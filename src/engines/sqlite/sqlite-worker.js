@@ -623,6 +623,18 @@
       });
       return out;
     }
+    /**
+     * The pieces of a text that hasPersonal recognises, as a JSON list (null when there are none): the review before sharing
+     * gives them to IfcOpenShell, which replaces exactly these inside a model's copy.
+     */
+    function personalMatches(x) {
+      if (x === null || x === undefined || typeof x !== 'string') return null;
+      var out = [];
+      PERSONAL.forEach(function (pattern) {
+        (x.match(pattern.re) || []).forEach(function (m) { if (isPersonal(pattern, m) && out.indexOf(m) < 0) out.push(m); });
+      });
+      return out.length ? JSON.stringify(out) : null;
+    }
 
     function registerFunctions(database) {
       database.create_function('dm_period', function (x, frequency) { return periodOf(x, frequency); });
@@ -636,6 +648,7 @@
       database.create_function('dm_valid_id', function (x, kind) { return validId(x, kind); });
       database.create_function('dm_has_personal', function (x) { return hasPersonal(x); });
       database.create_function('dm_mask_personal', function (x) { return maskPersonal(x); });
+      database.create_function('dm_personal_matches', function (x) { return personalMatches(x); });
       database.create_function('dm_hash', function (text, salt, length) {
         if (text === null) return null;
         var key = salt === null || salt === undefined || salt === '' ? String(text) : String(salt) + '|' + String(text);

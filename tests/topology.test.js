@@ -171,6 +171,28 @@
     return 'ok';
   }, 900000);
 
+  test('topology: Python reads the height of an IFC4.3 storey from its placement, as the app writes no Elevation there (IFC102)', async (assert) => {
+    if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them, about 13 MB more for IfcOpenShell)';
+    await bridge.start();
+    await waitFor(() => bridge.state !== 'busy', 60000, 'Python free');
+    const made = await bridge.runIfcNewModel('IFC4X3_ADD2', { project: 'Höjdprov', site: 'Tomten', building: 'Huset', storey: 'Plan 1', elevation: 0 });
+    const meta = await importer.run(new File([made.bytes], 'hojdprov.ifc', { type: 'application/octet-stream' }), { format: 'model' }, null, 'Höjdprov');
+    created.push(meta.id);
+    const cs = writeTools.create(meta.id);
+    assert.ok(writeTools.call(cs, 'create_storeys_and_grid', { storeys: [{ name: 'Plan 2', elevation: 3 }], grid: null }).ok);
+    for (const [start, end] of [[[0, 0], [6, 0]], [[6, 0], [6, 4]], [[6, 4], [0, 4]], [[0, 4], [0, 0]]]) assert.ok(writeTools.call(cs, 'create_wall', { storey: 'Plan 2', start, end, thickness: 0.2, height: 2.7, name: null }).ok);
+    assert.ok(writeTools.call(cs, 'create_wall', { storey: null, start: [10, 0], end: [12, 0], thickness: 0.2, height: 2.7, name: 'Nederst' }).ok);
+    const run = await ifcOps.previewChangeset(meta.id, writeTools.toWheel(cs));
+    assert.equal(run.report.errors, 0, 'no errors: ' + JSON.stringify(run.report.findings));
+    const upper = (run.report.topology || []).find((x) => x.storey === 'Plan 2');
+    assert.ok(upper, 'the storey with walls is in the topology: ' + JSON.stringify(run.report.topology));
+    assert.equal(upper.elevation, 3, 'the height from the placement, not 0');
+    assert.equal(upper.closed, true, 'the four walls close a room');
+    const low = (run.report.created || []).filter((c) => c.ifc_class === 'IfcWall' && c.storey !== 'Plan 2');
+    assert.deepEqual(low.map((c) => c.storey), ['Plan 1'], 'a wall without a storey goes on the lowest one: ' + JSON.stringify(run.report.created));
+    return 'ok';
+  }, 900000);
+
   test('topology: cleanup', async () => {
     for (const id of created) await datasets.remove(id).catch(() => {});
     return 'ok';

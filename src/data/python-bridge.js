@@ -66,8 +66,9 @@
             await this.engine.writeFile(`${HELPER_DIR}/dataspatium.py`, new TextEncoder().encode(src).buffer);
             // User-facing messages follow the app's language (see MESSAGES in python/dataspatium.py).
             const lang = D.require('ui/i18n').language();
-            // __dm_format_result lets the worker show figures as plots instead of their repr (see python-engine.js).
-            const setup = await this.engine.run(`import sys\nif ${JSON.stringify(HELPER_DIR)} not in sys.path: sys.path.insert(0, ${JSON.stringify(HELPER_DIR)})\nimport dataspatium as _dataspatium\nfrom dataspatium import *\n__dm_format_result = _dataspatium._format_result\n_dataspatium.dm_setup(lang=${JSON.stringify(lang)})\n`);
+            // __dm_format_result lets the worker show figures as plots instead of their repr (see python-engine.js). The app's version
+            // goes into the header of the IFC files the wheel writes (_ifc_header).
+            const setup = await this.engine.run(`import sys\nif ${JSON.stringify(HELPER_DIR)} not in sys.path: sys.path.insert(0, ${JSON.stringify(HELPER_DIR)})\nimport dataspatium as _dataspatium\nfrom dataspatium import *\n__dm_format_result = _dataspatium._format_result\n_dataspatium.dm_setup(lang=${JSON.stringify(lang)}, version=${JSON.stringify(String(D.version || ''))})\n`);
             if (!setup.ok) throw new Error(setup.error);
             this.streams = [];
             await this.mirrorAll();
@@ -428,6 +429,25 @@
       }
 
       /**
+       * The measures edit_element reads of elements of the model kept in a dataset file, for the read tool get_parameters (the
+       * wheel's `_ifc_parameters_file`). Read-only: nothing is written back.
+       * @param {ArrayBuffer|Uint8Array} bytes the model dataset's SQLite file @param {Array<number|string>} ids STEP ids or GlobalIds
+       * @returns {Promise<any[]>} one entry per id
+       */
+      async runIfcParameters(bytes, ids) {
+        return this.ifcJob(async () => {
+          await this.engine.writeFile('/data/step/model.sqlite', bytes);
+          try {
+            await this.ensurePackages(['ifcopenshell']);
+            this.streams = [];
+            return await this.engine.evalJson(`_dataspatium._ifc_parameters_file("/data/step/model.sqlite", ${JSON.stringify(JSON.stringify(ids))}, "/data/step/parameters.json")`);
+          } finally {
+            for (const p of ['/data/step/model.sqlite', '/data/step/parameters-in.ifc', '/data/step/parameters.json']) { try { await this.engine.unlink(p); } catch (_err) { /* ignore */ } }
+          }
+        });
+      }
+
+      /**
        * The IFC classes of a schema for a thing named in English words (decision B-57.2; the wheel's `_ifc_class_search` on
        * IfcOpenShell's documentation of the schema). No model is read.
        * @param {string} schema the model's schema, such as IFC4 @param {string} query @param {number} [limit]
@@ -463,15 +483,43 @@
       /**
        * A new, empty model written by the wheel (OB-06 Schemaval för nya modeller): project, units, contexts, site, building and a
        * first storey in the schema chosen.
+       * The optional names (site_long_name, land_id, building_long_name, building_id, storey_description, author, organization)
+       * are documented at _ifc_new_model; options.fileName is the name the file's header gives.
        * @param {string} schema IFC4X3_ADD2, IFC4 or IFC2X3 @param {{project: string, site: string, building: string, storey: string, elevation: number}} names
+       * @param {{fileName?: string}} [options]
        * @returns {Promise<{bytes: Uint8Array, info: any, log: Array<{kind: string, text: string}>}>}
        */
-      async runIfcNewModel(schema, names) {
+      async runIfcNewModel(schema, names, options = {}) {
         return this.ifcJob(async () => {
           await this.ensurePackages(['ifcopenshell']);
           this.streams = [];
-          const info = await this.engine.evalJson(`_dataspatium._ifc_new_model(${JSON.stringify(String(schema))}, ${JSON.stringify(JSON.stringify(names || {}))}, "/data/step/new-model.ifc")`);
+          const settings = Object.assign({}, names || {}, options.fileName ? { file_name: String(options.fileName) } : {});
+          const info = await this.engine.evalJson(`_dataspatium._ifc_new_model(${JSON.stringify(String(schema))}, ${JSON.stringify(JSON.stringify(settings))}, "/data/step/new-model.ifc")`);
           return this.takeIfc('/data/step/new-model.ifc', info, []);
+        });
+      }
+
+      /**
+       * Personal data out of a model's copy before it leaves the app (the review before sharing, data/share-scan; the wheel's
+       * `_ifc_scrub`): per part ('persons', 'organizations', 'owner', 'header', 'actors', 'text') 'hash' writes codes (salted SHA-256,
+       * as dm_hash) and 'remove' takes it away; `matches` are the pieces of free text the app's detectors found. The options go
+       * through a file, never through the code, and are removed with it. GlobalIds and the model's parts stay.
+       * @param {ArrayBuffer|Uint8Array} bytes the copy's SQLite file
+       * @param {{persons?: string, organizations?: string, owner?: string, header?: string, actors?: string, text?: string, matches?: string[], salt?: string}} options
+       * @returns {Promise<{bytes: Uint8Array, info: any, log: Array<{kind: string, text: string}>}>}
+       */
+      async runIfcScrub(bytes, options) {
+        return this.ifcJob(async () => {
+          await this.engine.writeFile('/data/step/model.sqlite', bytes);
+          await this.engine.writeFile('/data/step/scrub.json', new TextEncoder().encode(JSON.stringify(options || {})).buffer);
+          try {
+            await this.ensurePackages(['ifcopenshell']);
+            this.streams = [];
+            const info = await this.engine.evalJson('_dataspatium._ifc_scrub("/data/step/model.sqlite", "/data/step/scrub.json", "/data/step/scrub-out.ifc")');
+            return await this.takeIfc('/data/step/scrub-out.ifc', info, ['/data/step/model.sqlite', '/data/step/scrub-in.ifc']);
+          } finally {
+            for (const p of ['/data/step/scrub.json', '/data/step/model.sqlite', '/data/step/scrub-in.ifc', '/data/step/scrub-out.ifc']) { try { await this.engine.unlink(p); } catch (_err) { /* ignore */ } }
+          }
         });
       }
 

@@ -115,17 +115,17 @@
   }, 20000);
 
   test('ifc rules: the app\'s IDS files are embedded, and the brief\'s purpose picks the level and the IDS file, which reach the brief and both previews', async (assert) => {
-    const names = ifcOps.idsPresets();
+    const presets = D.require('analysis/ids-presets');
+    const listed = await presets.list();
+    const names = listed.map((x) => x.name);
     assert.ok(names.includes('presets/ids/SE-Dataspatium_Grund.ids') && names.includes('presets/ids/SE-Dataspatium_Klimatdeklaration.ids'), 'the two files: ' + names.join(', '));
-    const grund = await ifcOps.idsPreset('SE-Dataspatium_Grund.ids');
+    assert.deepEqual(listed.filter((x) => /Grund|Klimat/.test(x.file)).map((x) => x.title), ['SE-Dataspatium_Grund', 'SE-Dataspatium_Klimatdeklaration'], 'listed by their titles');
+    const grund = await presets.load('presets/ids/SE-Dataspatium_Grund.ids');
     assert.equal(grund.name, 'SE-Dataspatium_Grund.ids');
     assert.ok(grund.text.includes('<title>SE-Dataspatium_Grund</title>') && (grund.text.match(/<specification /g) || []).length === 14, 'Grund with 14 specifications');
     assert.ok(['G01', 'G05', 'G06', 'G14'].every((id) => grund.text.includes(`identifier="${id}"`)) && grund.text.includes('IFCBUILDINGELEMENTPROXY'), 'names, no proxies and PredefinedTypes');
-    const klimat = await ifcOps.idsPreset('presets/ids/SE-Dataspatium_Klimatdeklaration.ids');
+    const klimat = await presets.load('presets/ids/SE-Dataspatium_Klimatdeklaration.ids');
     assert.ok((klimat.text.match(/<specification /g) || []).length === 22 && ['LoadBearing', 'IsExternal', 'Qto_WallBaseQuantities', 'Category', 'IFCWALLSTANDARDCASE'].every((x) => klimat.text.includes(x)), 'Klimatdeklaration with 22 specifications');
-    let missing = '';
-    try { await ifcOps.idsPreset('Nej.ids'); } catch (err) { missing = String(err.message); }
-    assert.equal(missing, t('model.ids.preset.missing', { name: 'Nej.ids' }));
     // The panel in the mode Bygg ur brief.
     const ds = await theModel();
     const realRequest = http.request;
@@ -255,11 +255,7 @@
       for (const [start, end] of [[[0, 0], [12, 0]], [[12, 0], [12, 8]], [[12, 8], [0, 8]], [[0, 8], [0, 0]]]) assert.ok(writeTools.call(cs, 'create_wall', { storey: 'Plan 3', start, end, thickness: null, height: 3, name: 'Vägg', type: 'new-1' }).ok);
       assert.ok(writeTools.call(cs, 'create_slab', { storey: 'Plan 3', outline: [[0, 0], [12, 0], [12, 8], [0, 8]], thickness: 0.25, name: 'Golv' }).ok);
       assert.ok(writeTools.call(cs, 'set_properties', { ids: ['new-2'], pset: 'Pset_WallCommon', properties: { IsExternal: true, LoadBearing: true } }).ok);
-      if (bad) {
-        assert.ok(writeTools.call(cs, 'set_properties', { ids: ['new-3'], pset: 'Pset_WallCommon', properties: { UValue: 0.2 } }).ok);
-        assert.ok(writeTools.call(cs, 'set_properties', { ids: ['new-3'], pset: 'PSet_Eget', properties: { Varde: 1 } }).ok);
-        assert.ok(writeTools.call(cs, 'create_slab', { storey: 'Plan 3', outline: [[0, 0], [4, 4], [4, 0], [0, 4]], thickness: 0.2, name: 'Korsad' }).ok);
-      }
+      if (bad) assert.ok(writeTools.call(cs, 'create_slab', { storey: 'Plan 3', outline: [[0, 0], [4, 4], [4, 0], [0, 4]], thickness: 0.2, name: 'Korsad' }).ok);
       return writeTools.toWheel(cs);
     };
     const good = await ifcOps.previewChangeset(meta.id, build(false));
@@ -267,11 +263,19 @@
     assert.ok(good.report.rules && good.report.rules.errors === 0 && good.report.rules.source === 'buildingSMART ifc-gherkin-rules 893f827', JSON.stringify(good.report.rules));
     const bad = await ifcOps.previewChangeset(meta.id, build(true));
     const codes = (bad.report.findings || []).filter((f) => f.kind === 'rule').map((f) => `${f.rule} ${f.level}`);
-    assert.ok(codes.includes('PSE001 error') && codes.includes('SWE001 error') && codes.includes('PSE002 warning'), 'the wrong property, the crossing outline and the set named like IFC\'s: ' + JSON.stringify(bad.report.findings));
-    assert.ok(bad.report.errors >= 2 && bad.report.rules.errors >= 2 && bad.report.rules.warnings >= 1, JSON.stringify(bad.report.rules));
-    assert.ok((bad.report.findings || []).some((f) => f.rule === 'PSE001' && /UValue is not a property of Pset_WallCommon/.test(f.message)), 'the message names the property');
+    assert.ok(codes.includes('SWE001 error') && bad.report.errors >= 1 && bad.report.rules.errors >= 1, 'the crossing outline: ' + JSON.stringify(bad.report.findings));
+    // set_properties refuses a wrong standard set; the rules find one in a file that has it, the warning apart.
+    const run = await bridge.run(['import ifcopenshell, ifcopenshell.api.project, ifcopenshell.api.root, ifcopenshell.api.pset', 'm = ifcopenshell.api.project.create_file(version="IFC4")',
+      'w = ifcopenshell.api.root.create_entity(m, ifc_class="IfcWall")', 'p = ifcopenshell.api.pset.add_pset(m, product=w, name="Pset_WallCommon")',
+      'p.HasProperties = [m.create_entity("IfcPropertySingleValue", Name="UValue", NominalValue=m.create_entity("IfcReal", 0.2))]',
+      'q = ifcopenshell.api.pset.add_pset(m, product=w, name="PSet_Eget")', 'q.HasProperties = [m.create_entity("IfcPropertySingleValue", Name="Varde", NominalValue=m.create_entity("IfcInteger", 1))]',
+      'r = _dataspatium._ifc_rules(m)', 'print(" | ".join(sorted(set("%s %s" % (f["rule"], f["level"]) for f in r["findings"]))))',
+      'print([f["message"] for f in r["findings"] if f["rule"] == "PSE001"][0])'].join('\n'));
+    const said = run.entries.filter((e) => e.kind === 'stdout').map((e) => e.text).join('');
+    assert.ok(said.includes('PSE001 error') && said.includes('PSE002 warning') && said.includes('UValue is not a property of Pset_WallCommon'), 'a wrong property is an error and a set named like IFC\'s a warning: ' + said);
     // An IDS file in the preview: the walls without LoadBearing fail Klimatdeklaration.
-    const tried = await ifcOps.previewChangeset(meta.id, build(false), { ids: await ifcOps.idsPreset('SE-Dataspatium_Klimatdeklaration.ids') });
+    const klimat = await D.require('analysis/ids-presets').load('presets/ids/SE-Dataspatium_Klimatdeklaration.ids');
+    const tried = await ifcOps.previewChangeset(meta.id, build(false), { ids: { name: klimat.name, text: klimat.text } });
     const ids = tried.report.ids;
     assert.ok(ids && !ids.error && ids.file === 'SE-Dataspatium_Klimatdeklaration.ids' && ids.specifications === 22, JSON.stringify(ids));
     assert.ok(ids.failed.some((x) => x.name === 'Väggen är bärande eller inte' && x.failed >= 3), 'three walls say nothing of LoadBearing: ' + JSON.stringify(ids.failed.map((x) => [x.name, x.failed])));

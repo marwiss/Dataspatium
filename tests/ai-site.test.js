@@ -39,7 +39,7 @@
     assert.ok(!writeTools.CREATES.includes('set_site'), 'and not a create');
     const tool = writeTools.TOOLS.find((x) => x.name === 'set_site');
     assert.ok(tool && tool.description.includes('EPSG') && tool.parameters.type === 'object', 'the tool as the providers see it');
-    assert.deepEqual(Object.keys(tool.parameters.properties), ['latitude', 'longitude', 'elevation', 'crs', 'eastings', 'northings', 'rotation', 'site_name']);
+    assert.deepEqual(Object.keys(tool.parameters.properties), ['latitude', 'longitude', 'elevation', 'crs', 'eastings', 'northings', 'rotation', 'site_name', 'vertical_datum'], 'vertical_datum is optional (tests/ai-names.test.js)');
     const cs = writeTools.create('site-test');
     const out = writeTools.call(cs, 'set_site', ARGS);
     assert.ok(out.ok && out.step === 1 && !out.ref, 'one step, no ref: ' + JSON.stringify(out));

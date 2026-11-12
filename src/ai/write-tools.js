@@ -14,7 +14,20 @@
  * create_slab and create_roof take as type: the element gets the type, its thickness from the layers and the layers laid on it, and the
  * wheel joins the walls whose axes meet and writes the base quantities when it applies the change set (recommendations 3, 5 and 6 of
  * the native IFC study). Publishing is never a tool. The schemas are flat where they can be, with every field required (null for
- * "not given").
+ * "not given"). create_wall and create_slab take load_bearing, and they and create_roof take status, never guessed; the wheel writes
+ * them in the common set and sets IsExternal itself from the topology. set_properties refuses a number with its unit in the value and
+ * advises the guidance's naming for a set of the model's own, and the wheel checks IFC's own sets against the schema's templates;
+ * assign takes the material's category (recommendation 13 of the native IFC study, 4, 8 and 9 of the Praxi study).
+ * Since recommendations 2 and 3 of the Praxi study a storey takes a description and a long name, a listed room a number
+ * (its Name, with the name as its long name) and a room type, and set_site a vertical datum and the compound codes of SWEREF 99 with
+ * RH 2000; each lands on the operation only when given, so older change sets keep their form (dataspatium-tools/1, additive).
+ * edit_element changes an existing wall, slab, opening with its door or window, or roof in place and keeps its
+ * GlobalId (recommendation 7 of the Praxi study, 17 of the native IFC study); its step holds only the fields given, and the wheel reads
+ * the rest from the element. transform_elements moves a door or window with its opening and never a site, building or storey.
+ * Since recommendations 4 and 11 of the study, create_element makes the building elements that have no tool of their
+ * own (columns, beams, members, footings, piles, coverings, railings, chimneys, shading devices, sanitary terminals, furniture and
+ * straight stairs) of the most specific IFC class, with a ref; define_type also makes covering, column, beam, footing, railing, door
+ * and window types, and create_opening takes a door or window type, whose size and geometry the filling gets.
  */
 (function () {
   'use strict';
@@ -28,45 +41,77 @@
     const xy = () => ({ type: ['array', 'null'], items: { type: 'number' } });
     const ids = () => ({ type: 'array', items: { type: ['integer', 'string'] } });
     const bool = () => ({ type: ['boolean', 'null'] });
-    const CREATES = ['create_wall', 'create_slab', 'create_roof', 'create_opening', 'create_spaces', 'define_type'];
+    const CREATES = ['create_wall', 'create_slab', 'create_roof', 'create_opening', 'create_spaces', 'define_type', 'create_element'];
     const ROOF_SHAPES = ['gable', 'hip', 'shed', 'flat'];
     const MAX_ROOMS = 200;
-    const TYPE_KINDS = ['wall', 'slab', 'roof'];
+    /** The kinds of define_type: with material layers, and without (a material at most; doors and windows with their geometry). */
+    const LAYERED_KINDS = ['wall', 'slab', 'roof', 'covering'];
+    const ELEMENT_KINDS = ['column', 'beam', 'footing', 'railing', 'door', 'window'];
+    const TYPE_KINDS = LAYERED_KINDS.concat(ELEMENT_KINDS);
+    /** The type class of each kind (IFC4 and later); slab and roof types are both IfcSlabType, so their names must differ. */
+    const TYPE_CLASS = { wall: 'IfcWallType', slab: 'IfcSlabType', roof: 'IfcSlabType', covering: 'IfcCoveringType', column: 'IfcColumnType', beam: 'IfcBeamType', footing: 'IfcFootingType', railing: 'IfcRailingType', door: 'IfcDoorType', window: 'IfcWindowType' };
+    /** The door OperationTypes and window PartitioningTypes whose geometry IfcOpenShell draws; the first is the default. */
+    const DOOR_OPERATIONS = ['SINGLE_SWING_LEFT', 'SINGLE_SWING_RIGHT', 'DOUBLE_SWING_LEFT', 'DOUBLE_SWING_RIGHT', 'DOUBLE_DOOR_SINGLE_SWING', 'DOUBLE_DOOR_DOUBLE_SWING', 'SLIDING_TO_LEFT', 'SLIDING_TO_RIGHT', 'DOUBLE_DOOR_SLIDING'];
+    const WINDOW_PARTITIONS = ['SINGLE_PANEL', 'DOUBLE_PANEL_VERTICAL', 'DOUBLE_PANEL_HORIZONTAL', 'TRIPLE_PANEL_VERTICAL', 'TRIPLE_PANEL_HORIZONTAL', 'TRIPLE_PANEL_BOTTOM', 'TRIPLE_PANEL_TOP', 'TRIPLE_PANEL_LEFT', 'TRIPLE_PANEL_RIGHT'];
+    /** The classes create_element makes (IfcFurniture is IfcFurnishingElement in IFC2X3), and the define_type kind of those that have one. */
+    const ELEMENT_CLASSES = ['IfcColumn', 'IfcBeam', 'IfcMember', 'IfcFooting', 'IfcPile', 'IfcCovering', 'IfcRailing', 'IfcChimney', 'IfcShadingDevice', 'IfcSanitaryTerminal', 'IfcFurniture', 'IfcFurnishingElement', 'IfcStair'];
+    const CLASS_KIND = { IfcColumn: 'column', IfcBeam: 'beam', IfcFooting: 'footing', IfcCovering: 'covering', IfcRailing: 'railing' };
+    const MAX_RISERS = 60;
+    const MAX_OUTLINE = 500;
     const MAX_LAYERS = 20;
     /** IfcMaterial.Category as IfcOpenShell recommends it, and the roles of IfcMaterialLayer.Category (the wheel spells them per schema). */
     const MATERIAL_CATEGORIES = ['concrete', 'steel', 'aluminium', 'block', 'brick', 'stone', 'wood', 'glass', 'gypsum', 'plastic', 'earth'];
     const LAYER_ROLES = ['load_bearing', 'insulation', 'inner_finish', 'outer_finish'];
     const typeRef = () => ({ type: ['integer', 'string', 'null'] });
+    /** Pset_*Common.Status: the schema's values for an element's life (the wheel checks them against the template). */
+    const STATUSES = ['NEW', 'EXISTING', 'DEMOLISH', 'TEMPORARY'];
+    /** Units a value might carry after its number ("40 dB"), in lower case without spaces, as python/dataspatium.py `_CS_UNITS`. */
+    const UNITS = new Set(['mm', 'cm', 'dm', 'm', 'km', 'mm2', 'cm2', 'dm2', 'm2', 'km2', 'mm²', 'cm²', 'dm²', 'm²', 'km²', 'mm3', 'cm3', 'dm3', 'm3', 'mm³', 'cm³',
+      'dm³', 'm³', 'l', 'liter', 'litre', 'g', 'kg', 't', 'ton', 'n', 'kn', 'pa', 'kpa', 'mpa', 'gpa', 'db', 'dba', 'db(a)', 'w', 'kw', 'mw',
+      'wh', 'kwh', 'mwh', 'w/m2k', 'w/m²k', 'w/(m2k)', 'w/(m²k)', 'w/m2,k', 'w/m²,k', 'w/(m2·k)', 'w/(m²·k)', 'w/m²·k', 'w/mk', 'w/(mk)',
+      'w/m·k', 'w/(m·k)', 'm2k/w', 'm²k/w', '°c', '°', 'deg', 'k', '%', 'h', 'min', 's', 'l/s', 'm3/h', 'm³/h', 'm3/s', 'm³/s', 'kg/m3',
+      'kg/m³', 'kg/m2', 'kg/m²', 'kg/m', 'lux', 'lx', 'st', 'pcs', 'kr', 'sek', 'nok', 'dkk', 'isk', 'eur', 'kgco2e', 'kgco2-ekv']);
+    /** A set of the model's own as the guidance names it: country, origin and project, then the set's name (SE-ACME-42_Acoustics). */
+    const OWN_SET = /^[A-Z]{2}-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)?(?:_[A-Za-z0-9]+)?$/;
+    const PASCAL = /^[A-Z][A-Za-z0-9]*$/;
     /** The tools as the providers see them. */
     const TOOLS = [
-      { name: 'create_storeys_and_grid', description: 'Add building storeys (name and elevation in metres above the first) and/or a grid to the change set. The grid has x_count bays of x_spacing metres along X (axes A, B, …) and y_count bays of y_spacing along Y (axes 1, 2, …), with A1 at (0, 0). A storey that already exists is kept. Either may be null.',
+      { name: 'create_storeys_and_grid', description: 'Add building storeys (name and elevation in metres above the first) and/or a grid to the change set. Name the storeys with one numbering for the whole project that follows their height from the lowest up (such as Plan 1, Plan 2 …, a basement below them), and say the entrance level in the description, such as "Plan 2 (Entré)"; description and long_name (a longer name) are optional, null when not given. The grid has x_count bays of x_spacing metres along X (axes A, B, …) and y_count bays of y_spacing along Y (axes 1, 2, …), with A1 at (0, 0). A storey that already exists is kept, and gets the description and long_name given. Either may be null.',
         parameters: { type: 'object', properties: {
-          storeys: { type: ['array', 'null'], items: { type: 'object', properties: { name: { type: 'string' }, elevation: { type: 'number' } }, required: ['name', 'elevation'], additionalProperties: false } },
+          storeys: { type: ['array', 'null'], items: { type: 'object', properties: { name: { type: 'string' }, elevation: { type: 'number' }, description: str(), long_name: str() }, required: ['name', 'elevation', 'description', 'long_name'], additionalProperties: false } },
           grid: { type: ['object', 'null'], properties: { x_spacing: { type: 'number' }, x_count: { type: 'integer' }, y_spacing: { type: 'number' }, y_count: { type: 'integer' } }, required: ['x_spacing', 'x_count', 'y_spacing', 'y_count'], additionalProperties: false } } } },
-      { name: 'define_type', description: 'Define a wall, slab or roof type with its material layers, before the elements that use it. kind is wall (an IfcWallType), slab (an IfcSlabType) or roof (an IfcSlabType ROOF for the roof slabs of create_roof); name is the type\'s name, such as YV1. layers are its material layers, each {material, thickness in metres, category, role}: for a wall from its right side to its left as seen from its start toward its end (so the outside first when the outer walls run counter-clockwise), for a slab or a roof from the top down. category is the material\'s IFC category (concrete, steel, aluminium, block, brick, stone, wood, glass, gypsum, plastic or earth) and role the layer\'s (load_bearing, insulation, inner_finish or outer_finish); give them only when known, else null. predefined_type is the type\'s PredefinedType from its class\'s list, such as SOLIDWALL or PARTITIONING for a wall and FLOOR or BASESLAB for a slab (null: NOTDEFINED for a wall, FLOOR for a slab; a roof type is ROOF). Answers the ref of the type, which create_wall, create_slab and create_roof take as type; put shared properties on the type with set_properties and its ref.',
-        parameters: { type: 'object', properties: { kind: { type: 'string' }, name: { type: 'string' }, layers: { type: 'array', items: { type: 'object', properties: { material: { type: 'string' }, thickness: { type: 'number' }, category: str(), role: str() }, required: ['material', 'thickness', 'category', 'role'], additionalProperties: false } }, predefined_type: str() } } },
-      { name: 'create_wall', description: 'Add a wall on a storey (null: the lowest) from start [x, y] to end [x, y] in metres in the storey\'s plane, with its thickness centred on that line and its height from the storey. Defaults: thickness 0.2, height 3. partition true makes a non-load-bearing interior wall (PredefinedType PARTITIONING) when the wall has no type; otherwise the wall is SOLIDWALL or takes its PredefinedType from the type. With type (the ref of a define_type wall type, or a wall type\'s GlobalId or id) the wall takes its thickness from the type\'s layers, so leave thickness null. Walls whose lines meet at a corner, or that end on another wall\'s line, are joined by the app when the change set is applied: let them meet on their lines, and never lengthen or overlap them to close a corner. Answers the ref of the wall.',
-        parameters: { type: 'object', properties: { storey: str(), start: xy(), end: xy(), thickness: num(), height: num(), name: str(), type: typeRef(), partition: bool() } } },
-      { name: 'create_slab', description: 'Add a floor slab on a storey, with its top at the storey\'s elevation. outline is a list of [x, y] corners in metres, or null to follow the grid\'s extent. Default thickness 0.25. With type (the ref of a define_type slab type, or a slab type\'s GlobalId or id) the slab takes its thickness from the type\'s layers, so leave thickness null. Answers the ref of the slab.',
-        parameters: { type: 'object', properties: { storey: str(), outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, thickness: num(), name: str(), type: typeRef() } } },
-      { name: 'create_roof', description: 'Add a roof on the walls of a storey (null: the top storey), as an IfcRoof of roof slabs: shape is gable, hip, shed or flat. outline is the [x, y] corners in metres of the rectangle it covers, or null for the bounding box of the storey\'s walls; an outline that is not a rectangle along x and y is replaced by its bounding box for now. pitch is degrees, more than 0 and at most 75 (defaults: 30 for gable and hip, 10 for shed; flat ignores it). overhang is metres beyond the outline at the eaves (default 0.4, for flat 0), thickness metres (default 0.25). ridge is x or y: for gable the direction of the ridge (null: along the longer side), for shed the axis it falls along, down toward negative x or y (null: y, so to the south when y points north); hip and flat ignore it. base is the eaves height in metres above the storey (null: the top of the storey\'s walls, else 2.7). With type (the ref of a define_type roof type, or a roof type\'s GlobalId or id) every roof slab takes its thickness from the type\'s layers, so leave thickness null. Answers the ref of the roof.',
-        parameters: { type: 'object', properties: { storey: str(), shape: { type: 'string' }, outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, pitch: num(), overhang: num(), thickness: num(), ridge: str(), base: num(), name: str(), type: typeRef() } } },
-      { name: 'create_opening', description: 'Cut an opening in a wall (wall_id: its id or ref), offset metres from the wall\'s start, width by height metres, sill metres above the storey, and fill it with a door or a window (fill: door, window or null). Defaults: width 0.9, height 2.1, sill 0. Answers the ref of the door or window, or of the opening.',
-        parameters: { type: 'object', properties: { wall_id: { type: ['integer', 'string'] }, offset: num(), width: num(), height: num(), sill: num(), fill: str(), name: str() } } },
-      { name: 'create_spaces', description: 'Create the rooms the walls enclose as spaces (IfcSpace), from the topology of the model as it stands at this step, so that walls created earlier in the change set count. Each space gets the room\'s outline extruded to its height, is aggregated in its storey, gets Qto_SpaceBaseQuantities, and gets space boundaries to the walls along its edge and to the doors and windows in them (a door created later in such a wall joins them). storey is the storey\'s name; null makes every room on every storey with rooms, and then rooms must be null. rooms lists the rooms: each by at, an [x, y] point inside it in metres in the storey\'s plane, or by index, its index in get_topology (the other null), with name from the room programme (such as Kitchen) and long_name or null; null makes every room, named Room 1, Room 2 … in the person\'s language. A room that a space covers already is left out. height is metres (null: up to the next storey, or the walls\' height on the top storey). Answers one ref per listed room, in order; with rooms null the spaces get no refs.',
-        parameters: { type: 'object', properties: { storey: str(), rooms: { type: ['array', 'null'], items: { type: 'object', properties: { at: xy(), index: { type: ['integer', 'null'] }, name: { type: 'string' }, long_name: str() }, required: ['at', 'index', 'name', 'long_name'], additionalProperties: false } }, height: num() } } },
-      { name: 'set_properties', description: 'Set properties in one property set (pset, such as Pset_WallCommon) on elements (ids: ids or refs): properties is a list of {name, value} with string, number or boolean values. Missing sets are created.',
+      { name: 'define_type', description: 'Define a type before the elements that use it. kind is wall (an IfcWallType), slab (an IfcSlabType), roof (an IfcSlabType ROOF for the roof slabs of create_roof) or covering (an IfcCoveringType), each with its material layers; or column, beam, footing, railing, door or window (an IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType or IfcWindowType; IfcDoorStyle and IfcWindowStyle in IFC2X3) with layers null and, when known, its material as material and material_category. name is the type\'s name, such as YV1. layers are its material layers, each {material, thickness in metres, category, role}: for a wall from its right side to its left as seen from its start toward its end (so the outside first when the outer walls run counter-clockwise), for a slab, a roof or a covering from the top down (a cladding from its outer face in). category (and material_category) is the material\'s IFC category (concrete, steel, aluminium, block, brick, stone, wood, glass, gypsum, plastic or earth) and role the layer\'s (load_bearing, insulation, inner_finish or outer_finish); give them only when known, else null. predefined_type is the type\'s PredefinedType from its class\'s list, such as SOLIDWALL or PARTITIONING for a wall, FLOOR or BASESLAB for a slab, FLOORING, CEILING or CLADDING for a covering, PAD_FOOTING or STRIP_FOOTING for a footing and HANDRAIL or GUARDRAIL for a railing (null: FLOOR for a slab, COLUMN, BEAM, DOOR and WINDOW, NOTDEFINED for the others; a roof type is ROOF). A door type has operation, its OperationType: SINGLE_SWING_LEFT (the default), SINGLE_SWING_RIGHT, DOUBLE_SWING_LEFT, DOUBLE_SWING_RIGHT, DOUBLE_DOOR_SINGLE_SWING, DOUBLE_DOOR_DOUBLE_SWING, SLIDING_TO_LEFT, SLIDING_TO_RIGHT or DOUBLE_DOOR_SLIDING, LEFT with the hinges on the left as seen in the direction it opens. A window type has partitioning, its PartitioningType: SINGLE_PANEL (the default), DOUBLE_PANEL_VERTICAL, DOUBLE_PANEL_HORIZONTAL, TRIPLE_PANEL_VERTICAL, TRIPLE_PANEL_HORIZONTAL, TRIPLE_PANEL_BOTTOM, TRIPLE_PANEL_TOP, TRIPLE_PANEL_LEFT or TRIPLE_PANEL_RIGHT. Both have width and height in metres (null: 0.9 × 2.1 for a door, 1.2 × 1.2 for a window) and lining_depth, the depth of the lining across the wall (at least 0.05 m, the default; the wall\'s thickness fills the reveal), and get their geometry from these. Answers the ref of the type, which create_wall, create_slab, create_roof, create_element and create_opening take as type; put shared properties on the type with set_properties and its ref.',
+        parameters: { type: 'object', properties: { kind: { type: 'string' }, name: { type: 'string' }, layers: { type: ['array', 'null'], items: { type: 'object', properties: { material: { type: 'string' }, thickness: { type: 'number' }, category: str(), role: str() }, required: ['material', 'thickness', 'category', 'role'], additionalProperties: false } }, predefined_type: str(),
+          material: str(), material_category: str(), operation: str(), partitioning: str(), width: num(), height: num(), lining_depth: num() } } },
+      { name: 'create_wall', description: 'Add a wall on a storey (null: the lowest) from start [x, y] to end [x, y] in metres in the storey\'s plane, with its thickness centred on that line and its height from the storey. Defaults: thickness 0.2, height 3. partition true makes a non-load-bearing interior wall (PredefinedType PARTITIONING) when the wall has no type; otherwise the wall is SOLIDWALL or takes its PredefinedType from the type. With type (the ref of a define_type wall type, or a wall type\'s GlobalId or id) the wall takes its thickness from the type\'s layers, so leave thickness null. Walls whose lines meet at a corner, or that end on another wall\'s line, are joined by the app when the change set is applied: let them meet on their lines, and never lengthen or overlap them to close a corner. load_bearing is true for a wall that bears load and false for one that does not, as the brief or the person says; null when they do not say, never assumed. status is NEW, EXISTING, DEMOLISH or TEMPORARY as the brief says (EXISTING for a wall of an existing building), else null. The app sets IsExternal itself from the storey\'s topology. Answers the ref of the wall.',
+        parameters: { type: 'object', properties: { storey: str(), start: xy(), end: xy(), thickness: num(), height: num(), name: str(), type: typeRef(), partition: bool(), load_bearing: bool(), status: str() } } },
+      { name: 'create_slab', description: 'Add a floor slab on a storey, with its top at the storey\'s elevation. outline is a list of [x, y] corners in metres, or null to follow the grid\'s extent. Default thickness 0.25. With type (the ref of a define_type slab type, or a slab type\'s GlobalId or id) the slab takes its thickness from the type\'s layers, so leave thickness null. load_bearing is true for a slab that bears load and false for one that does not, as the brief or the person says; null when they do not say, never assumed. status is NEW, EXISTING, DEMOLISH or TEMPORARY as the brief says, else null. Answers the ref of the slab.',
+        parameters: { type: 'object', properties: { storey: str(), outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, thickness: num(), name: str(), type: typeRef(), load_bearing: bool(), status: str() } } },
+      { name: 'create_roof', description: 'Add a roof on the walls of a storey (null: the top storey), as an IfcRoof of roof slabs: shape is gable, hip, shed or flat. outline is the [x, y] corners in metres of the rectangle it covers, or null for the bounding box of the storey\'s walls; an outline that is not a rectangle along x and y is replaced by its bounding box for now. pitch is degrees, more than 0 and at most 75 (defaults: 30 for gable and hip, 10 for shed; flat ignores it). overhang is metres beyond the outline at the eaves (default 0.4, for flat 0), thickness metres (default 0.25). ridge is x or y: for gable the direction of the ridge (null: along the longer side), for shed the axis it falls along, down toward negative x or y (null: y, so to the south when y points north); hip and flat ignore it. base is the eaves height in metres above the storey (null: the top of the storey\'s walls, else 2.7). With type (the ref of a define_type roof type, or a roof type\'s GlobalId or id) every roof slab takes its thickness from the type\'s layers, so leave thickness null. status is NEW, EXISTING, DEMOLISH or TEMPORARY as the brief says, else null; the app marks the roof external itself. Answers the ref of the roof.',
+        parameters: { type: 'object', properties: { storey: str(), shape: { type: 'string' }, outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, pitch: num(), overhang: num(), thickness: num(), ridge: str(), base: num(), name: str(), type: typeRef(), status: str() } } },
+      { name: 'create_opening', description: 'Cut an opening in a wall (wall_id: its id or ref), offset metres from the wall\'s start, width by height metres, sill metres above the storey, and fill it with a door or a window (fill: door, window or null). Defaults: width 0.9, height 2.1, sill 0. With type (the ref of a define_type door or window type, or such a type\'s GlobalId or id, with fill door or window) the door or window takes its width, height and geometry from the type, so leave width and height null; it stands flush with the wall\'s left face as seen from the wall\'s start toward its end (the inside of an outer wall drawn counter-clockwise), and a door opens toward that side, a LEFT door with its hinges at the opening\'s side nearest the wall\'s start; side right turns it around, flush with the right face and opening toward it (side null: left). Answers the ref of the door or window, or of the opening.',
+        parameters: { type: 'object', properties: { wall_id: { type: ['integer', 'string'] }, offset: num(), width: num(), height: num(), sill: num(), fill: str(), name: str(), type: typeRef(), side: str() } } },
+      { name: 'create_element', description: 'Add a building element that has no tool of its own, of the most specific IFC class: IfcColumn, IfcBeam, IfcMember, IfcFooting, IfcPile, IfcCovering, IfcRailing, IfcChimney, IfcShadingDevice, IfcSanitaryTerminal, IfcFurniture (IfcFurnishingElement in IFC2X3) or IfcStair for a straight stair; never IfcBuildingElementProxy. predefined_type is a value of the class\'s list (search_ifc_class gives them), such as COLUMN; BEAM or LINTEL; STUD or RAFTER; PAD_FOOTING or STRIP_FOOTING; BORED or DRIVEN; FLOORING, CEILING, CLADDING, ROOFING or INSULATION; HANDRAIL, GUARDRAIL or BALUSTRADE; JALOUSIE or AWNING; WASHHANDBASIN or TOILETPAN; TABLE or BED; null for NOTDEFINED or the type\'s, and USERDEFINED only with object_type. type is the ref of a define_type step of the class\'s kind (column, beam, footing, covering or railing) or a type\'s GlobalId or id. at is [x, y] metres in the storey\'s plane, z metres above the storey and rotation degrees counter-clockwise from x. shape is the body: profile rectangle (x by y metres), circle (radius) or polygon (outline, [x, y] corners in the storey\'s plane; at and rotation are then ignored), extruded depth metres. along z (the default) stands the profile in the plan centred on at and extrudes it up from z: a column, footing, pile, covering, chimney, sanitary terminal or furniture (give a footing or a pile a negative z to reach down). along x lays the profile across, centred on a line at height z, and extrudes it from at in the direction of rotation, x its width and y its height: a beam, member or railing. A covering with a type takes its depth from the type\'s layers, so leave depth null. part_of (a ref, GlobalId or id) makes the element a part of a whole, such as a railing of a stair: aggregated in it and on its storey, not in the storey itself, so leave storey null. host (only for IfcCovering) is the element or space it covers. For IfcStair shape is null and stair is the flight: risers (the number of risers, from 2), riser_height and tread_length in metres, width (default 1), thickness (the waist at right angles to the slope, at least riser_height; default 0.2) and landing (the length in metres of a landing at the top, or null); at is the foot of the first riser\'s middle and rotation the direction it rises, and the last riser is the front edge of the landing or of the floor above. Answers the ref of the element.',
+        parameters: { type: 'object', properties: { storey: str(), ifc_class: { type: 'string' }, predefined_type: str(), object_type: str(), type: typeRef(), name: str(), at: xy(), z: num(), rotation: num(),
+          shape: { type: ['object', 'null'], properties: { profile: { type: 'string' }, x: num(), y: num(), radius: num(), outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, depth: num(), along: str() }, required: ['profile', 'x', 'y', 'radius', 'outline', 'depth', 'along'], additionalProperties: false },
+          stair: { type: ['object', 'null'], properties: { risers: { type: ['integer', 'null'] }, riser_height: num(), tread_length: num(), width: num(), thickness: num(), landing: num() }, required: ['risers', 'riser_height', 'tread_length', 'width', 'thickness', 'landing'], additionalProperties: false },
+          part_of: typeRef(), host: typeRef() } } },
+      { name: 'create_spaces', description: 'Create the rooms the walls enclose as spaces (IfcSpace), from the topology of the model as it stands at this step, so that walls created earlier in the change set count. Each space gets the room\'s outline extruded to its height, is aggregated in its storey, gets Qto_SpaceBaseQuantities, and gets space boundaries to the walls along its edge and to the doors and windows in them (a door created later in such a wall joins them). storey is the storey\'s name; null makes every room on every storey with rooms, and then rooms must be null. rooms lists the rooms: each by at, an [x, y] point inside it in metres in the storey\'s plane, or by index, its index in get_topology (the other null), with name from the room programme (such as Kitchen) and long_name or null; null makes every room, named Room 1, Room 2 … in the person\'s language. Give each listed room a number, unique in the building (such as the storey\'s number and two digits: 101, 102 … on Plan 1): the number becomes the space\'s Name, the name its LongName and long_name its description; with number null the name is the Name and long_name the LongName. room_type is the room\'s type when the brief gives one (such as Bedroom), written as ObjectType with PredefinedType USERDEFINED; null when not given. A room that a space covers already is left out. height is metres (null: up to the next storey, or the walls\' height on the top storey). Answers one ref per listed room, in order; with rooms null the spaces get no refs.',
+        parameters: { type: 'object', properties: { storey: str(), rooms: { type: ['array', 'null'], items: { type: 'object', properties: { at: xy(), index: { type: ['integer', 'null'] }, name: { type: 'string' }, long_name: str(), number: str(), room_type: str() }, required: ['at', 'index', 'name', 'long_name', 'number', 'room_type'], additionalProperties: false } }, height: num() } } },
+      { name: 'set_properties', description: 'Set properties in one property set (pset) on elements or types (ids: ids or refs): properties is a list of {name, value} with string, number or boolean values. Use IFC\'s own sets first (Pset_… for properties, Qto_… for quantities, such as Pset_WallCommon): the app checks them against the schema\'s templates when the change set is applied, so give the template\'s property names; a boolean is true or false, a measure a number without its unit (40, not "40 dB"; lengths in metres, areas m², volumes m³, angles degrees), an enumeration one of its values. A set of your own must never start with Pset_ or Qto_: name it country-origin-project_Name (such as SE-ACME-42_Acoustics), its properties in PascalCase without å, ä or ö, and its values without units. Never set IsExternal on walls, doors, windows or roofs, which the app sets from the topology, nor the base quantities, which it computes. Missing sets are created.',
         parameters: { type: 'object', properties: { ids: ids(), pset: { type: 'string' }, properties: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, value: { type: ['string', 'number', 'boolean'] } }, required: ['name', 'value'], additionalProperties: false } } } } },
       { name: 'set_classification', description: 'Classify elements (ids or refs) with a class of the classification system the person names; never assume a system. The IFC class with its PredefinedType is the classification itself (choose it with search_ifc_class); this adds a system on top. system is that system\'s name, name the class name, code its code and uri its address (for a bSDD class its uri). Written as an IfcClassificationReference under the system\'s IfcClassification, shared only when the system, the code and the uri match. edition, source and dictionary_uri describe the system (its edition, its publisher and the dictionary\'s address) and are written on its IfcClassification; the same system with another edition or dictionary_uri is another IfcClassification. search_bsdd finds a class in a free bSDD dictionary: take its dictionary as system with its edition, source and dictionary_uri. Never invent a code or an edition; null when not known.',
         parameters: { type: 'object', properties: { ids: ids(), system: { type: 'string' }, name: { type: 'string' }, code: str(), uri: str(), edition: str(), source: str(), dictionary_uri: str() } } },
-      { name: 'assign', description: 'Move elements (ids or refs) to a storey (by name) and/or give them a material (by name, created when missing). Either may be null.',
-        parameters: { type: 'object', properties: { ids: ids(), storey: str(), material: str() } } },
-      { name: 'transform_elements', description: 'Move elements (ids or refs) by dx, dy, dz metres.',
+      { name: 'assign', description: 'Move elements (ids or refs) to a storey (by name) and/or give them a material (by name, created when missing). Either may be null. category is the material\'s IFC category (concrete, steel, aluminium, block, brick, stone, wood, glass, gypsum, plastic or earth), given with the material when known, else null.',
+        parameters: { type: 'object', properties: { ids: ids(), storey: str(), material: str(), category: str() } } },
+      { name: 'edit_element', description: 'Change an existing element in place, keeping its GlobalId: id is its id, GlobalId or ref, and every other field is null to keep it. A wall takes start and end ([x, y] metres in its storey\'s plane), thickness, height and type; its openings keep their place along it while its direction stays the same (else their offset from its start), and the app joins it anew with the walls it meets. A slab takes outline (its [x, y] corners in metres), thickness and type, its top staying where it is. An opening, or the door or window in it, takes offset (metres from the wall\'s start), width, height and sill; the opening and its door or window change together and must stay within the wall. A roof takes pitch, overhang and base (the eaves\' height above the storey), and its roof slabs follow. Any element takes name. A typed wall or slab takes its thickness from its type, so give another wall or slab type (define_type) to change it. get_parameters reads an element\'s current measures. Change elements with this instead of deleting and recreating them.',
+        parameters: { type: 'object', properties: { id: { type: ['integer', 'string'] }, name: str(), start: xy(), end: xy(), thickness: num(), height: num(), type: typeRef(), outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, offset: num(), width: num(), sill: num(), pitch: num(), overhang: num(), base: num() } } },
+      { name: 'transform_elements', description: 'Move elements (ids or refs) by dx, dy, dz metres in their storey\'s plane. A door or window moves with its opening; to slide one along its wall, edit_element with offset is better. The site, the building and the storeys are never moved: their place and heights are the whole project\'s.',
         parameters: { type: 'object', properties: { ids: ids(), dx: num(), dy: num(), dz: num() } } },
       { name: 'delete_elements', description: 'Delete elements (ids or refs) with what depends on them. Only when the person asked for it in this conversation; confirm must be true to say so, and the person confirms again before approval.',
         parameters: { type: 'object', properties: { ids: ids(), confirm: { type: ['boolean', 'null'] } } } },
-      { name: 'set_site', description: 'Set the model\'s place on earth: the site\'s latitude and longitude in WGS 84 degrees (south and west negative), its elevation in metres above sea level, and, when the model is drawn in a projected coordinate system, the map conversion: crs is the EPSG code (such as EPSG:3006 for SWEREF 99 TM), eastings and northings the coordinates of the model\'s origin in metres, and rotation the angle in degrees from grid east (the map\'s x axis, along the eastings) to the model\'s X axis, counter-clockwise positive, as IfcMapConversion measures it (0 when null: the model\'s X axis points east and its Y axis north). crs, eastings and northings go together; site_name renames the site. One call per model is enough: a second call replaces the first.',
-        parameters: { type: 'object', properties: { latitude: { type: 'number' }, longitude: { type: 'number' }, elevation: num(), crs: str(), eastings: num(), northings: num(), rotation: num(), site_name: str() } } },
+      { name: 'set_site', description: 'Set the model\'s place on earth: the site\'s latitude and longitude in WGS 84 degrees (south and west negative), its elevation in metres above sea level, and, when the model is drawn in a projected coordinate system, the map conversion: crs is the EPSG code (such as EPSG:3006 for SWEREF 99 TM), eastings and northings the coordinates of the model\'s origin in metres, and rotation the angle in degrees from grid east (the map\'s x axis, along the eastings) to the model\'s X axis, counter-clockwise positive, as IfcMapConversion measures it (0 when null: the model\'s X axis points east and its Y axis north). crs, eastings and northings go together; site_name renames the site. For a building in Sweden prefer the local SWEREF 99 zone with RH 2000 heights as one compound code, EPSG:5846 to EPSG:5857 for the zones 12 00 to 23 15 in the order of EPSG:3007 to EPSG:3018 (such as EPSG:5850 for SWEREF 99 18 00 + RH 2000), when the eastings and northings are in that zone; coordinates in SWEREF 99 TM take EPSG:5845 (TM + RH 2000). Never convert coordinates between zones yourself: use the code of the coordinates you were given. vertical_datum is the height system of the elevation when the code does not give one (null: RH 2000 for EPSG:3006 to EPSG:3018). One call per model is enough: a second call replaces the first.',
+        parameters: { type: 'object', properties: { latitude: { type: 'number' }, longitude: { type: 'number' }, elevation: num(), crs: str(), eastings: num(), northings: num(), rotation: num(), site_name: str(), vertical_datum: str() } } },
       { name: 'manage_changeset', description: 'The open change set: action list shows its steps, remove_last drops the last step, clear empties it.',
         parameters: { type: 'object', properties: { action: { type: 'string' } } } },
     ];
@@ -152,12 +197,262 @@
       if (own !== null && typed.thickness !== null && Math.abs(own - typed.thickness) > 0.0005) throw new Error(`thickness ${fmt(own)} m differs from the ${fmt(typed.thickness)} m of the layers of type ${typed.ref}; leave thickness null`);
       return typed.thickness !== null ? typed.thickness : own;
     }
+    /**
+     * The load_bearing (walls and slabs) and status of a create step, checked and put on the op only when given: the wheel writes them
+     * in the common set, on the type when every occurrence agrees (python/ `write_marked`). A partition is not load-bearing.
+     * @param {any} a @param {any} op @param {boolean} bearing
+     */
+    function common(a, op, bearing) {
+      if (bearing && given(a.load_bearing)) {
+        if (typeof a.load_bearing !== 'boolean') throw new Error('load_bearing must be true, false or null (not given)');
+        if (a.load_bearing && a.partition === true) throw new Error('partition true makes a non-load-bearing wall; leave partition null for a load-bearing wall');
+        op.load_bearing = a.load_bearing;
+      }
+      if (given(a.status)) {
+        const status = String(a.status).trim().toUpperCase();
+        if (!STATUSES.includes(status)) throw new Error(`status must be ${STATUSES.join(', ')} or null`);
+        op.status = status;
+      }
+      return op;
+    }
+    /** [number, unit] of a text that is a number with its unit written after it ("40 dB"); null otherwise. @param {any} v */
+    function unitIn(v) {
+      if (typeof v !== 'string') return null;
+      const m = /^\s*([-+]?\d+(?:[.,]\d+)?(?:[eE][-+]?\d+)?)\s*([^\d\s.,+-].*?)\s*$/.exec(v);
+      return m && UNITS.has(m[2].replace(/\s+/g, '').toLowerCase()) ? [m[1], m[2]] : null;
+    }
+    /** Whether a set is IFC's own (Pset_…, Qto_…), which the wheel checks against the schema's templates. @param {string} pset */
+    const standardSet = (pset) => /^(pset|qto)_/i.test(pset);
+    /**
+     * Advice, not a refusal, for a set of the model's own: the guidance's naming (country-origin-project_Name) and PascalCase property
+     * names in plain letters; null when both are kept. @param {{pset: string, properties: object}} op
+     */
+    function ownSetAdvice(op) {
+      if (standardSet(op.pset)) return null;
+      const tips = [];
+      if (!OWN_SET.test(op.pset)) tips.push(`name a set of your own country-origin-project_Name in letters a-z, digits and hyphens, such as SE-ACME-42_Acoustics, rather than ${op.pset}`);
+      const odd = Object.keys(op.properties).filter((n) => !PASCAL.test(n));
+      if (odd.length) tips.push(`give its properties PascalCase names without spaces, å, ä or ö, such as SoundReduction, rather than ${odd.join(', ')}`);
+      return tips.length ? `advice: ${tips.join('; ')}. Use IFC's own sets (Pset_…) first when one has the property.` : null;
+    }
+    /**
+     * A storey's optional description and long_name on its operation, each only when given, so that older change sets keep their
+     * form (recommendation 2 of the Praxi study). @param {any} s the call's storey @param {{name: string, elevation: number}} op
+     */
+    function storeyTexts(s, op) {
+      for (const key of ['description', 'long_name']) { const v = text(s, key); if (v && v.trim()) op[key] = v.trim(); }
+      return op;
+    }
+    /**
+     * A listed room's optional number and room_type on its operation, each only when given: with a number the wheel names the space
+     * by it, with the name as its long name (recommendation 2 of the Praxi study). @param {any} r the call's room @param {any} room
+     */
+    function roomExtras(r, room) {
+      const number = given(r.number) ? String(r.number).trim().slice(0, 60) : '';
+      if (number) room.number = number;
+      const type = text(r, 'room_type');
+      if (type && type.trim()) room.room_type = type.trim();
+      return room;
+    }
+    /** The compound EPSG codes of SWEREF 99 with RH 2000 heights: 5845 (TM) to 5857 (the local zones in the order of 3007 to 3018). */
+    const RH2000_CODES = [5845, 5857];
+    /**
+     * set_site's optional vertical_datum on its operation, only when given (recommendation 3 of the Praxi study): the height system of
+     * the elevation for a code without heights. A compound code names its own, so RH 2000 with one is dropped and another refused.
+     * @param {any} a the call @param {string|null} crs @param {any} op
+     */
+    function verticalDatum(a, crs, op) {
+      const v = text(a, 'vertical_datum');
+      const datum = v ? v.trim() : '';
+      if (!datum) return op;
+      if (!crs) throw new Error('vertical_datum goes with a crs, such as EPSG:3006 with RH 2000');
+      const code = Number(String(crs).slice(5));
+      if (code >= RH2000_CODES[0] && code <= RH2000_CODES[1]) {
+        if (datum.replace(/\s+/g, '').toUpperCase() === 'RH2000') return op;
+        throw new Error(`${crs.toUpperCase()} gives its heights in RH 2000 already; leave vertical_datum null, or give the plan code EPSG:${code - 2839} with vertical_datum ${datum}`);
+      }
+      op.vertical_datum = datum.slice(0, 60);
+      return op;
+    }
+    /** The fields edit_element takes per kind of element besides name (python/ _ChangeSet.EDITS), and the kind a create step makes. */
+    const EDITS = { wall: ['start', 'end', 'thickness', 'height', 'type'], slab: ['outline', 'thickness', 'type'], opening: ['offset', 'width', 'height', 'sill'], roof: ['pitch', 'overhang', 'base'] };
+    const EDIT_OF = { create_wall: 'wall', create_slab: 'slab', create_opening: 'opening', create_roof: 'roof' };
+    const EDIT_KINDS = 'a wall takes start, end, thickness, height and type; a slab outline, thickness and type; an opening, door or window offset, width, height and sill; a roof pitch, overhang and base; any element name';
+    /**
+     * An edit_element step: only the fields given, checked as the create steps check them, of one kind of element (EDITS) and, for an
+     * element of this change set, of its kind; a type's ref must be a wall or slab type, whose layers give the thickness.
+     * @param {{ops: any[], refs: number}} cs @param {any} a
+     */
+    function editOp(cs, a) {
+      if (!given(a.id)) throw new Error('id is required: the element\'s id, GlobalId or ref (new-1, …)');
+      const op = { tool: 'edit_element', id: idOrRef(cs, a.id, 'id') };
+      const label = text(a, 'name');
+      if (label !== null && !label.trim()) throw new Error('name must not be empty; null keeps it');
+      if (label !== null) op.name = label.trim();
+      if (given(a.start)) op.start = point(a.start, 'start');
+      if (given(a.end)) op.end = point(a.end, 'end');
+      if (op.start && op.end && Math.hypot(op.end[0] - op.start[0], op.end[1] - op.start[1]) < 0.01) throw new Error('start and end are the same point');
+      if (given(a.outline)) {
+        const outline = Array.isArray(a.outline) ? corners(a.outline.map((p) => point(p, 'outline'))) : null;
+        if (!outline || outline.length < 3) throw new Error('outline must be at least three [x, y] points, or null to keep it');
+        op.outline = outline;
+      }
+      for (const key of ['thickness', 'height', 'width']) { const v = number(a, key, { positive: true }); if (v !== null) op[key] = v; }
+      for (const key of ['offset', 'sill', 'base']) { const v = number(a, key); if (v !== null) op[key] = v; }
+      const pitch = number(a, 'pitch', { unit: 'degrees' });
+      if (pitch !== null && (pitch <= 0 || pitch > 75)) throw new Error('pitch must be more than 0 and at most 75 degrees');
+      if (pitch !== null) op.pitch = pitch;
+      const overhang = number(a, 'overhang');
+      if (overhang !== null && overhang < 0) throw new Error('overhang must be zero or more (metres)');
+      if (overhang !== null) op.overhang = overhang;
+      const measures = Object.keys(op).filter((k) => !['tool', 'id', 'name'].includes(k)).concat(given(a.type) ? ['type'] : []);
+      if (!measures.length && label === null) throw new Error(`nothing to change: ${EDIT_KINDS}; give at least one, and null for the rest`);
+      let kinds = Object.keys(EDITS).filter((k) => measures.every((m) => EDITS[k].includes(m)));
+      if (measures.length && !kinds.length) throw new Error(`${measures.join(', ')} do not go together: ${EDIT_KINDS}`);
+      const made = typeof op.id === 'string' && /^new-\d+$/.test(op.id) ? cs.ops.find((o) => o.ref === op.id || (o.refs || []).includes(op.id)) : null;
+      if (made && measures.length && !kinds.includes(EDIT_OF[made.tool])) throw new Error(`${op.id} is made by ${made.tool}, so it takes ${EDIT_OF[made.tool] ? EDITS[EDIT_OF[made.tool]].join(', ') + ' or name' : 'only name'}`);
+      if (made && EDIT_OF[made.tool]) kinds = [EDIT_OF[made.tool]];
+      if (given(a.type)) {
+        const kind = kinds.length === 1 ? kinds[0] : null;
+        const ref = idOrRef(cs, a.type, 'type');
+        if (typeof ref === 'string' && /^new-\d+$/.test(ref)) {
+          const def = cs.ops.find((o) => o.ref === ref);
+          if (!def || def.tool !== 'define_type') throw new Error(`type ${ref} is not a type; give the ref of a define_type step, or a type's id`);
+          if (!kinds.includes(def.kind)) throw new Error(`type ${ref} is a ${def.kind} type; edit_element gives ${kind ? 'a ' + kind : 'a wall or a slab'} a type of its own kind`);
+          const layers = layersThickness(def.layers);
+          if (op.thickness !== undefined && Math.abs(op.thickness - layers) > 0.0005) throw new Error(`thickness ${fmt(op.thickness)} m differs from the ${fmt(layers)} m of the layers of type ${ref}; leave thickness null`);
+          op.thickness = layers;
+        }
+        op.type = ref;
+      }
+      return op;
+    }
+    /** 'a, b or c'. @param {string[]} words */
+    const either = (words) => words.slice(0, -1).join(', ') + ' or ' + words[words.length - 1];
+    /** A ref of this change set and the step that made it (a space of create_spaces by its refs), or null for an id or GlobalId. */
+    function stepOf(cs, ref) {
+      if (typeof ref !== 'string' || !/^new-\d+$/.test(ref)) return null;
+      return cs.ops.find((op) => op.ref === ref || (op.refs || []).includes(ref)) || null;
+    }
+    /**
+     * The door or window type of create_opening, as {ref, fill, width, height}: a define_type ref of kind door or window with its size,
+     * or a type of the model, whose size the wheel reads (fill must then be given); null without a type.
+     * @param {{ops: any[], refs: number}} cs @param {any} a @param {string|null} fill
+     */
+    function fillType(cs, a, fill) {
+      if (!given(a.type)) return null;
+      const ref = idOrRef(cs, a.type, 'type');
+      const def = stepOf(cs, ref);
+      if (typeof ref !== 'string' || !/^new-\d+$/.test(ref)) {
+        if (!fill) throw new Error('with a type of the model, give fill door or window');
+        return { ref, fill, width: null, height: null };
+      }
+      if (!def || def.tool !== 'define_type') throw new Error(`type ${ref} is not a type; give the ref of a define_type step, or a type's id or GlobalId`);
+      if (def.kind !== 'door' && def.kind !== 'window') throw new Error(`type ${ref} is a ${def.kind} type; create_opening takes a door or window type`);
+      if (fill && fill !== def.kind) throw new Error(`type ${ref} is a ${def.kind} type, so fill must be ${def.kind} or null`);
+      return { ref, fill: def.kind, width: def.width, height: def.height };
+    }
+    /** A typed opening's width or height: the type's, which one given must match; null for a type of the model without one given. */
+    function fillSize(a, typed, key) {
+      const own = number(a, key, { positive: true });
+      if (own !== null && typed[key] !== null && Math.abs(own - typed[key]) > 0.0005) throw new Error(`${key} ${fmt(own)} m differs from the ${fmt(typed[key])} m of type ${typed.ref}; leave width and height null`);
+      return typed[key] !== null ? typed[key] : own;
+    }
+    /**
+     * The type of create_element, as {ref, kind, thickness}: a define_type ref of the class's kind (a covering's with its layers'
+     * thickness), or a type of the model, which the wheel checks; null without a type.
+     * @param {{ops: any[], refs: number}} cs @param {any} a @param {string} cls
+     */
+    function elementType(cs, a, cls) {
+      if (!given(a.type)) return null;
+      const ref = idOrRef(cs, a.type, 'type');
+      const kind = CLASS_KIND[cls] || null;
+      if (typeof ref !== 'string' || !/^new-\d+$/.test(ref)) return { ref, kind, thickness: null };
+      const def = stepOf(cs, ref);
+      if (!def || def.tool !== 'define_type') throw new Error(`type ${ref} is not a type; give the ref of a define_type step, or a type's id or GlobalId`);
+      if (!kind) throw new Error(`define_type makes no type for ${cls}; give a type of the model by its GlobalId or id, or null`);
+      if (def.kind !== kind) throw new Error(`type ${ref} is a ${def.kind} type; ${cls} takes a ${kind} type`);
+      return { ref, kind, thickness: def.layers ? layersThickness(def.layers) : null };
+    }
+    /** create_element's shape, checked; its depth from a covering type's layers. @param {any} s @param {{kind: string|null, thickness: number|null, ref: any}|null} typed */
+    function shapeOf(s, typed) {
+      if (!s || typeof s !== 'object' || Array.isArray(s)) throw new Error('shape must be {profile, x, y, radius, outline, depth, along}');
+      const num = (key, options) => { try { return number(s, key, options); } catch (e) { throw new Error('shape.' + String((e && e.message) || e)); } };
+      const profile = given(s.profile) ? String(s.profile).trim().toLowerCase() : '';
+      const along = given(s.along) ? String(s.along).trim().toLowerCase() : 'z';
+      if (along !== 'z' && along !== 'x') throw new Error('shape.along must be z (standing, extruded up from z) or x (lying, extruded in the direction of rotation)');
+      const out = { profile, x: null, y: null, radius: null, outline: null, depth: null, along };
+      if (profile === 'rectangle') { out.x = num('x', { required: true, positive: true }); out.y = num('y', { required: true, positive: true }); }
+      else if (profile === 'circle') out.radius = num('radius', { required: true, positive: true });
+      else if (profile === 'polygon') {
+        if (along !== 'z') throw new Error('a polygon is an outline in the plan, so shape.along must be z');
+        if (!Array.isArray(s.outline)) throw new Error('shape.outline must be [x, y] corners in metres in the storey\'s plane');
+        out.outline = corners(s.outline.map((p) => point(p, 'shape.outline')));
+        if (out.outline.length < 3 || out.outline.length > MAX_OUTLINE) throw new Error(`shape.outline must be 3 to ${MAX_OUTLINE} different [x, y] corners`);
+      } else throw new Error('shape.profile must be rectangle, circle or polygon');
+      const depth = num('depth', { positive: true });
+      if (typed && typed.thickness !== null) {
+        if (depth !== null && Math.abs(depth - typed.thickness) > 0.0005) throw new Error(`shape.depth ${fmt(depth)} m differs from the ${fmt(typed.thickness)} m of the layers of type ${typed.ref}; leave depth null`);
+        out.depth = typed.thickness;
+      } else if (depth === null && !(typed && typed.kind === 'covering')) throw new Error('shape.depth is required (metres)');
+      else out.depth = depth;
+      if (out.depth !== null && out.depth > 200) throw new Error('shape.depth must be at most 200 m');
+      return out;
+    }
+    /** create_element's stair, checked: the flight of a straight stair. @param {any} s */
+    function stairOf(s) {
+      if (!s || typeof s !== 'object' || Array.isArray(s)) throw new Error('an IfcStair needs stair: {risers, riser_height, tread_length, width, thickness, landing}');
+      const num = (key, options) => { try { return number(s, key, options); } catch (e) { throw new Error('stair.' + String((e && e.message) || e)); } };
+      if (!Number.isInteger(s.risers) || s.risers < 2 || s.risers > MAX_RISERS) throw new Error(`stair.risers must be a whole number from 2 to ${MAX_RISERS}`);
+      const riser = num('riser_height', { required: true, positive: true });
+      const out = { risers: s.risers, riser_height: riser, tread_length: num('tread_length', { required: true, positive: true }), width: num('width', { fallback: 1, positive: true }),
+        thickness: num('thickness', { fallback: Math.max(0.2, riser), positive: true }), landing: num('landing', { positive: true }) };
+      if (out.thickness < riser - 1e-9) throw new Error(`stair.thickness ${fmt(out.thickness)} m (the waist at right angles to the slope) must be at least the riser height, ${fmt(riser)} m`);
+      return out;
+    }
+    /** part_of or host of create_element: a ref of a step that makes such a whole or host, or an id or GlobalId the wheel checks. */
+    function wholeRef(cs, x, key, tools) {
+      const ref = idOrRef(cs, x, key);
+      const def = stepOf(cs, ref);
+      if (def && !tools.includes(def.tool)) throw new Error(`${key} ${ref} is the ${def.tool} step; ${key} takes ${either(tools)}`);
+      return ref;
+    }
+    /** No two define_type steps of one type class with the same name (in any case). */
+    function noTwin(cs, kind, typeName) {
+      const twin = cs.ops.find((op) => op.tool === 'define_type' && TYPE_CLASS[op.kind] === TYPE_CLASS[kind] && op.name.toLowerCase() === typeName.toLowerCase());
+      if (twin) throw new Error(`${twin.ref} is a ${twin.kind} type named ${twin.name} already; give its ref as type, or choose another name`);
+    }
+    /** define_type for a kind without layers: its material, and a door's operation or a window's partitioning with the size and lining. */
+    function elementTypeOp(cs, tool, kind, typeName, a) {
+      if (Array.isArray(a.layers) ? a.layers.length : given(a.layers)) throw new Error(`a ${kind} type has no layers; give its material as material, or null`);
+      const predefined = given(a.predefined_type) ? String(a.predefined_type).trim().toUpperCase() : null;
+      if (predefined && !/^[A-Z][A-Z0-9_]*$/.test(predefined)) throw new Error('predefined_type must be a PredefinedType such as COLUMN, BEAM, PAD_FOOTING, HANDRAIL, DOOR or WINDOW, or null');
+      if (predefined === 'USERDEFINED') throw new Error('USERDEFINED needs the name of a kind of its own, which define_type does not take; choose a value from the class\'s list, or NOTDEFINED');
+      noTwin(cs, kind, typeName);
+      const op = { tool, kind, name: typeName, layers: null, predefined_type: predefined || null };
+      const material = text(a, 'material') ? text(a, 'material').trim() : '';
+      const category = given(a.material_category) ? String(a.material_category).trim().toLowerCase() : null;
+      if (category && !MATERIAL_CATEGORIES.includes(category)) throw new Error(`material_category must be ${MATERIAL_CATEGORIES.join(', ')} or null`);
+      if (material) { op.material = material; op.material_category = category || null; }
+      if (kind !== 'door' && kind !== 'window') return op;
+      const key = kind === 'door' ? 'operation' : 'partitioning';
+      const values = kind === 'door' ? DOOR_OPERATIONS : WINDOW_PARTITIONS;
+      const value = given(a[key]) ? String(a[key]).trim().toUpperCase().replace(/[\s-]+/g, '_') : values[0];
+      if (!values.includes(value)) throw new Error(`${key} must be ${either(values)}`);
+      op[key] = value;
+      op.width = number(a, 'width', { fallback: kind === 'door' ? 0.9 : 1.2, positive: true });
+      op.height = number(a, 'height', { fallback: kind === 'door' ? 2.1 : 1.2, positive: true });
+      op.lining_depth = number(a, 'lining_depth', { fallback: 0.05, positive: true });
+      if (op.width < 0.3 || op.width > 20 || op.height < 0.3 || op.height > 20) throw new Error('width and height must be 0.3 to 20 m');
+      if (op.lining_depth < 0.05 || op.lining_depth > 2) throw new Error('lining_depth must be 0.05 to 2 m');
+      return op;
+    }
     /** The operation for one call, checked, in the shape the wheel reads. */
     function build(cs, name, args) {
       const a = args || {};
       switch (name) {
         case 'create_storeys_and_grid': {
-          const storeys = Array.isArray(a.storeys) ? a.storeys.map((s) => { if (!s || !given(s.name)) throw new Error('every storey needs a name'); return { name: String(s.name).slice(0, 200), elevation: finite(s.elevation) ? s.elevation : 0 }; }) : [];
+          const storeys = Array.isArray(a.storeys) ? a.storeys.map((s) => { if (!s || !given(s.name)) throw new Error('every storey needs a name'); return storeyTexts(s, { name: String(s.name).slice(0, 200), elevation: finite(s.elevation) ? s.elevation : 0 }); }) : [];
           let grid = null;
           if (a.grid && typeof a.grid === 'object') {
             grid = { x_spacing: number(a.grid, 'x_spacing', { required: true, positive: true }), x_count: number(a.grid, 'x_count', { fallback: 1, positive: true }), y_spacing: number(a.grid, 'y_spacing', { required: true, positive: true }), y_count: number(a.grid, 'y_count', { fallback: 1, positive: true }) };
@@ -168,9 +463,10 @@
         }
         case 'define_type': {
           const kind = given(a.kind) ? String(a.kind).trim().toLowerCase() : '';
-          if (!TYPE_KINDS.includes(kind)) throw new Error('kind must be wall, slab or roof');
+          if (!TYPE_KINDS.includes(kind)) throw new Error(`kind must be ${either(TYPE_KINDS)}`);
           const typeName = text(a, 'name', { required: true }).trim();
           if (!typeName) throw new Error('name is required');
+          if (!LAYERED_KINDS.includes(kind)) return elementTypeOp(cs, name, kind, typeName, a);
           if (!Array.isArray(a.layers) || !a.layers.length || a.layers.length > MAX_LAYERS) throw new Error(`layers must be a list of 1 to ${MAX_LAYERS} {material, thickness, category, role}, the thickness in metres`);
           const layers = a.layers.map((l, i) => {
             const which = `layer ${i + 1}`;
@@ -187,10 +483,37 @@
           if (predefined && !/^[A-Z][A-Z0-9_]*$/.test(predefined)) throw new Error('predefined_type must be a PredefinedType such as SOLIDWALL, PARTITIONING, FLOOR or BASESLAB, or null');
           if (predefined === 'USERDEFINED') throw new Error('USERDEFINED needs the name of a kind of its own, which define_type does not take; choose a value from the class\'s list, or NOTDEFINED');
           if (kind === 'roof' && predefined && predefined !== 'ROOF') throw new Error('a roof type is an IfcSlabType ROOF; leave predefined_type null');
-          // Slab and roof types are both IfcSlabType, so their names must differ too.
-          const twin = cs.ops.find((op) => op.tool === 'define_type' && (op.kind === 'wall') === (kind === 'wall') && op.name.toLowerCase() === typeName.toLowerCase());
-          if (twin) throw new Error(`${twin.ref} is a ${twin.kind} type named ${twin.name} already; give its ref as type, or choose another name`);
+          noTwin(cs, kind, typeName);
           return { tool: name, kind, name: typeName, layers, predefined_type: predefined || null };
+        }
+        case 'create_element': {
+          const cls = given(a.ifc_class) ? ELEMENT_CLASSES.find((c) => c.toLowerCase() === String(a.ifc_class).trim().toLowerCase()) : undefined;
+          if (!cls) throw new Error(`ifc_class must be ${either(ELEMENT_CLASSES)}; walls, slabs, roofs, openings with their doors and windows, and spaces have tools of their own, and IfcBuildingElementProxy is never used`);
+          const predefined = given(a.predefined_type) ? String(a.predefined_type).trim().toUpperCase() : null;
+          if (predefined && !/^[A-Z][A-Z0-9_]*$/.test(predefined)) throw new Error('predefined_type must be a value of the class\'s list, such as COLUMN or STRIP_FOOTING (search_ifc_class gives them), or null');
+          const objectType = text(a, 'object_type') ? text(a, 'object_type').trim() : null;
+          if (predefined === 'USERDEFINED' && !objectType) throw new Error('USERDEFINED needs object_type, the name of its kind; or choose a value of the class\'s list (search_ifc_class)');
+          const typed = elementType(cs, a, cls);
+          const op = { tool: name, storey: text(a, 'storey'), ifc_class: cls, predefined_type: predefined, object_type: objectType || null, name: text(a, 'name'), at: null,
+            z: number(a, 'z', { fallback: 0 }), rotation: number(a, 'rotation', { fallback: 0, unit: 'degrees' }), shape: null, stair: null, part_of: null, host: null };
+          if (typed) op.type = typed.ref;
+          if (cls === 'IfcStair') {
+            if (given(a.shape)) throw new Error('an IfcStair takes stair, not shape');
+            if (given(a.part_of) || given(a.host)) throw new Error('a stair is not part_of another element and covers nothing, so part_of and host must be null');
+            if (predefined && predefined !== 'STRAIGHT_RUN_STAIR') throw new Error('create_element makes straight stairs of one flight: predefined_type STRAIGHT_RUN_STAIR or null');
+            op.at = point(a.at, 'at');
+            op.stair = stairOf(a.stair);
+            return op;
+          }
+          if (given(a.stair)) throw new Error(`stair is for IfcStair; ${cls} takes shape`);
+          op.shape = shapeOf(a.shape, typed);
+          if (op.shape.profile !== 'polygon') op.at = point(a.at, 'at');
+          if (given(a.part_of)) op.part_of = wholeRef(cs, a.part_of, 'part_of', ['create_element', 'create_roof']);
+          if (given(a.host)) {
+            if (cls !== 'IfcCovering') throw new Error('host is for IfcCovering: the element or space it covers; a part of a whole is part_of');
+            op.host = wholeRef(cs, a.host, 'host', ['create_wall', 'create_slab', 'create_roof', 'create_element', 'create_spaces']);
+          }
+          return op;
         }
         case 'create_wall': {
           const start = point(a.start, 'start'); const end = point(a.end, 'end');
@@ -199,7 +522,7 @@
           const op = { tool: name, storey: text(a, 'storey'), start, end, thickness: typed ? typedThickness(a, typed) : number(a, 'thickness', { fallback: 0.2, positive: true }), height: number(a, 'height', { fallback: 3, positive: true }), name: text(a, 'name') };
           if (typed) op.type = typed.ref;
           if (a.partition === true) op.partition = true;  // PARTITIONING in the wheel when untyped; SOLIDWALL otherwise
-          return op;
+          return common(a, op, true);
         }
         case 'create_slab': {
           const outline = given(a.outline) ? (Array.isArray(a.outline) ? corners(a.outline.map((p) => point(p, 'outline'))) : null) : null;
@@ -207,7 +530,7 @@
           const typed = typeOf(cs, a, 'slab', name);
           const op = { tool: name, storey: text(a, 'storey'), outline, thickness: typed ? typedThickness(a, typed) : number(a, 'thickness', { fallback: 0.25, positive: true }), name: text(a, 'name') };
           if (typed) op.type = typed.ref;
-          return op;
+          return common(a, op, true);
         }
         case 'create_roof': {
           const shape = given(a.shape) ? String(a.shape).toLowerCase() : '';
@@ -225,13 +548,23 @@
           const typed = typeOf(cs, a, 'roof', name);
           const op = { tool: name, storey: text(a, 'storey'), shape, outline, pitch, overhang, thickness: typed ? typedThickness(a, typed) : number(a, 'thickness', { fallback: 0.25, positive: true }), ridge: shape === 'gable' || shape === 'shed' ? ridge : null, base: number(a, 'base'), name: text(a, 'name') };
           if (typed) op.type = typed.ref;
-          return op;
+          return common(a, op, false);
         }
         case 'create_opening': {
-          const fill = given(a.fill) ? String(a.fill).toLowerCase() : null;
+          let fill = given(a.fill) ? String(a.fill).toLowerCase() : null;
           if (fill && fill !== 'door' && fill !== 'window') throw new Error('fill must be door, window or null');
           if (!given(a.wall_id)) throw new Error('wall_id is required');
-          return { tool: name, wall_id: idOrRef(cs, a.wall_id, 'wall_id'), offset: number(a, 'offset', { fallback: 0 }), width: number(a, 'width', { fallback: 0.9, positive: true }), height: number(a, 'height', { fallback: 2.1, positive: true }), sill: number(a, 'sill', { fallback: 0 }), fill, name: text(a, 'name') };
+          const typed = fillType(cs, a, fill);
+          if (typed) fill = typed.fill;
+          const op = { tool: name, wall_id: idOrRef(cs, a.wall_id, 'wall_id'), offset: number(a, 'offset', { fallback: 0 }), width: typed ? fillSize(a, typed, 'width') : number(a, 'width', { fallback: 0.9, positive: true }),
+            height: typed ? fillSize(a, typed, 'height') : number(a, 'height', { fallback: 2.1, positive: true }), sill: number(a, 'sill', { fallback: 0 }), fill, name: text(a, 'name') };
+          if (typed) {
+            const side = given(a.side) ? String(a.side).trim().toLowerCase() : 'left';
+            if (side !== 'left' && side !== 'right') throw new Error('side must be left or right, seen from the wall\'s start toward its end, or null for left');
+            op.type = typed.ref;
+            op.side = side;
+          }
+          return op;
         }
         case 'create_spaces': {
           const storey = text(a, 'storey');
@@ -249,8 +582,10 @@
               if (given(r.index) && (!Number.isInteger(r.index) || r.index < 1)) throw new Error(`${which}: index must be a whole number from 1`);
               if (given(r.index) && indexes.has(r.index)) throw new Error(`${which}: index ${r.index} is listed twice`);
               if (given(r.index)) indexes.add(r.index);
-              return { at: given(r.at) ? point(r.at, `${which}: at`) : null, index: given(r.index) ? r.index : null, name: String(r.name).slice(0, 200), long_name: text(r, 'long_name') };
+              return roomExtras(r, { at: given(r.at) ? point(r.at, `${which}: at`) : null, index: given(r.index) ? r.index : null, name: String(r.name).slice(0, 200), long_name: text(r, 'long_name') });
             });
+            const twice = rooms.find((r, i) => r.number && rooms.findIndex((o) => o.number === r.number) !== i);
+            if (twice) throw new Error(`room number ${twice.number} is listed twice; a room number is unique in the building`);
           }
           // Without a list the wheel names the rooms itself: the person's word for a room with {n} for its index.
           return { tool: name, storey, rooms, height: number(a, 'height', { positive: true }), default_name: rooms ? null : t('ai.change.spaces.name') };
@@ -258,9 +593,12 @@
         case 'set_properties': {
           const pset = text(a, 'pset', { required: true });
           if (!Array.isArray(a.properties) || !a.properties.length) throw new Error('properties must be a list of {name, value}');
+          if (/^(pset|qto)_$/i.test(pset.trim())) throw new Error(`${pset} is no set's name: give IFC's set, such as Pset_WallCommon, or a set of your own, such as SE-ACME-42_Acoustics`);
           const properties = {};
           for (const p of a.properties) {
             if (!p || !given(p.name) || !['string', 'number', 'boolean'].includes(typeof p.value)) throw new Error('every property needs a name and a string, number or boolean value');
+            const unit = unitIn(p.value);
+            if (unit) throw new Error(`${pset}.${p.name}: give the number only, without its unit (${unit[0].replace(',', '.')}, not "${p.value}"): IFC gives the property its unit`);
             properties[String(p.name).slice(0, 200)] = typeof p.value === 'string' ? p.value.slice(0, 1000) : p.value;
           }
           return { tool: name, ids: idList(cs, a.ids), pset, properties };
@@ -275,8 +613,16 @@
         case 'assign': {
           const storey = text(a, 'storey'); const material = text(a, 'material');
           if (!storey && !material) throw new Error('give a storey, a material or both');
-          return { tool: name, ids: idList(cs, a.ids), storey, material };
+          const op = { tool: name, ids: idList(cs, a.ids), storey, material };
+          if (given(a.category)) {
+            const category = String(a.category).trim().toLowerCase();
+            if (!material) throw new Error('category goes with a material');
+            if (!MATERIAL_CATEGORIES.includes(category)) throw new Error(`category must be ${MATERIAL_CATEGORIES.join(', ')} or null`);
+            op.category = category;  // IfcMaterial.Category
+          }
+          return op;
         }
+        case 'edit_element': return editOp(cs, a);
         case 'transform_elements': {
           const op = { tool: name, ids: idList(cs, a.ids), dx: number(a, 'dx', { fallback: 0 }), dy: number(a, 'dy', { fallback: 0 }), dz: number(a, 'dz', { fallback: 0 }) };
           if (!op.dx && !op.dy && !op.dz) throw new Error('nothing to move: dx, dy and dz are all zero');
@@ -297,7 +643,7 @@
             if (!/^EPSG:\d+$/i.test(crs)) throw new Error('crs must be an EPSG code such as EPSG:3006');
             if (eastings === null || northings === null) throw new Error('eastings and northings (metres) are required with crs');
           } else if (eastings !== null || northings !== null) throw new Error('eastings and northings need a crs such as EPSG:3006');
-          return { tool: name, latitude, longitude, elevation: number(a, 'elevation'), crs: crs ? crs.toUpperCase() : null, eastings, northings, rotation: number(a, 'rotation', { fallback: 0, unit: 'degrees' }), site_name: text(a, 'site_name') };
+          return verticalDatum(a, crs, { tool: name, latitude, longitude, elevation: number(a, 'elevation'), crs: crs ? crs.toUpperCase() : null, eastings, northings, rotation: number(a, 'rotation', { fallback: 0, unit: 'degrees' }), site_name: text(a, 'site_name') });
         }
         default: throw new Error(`unknown tool ${name}`);
       }
@@ -335,6 +681,8 @@
         const b = bounds(op.outline);
         out.note = `the outline is not a rectangle along x and y (${op.outline.length} corners), so for now the roof covers its bounding box: ${fmt(b[2] - b[0])} × ${fmt(b[3] - b[1])} m from (${fmt(b[0])}, ${fmt(b[1])})`;
       }
+      const advice = op.tool === 'set_properties' ? ownSetAdvice(op) : null;
+      if (advice) out.note = advice;
       return out;
     }
     const fmt = (v) => (typeof v === 'number' ? String(Math.round(v * 1000) / 1000) : String(v === null || v === undefined ? '' : v));
@@ -343,34 +691,69 @@
     const thick = (op) => (op.thickness === null || op.thickness === undefined ? '–' : fmt(op.thickness));
     /** ", type new-1" after a typed wall, slab or roof. */
     const typedText = (op) => (op.type !== undefined && op.type !== null ? t('ai.change.typed', { type: fmt(op.type) }) : '');
+    /** ", load-bearing" and ", existing" after a step that gives them (a partition says it bears no load already). */
+    const commonText = (op) => (typeof op.load_bearing === 'boolean' && !(op.partition && !op.load_bearing) ? t('ai.change.bearing.' + op.load_bearing) : '')
+      + (op.status ? t('ai.change.status.' + String(op.status).toLowerCase()) : '');
+    /** What an edit_element step changes, in the person's language, in the order of the tool's fields. @param {any} op */
+    function editText(op) {
+      const at = (p) => `(${fmt(p[0])}, ${fmt(p[1])})`;
+      const parts = [];
+      if (op.name) parts.push(t('ai.change.edit.name', { name: op.name }));
+      if (op.start) parts.push(t('ai.change.edit.start', { point: at(op.start) }));
+      if (op.end) parts.push(t('ai.change.edit.end', { point: at(op.end) }));
+      if (op.thickness !== undefined) parts.push(t('ai.change.edit.thickness', { value: fmt(op.thickness) }));
+      if (op.type !== undefined) parts.push(t('ai.change.edit.type', { type: fmt(op.type) }));
+      if (op.outline) parts.push(t('ai.change.edit.outline', { n: String(op.outline.length) }));
+      for (const key of ['offset', 'width', 'height', 'sill', 'pitch', 'overhang', 'base']) if (op[key] !== undefined) parts.push(t('ai.change.edit.' + key, { value: fmt(op[key]) }));
+      return parts.join(', ');
+    }
     /** One line about an operation, for the panel's list and the log. @param {any} op */
     function describe(op) {
       switch (op.tool) {
-        case 'create_storeys_and_grid': return t('ai.change.create_storeys_and_grid', { storeys: (op.storeys || []).map((s) => `${s.name} (${fmt(s.elevation)} m)`).join(', ') || '–', grid: op.grid ? t('ai.change.grid', { x: fmt(op.grid.x_spacing), y: fmt(op.grid.y_spacing), nx: fmt(op.grid.x_count), ny: fmt(op.grid.y_count) }) : '' });
-        case 'define_type': return t('ai.change.define_type', { ref: op.ref || '', kind: t('ai.change.type.' + op.kind), name: op.name, predefined: op.predefined_type ? ' ' + op.predefined_type : '',
-          layers: (op.layers || []).map((l) => `${l.material} ${fmt(l.thickness)} m`).join(', '), thickness: fmt(layersThickness(op.layers || [])) });
-        case 'create_wall': return t('ai.change.create_wall', { ref: op.ref || '', name: op.name || '', storey: op.storey || t('ai.change.storey.lowest'), x1: fmt(op.start[0]), y1: fmt(op.start[1]), x2: fmt(op.end[0]), y2: fmt(op.end[1]), thickness: thick(op), height: fmt(op.height) }) + typedText(op) + (op.partition ? t('ai.change.wall.partition') : '');
-        case 'create_slab': return t('ai.change.create_slab', { ref: op.ref || '', name: op.name || '', storey: op.storey || t('ai.change.storey.lowest'), thickness: thick(op), outline: op.outline ? t('ai.change.outline.points', { n: String(op.outline.length) }) : t('ai.change.outline.grid') }) + typedText(op);
+        case 'create_storeys_and_grid': return t('ai.change.create_storeys_and_grid', { storeys: (op.storeys || []).map((s) => `${s.name}${s.description ? ` – ${s.description}` : ''} (${fmt(s.elevation)} m)`).join(', ') || '–', grid: op.grid ? t('ai.change.grid', { x: fmt(op.grid.x_spacing), y: fmt(op.grid.y_spacing), nx: fmt(op.grid.x_count), ny: fmt(op.grid.y_count) }) : '' });
+        case 'define_type': {
+          const base = { ref: op.ref || '', kind: t('ai.change.type.' + op.kind), name: op.name, predefined: op.predefined_type ? ' ' + op.predefined_type : '' };
+          if (!op.layers) {
+            return t('ai.change.define_type.element', base) + (op.width ? t('ai.change.define_type.size', { operation: op.operation || op.partitioning, width: fmt(op.width), height: fmt(op.height) }) : '')
+              + (op.material ? t('ai.change.define_type.material', { material: op.material }) : '');
+          }
+          return t('ai.change.define_type', Object.assign(base, { layers: op.layers.map((l) => `${l.material} ${fmt(l.thickness)} m`).join(', '), thickness: fmt(layersThickness(op.layers)) }));
+        }
+        case 'create_element': {
+          const s = op.shape;
+          const depth = s && s.depth !== null ? fmt(s.depth) : '–';
+          const body = op.stair
+            ? t('ai.change.stair', { risers: fmt(op.stair.risers), riser: fmt(op.stair.riser_height), tread: fmt(op.stair.tread_length), width: fmt(op.stair.width), rotation: fmt(op.rotation) }) + (op.stair.landing ? t('ai.change.stair.landing', { landing: fmt(op.stair.landing) }) : '')
+            : t('ai.change.shape.' + s.profile, { x: fmt(s.x), y: fmt(s.y), radius: fmt(s.radius), n: String((s.outline || []).length) }) + (s.along === 'x' ? t('ai.change.shape.along', { depth, rotation: fmt(op.rotation) }) : t('ai.change.shape.up', { depth }));
+          return t('ai.change.create_element', { ref: op.ref || '', cls: op.ifc_class, predefined: op.predefined_type ? ' ' + op.predefined_type : '', name: op.name ? ' ' + op.name : '',
+            storey: op.storey || (op.part_of ? t('ai.change.storey.whole') : t('ai.change.storey.lowest')), at: op.at ? t('ai.change.at', { x: fmt(op.at[0]), y: fmt(op.at[1]) }) : '', body })
+            + typedText(op) + (op.part_of ? t('ai.change.part_of', { whole: fmt(op.part_of) }) : '') + (op.host ? t('ai.change.host', { host: fmt(op.host) }) : '');
+        }
+        case 'create_wall': return t('ai.change.create_wall', { ref: op.ref || '', name: op.name || '', storey: op.storey || t('ai.change.storey.lowest'), x1: fmt(op.start[0]), y1: fmt(op.start[1]), x2: fmt(op.end[0]), y2: fmt(op.end[1]), thickness: thick(op), height: fmt(op.height) }) + typedText(op) + (op.partition ? t('ai.change.wall.partition') : '') + commonText(op);
+        case 'create_slab': return t('ai.change.create_slab', { ref: op.ref || '', name: op.name || '', storey: op.storey || t('ai.change.storey.lowest'), thickness: thick(op), outline: op.outline ? t('ai.change.outline.points', { n: String(op.outline.length) }) : t('ai.change.outline.grid') }) + typedText(op) + commonText(op);
         case 'create_roof': {
           const b = op.outline ? bounds(op.outline) : null;
           return t('ai.change.create_roof', { ref: op.ref || '', name: op.name ? ' ' + op.name : '', storey: op.storey || t('ai.change.storey.top'), shape: t('ai.change.roof.' + op.shape), pitch: op.shape === 'flat' ? '' : ` ${fmt(op.pitch)}°`,
-            extent: b ? t('ai.change.roof.size', { x: fmt(b[2] - b[0]), y: fmt(b[3] - b[1]) }) : t('ai.change.roof.walls'), overhang: op.overhang ? t('ai.change.roof.overhang', { overhang: fmt(op.overhang) }) : '' }) + typedText(op);
+            extent: b ? t('ai.change.roof.size', { x: fmt(b[2] - b[0]), y: fmt(b[3] - b[1]) }) : t('ai.change.roof.walls'), overhang: op.overhang ? t('ai.change.roof.overhang', { overhang: fmt(op.overhang) }) : '' }) + typedText(op) + commonText(op);
         }
-        case 'create_opening': return t('ai.change.create_opening', { ref: op.ref || '', fill: t('ai.change.fill.' + (op.fill || 'none')), name: op.name || '', wall: fmt(op.wall_id), width: fmt(op.width), height: fmt(op.height), offset: fmt(op.offset) });
+        case 'create_opening': return t('ai.change.create_opening', { ref: op.ref || '', fill: t('ai.change.fill.' + (op.fill || 'none')), name: op.name || '', wall: fmt(op.wall_id), width: op.width === null ? '–' : fmt(op.width), height: op.height === null ? '–' : fmt(op.height), offset: fmt(op.offset) })
+          + typedText(op) + (op.side === 'right' ? t('ai.change.side.right') : '');
         case 'create_spaces': {
-          const rooms = op.rooms ? op.rooms.map((r) => (r.at ? t('ai.change.spaces.at', { name: r.name, x: fmt(r.at[0]), y: fmt(r.at[1]) }) : t('ai.change.spaces.index', { name: r.name, index: fmt(r.index) }))).join(', ')
+          const roomName = (r) => (r.number ? `${r.number} ${r.name}` : r.name);
+          const rooms = op.rooms ? op.rooms.map((r) => (r.at ? t('ai.change.spaces.at', { name: roomName(r), x: fmt(r.at[0]), y: fmt(r.at[1]) }) : t('ai.change.spaces.index', { name: roomName(r), index: fmt(r.index) }))).join(', ')
             : t('ai.change.spaces.all', { names: [1, 2].map((n) => t('ai.change.spaces.name', { n })).join(', ') });
           const refs = op.refs || [];
           return t('ai.change.create_spaces', { ref: refs.length > 1 ? `${refs[0]}–${refs[refs.length - 1]}` : refs[0] || '', storey: op.storey || t('ai.change.spaces.every'), rooms, height: op.height ? t('ai.change.spaces.height', { height: fmt(op.height) }) : '' });
         }
         case 'set_properties': return t('ai.change.set_properties', { pset: op.pset, ids: idsText(op.ids), props: Object.entries(op.properties || {}).map(([k, v]) => `${k} = ${fmt(v)}`).join(', ') });
         case 'set_classification': return t('ai.change.set_classification', { ids: idsText(op.ids), system: [op.system, op.edition].filter(Boolean).join(' '), cls: [op.code, op.name].filter(Boolean).join(' ') });
-        case 'assign': return t('ai.change.assign', { ids: idsText(op.ids), storey: op.storey ? t('ai.change.assign.storey', { storey: op.storey }) : '', material: op.material ? t('ai.change.assign.material', { material: op.material }) : '' });
+        case 'assign': return t('ai.change.assign', { ids: idsText(op.ids), storey: op.storey ? t('ai.change.assign.storey', { storey: op.storey }) : '', material: op.material ? t('ai.change.assign.material', { material: op.category ? `${op.material} (${op.category})` : op.material }) : '' });
+        case 'edit_element': return t('ai.change.edit_element', { id: fmt(op.id), changes: editText(op) });
         case 'transform_elements': return t('ai.change.transform_elements', { ids: idsText(op.ids), dx: fmt(op.dx), dy: fmt(op.dy), dz: fmt(op.dz) });
         case 'delete_elements': return t('ai.change.delete_elements', { ids: idsText(op.ids) });
         case 'set_site': {
           const deg = (v) => String(Math.round(v * 1e6) / 1e6);
-          const crs = op.crs ? t('ai.change.set_site.crs', { crs: op.crs, eastings: fmt(op.eastings), northings: fmt(op.northings) }) + (op.rotation ? t('ai.change.set_site.rotation', { rotation: fmt(op.rotation) }) : '') : '';
+          const crs = op.crs ? t('ai.change.set_site.crs', { crs: op.vertical_datum ? `${op.crs} + ${op.vertical_datum}` : op.crs, eastings: fmt(op.eastings), northings: fmt(op.northings) }) + (op.rotation ? t('ai.change.set_site.rotation', { rotation: fmt(op.rotation) }) : '') : '';
           return t('ai.change.set_site', { name: op.site_name ? ' ' + op.site_name : '', lat: deg(op.latitude), lon: deg(op.longitude), elevation: op.elevation === null ? '' : t('ai.change.set_site.elevation', { elevation: fmt(op.elevation) }), crs });
         }
         default: return String(op.tool);
@@ -390,12 +773,14 @@
         const o = Object.assign({}, op);
         if (Array.isArray(o.ids)) o.ids = o.ids.map(swap);
         if (o.wall_id !== undefined && o.wall_id !== null) o.wall_id = swap(o.wall_id);
+        if (o.id !== undefined && o.id !== null) o.id = swap(o.id);  // edit_element's element
         if (o.type !== undefined && o.type !== null) o.type = swap(o.type);
+        for (const key of ['part_of', 'host']) if (o[key] !== undefined && o[key] !== null) o[key] = swap(o[key]);
         return o;
       });
     }
     const toWheel = (cs) => cs.ops.map((op) => { const o = Object.assign({}, op); delete o.ref; delete o.refs; return o; });
 
-    return { withGuids, TOOLS, CREATES, MAX_OPS, MATERIAL_CATEGORIES, LAYER_ROLES, has, create, call, describe, summary, toWheel };
+    return { withGuids, TOOLS, CREATES, MAX_OPS, MATERIAL_CATEGORIES, LAYER_ROLES, STATUSES, EDITS, TYPE_KINDS, ELEMENT_CLASSES, DOOR_OPERATIONS, WINDOW_PARTITIONS, has, create, call, describe, summary, toWheel, unitIn };
   });
 })();

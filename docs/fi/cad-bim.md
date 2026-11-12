@@ -126,6 +126,8 @@ R:ssä ja Pythonissa `dm_read()` antaa rakennusosat, `dm_read_properties()` omin
 - **Ominaisuudet**: mitä arvoja ominaisuudella on ja kuinka monella kunkin tyypin rakennusosalla.
 - **Entiteetit**: kuinka monesta kunkin lajin entiteetistä tiedosto koostuu.
 - **Ilmastoselvitys**: alustava ilmastoselvitys mallista luokittain ja kerroksittain, katso *Alustava ilmastoselvitys* alla.
+- **Materiaali-inventointi**: pohja jätehuoltosuunnitelmalle mallista: uudelleenkäytettävät rakennustuotteet, jäte jakeittain ja
+  kerroksittain sekä mallin ilmoittamat vaaralliset aineet, katso *Materiaali-inventointi jätehuoltosuunnitelmaa varten* alla.
 
 Jokaisen tuloksen voi tallentaa aineistona.
 
@@ -150,6 +152,9 @@ tallennetaan sitten selaimeen. Mitään ei lähetetä minnekään; malli ei pois
   ifctesterillä, IfcOpenShellin omalla tarkistimella: valitse .ids-tiedosto, niin saat rivin vaatimusta ja elementtiä kohti,
   tilana hyväksytty, hylätty tai ei sovellettavissa, sekä syyn ja yhteenvedon. Tiedosto pysyy selaimessa. ifctester kulkee
   sovelluksen mukana ilman verkkosovellustaan, joten mitään ei haeta Pythonin itsensä lisäksi.
+  Kohdassa *Sovelluksen IDS* valitset sen sijaan jonkin sovelluksen omista IDS-tiedostoista, esimerkiksi *Avfallshantering* (katso
+  *Materiaali-inventointi jätehuoltosuunnitelmaa varten*), joka tarkistetaan samalla tavalla; *Tallenna IDS-tiedosto* tallentaa
+  valitun tietokoneelle.
 
 **Muokkaa-tilassa** mallilla on kaksi toimintoa kohdassa *Toiminnot* (painike on sekä mallinäkymässä että taulukkonäkymässä),
 ryhmässä *Malli*:
@@ -297,6 +302,60 @@ pyydettäessä.
 
 Jokaisen näkymän voi tallentaa aineistoksi. Lähde: Boverket, ilmastotietokanta (avoin data, katso [licenser.md](licenser.md)).
 
+## Materiaali-inventointi jätehuoltosuunnitelmaa varten
+
+Työkalu **Materiaali-inventointi** Analysoi-tilassa (Määrät-välilehti) kokoaa sen, mitä malli tietää, pohjaksi
+jätehuoltosuunnitelmalle (avfallshanteringsplan). Ruotsin PBL 10 kap. 8 a §:n mukaan, joka on voimassa 1.7.2026 alkaen,
+rakennuttajan on huolehdittava, että on olemassa jätehuoltosuunnitelma, jossa kerrotaan
+
+1. mitkä rakennustuotteet voidaan käyttää uudelleen ja miten ne käsitellään, ja
+2. mitä jätettä toimenpiteestä voi syntyä ja miten se käsitellään, erityisesti miten rakennuttaja aikoo mahdollistaa a) laadukkaan
+   materiaalikierrätyksen ja b) vaarallisten aineiden turvallisen käsittelyn ja poiston.
+
+Suunnitelmaa ei vaadita, kun se ei selvästikään ole tarpeen, ja vastaavalla tarkastajalla (kontrollansvarig) on sen suhteen sama
+tehtävä kuin tarkastussuunnitelman. Boverket ehdotti suunnitelmaa raportissa 2024:26 nimellä resurssienhallintasuunnitelma. Työkalu
+antaa pohjan; suunnitelma ja arviot ovat rakennuttajan. Näkymät seuraavat säännöksen kahta kohtaa.
+
+**1. Uudelleenkäytettävät rakennustuotteet.** Rakennusosat, joilla on tyyppi, tuotetietoja sisältävät ensin: valmistaja
+(Manufacturer), malli (ModelLabel) ja GTIN (GlobalTradeItemNumber) joukosta Pset_ManufacturerTypeInformation, mieluiten tyypissä,
+sekä sarjanumero (SerialNumber) ja viivakoodi (BarCode) joukosta Pset_ManufacturerOccurrence rakennusosassa. GTIN:n tarkistusnumero
+tarkistetaan GS1:n säännöllä; virhe näytetään mutta sitä ei koskaan korjata. Jokaisella rivillä on rakennuksen kerros, materiaalit,
+jakeet ja mallin ilmoittamat vaaralliset aineet. IFC2X3:ssa ei ole GTIN:ää.
+
+**2 a. Jäte jakeittain sekä kerroksittain ja jakeittain.** Jokaisen rakennusosan jokainen materiaali saa jätejakeen Ruotsin
+jäteasetuksen (avfallsförordningen 3 kap. 10 §) mukaan; asetus edellyttää vaarallisen jätteen lisäksi puun, mineraalien (betoni,
+tiili, klinkkeri, keramiikka ja kivi), metallin, lasin, muovin ja kipsin lajittelua. Jae otetaan ensin materiaalin luokasta IFC:ssä
+(IfcMaterial.Category, esimerkiksi concrete, steel, wood, glass, gypsum tai plastic) ja muuten materiaalin nimestä (betoni,
+liimapuu, kipsilevy, eristyslasi ja vastaavat pohjoismaisilla kielillä ja englanniksi). Mineraalivilla, lasivilla ja kivivilla eivät
+kuulu mineraaleihin eivätkä lasiin, ja komposiitit kuten lasikuituvahvisteinen muovi, nimet, jotka ilmoittavat useita jakeita
+(puu/alumiini) tai ei yhtään, sekä rakennusosat ilman materiaalia saavat jakeen *Muu / ratkaistava*. Sarake *Sääntö* näyttää, mikä
+ratkaisi. Summat antavat rakennusosat, rivit, tilavuuden, pinta-alan ja massan jakeittain sekä rakennuksen kerroksittain
+(ilmastoselvityksen kuusi kerrosta) ja jakeittain. Luokitusjärjestelmiä ei lueta.
+
+**2 b. Vaaralliset aineet.** Vain se, mitä mallin ominaisuus sanoo: ominaisuus, jonka nimi tai joukko koskee vaarallisia aineita tai
+vaarallista jätettä (esimerkiksi Pset_EnvironmentalImpactValues.HazardousWaste tai oma joukko, jossa on asbesti tai PCB), ja jonka
+arvo sanoo kyllä, rakennusosassa, tyypissä tai materiaalissa. Sovellus ei koskaan arvaa. Jos malli ei ilmoita vaarallisia aineita,
+työkalu kertoo sen, ja haitta-ainekartoitus tarvitaan silti.
+
+**Kaikki rakennusosat ja materiaalit** ovat summien taustalla olevat rivit: määrä, materiaalin luokka, paksuus, jae sääntöineen,
+kerros, tiheys ja massa.
+
+**Määrät ja massa.** Määrät ovat ilmastoselvityksen: tiedoston määrät, muuten yksinkertaisten pursotusten geometria, ja
+materiaalikerroksista koostuva rakennusosa jaetaan kerrosten paksuuden mukaan; ovet ja ikkunat lasketaan tässä materiaaleittain.
+Massa on tiedoston paino, muuten tilavuus kertaa materiaalin tiheys (Pset_MaterialCommon.MassDensity, kg/m³). Ilman tiheyttä rivillä
+ei ole massaa, ja huomautus kertoo, kuinka monta riviä tämä koskee.
+
+**Jätehuollon IDS.** *IDS Jätehuolto* avaa IDS-tarkistuksen sovelluksen IDS-tiedostolla `SE-Dataspatium_Avfallshantering.ids` ja
+tarkistaa mallin sitä vasten sovelluksen Pythonissa: jokaisella rakennusosalla materiaali, jolla on jokin IFC:n suosittelemista
+luokista; tilavuuden perusmäärä seinissä, laatoissa, palkeissa, pilareissa, sauvoissa ja levyissä (IfcMember ja IfcPlate),
+anturoissa ja porrassyöksyissä sekä pinta-alan perusmäärä ovissa, ikkunoissa, verhouksissa, katoissa ja lasijulkisivuissa;
+valmistaja ja malli ovissa, ikkunoissa ja laitteissa sekä GTIN oikeassa muodossa, jos sellainen on. Tiedosto koskee IFC4:ää ja
+IFC4.3:a, koska IFC2X3:sta puuttuvat materiaaliluokka, perusmäärien mallipohjat ja GTIN. ifctester hyväksyy materiaalivaatimuksen,
+kun ainakin yhdellä rakennusosan materiaalilla on luokka, ja kootut rakennusosat (katot, portaat, rampit ja lasijulkisivut)
+tarkistetaan osissaan.
+
+Jokaisen näkymän voi tallentaa aineistoksi. Verkosta ei haeta mitään.
+
 ## DXF-piirustukset
 
 DXF-tiedostosta tulee taulukko, jossa on yksi piirustusobjekti riviä kohti (tyyppi, taso, väri, pituus, pinta-ala, teksti ja
@@ -331,6 +390,44 @@ kerralla Python ja IfcOpenShell noudetaan suostumuksen jälkeen.
 Mallista tulee tavallinen malliaineisto. Avaa se Muokkaa-tilassa ja rakenna siihen *Muuta tekoälyllä* -toiminnolla, esimerkiksi
 ”kaksi kerrosta ja 6×4 m:n ruudukko, ulkoseinät ruudukon mukaan”. Sen voi viedä IFC-muodossa ja julkaista Dataregiumiin kuten
 muutkin mallit.
+
+### Tunnukset, numerot ja sijainti
+
+Lomakkeen kohdassa *Tunnukset* täytät sen, minkä tiedät; vain se kirjoitetaan tiedostoon:
+- *Kiinteistötunnus* tulee tontin nimeksi (IfcSite.Name) ja sen kiinteistötunnukseksi (Pset_LandRegistration.LandID); kohtaan
+  *Tontti* kirjoittamasi tulee silloin tontin pitkäksi nimeksi.
+- *Rakennusnumero* tulee rakennuksen nimeksi (IfcBuilding.Name) ja *Rakennuksen nimi* sen pitkäksi nimeksi (LongName).
+- *Kansallinen rakennustunnus* kirjoitetaan kenttään Pset_BuildingCommon.BuildingID yhdessä IsPermanentID:n kanssa, jotta malli ja
+  rekisterit tarkoittavat samaa rakennusta.
+- *Ensimmäisen kerroksen kuvaus* tulee kerroksen kuvaukseksi (Description), esimerkiksi että se on sisäänkäyntikerros.
+- *Tekijä* ja *Organisaatio* kirjoitetaan IFC-tiedoston otsakkeeseen vain, jos täytät ne; nimi on henkilötieto.
+
+Malli saa myös seinien akseleiden Axis-kontekstin alusta alkaen, ja raportti muistuttaa, että mallista puuttuu
+koordinaattijärjestelmä (buildingSMARTin sääntö GRF003), kunnes `set_site` on antanut sen.
+
+Tekoäly numeroi kerrokset korkeusjärjestyksessä koko projektille (Plan 1, Plan 2 …) ja kirjoittaa sisäänkäyntikerroksen kerroksen
+kuvaukseen; `create_storeys_and_grid` ottaa kerroksittain kentät `description` ja `long_name`. `create_spaces` ottaa jokaiselle
+huoneelle numeron (`number`), joka on yksilöllinen rakennuksessa: numerosta tulee huoneen Name, huoneen nimestä sen LongName ja
+kentästä `long_name` sen kuvaus, ja huonetyyppi (`room_type`) kirjoitetaan ObjectType-kenttään PredefinedType-arvolla USERDEFINED.
+Ilman numeroa nimet toimivat kuten ennen.
+
+`set_site` tuntee yhdistetyt EPSG-koodit SWEREF 99:lle korkeuksin RH 2000 -järjestelmässä: 5845 SWEREF 99 TM:lle ja 5846–5857
+kahdelletoista paikalliselle vyöhykkeelle samassa järjestyksessä kuin 3007–3018 (esimerkiksi 5850 SWEREF 99 18 00 + RH 2000).
+Ruotsissa sijaitsevalle rakennukselle tekoäly suosii paikallista vyöhykettä, kun koordinaatit ovat siinä; se ei koskaan muunna
+koordinaatteja itse. Koordinaattijärjestelmä (IfcProjectedCRS) saa selväkielisen kuvauksen ja, kun koodi ei kerro
+korkeusjärjestelmää, VerticalDatum-arvoksi RH 2000 (muun kentällä `vertical_datum`). Karttayksikkö on aina metri ja muunnoksen
+Scale tiedoston pituusyksikkö metreinä (GRF005), joten millimetreissä oleva malli saa Scale-arvon 0,001. Jokainen ylätason
+konteksti (Model, Plan) saa oman IfcMapConversionin samoin arvoin (GRF001). Rakennuksen korkeus merenpinnasta on muunnoksen
+OrthogonalHeight; IFC4:ssä ja IFC2X3:ssa myös IfcBuilding.ElevationOfRefHeight, jonka IFC4X3 on poistanut käytöstä.
+
+Tiedoston otsake: jokainen IFC-tiedosto, jonka sovellus kirjoittaa tai tallentaa, saa FILE_DESCRIPTION-osan näkymämäärittelyineen
+ja tasolla 2;1 sekä FILE_NAME-osan, jossa ovat tiedoston nimi, aika ISO 8601 -muodossa, esikäsittelijä (Dataspatium ja
+IfcOpenShell versioineen) ja alkuperäinen ohjelma muodossa *Dataspatium - Dataspatium - versio*. Näkymämäärittely on
+CoordinationView_V2.0 IFC2X3:lle ja ReferenceView_V1.2 IFC4:lle. IFC4X3:lle ei ole virallista näkymää koko skeeman mallille
+(Reference View jättää pois muun muassa pursotetut kappaleet), joten otsakkeessa lukee `notYetAssigned` sellaisen näkymän sijaan,
+jota tiedosto ei noudata; buildingSMARTin validointipalvelu merkitsee sen, ja vastaanottaja, joka vaatii näkymän, nimeää sen.
+Tiedosto, jota sovellus muuttaa, säilyttää oman tekijänsä, organisaationsa ja alkuperäisen ohjelmansa sekä näkymänsä, kun
+validointipalvelu hyväksyy sen.
 
 ## Uusi rakennus briefistä
 
@@ -460,6 +557,65 @@ Lopuksi muutosjoukon luomat tai muuttamat seinät, laatat, katot, ovet ja ikkuna
 Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities ja Qto_WindowBaseQuantities) mitoista laskettuina, aukot
 vähennettyinä ja skeeman mallien nimillä.
 
+Työkalu `create_element` tekee rakennusosat, joilla ei ole omaa työkalua, tarkimmasta IFC-luokasta eikä koskaan
+IfcBuildingElementProxy-luokkana: pilarit (IfcColumn), palkit (IfcBeam), sauvat kuten tolpat ja kattotuolien osat (IfcMember), anturat
+(IfcFooting), paalut (IfcPile), verhoukset kuten lattiapäällysteet, alakatot, julkisivuverhoukset, kattopäällysteet ja eristeet
+(IfcCovering), kaiteet (IfcRailing), savupiiput (IfcChimney), aurinkosuojat (IfcShadingDevice), saniteettikalusteet
+(IfcSanitaryTerminal), kalusteet (IfcFurniture, IFC2X3:ssa IfcFurnishingElement) ja suorat portaat (IfcStair). Luokka ja sen
+PredefinedType tarkistetaan mallin skeemaa vasten kuten muissakin työkaluissa. Kappale on pursotettu profiili: suorakaide, ympyrä tai
+ääriviiva kerroksen tasossa, pystyssä ylöspäin korkeudelta kerroksen yläpuolella (pilarit, anturat, verhoukset, kalusteet) tai
+vaakasuorassa johonkin suuntaan (palkit, sauvat ja kaiteet). Elementti on kerroksessa tai osa kokonaisuutta (`part_of`), esimerkiksi
+portaan kaide, ja on silloin kokonaisuudessa ja sen kerroksessa mutta ei suoraan kerroksessa. Verhous voi kertoa, mitä se verhoaa
+(`host`): rakennusosan (IfcRelCoversBldgElements) tai tilan (IfcRelCoversSpaces). Suora porras (STRAIGHT_RUN_STAIR) on kalteva
+porrassyöksy (IfcStairFlight, STRAIGHT), jonka askelmien määrä, nousu, etenemä ja leveys ovat attribuutteina ja
+Pset_StairFlightCommonissa, ja pyydettäessä ylhäällä lepotaso (IfcSlab, LANDING); viimeinen nousu on lepotason tai yläpuolisen laatan
+etureuna.
+
+`define_type` tekee myös tyypit verhouksille (kerroksineen kuten laattatyyppi), pilareille, palkeille, anturoille, kaiteille, oville ja
+ikkunoille (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType ja IfcWindowType; IFC2X3:ssa
+IfcDoorStyle ja IfcWindowStyle) materiaaleineen. Ovityypillä on avautumistapansa (OperationType, esimerkiksi SINGLE_SWING_LEFT, saranat
+vasemmalla oven avautumissuuntaan katsottuna), ikkunatyypillä jakonsa (PartitioningType, esimerkiksi SINGLE_PANEL tai
+DOUBLE_PANEL_VERTICAL), ja molemmilla leveys, korkeus ja karmin syvyys. IfcOpenShell piirtää geometrian karmeineen, ovilehtineen tai
+puitteineen ja laseineen kerran tyypille, ja jokainen tyypin ovi ja ikkuna käyttää sitä uudelleen (kuvattu geometria), ja tyyppi saa
+karmin ja ovilehtien ominaisuudet (IfcDoorLiningProperties, IfcDoorPanelProperties, IfcWindowLiningProperties). `create_opening` ottaa
+tyypin: ovi tai ikkuna saa tyypin koon ja geometrian ja on samassa tasossa seinän vasemman pinnan kanssa seinän alusta sen loppuun
+katsottuna (vastapäivään piirretyn ulkoseinän sisäpinta), ja ovi avautuu sille puolelle, vasenkätinen ovi saranat aukon sillä reunalla,
+joka on lähinnä seinän alkua. Arvolla `side: right` se käännetään: samaan tasoon oikean pinnan kanssa ja avautumaan sitä kohti. Seinän
+paksuinen karmi täyttää koko aukon pielen.
+Työkalu `edit_element` muuttaa olemassa olevaa elementtiä paikallaan, niin että se säilyttää GlobalId-tunnuksensa koko elinkaarensa
+ajan: seinän alun, lopun, paksuuden, korkeuden ja tyypin, laatan ääriviivan, paksuuden ja tyypin, aukon paikan, leveyden, korkeuden ja
+alareunan yhdessä sen oven tai ikkunan kanssa, katon kaltevuuden, räystään ulottuman ja räystään korkeuden sekä minkä tahansa elementin
+nimen. Mitat luetaan elementin omasta geometriasta (seinän alku ja loppu sen akselista), ja runko, akseli, kerrokset, perusmäärät ja
+seinäliitokset tehdään uudelleen. Lukutyökalu `get_parameters` näyttää tekoälylle mitat, joita `edit_element` muuttaa, samalla tavalla
+luettuina, jotta se voi muuttaa myös elementtiä, jota se ei ole itse luonut. Seinän aukot säilyttävät paikkansa seinän suunnassa niin
+kauan kuin seinä säilyttää suuntansa (muuten etäisyytensä seinän alusta), ja niiden on mahduttava seinään; katto säilyttää
+suorakulmionsa. Tyypitetty seinä tai laatta saa paksuutensa tyypistään, joten paksumpi seinä saa toisen tyypin. Elementin, jota ei ole
+piirretty kirjoitustyökalujen tapaan, voi vain nimetä uudelleen, ja vastaus kertoo, mitä tekoäly voi tehdä sen sijaan. Tekoäly siis
+muuttaa elementtejä poistamatta ja luomatta niitä uudelleen, ja poistaa vain, kun pyydät. Siirto työkalulla `transform_elements`
+tapahtuu kerroksen tasossa: ovi tai ikkuna siirtyy aukkonsa mukana, siirretty seinä liitetään seiniin, jotka se kohtaa, yhtään pistettä
+ei jää käyttämättä, eikä tonttia, rakennusta tai kerroksia koskaan siirretä, koska niiden paikka ja korkeudet koskevat koko hanketta ja
+muuttuvat vain sopimalla.
+Tuotetunnisteet tekoäly kirjoittaa vain, kun annat ne, eikä se koskaan keksi niitä: GTIN (GlobalTradeItemNumber), valmistaja
+(Manufacturer) ja malli (ModelLabel) joukossa Pset_ManufacturerTypeInformation tyypissä sekä sarjanumero (SerialNumber) ja
+viivakoodi (BarCode) joukossa Pset_ManufacturerOccurrence rakennusosassa. IFC2X3:ssa ei ole GTIN:ää.
+**Kantavuus, tila ja ominaisuudet.** `create_wall` ja `create_slab` ottavat `load_bearing`-arvon (kantava tai ei), ja ne sekä
+`create_roof` ottavat `status`-arvon (NEW uusi, EXISTING olemassa oleva, DEMOLISH purettava, TEMPORARY tilapäinen), mutta vain kun
+brief tai sinä sanot sen: tekoäly ei koskaan arvaa, ja olemassa olevan rakennuksen digitaalinen kaksonen saa arvon EXISTING. Arvot
+kirjoitetaan LoadBearing- ja Status-ominaisuuksina joukkoihin Pset_WallCommon, Pset_SlabCommon ja Pset_RoofCommon, tyyppiin kun kaikki
+tyypin elementit sanovat saman ja muuten elementtiin; IFC2X3:ssa ei ole Statusta, ja raportti kertoo sen. Kun muutosjoukko ajetaan,
+sovellus asettaa itse IsExternal-arvon topologian perusteella seinille, jotka se on luonut tai joita se on muuttanut: tosi kerroksen
+ulkorajalla ja epätosi rakennuksen sisällä, ja seinien ovet ja ikkunat saavat seinänsä arvon. Katot ja kattolaatat ovat ulkoisia.
+Kerros, jonka seinät eivät sulkeudu, ei saa IsExternal-arvoa, ja raportti ja tekoälyn esikatselu kertovat miksi; mallissa jo ollut
+arvo säilyy. Juuri LoadBearingin ja IsExternalin avulla ilmastoselvitys erottaa luokat toisistaan.
+`set_properties` tarkistaa ominaisuusjoukon, jonka nimi on Pset_… tai Qto_…, IfcOpenShellin mallin skeeman pohjia vasten: joukko tai
+ominaisuus, jota pohjassa ei ole, hylätään lähimpien nimien kera, toden ja epätoden, mittojen ja luetteloarvojen on oltava oikeaa
+tyyppiä, ja luku, jonka arvoon on kirjoitettu yksikkö ("40 dB"), hylätään. Anna pelkkä luku, pituudet metreinä, alat neliömetreinä,
+tilavuudet kuutiometreinä ja kulmat asteina, niin sovellus kirjoittaa ne tiedoston yksiköissä. Joukosta, jonka nimi on Qto_…, tulee
+määräjoukko (IfcElementQuantity). Oma ominaisuusjoukko ei saa alkaa Pset_- tai Qto_-etuliitteellä, ja tekoäly saa neuvon nimetä sen
+muotoon maa-alkuperä-projekti_Nimi, esimerkiksi SE-ACME-42_Akustiikka, ominaisuusnimet PascalCase-muodossa ilman å-, ä- ja
+ö-kirjaimia. Ominaisuudet kirjoitetaan elementin omaan joukkoon, ei koskaan tyypin joukkoon. `assign` ottaa materiaalin luokan
+(IfcMaterial.Category, samat yksitoista kuin `define_type`-työkalussa).
+
 *Esikatsele* ajaa muutosjoukon mallin kopiolle IfcOpenShellillä sovelluksen Pythonissa (komponentit haetaan suostumuksen jälkeen
 ensimmäisellä kerralla), piirtää tuloksen 3D:nä uudet vihreinä ja muutetut keltaisina ja näyttää, mitä luodaan, muutetaan ja poistetaan,
 sekä skeematarkistuksen löydökset. *Hyväksy* tekee muutoksista reseptivaiheen *Tekoälymuutos*: malli saa uuden version työtilaan,
@@ -545,6 +701,12 @@ aiheuttaa, lasketaan: mallissa jo ollut ei estä mitään. Tekoäly saa pettäv�
 topologiankin. Sovelluksessa ei ole koko sääntösarjaa: GRF005 tuntee koordinaattijärjestelmän yksikön sovelluksen kirjoittamille
 pohjoismaisille koodeille tai sen MapUnitista, ja SWE001 seuraa murtoviivoja, indeksoituja käyriä ja niistä koottuja käyriä. Koko sarja
 kuuluu palvelimelle.
+
+Siksi sovellus ei itsekään kirjoita sitä, minkä IFC102 vanhentaa. IFC4:ssä ja myöhemmin `host`-kohteen saanut verhous tulee
+peittämänsä rakennusosan osaksi (IfcRelAggregates) tai on tilassa, IfcRelCoversBldgElements- ja IfcRelCoversSpaces-suhteiden sijaan,
+ja portaan askelmien määrä ja mitat ovat vain joukossa Pset_StairFlightCommon. IFC 4.3:ssa karmin ja ovilehtien ominaisuudet ovat
+joukoissa Pset_DoorLiningProperties, Pset_DoorPanelProperties ja Pset_WindowLiningProperties, jotka korvaavat IfcDoorLiningPropertiesin
+ja muut.
 
 *Hyväksy* ajaa lisäksi skeeman EXPRESS-säännöt (WHERE-säännöt ja funktiot) IfcOpenShellillä; pytest haetaan niitä varten komponenttina
 ensimmäisellä kerralla. Muutosjoukkoa, joka rikkoo säännön, jonka malli täytti aiemmin, ei hyväksytä, ja viesti nimeää säännön; pyydä

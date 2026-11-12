@@ -71,6 +71,36 @@ følgjer med pakken* og maskerte i kopien om du ikkje vel å behalde dei, fjerne
 Ei synkronisering til **GitHub** må kunne hentast tilbake slik ho var, så der kan ingenting pseudonymiserast. Appen viser i staden kva som kan vere personopplysningar før du sender. **Publiser** lagar ei
 HTML-side med verdiane diagramma viser, så kontroller dei før du legg ut sida.
 
+### Personopplysningar i ein IFC-modell
+
+Ein modell som blir levert til ei styresmakt, blir eit offentleg dokument, og IFC-fila ber meir enn det som syner i 3D-visinga. For ein IFC-modell ser gjennomgangen
+difor inn i sjølve fila. Tabellane med element og eigenskapar blir bygde frå fila og blir ikkje viste for seg.
+
+| Del av modellen | Det som blir funne |
+|---|---|
+| Personar (IfcPerson) | Namn, identitet og adressene til personen med e-post og telefon |
+| Adressene til organisasjonane | Postadresser, e-post og telefon (IfcPostalAddress, IfcTelecomAddress) |
+| Eigarhistorikken (IfcOwnerHistory) | Brukaren som eig eller sist endra objekta, og programmet |
+| Filhovudet (FILE_NAME) | Forfattar, organisasjon og den som har godkjent fila |
+| Aktørar og bebuarar (IfcActor, IfcOccupant) | Rollene og personane dei peikar på |
+| Fritekst | E-postadresser, identitetsnummer og telefonnummer i namn, skildringar og eigenskapar, med dei same kontrollane som i tabellar |
+
+Kvar del kan haldast på, pseudonymiserast eller fjernast i kopien. Standard er å pseudonymisere personar, eigarhistorikk og aktørar og å fjerne adresser,
+filhovudet og treffa i fritekst.
+
+- *Pseudonymiser* byter ut namn, identitetar og adresser med kodar. Same verdi gjev same kode i fila og i tabellane. Programmet i eigarhistorikken står att.
+- *Fjern i kopien* tømer filhovudet og fjernar adressene, aktørane og eigarhistorikken. I IFC2X3, der kvart objekt må ha ein eigarhistorikk, får objekta den
+  nøytrale til appen i staden. Personar som er att, blir den nøytrale brukaren til appen, og treffa i fritekst blir [***].
+- Ein person som berre stod i eigarhistorikken eller hos ein aktør, forsvinn med han.
+- GlobalId, etasjar, element, typar og geometri blir haldne på, og tabellane i kopien blir bygde på nytt frå den reinsa fila.
+
+Det blir gjort av IfcOpenShell i Python i appen. Køyrer ikkje Python, kan du berre halde på delane eller avbryte, og dialogen seier kvifor. Med *Start Python*
+startar du han (første gongen blir han henta etter samtykket ditt), og då får delane alle val. Namn som står som vanleg tekst i eigenskapar, blir ikkje kjende att,
+så dei vurderer du sjølv.
+
+Gjennomgangen av modellen gjeld alle vegar ut: pakkar, einingar, delingsmenyen, publisering og OpenCDE, også når den eigne IFC-fila til modellen blir send. Ei
+synkronisering til GitHub kan ikkje endre noko, så der syner gjennomgangen berre kva som følgjer med.
+
 ## Delingsmeny
 
 Den eigne delingsmenyen til datamaskina eller telefonen: send ei fil til e-post, Teams, meldingsappar eller andre appar. Vel

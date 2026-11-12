@@ -26,8 +26,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/ai-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ai/providers', 'ai/agent', 'ai/write-tools', 'ai/check-tools', 'ui/bearbeta/ai-check', 'data/selection', 'data/recipes', 'data/ifc-ops', 'data/datasets', 'data/ifc-validation', 'api/connectors', 'api/families/opencde', 'platform/storage/idb'],
-    (base, basic, overlays, icons, providers, agent, writeTools, checkTools, aiCheck, selection, recipes, ifcOps, datasets, validation, connectors, opencde, idb) => {
+  D.define('ui/bearbeta/ai-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ai/providers', 'ai/agent', 'ai/write-tools', 'ai/check-tools', 'ui/bearbeta/ai-check', 'data/selection', 'data/recipes', 'data/ifc-ops', 'data/datasets', 'data/ifc-validation', 'api/connectors', 'api/families/opencde', 'platform/storage/idb', 'analysis/ids-presets'],
+    (base, basic, overlays, icons, providers, agent, writeTools, checkTools, aiCheck, selection, recipes, ifcOps, datasets, validation, connectors, opencde, idb, idsPresets) => {
       const { h, t, i18n, replace } = base;
       const LAST_SETTING = 'ai.lastProvider';
       const MODES = ['ask', 'change', 'build', 'check'];
@@ -42,7 +42,7 @@
         const s = { providers: [], providerId: '', policy: 'ask', mode: MODES.includes(String(options.mode)) ? String(options.mode) : 'ask', question: options.brief ? String(options.brief) : '', busy: false, answer: '', steps: [], elements: [], usage: null, error: '', history: [], exchanges: [],
           changeset: writeTools.create(options.datasetId), preview: null, previewing: false, approving: false, proposing: false, proposed: null, cde: null, approvingServer: false,
           attachments: [], questionBox: null, picturesFrom: '', albums: [], factsFrom: '', tables: [],
-          form: { building: '', storeys: '', length: '', width: '', height: '', foundation: '', roof: '', purpose: '', purposeText: '', stage: '' }, detail: 'main', ids: '', nextLabel: 'photo', material: null, uploading: false, opsForm: null, heightsSource: false, factsHeights: false, canPropose: null, projectPolicy: undefined,
+          form: { building: '', storeys: '', length: '', width: '', height: '', foundation: '', roof: '', purpose: '', purposeText: '', stage: '' }, detail: 'main', ids: '', idsTitles: {}, nextLabel: 'photo', material: null, uploading: false, opsForm: null, heightsSource: false, factsHeights: false, canPropose: null, projectPolicy: undefined,
           findings: checkTools.create(options.datasetId) };
         const el = h('div', { class: 'dm-card dm-stack-sm', 'data-ai-panel': '' });
         let abort = null;
@@ -75,6 +75,7 @@
             if (c && opencde.isOpenCde(c) && opencde.signedIn(c)) s.material = { cde, connector: c, name: meta.name };
           }
           await check.load(meta);
+          s.idsTitles = Object.fromEntries((await idsPresets.list().catch(() => [])).map((x) => [x.file, x.title]));
         }
         /** Uploads the brief and the pictures as documents on the server, tied to the topic Underlag (data/model-material). */
         async function uploadMaterial() {
@@ -223,7 +224,8 @@
         const PURPOSE_DEFAULTS = { volume: ['sketch', 'SE-Dataspatium_Grund.ids'], permit: ['main', 'SE-Dataspatium_Grund.ids'], climate: ['main', 'SE-Dataspatium_Klimatdeklaration.ids'],
           management: ['detailed', 'SE-Dataspatium_Grund.ids'], waste: ['detailed', 'SE-Dataspatium_Avfallshantering.ids'], other: ['main', ''] };
         const STAGES = ['feasibility', 'proposal', 'documents', 'construction', 'existing'];
-        const idsFiles = () => ifcOps.idsPresets().map((n) => n.slice(n.lastIndexOf('/') + 1));
+        // The app's IDS files (analysis/ids-presets), by file name; their titles label the choice once read.
+        const idsFiles = () => D.assets.names(idsPresets.PREFIX).filter((n) => /\.ids$/i.test(n)).map((n) => n.slice(idsPresets.PREFIX.length)).sort();
         function choosePurpose(v) {
           s.form.purpose = PURPOSES.includes(v) ? v : '';
           const d = PURPOSE_DEFAULTS[s.form.purpose];
@@ -233,7 +235,7 @@
         /** The IDS file the brief names, as the name and text the preview takes; null without one or when it cannot be read. */
         async function requirements() {
           if (!s.ids) return null;
-          try { return await ifcOps.idsPreset(s.ids); } catch (err) { log(String((err && err.message) || err), 'warn'); return null; }
+          try { const got = await idsPresets.load(idsPresets.PREFIX + s.ids); return { name: got.name, text: got.text }; } catch (err) { log(String((err && err.message) || err), 'warn'); return null; }
         }
         const factsGiven = () => Object.values(s.form).some((v) => String(v || '').trim());
         /** The building's facts and the level of detail as the opening of the brief. */
@@ -300,7 +302,7 @@
           }
           const stage = basic.select(t('ai.build.stage'), [{ value: '', label: t('ai.build.form.unknown') }].concat(STAGES.map((k) => ({ value: k, label: t('ai.build.stage.' + k) }))), s.form.stage, (v) => { s.form.stage = STAGES.includes(v) ? v : ''; }, { 'data-ai-form': 'stage', title: t('ai.build.stage.hint') });
           const files = idsFiles();
-          const ids = basic.select(t('ai.build.ids'), [{ value: '', label: t('ai.build.ids.none') }].concat(files.map((n) => ({ value: n, label: n.replace(/\.ids$/, '') }))), files.includes(s.ids) ? s.ids : '', (v) => { s.ids = files.includes(v) ? v : ''; }, { 'data-ai-ids': '', title: t('ai.build.ids.hint') });
+          const ids = basic.select(t('ai.build.ids'), [{ value: '', label: t('ai.build.ids.none') }].concat(files.map((n) => ({ value: n, label: s.idsTitles[n] || n.replace(/\.ids$/, '') }))), files.includes(s.ids) ? s.ids : '', (v) => { s.ids = files.includes(v) ? v : ''; }, { 'data-ai-ids': '', title: t('ai.build.ids.hint') });
           return h('div', { class: 'dm-row-wrap' }, purpose, own, stage, ids);
         }
         function heightsSwitch() {
@@ -458,7 +460,10 @@
         /** The operations with the model's GlobalIds for its STEP ids, read from the dataset's own table (decision F34 a at Dataregium). */
         async function guidOps(ops) {
           const ids = new Set();
-          for (const op of ops) { for (const x of Array.isArray(op.ids) ? op.ids : []) if (Number.isInteger(x)) ids.add(x); if (Number.isInteger(op.wall_id)) ids.add(op.wall_id); }
+          for (const op of ops) {
+            for (const x of Array.isArray(op.ids) ? op.ids : []) if (Number.isInteger(x)) ids.add(x);
+            for (const key of ['wall_id', 'id', 'type', 'part_of', 'host']) if (Number.isInteger(op[key])) ids.add(op[key]);
+          }
           if (!ids.size) return ops;
           const map = new Map();
           const handle = await datasets.ensureOpen(options.datasetId);
@@ -645,6 +650,8 @@
               ruleWarnings ? h('p', { class: 'dm-help dm-xs', 'data-ai-rule-warnings': String(ruleWarnings), text: t('ai.change.rules.warnings', { n: i18n.formatNumber(ruleWarnings) }) }) : null,
               ids ? h('p', { class: ids.error || (ids.failed || []).length ? 'dm-small' : 'dm-help dm-xs', 'data-ai-ids-result': ids.error ? 'error' : String((ids.failed || []).length),
                 text: ids.error ? t('ai.change.ids.error', { file: ids.file || '', error: ids.error }) : t('ai.change.ids.result', { file: ids.file || '', passed: i18n.formatNumber(Number(ids.passed) || 0), n: i18n.formatNumber(Number(ids.specifications) || 0), failed: (ids.failed || []).map((x) => x.name).slice(0, 5).join('; ') || '–' }) }) : null,
+              // The wheel's notes: what it could not do in the file's schema, and what the model still lacks (no CRS, GRF003).
+              Array.isArray(report.notes) && report.notes.length ? h('ul', { class: 'dm-list dm-xs', 'data-ai-notes': String(report.notes.length) }, report.notes.slice(0, 10).map((n) => h('li', { class: 'dm-help dm-xs', text: String(n) }))) : null,
               s.preview.server ? h('p', { class: s.preview.server.status === 'issues' || s.preview.server.status === 'failed' ? 'dm-error dm-small' : 'dm-help dm-xs', 'data-ai-precheck': s.preview.server.status,
                 text: t('ai.change.precheck.' + s.preview.server.status, { n: i18n.formatNumber((s.preview.server.counts || {}).findings || 0), errors: i18n.formatNumber((s.preview.server.counts || {}).errors || 0), error: s.preview.server.error || '' }) }) : null,
               s.cde && proposal ? h('p', { class: 'dm-help dm-xs', 'data-ai-proposal': String(proposal.changes.length), text: proposalText(proposal) }) : null,

@@ -355,6 +355,20 @@
       /** The local database bridge (api/bridge): connection, source, tables, preview, own SQL and import. */
       // ---- a new, empty building model (OB-06 Schemaval för nya modeller) ----
       const newModel = { schema: '', values: {}, busy: false, error: '', result: null };
+      /**
+       * The optional designations of a new model (data/ifc-new identity: property designation, building number and name, national
+       * building id, the first storey's description, and the header's author and organisation), folded under their own heading.
+       * @param {(key: string, extra?: any) => any} field the form's field maker
+       */
+      function newModelIdentity(field) {
+        const keys = D.require('data/ifc-new').IDENTITY_FIELDS;
+        const filled = keys.some((key) => String(newModel.values[key] || '').trim());
+        return h('details', { class: 'dm-more', open: filled ? '' : null, 'data-newmodel-identity': '' },
+          h('summary', { text: t('newmodel.identity') }),
+          h('div', { class: 'dm-stack' },
+            h('p', { class: 'dm-help dm-xs', text: t('newmodel.identity.lead') }),
+            keys.map((key) => field(key, { placeholder: t('newmodel.' + key + '.placeholder'), help: t('newmodel.' + key + '.help') }))));
+      }
       function renderNewModel() {
         const ifcNew = D.require('data/ifc-new');
         const field = (key, extra) => {
@@ -389,6 +403,7 @@
             field('project', { placeholder: t('newmodel.default.project') }), field('site', { placeholder: t('newmodel.default.site') }),
             field('building', { placeholder: t('newmodel.default.building') }), field('storey', { placeholder: t('newmodel.default.storey') }),
             field('elevation', { type: 'number', placeholder: '0' }),
+            newModelIdentity(field),
             field('brief', { type: 'textarea', rows: '5', placeholder: t('newmodel.brief.placeholder'), help: t('newmodel.brief.help') }),
             newModel.error ? h('p', { class: 'dm-error dm-small', 'data-newmodel-error': '', text: newModel.error }) : null,
             h('div', { class: 'dm-row' }, ui.button({ label: newModel.busy ? t('newmodel.creating') : t('newmodel.create'), icon: 'box', variant: 'primary', loading: newModel.busy, title: t('newmodel.create.hint'), 'data-newmodel-create': '', onClick: create })),

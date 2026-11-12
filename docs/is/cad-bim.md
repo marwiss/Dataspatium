@@ -120,6 +120,8 @@ GROUP BY 1, 2 ORDER BY 1, 2
 - **Eiginleikar**: hvaða gildi eiginleiki hefur og á hve mörgum byggingarhlutum af hverri gerð.
 - **Einingar**: úr hve mörgum einingum af hverri tegund skráin samanstendur.
 - **Loftslagsyfirlýsing**: bráðabirgðaloftslagsyfirlýsing út frá líkaninu eftir flokki og lagi, sjá *Bráðabirgðaloftslagsyfirlýsing* hér fyrir neðan.
+- **Efnisúttekt**: grunnur að úrgangsstjórnunaráætluninni úr líkaninu, með byggingarvörum sem má endurnota, úrganginum eftir flokkum
+  og lögum og þeim hættulegu efnum sem líkanið tilgreinir, sjá *Efnisúttekt fyrir úrgangsstjórnunaráætlun* hér fyrir neðan.
 
 Hægt er að vista hverja niðurstöðu sem gagnasafn.
 
@@ -143,6 +145,8 @@ vafranum. Engu er sent neitt; líkanið fer ekki af tölvunni.
   eigin prófara IfcOpenShell: veldu .ids-skrána og þú færð eina röð á kröfu og einingu með stóðst, féll eða á ekki við og
   ástæðunni, auk samantektar. Skráin verður í vafranum. ifctester fylgir forritinu án vefforrits síns, svo ekkert er sótt umfram
   Python sjálft.
+  Undir *IDS í forritinu* velur þú í staðinn eina af IDS-skrám forritsins, til dæmis *Avfallshantering* (sjá *Efnisúttekt fyrir
+  úrgangsstjórnunaráætlun*), sem er prófuð á sama hátt; *Vista IDS-skrána* vistar þá völdu á tölvunni.
 
 **Í Vinna** hefur líkanið tvær aðgerðir undir *Aðgerðir* (hnappurinn er bæði í líkansýn og töflusýn), í hópnum *Líkan*:
 
@@ -285,6 +289,58 @@ yfir meðaltali; tólið reiknar með varfærna gildinu og sýnir það dæmiger
 
 Hverja sýn má vista sem gagnasafn. Heimild: Boverket, loftslagsgagnagrunnurinn (opin gögn, sjá [licenser.md](licenser.md)).
 
+## Efnisúttekt fyrir úrgangsstjórnunaráætlun
+
+Tólið **Efnisúttekt** í Greina (flipinn Magn) tekur saman það sem líkanið veit sem grunn að úrgangsstjórnunaráætluninni
+(avfallshanteringsplan). Samkvæmt sænsku PBL 10 kap. 8 a §, sem gildir frá 1. júlí 2026, skal byggjandinn sjá til þess að til sé
+úrgangsstjórnunaráætlun með upplýsingum um
+
+1. hvaða byggingarvörur má endurnota og hvernig þær eru meðhöndlaðar, og
+2. hvaða úrgangur getur hlotist af framkvæmdinni og hvernig hann er meðhöndlaður, einkum hvernig byggjandinn hyggst gera mögulega a)
+   hágæða endurvinnslu efna og b) örugga meðhöndlun og fjarlægingu hættulegra efna.
+
+Áætlunar er ekki krafist þegar hún er augljóslega óþörf, og eftirlitsaðilinn (kontrollansvarig) hefur sama hlutverk gagnvart henni
+og eftirlitsáætluninni. Boverket lagði áætlunina til í skýrslu 2024:26 undir heitinu auðlindastjórnunaráætlun. Tólið gefur grunninn;
+áætlunin og matið eru byggjandans. Sýnirnar fylgja tveimur liðum ákvæðisins.
+
+**1. Byggingarvörur sem má endurnota.** Byggingarhlutarnir með gerð, þeir með vörugögn fyrst: framleiðandi (Manufacturer), gerð
+(ModelLabel) og GTIN (GlobalTradeItemNumber) úr Pset_ManufacturerTypeInformation, helst á gerðinni, og raðnúmer (SerialNumber) og
+strikamerki (BarCode) úr Pset_ManufacturerOccurrence á byggingarhlutanum. Vartala GTIN er prófuð samkvæmt reglu GS1; villa er sýnd
+en aldrei leiðrétt. Hver lína hefur lag byggingarinnar, efnin, flokkana og þau hættulegu efni sem líkanið tilgreinir. IFC2X3 hefur
+ekkert GTIN.
+
+**2 a. Úrgangur eftir flokkum og eftir lögum og flokkum.** Hvert efni í hverjum byggingarhluta fær úrgangsflokk samkvæmt sænsku
+úrgangsreglugerðinni (avfallsförordningen 3 kap. 10 §), sem auk spilliefna krefst þess að timbur, steinefni (steypa, múrsteinn,
+klinker, keramik og steinn), málmar, gler, plast og gifs séu flokkuð frá. Flokkurinn er fyrst tekinn úr flokki efnisins í IFC
+(IfcMaterial.Category, til dæmis concrete, steel, wood, glass, gypsum eða plastic) og annars úr heiti efnisins (steypa, límtré,
+gifsplata, einangrunargler og þess háttar, á norrænu málunum og ensku). Steinull, glerull og steinefnaull tilheyra hvorki steinefnum
+né gleri, og samsett efni eins og trefjastyrkt plast, heiti sem tilgreina fleiri flokka (timbur/ál) eða engan, og byggingarhlutar án
+efnis fá flokkinn *Annað / ákveða*. Dálkurinn *Regla* sýnir hvað réð. Summurnar gefa byggingarhluta, línur, rúmmál, flatarmál og
+massa eftir flokkum og eftir lögum byggingarinnar (sex lögum loftslagsyfirlýsingarinnar) og flokkum. Ekkert flokkunarkerfi er lesið.
+
+**2 b. Hættuleg efni.** Aðeins það sem eiginleiki í líkaninu segir: eiginleiki sem varðar hættuleg efni eða spilliefni að heiti eða
+mengi (til dæmis Pset_EnvironmentalImpactValues.HazardousWaste, eða eigið mengi með asbesti eða PCB) og hefur gildi sem segir já, á
+byggingarhlutanum, gerðinni eða efninu. Forritið giskar aldrei. Tilgreini líkanið engin hættuleg efni segir tólið það, og úttekt á
+hættulegum efnum þarf samt.
+
+**Allir byggingarhlutar og efni** eru línurnar á bak við summurnar: magnið, flokkur efnisins, þykktin, úrgangsflokkurinn með
+reglunni, lagið, eðlismassinn og massinn.
+
+**Magn og massi.** Magnið er loftslagsyfirlýsingarinnar: magn skrárinnar, annars rúmfræði einfaldra útpressana, og byggingarhluta
+með efnislögum er skipt eftir þykkt laganna; hurðir og gluggar eru hér taldir eftir efni. Massinn er þyngd skrárinnar, annars
+rúmmálið sinnum eðlismassi efnisins (Pset_MaterialCommon.MassDensity í kg/m³). Án eðlismassa hefur línan engan massa, og
+athugasemdin segir hve margar línur það á við.
+
+**IDS fyrir úrgangsstjórnun.** *IDS Úrgangsstjórnun* opnar IDS-prófun með IDS-skrá forritsins `SE-Dataspatium_Avfallshantering.ids`
+og prófar líkanið gegn henni í Python forritsins: efni með einum af ráðlögðum flokkum IFC á hverjum byggingarhluta; grunnmagn
+rúmmáls á veggjum, plötum, bitum, súlum, stöngum og plötuhlutum (IfcMember og IfcPlate), undirstöðum og stigaköflum, og flatarmáls á
+hurðum, gluggum, klæðningum, þökum og glerveggjum; framleiðanda og gerð á hurðum, gluggum og lagnabúnaði og GTIN á réttu formi þegar
+það er til. Skráin gildir fyrir IFC4 og IFC4.3, því að IFC2X3 vantar efnisflokk, sniðmát fyrir grunnmagn og GTIN. ifctester
+samþykkir efniskröfuna þegar að minnsta kosti eitt af efnum byggingarhlutans hefur flokk, og samsettir byggingarhlutar (þök, stigar,
+rampar og glerveggir) eru prófaðir í hlutum sínum.
+
+Vista má hverja sýn sem gagnasafn. Ekkert er sótt af netinu.
+
 ## DXF-teikningar
 
 DXF-skrá verður að töflu með einum teikningarhlut í hverri röð (gerð, lag, litur, lengd, flatarmál, texti og staðsetning) og
@@ -317,6 +373,42 @@ sótt eftir samþykki.
 
 Líkanið verður venjulegt líkanagagnasafn. Opnaðu það í Vinna og byggðu í því með *Breyta með gervigreind*, til dæmis „tvær hæðir og
 hnitanet 6×4 m með útveggjum eftir netinu“. Það má flytja út sem IFC og birta á Dataregium eins og önnur líkön.
+
+### Auðkenni, númer og staðsetning
+
+Undir *Auðkenni* í eyðublaðinu fyllir þú út það sem þú veist; aðeins það er skrifað í skrána:
+- *Landeignarnúmer* verður heiti lóðarinnar (IfcSite.Name) og auðkenni hennar (Pset_LandRegistration.LandID); það sem þú
+  skrifaðir undir *Lóð* verður þá langt heiti lóðarinnar.
+- *Byggingarnúmer* verður heiti byggingarinnar (IfcBuilding.Name) og *Heiti byggingarinnar* langt heiti hennar (LongName).
+- *Opinbert auðkenni byggingar* er skrifað í Pset_BuildingCommon.BuildingID með IsPermanentID, svo að líkanið og skrárnar eigi við
+  sömu byggingu.
+- *Lýsing fyrstu hæðar* verður Description hæðarinnar, til dæmis að hún sé inngangshæð.
+- *Höfundur* og *Stofnun* eru aðeins skrifuð í haus IFC-skrárinnar ef þú fyllir þau út; nafn eru persónuupplýsingar.
+
+Líkanið fær einnig samhengið Axis fyrir ása veggjanna frá upphafi, og skýrslan minnir á að líkanið vantar hnitakerfi
+(buildingSMART-reglan GRF003) þar til `set_site` hefur gefið því eitt.
+
+Gervigreindin númerar hæðirnar í hæðarröð fyrir allt verkefnið (Plan 1, Plan 2 …) og skrifar inngangshæðina í lýsingu hæðarinnar;
+`create_storeys_and_grid` tekur `description` og `long_name` fyrir hverja hæð. `create_spaces` tekur `number` fyrir hvert rými,
+einkvæmt í byggingunni: númerið verður Name rýmisins, heiti rýmisins LongName þess og `long_name` lýsing þess, og rýmisgerð
+(`room_type`) er skrifuð sem ObjectType með PredefinedType USERDEFINED. Án númers gilda heitin eins og áður.
+
+`set_site` þekkir samsettu EPSG-kóðana fyrir SWEREF 99 með hæðum í RH 2000: 5845 fyrir SWEREF 99 TM og 5846–5857 fyrir tólf
+staðbundnu beltin í sömu röð og 3007–3018 (til dæmis 5850 fyrir SWEREF 99 18 00 + RH 2000). Fyrir byggingu í Svíþjóð velur
+gervigreindin helst staðbundna beltið þegar hnitin eru í því; hún umreiknar aldrei hnit sjálf. Hnitakerfið (IfcProjectedCRS) fær
+lýsingu á venjulegu máli og, þegar kóðinn tilgreinir ekki hæðarkerfið, RH 2000 sem VerticalDatum (annað með `vertical_datum`).
+Kortaeiningin er alltaf metri og Scale umbreytingarinnar lengdareining skrárinnar í metrum (GRF005), svo líkan í millimetrum fær
+Scale 0,001. Hvert yfirsamhengi (Model, Plan) fær sína eigin IfcMapConversion með sömu gildum (GRF001). Hæð byggingarinnar yfir
+sjávarmáli er OrthogonalHeight umbreytingarinnar; í IFC4 og IFC2X3 einnig IfcBuilding.ElevationOfRefHeight, sem IFC4X3 hefur
+lagt af.
+
+Skráarhausinn: hver IFC-skrá sem forritið skrifar eða vistar fær FILE_DESCRIPTION með sýnarskilgreiningu og stiginu 2;1, og
+FILE_NAME með heiti skrárinnar, tímanum samkvæmt ISO 8601, forvinnsluforritinu (Dataspatium og IfcOpenShell með útgáfum) og
+upprunaforritinu á forminu *Dataspatium - Dataspatium - útgáfa*. Sýnarskilgreiningin er CoordinationView_V2.0 fyrir IFC2X3 og
+ReferenceView_V1.2 fyrir IFC4. IFC4X3 hefur enga opinbera sýn fyrir líkan í öllu skemanu (Reference View sleppir meðal annars
+útpressuðum formum), svo hausinn segir `notYetAssigned` í stað sýnar sem skráin fylgir ekki; staðfestingarþjónusta buildingSMART
+merkir það, og viðtakandi sem krefst sýnar tilgreinir hana. Skrá sem forritið breytir heldur eigin höfundi, stofnun og
+upprunaforriti, og sýn sinni þegar staðfestingarþjónustan samþykkir hana.
 
 ## Ný bygging úr lýsingu
 
@@ -443,6 +535,61 @@ veggir, plötur, þök, hurðir og gluggar sem breytingasettið bjó til eða br
 Qto_RoofBaseQuantities, Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) reiknað út frá málunum, með opin dregin frá og með nöfnunum
 úr sniðmátum skemans.
 
+Verkfærið `create_element` gerir þá byggingarhluta sem hafa ekki eigið verkfæri, í nákvæmasta IFC-flokknum og aldrei sem
+IfcBuildingElementProxy: súlur (IfcColumn), bita (IfcBeam), stoðir og sperrur (IfcMember), undirstöður (IfcFooting), staura (IfcPile),
+klæðningar eins og gólfefni, niðurhengd loft, utanhússklæðningu, þakklæðningu og einangrun (IfcCovering), handrið (IfcRailing),
+reykháfa (IfcChimney), sólskyggni (IfcShadingDevice), hreinlætistæki (IfcSanitaryTerminal), húsgögn (IfcFurniture, í IFC2X3
+IfcFurnishingElement) og beina stiga (IfcStair). Flokkurinn og PredefinedType hans eru prófuð gagnvart skema líkansins eins og í hinum
+verkfærunum. Formið er pressaður prófíll: rétthyrningur, hringur eða útlína í plani hæðarinnar, uppréttur frá hæð yfir hæðinni (súlur,
+undirstöður, klæðningar, húsgögn) eða liggjandi í stefnu (bitar, stoðir og handrið). Hlutinn er á hæðinni eða hluti af heild
+(`part_of`), til dæmis handrið stiga, og er þá í heildinni og á hæð hennar en ekki beint á hæðinni. Klæðning getur tilgreint hvað hún
+klæðir (`host`): byggingarhluta (IfcRelCoversBldgElements) eða rými (IfcRelCoversSpaces). Beinn stigi (STRAIGHT_RUN_STAIR) er hallandi
+stigahluti (IfcStairFlight, STRAIGHT) með fjölda þrepa, uppstigi, framstigi og breidd sem eigindum og í Pset_StairFlightCommon og, ef
+óskað er, stigapalli (IfcSlab, LANDING) efst; síðasta uppstigið er frambrún pallsins eða plötunnar fyrir ofan.
+
+`define_type` gerir líka gerðir fyrir klæðningar (með lögum, eins og plötugerð), súlur, bita, undirstöður, handrið, hurðir og glugga
+(IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType og IfcWindowType; í IFC2X3 IfcDoorStyle og
+IfcWindowStyle) með efni. Hurðagerð hefur opnunarmáta sinn (OperationType, til dæmis SINGLE_SWING_LEFT, með lamirnar vinstra megin séð
+í þá stefnu sem hurðin opnast), gluggagerð skiptingu sína (PartitioningType, til dæmis SINGLE_PANEL eða DOUBLE_PANEL_VERTICAL), og
+báðar breidd, hæð og dýpt karmsins. IfcOpenShell teiknar formið, með karmi, hurðarblöðum eða gluggarömmum og gleri, einu sinni á
+gerðinni og hver hurð og gluggi gerðarinnar endurnýtir það (vörpuð lögun), og gerðin fær eiginleika karmsins og hurðarblaðanna
+(IfcDoorLiningProperties, IfcDoorPanelProperties, IfcWindowLiningProperties). `create_opening` tekur gerðina: hurðin eða glugginn fær
+stærð og form gerðarinnar og stendur í fleti við vinstri hlið veggjarins, séð frá upphafi veggjarins að enda hans (innhlið útveggjar
+sem er teiknaður rangsælis), og hurð opnast að þeirri hlið, vinstri hurð með lamirnar á þeirri hlið opsins sem er næst upphafi
+veggjarins. Með `side: right` er henni snúið: í fleti við hægri hliðina og opnast að henni. Karmur jafndjúpur og veggurinn er þykkur
+fyllir allt gatið.
+Tólið `edit_element` breytir einingu sem fyrir er á sínum stað, svo að hún heldur GlobalId sínu alla ævi: upphafi, enda, þykkt, hæð og
+gerð veggjar, útlínu, þykkt og gerð plötu, staðsetningu, breidd, hæð og neðri brún ops ásamt hurð þess eða glugga, þakhalla, þakskeggi
+og hæð þakskeggs þaks, og heiti hvaða einingar sem er. Málin eru lesin úr eigin rúmfræði einingarinnar (upphaf og endir veggjar úr ás
+hans), og bolurinn, ásinn, lögin, grunnmagnið og veggjasamskeytin eru gerð á ný. Lestrartólið `get_parameters` sýnir gervigreindinni
+málin sem `edit_element` breytir, lesin á sama hátt, svo að hún geti breytt einingu sem hún bjó ekki til sjálf. Op veggjarins halda
+stað sínum eftir honum meðan hann heldur stefnu sinni (annars fjarlægð sinni frá upphafi hans) og verða að rúmast í honum, og þakið
+heldur ferhyrningi sínum. Veggur eða plata með gerð fær þykkt sína úr gerðinni, svo að þykkari veggur fær aðra gerð. Einingu sem er
+ekki teiknuð eins og skrifverkfærin teikna má aðeins gefa nýtt heiti, og svarið segir hvað gervigreindin getur gert í staðinn.
+Gervigreindin breytir því einingum í stað þess að eyða þeim og búa þær til á ný, og eyðir aðeins þegar þú biður um það. Færsla með
+`transform_elements` fer fram í fleti hæðarinnar: hurð eða gluggi færist með opi sínu, færður veggur er tengdur veggjunum sem hann
+mætir, enginn punktur er skilinn eftir ónotaður, og lóðin, byggingin og hæðirnar eru aldrei færðar, því að staður þeirra og hæðir varða
+allt verkefnið og breytast aðeins eftir samkomulagi.
+Vöruauðkenni skrifar gervigreindin aðeins þegar þú gefur þau upp, og hún býr þau aldrei til: GTIN (GlobalTradeItemNumber),
+framleiðanda (Manufacturer) og gerð (ModelLabel) í Pset_ManufacturerTypeInformation á gerðinni, og raðnúmer (SerialNumber) og
+strikamerki (BarCode) í Pset_ManufacturerOccurrence á byggingarhlutanum. IFC2X3 hefur ekkert GTIN.
+**Burður, staða og eiginleikar.** `create_wall` og `create_slab` taka `load_bearing` (burðarvirki eða ekki), og þau og `create_roof`
+taka `status` (NEW nýtt, EXISTING núverandi, DEMOLISH verður rifið, TEMPORARY tímabundið), en aðeins þegar lýsingin eða þú segir það:
+gervigreindin giskar aldrei, og stafrænn tvíburi núverandi byggingar fær EXISTING. Gildin eru skrifuð sem LoadBearing og Status í
+Pset_WallCommon, Pset_SlabCommon og Pset_RoofCommon, á gerðina þegar allir hlutir gerðarinnar segja það sama og annars á hlutinn;
+IFC2X3 hefur ekkert Status, og skýrslan segir það. Þegar breytingasafnið er keyrt setur forritið sjálft IsExternal út frá
+grannfræðinni á veggina sem það bjó til eða breytti: satt meðfram ytri mörkum hæðarinnar og ósatt inni í byggingunni, og hurðirnar og
+gluggarnir í veggjunum fá gildi síns veggjar. Þök og þakplötur eru ytri. Hæð þar sem veggirnir lokast ekki fær ekkert IsExternal, og
+skýrslan og forskoðun gervigreindarinnar segja hvers vegna; gildi sem líkanið hafði þegar heldur sér. Það er með LoadBearing og
+IsExternal sem loftslagsyfirlýsingin greinir flokkana að.
+`set_properties` prófar eiginleikasafn sem heitir Pset_… eða Qto_… á móti sniðmátum IfcOpenShell fyrir skema líkansins: safni eða
+eiginleika sem sniðmátið vantar er hafnað með nálægustu nöfnunum, satt og ósatt, mælingar og upptalningar verða að hafa rétta tegund,
+og tölu með einingunni skrifaðri í gildið („40 dB“) er hafnað. Gefðu aðeins töluna, lengdir í metrum, flatarmál í m², rúmmál í m³ og
+horn í gráðum, og forritið skrifar þau í einingum skrárinnar. Safn sem heitir Qto_… verður magnsafn (IfcElementQuantity). Eigið
+eiginleikasafn má ekki byrja á Pset_ eða Qto_, og gervigreindin fær það ráð að nefna það land-uppruni-verkefni_Nafn, til dæmis
+SE-ACME-42_Hljodvist, með eiginleikanöfnum í PascalCase án å, ä og ö. Eiginleikarnir fara í eigið safn hlutarins, aldrei í safn
+gerðarinnar. `assign` tekur flokk efnisins (IfcMaterial.Category, sömu ellefu og í `define_type`).
+
 *Forskoða* keyrir breytingasettið á afriti af líkaninu með IfcOpenShell í Python forritsins (íhlutirnir eru sóttir eftir samþykki í
 fyrsta sinn), teiknar niðurstöðuna í þrívídd með nýtt grænt og breytt gult og sýnir hvað er búið til, breytt og eytt ásamt niðurstöðum
 skemaathugunarinnar. *Samþykkja* gerir breytingarnar að uppskriftarskrefinu *Gervigreindarbreyting*: líkanið fær nýja útgáfu í
@@ -526,6 +673,11 @@ starfsvenjur (PSE002, GRF003 og GRF005) gefa viðvaranir, sem standa sér. Aðei
 var í líkaninu hindrar ekkert. Gervigreindin fær reglurnar sem halda ekki eftir hverja forskoðun og lagar þær, eins og hún gerir með
 grannfræðina. Forritið hefur ekki allt reglusafnið: GRF005 þekkir einingu hnitakerfisins fyrir norrænu kóðana sem forritið skrifar eða
 út frá MapUnit þess, og SWE001 fylgir fjöllínum, vísuðum ferlum og samsettum ferlum úr þeim. Allt safnið á heima á þjóninum.
+
+Þess vegna skrifar forritið ekki heldur sjálft það sem IFC102 úreldir. Í IFC4 og síðar verður klæðning með `host` hluti af
+byggingarhlutanum sem hún klæðir (IfcRelAggregates) eða liggur í rýminu, í stað IfcRelCoversBldgElements og IfcRelCoversSpaces, og
+fjöldi þrepa og mál stigans standa aðeins í Pset_StairFlightCommon. Í IFC 4.3 standa eiginleikar karms og hurðarblaða í
+Pset_DoorLiningProperties, Pset_DoorPanelProperties og Pset_WindowLiningProperties, sem koma í stað IfcDoorLiningProperties og hinna.
 
 *Samþykkja* keyrir að auki EXPRESS-reglur skemans (WHERE-reglur og föll) með IfcOpenShell; pytest er sótt fyrir þær sem íhlutur í
 fyrsta sinn. Breytingasett sem brýtur reglu sem líkanið uppfyllti áður er ekki samþykkt, og skilaboðin nefna regluna; biddu

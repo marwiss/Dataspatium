@@ -122,6 +122,8 @@ I R og Python gir `dm_read()` bygningsdelene, `dm_read_properties()` egenskapene
 - **Egenskaper**: hvilke verdier en egenskap har, og hos hvor mange bygningsdeler av hver type.
 - **Entiteter**: hvor mange entiteter av hvert slag filen består av.
 - **Klimaerklæring**: en foreløpig klimaerklæring ut fra modellen per kategori og lag, se *Foreløpig klimaerklæring* nedenfor.
+- **Materialkartlegging**: grunnlag for avfallshåndteringsplanen ut fra modellen, med byggevarer som kan ombrukes, avfallet per
+  fraksjon og lag og de farlige stoffene modellen oppgir, se *Materialkartlegging for avfallshåndteringsplanen* nedenfor.
 
 Hvert resultat kan lagres som datasett.
 
@@ -146,6 +148,8 @@ deretter i nettleseren. Ingenting sendes noe sted; modellen forlater ikke datama
   ifctester, IfcOpenShells egen kontrollør: velg .ids-filen, så får du en rad per krav og element med godkjent, ikke godkjent
   eller ikke relevant og årsaken, samt en opptelling. Filen blir i nettleseren. ifctester følger med appen uten webappen sin, så
   ingenting hentes utover Python selv.
+  Under *IDS i appen* velger du i stedet en av appens egne IDS-filer, for eksempel *Avfallshantering* (se *Materialkartlegging for
+  avfallshåndteringsplanen*), som prøves på samme måte; *Lagre IDS-filen* lagrer den valgte på datamaskinen.
 
 **I Bearbeid** har modellen to handlinger under *Handlinger* (knappen finnes i modellvisningen og i tabellvisningen), i gruppen
 *Modell*:
@@ -288,6 +292,57 @@ over gjennomsnittet; verktøyet regner med den konservative verdien og viser den
 
 Hver visning kan lagres som datasett. Kilde: Boverket, klimadatabasen (åpne data, se [licenser.md](licenser.md)).
 
+## Materialkartlegging for avfallshåndteringsplanen
+
+Verktøyet **Materialkartlegging** i Analyser (fanen Mengder) samler det modellen vet, som grunnlag for avfallshåndteringsplanen
+(avfallshanteringsplan). Etter den svenske PBL 10 kap. 8 a §, som gjelder siden 1. juli 2026, skal byggherren sørge for at det
+finnes en avfallshåndteringsplan med opplysninger om
+
+1. hvilke byggevarer som kan ombrukes, og hvordan de tas hånd om, og
+2. hvilket avfall tiltaket kan gi opphav til, og hvordan det tas hånd om, særlig hvordan byggherren vil gjøre mulig a)
+   materialgjenvinning av høy kvalitet og b) sikker håndtering og fjerning av farlige stoffer.
+
+Planen kreves ikke når den åpenbart ikke trengs, og den kontrollansvarlige (kontrollansvarig) har samme oppgave for den som for
+kontrollplanen. Boverket foreslo planen i rapport 2024:26 under navnet ressursforvaltningsplan. Verktøyet gir grunnlaget; planen og
+vurderingene er byggherrens. Visningene følger bestemmelsens to punkter.
+
+**1. Byggevarer som kan ombrukes.** Bygningsdelene med en type, de med produktdata først: produsent (Manufacturer), modell
+(ModelLabel) og GTIN (GlobalTradeItemNumber) fra Pset_ManufacturerTypeInformation, helst på typen, og serienummer (SerialNumber) og
+strekkode (BarCode) fra Pset_ManufacturerOccurrence på bygningsdelen. Kontrollsifferet i GTIN prøves etter GS1; en feil vises, men
+rettes aldri. Hver rad har laget i bygningen, materialene, fraksjonene og de farlige stoffene modellen oppgir. IFC2X3 har ikke GTIN.
+
+**2 a. Avfall per fraksjon og per lag og fraksjon.** Hvert materiale i hver bygningsdel får en avfallsfraksjon etter den svenske
+avfallsforskriften (avfallsförordningen 3 kap. 10 §), som i tillegg til farlig avfall krever at tre, mineral (betong, tegl, klinker,
+keramikk og stein), metall, glass, plast og gips sorteres ut. Fraksjonen tas først fra materialets kategori i IFC
+(IfcMaterial.Category, for eksempel concrete, steel, wood, glass, gypsum eller plastic) og ellers fra materialets navn (betong,
+limtre, gipsplate, isolerglass og lignende, på de nordiske språkene og engelsk). Mineralull, glassull og steinull hører verken til
+mineral eller glass, og kompositter som glassfiberarmert plast, navn som oppgir flere fraksjoner (tre/aluminium) eller ingen, og
+bygningsdeler uten materiale blir *Annet / avgjøres*. Kolonnen *Regel* viser hva som avgjorde. Summene gir bygningsdeler, rader,
+volum, areal og masse per fraksjon og per lag i bygningen (klimaerklæringens seks lag) og fraksjon. Ingen klassifikasjon leses.
+
+**2 b. Farlige stoffer.** Bare det en egenskap i modellen sier: en egenskap der navnet eller settet gjelder farlige stoffer eller
+farlig avfall (for eksempel Pset_EnvironmentalImpactValues.HazardousWaste, eller et eget sett med asbest eller PCB), og der verdien
+sier ja, på bygningsdelen, typen eller materialet. Appen gjetter aldri. Oppgir modellen ingen farlige stoffer, sier verktøyet det,
+og en kartlegging av farlige stoffer trengs likevel.
+
+**Alle bygningsdeler og materialer** er radene bak summene: mengden, materialets kategori, tykkelsen, fraksjonen med regelen, laget,
+densiteten og massen.
+
+**Mengder og masse.** Mengdene er klimaerklæringens: filens mengder, ellers geometrien for enkle ekstruderinger, og en bygningsdel
+med materialsjikt deles etter sjiktenes tykkelse; dører og vinduer telles her per materiale. Massen er filens vekt, ellers volumet
+ganger materialets densitet (Pset_MaterialCommon.MassDensity i kg/m³). Mangler densiteten, har raden ingen masse, og merknaden sier
+hvor mange rader det gjelder.
+
+**IDS for avfallshåndtering.** *IDS Avfallshåndtering* åpner IDS-kontroll med appens IDS-fil `SE-Dataspatium_Avfallshantering.ids`
+og prøver modellen mot den i appens Python: et materiale med en av IFCs anbefalte kategorier på hver bygningsdel; basismengden for
+volum på vegger, dekker, bjelker, søyler, staver og plater (IfcMember og IfcPlate), fundamenter og trappeløp og for areal på dører,
+vinduer, kledninger, tak og glassfasader; produsent og modell på dører, vinduer og installasjoner og GTIN i riktig form når det
+finnes. Filen gjelder IFC4 og IFC4.3, fordi IFC2X3 mangler materialkategori, maler for basismengder og GTIN. ifctester godkjenner
+materialkravet når minst ett av bygningsdelens materialer har en kategori, og sammensatte bygningsdeler (tak, trapper, ramper og
+glassfasader) prøves i delene sine.
+
+Hver visning kan lagres som datasett. Ingenting hentes fra nettet.
+
 ## DXF-tegninger
 
 En DXF-fil blir en tabell med ett tegningsobjekt per rad (type, lag, farge, lengde, areal, tekst og plassering) og en
@@ -320,6 +375,42 @@ samtykke.
 
 Modellen blir et vanlig modelldatasett. Åpne det i Bearbeid og bygg i det med *Endre med AI*, for eksempel «to etasjer og et
 rutenett på 6×4 m med yttervegger langs rutenettet». Det kan eksporteres som IFC og publiseres på en Dataregium som andre modeller.
+
+### Betegnelser, numre og plassering
+
+Under *Betegnelser og id* i skjemaet fyller du ut det du vet; bare det skrives i filen:
+- *Eiendomsbetegnelse* blir tomtas navn (IfcSite.Name) og eiendoms-id-en (Pset_LandRegistration.LandID); det du skrev under
+  *Tomt*, blir da tomtas lange navn.
+- *Bygningsnummer* blir bygningens navn (IfcBuilding.Name) og *Bygningens navn* dens lange navn (LongName).
+- *Nasjonal bygnings-id* skrives i Pset_BuildingCommon.BuildingID med IsPermanentID, slik at modellen og registrene snakker om
+  samme bygning.
+- *Første etasjes beskrivelse* blir etasjens Description, for eksempel at den er inngangsplan.
+- *Forfatter* og *Organisasjon* skrives i IFC-filens hode bare hvis du fyller dem ut; et navn er en personopplysning.
+
+Modellen får også konteksten Axis for veggenes akser fra start, og rapporten minner om at modellen mangler koordinatsystem
+(buildingSMART-regelen GRF003) til `set_site` har gitt den et.
+
+AI-en nummererer etasjene i høydeorden for hele prosjektet (Plan 1, Plan 2 …) og skriver inngangsplanet i etasjens beskrivelse;
+`create_storeys_and_grid` tar `description` og `long_name` per etasje. `create_spaces` tar et `number` per rom, unikt i
+bygningen: nummeret blir rommets Name, romnavnet dets LongName og `long_name` dets beskrivelse, og en romtype (`room_type`) skrives
+som ObjectType med PredefinedType USERDEFINED. Uten nummer gjelder navnene som før.
+
+`set_site` kjenner de sammensatte EPSG-kodene for SWEREF 99 med høyder i RH 2000: 5845 for SWEREF 99 TM og 5846–5857 for de tolv
+lokale sonene i samme rekkefølge som 3007–3018 (for eksempel 5850 for SWEREF 99 18 00 + RH 2000). For en bygning i Sverige
+foretrekker AI-en den lokale sonen når koordinatene er i den; den regner aldri om koordinater selv. Koordinatsystemet
+(IfcProjectedCRS) får en beskrivelse i klartekst og, når koden ikke angir høydesystemet, RH 2000 som VerticalDatum (et annet med
+`vertical_datum`). Kartenheten er alltid meter og konverteringens Scale filens lengdeenhet i meter (GRF005), så en modell i
+millimeter får Scale 0,001. Hver overordnet kontekst (Model, Plan) får sin egen IfcMapConversion med de samme verdiene (GRF001).
+Bygningens høyde over havet står i konverteringens OrthogonalHeight; i IFC4 og IFC2X3 også i IfcBuilding.ElevationOfRefHeight, som
+IFC4X3 har faset ut.
+
+Filhodet: hver IFC-fil appen skriver eller lagrer, får FILE_DESCRIPTION med visningsdefinisjon og nivået 2;1, og FILE_NAME med
+filens navn, tiden etter ISO 8601, preprosessoren (Dataspatium og IfcOpenShell med versjoner) og opprinnelsesprogrammet i formen
+*Dataspatium - Dataspatium - versjon*. Visningsdefinisjonen er CoordinationView_V2.0 for IFC2X3 og ReferenceView_V1.2 for IFC4.
+IFC4X3 har ingen offisiell visning for en modell i hele skjemaet (Reference View utelater blant annet ekstruderte legemer), så
+hodet sier `notYetAssigned` i stedet for en visning filen ikke følger; buildingSMARTs valideringstjeneste markerer det, og en
+mottaker som krever en visning, angir den. En fil appen endrer, beholder sin egen forfatter, organisasjon og sitt
+opprinnelsesprogram, og sin visning når valideringstjenesten godtar den.
 
 ## En ny bygning fra en brief
 
@@ -444,6 +535,61 @@ hjørner i andre vinkler enn rette kobles slik de er tegnet. Til slutt får de v
 endringssettet har laget eller endret, basismengder (Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities,
 Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) beregnet ut fra målene, med åpningene trukket fra og med navnene fra skjemaets maler.
 
+Verktøyet `create_element` lager bygningsdelene som ikke har et eget verktøy, av den mest spesifikke IFC-klassen og aldri som
+IfcBuildingElementProxy: søyler (IfcColumn), bjelker (IfcBeam), staver som stendere og sperrer (IfcMember), fundamenter (IfcFooting),
+peler (IfcPile), kledninger som gulvbelegg, himlinger, fasadekledning, taktekking og isolasjon (IfcCovering), rekkverk (IfcRailing),
+skorsteiner (IfcChimney), solskjerming (IfcShadingDevice), sanitærutstyr (IfcSanitaryTerminal), møbler (IfcFurniture, i IFC2X3
+IfcFurnishingElement) og rette trapper (IfcStair). Klassen og dens PredefinedType kontrolleres mot modellens skjema som i de andre
+verktøyene. Kroppen er en ekstrudert profil: et rektangel, en sirkel eller et omriss i etasjens plan, stående oppover fra en høyde over
+etasjen (søyler, fundamenter, kledninger, møbler) eller liggende i en retning (bjelker, staver og rekkverk). Elementet ligger i etasjen
+eller er en del av en helhet (`part_of`), for eksempel et rekkverk i en trapp, og ligger da i helheten og i dens etasje, men ikke
+direkte i etasjen. En kledning kan angi hva den kler (`host`): en bygningsdel (IfcRelCoversBldgElements) eller et rom
+(IfcRelCoversSpaces). En rett trapp (STRAIGHT_RUN_STAIR) består av et skrånende trappeløp (IfcStairFlight, STRAIGHT) med antall trinn,
+opptrinn, inntrinn og bredde som attributter og i Pset_StairFlightCommon og på forespørsel en repos (IfcSlab, LANDING) øverst; det
+siste opptrinnet er reposens eller dekkets forkant.
+
+`define_type` lager også typer for kledninger (med sjikt, som en dekketype), søyler, bjelker, fundamenter, rekkverk, dører og vinduer
+(IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType og IfcWindowType; i IFC2X3 IfcDoorStyle og
+IfcWindowStyle) med materiale. En dørtype har sin åpningsmåte (OperationType, for eksempel SINGLE_SWING_LEFT, med hengslene til venstre
+sett i retningen døren åpnes), en vindustype sin oppdeling (PartitioningType, for eksempel SINGLE_PANEL eller DOUBLE_PANEL_VERTICAL),
+og begge bredde, høyde og karmdybde. Geometrien med karm, dørblad eller rammer og glass tegnes av IfcOpenShell én gang på typen og
+gjenbrukes av hver dør og hvert vindu av typen (mappet geometri), og typen får karmens og dørbladenes egenskaper
+(IfcDoorLiningProperties, IfcDoorPanelProperties, IfcWindowLiningProperties). `create_opening` tar typen: døren eller vinduet får
+typens størrelse og geometri og står i liv med veggens venstre side, sett fra veggens start mot slutten (innsiden av en yttervegg
+tegnet mot klokken), og en dør åpnes mot den siden, en venstrehengslet med hengslene på den siden av åpningen som er nærmest veggens
+start. Med `side: right` snus den: i liv med høyre side og åpnet mot den. En karm like dyp som veggen er tykk, fyller hele smygen.
+Verktøyet `edit_element` endrer et eksisterende element på stedet, slik at det beholder sin GlobalId hele levetiden: en veggs start,
+slutt, tykkelse, høyde og type, et dekkes omriss, tykkelse og type, en åpnings plassering, bredde, høyde og underkant sammen med døren
+eller vinduet i den, et taks takvinkel, takutstikk og gesimshøyde, og navnet på ethvert element. Målene leses ut fra elementets egen
+geometri (veggens start og slutt fra aksen), og kroppen, aksen, sjiktene, basismengdene og veggskjøtene lages på nytt. Leseverktøyet
+`get_parameters` viser AI-en målene som `edit_element` endrer, lest på samme måte, slik at den kan endre et element den ikke selv har
+laget. Veggens åpninger beholder plassen sin langs veggen så lenge den beholder retningen (ellers avstanden fra starten) og må få plass
+i den, og taket beholder rektangelet sitt. En vegg eller et dekke med type får tykkelsen fra typen, så en tykkere vegg får en annen
+type. Et element som ikke er tegnet slik skriveverktøyene tegner, kan bare få nytt navn, og svaret sier hva AI-en kan gjøre i stedet.
+AI-en endrer derfor elementer i stedet for å slette og lage dem på nytt, og sletter bare når du ber om det. Flytting med
+`transform_elements` skjer i etasjens plan: en dør eller et vindu flyttes med åpningen sin, en flyttet vegg kobles til veggene den
+møter, ingen punkter blir liggende ubrukt, og tomten, bygningen og etasjene flyttes aldri, fordi plasseringen og høydene deres gjelder
+hele prosjektet og bare endres etter avtale.
+Produktidentiteter skriver AI-en bare når du oppgir dem, og den finner aldri på dem: GTIN (GlobalTradeItemNumber), produsent
+(Manufacturer) og modell (ModelLabel) i Pset_ManufacturerTypeInformation på typen, og serienummer (SerialNumber) og strekkode
+(BarCode) i Pset_ManufacturerOccurrence på bygningsdelen. IFC2X3 har ikke GTIN.
+**Bærende, status og egenskaper.** `create_wall` og `create_slab` tar `load_bearing` (bærende eller ikke), og de og `create_roof` tar
+`status` (NEW ny, EXISTING eksisterende, DEMOLISH rives, TEMPORARY midlertidig), men bare når briefen eller du sier det: AI-en gjetter
+aldri, og en digital tvilling av en eksisterende bygning får EXISTING. Verdiene skrives som LoadBearing og Status i Pset_WallCommon,
+Pset_SlabCommon og Pset_RoofCommon, på typen når alle elementer av typen sier det samme, og ellers på elementet; IFC2X3 har ikke
+Status, og rapporten sier det. Når endringssettet kjøres, setter appen selv IsExternal ut fra topologien på veggene det har opprettet
+eller endret: sann langs etasjens ytre grense og usann inne i bygningen, og dørene og vinduene i veggene får veggens verdi. Tak og
+takplater er ytre. En etasje der veggene ikke slutter seg, får ingen IsExternal, og rapporten og AI-ens forhåndsvisning sier hvorfor;
+en verdi som modellen allerede hadde, beholdes. Det er med LoadBearing og IsExternal at klimaerklæringen skiller kategoriene fra
+hverandre.
+`set_properties` prøver et egenskapssett som heter Pset_… eller Qto_…, mot IfcOpenShells maler for modellens skjema: et sett eller en
+egenskap som malen mangler, avvises med de nærmeste navnene, sann og usann, mål og oppramsinger må ha riktig type, og et tall med
+enheten skrevet i verdien («40 dB») avvises. Oppgi bare tallet, lengder i meter, arealer i m², volumer i m³ og vinkler i grader, så
+skriver appen dem i filens enheter. Et sett som heter Qto_…, blir et mengdesett (IfcElementQuantity). Et eget egenskapssett må ikke
+begynne med Pset_ eller Qto_, og AI-en får rådet å kalle det land-opphav-prosjekt_Navn, for eksempel SE-ACME-42_Akustikk, med
+egenskapsnavn i PascalCase uten å, ä og ö. Egenskapene skrives i elementets eget sett, aldri i typens. `assign` tar materialets
+kategori (IfcMaterial.Category, de samme elleve som i `define_type`).
+
 *Forhåndsvis* kjører endringssettet på en kopi av modellen med IfcOpenShell i appens Python (komponentene hentes etter samtykke første
 gang), tegner resultatet i 3D med nytt grønt og endret gult, og viser hva som opprettes, endres og slettes samt skjemakontrollens funn.
 *Godkjenn* gjør endringene til oppskriftstrinnet *AI-endring*: modellen får en ny versjon i arbeidsområdet, tabellene bygges om, og
@@ -526,6 +672,11 @@ bransjepraksis (PSE002, GRF003 og GRF005) gir advarsler, som står for seg. Bare
 fantes i modellen, sperrer ingenting. AI-en får reglene som ikke holder, etter hver forhåndsvisning og retter dem, slik den gjør med
 topologien. Appen har ikke hele regelsettet: GRF005 kjenner koordinatsystemets enhet for de nordiske kodene appen skriver eller ut fra
 dets MapUnit, og SWE001 følger polylinjer, indekserte kurver og sammensatte kurver av dem. Hele settet hører hjemme på serveren.
+
+Derfor skriver appen heller ikke selv det IFC102 faser ut. I IFC4 og senere blir en kledning med `host` en del av bygningsdelen
+den kler (IfcRelAggregates) eller ligger i rommet, i stedet for IfcRelCoversBldgElements og IfcRelCoversSpaces, og trappens antall
+trinn og mål står bare i Pset_StairFlightCommon. I IFC 4.3 står karmens og dørbladenes egenskaper i Pset_DoorLiningProperties,
+Pset_DoorPanelProperties og Pset_WindowLiningProperties, som erstatter IfcDoorLiningProperties og de andre.
 
 *Godkjenn* kjører i tillegg skjemaets EXPRESS-regler (WHERE-regler og funksjoner) med IfcOpenShell; pytest hentes til dem som komponent
 første gang. Et endringssett som bryter en regel modellen oppfylte før, godkjennes ikke, og meldingen nevner regelen; be AI-en rette

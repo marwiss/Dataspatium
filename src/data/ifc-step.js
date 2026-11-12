@@ -5,8 +5,8 @@
  * every entity is, then only the entities that matter are parsed. It gives the file's facts (schema, project, units,
  * counts per entity type) and the tables of a model dataset: the elements with storey, type, material and
  * classification, their properties and quantities (inherited from the type too) and the non-geometric entities with
- * their raw attributes. Quantities are converted to SI units with the project's unit assignment. Geometry is not
- * touched here: it goes through engines/ifc. Standalone worker function: no references outside itself.
+ * their raw attributes. Quantities are converted to SI units with the project's unit assignment. For the review before
+ * sharing it also lists what in the file can be personal data (personalOf). Geometry is not touched here: it goes through engines/ifc. Standalone worker function: no references outside itself.
  */
 (function () {
   'use strict';
@@ -520,9 +520,10 @@
         if (k < 0 || depth > 6) return null;
         var n = nameOfType(k); var a = argsOf(f, k);
         var each = function (list, fn) { return refs(list).map(function (x) { var j = at(x); return j < 0 ? null : fn(argsOf(f, j)); }).filter(Boolean); };
-        // Every item: [name, thickness m, fraction, the item's category (layer, profile, constituent), the material's own category].
-        var item = function (matRef, thickness, fraction, category) { var m = materialOfRef(matRef); return [m[0], thickness, fraction, category, m[1]]; };
-        if (n === 'IFCMATERIAL') return { kind: 'single', items: [[String(a[0] || ''), null, null, null, text(a[2])]] };
+        // Every item: [name, thickness m, fraction, the item's category (layer, profile, constituent), the material's own category,
+        // the IfcMaterial's id (for its properties in materialProps)].
+        var item = function (matRef, thickness, fraction, category) { var m = materialOfRef(matRef); return [m[0], thickness, fraction, category, m[1], at(matRef) >= 0 ? matRef : null]; };
+        if (n === 'IFCMATERIAL') return { kind: 'single', items: [[String(a[0] || ''), null, null, null, text(a[2]), id]] };
         if (n === 'IFCMATERIALLAYERSETUSAGE' || n === 'IFCMATERIALPROFILESETUSAGE' || n === 'IFCMATERIALPROFILESETUSAGETAPERING') return materialSet(ref(a[0]), depth + 1);
         if (n === 'IFCMATERIALLAYERSET') return { kind: 'layers', items: each(a[0], function (la) { var th = num(la[1]); return item(ref(la[0]), th === null ? null : th * L, null, text(la[5])); }) };
         if (n === 'IFCMATERIALPROFILESET') return { kind: 'profiles', items: each(a[2], function (pa) { return item(ref(pa[2]), null, null, text(pa[5])); }) };
@@ -657,7 +658,147 @@
         var hostId = opening !== null && openingHost.has(opening) ? openingHost.get(opening) : null;
         out.push([el.id, enumFrom(a, 8), typePredefined, mat, overall, volume, flags.clipped, geometry, parentOf.has(el.id) ? parentOf.get(el.id) : null, hasParts.has(el.id), voids.get(el.id) || 0, hostId]);
       }
-      return { elements: out };
+      return { elements: out, materialProps: materialPropsOf(f) };
+    }
+
+    /**
+     * The properties of the materials, for the material inventory (analysis/inventory): IFC4's IfcMaterialProperties (such as
+     * Pset_MaterialCommon with MassDensity), IFC2X3's IfcExtendedMaterialProperties, and the MassDensity of IFC2X3's
+     * IfcGeneralMaterialProperties under Pset_MaterialCommon. One row per single or enumerated value: [material id, set, name, value].
+     */
+    function materialPropsOf(f) {
+      var wanted = {};
+      f.typeNames.forEach(function (n, i) { if (n === 'IFCMATERIALPROPERTIES' || n === 'IFCEXTENDEDMATERIALPROPERTIES' || n === 'IFCGENERALMATERIALPROPERTIES') wanted[i] = n; });
+      var out = [];
+      if (!Object.keys(wanted).length) return out;
+      var ref = function (v) { return v && v.r !== undefined ? v.r : null; };
+      var at = function (id) { var k = id === null || id === undefined ? -1 : f.indexOf[id]; return k === undefined || k < 0 ? -1 : k; };
+      var valueOf = function (k) {
+        var n = f.typeNames[f.types[k]]; var a = argsOf(f, k);
+        if (n !== 'IFCPROPERTYSINGLEVALUE' && n !== 'IFCPROPERTYENUMERATEDVALUE') return null;
+        var v = plain(a[2]);
+        return [String(a[0] || ''), Array.isArray(v) ? v.join(', ') : v];
+      };
+      for (var k = 0; k < f.count; k++) {
+        var n = wanted[f.types[k]];
+        if (!n) continue;
+        var a = argsOf(f, k);
+        if (n === 'IFCGENERALMATERIALPROPERTIES') { var d = plain(a[3]); if (ref(a[0]) !== null && typeof d === 'number') out.push([ref(a[0]), 'Pset_MaterialCommon', 'MassDensity', d]); continue; }
+        var four = n === 'IFCMATERIALPROPERTIES';
+        var material = ref(four ? a[3] : a[0]); var set = String((four ? a[0] : a[3]) || '');
+        var list = four ? a[2] : a[1];
+        if (material === null || !Array.isArray(list)) continue;
+        for (var i = 0; i < list.length; i++) {
+          var j = at(ref(list[i]));
+          var pv = j >= 0 ? valueOf(j) : null;
+          if (pv && pv[0] && pv[1] !== null && pv[1] !== undefined && pv[1] !== '') out.push([material, set, pv[0], pv[1]]);
+        }
+      }
+      return out;
+    }
+
+    /**
+     * What in the file can be personal data, for the review before sharing: the people (IfcPerson with names, identification and
+     * addresses), the organisations' addresses (postal and telecom), the owner histories whose user is a person, the header's
+     * author, organisation and authorisation, the actors and occupants, and the strings in Name, Description and properties that
+     * may hold an e-mail address or an identity number ('@' or eight digits; the page confirms them with the app's own detectors).
+     * The app's own neutral owner (identification "user", family name "User", no address) is not a person.
+     */
+    function personalOf(f) {
+      var at = function (id) { var k = id === null || id === undefined ? -1 : f.indexOf[id]; return k === undefined || k < 0 ? -1 : k; };
+      var ref = function (v) { return v && v.r !== undefined ? v.r : null; };
+      var refs = function (v) { return Array.isArray(v) ? v.map(ref).filter(function (x) { return x !== null; }) : []; };
+      var str = function (v) { return typeof v === 'string' ? v.trim() : (v && v.t !== undefined && typeof v.v === 'string' ? v.v.trim() : ''); };
+      var strs = function (v) { return Array.isArray(v) ? v.map(str).filter(Boolean) : (str(v) ? [str(v)] : []); };
+      var typeAt = function (k) { return k < 0 ? '' : f.typeNames[f.types[k]]; };
+      var PLACEHOLDER = /^(none|unknown|undefined|not defined|not specified|nobody|n\/a|-|\?)$/i;
+      var people = []; var orgs = []; var histories = []; var actors = []; var texts = []; var seenText = new Set();
+      var PROPERTY = /^IFC(PROPERTYSINGLEVALUE|PROPERTYENUMERATEDVALUE|PROPERTYLISTVALUE|PROPERTYBOUNDEDVALUE|PROPERTYTABLEVALUE|COMPLEXPROPERTY)$/;
+      var leaves = function (v, out) {
+        if (typeof v === 'string') out.push(v);
+        else if (Array.isArray(v)) v.forEach(function (x) { leaves(x, out); });
+        else if (v && v.t !== undefined) leaves(v.v, out);
+        return out;
+      };
+      var candidate = function (s) {
+        if (typeof s !== 'string' || s.length < 6 || seenText.has(s) || texts.length >= 20000) return;
+        var digits = 0;
+        for (var i = 0; i < s.length && digits < 8; i++) { var c = s.charCodeAt(i); if (c >= 48 && c <= 57) digits++; }
+        if (s.indexOf('@') < 0 && digits < 8) return;
+        seenText.add(s); texts.push(s);
+      };
+      for (var k = 0; k < f.count; k++) {
+        var tn = f.typeNames[f.types[k]];
+        if (tn === 'IFCPERSON') people.push(k);
+        else if (tn === 'IFCORGANIZATION') orgs.push(k);
+        else if (tn === 'IFCOWNERHISTORY') histories.push(k);
+        else if (tn === 'IFCACTOR' || tn === 'IFCOCCUPANT') actors.push(k);
+        var rooted = f.b[f.starts[k] + 1] === 39 && f.b[f.starts[k] + 24] === 39;
+        if (rooted) { var ra = argsOf(f, k); candidate(ra[2]); candidate(ra[3]); }
+        else if (PROPERTY.test(tn)) leaves(argsOf(f, k), []).forEach(candidate);
+      }
+      /** The postal and telecom addresses of a person or organisation, as short words: e-mail, phone, street and town. */
+      var addressWords = function (list) {
+        var out = [];
+        refs(list).forEach(function (x) {
+          var j = at(x); var t = typeAt(j); if (j < 0) return;
+          var a = argsOf(f, j);
+          if (t === 'IFCTELECOMADDRESS') out.push.apply(out, strs(a[6]).concat(strs(a[3]), strs(a[4]), strs(a[5]), strs(a[7]), strs(a[8])));
+          else if (t === 'IFCPOSTALADDRESS') out.push.apply(out, strs(a[4]).concat(strs(a[3]), strs(a[5]), strs(a[8]), strs(a[6])));
+        });
+        return out.filter(Boolean);
+      };
+      var personOf = function (j) {
+        var a = argsOf(f, j);
+        var names = strs(a[4]).concat(strs(a[2]), strs(a[3]), strs(a[1]), strs(a[5]));
+        var ident = str(a[0]);
+        var addresses = addressWords(a[7]);
+        var neutral = (!ident || ident === 'user') && !addresses.length && names.every(function (n) { return n === 'User'; });
+        return { id: f.ids[j], label: names.filter(function (n) { return n !== 'User' || ident !== 'user'; }).join(' ') || ident || ('#' + f.ids[j]), neutral: neutral, addresses: addresses };
+      };
+      var orgName = function (j) { var a = argsOf(f, j); return str(a[1]) || str(a[0]) || ('#' + f.ids[j]); };
+      /** Who a reference names: a person, an organisation, or both (IfcPersonAndOrganization); null for the neutral owner. */
+      var whoOf = function (id) {
+        var j = at(id); var t = typeAt(j);
+        if (t === 'IFCPERSON') { var p = personOf(j); return p.neutral ? null : p.label; }
+        if (t === 'IFCORGANIZATION') return orgName(j);
+        if (t === 'IFCPERSONANDORGANIZATION') {
+          var a = argsOf(f, j); var pj = at(ref(a[0])); var oj = at(ref(a[1]));
+          var person = pj >= 0 ? personOf(pj) : null;
+          if (!person || person.neutral) return null;
+          return person.label + (oj >= 0 ? ' (' + orgName(oj) + ')' : '');
+        }
+        return null;
+      };
+      var out = { persons: [], organizations: [], owner: { count: 0, users: [], applications: [] }, header: [], actors: [], texts: texts };
+      people.forEach(function (j) { var p = personOf(j); if (!p.neutral) out.persons.push({ id: p.id, label: p.label }); });
+      orgs.forEach(function (j) {
+        var words = addressWords(argsOf(f, j)[4]);
+        if (words.length) out.organizations.push({ id: f.ids[j], label: orgName(j) + ': ' + words.slice(0, 2).join(', '), addresses: refs(argsOf(f, j)[4]).length });
+      });
+      var users = new Set(); var apps = new Set();
+      histories.forEach(function (j) {
+        var a = argsOf(f, j);
+        var who = [whoOf(ref(a[0])), whoOf(ref(a[5]))].filter(Boolean);
+        if (!who.length) return;
+        out.owner.count++;
+        who.forEach(function (w) { users.add(w); });
+        [ref(a[1]), ref(a[6])].forEach(function (x) { var aj = at(x); if (typeAt(aj) === 'IFCAPPLICATION') { var app = argsOf(f, aj); apps.add([str(app[2]), str(app[1])].filter(Boolean).join(' ')); } });
+      });
+      out.owner.users = Array.from(users); out.owner.applications = Array.from(apps).filter(Boolean);
+      actors.forEach(function (j) {
+        var a = argsOf(f, j);
+        out.actors.push({ id: f.ids[j], type: prettyType(typeAt(j)), label: [str(a[2]), whoOf(ref(a[5]))].filter(Boolean).join(': ') || ('#' + f.ids[j]) });
+      });
+      // The header's FILE_NAME: name, time stamp, (author), (organisation), preprocessor, originating system, authorisation.
+      var h = f.header; var fn = h.search(/FILE_NAME\s*\(/);
+      if (fn >= 0) {
+        try {
+          var fa = argsOf({ b: f.b, starts: [h.indexOf('(', fn)], ends: [h.length] }, 0);
+          out.header = strs(fa[2]).concat(strs(fa[3]), strs(fa[6])).filter(function (s) { return !PLACEHOLDER.test(s); });
+        } catch (_e) { out.header = []; }
+      }
+      return out;
     }
 
     var parts = null;
@@ -669,6 +810,8 @@
           self.postMessage({ id: msg.id, ok: true, result: summaryOf(scan(new Uint8Array(msg.bytes), report)) });
         } else if (msg.type === 'climate') {
           self.postMessage({ id: msg.id, ok: true, result: climateOf(scan(new Uint8Array(msg.bytes), report)) });
+        } else if (msg.type === 'personal') {
+          self.postMessage({ id: msg.id, ok: true, result: personalOf(scan(new Uint8Array(msg.bytes), report)) });
         } else if (msg.type === 'tables') {
           var t = tablesOf(scan(new Uint8Array(msg.bytes), report), report);
           parts = { queue: [['elements', t.elements], ['properties', t.properties], ['quantities', t.quantities], ['entities', t.entities]], at: 0, summary: t.summary };
@@ -746,15 +889,28 @@
     }
     /**
      * The facts the climate declaration reads from the file, one row per element: [id, predefined, typePredefined, materials
-     * ({kind, items: [name, thickness m, fraction, item category, material category][]}), overall [height, width] m, extruded
-     * volume m³, clipped, geometry ('none'|'extrusion'|'other'), parent element id, has parts, openings, host element id (the
-     * element a door or window fills an opening in)]. The worker stays for the next call.
-     * @param {Uint8Array} bytes @param {{onProgress?: (share: number) => void}} [options] @returns {Promise<{elements: any[][]}>}
+     * ({kind, items: [name, thickness m, fraction, item category, material category, material id][]}), overall [height, width] m,
+     * extruded volume m³, clipped, geometry ('none'|'extrusion'|'other'), parent element id, has parts, openings, host element id
+     * (the element a door or window fills an opening in)]; and the materials' properties, [material id, set, name, value] (the
+     * mass density in the file's values, taken as kg/m³). The worker stays for the next call.
+     * @param {Uint8Array} bytes @param {{onProgress?: (share: number) => void}} [options] @returns {Promise<{elements: any[][], materialProps: any[][]}>}
      */
     async function climate(bytes, options = {}) {
       const copy = bytes.slice().buffer;
       return call({ type: 'climate', bytes: copy }, options.onProgress, [copy]);
     }
-    return { summary, tables, climate, stop };
+    /**
+     * What in an IFC file can be personal data (the review before sharing, data/share-scan): `persons` and `organizations` (with
+     * addresses) as {id, label}, `owner` {count, users, applications} for the owner histories whose user is a person, `header` the
+     * FILE_NAME author, organisation and authorisation, `actors` (IfcActor, IfcOccupant) as {id, type, label}, and `texts`, the
+     * strings in Name, Description and properties that may hold an e-mail address or an identity number. The worker stays.
+     * @param {Uint8Array} bytes @param {{onProgress?: (share: number) => void}} [options]
+     * @returns {Promise<{persons: any[], organizations: any[], owner: {count: number, users: string[], applications: string[]}, header: string[], actors: any[], texts: string[]}>}
+     */
+    async function personal(bytes, options = {}) {
+      const copy = bytes.slice().buffer;
+      return call({ type: 'personal', bytes: copy }, options.onProgress, [copy]);
+    }
+    return { summary, tables, climate, personal, stop };
   });
 })();

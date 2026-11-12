@@ -125,6 +125,9 @@ In R and Python `dm_read()` gives the elements, `dm_read_properties()` the prope
 - **Properties**: which values a property has, and on how many elements of each type.
 - **Entities**: how many entities of each kind the file consists of.
 - **Climate declaration**: a preliminary climate declaration from the model per category and layer, see *Preliminary climate declaration* below.
+- **Material inventory**: a basis for the waste management plan from the model, with the building products that can be reused, the
+  waste per fraction and layer and the hazardous substances the model names, see *Material inventory for the waste management plan*
+  below.
 
 Every result can be saved as a dataset.
 
@@ -149,6 +152,8 @@ browser. Nothing is sent anywhere; the model does not leave the computer.
   ifctester, IfcOpenShell's own checker: choose the .ids file and you get a row per requirement and element with passed, failed
   or not applicable and the reason, plus a tally. The file stays in the browser. ifctester travels with the app without its web
   app, so nothing is fetched beyond Python itself.
+  Under *IDS in the app* you choose one of the app's own IDS files instead, for instance *Avfallshantering* (see *Material inventory
+  for the waste management plan*), which is checked the same way; *Save the IDS file* saves the chosen one on the computer.
 
 **In Process** the model has two actions under *Actions* (the button is in the model view and in the table view), in the group
 *Model*:
@@ -296,6 +301,59 @@ the typical one when asked.
 
 Every view can be saved as a dataset. Source: Boverket, the climate database (open data, see [licenser.md](licenser.md)).
 
+## Material inventory for the waste management plan
+
+The tool **Material inventory** in Analyse (the Quantities tab) gathers what the model knows as a basis for the waste management
+plan (avfallshanteringsplan). Under the Swedish PBL 10 kap. 8 a §, in force since 1 July 2026, the developer must make sure there is
+a waste management plan stating
+
+1. which building products can be reused and how they are taken care of, and
+2. which waste the measure can give rise to and how it is taken care of, in particular how the developer intends to make possible a)
+   high-quality material recycling and b) the safe handling and removal of hazardous substances.
+
+No plan is needed when it is obviously not needed, and the certified inspector (kontrollansvarig) has the same task for it as for
+the control plan. Boverket proposed the plan in its report 2024:26 under the name resource management plan. The tool gives the
+basis; the plan and the assessments are the developer's. The views follow the provision's two points.
+
+**1. Building products that can be reused.** The elements with a type, those with product data first: the manufacturer
+(Manufacturer), the model (ModelLabel) and the GTIN (GlobalTradeItemNumber) from Pset_ManufacturerTypeInformation, preferably on the
+type, and the serial number (SerialNumber) and barcode (BarCode) from Pset_ManufacturerOccurrence on the element. The GTIN's check
+digit is checked by GS1's rule; an error is shown but never mended. Every row has the layer of the building, the materials, the
+fractions and the hazardous substances the model names. IFC2X3 has no GTIN.
+
+**2 a. Waste per fraction and per layer and fraction.** Every material of every element gets a waste fraction of the Swedish Waste
+Ordinance (avfallsförordningen 3 kap. 10 §), which, besides hazardous waste, requires wood, mineral (concrete, brick, clinker,
+ceramics and stone), metal, glass, plastic and gypsum to be sorted out. The fraction comes first from the material's category in IFC
+(IfcMaterial.Category, for instance concrete, steel, wood, glass, gypsum or plastic) and otherwise from the material's name
+(concrete, glulam, plasterboard, insulating glass and the like, in the Nordic languages and English). Mineral wool, glass wool and
+stone wool belong to neither mineral nor glass, and composites such as glass-fibre reinforced plastic, names that name several
+fractions (wood/aluminium) or none, and elements without a material become *Other / to decide*. The column *Rule* shows what
+decided. The sums give elements, rows, volume, area and mass per fraction, and per layer of the building (the climate declaration's
+six layers) and fraction. No classification is read.
+
+**2 b. Hazardous substances.** Only what a property in the model says: a property whose name or set is about hazardous substances or
+hazardous waste (for instance Pset_EnvironmentalImpactValues.HazardousWaste, or an own set with asbestos or PCB) and whose value
+says yes, on the element, the type or the material. The app never guesses. When the model names no hazardous substances the tool
+says so, and an inventory of hazardous substances is still needed.
+
+**All elements and materials** are the rows behind the sums: the quantity, the material's category, the thickness, the fraction with
+its rule, the layer, the density and the mass.
+
+**Quantities and mass.** The quantities are the climate declaration's: the file's quantities, otherwise the geometry of simple
+extrusions, and an element with material layers is split by the layers' thickness; doors and windows are counted per material here.
+The mass is the file's weight, otherwise the volume times the material's density (Pset_MaterialCommon.MassDensity in kg/m³). Without
+a density the row has no mass, and the note says how many rows that is.
+
+**IDS for waste management.** *IDS waste management* opens the IDS check with the app's IDS file
+`SE-Dataspatium_Avfallshantering.ids` and checks the model against it in the app's Python: a material with one of IFC's recommended
+categories on every element; the base quantity for volume on walls, slabs, beams, columns, members and plates, footings and stair
+flights, and for area on doors, windows, coverings, roofs and curtain walls; the manufacturer and the model on doors, windows and
+installations, and a GTIN of the right form when there is one. The file is for IFC4 and IFC4.3, since IFC2X3 has no material
+category, no templates for base quantities and no GTIN. ifctester passes the material requirement when at least one of the element's
+materials has a category, and composed elements (roofs, stairs, ramps and curtain walls) are checked in their parts.
+
+Every view can be saved as a dataset. Nothing is fetched from the network.
+
 ## DXF drawings
 
 A DXF file becomes a table with one drawing object per row (type, layer, colour, length, area, text and position) and an
@@ -328,6 +386,42 @@ first time, Python and IfcOpenShell are fetched after consent.
 
 The model becomes an ordinary model dataset. Open it in Process and build in it with *Change with AI*, for example "two storeys and
 a 6×4 m grid with external walls along the grid". It can be exported as IFC and published to a Dataregium like other models.
+
+### Designations, numbers and place
+
+Under *Designations and ids* in the form, fill in what you know; only that is written to the file:
+- *Property designation* becomes the site's name (IfcSite.Name) and its land id (Pset_LandRegistration.LandID); what you wrote
+  under *Site* then becomes the site's long name.
+- *Building number* becomes the building's name (IfcBuilding.Name) and *Building name* its long name (LongName).
+- *National building id* is written to Pset_BuildingCommon.BuildingID with IsPermanentID, so that the model and the registers mean
+  the same building.
+- *First storey's description* becomes the storey's Description, for example that it is the entrance level.
+- *Author* and *Organisation* are written to the IFC file's header only if you fill them in; a name is personal data.
+
+The model also gets the Axis context for the walls' axes from the start, and the report reminds you that the model has no
+coordinate reference system (buildingSMART rule GRF003) until `set_site` has given it one.
+
+The AI numbers the storeys in order of height for the whole project (Plan 1, Plan 2 …) and writes the entrance level in the
+storey's description; `create_storeys_and_grid` takes `description` and `long_name` per storey. `create_spaces` takes a `number`
+per room, unique in the building: the number becomes the room's Name, the room name its LongName and `long_name` its description,
+and a room type (`room_type`) is written as ObjectType with PredefinedType USERDEFINED. Without a number the names work as before.
+
+`set_site` knows the compound EPSG codes for SWEREF 99 with heights in RH 2000: 5845 for SWEREF 99 TM and 5846–5857 for the twelve
+local zones in the same order as 3007–3018 (for example 5850 for SWEREF 99 18 00 + RH 2000). For a building in Sweden the AI
+prefers the local zone when the coordinates are in it; it never converts coordinates itself. The coordinate reference system
+(IfcProjectedCRS) gets a description in plain words and, when the code does not give the height system, RH 2000 as VerticalDatum
+(another one with `vertical_datum`). The map unit is always the metre and the conversion's Scale the file's length unit in metres
+(GRF005), so a model in millimetres gets Scale 0.001. Every parent context (Model, Plan) gets its own IfcMapConversion with the same
+values (GRF001). The building's height above sea level is the conversion's OrthogonalHeight; in IFC4 and IFC2X3 also
+IfcBuilding.ElevationOfRefHeight, which IFC4X3 has deprecated.
+
+The file header: every IFC file the app writes or saves gets FILE_DESCRIPTION with the view definition and the level 2;1, and
+FILE_NAME with the file's name, the time in ISO 8601, the preprocessor (Dataspatium and IfcOpenShell with their versions) and the
+originating system in the form *Dataspatium - Dataspatium - version*. The view definition is CoordinationView_V2.0 for IFC2X3 and
+ReferenceView_V1.2 for IFC4. IFC4X3 has no official view for a model in the full schema (the Reference View leaves out extruded
+solids among others), so the header says `notYetAssigned` instead of a view the file does not follow; buildingSMART's validation
+service flags it, and a recipient who requires a view names it. A file the app changes keeps its own author, organisation and
+originating system, and its view when the validation service accepts it.
 
 ## A new building from a brief
 
@@ -457,6 +551,62 @@ Finally the walls, slabs, roofs, doors and windows the change set created or cha
 Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities and Qto_WindowBaseQuantities) computed from their dimensions,
 with the openings deducted and with the names of the schema's templates.
 
+The tool `create_element` makes the building elements that have no tool of their own, of the most specific IFC class and never as
+IfcBuildingElementProxy: columns (IfcColumn), beams (IfcBeam), members such as studs and rafters (IfcMember), footings (IfcFooting),
+piles (IfcPile), coverings such as flooring, ceilings, cladding, roofing and insulation (IfcCovering), railings (IfcRailing), chimneys
+(IfcChimney), shading devices (IfcShadingDevice), sanitary terminals (IfcSanitaryTerminal), furniture (IfcFurniture,
+IfcFurnishingElement in IFC2X3) and straight stairs (IfcStair). The class and its PredefinedType are checked against the model's schema
+as in the other tools. The body is an extruded profile: a rectangle, a circle or an outline in the storey's plane, standing up from a
+height above the storey (columns, footings, coverings, furniture) or lying in a direction (beams, members and railings). The element
+lies in the storey, or is a part of a whole (`part_of`), such as a railing of a stair, and then lies in the whole and on its storey but
+not directly in the storey. A covering can name what it covers (`host`): a building element (IfcRelCoversBldgElements) or a space
+(IfcRelCoversSpaces). A straight stair (STRAIGHT_RUN_STAIR) is a sloped flight (IfcStairFlight, STRAIGHT) with the number of risers,
+the riser height, the tread length and the width as attributes and in Pset_StairFlightCommon, and on request a landing (IfcSlab,
+LANDING) at the top; the last riser is the front edge of the landing or of the floor above.
+
+`define_type` also makes types for coverings (with layers, as a slab type), columns, beams, footings, railings, doors and windows
+(IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType and IfcWindowType; IfcDoorStyle and
+IfcWindowStyle in IFC2X3), with their material. A door type has its operation (OperationType, such as SINGLE_SWING_LEFT, with the
+hinges on the left as seen in the direction the door opens), a window type its partitioning (PartitioningType, such as SINGLE_PANEL or
+DOUBLE_PANEL_VERTICAL), and both a width, a height and a lining depth. The geometry, with the lining, the door panels or the window
+frames and glazing, is drawn by IfcOpenShell once on the type and reused by every door and window of the type (mapped geometry), and
+the type gets the properties of its lining and door panels (IfcDoorLiningProperties, IfcDoorPanelProperties,
+IfcWindowLiningProperties). `create_opening` takes the type: the door or window gets the type's size and geometry and stands flush with
+the wall's left face, seen from the wall's start toward its end (the inside of an outer wall drawn counter-clockwise), and a door opens
+toward that side, a LEFT door with its hinges at the side of the opening nearest the wall's start. With `side: right` it is turned
+around: flush with the right face and opening toward it. A lining as deep as the wall is thick fills the whole reveal.
+The tool `edit_element` changes an existing element in place, so that it keeps its GlobalId for its whole life: a wall's start, end,
+thickness, height and type, a slab's outline, thickness and type, an opening's position, width, height and sill together with its door
+or window, a roof's pitch, overhang and eaves height, and any element's name. The measures are read from the element's own geometry
+(the wall's start and end from its axis), and the body, the axis, the layers, the base quantities and the wall joins are made anew. The
+read tool `get_parameters` shows the AI the measures `edit_element` changes, read the same way, so that it can change an element it did
+not create itself. The wall's openings keep their place along it as long as it keeps its direction (otherwise their distance from its
+start) and must fit within it, and the roof keeps its rectangle. A typed wall or slab takes its thickness from its type, so a thicker
+wall gets another type. An element not drawn the way the write tools draw it can only be renamed, and the answer says what the AI can
+do instead. The AI therefore changes elements instead of deleting and recreating them, and deletes only when you ask it to. A move with
+`transform_elements` happens in the storey's plane: a door or window moves with its opening, a moved wall is joined with the walls it
+meets, no point is left unused, and the site, the building and the storeys are never moved, since their place and heights belong to the
+whole project and change only by agreement.
+The AI writes product identities only when you give them, and never invents them: the GTIN (GlobalTradeItemNumber), the manufacturer
+(Manufacturer) and the model (ModelLabel) in Pset_ManufacturerTypeInformation on the type, and the serial number (SerialNumber) and
+barcode (BarCode) in Pset_ManufacturerOccurrence on the element. IFC2X3 has no GTIN.
+**Load-bearing, status and properties.** `create_wall` and `create_slab` take `load_bearing` (load-bearing or not), and they and
+`create_roof` take `status` (NEW, EXISTING, DEMOLISH or TEMPORARY), but only when the brief or you say so: the AI never guesses, and a
+digital twin of an existing building gets EXISTING. The values are written as LoadBearing and Status in Pset_WallCommon,
+Pset_SlabCommon and Pset_RoofCommon, on the type when every element of the type says the same and on the element otherwise; IFC2X3 has
+no Status, and the report says so. When the change set runs, the app sets IsExternal itself from the topology on the walls it created
+or changed: true along the storey's outer boundary and false inside the building, and the doors and windows in the walls take their
+wall's value. Roofs and roof slabs are external. A storey whose walls do not close gets no IsExternal, and the report and the AI's
+preview say why; a value the model had already is kept. LoadBearing and IsExternal are what the climate declaration tells its
+categories apart by.
+`set_properties` checks a property set named Pset_… or Qto_… against IfcOpenShell's templates for the model's schema: a set or
+property the template lacks is refused with the nearest names, true and false, measures and enumerations must have the right type, and
+a number with its unit written in the value ("40 dB") is refused. Give the number only, lengths in metres, areas in m², volumes in m³
+and angles in degrees, and the app writes them in the file's units. A set named Qto_… becomes a quantity set (IfcElementQuantity). A
+property set of your own must not start with Pset_ or Qto_, and the AI is advised to name it country-origin-project_Name, for example
+SE-ACME-42_Acoustics, with property names in PascalCase without å, ä and ö. The properties go in the element's own set, never in its
+type's. `assign` takes the material's category (IfcMaterial.Category, the same eleven as in `define_type`).
+
 *Preview* runs the change set on a copy of the model with IfcOpenShell in the app's Python (the components are fetched after consent the
 first time), draws the result in 3D with new elements green and changed ones yellow, and shows what is created, changed and deleted
 together with the schema check's findings. *Approve* makes the changes the recipe step *AI change*: the model gets a new version in the
@@ -540,6 +690,12 @@ errors do; industry practice (PSE002, GRF003 and GRF005) gives warnings, which s
 what the model had already blocks nothing. The AI gets the rules that fail after every preview and mends them, as it does with the
 topology. The app does not have the whole suite: GRF005 knows a coordinate system's unit for the Nordic codes the app writes or from
 its MapUnit, and SWE001 follows polylines, indexed curves and composite curves of them. The whole suite belongs on the server.
+
+That is also why the app itself does not write what IFC102 deprecates. In IFC4 and later a covering with a `host` becomes a part
+of the element it covers (IfcRelAggregates) or lies in the space, instead of IfcRelCoversBldgElements and IfcRelCoversSpaces, and the
+stair's number of steps and measures stand in Pset_StairFlightCommon only. In IFC 4.3 the properties of the lining and the door panels
+stand in Pset_DoorLiningProperties, Pset_DoorPanelProperties and Pset_WindowLiningProperties, which replace IfcDoorLiningProperties and
+the others.
 
 *Approve* also runs the schema's EXPRESS rules (WHERE rules and functions) with IfcOpenShell; pytest is fetched for them as a component
 the first time. A change set that breaks a rule the model met before is not approved, and the message names the rule; ask the AI to

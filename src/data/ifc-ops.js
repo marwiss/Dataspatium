@@ -10,9 +10,9 @@
  * Ändra med AI (ai/write-tools), applied by the wheel's _ifc_changeset with the schema check; `previewChangeset` runs it on a copy.
  * `topologyOf` reads the building's topology (rooms, neighbours, external walls with their facing, open wall ends) from the model;
  * `classSearch` finds the IFC class for a thing and `classReportOf` reports the model's class faults (decision B-57.2).
- * `basicsOf` reads the model's basic requirements (the card Grunduppgifter), and `idsPresets`/`idsPreset` list and read the app's
- * own IDS files (presets/ids). The preview tries buildingSMART's rules, and the approved step also the schema's EXPRESS rules: a
- * change set that breaks one the base kept is refused.
+ * `basicsOf` reads the model's basic requirements (the card Grunduppgifter). The preview tries buildingSMART's rules, and with an
+ * IDS file (analysis/ids-presets) its requirements; the approved step also the schema's EXPRESS rules: a change set that breaks
+ * one the base kept is refused.
  */
 (function () {
   'use strict';
@@ -20,7 +20,6 @@
   D.define('data/ifc-ops', ['data/operations', 'data/datasets', 'data/model'], (ops, datasets, model) => {
     const bridge = () => D.require('data/python-bridge').bridge;
     const lines = (prefix, text) => String(text).split('\n').map((l) => prefix + l);
-    const IDS_PREFIX = 'presets/ids/';
 
     /** The model dataset of the operation (IFC, not DXF). */
     async function modelOf(ctx) {
@@ -170,17 +169,18 @@
       const handle = await datasets.ensureOpen(datasetId);
       return (await bridge().runIfcBasics(await handle.engine.export())) || {};
     }
-    /** The app's own IDS files (presets/ids), as asset names in order. @returns {string[]} */
-    function idsPresets() { return D.assets.names(IDS_PREFIX).filter((n) => n.endsWith('.ids')).sort(); }
     /**
-     * One of the app's IDS files by its asset name or file name, as the name and text the preview and the IDS tool take.
-     * @param {string} name @returns {Promise<{name: string, text: string}>}
+     * The measures edit_element reads of elements, for the read tool get_parameters (python/ `_ChangeSet.parameters`): per element
+     * its kind and a wall's start, end, thickness, height and type, a slab's outline, thickness and type, an opening's offset, width,
+     * height and sill, a roof's shape, pitch, overhang and base. Python starts as for classSearch; the dataset is untouched.
+     * @param {string} datasetId @param {Array<number|string>} ids STEP ids or GlobalIds @returns {Promise<any[]>}
      */
-    async function idsPreset(name) {
-      const asset = String(name).startsWith(IDS_PREFIX) ? String(name) : IDS_PREFIX + String(name);
-      if (!idsPresets().includes(asset)) throw new Error(D.t('model.ids.preset.missing', { name: String(name) }));
-      return { name: asset.slice(IDS_PREFIX.length), text: await D.assets.loadText(asset) };
+    async function parametersOf(datasetId, ids) {
+      await modelMeta(datasetId);
+      const handle = await datasets.ensureOpen(datasetId);
+      const out = await bridge().runIfcParameters(await handle.engine.export(), ids);
+      return Array.isArray(out) ? out : [];
     }
-    return { python, applyTable, changeset, previewChangeset, topologyOf, classSearch, classReportOf, basicsOf, idsPresets, idsPreset, refuseExpress, IDS: ['ifc_apply_table', 'ifc_python'] };
+    return { python, applyTable, changeset, previewChangeset, topologyOf, classSearch, classReportOf, parametersOf, basicsOf, refuseExpress, IDS: ['ifc_apply_table', 'ifc_python'] };
   });
 })();

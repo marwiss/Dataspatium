@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * The review before sharing: everything in a dataset that may be personal data is listed (data/share-scan), and for each
- * the user chooses what happens in the copy that leaves the app. The datasets themselves are never changed.
+ * the user chooses what happens in the copy that leaves the app. The datasets themselves are never changed. In an IFC model the
+ * review looks inside the file; changing it there needs the app's Python with IfcOpenShell, so without Python running the dialog
+ * offers to keep or to stop, says why, and can start Python.
  */
 (function () {
   'use strict';
@@ -37,12 +39,41 @@
         default: return t('review.part.' + p.kind, { n, names });
       }
     }
-    function picker(label, choices, start, onChange) {
-      const sel = /** @type {any} */ (h('dm-select', { label }));
+    function picker(label, choices, start, onChange, attrs) {
+      const sel = /** @type {any} */ (h('dm-select', Object.assign({ label }, attrs || {})));
       sel.options = choices.map((c) => ({ value: c, label: t('review.choice.' + c) }));
       sel.value = start;
       sel.addEventListener('change', () => onChange(sel.value));
       return sel;
+    }
+
+    /**
+     * Why an IFC model's parts can only be kept, with the button that starts Python (the person's action); once it runs, the
+     * pickers get all their choices and start where they would have. @param {Array<{sel: any, key: string, part: any}>} pickers
+     * @param {Map<string, string>} choices
+     */
+    function pythonBlock(pickers, choices) {
+      const note = h('p', { class: 'dm-help dm-small', 'data-review-ifc-python': '', text: t('review.ifc.python') });
+      const btn = /** @type {any} */ (D.require('ui/basic').button({ label: t('review.ifc.start'), icon: 'play', size: 'sm', title: t('review.ifc.start.hint'), 'data-review-ifc-start': '',
+        onClick: async () => {
+          if (btn.loading) return;
+          btn.loading = true;
+          try {
+            await D.require('data/python-bridge').bridge.start();
+            for (const { sel, key, part } of pickers) {
+              sel.options = part.withPython.choices.map((c) => ({ value: c, label: t('review.choice.' + c) }));
+              sel.value = part.withPython.start;
+              choices.set(key, part.withPython.start);
+            }
+            note.textContent = t('review.ifc.started');
+            btn.remove();
+          } catch (err) {
+            D.log('review', 'python start failed', err);
+            note.textContent = t('review.ifc.start.failed', { error: String((err && err.message) || err) });
+            btn.loading = false;
+          }
+        } }));
+      return h('div', { class: 'dm-stack-xs' }, note, h('div', null, btn));
     }
 
     /**
@@ -59,6 +90,9 @@
       const names = new Map(ctx.store.get().datasets.map((d) => [d.id, d.name]));
       /** @type {Map<string, string>} */
       const choices = new Map();
+      /** The parts by key, for what a choice carries along (the pieces of a model's free text). */
+      const partsByKey = new Map();
+      const ifcPickers = [];
       const rows = [];
       for (const [id, list] of found) {
         rows.push(h('h4', { text: names.get(id) || id }));
@@ -71,9 +105,13 @@
         for (const p of list.parts) {
           const key = id + SEP + 'part' + SEP + p.id;
           choices.set(key, p.start);
-          rows.push(picker(partLabel(p), p.choices, p.start, (v) => choices.set(key, v)));
+          partsByKey.set(key, p);
+          const sel = picker(partLabel(p), p.choices, p.start, (v) => choices.set(key, v), p.kind.startsWith('ifc.') ? { 'data-review-ifc': p.id.slice(4) } : null);
+          if (p.needsPython) ifcPickers.push({ sel, key, part: p });
+          rows.push(sel);
         }
       }
+      if (ifcPickers.length) rows.push(pythonBlock(ifcPickers, choices));
       /** @type {Record<string, string>} */
       const extras = {};
       if (others.length) {
@@ -102,6 +140,12 @@
         const name = at > 0 ? what.slice(at + 1) : '';
         if (group === 'text') tr[choice === 'drop' ? 'drop' : 'mask'].push(name);
         else if (group === 'side') tr.side[name] = choice;
+        else if (group === 'ifc') {
+          const ifc = tr.ifc || (tr.ifc = {});
+          ifc[name] = choice;
+          const part = partsByKey.get(key);
+          if (part && part.matches) ifc.matches = part.matches;
+        }
         else tr[group] = true;
       }
       return { transform, extras, findings: found };
@@ -156,6 +200,7 @@
       for (const tr of Object.values(transform || {})) {
         hash += (tr.hash || []).length; drop += (tr.drop || []).length;
         other += (tr.mask || []).length + Object.keys(tr.side || {}).length + ['originals', 'pictures', 'positions', 'comments', 'authors'].filter((k) => tr[k]).length;
+        other += shareScan.IFC_PARTS.filter((k) => tr.ifc && (tr.ifc[k] === 'hash' || tr.ifc[k] === 'remove')).length;
       }
       if (!hash && !drop && !other) return '';
       return other ? `${t('review.applied', { hash, drop })} ${t('review.applied.more', { n: other })}` : t('review.applied', { hash, drop });

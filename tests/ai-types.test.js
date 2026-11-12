@@ -48,7 +48,8 @@
   async function factsOf(bytes, code) {
     await bridge.writeFile('/data/step/types-facts.ifc', bytes);
     const out = await bridge.run(['import json', 'import math', 'import ifcopenshell', 'import ifcopenshell.util.element as el', 'import ifcopenshell.util.placement as pl',
-      'import ifcopenshell.util.unit', 'm = ifcopenshell.open("/data/step/types-facts.ifc")', 'scale = ifcopenshell.util.unit.calculate_unit_scale(m)'].concat(code).join('\n'));
+      'import ifcopenshell.util.unit', 'm = ifcopenshell.open("/data/step/types-facts.ifc")', 'scale = ifcopenshell.util.unit.calculate_unit_scale(m)',
+      'matrix = getattr(pl, "get_placement", None) or pl.get_local_placement'].concat(code).join('\n'));  // get_placement since IfcOpenShell 0.9.1
     const error = out.entries.find((e) => e.kind === 'error');
     if (error) throw new Error(String(error.text));
     return JSON.parse(stdoutOf(out).trim().split('\n').pop() || 'null');
@@ -81,7 +82,7 @@
     '        p = body(e).SweptArea',
     '        cx, cy = [float(c) for c in p.Position.Location.Coordinates][:2]',
     '        rec["body_y"] = [round(cy - p.YDim / 2, 6), round(cy + p.YDim / 2, 6)]',
-    '        M = pl.get_local_placement(e.ObjectPlacement)',
+    '        M = matrix(e.ObjectPlacement)',
     '        y = rec["usage"]["offset"] + rec["usage"]["layers"][0][1] / 2',
     '        rec["first_at"] = [round((M[0][0] * cx + M[0][1] * y + M[0][3]) * scale, 6), round((M[1][0] * cx + M[1][1] * y + M[1][3]) * scale, 6)]',
     '    if e.is_a("IfcSlab") and rec["usage"]:',
@@ -99,7 +100,7 @@
     'from shapely.ops import unary_union',
     'walls, feet = {}, []',
     'for w in m.by_type("IfcWall"):',
-    '    M = pl.get_local_placement(w.ObjectPlacement)',
+    '    M = matrix(w.ObjectPlacement)',
     '    def at(x, y):',
     '        return [round((M[0][0] * x + M[0][1] * y + M[0][3]) * scale, 6), round((M[1][0] * x + M[1][1] * y + M[1][3]) * scale, 6)]',
     '    reps = {r.RepresentationIdentifier: r for r in w.Representation.Representations}',
@@ -126,7 +127,7 @@
   test('ai types: define_type is a create with a ref, and checks its kind, name, layers with their category and role, and PredefinedType', async (assert) => {
     assert.ok(writeTools.has('define_type') && writeTools.CREATES.includes('define_type'), 'a write tool that creates');
     const tool = writeTools.TOOLS.find((x) => x.name === 'define_type');
-    assert.deepEqual(Object.keys(tool.parameters.properties), ['kind', 'name', 'layers', 'predefined_type']);
+    assert.deepEqual(Object.keys(tool.parameters.properties), ['kind', 'name', 'layers', 'predefined_type', 'material', 'material_category', 'operation', 'partitioning', 'width', 'height', 'lining_depth']);
     assert.deepEqual(tool.parameters.properties.layers.items.required, ['material', 'thickness', 'category', 'role'], 'every field of a layer is required, null when not known');
     assert.deepEqual(writeTools.MATERIAL_CATEGORIES, ['concrete', 'steel', 'aluminium', 'block', 'brick', 'stone', 'wood', 'glass', 'gypsum', 'plastic', 'earth'], 'the categories IfcOpenShell recommends');
     assert.deepEqual(writeTools.LAYER_ROLES, ['load_bearing', 'insulation', 'inner_finish', 'outer_finish'], 'the roles of IfcMaterialLayer.Category');
@@ -143,7 +144,7 @@
     const refused = (args, label) => { const out = writeTools.call(cs, 'define_type', args); assert.ok(out.error, label + ': ' + JSON.stringify(out)); return String(out.error || ''); };
     const one = (patch) => Object.assign({ kind: 'wall', name: 'X', layers: [layer('Betong', 0.2, null, null)], predefined_type: null }, patch);
     const with1 = (patch) => one({ layers: [Object.assign(layer('Betong', 0.2, null, null), patch)] });
-    assert.ok(refused(one({ kind: 'door' }), 'a door type').includes('wall, slab or roof'));
+    assert.ok(refused(one({ kind: 'stair' }), 'a stair type').includes('wall, slab, roof, covering'));
     assert.ok(refused(one({ name: ' ' }), 'no name').includes('name'));
     assert.ok(refused(one({ layers: [] }), 'no layers').includes('layers'));
     assert.ok(refused(with1({ material: '' }), 'a layer without its material').includes('material'));
@@ -229,7 +230,7 @@
       assert.ok(text.includes('define_type') && text.includes('materials and shared properties go on the types'), label + ': materials and properties on the types');
       assert.ok(text.includes('Walls meet on their axes at corners and junctions and the app joins them, so never lengthen or overlap walls to close a corner.'), label + ': the app joins the walls');
     }
-    assert.ok(/create_spaces after the walls and before the slabs\.$/.test(agent.SYSTEM_BUILD), 'the rooms still close the build text');
+    assert.ok(/create_spaces after the walls and before the slabs\./.test(agent.SYSTEM_BUILD), 'the rooms line is still in the build text');
     return 'ok';
   });
 
@@ -262,7 +263,7 @@
     if (!wantReal() && !(await catalog.cachedRuntime())) return SKIPPED;
     const { res, facts } = await typedBuild();
     assert.equal(res.report.errors, 0, 'no errors: ' + JSON.stringify(res.report.findings));
-    assert.deepEqual(res.report.notes || [], [], 'nothing left out in IFC4');
+    assert.deepEqual((res.report.notes || []).filter((n) => !String(n).startsWith('GRF003')), [], 'nothing left out in IFC4 (the note that the model has no CRS yet, GRF003, aside)');
     const types = (res.report.created || []).filter((e) => /Type$/.test(e.ifc_class));
     assert.deepEqual(types.map((e) => [e.ref, e.ifc_class, e.name]), [['new-1', 'IfcWallType', 'YV1'], ['new-2', 'IfcSlabType', 'BJ1'], ['new-3', 'IfcSlabType', 'TAK1']], 'the types with the refs the panel gave');
     // Millimetres: the 300 mm wall's layers run from −150 mm across its axis, and IFC4 calls both finishes Finish.
@@ -327,7 +328,7 @@
     for (const [name, start, end] of BOX) assert.ok(wall(cs, name, start, end, 'new-1').ok, name);
     const first = await ifcOps.previewChangeset(dataset.id, writeTools.toWheel(cs));
     assert.equal(first.report.errors, 0, 'no errors: ' + JSON.stringify(first.report.findings));
-    assert.deepEqual(first.report.notes || [], [], 'every corner resolved');
+    assert.deepEqual((first.report.notes || []).filter((n) => !String(n).startsWith('GRF003')), [], 'every corner resolved (the note that the model has no CRS yet, GRF003, aside)');
     const box = await factsOf(first.bytes, JOINS);
     assert.deepEqual(box.joins, [['Norr', 'ATEND', 'Väst', 'ATSTART'], ['Norr', 'ATSTART', 'Öst', 'ATEND'], ['Syd', 'ATEND', 'Öst', 'ATSTART'], ['Syd', 'ATSTART', 'Väst', 'ATEND']], 'four L-corners, the longer walls relating');
     assert.deepEqual(['Syd', 'Öst', 'Norr', 'Väst'].map((n) => box.walls[n].length), [12.3, 7.7, 12.3, 7.7], 'the long walls reach past the corners and the short ones stop at them');

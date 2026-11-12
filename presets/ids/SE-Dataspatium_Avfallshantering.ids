@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0 -->
+<ids:ids xmlns:ids="http://standards.buildingsmart.org/IDS" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://standards.buildingsmart.org/IDS http://standards.buildingsmart.org/IDS/1.0/ids.xsd">
+  <ids:info>
+    <ids:title>Avfallshantering: material, mängder och produktdata</ids:title>
+    <ids:copyright>Dataspatium</ids:copyright>
+    <ids:version>1.0</ids:version>
+    <ids:description>Det som materialinventeringen i Dataspatium behöver ur en IFC4- eller IFC4.3-modell som underlag för avfallshanteringsplanen enligt PBL 10 kap. 8 a §: material med kategori för avfallsfraktionerna, basmängder för mängderna och produktdata för de byggprodukter som kan återanvändas. IFC2X3 saknar materialkategori, mallar för basmängder och GTIN.</ids:description>
+    <ids:date>2026-11-12</ids:date>
+    <ids:purpose>Underlag för avfallshanteringsplanen (PBL 10 kap. 8 a §)</ids:purpose>
+  </ids:info>
+  <ids:specifications>
+    <ids:specification name="Material med kategori" ifcVersion="IFC4 IFC4X3_ADD2" identifier="AH-01" description="Varje byggdel har ett material med en kategori ur IFC:s rekommenderade värden, så att avfallsfraktionen enligt avfallsförordningen 3 kap. 10 § kan läsas ur modellen. Sammansatta byggdelar (tak, trappor, ramper, glasfasader) prövas i sina delar." instructions="Ge materialet (IfcMaterial) en kategori i Category: concrete, steel, aluminium, block, brick, stone, wood, glass, gypsum, plastic eller earth. Kontrollen godkänner när minst ett av byggdelens material har en sådan kategori; inventeringen i appen visar varje skikt.">
+      <ids:applicability minOccurs="0" maxOccurs="unbounded">
+        <ids:entity>
+          <ids:name>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="IFCWALL"/>
+              <xs:enumeration value="IFCWALLSTANDARDCASE"/>
+              <xs:enumeration value="IFCSLAB"/>
+              <xs:enumeration value="IFCBEAM"/>
+              <xs:enumeration value="IFCCOLUMN"/>
+              <xs:enumeration value="IFCMEMBER"/>
+              <xs:enumeration value="IFCPLATE"/>
+              <xs:enumeration value="IFCFOOTING"/>
+              <xs:enumeration value="IFCPILE"/>
+              <xs:enumeration value="IFCSTAIRFLIGHT"/>
+              <xs:enumeration value="IFCRAMPFLIGHT"/>
+              <xs:enumeration value="IFCRAILING"/>
+              <xs:enumeration value="IFCCOVERING"/>
+              <xs:enumeration value="IFCDOOR"/>
+              <xs:enumeration value="IFCWINDOW"/>
+              <xs:enumeration value="IFCBUILDINGELEMENTPROXY"/>
+              <xs:enumeration value="IFCCHIMNEY"/>
+              <xs:enumeration value="IFCSHADINGDEVICE"/>
+            </xs:restriction>
+          </ids:name>
+        </ids:entity>
+      </ids:applicability>
+      <ids:requirements>
+        <ids:material cardinality="required" instructions="Material med kategori (IfcMaterial.Category).">
+          <ids:value>
+            <xs:restriction base="xs:string">
+              <xs:pattern value="[Cc]oncrete|[Ss]teel|[Aa]luminium|[Bb]lock|[Bb]rick|[Ss]tone|[Ww]ood|[Gg]lass|[Gg]ypsum|[Pp]lastic|[Ee]arth"/>
+            </xs:restriction>
+          </ids:value>
+        </ids:material>
+      </ids:requirements>
+    </ids:specification>
+    <ids:specification name="Material med kategori (IFC4:s StandardCase)" ifcVersion="IFC4" identifier="AH-01b" description="Varje byggdel har ett material med en kategori ur IFC:s rekommenderade värden, så att avfallsfraktionen enligt avfallsförordningen 3 kap. 10 § kan läsas ur modellen. Sammansatta byggdelar (tak, trappor, ramper, glasfasader) prövas i sina delar." instructions="Ge materialet (IfcMaterial) en kategori i Category: concrete, steel, aluminium, block, brick, stone, wood, glass, gypsum, plastic eller earth. Kontrollen godkänner när minst ett av byggdelens material har en sådan kategori; inventeringen i appen visar varje skikt.">
+      <ids:applicability minOccurs="0" maxOccurs="unbounded">
+        <ids:entity>
+          <ids:name>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="IFCWALLELEMENTEDCASE"/>
+              <xs:enumeration value="IFCSLABSTANDARDCASE"/>
+              <xs:enumeration value="IFCSLABELEMENTEDCASE"/>
+              <xs:enumeration value="IFCBEAMSTANDARDCASE"/>
+              <xs:enumeration value="IFCCOLUMNSTANDARDCASE"/>
+              <xs:enumeration value="IFCMEMBERSTANDARDCASE"/>
+              <xs:enumeration value="IFCPLATESTANDARDCASE"/>
+              <xs:enumeration value="IFCDOORSTANDARDCASE"/>
+              <xs:enumeration value="IFCWINDOWSTANDARDCASE"/>
+            </xs:restriction>
+          </ids:name>
+        </ids:entity>
+      </ids:applicability>
+      <ids:requirements>
+        <ids:material cardinality="required" instructions="Material med kategori (IfcMaterial.Category).">
+          <ids:value>
+            <xs:restriction base="xs:string">
+              <xs:pattern value="[Cc]oncrete|[Ss]teel|[Aa]luminium|[Bb]lock|[Bb]rick|[Ss]tone|[Ww]ood|[Gg]lass|[Gg]ypsum|[Pp]lastic|[Ee]arth"/>
+            </xs:restriction>
+          </ids:value>
+        </ids:material>
+      </ids:requirements>
+    </ids:specification>
+    <ids:specification name="Basmängd: volym" ifcVersion="IFC4 IFC4X3_ADD2" identifier="AH-02" description="Byggdelen har sin basmängd för volym (NetVolume eller GrossVolume) i klassens Qto-uppsättning, för mängden och massan per material." instructions="Skriv basmängderna (Qto_…BaseQuantities) med netto- eller bruttovolym.">
+      <ids:applicability minOccurs="0" maxOccurs="unbounded">
+        <ids:entity>
+          <ids:name>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="IFCWALL"/>
+              <xs:enumeration value="IFCWALLSTANDARDCASE"/>
+              <xs:enumeration value="IFCSLAB"/>
+              <xs:enumeration value="IFCBEAM"/>
+              <xs:enumeration value="IFCCOLUMN"/>
+              <xs:enumeration value="IFCMEMBER"/>
+              <xs:enumeration value="IFCPLATE"/>
+              <xs:enumeration value="IFCFOOTING"/>
+              <xs:enumeration value="IFCSTAIRFLIGHT"/>
+            </xs:restriction>
+          </ids:name>
+        </ids:entity>
+      </ids:applicability>
+      <ids:requirements>
+        <ids:property dataType="IFCVOLUMEMEASURE" cardinality="required" instructions="Netto- eller bruttovolym i klassens basmängder.">
+          <ids:propertySet>
+            <xs:restriction base="xs:string">
+              <xs:pattern value="Qto_(Wall|Slab|Beam|Column|Member|Plate|Footing|StairFlight)BaseQuantities"/>
+            </xs:restriction>
+          </ids:propertySet>
+          <ids:baseName>
+            <xs:restriction base="xs:string">
+              <xs:pattern value="(Net|Gross)Volume"/>
+            </xs:restriction>
+          </ids:baseName>
+        </ids:property>
+      </ids:requirements>
+    </ids:specification>
+    <ids:specification name="Basmängd: volym (IFC4:s StandardCase)" ifcVersion="IFC4" identifier="AH-02b" description="Byggdelen har sin basmängd för volym (NetVolume eller GrossVolume) i klassens Qto-uppsättning, för mängden och massan per material." instructions="Skriv basmängderna (Qto_…BaseQuantities) med netto- eller bruttovolym.">
+      <ids:applicability minOccurs="0" maxOccurs="unbounded">
+        <ids:entity>
+          <ids:name>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="IFCWALLELEMENTEDCASE"/>
+              <xs:enumeration value="IFCSLABSTANDARDCASE"/>
+              <xs:enumeration value="IFCSLABELEMENTEDCASE"/>
+              <xs:enumeration value="IFCBEAMSTANDARDCASE"/>
+              <xs:enumeration value="IFCCOLUMNSTANDARDCASE"/>
+              <xs:enumeration value="IFCMEMBERSTANDARDCASE"/>
+              <xs:enumeration value="IFCPLATESTANDARDCASE"/>
+            </xs:restriction>
+          </ids:name>
+        </ids:entity>
+      </ids:applicability>
+      <ids:requirements>
+        <ids:property dataType="IFCVOLUMEMEASURE" cardinality="required" instructions="Netto- eller bruttovolym i klassens basmängder.">
+          <ids:propertySet>
+            <xs:restriction base="xs:string">
+              <xs:pattern value="Qto_(Wall|Slab|Beam|Column|Member|Plate|Footing|StairFlight)BaseQuantities"/>
+            </xs:restriction>
+          </ids:propertySet>
+          <ids:baseName>
+            <xs:restriction base="xs:string">
+              <xs:pattern value="(Net|Gross)Volume"/>
+            </xs:restriction>
+          </ids:baseName>
+        </ids:property>
+      </ids:requirements>
+    </ids:specification>
+    <ids:specification name="Basmängd: area" ifcVersion="IFC4 IFC4X3_ADD2" identifier="AH-03" description="Dörrar, fönster, beklädnader, tak och glasfasader har sin basmängd för area (Area, NetArea, GrossArea eller sidoarean) i klassens Qto-uppsättning." instructions="Skriv basmängderna (Qto_…BaseQuantities, för glasfasader Qto_CurtainWallQuantities) med arean.">
+      <ids:applicability minOccurs="0" maxOccurs="unbounded">
+        <ids:entity>
+          <ids:name>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="IFCDOOR"/>
+              <xs:enumeration value="IFCWINDOW"/>
+              <xs:enumeration value="IFCCOVERING"/>
+              <xs:enumeration value="IFCROOF"/>
+              <xs:enumeration value="IFCCURTAINWALL"/>
+            </xs:restriction>
+          </ids:name>
+        </ids:entity>
+      </ids:applicability>
+      <ids:requirements>
+        <ids:property dataType="IFCAREAMEASURE" cardinality="required" instructions="Arean i klassens basmängder.">
+          <ids:propertySet>
+            <xs:restriction base="xs:string">
+              <xs:pattern value="Qto_(Door|Window|Covering|Roof)BaseQuantities|Qto_CurtainWallQuantities"/>
+            </xs:restriction>
+          </ids:propertySet>
+          <ids:baseName>
+            <xs:restriction base="xs:string">
+              <xs:pattern value="Area|NetArea|GrossArea|NetSideArea|GrossSideArea"/>
+            </xs:restriction>
+          </ids:baseName>
+        </ids:property>
+      </ids:requirements>
+    </ids:specification>
+    <ids:specification name="Basmängd: area (IFC4:s StandardCase)" ifcVersion="IFC4" identifier="AH-03b" description="Dörrar, fönster, beklädnader, tak och glasfasader har sin basmängd för area (Area, NetArea, GrossArea eller sidoarean) i klassens Qto-uppsättning." instructions="Skriv basmängderna (Qto_…BaseQuantities, för glasfasader Qto_CurtainWallQuantities) med arean.">
+      <ids:applicability minOccurs="0" maxOccurs="unbounded">
+        <ids:entity>
+          <ids:name>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="IFCDOORSTANDARDCASE"/>
+              <xs:enumeration value="IFCWINDOWSTANDARDCASE"/>
+            </xs:restriction>
+          </ids:name>
+        </ids:entity>
+      </ids:applicability>
+      <ids:requirements>
+        <ids:property dataType="IFCAREAMEASURE" cardinality="required" instructions="Arean i klassens basmängder.">
+          <ids:propertySet>
+            <xs:restriction base="xs:string">
+              <xs:pattern value="Qto_(Door|Window|Covering|Roof)BaseQuantities|Qto_CurtainWallQuantities"/>
+            </xs:restriction>
+          </ids:propertySet>
+          <ids:baseName>
+            <xs:restriction base="xs:string">
+              <xs:pattern value="Area|NetArea|GrossArea|NetSideArea|GrossSideArea"/>
+            </xs:restriction>
+          </ids:baseName>
+        </ids:property>
+      </ids:requirements>
+    </ids:specification>
+    <ids:specification name="Produktdata på dörrar, fönster och installationer" ifcVersion="IFC4 IFC4X3_ADD2" identifier="AH-04" description="Dörrar, fönster och installationer har produktdata för återbruk: tillverkare och modell i Pset_ManufacturerTypeInformation, helst på typen, och GTIN i GlobalTradeItemNumber när det finns." instructions="Ange Manufacturer och ModelLabel ur produktens dokumentation. Ange GTIN bara när tillverkaren har gett det (8, 12, 13 eller 14 siffror); hitta aldrig på ett. Serienummer och streckkod hör till Pset_ManufacturerOccurrence på byggdelen.">
+      <ids:applicability minOccurs="0" maxOccurs="unbounded">
+        <ids:entity>
+          <ids:name>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="IFCDOOR"/>
+              <xs:enumeration value="IFCWINDOW"/>
+              <xs:enumeration value="IFCAIRTERMINAL"/>
+              <xs:enumeration value="IFCAIRTERMINALBOX"/>
+              <xs:enumeration value="IFCSANITARYTERMINAL"/>
+              <xs:enumeration value="IFCWASTETERMINAL"/>
+              <xs:enumeration value="IFCSTACKTERMINAL"/>
+              <xs:enumeration value="IFCFIRESUPPRESSIONTERMINAL"/>
+              <xs:enumeration value="IFCLIGHTFIXTURE"/>
+              <xs:enumeration value="IFCLAMP"/>
+              <xs:enumeration value="IFCOUTLET"/>
+              <xs:enumeration value="IFCSPACEHEATER"/>
+              <xs:enumeration value="IFCCOOLEDBEAM"/>
+              <xs:enumeration value="IFCBOILER"/>
+              <xs:enumeration value="IFCBURNER"/>
+              <xs:enumeration value="IFCCHILLER"/>
+              <xs:enumeration value="IFCCOIL"/>
+              <xs:enumeration value="IFCCONDENSER"/>
+              <xs:enumeration value="IFCCOOLINGTOWER"/>
+              <xs:enumeration value="IFCEVAPORATOR"/>
+              <xs:enumeration value="IFCEVAPORATIVECOOLER"/>
+              <xs:enumeration value="IFCHEATEXCHANGER"/>
+              <xs:enumeration value="IFCAIRTOAIRHEATRECOVERY"/>
+              <xs:enumeration value="IFCHUMIDIFIER"/>
+              <xs:enumeration value="IFCUNITARYEQUIPMENT"/>
+              <xs:enumeration value="IFCENGINE"/>
+              <xs:enumeration value="IFCELECTRICGENERATOR"/>
+              <xs:enumeration value="IFCELECTRICMOTOR"/>
+              <xs:enumeration value="IFCTRANSFORMER"/>
+              <xs:enumeration value="IFCPUMP"/>
+              <xs:enumeration value="IFCFAN"/>
+              <xs:enumeration value="IFCCOMPRESSOR"/>
+              <xs:enumeration value="IFCVALVE"/>
+              <xs:enumeration value="IFCDAMPER"/>
+              <xs:enumeration value="IFCFLOWMETER"/>
+              <xs:enumeration value="IFCSWITCHINGDEVICE"/>
+              <xs:enumeration value="IFCPROTECTIVEDEVICE"/>
+              <xs:enumeration value="IFCELECTRICTIMECONTROL"/>
+              <xs:enumeration value="IFCELECTRICDISTRIBUTIONBOARD"/>
+              <xs:enumeration value="IFCTANK"/>
+              <xs:enumeration value="IFCELECTRICFLOWSTORAGEDEVICE"/>
+              <xs:enumeration value="IFCFILTER"/>
+              <xs:enumeration value="IFCINTERCEPTOR"/>
+              <xs:enumeration value="IFCDUCTSILENCER"/>
+              <xs:enumeration value="IFCSENSOR"/>
+              <xs:enumeration value="IFCACTUATOR"/>
+              <xs:enumeration value="IFCALARM"/>
+              <xs:enumeration value="IFCCONTROLLER"/>
+              <xs:enumeration value="IFCUNITARYCONTROLELEMENT"/>
+              <xs:enumeration value="IFCELECTRICAPPLIANCE"/>
+              <xs:enumeration value="IFCAUDIOVISUALAPPLIANCE"/>
+              <xs:enumeration value="IFCCOMMUNICATIONSAPPLIANCE"/>
+              <xs:enumeration value="IFCMEDICALDEVICE"/>
+              <xs:enumeration value="IFCSOLARDEVICE"/>
+              <xs:enumeration value="IFCTRANSPORTELEMENT"/>
+            </xs:restriction>
+          </ids:name>
+        </ids:entity>
+      </ids:applicability>
+      <ids:requirements>
+        <ids:property dataType="IFCLABEL" cardinality="required" instructions="Tillverkaren.">
+          <ids:propertySet><ids:simpleValue>Pset_ManufacturerTypeInformation</ids:simpleValue></ids:propertySet>
+          <ids:baseName><ids:simpleValue>Manufacturer</ids:simpleValue></ids:baseName>
+        </ids:property>
+        <ids:property dataType="IFCLABEL" cardinality="required" instructions="Modellens namn.">
+          <ids:propertySet><ids:simpleValue>Pset_ManufacturerTypeInformation</ids:simpleValue></ids:propertySet>
+          <ids:baseName><ids:simpleValue>ModelLabel</ids:simpleValue></ids:baseName>
+        </ids:property>
+        <ids:property dataType="IFCIDENTIFIER" cardinality="optional" instructions="GTIN, när tillverkaren har gett det: 8, 12, 13 eller 14 siffror.">
+          <ids:propertySet><ids:simpleValue>Pset_ManufacturerTypeInformation</ids:simpleValue></ids:propertySet>
+          <ids:baseName><ids:simpleValue>GlobalTradeItemNumber</ids:simpleValue></ids:baseName>
+          <ids:value>
+            <xs:restriction base="xs:string">
+              <xs:pattern value="[0-9]{8}|[0-9]{12,14}"/>
+            </xs:restriction>
+          </ids:value>
+        </ids:property>
+      </ids:requirements>
+    </ids:specification>
+    <ids:specification name="Produktdata på dörrar och fönster (IFC4:s StandardCase)" ifcVersion="IFC4" identifier="AH-04b" description="Dörrar, fönster och installationer har produktdata för återbruk: tillverkare och modell i Pset_ManufacturerTypeInformation, helst på typen, och GTIN i GlobalTradeItemNumber när det finns." instructions="Ange Manufacturer och ModelLabel ur produktens dokumentation. Ange GTIN bara när tillverkaren har gett det (8, 12, 13 eller 14 siffror); hitta aldrig på ett. Serienummer och streckkod hör till Pset_ManufacturerOccurrence på byggdelen.">
+      <ids:applicability minOccurs="0" maxOccurs="unbounded">
+        <ids:entity>
+          <ids:name>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="IFCDOORSTANDARDCASE"/>
+              <xs:enumeration value="IFCWINDOWSTANDARDCASE"/>
+            </xs:restriction>
+          </ids:name>
+        </ids:entity>
+      </ids:applicability>
+      <ids:requirements>
+        <ids:property dataType="IFCLABEL" cardinality="required" instructions="Tillverkaren.">
+          <ids:propertySet><ids:simpleValue>Pset_ManufacturerTypeInformation</ids:simpleValue></ids:propertySet>
+          <ids:baseName><ids:simpleValue>Manufacturer</ids:simpleValue></ids:baseName>
+        </ids:property>
+        <ids:property dataType="IFCLABEL" cardinality="required" instructions="Modellens namn.">
+          <ids:propertySet><ids:simpleValue>Pset_ManufacturerTypeInformation</ids:simpleValue></ids:propertySet>
+          <ids:baseName><ids:simpleValue>ModelLabel</ids:simpleValue></ids:baseName>
+        </ids:property>
+        <ids:property dataType="IFCIDENTIFIER" cardinality="optional" instructions="GTIN, när tillverkaren har gett det: 8, 12, 13 eller 14 siffror.">
+          <ids:propertySet><ids:simpleValue>Pset_ManufacturerTypeInformation</ids:simpleValue></ids:propertySet>
+          <ids:baseName><ids:simpleValue>GlobalTradeItemNumber</ids:simpleValue></ids:baseName>
+          <ids:value>
+            <xs:restriction base="xs:string">
+              <xs:pattern value="[0-9]{8}|[0-9]{12,14}"/>
+            </xs:restriction>
+          </ids:value>
+        </ids:property>
+      </ids:requirements>
+    </ids:specification>
+  </ids:specifications>
+</ids:ids>
