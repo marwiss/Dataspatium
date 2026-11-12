@@ -28,6 +28,9 @@
  * own (columns, beams, members, footings, piles, coverings, railings, chimneys, shading devices, sanitary terminals, furniture and
  * straight stairs) of the most specific IFC class, with a ref; define_type also makes covering, column, beam, footing, railing, door
  * and window types, and create_opening takes a door or window type, whose size and geometry the filling gets.
+ * Since recommendation 8 of the study of the IFC and BCF guidelines, set_responsible_party names the organisation that answers for
+ * the model with its role (IfcRoleEnum), a change without a ref; the model's own form (ui/bearbeta/party) builds the same operation
+ * with partyOp, and only there may it carry a contact person's name.
  */
 (function () {
   'use strict';
@@ -65,6 +68,10 @@
     const typeRef = () => ({ type: ['integer', 'string', 'null'] });
     /** Pset_*Common.Status: the schema's values for an element's life (the wheel checks them against the template). */
     const STATUSES = ['NEW', 'EXISTING', 'DEMOLISH', 'TEMPORARY'];
+    /** IfcRoleEnum as IFC4 and IFC4X3 spell it, the disciplines that design first (the wheel spells COMMISSIONINGENGINEER as IFC2X3 does there). */
+    const ROLES = ['ARCHITECT', 'STRUCTURALENGINEER', 'MECHANICALENGINEER', 'ELECTRICALENGINEER', 'CIVILENGINEER', 'ENGINEER', 'CONSULTANT', 'COSTENGINEER', 'COMMISSIONINGENGINEER',
+      'PROJECTMANAGER', 'CONSTRUCTIONMANAGER', 'FIELDCONSTRUCTIONMANAGER', 'CONTRACTOR', 'SUBCONTRACTOR', 'SUPPLIER', 'MANUFACTURER', 'RESELLER', 'CLIENT', 'OWNER', 'BUILDINGOWNER',
+      'BUILDINGOPERATOR', 'FACILITIESMANAGER', 'USERDEFINED'];
     /** Units a value might carry after its number ("40 dB"), in lower case without spaces, as python/dataspatium.py `_CS_UNITS`. */
     const UNITS = new Set(['mm', 'cm', 'dm', 'm', 'km', 'mm2', 'cm2', 'dm2', 'm2', 'km2', 'mm²', 'cm²', 'dm²', 'm²', 'km²', 'mm3', 'cm3', 'dm3', 'm3', 'mm³', 'cm³',
       'dm³', 'm³', 'l', 'liter', 'litre', 'g', 'kg', 't', 'ton', 'n', 'kn', 'pa', 'kpa', 'mpa', 'gpa', 'db', 'dba', 'db(a)', 'w', 'kw', 'mw',
@@ -112,6 +119,8 @@
         parameters: { type: 'object', properties: { ids: ids(), confirm: { type: ['boolean', 'null'] } } } },
       { name: 'set_site', description: 'Set the model\'s place on earth: the site\'s latitude and longitude in WGS 84 degrees (south and west negative), its elevation in metres above sea level, and, when the model is drawn in a projected coordinate system, the map conversion: crs is the EPSG code (such as EPSG:3006 for SWEREF 99 TM), eastings and northings the coordinates of the model\'s origin in metres, and rotation the angle in degrees from grid east (the map\'s x axis, along the eastings) to the model\'s X axis, counter-clockwise positive, as IfcMapConversion measures it (0 when null: the model\'s X axis points east and its Y axis north). crs, eastings and northings go together; site_name renames the site. For a building in Sweden prefer the local SWEREF 99 zone with RH 2000 heights as one compound code, EPSG:5846 to EPSG:5857 for the zones 12 00 to 23 15 in the order of EPSG:3007 to EPSG:3018 (such as EPSG:5850 for SWEREF 99 18 00 + RH 2000), when the eastings and northings are in that zone; coordinates in SWEREF 99 TM take EPSG:5845 (TM + RH 2000). Never convert coordinates between zones yourself: use the code of the coordinates you were given. vertical_datum is the height system of the elevation when the code does not give one (null: RH 2000 for EPSG:3006 to EPSG:3018). One call per model is enough: a second call replaces the first.',
         parameters: { type: 'object', properties: { latitude: { type: 'number' }, longitude: { type: 'number' }, elevation: num(), crs: str(), eastings: num(), northings: num(), rotation: num(), site_name: str(), vertical_datum: str() } } },
+      { name: 'set_responsible_party', description: `Set the model's responsible party: the organisation (company or authority) that answers for this model file, only as the person or the brief names it; never guess one, and never write a person's name. organization is its name; role its discipline in IFC's list: ${ROLES.join(', ')} (MECHANICALENGINEER for heating, ventilation and plumbing), USERDEFINED with user_role the role's own name, or null when not given. designation is the short designation the project gives the party, such as A for the architect, and contact_role whom to contact there as a role, such as project lead; null when not given. Written in IFC as an IfcActor of the IfcOrganization with its IfcActorRole, assigned to the IfcProject. One call per model is enough: a second call changes the party.`,
+        parameters: { type: 'object', properties: { organization: { type: 'string' }, role: str(), user_role: str(), designation: str(), contact_role: str() } } },
       { name: 'manage_changeset', description: 'The open change set: action list shows its steps, remove_last drops the last step, clear empties it.',
         parameters: { type: 'object', properties: { action: { type: 'string' } } } },
     ];
@@ -447,6 +456,38 @@
       if (op.lining_depth < 0.05 || op.lining_depth > 2) throw new Error('lining_depth must be 0.05 to 2 m');
       return op;
     }
+    /**
+     * The operation set_responsible_party, checked, in the shape the wheel reads (recommendation 8 of the study of the IFC and BCF
+     * guidelines): organization required, role a value of ROLES or null, user_role only with USERDEFINED, and designation and
+     * contact_role only when given. contact_person, a person's name, is taken only from the person's own form (`person`), never
+     * from the AI. A message never quotes what was sent.
+     * @param {any} a @param {{person?: boolean}} [options]
+     */
+    function partyOp(a, options = {}) {
+      const clean = (key) => (given(a[key]) ? String(a[key]).replace(/\s+/g, ' ').trim().slice(0, 255) : '');
+      const organization = clean('organization');
+      if (!organization) throw new Error('organization is required: the name of the company or authority that answers for the model');
+      const typed = clean('role').toUpperCase().replace(/[\s_-]+/g, '');
+      const role = typed === 'COMISSIONINGENGINEER' ? 'COMMISSIONINGENGINEER' : typed;  // IFC2X3's spelling
+      if (role && !ROLES.includes(role)) throw new Error(`role must be ${either(ROLES)}, or null`);
+      const userRole = clean('user_role');
+      if (role === 'USERDEFINED' && !userRole) throw new Error('role USERDEFINED needs user_role, the name of the role');
+      if (userRole && role !== 'USERDEFINED') throw new Error('user_role goes with role USERDEFINED; leave it null for a role of the list');
+      const op = { tool: 'set_responsible_party', organization, role: role || null };
+      if (userRole) op.user_role = userRole;
+      for (const key of ['designation', 'contact_role']) { const v = clean(key); if (v) op[key] = v; }
+      // A name sets the contact person, '' removes it, and leaving it out keeps the one the party has (python/ op_set_responsible_party).
+      const person = clean('contact_person');
+      if (person && !options.person) throw new Error('contact_person is not taken here: a person\'s name is personal data that only the person enters, in the model\'s form');
+      if (options.person && (person || a.contact_person === '')) op.contact_person = person;
+      return op;
+    }
+    /** A party's role in the person's language: the role's own name for USERDEFINED, '' without one. @param {{role?: string|null, user_role?: string, userRole?: string}} p */
+    function partyRole(p) {
+      if (!p || !p.role) return '';
+      if (p.role === 'USERDEFINED') return String(p.user_role || p.userRole || '') || t('party.role.userdefined');
+      return ROLES.includes(p.role) ? t('party.role.' + p.role.toLowerCase()) : p.role;
+    }
     /** The operation for one call, checked, in the shape the wheel reads. */
     function build(cs, name, args) {
       const a = args || {};
@@ -646,6 +687,7 @@
           } else if (eastings !== null || northings !== null) throw new Error('eastings and northings need a crs such as EPSG:3006');
           return verticalDatum(a, crs, { tool: name, latitude, longitude, elevation: number(a, 'elevation'), crs: crs ? crs.toUpperCase() : null, eastings, northings, rotation: number(a, 'rotation', { fallback: 0, unit: 'degrees' }), site_name: text(a, 'site_name') });
         }
+        case 'set_responsible_party': return partyOp(a);
         default: throw new Error(`unknown tool ${name}`);
       }
     }
@@ -757,6 +799,10 @@
           const crs = op.crs ? t('ai.change.set_site.crs', { crs: op.vertical_datum ? `${op.crs} + ${op.vertical_datum}` : op.crs, eastings: fmt(op.eastings), northings: fmt(op.northings) }) + (op.rotation ? t('ai.change.set_site.rotation', { rotation: fmt(op.rotation) }) : '') : '';
           return t('ai.change.set_site', { name: op.site_name ? ' ' + op.site_name : '', lat: deg(op.latitude), lon: deg(op.longitude), elevation: op.elevation === null ? '' : t('ai.change.set_site.elevation', { elevation: fmt(op.elevation) }), crs });
         }
+        // The contact person is said, never named: the line goes to the log.
+        case 'set_responsible_party': return t('ai.change.set_responsible_party', { organization: op.organization, role: op.role ? ` (${partyRole(op)})` : '' })
+          + (op.designation ? t('ai.change.party.designation', { designation: op.designation }) : '') + (op.contact_role ? t('ai.change.party.contact', { contact: op.contact_role }) : '')
+          + (op.contact_person ? t('ai.change.party.person') : op.contact_person === '' ? t('ai.change.party.noperson') : '');
         default: return String(op.tool);
       }
     }
@@ -782,6 +828,6 @@
     }
     const toWheel = (cs) => cs.ops.map((op) => { const o = Object.assign({}, op); delete o.ref; delete o.refs; return o; });
 
-    return { withGuids, TOOLS, CREATES, MAX_OPS, MATERIAL_CATEGORIES, LAYER_ROLES, STATUSES, EDITS, TYPE_KINDS, ELEMENT_CLASSES, DOOR_OPERATIONS, WINDOW_PARTITIONS, has, create, call, describe, summary, toWheel, unitIn };
+    return { withGuids, TOOLS, CREATES, MAX_OPS, MATERIAL_CATEGORIES, LAYER_ROLES, STATUSES, ROLES, EDITS, TYPE_KINDS, ELEMENT_CLASSES, DOOR_OPERATIONS, WINDOW_PARTITIONS, has, create, call, describe, summary, toWheel, unitIn, partyOp, partyRole };
   });
 })();

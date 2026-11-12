@@ -1649,6 +1649,18 @@ class _ChangeSet:
             own IfcMapConversion with the same values and the file's unit as Scale, and IFC4 and IFC2X3 buildings the height in
             ElevationOfRefHeight (map_conversion, building_height).
 
+    Since recommendation 8 of the study of the IFC and BCF guidelines (2026-11-12), one new operation:
+
+        set_responsible_party {organization, role, user_role, designation, contact_role, contact_person}
+            the organisation that answers for the model file (organization, required) with its role (role: a value of IfcRoleEnum,
+            COMMISSIONINGENGINEER spelled as IFC2X3 spells it there; USERDEFINED with user_role, the role's name; null for none),
+            written natively: an IfcActor of the IfcOrganization, the role an IfcActorRole among its Roles, assigned to the
+            IfcProject by an IfcRelAssignsToActor with that ActingRole. designation (the actor's Name: the short designation the
+            project gives the party) and contact_role (its Description: whom to contact there, as a role) are optional;
+            contact_person (optional, personal data the person enters) makes the actor an IfcPersonAndOrganization: a name sets it,
+            "" removes it, and null or missing keeps the one the party has as long as the organisation stays. A second call
+            changes the party in place and keeps its GlobalIds (op_set_responsible_party).
+
     Since recommendation 7 of the Praxi study and 17 of the native IFC study (2026-11-12), elements are changed in place so that their
     GlobalId stays for their whole life:
 
@@ -3396,6 +3408,97 @@ class _ChangeSet:
                 for key, value in values.items():
                     setattr(conversion, key, value)
                 self.touch(conversion)
+
+    # -- the model's responsible party (recommendation 8 of the study of the IFC and BCF guidelines)
+    def op_set_responsible_party(self, op):
+        """The organisation that answers for the model, its role, designation and contact (see the class's documentation): one
+        responsible party per model. The project's assignment to an actor of the same organisation, else of the same role, else
+        its only one, is changed in place, so that the actor and the assignment keep their GlobalIds; otherwise a new actor is
+        assigned. An organisation is never renamed, since owner histories and applications share it: another name gets an
+        organisation of its own, and what the old party left unused goes."""
+        import ifcopenshell.guid
+        text = lambda key: str(op.get(key) or "").strip()[:255] or None  # noqa: E731
+        name = text("organization")
+        if not name:
+            raise DataspatiumError("organization is required: the name of the company or authority that answers for the model")
+        role = str(op.get("role") or "").strip().upper() or None
+        user_role = text("user_role")
+        if role is not None:
+            items = _ifc_enum_items(self.check_class("IfcActorRole"), "Role") or ()
+            if role == "COMMISSIONINGENGINEER" and role not in items and "COMISSIONINGENGINEER" in items:
+                role = "COMISSIONINGENGINEER"  # IFC2X3's spelling
+            if role not in items:
+                raise DataspatiumError("role must be one of %s, or null" % ", ".join(items))
+        if role == "USERDEFINED" and not user_role:
+            raise DataspatiumError("role USERDEFINED needs user_role, the name of the role")
+        if user_role and role != "USERDEFINED":
+            raise DataspatiumError("user_role goes with role USERDEFINED")
+        projects = self.m.by_type("IfcProject")
+        if not projects:
+            raise DataspatiumError("the model has no IfcProject to assign its responsible party to")
+        project = projects[0]
+        rel = self.party_assignment(project, name, role)
+        actor = rel.RelatingActor if rel is not None else None
+        before = actor.TheActor if actor is not None else None
+        old_org = org = self.party_of(before)
+        if org is None or str(org.Name or "").strip().lower() != name.lower():
+            org = self.m.create_entity("IfcOrganization", Name=name)
+        old_role = rel.ActingRole if rel is not None else None
+        acting = None
+        if role is not None:
+            same = old_role is not None and old_role.Role == role and (old_role.UserDefinedRole or None) == user_role
+            acting = old_role if same else self.m.create_entity("IfcActorRole", Role=role, UserDefinedRole=user_role)
+        # The party's role among its organisation's Roles, in place of the one it played before (also on an organisation it left).
+        for o in dict.fromkeys(x for x in (old_org, org) if x is not None):
+            roles = [r for r in (o.Roles or ()) if r != old_role] + ([acting] if o == org and acting is not None else [])
+            o.Roles = tuple(roles) or None
+        # The contact person: a name sets it, "" removes it, and null keeps the one the party has at the same organisation.
+        person = text("contact_person")
+        kept = before is not None and before.is_a("IfcPersonAndOrganization") and before.TheOrganization == org and before.ThePerson is not None
+        who = before if kept and op.get("contact_person") is None else org
+        if person:
+            words = person.split()
+            given, family = " ".join(words[:-1]) or None, words[-1]
+            if kept and before.ThePerson.FamilyName == family and (before.ThePerson.GivenName or None) == given:
+                who = before
+            else:
+                who = self.m.create_entity("IfcPersonAndOrganization", ThePerson=self.m.create_entity("IfcPerson", FamilyName=family, GivenName=given), TheOrganization=org)
+        if actor is None:
+            actor = self.m.create_entity("IfcActor", GlobalId=ifcopenshell.guid.new(), OwnerHistory=self.owner, Name=text("designation"), Description=text("contact_role"), TheActor=who)
+            rel = self.m.create_entity("IfcRelAssignsToActor", GlobalId=ifcopenshell.guid.new(), OwnerHistory=self.owner, RelatedObjects=[project], RelatingActor=actor, ActingRole=acting)
+            self.register(actor, ref=False)
+            self.register(rel, ref=False)
+            return
+        actor.Name, actor.Description, actor.TheActor = text("designation"), text("contact_role"), who
+        rel.ActingRole = acting
+        self.touch(actor)
+        self.touch(rel)
+        self.party_unused([before, old_role] if before is not who else [old_role])
+
+    def party_assignment(self, project, name, role):
+        """The project's assignment to an actor (not an occupant) of the organisation named, else of the role, else its only one."""
+        rels = [r for r in self.m.get_inverse(project) if r.is_a("IfcRelAssignsToActor") and r.RelatingActor is not None and not r.RelatingActor.is_a("IfcOccupant")]
+        named = [r for r in rels if str(getattr(self.party_of(r.RelatingActor.TheActor), "Name", None) or "").strip().lower() == name.lower()]
+        playing = [r for r in rels if role is not None and r.ActingRole is not None and r.ActingRole.Role == role]
+        return (named or playing or (rels if len(rels) == 1 else [None]))[0]
+
+    @staticmethod
+    def party_of(who):
+        """The organisation of an actor's TheActor: itself, or a person-and-organisation's; None for a person alone."""
+        if who is None:
+            return None
+        if who.is_a("IfcOrganization"):
+            return who
+        return getattr(who, "TheOrganization", None) if who.is_a("IfcPersonAndOrganization") else None
+
+    def party_unused(self, entities):
+        """What a changed party no longer uses, when nothing else does: its person-and-organisation, person, organisation or role."""
+        for e in entities:
+            if e is None or self.m.get_total_inverses(e):
+                continue
+            inner = [e.ThePerson, e.TheOrganization] if e.is_a("IfcPersonAndOrganization") else []
+            self.m.remove(e)
+            self.party_unused(inner)
 
     # -- types with material layers, wall joins and base quantities (recommendations 3, 5 and 6 of the native IFC study)
     TYPE_KINDS = {"wall": ("IfcWallType", "NOTDEFINED"), "slab": ("IfcSlabType", "FLOOR"), "roof": ("IfcSlabType", "ROOF"),
@@ -6685,9 +6788,21 @@ def _scrub_dangling(model, rels):
             model.remove(rel)
 
 
+def _scrub_names_person(actor):
+    """Whether an actor can be personal data: an occupant always (a tenant is often a person), an actor when it points at a person
+    other than the app's neutral user. An actor that is an organisation alone, such as a model's responsible party, names nobody."""
+    if actor.is_a("IfcOccupant"):
+        return True
+    who = actor.TheActor
+    person = who if who is not None and who.is_a("IfcPerson") else (who.ThePerson if who is not None and who.is_a("IfcPersonAndOrganization") else None)
+    return person is not None and not _scrub_neutral_person(person)
+
+
 def _scrub_actors(model, choice, salt, made):
-    """IfcActor and IfcOccupant: a code for the name and a stand-in for the person ("hash"), or gone with their assignments."""
-    actors = list(model.by_type("IfcActor"))
+    """IfcActor and IfcOccupant that name a person (_scrub_names_person): a code for the name and a stand-in for the person
+    ("hash"), or gone with their assignments ("remove"); an actor of a person at an organisation keeps the organisation, without
+    the person, its name and its description, so that a model's responsible party stays."""
+    actors = [a for a in model.by_type("IfcActor") if _scrub_names_person(a)]
     named = set()
     for a in actors:
         named |= _scrub_named(a)
@@ -6698,6 +6813,8 @@ def _scrub_actors(model, choice, salt, made):
             stand_in = _scrub_stand_in(model, a.TheActor, salt, made)
             if stand_in is not a.TheActor:
                 a.TheActor = stand_in
+        elif not a.is_a("IfcOccupant") and a.TheActor.is_a("IfcPersonAndOrganization") and a.TheActor.TheOrganization is not None:
+            a.TheActor, a.Name, a.Description = a.TheActor.TheOrganization, None, None
         else:
             rels = [r for r in model.get_inverse(a) if r.is_a("IfcRelationship")]
             model.remove(a)
@@ -7256,6 +7373,8 @@ def _ifc_new_model(schema, settings_json, out_file):
     building number when there is one), building_id (the national building id as Pset_BuildingCommon.BuildingID with
     IsPermanentID true), storey_description (the first storey's Description), author and organization (the header's, personal
     data the person enters) and file_name (the header's name of the file). The model contexts are Model with Body and Axis.
+    party ({organization, role, user_role, designation, contact_role, contact_person}) is the model's responsible party, written
+    by set_responsible_party (recommendation 8 of the study of the IFC and BCF guidelines).
     """
     import ifcopenshell.api.aggregate
     import ifcopenshell.api.context
@@ -7300,7 +7419,8 @@ def _ifc_new_model(schema, settings_json, out_file):
     first = {"name": name("storey", "Level 1"), "elevation": _cs_num(opts, "elevation", 0.0)}
     if name("storey_description", None):
         first["description"] = name("storey_description", None)
-    cs.apply([{"tool": "create_storeys_and_grid", "storeys": [first]}])
+    party = opts.get("party") if isinstance(opts.get("party"), dict) else None
+    cs.apply([{"tool": "create_storeys_and_grid", "storeys": [first]}] + ([dict(party, tool="set_responsible_party")] if party else []))
     findings, errors = cs.findings()
     notes = [n for n in [_ifc_crs_note(model)] if n]
     _ifc_header(model, opts.get("file_name") or out_file, new=True, author=opts.get("author"), organization=opts.get("organization"))

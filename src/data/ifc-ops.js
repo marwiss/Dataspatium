@@ -8,6 +8,7 @@
  * so the step is logged, undoable and replayable like any other, and the original file in `_files` is always the
  * current version of the model. The dataset is never changed by Python directly. `ifc_changeset` is the approved change set of
  * Ändra med AI (ai/write-tools), applied by the wheel's _ifc_changeset with the schema check; `previewChangeset` runs it on a copy.
+ * `ifc_party` writes the model's responsible party from its form the same way (set_responsible_party).
  * `topologyOf` reads the building's topology (rooms, neighbours, external walls with their facing, open wall ends) from the model;
  * `classSearch` finds the IFC class for a thing and `classReportOf` reports the model's class faults (decision B-57.2).
  * `basicsOf` reads the model's basic requirements (the card Grunduppgifter). The preview tries buildingSMART's rules, and with an
@@ -97,6 +98,23 @@
       toR: (p) => ['# ' + D.t('op.ifc_changeset.note')].concat(lines('# ', p.changes)).join('\n'),
     });
     /**
+     * The model's responsible party from its own form (ui/bearbeta/party): the operation set_responsible_party (ai/write-tools partyOp,
+     * as JSON, so that a contact person's '' that removes it stays) through the wheel like a change set, a step of its own in the recipe.
+     */
+    const party = ops.define({
+      id: 'ifc_party', group: 'model', manualPreview: true,
+      params: [{ name: 'party', type: 'text', required: true }],
+      async prepare(ctx, p) {
+        const meta = await modelOf(ctx);
+        const op = Object.assign(typeof p.party === 'string' ? JSON.parse(p.party) : p.party, { tool: 'set_responsible_party' });
+        const res = await bridge().runIfcChangeset([op], await ctx.engine.export(), { name: meta.name, express: true });
+        ctx._ifc = { bytes: res.bytes, info: res.info, fileName: fileNameOf(meta, res.info) };
+      },
+      async apply(ctx) { refuseExpress((ctx._ifc && ctx._ifc.info) || {}); return take(ctx); },
+      toSQL: () => ['-- ' + D.t('op.ifc_party.note')],
+      toR: () => '# ' + D.t('op.ifc_party.note'),
+    });
+    /**
      * The approved step refuses a change set that breaks the schema's EXPRESS rules where the base kept them (the wheel's `express`
      * report; only new errors count), naming the first rules, so that the person can ask the AI to mend it. @param {any} info
      */
@@ -181,6 +199,6 @@
       const out = await bridge().runIfcParameters(await handle.engine.export(), ids);
       return Array.isArray(out) ? out : [];
     }
-    return { python, applyTable, changeset, previewChangeset, topologyOf, classSearch, classReportOf, parametersOf, basicsOf, refuseExpress, IDS: ['ifc_apply_table', 'ifc_python'] };
+    return { python, applyTable, changeset, party, previewChangeset, topologyOf, classSearch, classReportOf, parametersOf, basicsOf, refuseExpress, IDS: ['ifc_apply_table', 'ifc_python'] };
   });
 })();
