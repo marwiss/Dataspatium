@@ -3809,7 +3809,8 @@ class _ChangeSet:
         """A building element of ELEMENT_CLASSES with a ref: its class (element_class), PredefinedType and ObjectType checked against
         the schema (element_predefined), a SweptSolid body (element_body) placed at `at` and z in the storey's plane, turned by
         rotation (element_placement), and contained in the storey, or for a part (part_of) aggregated in its whole and on the whole's
-        storey, never both; a covering's host gets IfcRelCoversBldgElements or IfcRelCoversSpaces (cover), and a type its
+        storey, never both; a covering with a host is, in IFC4 and later, a part of that element (IfcRelAggregates) or contained in
+        that space, and only in IFC2X3 gets IfcRelCoversBldgElements or IfcRelCoversSpaces (cover); and a type gets its
         IfcRelDefinesByType (relate_type). IfcStair goes to create_stair."""
         import ifcopenshell.api.aggregate
         cls = self.element_class(op.get("ifc_class"))
