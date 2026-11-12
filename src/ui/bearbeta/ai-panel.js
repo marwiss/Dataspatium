@@ -419,7 +419,10 @@
         /** The operations with the model's GlobalIds for its STEP ids, read from the dataset's own table (decision F34 a at Dataregium). */
         async function guidOps(ops) {
           const ids = new Set();
-          for (const op of ops) { for (const x of Array.isArray(op.ids) ? op.ids : []) if (Number.isInteger(x)) ids.add(x); if (Number.isInteger(op.wall_id)) ids.add(op.wall_id); }
+          for (const op of ops) {
+            for (const x of Array.isArray(op.ids) ? op.ids : []) if (Number.isInteger(x)) ids.add(x);
+            for (const key of ['wall_id', 'type', 'part_of', 'host']) if (Number.isInteger(op[key])) ids.add(op[key]);
+          }
           if (!ids.size) return ops;
           const map = new Map();
           const handle = await datasets.ensureOpen(options.datasetId);
