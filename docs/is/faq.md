@@ -29,6 +29,17 @@ OCR, sýnir stöðustikan hve mikið af heildinni er komið, hraðann og um þa�
 við. Það sem beið eftir niðurhalinu fær þá skilaboð um að hætt hafi verið við og má ræsa aftur síðar. Úr möppunni (file://) er ekkert sótt;
 skrárnar eru á disknum.
 
+Hve langan tíma forritið sjálft tekur að ræsa sýnir ræsingarsniðið. Bættu `?profil=start` við slóðina (`index.html?profil=start`, eða
+`m/index.html?profil=start` fyrir Dataspatium Farsíma), og þá skrifar forritið í stjórnborð vafrans töflu yfir skrifturnar með tímanum
+frá því að hver var sett inn þar til hún hafði keyrt og þeim hluta ræsingarinnar sem hún ein stóð fyrir, tímann eftir möppum, tímann
+þar til forritið er tilbúið og að fyrstu teikningu, löng verk yfir 50 ms (í Edge og Chrome) og, þegar forritið keyrir frá vefþjóni,
+stærð hverrar skrár; án færibreytunnar er ekkert mælt. Með `&profil-exit=1` lýkur mælingunni eins og prófi, svo að hana má keyra án
+glugga úr möppunni: `powershell -File tools/run-tests.ps1 -Browsers edge -Url "index.html?lang=sv&profil=start&profil-exit=1"`, og með
+`-Url "m/index.html?lang=sv&profil=start&profil-exit=1"` fyrir farsímasíðuna (`-Browsers firefox` fyrir Firefox). Gegn vefþjóni
+(`python -m http.server 8092 --bind 127.0.0.1` í möppunni) verður slóðin
+`http://127.0.0.1:8092/index.html?lang=sv&profil=start&profil-exit=1`. `lang=sv` (eða `lang=is`) velur tungumálið fyrirfram, því allra
+fyrsta ræsingin hleður öll sjö tungumálin og bíður eftir vali á tungumáli.
+
 ## Get ég rofið R-kóða sem hefur fest?
 
 Já, þegar forritið keyrir af vefþjóni (til dæmis `python -m http.server 8080` á eigin tölvu, eða https á innraneti): þá

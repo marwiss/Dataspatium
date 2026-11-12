@@ -30,6 +30,17 @@ OCR, viser statuslinjen hvor mye som er hentet av det hele, hastigheten og omtre
 for å avbryte. Det som ventet på hentingen får da en melding om at den ble avbrutt, og kan startes igjen senere. Fra mappen (file://)
 hentes ingenting; filene ligger på disken.
 
+Hvor lang tid appen selv bruker på å starte, viser startprofilen. Legg til `?profil=start` i adressen (`index.html?profil=start`,
+eller `m/index.html?profil=start` for Dataspatium Mobil), så skriver appen i nettleserens konsoll en tabell over skriptene med tiden
+fra hvert ble lagt inn til det hadde kjørt og den delen av starten det alene sto for, tiden per mappe, tiden til klar og til første
+tegning, lange oppgaver over 50 ms (i Edge og Chrome) og, når appen kjøres fra en webserver, størrelsen på hver fil; uten parameteren
+måles ingenting. Med `&profil-exit=1` avsluttes målingen som en test, slik at den kan kjøres uten vindu fra mappen:
+`powershell -File tools/run-tests.ps1 -Browsers edge -Url "index.html?lang=sv&profil=start&profil-exit=1"`, og med
+`-Url "m/index.html?lang=sv&profil=start&profil-exit=1"` for mobilsiden (`-Browsers firefox` for Firefox). Mot en webserver
+(`python -m http.server 8092 --bind 127.0.0.1` i mappen) blir adressen
+`http://127.0.0.1:8092/index.html?lang=sv&profil=start&profil-exit=1`. `lang=sv` (eller `lang=nb`) velger språket på forhånd, siden
+den aller første starten laster alle sju språkene og venter på språkvalget.
+
 ## Kan jeg avbryte R-kode som har hengt seg?
 
 Ja, når appen kjører fra en nettserver (for eksempel `python -m http.server 8080` på din egen datamaskin eller https på

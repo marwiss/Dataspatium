@@ -30,6 +30,17 @@ och OCR, visar statusraden hur mycket som hämtats av det hela, hastigheten och 
 knapp för att avbryta. Det som väntade på hämtningen får då ett meddelande om att den avbröts och kan startas om senare. Från mappen
 (file://) hämtas ingenting; filerna ligger på disken.
 
+Hur lång tid appen själv tar att starta visar startprofilen. Lägg till `?profil=start` i adressen (`index.html?profil=start`, eller
+`m/index.html?profil=start` för Dataspatium Mobil), så skriver appen i webbläsarens konsol en tabell över skripten med tiden från att
+vart och ett lades in tills det körts och den del av starten det ensamt stod för, tiden per mapp, tiden till redo och till första
+ritningen, långa uppgifter över 50 ms (i Edge och Chrome) och, när appen körs från en webbserver, storleken på varje fil; utan
+parametern mäts ingenting. Med `&profil-exit=1` avslutas mätningen som ett prov, så att den kan köras utan fönster från mappen:
+`powershell -File tools/run-tests.ps1 -Browsers edge -Url "index.html?lang=sv&profil=start&profil-exit=1"`, och med
+`-Url "m/index.html?lang=sv&profil=start&profil-exit=1"` för mobilsidan (`-Browsers firefox` för Firefox). Mot en webbserver
+(`python -m http.server 8092 --bind 127.0.0.1` i mappen) blir adressen
+`http://127.0.0.1:8092/index.html?lang=sv&profil=start&profil-exit=1`. `lang=sv` väljer språket i förväg, eftersom den allra första
+starten laddar alla sju språken och väntar på språkvalet.
+
 ## Kan jag avbryta R-kod som fastnat?
 
 Ja, när appen körs från en webbserver (till exempel `python -m http.server 8080` på den egna datorn, eller https på

@@ -32,6 +32,18 @@ IfcOpenShell ja OCR, tilarivi näyttää, paljonko kokonaisuudesta on haettu, no
 vauhdilla, sekä painikkeen keskeyttämiseen. Latausta odottanut toiminto saa silloin ilmoituksen keskeytyksestä ja voidaan käynnistää
 myöhemmin uudelleen. Kansiosta (file://) ei haeta mitään; tiedostot ovat levyllä.
 
+Kuinka kauan sovelluksen käynnistyminen kestää, näyttää käynnistysprofiili. Lisää osoitteeseen `?profil=start`
+(`index.html?profil=start` tai Dataspatium Mobiilille `m/index.html?profil=start`), niin sovellus kirjoittaa selaimen konsoliin
+taulukon skripteistä: kunkin lisäämisestä sen ajon päättymiseen kulunut aika ja se osa käynnistyksestä, jonka se yksin vei, aika
+kansioittain, aika valmiiksi ja ensimmäiseen piirtoon, yli 50 ms:n pitkät tehtävät (Edgessä ja Chromessa) ja, kun sovellus ajetaan
+verkkopalvelimelta, kunkin tiedoston koko; ilman parametria mitään ei mitata. Kun lisäät `&profil-exit=1`, mittaus päättyy kuin testi,
+joten sen voi ajaa ilman ikkunaa kansiosta:
+`powershell -File tools/run-tests.ps1 -Browsers edge -Url "index.html?lang=sv&profil=start&profil-exit=1"`, ja mobiilisivulle
+`-Url "m/index.html?lang=sv&profil=start&profil-exit=1"` (Firefoxille `-Browsers firefox`). Verkkopalvelinta vasten
+(`python -m http.server 8092 --bind 127.0.0.1` kansiossa) osoite on
+`http://127.0.0.1:8092/index.html?lang=sv&profil=start&profil-exit=1`. `lang=sv` (tai `lang=fi`) valitsee kielen etukäteen, koska
+aivan ensimmäinen käynnistys lataa kaikki seitsemän kieltä ja odottaa kielen valintaa.
+
 ## Voinko keskeyttää jumittuneen R-koodin?
 
 Voit, kun sovellus ajetaan verkkopalvelimelta (esimerkiksi `python -m http.server 8080` omalla tietokoneella tai https

@@ -30,6 +30,17 @@ IfcOpenShell og OCR, viser statuslinja kor mykje som er henta av det heile, fart
 ein knapp for å avbryte. Det som venta på hentinga får då ei melding om at ho vart avbroten, og kan startast att seinare. Frå mappa
 (file://) blir ingenting henta; filene ligg på disken.
 
+Kor lang tid appen sjølv brukar på å starte, viser startprofilen. Legg til `?profil=start` i adressa (`index.html?profil=start`, eller
+`m/index.html?profil=start` for Dataspatium Mobil), så skriv appen i konsollen i nettlesaren ein tabell over skripta med tida frå
+kvart vart lagt inn til det hadde køyrt og den delen av starten det åleine stod for, tida per mappe, tida til klar og til første
+teikning, lange oppgåver over 50 ms (i Edge og Chrome) og, når appen køyrer frå ein webserver, storleiken på kvar fil; utan
+parameteren blir ingenting målt. Med `&profil-exit=1` blir målinga avslutta som ein test, slik at ho kan køyrast utan vindauge frå
+mappa: `powershell -File tools/run-tests.ps1 -Browsers edge -Url "index.html?lang=sv&profil=start&profil-exit=1"`, og med
+`-Url "m/index.html?lang=sv&profil=start&profil-exit=1"` for mobilsida (`-Browsers firefox` for Firefox). Mot ein webserver
+(`python -m http.server 8092 --bind 127.0.0.1` i mappa) blir adressa
+`http://127.0.0.1:8092/index.html?lang=sv&profil=start&profil-exit=1`. `lang=sv` (eller `lang=nn`) vel språket på førehand, sidan den
+aller første starten lastar alle sju språka og ventar på språkvalet.
+
 ## Kan eg avbryte R-kode som har hengt seg?
 
 Ja, når appen køyrer frå ein webtenar (til dømes `python -m http.server 8080` på di eiga datamaskin eller https på
