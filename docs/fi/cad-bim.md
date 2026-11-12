@@ -125,6 +125,7 @@ R:ssä ja Pythonissa `dm_read()` antaa rakennusosat, `dm_read_properties()` omin
 - **Määräluettelo**: jokainen tiedoston määrän nimi tyypeittäin summineen. Näet tarkalleen, mitä tiedosto ilmoittaa.
 - **Ominaisuudet**: mitä arvoja ominaisuudella on ja kuinka monella kunkin tyypin rakennusosalla.
 - **Entiteetit**: kuinka monesta kunkin lajin entiteetistä tiedosto koostuu.
+- **Ilmastoselvitys**: alustava ilmastoselvitys mallista luokittain ja kerroksittain, katso *Alustava ilmastoselvitys* alla.
 
 Jokaisen tuloksen voi tallentaa aineistona.
 
@@ -249,6 +250,52 @@ mallin omissa koordinaateissa. Siitä:
 
 Viimeisin tulos näkyy Hallitse-tilan kortissa Validoi malli, ja siitä näkyy, tehtiinkö se sovelluksessa vai palvelimella. Mittaus edellyttää suljettuja pintoja: elementti, jonka pinnat ovat auki
 tai rikki, voi antaa epävarmoja syvyyksiä. Kaarevat pinnat on jaettu kolmioihin, joten alle millimetrin toleranssi on epävarma. Elementit, joita 3D-näkymä ei pysty piirtämään, eivät ole mukana, ja tulos kertoo, kuinka monta niitä on; Teklan esimerkkimallissa se koski kaikkia raudoitustankoja.
+
+## Alustava ilmastoselvitys
+
+Työkalu **Ilmastoselvitys** Analysoi-tilassa (Määrät-välilehti) laskee mallista alustavan ilmastoselvityksen: ilmastovaikutuksen
+vaiheille A1–A3, A4 ja A5 kg CO₂e luokittain ja rakennuksen kerroksittain. Se on suunnittelun apuväline, ei Boverketiin
+rekisteröitävä selvitys.
+
+**Luokka ja kerros.** Jokainen rakennusosa saa yhden Boverketin neljästä luokasta (kantavat rakenneosat – perustukset, kantavat
+rakenneosat – muut, vaippa, väliseinät) tai luokan *Ei sisälly* sekä yhden rakennuksen kuudesta kerroksesta Boverketin raportin
+2024:26 mukaan: 1 tontti ja perustukset, 2 runko ja muut kantavat rakenteet, 3 vaippa, yläpohja ja julkisivu, 4 talotekniikka,
+5 sisäkatot, väliseinät ja sisäpinnat, 6 kiintokalusteet. Säännöt lukevat vain IFC-luokan, PredefinedTypen (rakennusosan tai sen
+tyypin) sekä Pset_*Commonin LoadBearingin ja IsExternalin; luokitusjärjestelmää ei lueta. Ne noudattavat Boverketin luetteloa
+mukaan kuuluvista rakennusosista: paalut, maarakenteet, talotekniikka, kiintokalusteet, siirrettävät väliseinät, sisäpinnat ja
+aurinkosuojaus eivät sisälly; portaat, luiskat ja kaiteet ovat kantavia; sisäkatot, alakatot ja sisäovet kuuluvat väliseiniin.
+Sarake *Sääntö* näyttää, mikä ratkaisi.
+
+- **Epävarma**: rakennusosa sisältyy, mutta sen luokka on epävarma, esimerkiksi väliseinä ilman LoadBearingia tai ovi ilman
+  IsExternalia. Se lasketaan näytettyyn luokkaan ja näkyy kohdassa *Ratkaistavat*. Ulkoseinä on vaippaa LoadBearingista riippumatta.
+- **Ei voida ratkaista**: säännöt eivät kerro, sisältyykö rakennusosa, esimerkiksi proxy-elementti tai aurinkokennot (jotka
+  sisältyvät vain, kun ne on integroitu kattoon tai julkisivuun). Sitä ei lasketa ennen kuin olet ratkaissut sen.
+- **Johdettu IsExternal**: kun tiedosto ei ilmoita IsExternalia, ovi tai ikkuna saa arvon seinästä, jossa se on. *Johda IsExternal*
+  lukee rakennuksen topologian sovelluksen Pythonilla, joka käynnistyy silloin (ensimmäisellä kerralla sen komponentit noudetaan
+  suostumuksellasi): kerroksen ulkorajaa pitkin kulkevat seinät ovat ulkoseiniä, ja suljetussa kerroksessa huoneiden muut seinät
+  ovat sisäseiniä. Sääntö kertoo, kun arvo on johdettu.
+- Koottu rakennusosa, esimerkiksi kattolaatoista koottu katto, lasketaan osissaan, ja osa, jota säännöt eivät voi ratkaista, saa
+  kokonaisuutensa luokan.
+
+Kohdassa **Ratkaistavat** valitset luokan kokonaiselle ryhmälle rakennusosia, joilla on sama luokka, tyyppi ja sääntö. Valinta
+tallennetaan rakennusosittain (GlobalId) selaimeen, kunnes annat sääntöjen ratkaista uudelleen.
+
+**Määrät.** Tilavuus, pinta-ala ja paino otetaan tiedoston määristä, nettomitat ennen bruttomittoja ja seinän sivupinta-ala. Jos
+tiedostossa ei ole määriä, tilavuus lasketaan geometriasta, kun rakennusosa on yksinkertainen pursotus: profiilin pinta-ala kertaa
+syvyys (suorakaide, ympyrä, I-profiili, murtoviiva ja muita), myös tyypin esityksen kautta ja ennen leikkausta. Aukkoja ei silloin
+vähennetä, ja sarake *Määrän lähde* kertoo sen. Ovet ja ikkunat lasketaan neliömetreittäin mitoistaan. Kerroksellinen rakennusosa
+jaetaan materiaaleittain kerrosten paksuuksien mukaan. Muuten rivillä ei ole määrää, eikä sitä lasketa.
+
+**Ilmastotiedot.** *Nouda ilmastotietokanta* noutaa Boverketin ilmastotietokannan (noin 0,9 MB) osoitteesta api.boverket.se API-haun
+suostumuksellasi ja tallentaa sen selaimeen; mallista ei lähetetä mitään. Kohdassa *Materiaalit ja resurssit* valitset resurssin
+jokaiselle materiaalille. Ehdotukset perustuvat ensin materiaalin IFC-luokkaan (IfcMaterial.Category, esimerkiksi concrete, steel,
+wood, glass tai gypsum) ja sitten nimeen; ovia ja ikkunoita ehdotetaan tyypin nimen perusteella. *Hyväksy ehdotukset* tallentaa
+ehdotukset valinnoiksesi, jotka koskevat kaikkia malleja. Ilmastovaikutus on massa (tilavuus kertaa tiheys tai pinta-ala kertaa
+neliömetripaino) kertaa tietokannan arvot vaiheille A1–A3, A4 ja A5 (hukka). Boverketin mukaan rakennustuotteiden ilmastotiedot on
+asetettu varovaisesti, noin 25 prosenttia keskiarvon yläpuolelle; työkalu laskee varovaisella arvolla ja näyttää tyypillisen
+pyydettäessä.
+
+Jokaisen näkymän voi tallentaa aineistoksi. Lähde: Boverket, ilmastotietokanta (avoin data, katso [licenser.md](licenser.md)).
 
 ## DXF-piirustukset
 

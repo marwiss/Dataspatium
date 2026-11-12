@@ -121,6 +121,7 @@ I R og Python gjev `dm_read()` bygningsdelane, `dm_read_properties()` eigenskapa
 - **Mengdeliste**: kvart mengdenamn i fila per type med sum. Her ser du nøyaktig kva fila oppgjev.
 - **Eigenskapar**: kva verdiar ein eigenskap har, og hos kor mange bygningsdelar av kvar type.
 - **Entitetar**: kor mange entitetar av kvart slag fila består av.
+- **Klimaerklæring**: ei førebels klimaerklæring ut frå modellen per kategori og lag, sjå *Førebels klimaerklæring* nedanfor.
 
 Kvart resultat kan lagrast som datasett.
 
@@ -243,6 +244,52 @@ i dei eigne koordinatane til modellen. Derifrå:
 
 Det siste resultatet står på kortet Valider modellen i Handter, med om det vart gjort i appen eller på tenaren. Målinga føreset lukka flater: eit element med opne eller øydelagde
 flater kan gi usikre djupner. Bøygde flater er delte opp i trekantar, så ein toleranse under ein millimeter blir usikker. Element som 3D-visinga ikkje kan teikne, er ikkje med, og resultatet seier kor mange dei er; i ein prøvemodell frå Tekla gjaldt det alle armeringsjerna.
+
+## Førebels klimaerklæring
+
+Verktøyet **Klimaerklæring** i Analyser (fana Mengder) reknar ut ei førebels klimaerklæring frå modellen: klimapåverknaden for A1–A3,
+A4 og A5 i kg CO₂e per kategori og per lag i bygningen. Det er eit grunnlag i prosjekteringa, ikkje ei erklæring for registrering hos
+Boverket.
+
+**Kategori og lag.** Kvar bygningsdel får ein av dei fire kategoriane til Boverket (berande konstruksjonsdelar – fundamentering,
+berande konstruksjonsdelar – andre, klimaskjerm, innerveggar) eller *Inngår ikkje*, og eitt av dei seks laga i bygningen frå rapport
+2024:26 frå Boverket: 1 tomt og fundamentering, 2 berande system og andre berande konstruksjonar, 3 klimaskjerm, yttertak og fasade,
+4 tekniske installasjonar, 5 himlingar, innerveggar og overflater innandørs, 6 fast inventar. Reglane les berre IFC-klassen,
+PredefinedType (til bygningsdelen eller typen) og LoadBearing og IsExternal i Pset_*Common; ingen klassifikasjon blir lesen. Dei
+følgjer lista til Boverket over bygningsdelar som inngår: pelar, grunnarbeid, installasjonar, fast inventar, flyttbare innerveggar,
+innvendige overflater og solskjerming inngår ikkje; trapper, rampar og rekkverk er berande; himlingar, nedsenka himlingar og
+innerdører høyrer til innerveggane. Kolonnen *Regel* viser kva som avgjorde.
+
+- **Usikker**: bygningsdelen inngår, men kategorien er usikker, til dømes ein innervegg utan LoadBearing eller ei dør utan
+  IsExternal. Han blir talt i kategorien som står, og blir lista under *Skal avgjerast*. Ein yttervegg er klimaskjerm same kva
+  LoadBearing seier.
+- **Kan ikkje avgjerast**: reglane kan ikkje seie om bygningsdelen inngår, til dømes eit proxyelement eller solceller (som berre
+  inngår når dei er integrerte i tak eller fasade). Han blir ikkje talt før du har avgjort han.
+- **Utleidd IsExternal**: når fila ikkje oppgjev IsExternal, får ei dør eller eit vindauge verdien frå veggen der dei sit. *Utlei
+  IsExternal* les topologien til bygningen med Python i appen, som startar då (første gongen blir komponentane henta med samtykket
+  ditt): veggane langs den ytre grensa til ein etasje er ytre, og på ein lukka etasje er dei andre veggane til romma indre. Regelen
+  seier når ein verdi er utleidd.
+- Ein samansett bygningsdel, til dømes eit tak av takplater, blir talt i delane sine, og ein del som reglane ikkje kan avgjere, får
+  kategorien til heilskapen.
+
+Under **Skal avgjerast** vel du kategori for ei heil gruppe bygningsdelar med same klasse, type og regel. Valet blir lagra per
+bygningsdel (GlobalId) i nettlesaren til du lèt reglane avgjere igjen.
+
+**Mengder.** Volum, areal og vekt blir tekne frå mengdene i fila, netto før brutto og sidearealet til veggen. Har fila ingen mengder,
+blir volumet rekna ut frå geometrien når bygningsdelen er ei enkel ekstrudering: arealet til profilen gonger djupna (rektangel,
+sirkel, I-profil, polylinje med fleire), også gjennom representasjonen til typen og før ei klipping. Opningar blir då ikkje trekte
+frå, og kolonnen *Kjelda til mengda* seier det. Dører og vindauge blir talde per kvadratmeter ut frå måla. Ein bygningsdel med
+materialsjikt blir delt per materiale etter tjukkleiken til sjikta. Elles har rada inga mengd og blir ikkje tald.
+
+**Klimadata.** *Hent klimadatabasen* hentar klimadatabasen til Boverket (om lag 0,9 MB) frå api.boverket.se med samtykket ditt til
+API-henting og lagrar han i nettlesaren; ingenting om modellen blir sendt. Under *Material og ressursar* vel du ein ressurs for kvart
+materiale. Forslaga byggjer først på kategorien til materialet i IFC (IfcMaterial.Category, til dømes concrete, steel, wood, glass
+eller gypsum) og deretter på namnet; dører og vindauge blir føreslåtte etter namnet på typen. *Godta forslaga* lagrar forslaga som vala
+dine, som gjeld alle modellar. Klimapåverknaden er massen (volumet gonger densiteten eller arealet gonger vekta per kvadratmeter)
+gonger verdiane i databasen for A1–A3, A4 og A5 (svinn). Boverket oppgjev at klimadata for byggjevarer er sette konservativt, om lag
+25 prosent over gjennomsnittet; verktøyet reknar med den konservative verdien og viser den typiske ved behov.
+
+Kvar vising kan lagrast som datasett. Kjelde: Boverket, klimadatabasen (opne data, sjå [licenser.md](licenser.md)).
 
 ## DXF-teikningar
 

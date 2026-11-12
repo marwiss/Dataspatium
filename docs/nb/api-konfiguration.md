@@ -22,6 +22,7 @@ to siste svenske krever nøkkel.
 | Sverige | SCB Statistikdatabasen (API v1 og v2) | Offisiell statistikk | Bla eller søk, velg verdier |
 | Sverige | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäteriets geodatakatalog, Sveriges dataportal | Folkehelse, helse, nøkkeltall for kommuner, vær, luftkvalitet, verneområder, geodata | Se den svenske veiledningen |
 | Sverige | Lantmäteriet Direkt, Boverket, Trafikverket NVDB, Lantmäteriet STAC | Stedsnavn, energiattester, vegdata, geodatafiler | Krever nøkkel |
+| Sverige | Boverkets klimadatabase | Generiske klimadata for byggevarer (GWP for A1–A5), uten nøkkel | Hent siste versjon og ressursene; verktøyet Klimaerklæring for modeller bruker de samme dataene |
 | Sverige, internasjonalt | Riksbanken (SWEA), Verdensbanken | Renter, valutakurser, utviklingsindikatorer | Bare via broen |
 
 ### Resten av Norden

@@ -465,6 +465,201 @@
       return { summary: summary, elements: elements, properties: properties, quantities: quantities, entities: entities };
     }
 
+    /**
+     * What the climate declaration needs per element (analysis/climate), in metres and cubic metres: the PredefinedType of the
+     * element and of its type, its materials (name, layer thickness, fraction, the item's and the material's category), the
+     * overall height and width of a door or window, the volume of the Body when it is made of extrusions (profile area × depth,
+     * through mapped items, and the first operand of a clipping), the element it is a part of, whether it has parts, how many
+     * openings void it, and the element a door or window sits in.
+     */
+    function climateOf(f) {
+      var rooted = rootedIndex(f);
+      var L = projectUnits(f, rooted.of).factors.LENGTHUNIT || 1;
+      var ref = function (v) { return v && v.r !== undefined ? v.r : null; };
+      var refs = function (v) { return Array.isArray(v) ? v.map(ref).filter(function (x) { return x !== null; }) : []; };
+      var at = function (id) { var k = id === null || id === undefined ? -1 : f.indexOf[id]; return k === undefined || k < 0 ? -1 : k; };
+      var nameOfType = function (k) { return f.typeNames[f.types[k]]; };
+      var num = function (v) { var x = plain(v); return typeof x === 'number' && isFinite(x) ? x : null; };
+      var text = function (v) { return typeof v === 'string' ? v : null; };
+      /** The first enumeration from an attribute on: the PredefinedType (booleans and logicals are skipped). */
+      var enumFrom = function (a, start) { for (var i = start; i < a.length; i++) { var v = a[i]; if (v && v.e !== undefined && v.e !== 'T' && v.e !== 'F' && v.e !== 'U') return v.e; } return null; };
+
+      var elements = [];
+      rooted.byType.forEach(function (list, t) {
+        var name = f.typeNames[t];
+        if (ROOT_NOT_PRODUCT.test(name) || NOT_ELEMENT[name] || STRUCTURE.test(name) || ROOMS.test(name)) return;
+        for (var i = 0; i < list.length; i++) {
+          var a = argsOf(f, list[i]);
+          var hasPlace = a[5] && a[5].r !== undefined; var hasShape = a[6] && a[6].r !== undefined;
+          if ((a[5] === null || hasPlace) && (a[6] === null || hasShape) && (hasPlace || hasShape)) elements.push({ k: list[i], id: f.ids[list[i]], a: a, name: name });
+        }
+      });
+      var isElement = new Set(elements.map(function (e) { return e.id; }));
+      var typeOf = new Map(); var materialOf = new Map(); var parentOf = new Map(); var hasParts = new Set(); var voids = new Map();
+      var openingHost = new Map(); var fills = new Map();
+      rooted.byType.forEach(function (list, t) {
+        var name = f.typeNames[t];
+        if (name !== 'IFCRELDEFINESBYTYPE' && name !== 'IFCRELASSOCIATESMATERIAL' && name !== 'IFCRELAGGREGATES' && name !== 'IFCRELVOIDSELEMENT' && name !== 'IFCRELFILLSELEMENT') return;
+        for (var i = 0; i < list.length; i++) {
+          var a = argsOf(f, list[i]);
+          if (name === 'IFCRELDEFINESBYTYPE') { var ty = ref(a[5]); refs(a[4]).forEach(function (x) { typeOf.set(x, ty); }); }
+          else if (name === 'IFCRELASSOCIATESMATERIAL') { var m = ref(a[5]); refs(a[4]).forEach(function (x) { if (!materialOf.has(x)) materialOf.set(x, m); }); }
+          else if (name === 'IFCRELAGGREGATES') {
+            var whole = ref(a[4]);
+            if (!isElement.has(whole)) continue;
+            refs(a[5]).forEach(function (x) { if (isElement.has(x)) { parentOf.set(x, whole); hasParts.add(whole); } });
+          } else if (name === 'IFCRELVOIDSELEMENT') { var host = ref(a[4]); voids.set(host, (voids.get(host) || 0) + 1); openingHost.set(ref(a[5]), host); }
+          else fills.set(ref(a[5]), ref(a[4]));
+        }
+      });
+
+      /** A material's name and its own category (IfcMaterial.Category in IFC4: concrete, steel, wood, glass, gypsum …). */
+      function materialOfRef(id) { var k = at(id); if (k < 0 || nameOfType(k) !== 'IFCMATERIAL') return ['', null]; var a = argsOf(f, k); return [String(a[0] || ''), text(a[2])]; }
+      function materialSet(id, depth) {
+        var k = at(id);
+        if (k < 0 || depth > 6) return null;
+        var n = nameOfType(k); var a = argsOf(f, k);
+        var each = function (list, fn) { return refs(list).map(function (x) { var j = at(x); return j < 0 ? null : fn(argsOf(f, j)); }).filter(Boolean); };
+        // Every item: [name, thickness m, fraction, the item's category (layer, profile, constituent), the material's own category].
+        var item = function (matRef, thickness, fraction, category) { var m = materialOfRef(matRef); return [m[0], thickness, fraction, category, m[1]]; };
+        if (n === 'IFCMATERIAL') return { kind: 'single', items: [[String(a[0] || ''), null, null, null, text(a[2])]] };
+        if (n === 'IFCMATERIALLAYERSETUSAGE' || n === 'IFCMATERIALPROFILESETUSAGE' || n === 'IFCMATERIALPROFILESETUSAGETAPERING') return materialSet(ref(a[0]), depth + 1);
+        if (n === 'IFCMATERIALLAYERSET') return { kind: 'layers', items: each(a[0], function (la) { var th = num(la[1]); return item(ref(la[0]), th === null ? null : th * L, null, text(la[5])); }) };
+        if (n === 'IFCMATERIALPROFILESET') return { kind: 'profiles', items: each(a[2], function (pa) { return item(ref(pa[2]), null, null, text(pa[5])); }) };
+        if (n === 'IFCMATERIALCONSTITUENTSET') return { kind: 'constituents', items: each(a[2], function (ca) { return item(ref(ca[2]), null, num(ca[3]), text(ca[4])); }) };
+        if (n === 'IFCMATERIALLIST') return { kind: 'list', items: refs(a[0]).map(function (x) { return item(x, null, null, null); }) };
+        return null;
+      }
+
+      // ---- the volume of a Body made of extrusions ----------------------------------------------------------------
+      function pointsArea(pts) {
+        if (pts.length < 3 || pts.some(function (p) { return !p; })) return null;
+        var s = 0;
+        for (var i = 0; i < pts.length; i++) { var p = pts[i]; var q = pts[(i + 1) % pts.length]; s += p[0] * q[1] - q[0] * p[1]; }
+        return Math.abs(s) / 2;
+      }
+      var xy = function (c) { return Array.isArray(c) && c.length >= 2 ? [Number(c[0]) || 0, Number(c[1]) || 0] : null; };
+      function curveArea(id) {
+        var k = at(id);
+        if (k < 0) return null;
+        var n = nameOfType(k); var a = argsOf(f, k);
+        if (n === 'IFCPOLYLINE') return pointsArea(refs(a[0]).map(function (x) { var j = at(x); return j < 0 ? null : xy(argsOf(f, j)[0]); }));
+        if (n === 'IFCINDEXEDPOLYCURVE') {
+          var lk = at(ref(a[0]));
+          var coords = lk >= 0 ? argsOf(f, lk)[0] : null;
+          if (!Array.isArray(coords)) return null;
+          var order = [];
+          if (Array.isArray(a[1]) && a[1].length) {
+            for (var s = 0; s < a[1].length; s++) {
+              var seg = a[1][s];
+              // An arc would need its curve; only straight segments are counted.
+              if (!seg || seg.t !== 'IFCLINEINDEX') return null;
+              var idx = Array.isArray(seg.v) ? seg.v : [seg.v];
+              for (var i = 0; i < idx.length; i++) if (!order.length || order[order.length - 1] !== idx[i]) order.push(idx[i]);
+            }
+          } else for (var c = 0; c < coords.length; c++) order.push(c + 1);
+          return pointsArea(order.map(function (i) { return xy(coords[Number(i) - 1]); }));
+        }
+        return null;
+      }
+      function profileArea(id, depth) {
+        var k = at(id);
+        if (k < 0 || depth > 4) return null;
+        var n = nameOfType(k); var a = argsOf(f, k);
+        var x = function (i) { return num(a[i]); };
+        var all = function (list) { return list.every(function (v) { return v !== null; }); };
+        if (n === 'IFCRECTANGLEPROFILEDEF') return all([x(3), x(4)]) ? x(3) * x(4) : null;
+        if (n === 'IFCROUNDEDRECTANGLEPROFILEDEF') return all([x(3), x(4)]) ? x(3) * x(4) - (4 - Math.PI) * Math.pow(x(5) || 0, 2) : null;
+        if (n === 'IFCRECTANGLEHOLLOWPROFILEDEF') return all([x(3), x(4), x(5)]) ? x(3) * x(4) - Math.max(0, x(3) - 2 * x(5)) * Math.max(0, x(4) - 2 * x(5)) : null;
+        if (n === 'IFCCIRCLEPROFILEDEF') return x(3) !== null ? Math.PI * x(3) * x(3) : null;
+        if (n === 'IFCCIRCLEHOLLOWPROFILEDEF') return all([x(3), x(4)]) ? Math.PI * (x(3) * x(3) - Math.pow(Math.max(0, x(3) - x(4)), 2)) : null;
+        if (n === 'IFCELLIPSEPROFILEDEF') return all([x(3), x(4)]) ? Math.PI * x(3) * x(4) : null;
+        if (n === 'IFCISHAPEPROFILEDEF') return all([x(3), x(4), x(5), x(6)]) ? 2 * x(3) * x(6) + (x(4) - 2 * x(6)) * x(5) : null;
+        if (n === 'IFCARBITRARYCLOSEDPROFILEDEF') return curveArea(ref(a[2]));
+        if (n === 'IFCARBITRARYPROFILEDEFWITHVOIDS') {
+          var outer = curveArea(ref(a[2]));
+          if (outer === null) return null;
+          var inner = refs(a[3]).map(curveArea);
+          return inner.some(function (v) { return v === null; }) ? null : Math.max(0, outer - inner.reduce(function (sum, v) { return sum + v; }, 0));
+        }
+        if (n === 'IFCDERIVEDPROFILEDEF') {
+          var parent = profileArea(ref(a[2]), depth + 1);
+          var ok = at(ref(a[3]));
+          var oa = ok >= 0 ? argsOf(f, ok) : [];
+          var s1 = num(oa[3]); s1 = s1 === null ? 1 : s1;
+          var s2 = nameOfType(ok) === 'IFCCARTESIANTRANSFORMATIONOPERATOR2DNONUNIFORM' && num(oa[4]) !== null ? num(oa[4]) : s1;
+          return parent === null ? null : parent * s1 * s2;
+        }
+        return null;
+      }
+      function solidVolume(id, depth, flags) {
+        var k = at(id);
+        if (k < 0 || depth > 8) return null;
+        var n = nameOfType(k); var a = argsOf(f, k);
+        if (n === 'IFCEXTRUDEDAREASOLID') {
+          var area = profileArea(ref(a[0]), 0); var d = num(a[3]); var dk = at(ref(a[2]));
+          var dir = dk >= 0 ? argsOf(f, dk)[0] : null;
+          if (area === null || d === null || !Array.isArray(dir)) return null;
+          var len = Math.sqrt(dir.reduce(function (sum, v) { return sum + (Number(v) || 0) * (Number(v) || 0); }, 0));
+          // The profile lies in the placement's XY plane: only the part of the direction along Z adds volume.
+          return len ? area * d * Math.abs((Number(dir[2]) || 0) / len) : null;
+        }
+        if (n === 'IFCBOOLEANCLIPPINGRESULT' || (n === 'IFCBOOLEANRESULT' && a[0] && a[0].e === 'DIFFERENCE')) { flags.clipped = true; return solidVolume(ref(a[1]), depth + 1, flags); }
+        if (n === 'IFCMAPPEDITEM') {
+          var mk = at(ref(a[0]));
+          var v = mk >= 0 ? representationVolume(ref(argsOf(f, mk)[1]), depth + 1, flags) : null;
+          if (v === null) return null;
+          var tk = at(ref(a[1]));
+          if (tk < 0) return v;
+          var ta = argsOf(f, tk); var s = num(ta[3]); s = s === null ? 1 : s;
+          if (nameOfType(tk) === 'IFCCARTESIANTRANSFORMATIONOPERATOR3DNONUNIFORM') return v * s * (num(ta[5]) === null ? s : num(ta[5])) * (num(ta[6]) === null ? s : num(ta[6]));
+          return v * s * s * s;
+        }
+        return null;
+      }
+      function representationVolume(id, depth, flags) {
+        var k = at(id);
+        var items = k >= 0 ? refs(argsOf(f, k)[3]) : [];
+        if (!items.length) return null;
+        var sum = 0;
+        for (var i = 0; i < items.length; i++) { var v = solidVolume(items[i], depth, flags); if (v === null) return null; sum += v; }
+        return sum;
+      }
+      function bodyOf(shape) {
+        var k = at(shape);
+        var reps = k >= 0 ? refs(argsOf(f, k)[2]) : [];
+        var info = reps.map(function (r) { var j = at(r); var a = j >= 0 ? argsOf(f, j) : []; return { id: r, ident: String(a[1] || ''), kind: String(a[2] || '') }; });
+        var body = info.filter(function (r) { return /^body$/i.test(r.ident); });
+        if (!body.length) body = info.filter(function (r) { return !r.ident && /^(SweptSolid|Clipping|MappedRepresentation|CSG)$/i.test(r.kind); });
+        return body.map(function (r) { return r.id; });
+      }
+
+      var out = [];
+      for (var e = 0; e < elements.length; e++) {
+        var el = elements[e]; var a = el.a;
+        var typeId = typeOf.has(el.id) ? typeOf.get(el.id) : null;
+        var tk = at(typeId);
+        var typePredefined = tk >= 0 ? enumFrom(argsOf(f, tk), 9) : null;
+        var mat = materialOf.has(el.id) ? materialSet(materialOf.get(el.id), 0) : null;
+        if (!mat && typeId !== null && materialOf.has(typeId)) mat = materialSet(materialOf.get(typeId), 0);
+        var overall = null;
+        if (/^IFC(DOOR|WINDOW)(STANDARDCASE)?$/.test(el.name)) { var h = num(a[8]); var w = num(a[9]); if (h !== null && w !== null) overall = [h * L, w * L]; }
+        var geometry = 'none'; var volume = null; var flags = { clipped: false };
+        var body = a[6] && a[6].r !== undefined ? bodyOf(a[6].r) : [];
+        if (body.length) {
+          var total = 0;
+          for (var b = 0; b < body.length && total !== null; b++) { var v = representationVolume(body[b], 0, flags); total = v === null ? null : total + v; }
+          geometry = total === null ? 'other' : 'extrusion';
+          volume = total === null ? null : total * L * L * L;
+        }
+        // A door or a window fills an opening that voids its host, usually a wall.
+        var opening = fills.has(el.id) ? fills.get(el.id) : null;
+        var hostId = opening !== null && openingHost.has(opening) ? openingHost.get(opening) : null;
+        out.push([el.id, enumFrom(a, 8), typePredefined, mat, overall, volume, flags.clipped, geometry, parentOf.has(el.id) ? parentOf.get(el.id) : null, hasParts.has(el.id), voids.get(el.id) || 0, hostId]);
+      }
+      return { elements: out };
+    }
+
     var parts = null;
     self.onmessage = function (ev) {
       var msg = ev.data || {};
@@ -472,6 +667,8 @@
         var report = function (p) { self.postMessage({ id: msg.id, progress: p }); };
         if (msg.type === 'summary') {
           self.postMessage({ id: msg.id, ok: true, result: summaryOf(scan(new Uint8Array(msg.bytes), report)) });
+        } else if (msg.type === 'climate') {
+          self.postMessage({ id: msg.id, ok: true, result: climateOf(scan(new Uint8Array(msg.bytes), report)) });
         } else if (msg.type === 'tables') {
           var t = tablesOf(scan(new Uint8Array(msg.bytes), report), report);
           parts = { queue: [['elements', t.elements], ['properties', t.properties], ['quantities', t.quantities], ['entities', t.entities]], at: 0, summary: t.summary };
@@ -547,6 +744,17 @@
       } finally { stop(); }
       return head.summary;
     }
-    return { summary, tables, stop };
+    /**
+     * The facts the climate declaration reads from the file, one row per element: [id, predefined, typePredefined, materials
+     * ({kind, items: [name, thickness m, fraction, item category, material category][]}), overall [height, width] m, extruded
+     * volume m³, clipped, geometry ('none'|'extrusion'|'other'), parent element id, has parts, openings, host element id (the
+     * element a door or window fills an opening in)]. The worker stays for the next call.
+     * @param {Uint8Array} bytes @param {{onProgress?: (share: number) => void}} [options] @returns {Promise<{elements: any[][]}>}
+     */
+    async function climate(bytes, options = {}) {
+      const copy = bytes.slice().buffer;
+      return call({ type: 'climate', bytes: copy }, options.onProgress, [copy]);
+    }
+    return { summary, tables, climate, stop };
   });
 })();

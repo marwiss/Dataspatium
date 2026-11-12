@@ -119,6 +119,7 @@ GROUP BY 1, 2 ORDER BY 1, 2
 - **Magnlisti**: hvert magnheiti í skránni eftir gerð, með summu. Hér sérðu nákvæmlega hvað skráin segir.
 - **Eiginleikar**: hvaða gildi eiginleiki hefur og á hve mörgum byggingarhlutum af hverri gerð.
 - **Einingar**: úr hve mörgum einingum af hverri tegund skráin samanstendur.
+- **Loftslagsyfirlýsing**: bráðabirgðaloftslagsyfirlýsing út frá líkaninu eftir flokki og lagi, sjá *Bráðabirgðaloftslagsyfirlýsing* hér fyrir neðan.
 
 Hægt er að vista hverja niðurstöðu sem gagnasafn.
 
@@ -239,6 +240,50 @@ Niðurstaðan er tafla með auðkenni, GlobalId, tegund og heiti beggja eininga,
 
 Nýjasta niðurstaðan stendur á spjaldinu Sannprófa líkanið í Umsjón, með því hvort það var gert í forritinu eða á þjóninum. Mælingin gerir ráð fyrir lokuðum flötum: eining með opna eða
 gallaða fleti getur gefið óvissa dýpt. Bognir fletir eru skipt í þríhyrninga, svo vikmörk undir millimetra verða óviss. Einingar sem þrívíddarsýnin getur ekki teiknað eru ekki með, og niðurstaðan segir hve margar þær eru; í sýnilíkani frá Tekla átti það við um allt bendistál.
+
+## Bráðabirgðaloftslagsyfirlýsing
+
+Tólið **Loftslagsyfirlýsing** í Greina (flipinn Magn) reiknar bráðabirgðaloftslagsyfirlýsingu út frá líkaninu: loftslagsáhrif fyrir
+A1–A3, A4 og A5 í kg CO₂e eftir flokki og eftir lagi byggingarinnar. Hún er stuðningur við hönnunina, ekki yfirlýsing til skráningar
+hjá Boverket.
+
+**Flokkur og lag.** Hver byggingarhluti fær einn af fjórum flokkum Boverket (burðarhlutar – undirstöður, burðarhlutar – annað,
+hjúpur, innveggir) eða *Ekki innifalið*, og eitt af sex lögum byggingarinnar samkvæmt skýrslu Boverket 2024:26: 1 lóð og undirstöður,
+2 burðarkerfi og önnur burðarvirki, 3 hjúpur, þak og framhlið, 4 tæknikerfi, 5 loft, innveggir og yfirborð innanhúss, 6 fastar
+innréttingar. Reglurnar lesa aðeins IFC-klasann, PredefinedType (byggingarhlutans eða gerðarinnar) og LoadBearing og IsExternal í
+Pset_*Common; ekkert flokkunarkerfi er lesið. Þær fylgja lista Boverket yfir byggingarhluta sem eru innifaldir: staurar, jarðvinna,
+tæknikerfi, fastar innréttingar, færanlegir innveggir, yfirborð innanhúss og sólarvörn eru ekki innifalin; stigar, skábrautir og
+handrið eru burðarhlutar; loft, niðurhengd loft og innihurðir tilheyra innveggjunum. Dálkurinn *Regla* sýnir hvað réð.
+
+- **Óviss**: byggingarhlutinn er innifalinn en flokkurinn óviss, til dæmis innveggur án LoadBearing eða hurð án IsExternal. Hann er
+  talinn í flokknum sem sýndur er og birtist undir *Til ákvörðunar*. Útveggur er hjúpur óháð LoadBearing.
+- **Ekki hægt að ákveða**: reglurnar geta ekki sagt hvort byggingarhlutinn er innifalinn, til dæmis staðgengilshlutur eða sólarsellur
+  (sem eru aðeins innifaldar þegar þær eru felldar inn í þak eða framhlið). Hann er ekki talinn fyrr en þú hefur ákveðið hann.
+- **Útleitt IsExternal**: þegar skráin tilgreinir ekki IsExternal fær hurð eða gluggi gildið frá veggnum sem hún eða hann situr í.
+  *Leiða út IsExternal* les grannfræði byggingarinnar með Python forritsins, sem ræsist þá (í fyrsta sinn eru íhlutir þess sóttir með
+  samþykki þínu): veggirnir meðfram ytri mörkum hæðar eru útveggir, og á lokaðri hæð eru aðrir veggir rýmanna innveggir. Reglan segir
+  hvenær gildi er útleitt.
+- Samsettur byggingarhluti, til dæmis þak úr þakplötum, er talinn í hlutum sínum, og hluti sem reglurnar geta ekki ákveðið fær flokk
+  heildarinnar.
+
+Undir **Til ákvörðunar** velur þú flokk fyrir heilan hóp byggingarhluta með sama klasa, gerð og reglu. Valið er geymt fyrir hvern
+byggingarhluta (GlobalId) í vafranum þar til þú lætur reglurnar ákveða aftur.
+
+**Magn.** Rúmmál, flatarmál og þyngd eru tekin úr magntölum skrárinnar, nettó á undan brúttó og hliðarflatarmál veggjar. Ef skráin
+hefur engar magntölur er rúmmálið reiknað úr rúmfræðinni þegar byggingarhlutinn er einföld útpressun: flatarmál sniðsins sinnum dýptin
+(rétthyrningur, hringur, I-snið, fjöllína og fleira), líka gegnum framsetningu gerðarinnar og fyrir klippingu. Op eru þá ekki dregin
+frá, og dálkurinn *Heimild magnsins* segir það. Hurðir og gluggar eru taldir í fermetrum út frá málum sínum. Byggingarhluta með
+efnislögum er skipt eftir efni samkvæmt þykkt laganna. Annars hefur röðin ekkert magn og er ekki talin.
+
+**Loftslagsgögn.** *Sækja loftslagsgagnagrunninn* sækir loftslagsgagnagrunn Boverket (um 0,9 MB) frá api.boverket.se með samþykki
+þínu fyrir vefþjónustur og geymir hann í vafranum; ekkert um líkanið er sent. Undir *Efni og auðlindir* velur þú auðlind fyrir hvert
+efni. Tillögurnar byggja fyrst á flokki efnisins í IFC (IfcMaterial.Category, til dæmis concrete, steel, wood, glass eða gypsum) og
+síðan á heitinu; hurðir og gluggar fá tillögur eftir heiti gerðarinnar. *Samþykkja tillögurnar* geymir tillögurnar sem þitt val, sem
+gildir fyrir öll líkön. Loftslagsáhrifin eru massinn (rúmmálið sinnum eðlismassinn eða flatarmálið sinnum þyngdin á fermetra) sinnum
+gildi gagnagrunnsins fyrir A1–A3, A4 og A5 (rýrnun). Boverket segir að loftslagsgögn byggingarvara séu sett varfærið, um 25 prósentum
+yfir meðaltali; tólið reiknar með varfærna gildinu og sýnir það dæmigerða ef beðið er um það.
+
+Hverja sýn má vista sem gagnasafn. Heimild: Boverket, loftslagsgagnagrunnurinn (opin gögn, sjá [licenser.md](licenser.md)).
 
 ## DXF-teikningar
 

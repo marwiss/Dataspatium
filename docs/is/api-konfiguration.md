@@ -22,6 +22,7 @@ hér að neðan voru athugaðir með tilliti til CORS í nóvember 2026, og aðe
 | Svíþjóð | SCB Statistikdatabasen (API v1 og v2) | Opinberar hagtölur | Flettu eða leitaðu, veldu gildi |
 | Svíþjóð | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, landupplýsingaskrá Lantmäteriet, gagnagátt Svíþjóðar | Lýðheilsa, heilbrigði, lykiltölur sveitarfélaga, veður, loftgæði, verndarsvæði, landupplýsingar | Sjá sænsku leiðbeiningarnar |
 | Svíþjóð | Lantmäteriet Direkt, Boverket, Trafikverket NVDB, Lantmäteriet STAC | Örnefni, orkuvottorð, vegagögn, landupplýsingaskrár | Krefjast lykils |
+| Svíþjóð | Loftslagsgagnagrunnur Boverket | Almenn loftslagsgögn fyrir byggingarvörur (GWP fyrir A1–A5), án lykils | Sæktu nýjustu útgáfu og auðlindir hennar; tólið Loftslagsyfirlýsing fyrir líkön notar sömu gögn |
 | Svíþjóð, alþjóðlegt | Riksbanken (SWEA), Alþjóðabankinn | Vextir, gengi, þróunarvísar | Aðeins um brúna |
 
 ### Önnur Norðurlönd

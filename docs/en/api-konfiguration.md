@@ -31,6 +31,7 @@ browsed in the app's language when the service has it.
 | Sweden's data portal | Search the datasets of all agencies | No | Search, read the table, download and import as a file |
 | Lantmäteriet Direkt (place names) | Place name search | Yes, account in Geotorget (OAuth2) | Give client id and client secret, search |
 | Boverket energy performance certificates | Energy performance certificates for buildings | Yes, key from Boverket's API portal | Give the key, call according to the portal's documentation |
+| Boverket climate database | Generic climate data for building products (GWP for A1–A5) | No | Fetch the latest version and its resources; the tool Climate declaration for models uses the same data |
 | Trafikverket NVDB | Road data: speed limits, road numbers, bearing capacity and 42 more object types, as a map | Yes, free key from data.trafikverket.se | Choose an object type, give an area, Fetch |
 | Lantmäteriet geodata with a key (STAC) | Vector data, orthophotos, elevation data and maps as files | Yes, account in Geotorget (OAuth2) | Choose a collection, give an area, Fetch; the files are fetched in Manage with *Files in the source* |
 | Riksbank interest and exchange rates (SWEA) | The policy rate, market rates and exchange rates | No, but reached only through the bridge | Choose a series and a period, Fetch |

@@ -5,15 +5,16 @@
  * material (from the file's quantity sets or measured on the geometry), every quantity name, the values of a property
  * and the entity types of the file. For a DXF drawing: count, length and area per layer and type. Every result can be
  * saved as a dataset. The logic lives in analysis/model. The tool Ärenden counts the issues of a saved issue table (from the
- * model view's panel) per status, type, element type or storey; data/issues does the counting.
+ * model view's panel) per status, type, element type or storey; data/issues does the counting. The tool Klimatdeklaration is
+ * ui/analysis/climate-panel.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/analysis/model-panel', ['ui/base', 'ui/basic', 'data/datasets', 'data/model', 'analysis/model', 'data/issues'], (base, basic, datasets, model, analysis, issuesLogic) => {
+  D.define('ui/analysis/model-panel', ['ui/base', 'ui/basic', 'data/datasets', 'data/model', 'analysis/model', 'data/issues', 'ui/analysis/climate-panel'], (base, basic, datasets, model, analysis, issuesLogic, climateModule) => {
     const { h, t, i18n, replace } = base;
     const PREVIEW_ROWS = 2000;
-    const IFC_TOOLS = ['summary', 'quantities', 'list', 'properties', 'entities', 'issues', 'validate', 'ids', 'clash', 'structure', 'psets', 'select', 'geometry'];
+    const IFC_TOOLS = ['summary', 'quantities', 'list', 'climate', 'properties', 'entities', 'issues', 'validate', 'ids', 'clash', 'structure', 'psets', 'select', 'geometry'];
     const DXF_TOOLS = ['summary', 'quantities', 'entities'];
 
     /** @param {any} ctx shell context @param {{rerenderRight?: () => void}} [options] */
@@ -23,6 +24,8 @@
         clash: { typeA: '', other: '', typeB: '', mode: 'intersection', tolerance: 2, clearance: 50, busy: false, progress: '', error: '', result: null, resultFor: '', where: 'here' } };
       let fieldsEl = null; let resultEl = null; let seq = 0;
       /** @type {{id: string, list: any[]}|null} */ let names = null;
+      /** @type {any} */ let clPanel = null;
+      const climatePanel = () => clPanel || (clPanel = climateModule.create(ctx, { refresh: () => { renderFields(); run(); if (options.rerenderRight) options.rerenderRight(); } }));
 
       const selected = () => { const st = store.get(); return st.datasets.find((d) => d.id === st.selectedId) || null; };
       const usable = (ds) => !!ds && ds.kind === 'model';
@@ -99,6 +102,10 @@
             h('span', { class: 'dm-help', text: t('model.ifc.python.note') }), input));
         } else if (s.tool === 'clash') {
           parts.push(...clashFields(ds));
+        } else if (s.tool === 'climate') {
+          const own = await climatePanel().fields(ds);
+          if (!fieldsEl || s.tool !== 'climate') return;
+          parts.push(...own);
         } else if (s.tool === 'psets' || s.tool === 'geometry') {
           const classes = ['IfcElement', 'IfcProduct'].concat(((ds.model && ds.model.elementTypes) || []).map((x) => String(x.name))).filter((v, i, a) => a.indexOf(v) === i);
           if (!classes.includes(s.ifcClass)) s.ifcClass = 'IfcElement';
@@ -129,6 +136,7 @@
         if (!usable(ds)) { replace(resultEl, h('p', { class: 'dm-help', text: t('model.tool.needs') })); return; }
         // Clash detection is heavy, so it runs on the button, not on choosing the tool.
         if (s.tool === 'clash') { renderClash(ds); return; }
+        if (s.tool === 'climate') { await climatePanel().run(ds, resultEl, { isCurrent: () => my === seq && !!resultEl, showTable, createDataset }); return; }
         const facts = ds.model || {};
         try {
           let out;
@@ -410,6 +418,7 @@
       function inspector() {
         const ds = selected();
         const items = [h('h4', { text: t('model.tool.' + s.tool) }), h('p', { class: 'dm-help', text: t('model.tool.about.' + s.tool) })];
+        if (s.tool === 'climate') items.push(...climatePanel().inspector());
         if (usable(ds)) items.push(h('p', { class: 'dm-help', text: ds.name }));
         return items;
       }
