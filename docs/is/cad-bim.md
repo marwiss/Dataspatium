@@ -348,6 +348,39 @@ veggirnir loka að minnsta kosti einu herbergi og enginn veggendi stendur laus; 
 bæta við veggjum áður en hún leggur plöturnar. Útveggirnir með áttum sínum gera gervigreindinni kleift að para ljósmynd af
 suðurhliðinni við réttu veggina (lestrartólið `get_topology`), og sama grannfræði birtist á kortinu *Grannfræði* í Athuga.
 
+### Tilgangur, áfangi og kröfur
+
+Undir *Upplýsingar um bygginguna* eru einnig *Tilgangur*, *Áfangi* og *Kröfur (IDS)*. Tilgangurinn er það sem líkanið er notað til, og
+hann velur nákvæmni og kröfur, sem þú getur breytt eftir á:
+
+| Tilgangur | Nákvæmni | Kröfur |
+|---|---|---|
+| Rúmmálsathugun | Skissa | SE-Dataspatium_Grund |
+| Byggingarleyfi | Aðaldrættir | SE-Dataspatium_Grund |
+| Loftslagsyfirlýsing | Aðaldrættir | SE-Dataspatium_Klimatdeklaration |
+| Rekstur og viðhald | Nákvæmt | SE-Dataspatium_Grund |
+| Úrgangsstjórnun | Nákvæmt | SE-Dataspatium_Avfallshantering |
+| Annað (með eigin texta) | Aðaldrættir | engar |
+
+Áfanginn segir hvar í lífi byggingarinnar líkanið á heima: frumathugun, tillaga, verkteikningar, í byggingu eða núverandi bygging.
+Tilgangur, áfangi og kröfur hefja lýsinguna. Með kröfum prófar hver forskoðun, gervigreindarinnar og þín, tillöguna gegn IDS-skránni,
+og gervigreindin fær forskriftirnar sem ekki eru uppfylltar svo hún geti lagað þær. Kröfurnar hindra ekki samþykktina; spjaldið sýnir
+hve margar forskriftir eru uppfylltar og hverjar ekki.
+
+Nákvæmnin fylgir upplýsingaþörfinni í ISO 7817-1 (kafli 6), sem skiptir henni í rúmfræði, stafræna upplýsingar og skjölun. Með eigin
+orðum forritsins merkja stigin þrjú þetta eftir þáttum:
+
+| Þáttur | Skissa | Aðaldrættir | Nákvæmt |
+|---|---|---|---|
+| Smáatriði | hæðir, útveggir og plötur sem einföld form, engin op | allir veggir með þykkt gerðanna, plötur, lögun þaksins og op með sennilegum málum | lög eftir gerð, hurðir og gluggar með karmi og ramma, veggir sem mætast í hornum |
+| Víddir | form í þrívídd og ás veggjarins | eins og skissan | eins og skissan; grunnmyndatákn geta komið síðar |
+| Staðsetning | hæðarkótar hæða, hnitanetið og lóðin þegar hún er þekkt | mál úr teikningu eða lýsingu, hnitsett þegar upplýsingarnar eru til | mæld eða málsett staðsetning, op á nákvæmum stað |
+| Útlit | sjálfgefnir litir | litur eftir flokki efnisins | yfirborðsstíll fyrir hvert efni, aðskilinn frá efninu |
+| Stikuð hegðun | útpressanir sem hægt er að breyta málum á | gerðir (skiptu um gerð og allar breytast) og lög | tengingar sem reikna hornin upp á nýtt, stikaðar hurðir og gluggar |
+| Auðkenning | heiti, IFC-flokkur með PredefinedType og GlobalId | nefndar gerðir, herbergi með númeri og heiti | hlutar og rýmisflokkar, Tag á hurðum og gluggum |
+| Upplýsingainnihald | hæðir og hæðarkótar | IsExternal, LoadBearing og efni á gerðunum, grunnmagn | bruni, U-gildi og loftslagsgögn eftir gerð eða efni, ástand núverandi byggingar |
+| Skjölun | lýsingin | lýsingin og myndirnar sem gögn líkansins | EPD-tilvísanir og vörublöð |
+
 ## Athuga með gervigreind
 
 Hamurinn **Athuga** í gervigreindarspjaldinu ber líkan af byggingu sem þegar stendur saman við ljósmyndir af skemmdum og sliti, teknar
@@ -469,6 +502,63 @@ breytingasettið tekur aðeins við flokkum sem eru til og eru ekki óhlutbundni
 Kortið *IFC-flokkar* í Athuga (og lestrartólið `get_class_report`) telur staðgengilshluta (IfcBuildingElementProxy), USERDEFINED án
 nafns, byggingarhluta án gerðar, PredefinedType bæði á gerð og hluta (reglan OJT001) og hluta utan rýmisskipanarinnar (SPS007), með
 dæmum.
+
+## Reglur buildingSMART í forskoðuninni
+
+Forskoðunin prófar líka það sem breytingasettið býr til eða breytir gegn úrvali af stöðluðum reglum buildingSMART, sömu reglum og
+staðfestingarþjónusta buildingSMART notar (ifc-gherkin-rules), fluttum yfir í eigið Python forritsins:
+
+- **IFC102**: engar úreltar einingar, eigindi eða gildi í skema skrárinnar, til dæmis IfcWallStandardCase, veggurinn STANDARD eða
+  IfcBuildingStorey.Elevation í IFC 4.3;
+- **GEM111**: engir endurteknir punktar í fjöllínum og fjöllykkjum, og lokuð fjöllína endar í sínum eigin fyrsta punkti;
+- **SWE001**: snið sem skera ekki sjálf sig (prófað með shapely);
+- **PSE001** og **PSE002**: staðlað sett (Pset_) hefur heiti, eiginleika, gerðir og flokka sniðmáts skemans, og eigið sett byrjar ekki
+  eins og Pset;
+- **QTY001**: magnsett (Qto_) fylgir sniðmátinu og hefur MethodOfMeasurement BaseQuantities;
+- **GRF001**, **GRF003** og **GRF005**: öll samhengi hafa sömu hnitaaðgerð, líkan með byggingu hefur hnitakerfi, og kvarði
+  kortavörpunarinnar passar við einingarnar;
+- **SPS007**: byggingarhlutar liggja í rýmisskipaninni, og hluti af byggingarhluta liggur ekki jafnframt í hæð;
+- **OJT001**: PredefinedType er á gerðinni eða á hlutnum, ekki báðum, og USERDEFINED hefur heiti;
+- **PJS003**: hvert GlobalId hefur 22 leyfð tákn og byrjar á 0–3, og ekkert GlobalId er notað tvisvar.
+
+Hver niðurstaða ber kóða reglunnar. Það sem buildingSMART telur samkomulag gefur villur, sem hindra samþykktina eins og skemavillur;
+starfsvenjur (PSE002, GRF003 og GRF005) gefa viðvaranir, sem standa sér. Aðeins það sem breytingasettið veldur telst með: það sem þegar
+var í líkaninu hindrar ekkert. Gervigreindin fær reglurnar sem halda ekki eftir hverja forskoðun og lagar þær, eins og hún gerir með
+grannfræðina. Forritið hefur ekki allt reglusafnið: GRF005 þekkir einingu hnitakerfisins fyrir norrænu kóðana sem forritið skrifar eða
+út frá MapUnit þess, og SWE001 fylgir fjöllínum, vísuðum ferlum og samsettum ferlum úr þeim. Allt safnið á heima á þjóninum.
+
+*Samþykkja* keyrir að auki EXPRESS-reglur skemans (WHERE-reglur og föll) með IfcOpenShell; pytest er sótt fyrir þær sem íhlutur í
+fyrsta sinn. Breytingasett sem brýtur reglu sem líkanið uppfyllti áður er ekki samþykkt, og skilaboðin nefna regluna; biddu
+gervigreindina að laga breytingasettið og samþykktu aftur. Í líkani með fleiri en 300.000 tilvik er EXPRESS-reglunum sleppt, og
+annállinn segir frá því.
+
+## Grunnupplýsingar
+
+Spjaldið **Grunnupplýsingar** í Athuga prófar líkan gegn grunnreglum Praxi, leiðbeininga BIM Alliance um IFC, hér með eigin orðum
+forritsins; engir textar, gildalistar eða sniðmát úr Praxi fylgja forritinu. Spjaldið les líkanið þegar þú ýtir á hnappinn:
+
+- haus skrárinnar tilgreinir sýn (MVD), forritið sem skrifaði skrána, forvinnsluna og tímann (höfundur og stofnun birtast ekki);
+- líkanið hefur varpað hnitakerfi með einum EPSG-kóða, kortavörpun og hæðarkerfi;
+- verkefnið, lóðin, byggingin og hæðirnar hafa heiti, byggingin einnig langt heiti og hæðirnar lýsingu;
+- hvert herbergi hefur númer í Name, og ekkert númer er notað tvisvar í sömu byggingu;
+- eigið eiginleikasett byrjar ekki eins og sett IFC (Pset_, Qto_), byrjar á landskóða (SE-…), hefur aðeins A–Z, tölustafi, - og _, og
+  eiginleika í PascalCase án å, ä og ö;
+- ekkert gildi ber einingu sína: 40, ekki „40 dB“.
+
+Hver athugun birtist sem uppfyllt, þarf að skoða eða villa, með fyrstu dæmunum. IDS getur ekki prófað haus skrárinnar eða að eitthvað
+sé einstakt, og þess vegna er þetta sérstakt spjald.
+
+## IDS-skrár forritsins
+
+Forritið hefur eigin IDS-skrár í `presets/ids/`, skrifaðar eftir opnum reglum:
+
+- **SE-Dataspatium_Grund.ids**: heiti á lóð, byggingu, hæðum og herbergjum, engir staðgengilshlutar, og PredefinedType á plötum,
+  þökum, hurðum, gluggum og klæðningum (USERDEFINED er samþykkt með heiti).
+- **SE-Dataspatium_Klimatdeklaration.ids**: LoadBearing á veggjum, plötum, þökum, súlum og bitum, IsExternal á veggjum, hurðum og
+  gluggum, efni á byggingarhlutunum, flokkur á hverju efni og grunnmagn: það sem bráðabirgðaloftslagsyfirlýsingin les.
+
+IDS nefnir flokk án undirflokka hans, svo IFC4-flokkarnir …StandardCase hafa eigin forskriftir, og forskrift gildir aðeins um þær
+IFC-útgáfur sem hún tilgreinir. Lýsingin velur skrá eftir tilganginum, og IDS-prófun í Greina getur keyrt þær.
 
 ## Bera saman útgáfur
 

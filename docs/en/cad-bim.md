@@ -361,6 +361,39 @@ when the walls enclose at least one room and no wall end is left open; the AI me
 the slabs. The external walls with their compass directions let the AI match a photo of the south façade to the right walls (the read
 tool `get_topology`), and the same topology is shown on the card *Topology* in Check.
 
+### Purpose, stage and requirements
+
+*The building's facts* also hold *Purpose*, *Stage* and *Requirements (IDS)*. The purpose is what the model is for, and it picks the
+level of detail and the requirements, which you can change afterwards:
+
+| Purpose | Level of detail | Requirements |
+|---|---|---|
+| Massing study | Sketch | SE-Dataspatium_Grund |
+| Building permit | Main features | SE-Dataspatium_Grund |
+| Climate declaration | Main features | SE-Dataspatium_Klimatdeklaration |
+| Facility management | Detailed | SE-Dataspatium_Grund |
+| Waste management plan | Detailed | SE-Dataspatium_Avfallshantering |
+| Other (with your own text) | Main features | none |
+
+The stage says where in the building's life the model belongs: feasibility study, proposal, construction documents, under construction
+or existing building. Purpose, stage and requirements open the brief. With requirements, every preview, the AI's own and yours, tries
+the candidate against the IDS file, and the AI gets the specifications that are not met so that it can mend them. The requirements do
+not stop the approval; the panel shows how many specifications are met and which are not.
+
+The level of detail follows the level of information need of ISO 7817-1 (section 6), which divides it into geometry, alphanumeric
+information and documentation. In the app's own words, the three levels mean this per facet:
+
+| Facet | Sketch | Main features | Detailed |
+|---|---|---|---|
+| Detail | storeys, outer walls and slabs as plain solids, no openings | every wall with its type's thickness, slabs, the roof's shape and openings of plausible size | layers per type, doors and windows with frame and sash, walls that meet at the corners |
+| Dimensionality | solids in 3D and the wall's axis | as the sketch | as the sketch; plan symbols may come later |
+| Location | the storeys' heights, the grid and the site when known | measures from a drawing or the brief, georeferenced when the facts are there | surveyed or dimensioned positions, openings exactly placed |
+| Appearance | default colours | colour by the material's category | a surface style per material, apart from the material |
+| Parametric behaviour | extrusions whose measures can change | types (change the type and all change) and layers | connections that recompute the corners, doors and windows with parameters |
+| Identification | name, IFC class with PredefinedType and GlobalId | named types, rooms with number and name | parts and space classes, Tag on doors and windows |
+| Information content | storeys and heights | IsExternal, LoadBearing and materials on the types, base quantities | fire, U-value and climate data per type or material, the condition of an existing building |
+| Documentation | the brief | the brief and the pictures as the model's material | EPD references and product sheets |
+
 ## Check with AI
 
 The mode **Check** in the AI panel tries an existing building's model against photos of damage and wear, taken with Dataspatium
@@ -483,6 +516,64 @@ comes with IfcOpenShell, and the change set takes only classes that exist and ar
 PredefinedTypes from the class's list. The card *IFC classes* in Check (and the read tool `get_class_report`) counts proxy elements
 (IfcBuildingElementProxy), USERDEFINED without a name, elements without a type, PredefinedType on both type and element (rule OJT001)
 and elements outside the spatial structure (SPS007), with examples.
+
+## buildingSMART's rules in the preview
+
+The preview also tries what the change set creates or changes against a selection of buildingSMART's normative rules, the rules that
+buildingSMART's validation service uses (ifc-gherkin-rules), ported to the app's own Python:
+
+- **IFC102**: no deprecated entities, attributes or values of the file's schema, such as IfcWallStandardCase, the wall STANDARD or
+  IfcBuildingStorey.Elevation in IFC 4.3;
+- **GEM111**: no repeated points in polylines and polyloops, and a closed polyline ends on its own first point;
+- **SWE001**: profiles that do not cross themselves (tried with shapely);
+- **PSE001** and **PSE002**: a standard set (Pset_) has the name, properties, types and classes of the schema's template, and a set of
+  your own does not start like Pset;
+- **QTY001**: a quantity set (Qto_) follows its template and has MethodOfMeasurement BaseQuantities;
+- **GRF001**, **GRF003** and **GRF005**: every context has the same coordinate operation, a model with a building has a coordinate
+  system, and the map conversion's scale fits the units;
+- **SPS007**: building elements lie in the spatial structure, and a part of an element does not also lie in a storey;
+- **OJT001**: the PredefinedType is on the type or on the element, not both, and USERDEFINED has a name;
+- **PJS003**: every GlobalId has 22 allowed characters and starts with 0–3, and no GlobalId is used twice.
+
+Every finding carries its rule's code. What buildingSMART counts as agreements gives errors, which stop the approval just as schema
+errors do; industry practice (PSE002, GRF003 and GRF005) gives warnings, which stand apart. Only what the change set causes counts:
+what the model had already blocks nothing. The AI gets the rules that fail after every preview and mends them, as it does with the
+topology. The app does not have the whole suite: GRF005 knows a coordinate system's unit for the Nordic codes the app writes or from
+its MapUnit, and SWE001 follows polylines, indexed curves and composite curves of them. The whole suite belongs on the server.
+
+*Approve* also runs the schema's EXPRESS rules (WHERE rules and functions) with IfcOpenShell; pytest is fetched for them as a component
+the first time. A change set that breaks a rule the model met before is not approved, and the message names the rule; ask the AI to
+mend the change set and approve again. In a model of more than 300,000 instances the EXPRESS rules are left out, and the log says so.
+
+## Basic requirements
+
+The card **Basic requirements** in Check tries a model against the basic rules of Praxi, BIM Alliance's guidance for IFC, here in the
+app's own words; no text, value list or template of Praxi comes with the app. The card reads the model when you press its button:
+
+- the file header names the view (MVD), the program that wrote the file, the preprocessor and the time (author and organisation are not
+  shown);
+- the model has a projected coordinate system with a single EPSG code, a map conversion and a height system;
+- the project, the site, the building and the storeys have names, the building also a long name and the storeys a description;
+- every room has a number in Name, and no number is used twice in one building;
+- a property set of your own does not start like IFC's (Pset_, Qto_), starts with a country code (SE-…), has only A–Z, digits, - and _,
+  and names its properties in PascalCase without å, ä and ö;
+- no value carries its unit: 40, not "40 dB".
+
+Each check is shown as met, to look at or an error, with the first examples. IDS cannot try the file header or that something is
+unique, which is why this is a card of its own.
+
+## The app's IDS files
+
+The app has IDS files of its own in `presets/ids/`, written from open rules:
+
+- **SE-Dataspatium_Grund.ids**: names on the site, the building, the storeys and the rooms, no proxy elements, and a PredefinedType on
+  slabs, roofs, doors, windows and coverings (USERDEFINED passes with a name).
+- **SE-Dataspatium_Klimatdeklaration.ids**: LoadBearing on walls, slabs, roofs, columns and beams, IsExternal on walls, doors and
+  windows, materials on the building elements, a category on every material and base quantities: what the preliminary climate
+  declaration reads.
+
+IDS names a class without its subclasses, so the IFC4 classes …StandardCase have specifications of their own, and a specification
+applies only to the IFC versions it names. The brief picks a file by its purpose, and the IDS check in Analyse can run them.
 
 ## Compare versions
 

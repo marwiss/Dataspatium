@@ -363,6 +363,39 @@ suljettu, kun seinät rajaavat vähintään yhden huoneen eikä yksikään sein�
 tai lisäämällä seiniä ennen kuin se lisää laatat. Ulkoseinät ilmansuuntineen antavat tekoälyn yhdistää eteläjulkisivun valokuvan
 oikeisiin seiniin (lukutyökalu `get_topology`), ja sama topologia näkyy Tarkista-tilan kortilla *Topologia*.
 
+### Käyttötarkoitus, vaihe ja vaatimukset
+
+*Rakennuksen tiedot* sisältävät myös kentät *Käyttötarkoitus*, *Vaihe* ja *Vaatimukset (IDS)*. Käyttötarkoitus kertoo, mihin mallia
+käytetään, ja se valitsee tarkkuuden ja vaatimukset, joita voit muuttaa jälkikäteen:
+
+| Käyttötarkoitus | Tarkkuus | Vaatimukset |
+|---|---|---|
+| Massoittelututkimus | Luonnos | SE-Dataspatium_Grund |
+| Rakennuslupa | Pääpiirteet | SE-Dataspatium_Grund |
+| Ilmastoselvitys | Pääpiirteet | SE-Dataspatium_Klimatdeklaration |
+| Ylläpito | Yksityiskohtainen | SE-Dataspatium_Grund |
+| Jätehuolto | Yksityiskohtainen | SE-Dataspatium_Avfallshantering |
+| Muu (omalla tekstillä) | Pääpiirteet | ei mitään |
+
+Vaihe kertoo, mihin rakennuksen elinkaaren kohtaan malli kuuluu: esiselvitys, ehdotus, toteutussuunnitelmat, rakenteilla tai olemassa
+oleva rakennus. Käyttötarkoitus, vaihe ja vaatimukset aloittavat briefin. Kun vaatimukset on valittu, jokainen esikatselu, tekoälyn
+oma ja sinun, koettelee ehdokasta IDS-tiedostoa vasten, ja tekoäly saa täyttymättömät spesifikaatiot korjattavakseen. Vaatimukset
+eivät estä hyväksymistä; paneeli näyttää, kuinka moni spesifikaatio täyttyy ja mitkä eivät.
+
+Tarkkuus noudattaa ISO 7817-1:n tietotarvetta (luku 6), joka jakaa sen geometriaan, aakkosnumeeriseen tietoon ja dokumentaatioon.
+Sovelluksen omin sanoin kolme tasoa tarkoittavat näkökohdittain seuraavaa:
+
+| Näkökohta | Luonnos | Pääpiirteet | Yksityiskohtainen |
+|---|---|---|---|
+| Yksityiskohtaisuus | kerrokset, ulkoseinät ja laatat yksinkertaisina kappaleina, ei aukkoja | kaikki seinät tyyppien paksuisina, laatat, katon muoto ja aukot järkevin mitoin | kerrokset tyypeittäin, ovet ja ikkunat karmeineen ja puitteineen, nurkissa kohtaavat seinät |
+| Ulottuvuudet | kappaleet 3D:nä ja seinän akseli | kuten luonnos | kuten luonnos; tasosymbolit voivat tulla myöhemmin |
+| Sijainti | kerrosten korot, ruudukko ja tontti, kun se tiedetään | mitat piirustuksesta tai briefistä, georeferoitu, kun tiedot ovat olemassa | mitatut tai mitoitetut sijainnit, aukot tarkalla paikallaan |
+| Ulkoasu | oletusvärit | väri materiaalin luokan mukaan | pintatyyli materiaalia kohden, erillään materiaalista |
+| Parametrinen käyttäytyminen | ekstruusiot, joiden mittoja voi muuttaa | tyypit (vaihda tyyppi, niin kaikki muuttuvat) ja kerrokset | liitokset, jotka laskevat nurkat uudelleen, parametriset ovet ja ikkunat |
+| Tunnistaminen | nimi, IFC-luokka PredefinedTypeineen ja GlobalId | nimetyt tyypit, huoneet numeroineen ja nimineen | osat ja tilaluokat, Tag ovissa ja ikkunoissa |
+| Tietosisältö | kerrokset ja korot | IsExternal, LoadBearing ja materiaalit tyypeissä, perusmäärät | palo, U-arvo ja ilmastotiedot tyypeittäin tai materiaaleittain, olemassa olevan rakennuksen kunto |
+| Dokumentaatio | brief | brief ja kuvat mallin aineistona | EPD-viitteet ja tuotekortit |
+
 ## Tarkista tekoälyllä
 
 Tekoälypaneelin tila **Tarkista** vertaa olemassa olevan rakennuksen mallia valokuviin vaurioista ja kulumisesta, jotka on otettu
@@ -486,6 +519,67 @@ muutosjoukko hyväksyy vain luokat, jotka ovat mallin skeemassa eivätkä ole ab
 Tarkista-tilan kortti *IFC-luokat* (ja lukutyökalu `get_class_report`) laskee proxy-elementit (IfcBuildingElementProxy), nimettömät
 USERDEFINED-arvot, tyypittömät elementit, PredefinedTypen sekä tyypissä että elementissä (sääntö OJT001) ja spatiaalisen rakenteen
 ulkopuoliset elementit (SPS007) esimerkkeineen.
+
+## buildingSMARTin säännöt esikatselussa
+
+Esikatselu koettelee myös sen, mitä muutosjoukko luo tai muuttaa, buildingSMARTin normatiivisten sääntöjen valikoimaa vasten. Ne ovat
+samoja sääntöjä, joita buildingSMARTin validointipalvelu käyttää (ifc-gherkin-rules), siirrettyinä sovelluksen omaan Pythoniin:
+
+- **IFC102**: ei tiedoston skeemassa vanhentuneita entiteettejä, attribuutteja tai arvoja, kuten IfcWallStandardCase, seinä STANDARD
+  tai IfcBuildingStorey.Elevation IFC 4.3:ssa;
+- **GEM111**: ei toistuvia pisteitä murtoviivoissa ja monikulmiosilmukoissa, ja suljettu murtoviiva päättyy omaan ensimmäiseen
+  pisteeseensä;
+- **SWE001**: profiilit, jotka eivät leikkaa itseään (koeteltu shapelyllä);
+- **PSE001** ja **PSE002**: standardijoukolla (Pset_) on skeeman mallin nimi, ominaisuudet, tyypit ja luokat, eikä oma joukko ala kuten
+  Pset;
+- **QTY001**: määräjoukko (Qto_) noudattaa malliaan ja sillä on MethodOfMeasurement BaseQuantities;
+- **GRF001**, **GRF003** ja **GRF005**: kaikilla konteksteilla on sama koordinaattioperaatio, rakennuksen sisältävällä mallilla on
+  koordinaattijärjestelmä, ja karttamuunnoksen mittakaava sopii yksiköihin;
+- **SPS007**: rakennusosat ovat tilarakenteessa, eikä rakennusosan osa ole samalla kerroksessa;
+- **OJT001**: PredefinedType on tyypissä tai elementissä, ei molemmissa, ja USERDEFINED-arvolla on nimi;
+- **PJS003**: jokaisessa GlobalIdissä on 22 sallittua merkkiä ja se alkaa numerolla 0–3, eikä samaa GlobalIdiä käytetä kahdesti.
+
+Jokainen havainto kantaa sääntönsä koodia. Se, minkä buildingSMART laskee sopimuksiksi, antaa virheitä, jotka estävät hyväksymisen
+kuten skeemavirheet; alan käytäntö (PSE002, GRF003 ja GRF005) antaa varoituksia, jotka näytetään erikseen. Vain se, minkä muutosjoukko
+aiheuttaa, lasketaan: mallissa jo ollut ei estä mitään. Tekoäly saa pettävät säännöt jokaisen esikatselun jälkeen ja korjaa ne, kuten
+topologiankin. Sovelluksessa ei ole koko sääntösarjaa: GRF005 tuntee koordinaattijärjestelmän yksikön sovelluksen kirjoittamille
+pohjoismaisille koodeille tai sen MapUnitista, ja SWE001 seuraa murtoviivoja, indeksoituja käyriä ja niistä koottuja käyriä. Koko sarja
+kuuluu palvelimelle.
+
+*Hyväksy* ajaa lisäksi skeeman EXPRESS-säännöt (WHERE-säännöt ja funktiot) IfcOpenShellillä; pytest haetaan niitä varten komponenttina
+ensimmäisellä kerralla. Muutosjoukkoa, joka rikkoo säännön, jonka malli täytti aiemmin, ei hyväksytä, ja viesti nimeää säännön; pyydä
+tekoälyä korjaamaan muutosjoukko ja hyväksy uudelleen. Mallissa, jossa on yli 300 000 instanssia, EXPRESS-säännöt ohitetaan, ja loki
+kertoo sen.
+
+## Perustiedot
+
+**Perustiedot**-kortti Tarkista-tilassa koettelee mallia BIM Alliancen IFC-ohjeen Praxin perussääntöjä vasten, tässä sovelluksen omin
+sanoin; mitään Praxin tekstejä, arvoluetteloita tai malleja ei ole sovelluksessa. Kortti lukee mallin, kun painat sen painiketta:
+
+- tiedoston otsake kertoo näkymän (MVD), tiedoston kirjoittaneen ohjelman, esikäsittelijän ja ajan (tekijää ja organisaatiota ei
+  näytetä);
+- mallilla on projisoitu koordinaattijärjestelmä yhdellä EPSG-koodilla, karttamuunnos ja korkeusjärjestelmä;
+- projektilla, tontilla, rakennuksella ja kerroksilla on nimet, rakennuksella myös pitkä nimi ja kerroksilla kuvaus;
+- jokaisella huoneella on numero kentässä Name, eikä samaa numeroa käytetä kahdesti samassa rakennuksessa;
+- oma ominaisuusjoukko ei ala kuten IFC:n (Pset_, Qto_), alkaa maakoodilla (SE-…), sisältää vain merkit A–Z, numerot, - ja _, ja sen
+  ominaisuuksien nimet ovat PascalCase-muotoisia ilman kirjaimia å, ä ja ö;
+- mikään arvo ei sisällä yksikköään: 40, ei "40 dB".
+
+Jokainen tarkistus näytetään täyttyneenä, tarkistettavana tai virheenä ensimmäisine esimerkkeineen. IDS ei voi koetella tiedoston
+otsaketta eikä sitä, että jokin on yksilöllinen, joten tämä on oma korttinsa.
+
+## Sovelluksen IDS-tiedostot
+
+Sovelluksella on omat IDS-tiedostot kansiossa `presets/ids/`, kirjoitettuina avoimien sääntöjen pohjalta:
+
+- **SE-Dataspatium_Grund.ids**: nimet tontilla, rakennuksella, kerroksilla ja huoneilla, ei proxy-elementtejä, ja PredefinedType
+  laatoilla, katoilla, ovilla, ikkunoilla ja verhouksilla (USERDEFINED hyväksytään nimen kanssa).
+- **SE-Dataspatium_Klimatdeklaration.ids**: LoadBearing seinissä, laatoissa, katoissa, pilareissa ja palkeissa, IsExternal seinissä,
+  ovissa ja ikkunoissa, materiaalit rakennusosissa, luokka jokaisella materiaalilla ja perusmäärät: se, mitä alustava ilmastoselvitys
+  lukee.
+
+IDS nimeää luokan ilman sen aliluokkia, joten IFC4:n …StandardCase-luokilla on omat spesifikaationsa, ja spesifikaatio koskee vain
+mainitsemiaan IFC-versioita. Brief valitsee tiedoston käyttötarkoituksen mukaan, ja Analysoi-tilan IDS-tarkistus voi ajaa ne.
 
 ## Vertaa versioita
 

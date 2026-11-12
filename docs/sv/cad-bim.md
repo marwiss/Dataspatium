@@ -347,6 +347,39 @@ väggarna sluter minst ett rum och ingen väggände står lös; AI:n lagar lösa
 lägger bjälklagen. Ytterväggarna med sina väderstreck låter AI:n para ett foto av fasaden mot söder med rätt väggar (läsverktyget
 `get_topology`), och samma topologi visas på kortet *Topologi* i Kontrollera.
 
+### Syfte, skede och krav
+
+Under *Byggnadens uppgifter* finns också *Syfte*, *Skede* och *Krav (IDS)*. Syftet är vad modellen ska användas till, och det väljer
+noggrannhet och krav, som du kan ändra efteråt:
+
+| Syfte | Noggrannhet | Krav |
+|---|---|---|
+| Volymstudie | Skiss | SE-Dataspatium_Grund |
+| Bygglov | Huvuddrag | SE-Dataspatium_Grund |
+| Klimatdeklaration | Huvuddrag | SE-Dataspatium_Klimatdeklaration |
+| Förvaltning | Detaljerad | SE-Dataspatium_Grund |
+| Avfallshantering | Detaljerad | SE-Dataspatium_Avfallshantering |
+| Annat (med egen text) | Huvuddrag | inga |
+
+Skedet säger var i byggnadens liv modellen hör hemma: förstudie, förslag, bygghandlingar, under byggnad eller befintlig byggnad.
+Syfte, skede och krav inleder briefen. Med ett krav prövar varje förhandsvisning, AI:ns egen och din, kandidaten mot IDS-filen, och
+AI:n får de specifikationer som inte uppfylls så att den kan rätta dem. Kraven hindrar inte godkännandet; panelen visar hur många
+specifikationer som uppfylls och vilka som inte gör det.
+
+Noggrannheten följer informationsbehovet i ISO 7817-1 (avsnitt 6), som delar det i geometri, alfanumerisk information och
+dokumentation. Med appens egna ord betyder de tre nivåerna detta per aspekt:
+
+| Aspekt | Skiss | Huvuddrag | Detaljerad |
+|---|---|---|---|
+| Detalj | våningar, ytterväggar och bjälklag som enkla kroppar, inga öppningar | alla väggar med typernas tjocklek, bjälklag, takets form och öppningar med rimliga mått | skikt per typ, dörrar och fönster med karm och båge, väggar som möts i hörnen |
+| Dimensioner | kroppar i 3D och väggens axel | som skissen | som skissen; symboler i plan kan komma senare |
+| Läge | våningarnas höjder, rutnätet och platsen när den är känd | mått ur ritning eller brief, georefererad när uppgifterna finns | inmätta eller måttsatta lägen, öppningar på exakt plats |
+| Utseende | standardfärger | färg efter materialets kategori | en ytstil per material, skild från materialet |
+| Parametriskt beteende | extruderingar vars mått kan ändras | typer (byt typen så ändras alla) och skikt | anslutningar som räknar om hörnen, dörrar och fönster med parametrar |
+| Identifiering | namn, IFC-klass med PredefinedType och GlobalId | typer med namn, rum med nummer och namn | delar och rumsklasser, Tag på dörrar och fönster |
+| Informationsinnehåll | våningar och höjder | IsExternal, LoadBearing och material på typerna, basmängder | brand, U-värde och klimatdata per typ eller material, skicket i en befintlig byggnad |
+| Dokumentation | briefen | briefen och bilderna som modellens underlag | EPD-referenser och produktblad |
+
 ## Kontrollera med AI
 
 Läget **Kontrollera** i AI-panelen prövar en befintlig byggnads modell mot foton av skador och slitage, tagna med Dataspatium Mobil,
@@ -466,6 +499,62 @@ IfcOpenShell, och ändringssetet godtar bara klasser som finns och inte är abst
 lista. Kortet *IFC-klasser* i Kontrollera (och läsverktyget `get_class_report`) räknar proxyelement (IfcBuildingElementProxy),
 USERDEFINED utan namn, element utan typ, PredefinedType på både typ och element (regeln OJT001) och element utanför den rumsliga
 strukturen (SPS007), med exempel.
+
+## buildingSMART:s regler i förhandsvisningen
+
+Förhandsvisningen prövar också det som ändringssetet skapar eller ändrar mot ett urval av buildingSMART:s normativa regler, samma regler
+som buildingSMART:s valideringstjänst använder (ifc-gherkin-rules), överförda till appens egen Python:
+
+- **IFC102**: inga avvecklade entiteter, attribut eller värden i filens schema, till exempel IfcWallStandardCase, väggen STANDARD eller
+  IfcBuildingStorey.Elevation i IFC 4.3;
+- **GEM111**: inga upprepade punkter i polylinjer och polyloopar, och en sluten polylinje slutar på sin egen första punkt;
+- **SWE001**: profiler som inte skär sig själva (prövat med shapely);
+- **PSE001** och **PSE002**: en standarduppsättning (Pset_) har schemamallens namn, egenskaper, typer och klasser, och en egen uppsättning
+  börjar inte som Pset;
+- **QTY001**: en mängduppsättning (Qto_) följer mallen och har MethodOfMeasurement BaseQuantities;
+- **GRF001**, **GRF003** och **GRF005**: alla sammanhang har samma koordinatoperation, en modell med byggnad har ett koordinatsystem,
+  och kartkonverteringens skala stämmer med enheterna;
+- **SPS007**: byggdelar ligger i den rumsliga strukturen, och en del av en byggdel ligger inte samtidigt i en våning;
+- **OJT001**: PredefinedType står på typen eller på elementet, inte på båda, och USERDEFINED har ett namn;
+- **PJS003**: varje GlobalId har 22 tillåtna tecken och börjar med 0–3, och inget GlobalId används två gånger.
+
+Varje fynd bär sin regels kod. Det buildingSMART räknar som överenskommelser ger fel, som hindrar godkännandet precis som schemafel;
+branschpraxis (PSE002, GRF003 och GRF005) ger varningar, som står för sig. Bara det som ändringssetet orsakar räknas: det som redan
+fanns i modellen spärrar ingenting. AI:n får de regler som inte håller efter varje förhandsvisning och rättar dem, som den gör med
+topologin. Appen har inte hela regelsviten: GRF005 känner koordinatsystemets enhet för de nordiska koder som appen skriver eller ur
+dess MapUnit, och SWE001 följer polylinjer, indexerade kurvor och sammansatta kurvor av dem. Hela sviten hör hemma på servern.
+
+*Godkänn* kör dessutom schemats EXPRESS-regler (WHERE-regler och funktioner) med IfcOpenShell; pytest hämtas för dem som komponent
+första gången. Ett ändringsset som bryter mot en regel som modellen klarade förut godkänns inte, och meddelandet namnger regeln; be
+AI:n rätta ändringssetet och godkänn igen. I en modell med fler än 300 000 instanser hoppas EXPRESS-reglerna över, och loggen säger det.
+
+## Grunduppgifter
+
+Kortet **Grunduppgifter** i Kontrollera prövar en modell mot grundreglerna i Praxi, BIM Alliances anvisningar för IFC, här med appens
+egna ord; inga texter, värdelistor eller mallar ur Praxi följer med appen. Kortet läser modellen när du trycker på knappen:
+
+- filhuvudet anger vy (MVD), programmet som skrev filen, förprocessorn och tidpunkten (författare och organisation visas inte);
+- modellen har ett projicerat koordinatsystem med en enda EPSG-kod, en kartkonvertering och ett höjdsystem;
+- projektet, platsen, byggnaden och våningarna har namn, byggnaden även ett längre namn och våningarna en beskrivning;
+- varje rum har ett nummer i Name, och inget nummer används två gånger i samma byggnad;
+- en egen egenskapsuppsättning börjar inte som IFC:s (Pset_, Qto_), börjar med en landskod (SE-…), har bara A–Z, siffror, - och _, och
+  egenskaper i PascalCase utan å, ä och ö;
+- inget värde bär sin enhet: 40, inte "40 dB".
+
+Varje kontroll visas som uppfylld, att se över eller fel, med de första exemplen. IDS kan inte pröva filhuvudet eller att något är
+unikt, och därför är det ett eget kort.
+
+## Appens IDS-filer
+
+Appen har egna IDS-filer i `presets/ids/`, skrivna efter öppna regler:
+
+- **SE-Dataspatium_Grund.ids**: namn på plats, byggnad, våningar och rum, inga proxyelement, och en PredefinedType på bjälklag, tak,
+  dörrar, fönster och beklädnader (USERDEFINED godtas med ett namn).
+- **SE-Dataspatium_Klimatdeklaration.ids**: LoadBearing på väggar, bjälklag, tak, pelare och balkar, IsExternal på väggar, dörrar och
+  fönster, material på byggdelarna, en kategori på varje material och basmängder: det som den preliminära klimatdeklarationen läser.
+
+IDS nämner en klass utan dess underklasser, så IFC4:s klasser …StandardCase har egna specifikationer, och en specifikation gäller bara
+de IFC-versioner den anger. Briefen väljer en fil efter syftet, och IDS-kontroll i Analysera kan köra dem.
 
 ## Jämför versioner
 
