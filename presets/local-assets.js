@@ -417,13 +417,13 @@ Dataspatium.assets.addEntries({
  "presets/ids/SE-Dataspatium_Grund.ids": {
   "file": "presets/ids/SE-Dataspatium_Grund.ids.js",
   "encoding": "text",
-  "size": 9094,
+  "size": 13462,
   "library": "dataspatium"
  },
  "presets/ids/SE-Dataspatium_Klimatdeklaration.ids": {
   "file": "presets/ids/SE-Dataspatium_Klimatdeklaration.ids.js",
   "encoding": "text",
-  "size": 11489,
+  "size": 18382,
   "library": "dataspatium"
  },
  "presets/bibliotek/index.json": {

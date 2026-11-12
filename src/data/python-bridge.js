@@ -368,16 +368,42 @@
       /**
        * The recipe step "AI-ändring" and its preview: a change set (the operations of ai/write-tools, JSON) on the model kept in a
        * dataset file; the written IFC comes back with the wheel's report (created with refs, changed, deleted, findings, errors).
-       * @param {any[]} changes @param {ArrayBuffer|Uint8Array} bytes the dataset's SQLite file @param {{name?: string}} [options]
+       * `express` also runs the schema's EXPRESS rules (at approval; pytest is fetched for them as a component) and `ids` tries the
+       * candidate against an IDS file given as its name and text (ifctester), both reported by the wheel (`express`, `ids`).
+       * @param {any[]} changes @param {ArrayBuffer|Uint8Array} bytes the dataset's SQLite file
+       * @param {{name?: string, express?: boolean, ids?: {name: string, text: string}|null}} [options]
        * @returns {Promise<{bytes: Uint8Array, info: any, log: Array<{kind: string, text: string}>}>}
        */
       async runIfcChangeset(changes, bytes, options = {}) {
         return this.ifcJob(async () => {
           await this.engine.writeFile('/data/step/model.sqlite', bytes);
-          await this.ensurePackages(['ifcopenshell']);
+          const wheel = {};
+          const idsPath = options.ids && options.ids.text ? '/data/ids/' + String(options.ids.name || 'krav.ids').replace(/[^\w.-]+/g, '_') : '';
+          if (idsPath) { await this.engine.mkdir('/data/ids'); await this.engine.writeFile(idsPath, new TextEncoder().encode(String(options.ids.text))); wheel.ids = idsPath; }
+          if (options.express) wheel.express = true;
+          await this.ensurePackages(['ifcopenshell'].concat(options.express ? ['pytest'] : [], idsPath ? ['ifctester'] : []));
           this.streams = [];
-          const info = await this.engine.evalJson(`_dataspatium._ifc_changeset("/data/step/model.sqlite", ${JSON.stringify(JSON.stringify(changes))}, "/data/step/model-out.ifc")`);
-          return this.takeIfc('/data/step/model-out.ifc', Object.assign({ name: options.name || '' }, info || {}), ['/data/step/model.sqlite', '/data/step/changeset-in.ifc']);
+          const info = await this.engine.evalJson(`_dataspatium._ifc_changeset("/data/step/model.sqlite", ${JSON.stringify(JSON.stringify(changes))}, "/data/step/model-out.ifc", ${JSON.stringify(JSON.stringify(wheel))})`);
+          return this.takeIfc('/data/step/model-out.ifc', Object.assign({ name: options.name || '' }, info || {}), ['/data/step/model.sqlite', '/data/step/changeset-in.ifc'].concat(idsPath ? [idsPath] : []));
+        });
+      }
+
+      /**
+       * The basic requirements of the model kept in a dataset file (the card Grunduppgifter; the wheel's `_ifc_basics_file`): the
+       * header, the coordinate system, names, room numbers, the naming of one's own sets and units in values. Read-only.
+       * @param {ArrayBuffer|Uint8Array} bytes the model dataset's SQLite file
+       * @returns {Promise<any>}
+       */
+      async runIfcBasics(bytes) {
+        return this.ifcJob(async () => {
+          await this.engine.writeFile('/data/step/model.sqlite', bytes);
+          try {
+            await this.ensurePackages(['ifcopenshell']);
+            this.streams = [];
+            return await this.engine.evalJson('_dataspatium._ifc_basics_file("/data/step/model.sqlite", "/data/step/basics.json")');
+          } finally {
+            for (const p of ['/data/step/model.sqlite', '/data/step/basics-in.ifc', '/data/step/basics.json']) { try { await this.engine.unlink(p); } catch (_err) { /* ignore */ } }
+          }
         });
       }
 

@@ -4,7 +4,8 @@
      IFC102, and the naming rules of the guidance Praxi in the app's own words); no text, list or template of Praxi is copied.
      The pattern in the PredefinedType specifications takes every value except an empty one and the words NOTDEFINED and
      USERDEFINED themselves, so that a standard value passes and so does USERDEFINED with an ObjectType, which IDS reads as the
-     ObjectType; USERDEFINED without one fails. -->
+     ObjectType; USERDEFINED without one fails. IDS names a class without its subtypes, so the IFC4 classes ...StandardCase and
+     IfcSlabElementedCase have specifications of their own. -->
 <ids xmlns="http://standards.buildingsmart.org/IDS" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://standards.buildingsmart.org/IDS http://standards.buildingsmart.org/IDS/1.0/ids.xsd">
   <info>
     <title>SE-Dataspatium_Grund</title>
@@ -103,6 +104,50 @@
       <requirements>
         <entity>
           <name><simpleValue>IFCCOVERING</simpleValue></name>
+          <predefinedType><xs:restriction base="xs:string"><xs:pattern value="[^NU].*|N([^O].*)?|NO([^T].*)?|NOT([^D].*)?|NOTD([^E].*)?|NOTDE([^F].*)?|NOTDEF([^I].*)?|NOTDEFI([^N].*)?|NOTDEFIN([^E].*)?|NOTDEFINE([^D].*)?|NOTDEFINED.+|U([^S].*)?|US([^E].*)?|USE([^R].*)?|USER([^D].*)?|USERD([^E].*)?|USERDE([^F].*)?|USERDEF([^I].*)?|USERDEFI([^N].*)?|USERDEFIN([^E].*)?|USERDEFINE([^D].*)?|USERDEFINED.+"/></xs:restriction></predefinedType>
+        </entity>
+      </requirements>
+    </specification>
+    <specification name="Bjälklaget (IfcSlabStandardCase) har en PredefinedType" ifcVersion="IFC4" identifier="G11" description="IfcSlabStandardCase (IFC4) har en PredefinedType, på elementet eller dess typ, och inte NOTDEFINED." instructions="Ange bjälklagets PredefinedType.">
+      <applicability minOccurs="0" maxOccurs="unbounded">
+        <entity><name><simpleValue>IFCSLABSTANDARDCASE</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <entity>
+          <name><simpleValue>IFCSLABSTANDARDCASE</simpleValue></name>
+          <predefinedType><xs:restriction base="xs:string"><xs:pattern value="[^NU].*|N([^O].*)?|NO([^T].*)?|NOT([^D].*)?|NOTD([^E].*)?|NOTDE([^F].*)?|NOTDEF([^I].*)?|NOTDEFI([^N].*)?|NOTDEFIN([^E].*)?|NOTDEFINE([^D].*)?|NOTDEFINED.+|U([^S].*)?|US([^E].*)?|USE([^R].*)?|USER([^D].*)?|USERD([^E].*)?|USERDE([^F].*)?|USERDEF([^I].*)?|USERDEFI([^N].*)?|USERDEFIN([^E].*)?|USERDEFINE([^D].*)?|USERDEFINED.+"/></xs:restriction></predefinedType>
+        </entity>
+      </requirements>
+    </specification>
+    <specification name="Bjälklaget (IfcSlabElementedCase) har en PredefinedType" ifcVersion="IFC4" identifier="G12" description="IfcSlabElementedCase (IFC4) har en PredefinedType, på elementet eller dess typ, och inte NOTDEFINED." instructions="Ange bjälklagets PredefinedType.">
+      <applicability minOccurs="0" maxOccurs="unbounded">
+        <entity><name><simpleValue>IFCSLABELEMENTEDCASE</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <entity>
+          <name><simpleValue>IFCSLABELEMENTEDCASE</simpleValue></name>
+          <predefinedType><xs:restriction base="xs:string"><xs:pattern value="[^NU].*|N([^O].*)?|NO([^T].*)?|NOT([^D].*)?|NOTD([^E].*)?|NOTDE([^F].*)?|NOTDEF([^I].*)?|NOTDEFI([^N].*)?|NOTDEFIN([^E].*)?|NOTDEFINE([^D].*)?|NOTDEFINED.+|U([^S].*)?|US([^E].*)?|USE([^R].*)?|USER([^D].*)?|USERD([^E].*)?|USERDE([^F].*)?|USERDEF([^I].*)?|USERDEFI([^N].*)?|USERDEFIN([^E].*)?|USERDEFINE([^D].*)?|USERDEFINED.+"/></xs:restriction></predefinedType>
+        </entity>
+      </requirements>
+    </specification>
+    <specification name="Dörren (IfcDoorStandardCase) har en PredefinedType" ifcVersion="IFC4" identifier="G13" description="IfcDoorStandardCase (IFC4) har en PredefinedType, på elementet eller dess typ, och inte NOTDEFINED." instructions="Ange dörrens PredefinedType.">
+      <applicability minOccurs="0" maxOccurs="unbounded">
+        <entity><name><simpleValue>IFCDOORSTANDARDCASE</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <entity>
+          <name><simpleValue>IFCDOORSTANDARDCASE</simpleValue></name>
+          <predefinedType><xs:restriction base="xs:string"><xs:pattern value="[^NU].*|N([^O].*)?|NO([^T].*)?|NOT([^D].*)?|NOTD([^E].*)?|NOTDE([^F].*)?|NOTDEF([^I].*)?|NOTDEFI([^N].*)?|NOTDEFIN([^E].*)?|NOTDEFINE([^D].*)?|NOTDEFINED.+|U([^S].*)?|US([^E].*)?|USE([^R].*)?|USER([^D].*)?|USERD([^E].*)?|USERDE([^F].*)?|USERDEF([^I].*)?|USERDEFI([^N].*)?|USERDEFIN([^E].*)?|USERDEFINE([^D].*)?|USERDEFINED.+"/></xs:restriction></predefinedType>
+        </entity>
+      </requirements>
+    </specification>
+    <specification name="Fönstret (IfcWindowStandardCase) har en PredefinedType" ifcVersion="IFC4" identifier="G14" description="IfcWindowStandardCase (IFC4) har en PredefinedType, på elementet eller dess typ, och inte NOTDEFINED." instructions="Ange fönstrets PredefinedType.">
+      <applicability minOccurs="0" maxOccurs="unbounded">
+        <entity><name><simpleValue>IFCWINDOWSTANDARDCASE</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <entity>
+          <name><simpleValue>IFCWINDOWSTANDARDCASE</simpleValue></name>
           <predefinedType><xs:restriction base="xs:string"><xs:pattern value="[^NU].*|N([^O].*)?|NO([^T].*)?|NOT([^D].*)?|NOTD([^E].*)?|NOTDE([^F].*)?|NOTDEF([^I].*)?|NOTDEFI([^N].*)?|NOTDEFIN([^E].*)?|NOTDEFINE([^D].*)?|NOTDEFINED.+|U([^S].*)?|US([^E].*)?|USE([^R].*)?|USER([^D].*)?|USERD([^E].*)?|USERDE([^F].*)?|USERDEF([^I].*)?|USERDEFI([^N].*)?|USERDEFIN([^E].*)?|USERDEFINE([^D].*)?|USERDEFINED.+"/></xs:restriction></predefinedType>
         </entity>
       </requirements>

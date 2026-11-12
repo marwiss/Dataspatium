@@ -3,7 +3,8 @@
 <!-- Dataspatium's own requirements for a preliminary climate declaration, written from open rules: the common property sets and
      base quantities of IFC (IfcOpenShell's templates of the schema), IfcMaterial.Category, and Boverket's four categories (load
      bearing parts, the climate envelope, interior walls), which the app reads from the IFC class, LoadBearing and IsExternal
-     (Analysera, Mängder, Klimatdeklaration). No classification system is needed. -->
+     (Analysera, Mängder, Klimatdeklaration). No classification system is needed. IDS names a class without its subtypes, so the
+     classes ...StandardCase of IFC4 (and IfcWallStandardCase of IFC2X3) have specifications of their own. -->
 <ids xmlns="http://standards.buildingsmart.org/IDS" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://standards.buildingsmart.org/IDS http://standards.buildingsmart.org/IDS/1.0/ids.xsd">
   <info>
     <title>SE-Dataspatium_Klimatdeklaration</title>
@@ -134,6 +135,72 @@
       </applicability>
       <requirements>
         <property dataType="IFCVOLUMEMEASURE" cardinality="required"><propertySet><simpleValue>Qto_BeamBaseQuantities</simpleValue></propertySet><baseName><simpleValue>GrossVolume</simpleValue></baseName></property>
+      </requirements>
+    </specification>
+    <specification name="Väggen (IfcWallStandardCase) är bärande eller inte, sitter i klimatskärmen eller inte och har material" ifcVersion="IFC2X3 IFC4" identifier="K16" description="Pset_WallCommon.LoadBearing och IsExternal och ett material på IfcWallStandardCase." instructions="Ange om väggen är bärande och en yttervägg, och ge den dess material.">
+      <applicability minOccurs="0" maxOccurs="unbounded">
+        <entity><name><simpleValue>IFCWALLSTANDARDCASE</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCBOOLEAN" cardinality="required"><propertySet><simpleValue>Pset_WallCommon</simpleValue></propertySet><baseName><simpleValue>LoadBearing</simpleValue></baseName></property>
+        <property dataType="IFCBOOLEAN" cardinality="required"><propertySet><simpleValue>Pset_WallCommon</simpleValue></propertySet><baseName><simpleValue>IsExternal</simpleValue></baseName></property>
+        <material cardinality="required"/>
+      </requirements>
+    </specification>
+    <specification name="Väggen (IfcWallStandardCase) har basmängder" ifcVersion="IFC4" identifier="K17" description="Qto_WallBaseQuantities med GrossSideArea och GrossVolume." instructions="Räkna väggens basmängder.">
+      <applicability minOccurs="0" maxOccurs="unbounded">
+        <entity><name><simpleValue>IFCWALLSTANDARDCASE</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCAREAMEASURE" cardinality="required"><propertySet><simpleValue>Qto_WallBaseQuantities</simpleValue></propertySet><baseName><simpleValue>GrossSideArea</simpleValue></baseName></property>
+        <property dataType="IFCVOLUMEMEASURE" cardinality="required"><propertySet><simpleValue>Qto_WallBaseQuantities</simpleValue></propertySet><baseName><simpleValue>GrossVolume</simpleValue></baseName></property>
+      </requirements>
+    </specification>
+    <specification name="Bjälklaget (IfcSlabStandardCase, IfcSlabElementedCase) är bärande eller inte, har material och basmängder" ifcVersion="IFC4" identifier="K18" description="Pset_SlabCommon.LoadBearing, ett material och Qto_SlabBaseQuantities med GrossArea och GrossVolume." instructions="Ange om bjälklaget är bärande, ge det dess material och räkna dess basmängder.">
+      <applicability minOccurs="0" maxOccurs="unbounded">
+        <entity><name><xs:restriction base="xs:string"><xs:enumeration value="IFCSLABSTANDARDCASE"/><xs:enumeration value="IFCSLABELEMENTEDCASE"/></xs:restriction></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCBOOLEAN" cardinality="required"><propertySet><simpleValue>Pset_SlabCommon</simpleValue></propertySet><baseName><simpleValue>LoadBearing</simpleValue></baseName></property>
+        <property dataType="IFCAREAMEASURE" cardinality="required"><propertySet><simpleValue>Qto_SlabBaseQuantities</simpleValue></propertySet><baseName><simpleValue>GrossArea</simpleValue></baseName></property>
+        <property dataType="IFCVOLUMEMEASURE" cardinality="required"><propertySet><simpleValue>Qto_SlabBaseQuantities</simpleValue></propertySet><baseName><simpleValue>GrossVolume</simpleValue></baseName></property>
+        <material cardinality="required"/>
+      </requirements>
+    </specification>
+    <specification name="Pelaren (IfcColumnStandardCase) är bärande eller inte, har material och basmängder" ifcVersion="IFC4" identifier="K19" description="Pset_ColumnCommon.LoadBearing, ett material och Qto_ColumnBaseQuantities med GrossVolume." instructions="Ange om pelaren är bärande, ge den dess material och räkna dess basmängder.">
+      <applicability minOccurs="0" maxOccurs="unbounded">
+        <entity><name><simpleValue>IFCCOLUMNSTANDARDCASE</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCBOOLEAN" cardinality="required"><propertySet><simpleValue>Pset_ColumnCommon</simpleValue></propertySet><baseName><simpleValue>LoadBearing</simpleValue></baseName></property>
+        <property dataType="IFCVOLUMEMEASURE" cardinality="required"><propertySet><simpleValue>Qto_ColumnBaseQuantities</simpleValue></propertySet><baseName><simpleValue>GrossVolume</simpleValue></baseName></property>
+        <material cardinality="required"/>
+      </requirements>
+    </specification>
+    <specification name="Balken (IfcBeamStandardCase) är bärande eller inte, har material och basmängder" ifcVersion="IFC4" identifier="K20" description="Pset_BeamCommon.LoadBearing, ett material och Qto_BeamBaseQuantities med GrossVolume." instructions="Ange om balken är bärande, ge den dess material och räkna dess basmängder.">
+      <applicability minOccurs="0" maxOccurs="unbounded">
+        <entity><name><simpleValue>IFCBEAMSTANDARDCASE</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCBOOLEAN" cardinality="required"><propertySet><simpleValue>Pset_BeamCommon</simpleValue></propertySet><baseName><simpleValue>LoadBearing</simpleValue></baseName></property>
+        <property dataType="IFCVOLUMEMEASURE" cardinality="required"><propertySet><simpleValue>Qto_BeamBaseQuantities</simpleValue></propertySet><baseName><simpleValue>GrossVolume</simpleValue></baseName></property>
+        <material cardinality="required"/>
+      </requirements>
+    </specification>
+    <specification name="Dörren (IfcDoorStandardCase) sitter i klimatskärmen eller inte" ifcVersion="IFC4" identifier="K21" description="Pset_DoorCommon.IsExternal är satt." instructions="Ange om dörren är en ytterdörr.">
+      <applicability minOccurs="0" maxOccurs="unbounded">
+        <entity><name><simpleValue>IFCDOORSTANDARDCASE</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCBOOLEAN" cardinality="required"><propertySet><simpleValue>Pset_DoorCommon</simpleValue></propertySet><baseName><simpleValue>IsExternal</simpleValue></baseName></property>
+      </requirements>
+    </specification>
+    <specification name="Fönstret (IfcWindowStandardCase) sitter i klimatskärmen eller inte" ifcVersion="IFC4" identifier="K22" description="Pset_WindowCommon.IsExternal är satt." instructions="Ange om fönstret sitter i en yttervägg eller ett tak.">
+      <applicability minOccurs="0" maxOccurs="unbounded">
+        <entity><name><simpleValue>IFCWINDOWSTANDARDCASE</simpleValue></name></entity>
+      </applicability>
+      <requirements>
+        <property dataType="IFCBOOLEAN" cardinality="required"><propertySet><simpleValue>Pset_WindowCommon</simpleValue></propertySet><baseName><simpleValue>IsExternal</simpleValue></baseName></property>
       </requirements>
     </specification>
   </specifications>

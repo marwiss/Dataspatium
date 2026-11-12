@@ -10,6 +10,9 @@
  * Ändra med AI (ai/write-tools), applied by the wheel's _ifc_changeset with the schema check; `previewChangeset` runs it on a copy.
  * `topologyOf` reads the building's topology (rooms, neighbours, external walls with their facing, open wall ends) from the model;
  * `classSearch` finds the IFC class for a thing and `classReportOf` reports the model's class faults (decision B-57.2).
+ * `basicsOf` reads the model's basic requirements (the card Grunduppgifter), and `idsPresets`/`idsPreset` list and read the app's
+ * own IDS files (presets/ids). The preview tries buildingSMART's rules, and the approved step also the schema's EXPRESS rules: a
+ * change set that breaks one the base kept is refused.
  */
 (function () {
   'use strict';
@@ -17,6 +20,7 @@
   D.define('data/ifc-ops', ['data/operations', 'data/datasets', 'data/model'], (ops, datasets, model) => {
     const bridge = () => D.require('data/python-bridge').bridge;
     const lines = (prefix, text) => String(text).split('\n').map((l) => prefix + l);
+    const IDS_PREFIX = 'presets/ids/';
 
     /** The model dataset of the operation (IFC, not DXF). */
     async function modelOf(ctx) {
@@ -85,23 +89,36 @@
       params: [{ name: 'changes', type: 'text', required: true }, { name: 'provenance', type: 'text' }],
       async prepare(ctx, p) {
         const meta = await modelOf(ctx);
-        const res = await bridge().runIfcChangeset(parseChanges(p.changes), await ctx.engine.export(), { name: meta.name });
+        const res = await bridge().runIfcChangeset(parseChanges(p.changes), await ctx.engine.export(), { name: meta.name, express: true });
         ctx._ifc = { bytes: res.bytes, info: res.info, fileName: fileNameOf(meta, res.info) };
       },
-      async apply(ctx) { const info = (ctx._ifc && ctx._ifc.info) || {}; const out = await take(ctx); return Object.assign(out, { report: info, created: (info.created || []).length, deleted: (info.deleted || []).length }); },
+      // The refusal in apply, whose failure rolls the step back and takes it off the undo stack.
+      async apply(ctx) { const info = (ctx._ifc && ctx._ifc.info) || {}; refuseExpress(info); const out = await take(ctx); return Object.assign(out, { report: info, created: (info.created || []).length, deleted: (info.deleted || []).length }); },
       toSQL: (p) => ['-- ' + D.t('op.ifc_changeset.note')].concat(lines('-- ', p.changes)),
       toR: (p) => ['# ' + D.t('op.ifc_changeset.note')].concat(lines('# ', p.changes)).join('\n'),
     });
     /**
-     * A change set applied to a copy of the model, for the preview: the candidate IFC and the wheel's report (created, changed,
-     * deleted, findings, errors). The dataset is untouched.
-     * @param {string} datasetId @param {any[]} changes @returns {Promise<{bytes: Uint8Array, report: any, log: any[]}>}
+     * The approved step refuses a change set that breaks the schema's EXPRESS rules where the base kept them (the wheel's `express`
+     * report; only new errors count), naming the first rules, so that the person can ask the AI to mend it. @param {any} info
      */
-    async function previewChangeset(datasetId, changes) {
+    function refuseExpress(info) {
+      const ex = info && info.express;
+      if (!ex || !(Number(ex.errors) > 0)) return;
+      const rules = Array.from(new Set((info.findings || []).filter((f) => f && f.kind === 'express').map((f) => String(f.rule || f.message || '')))).slice(0, 3);
+      throw new Error(D.t('op.err.ifc_changeset.express', { n: Number(ex.errors), rules: rules.join(', ') }));
+    }
+    /**
+     * A change set applied to a copy of the model, for the preview: the candidate IFC and the wheel's report (created, changed,
+     * deleted, findings with buildingSMART's rules, errors; with `ids`, the specifications of that IDS file that fail). The dataset
+     * is untouched.
+     * @param {string} datasetId @param {any[]} changes @param {{ids?: {name: string, text: string}|null}} [options]
+     * @returns {Promise<{bytes: Uint8Array, report: any, log: any[]}>}
+     */
+    async function previewChangeset(datasetId, changes, options = {}) {
       const meta = await datasets.get(datasetId);
       if (!meta || !model.isModel(meta) || model.isDxf(meta)) throw new Error(D.t('op.err.ifc.notmodel'));
       const handle = await datasets.ensureOpen(datasetId);
-      const res = await bridge().runIfcChangeset(parseChanges(changes), await handle.engine.export(), { name: meta.name });
+      const res = await bridge().runIfcChangeset(parseChanges(changes), await handle.engine.export(), Object.assign({ name: meta.name }, options && options.ids ? { ids: options.ids } : {}));
       return { bytes: res.bytes, report: res.info || {}, log: res.log || [] };
     }
     /**
@@ -144,6 +161,26 @@
       const handle = await datasets.ensureOpen(datasetId);
       return (await bridge().runIfcClassReport(await handle.engine.export())) || {};
     }
-    return { python, applyTable, changeset, previewChangeset, topologyOf, classSearch, classReportOf, IDS: ['ifc_apply_table', 'ifc_python'] };
+    /**
+     * The model's basic requirements (the card Grunduppgifter; python/ `_ifc_basics`): per check its status, facts and faults with
+     * examples. Python starts as for classSearch. @param {string} datasetId @returns {Promise<any>}
+     */
+    async function basicsOf(datasetId) {
+      await modelMeta(datasetId);
+      const handle = await datasets.ensureOpen(datasetId);
+      return (await bridge().runIfcBasics(await handle.engine.export())) || {};
+    }
+    /** The app's own IDS files (presets/ids), as asset names in order. @returns {string[]} */
+    function idsPresets() { return D.assets.names(IDS_PREFIX).filter((n) => n.endsWith('.ids')).sort(); }
+    /**
+     * One of the app's IDS files by its asset name or file name, as the name and text the preview and the IDS tool take.
+     * @param {string} name @returns {Promise<{name: string, text: string}>}
+     */
+    async function idsPreset(name) {
+      const asset = String(name).startsWith(IDS_PREFIX) ? String(name) : IDS_PREFIX + String(name);
+      if (!idsPresets().includes(asset)) throw new Error(D.t('model.ids.preset.missing', { name: String(name) }));
+      return { name: asset.slice(IDS_PREFIX.length), text: await D.assets.loadText(asset) };
+    }
+    return { python, applyTable, changeset, previewChangeset, topologyOf, classSearch, classReportOf, basicsOf, idsPresets, idsPreset, refuseExpress, IDS: ['ifc_apply_table', 'ifc_python'] };
   });
 })();
