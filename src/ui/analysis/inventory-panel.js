@@ -46,7 +46,7 @@
       async function fields() {
         return [h('div', { class: 'dm-row-wrap' },
           basic.select(t('inventory.view'), VIEWS.map((v) => ({ value: v, label: t('inventory.view.' + v) })), s.view, (v) => { s.view = v; refresh(); }, { 'data-inventory-view': '' }),
-          options.openIds ? ui.button({ label: t('inventory.ids'), icon: 'circle-check', size: 'sm', variant: 'ghost', title: t('inventory.ids.hint'), 'data-inventory-ids': '', onClick: () => options.openIds(IDS) }) : null)];
+          options.openIds ? ui.button({ label: t('inventory.ids'), icon: 'circle-check', size: 'sm', variant: 'ghost', title: t('inventory.ids.hint'), 'data-inventory-ids': '', onClick: () => { if (options.openIds) options.openIds(IDS); } }) : null)];
       }
 
       /** What the view rests on: the basis, what the view holds, and what is missing or left to the person. */
