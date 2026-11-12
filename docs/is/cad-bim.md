@@ -449,7 +449,7 @@ Skráarhausinn: hver IFC-skrá sem forritið skrifar eða vistar fær FILE_DESCR
 FILE_NAME með heiti skrárinnar, tímanum samkvæmt ISO 8601, forvinnsluforritinu (Dataspatium og IfcOpenShell með útgáfum) og
 upprunaforritinu á forminu *Dataspatium - Dataspatium - útgáfa*. Sýnarskilgreiningin er CoordinationView_V2.0 fyrir IFC2X3 og
 ReferenceView_V1.2 fyrir IFC4. IFC4X3 hefur enga opinbera sýn fyrir líkan í öllu skemanu (Reference View sleppir meðal annars
-útpressuðum formum), svo hausinn segir `notYetAssigned` í stað sýnar sem skráin fylgir ekki; staðfestingarþjónusta buildingSMART
+útpressuðum formum og rýmismörkum, buildingSMART-reglan IFC430), svo hausinn segir `notYetAssigned` í stað sýnar sem skráin fylgir ekki; staðfestingarþjónusta buildingSMART
 merkir það, og viðtakandi sem krefst sýnar tilgreinir hana. Skrá sem forritið breytir heldur eigin höfundi, stofnun og
 upprunaforriti, og sýn sinni þegar staðfestingarþjónustan samþykkir hana.
 
@@ -564,7 +564,8 @@ kortavörpunina, það er upphafspunkt líkansins í austur- og norðurhnitum og
 nefnd): IfcRoof úr þakplötum (IfcSlab af gerðinni ROOF), einni á hvern þakflöt, yfir umlykjandi rétthyrningi veggjanna eða gefnum
 rétthyrningi (önnur útlína víkur enn sem komið er fyrir umlykjandi rétthyrningi sínum). Tólið `create_spaces` gerir herbergin sem
 veggirnir loka að rýmum (IfcSpace) með nöfnum úr rýmisáætluninni, valin með punkti inni í þeim eða númeri sínu í grannfræðinni, með hæð
-upp að næstu hæð, flatarmálum (Qto_SpaceBaseQuantities) og mörkum að veggjunum og hurðum þeirra og gluggum. Tólin breyta engu: þau
+upp að næstu hæð, flatarmálum (Qto_SpaceBaseQuantities) og mörkum að veggjunum, hurðum þeirra og gluggum og plötunum fyrir neðan
+og ofan (sjá *Rýmismörk* hér á eftir). Tólin breyta engu: þau
 fylla breytingasett sem spjaldið telur upp skref fyrir skref (mál í metrum; nýjar einingar fá tilvísanirnar new-1, new-2 … þar til
 skráin hefur gefið þeim auðkenni).
 
@@ -638,6 +639,21 @@ horn í gráðum, og forritið skrifar þau í einingum skrárinnar. Safn sem he
 eiginleikasafn má ekki byrja á Pset_ eða Qto_, og gervigreindin fær það ráð að nefna það land-uppruni-verkefni_Nafn, til dæmis
 SE-ACME-42_Hljodvist, með eiginleikanöfnum í PascalCase án å, ä og ö. Eiginleikarnir fara í eigið safn hlutarins, aldrei í safn
 gerðarinnar. `assign` tekur flokk efnisins (IfcMaterial.Category, sömu ellefu og í `define_type`).
+
+**Rýmismörk.** Mörk rýmanna (IfcRelSpaceBoundary) eru af fyrsta stigi: IfcRelSpaceBoundary1stLevel í IFC4 og IFC4X3, og í IFC2X3,
+sem vantar klasann, IfcRelSpaceBoundary með nafnið 1stLevel. Hver mörk eru sléttur flötur í hnitum rýmisins, afmarkað plan
+(IfcConnectionSurfaceGeometry með IfcCurveBoundedPlane) þar sem þverillinn vísar frá rýminu. Það er formið sem IFC gefur fyrir slétt
+mörk í öllum þremur skemunum, og IfcOpenShell teiknar það; IfcFaceBasedSurfaceModel er úrelt í IFC4 og IFC4.3 (reglan IFC102).
+Veggur afmarkar rýmið með hlið sinni að rýminu innan veggjanna, frá yfirborði gólfsins að neðra borði loftsins, ein mörk fyrir hvern
+beinan hluta veggjarins (búkur rýmisins nær að miðlínum veggjanna). Mörk hurðar, glugga eða ops liggja í fleti veggjarins þar sem opið
+er og skarast við mörk veggjarins, sem eru ekki skorin, og í IFC4 og síðar vísa þau í mörk veggjarins sem foreldri (ParentBoundary).
+Op án hurðar eða glugga eru sýndarmörk að opinu, nema í IFC2X3, þar sem reglan leyfir það ekki. Plöturnar fyrir neðan og ofan
+afmarka rýmið með efra og neðra borði sínu innan veggjanna. Veggur er ytri eða innri samkvæmt grannfræðinni; plata er ytri þegar hún
+hefur IsExternal, er þak eða botnplata, eða er gólf neðstu hæðar eða loft yfir efstu hæð. Þegar breytingasafnið er keyrt fá rýmin
+nálægt því sem var búið til, breytt eða eytt mörk sín á ný, svo veggur eða plata sem er gerð á eftir rýmunum afmarkar þau og
+fletirnir fylgja hurð eða færðum eða eyddum vegg. Mörk eydds veggjar hverfa með honum, og hin mörkin halda GlobalId sínu. Rými þar sem
+búkurinn er ekki bein útpressun útlínu, til dæmis úr öðru forriti, heldur mörkum sínum. Mörk af öðru stigi (fyrir orkureikninga)
+skrifar forritið ekki.
 
 *Forskoða* keyrir breytingasettið á afriti af líkaninu með IfcOpenShell í Python forritsins (íhlutirnir eru sóttir eftir samþykki í
 fyrsta sinn), teiknar niðurstöðuna í þrívídd með nýtt grænt og breytt gult og sýnir hvað er búið til, breytt og eytt ásamt niðurstöðum

@@ -470,7 +470,7 @@ Tiedoston otsake: jokainen IFC-tiedosto, jonka sovellus kirjoittaa tai tallentaa
 ja tasolla 2;1 sekä FILE_NAME-osan, jossa ovat tiedoston nimi, aika ISO 8601 -muodossa, esikäsittelijä (Dataspatium ja
 IfcOpenShell versioineen) ja alkuperäinen ohjelma muodossa *Dataspatium - Dataspatium - versio*. Näkymämäärittely on
 CoordinationView_V2.0 IFC2X3:lle ja ReferenceView_V1.2 IFC4:lle. IFC4X3:lle ei ole virallista näkymää koko skeeman mallille
-(Reference View jättää pois muun muassa pursotetut kappaleet), joten otsakkeessa lukee `notYetAssigned` sellaisen näkymän sijaan,
+(Reference View jättää pois muun muassa pursotetut kappaleet ja tilarajat, buildingSMART-sääntö IFC430), joten otsakkeessa lukee `notYetAssigned` sellaisen näkymän sijaan,
 jota tiedosto ei noudata; buildingSMARTin validointipalvelu merkitsee sen, ja vastaanottaja, joka vaatii näkymän, nimeää sen.
 Tiedosto, jota sovellus muuttaa, säilyttää oman tekijänsä, organisaationsa ja alkuperäisen ohjelmansa sekä näkymänsä, kun
 validointipalvelu hyväksyy sen.
@@ -589,7 +589,8 @@ seinille) harjakaton, aumakaton, pulpettikaton tai tasakaton, jolla on kaltevuus
 (IfcSlab, tyyppi ROOF), yksi kutakin lapetta kohti, seinien ympäröivän suorakulmion tai annetun suorakulmion päälle (muu ääriviiva
 korvataan toistaiseksi sitä ympäröivällä suorakulmiolla). Työkalu `create_spaces` tekee seinien rajaamista huoneista tiloja (IfcSpace),
 joiden nimet tulevat huoneohjelmasta ja jotka valitaan sisällä olevalla pisteellä tai topologian numerolla; tiloilla on korkeus
-seuraavaan kerrokseen, pinta-alat (Qto_SpaceBaseQuantities) ja rajat seiniin sekä niiden oviin ja ikkunoihin. Työkalut eivät muuta
+seuraavaan kerrokseen, pinta-alat (Qto_SpaceBaseQuantities) ja rajat seiniin, niiden oviin ja ikkunoihin sekä alla ja yllä oleviin
+laattoihin (ks. *Tilarajat* alla). Työkalut eivät muuta
 mitään: ne täyttävät muutosjoukon, jonka paneeli luettelee vaihe vaiheelta (mitat metreinä; uudet elementit saavat viitteet new-1,
 new-2 …, kunnes tiedosto on antanut niille tunnisteet).
 
@@ -666,6 +667,22 @@ määräjoukko (IfcElementQuantity). Oma ominaisuusjoukko ei saa alkaa Pset_- ta
 muotoon maa-alkuperä-projekti_Nimi, esimerkiksi SE-ACME-42_Akustiikka, ominaisuusnimet PascalCase-muodossa ilman å-, ä- ja
 ö-kirjaimia. Ominaisuudet kirjoitetaan elementin omaan joukkoon, ei koskaan tyypin joukkoon. `assign` ottaa materiaalin luokan
 (IfcMaterial.Category, samat yksitoista kuin `define_type`-työkalussa).
+
+**Tilarajat.** Tilojen rajat (IfcRelSpaceBoundary) ovat ensimmäistä tasoa: IFC4:ssä ja IFC4X3:ssa IfcRelSpaceBoundary1stLevel ja
+IFC2X3:ssa, josta luokka puuttuu, IfcRelSpaceBoundary, jonka nimi on 1stLevel. Jokainen raja on tasopinta tilan koordinaateissa,
+rajattu taso (IfcConnectionSurfaceGeometry ja IfcCurveBoundedPlane), jonka normaali osoittaa poispäin tilasta. Tämä on muoto, jonka
+IFC antaa tasomaiselle rajalle kaikissa kolmessa skeemassa, ja IfcOpenShell piirtää sen; IfcFaceBasedSurfaceModel on vanhentunut
+IFC4:ssä ja IFC4.3:ssa (sääntö IFC102). Seinä rajaa tilan tilaa kohti olevalla puolellaan seinien sisäpuolella, lattian yläpinnasta
+katon alapintaan, yksi raja seinän kutakin suoraa osaa kohti (tilan kappale ulottuu seinien keskilinjoihin). Oven, ikkunan tai aukon
+raja on seinän pinnassa aukon kohdalla päällekkäin seinän rajan kanssa, jota ei leikata, ja IFC4:ssä ja uudemmissa se nimeää seinän
+rajan vanhemmakseen (ParentBoundary). Aukko ilman ovea tai ikkunaa on virtuaalinen raja aukkoon, paitsi IFC2X3:ssa, jonka sääntö ei
+salli sitä. Alla ja yllä olevat laatat rajaavat tilan ylä- ja alapinnallaan seinien sisäpuolella. Seinä on ulkoinen tai sisäinen
+topologian mukaan; laatta on ulkoinen, kun sillä on IsExternal, se on katto tai pohjalaatta tai se on alimman kerroksen lattia tai
+ylimmän kerroksen katto. Kun muutosjoukko ajetaan, sen luomien, muuttamien tai poistamien elementtien lähellä olevat tilat saavat
+rajansa uudelleen, joten huoneiden jälkeen tehty seinä tai laatta rajaa ne ja pinnat seuraavat ovea tai siirrettyä tai poistettua
+seinää. Poistetun seinän rajat poistuvat sen mukana, ja muut rajat säilyttävät GlobalId-tunnisteensa. Tila, jonka kappale ei ole
+ääriviivan suora pursotus, esimerkiksi toisesta ohjelmasta, säilyttää rajansa. Toisen tason rajoja (energialaskentaan) sovellus ei
+kirjoita.
 
 *Esikatsele* ajaa muutosjoukon mallin kopiolle IfcOpenShellillä sovelluksen Pythonissa (komponentit haetaan suostumuksen jälkeen
 ensimmäisellä kerralla), piirtää tuloksen 3D:nä uudet vihreinä ja muutetut keltaisina ja näyttää, mitä luodaan, muutetaan ja poistetaan,

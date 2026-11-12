@@ -457,7 +457,8 @@ som IFC4X3 har fasa ut.
 Filhovudet: kvar IFC-fil appen skriv eller lagrar, får FILE_DESCRIPTION med visingsdefinisjon og nivået 2;1, og FILE_NAME med
 namnet på fila, tida etter ISO 8601, preprosessoren (Dataspatium og IfcOpenShell med versjonar) og opphavsprogrammet i forma
 *Dataspatium - Dataspatium - versjon*. Visingsdefinisjonen er CoordinationView_V2.0 for IFC2X3 og ReferenceView_V1.2 for IFC4.
-IFC4X3 har inga offisiell vising for ein modell i heile skjemaet (Reference View utelèt mellom anna ekstruderte lekamar), så
+IFC4X3 har inga offisiell vising for ein modell i heile skjemaet (Reference View utelèt mellom anna ekstruderte lekamar og
+romgrenser, buildingSMART-regelen IFC430), så
 hovudet seier `notYetAssigned` i staden for ei vising fila ikkje følgjer; valideringstenesta til buildingSMART merkjer det, og ein
 mottakar som krev ei vising, gjev ho. Ei fil appen endrar, held på sin eigen forfattar, organisasjon og sitt opphavsprogram, og
 visinga si når valideringstenesta godtek ho.
@@ -571,8 +572,8 @@ manglar henne). Verktøyet `create_roof` legg eit saltak, valmtak, pulttak eller
 i ein etasje (utan oppgjeven etasje den øvste): eit IfcRoof av takplater (IfcSlab av typen ROOF), éi per takflate, over det omskrivne
 rektangelet til veggane eller eit oppgjeve rektangel (ein annan kontur blir inntil vidare bytt ut med det omskrivne rektangelet sitt).
 Verktøyet `create_spaces` lagar romma veggane lukkar, som IfcSpace med namn frå romprogrammet, valde med eit punkt inni eller nummeret
-sitt i topologien, med høgda opp til neste etasje, romareal (Qto_SpaceBaseQuantities) og grenser mot veggane og dørene og vindauga i
-dei. Verktøya endrar ingenting: dei fyller eit endringssett som panelet listar steg for steg (mål i meter; nye element får referansane
+sitt i topologien, med høgda opp til neste etasje, romareal (Qto_SpaceBaseQuantities) og grenser mot veggane, dørene og vindauga i
+dei og dekka under og over (sjå *Romgrenser* nedanfor). Verktøya endrar ingenting: dei fyller eit endringssett som panelet listar steg for steg (mål i meter; nye element får referansane
 new-1, new-2 … til fila har gjeve dei id).
 
 Verktøyet `define_type` lagar ein veggtype, dekketype eller taktype (IfcWallType, IfcSlabType eller IfcSlabType av typen ROOF for
@@ -646,6 +647,22 @@ grader, så skriv appen dei i einingane til fila. Eit sett som heiter Qto_…, b
 eigenskapssett må ikkje byrje med Pset_ eller Qto_, og AI-en får rådet å kalle det land-opphav-prosjekt_Namn, til dømes
 SE-ACME-42_Akustikk, med eigenskapsnamn i PascalCase utan å, ä og ö. Eigenskapane blir skrivne i det eigne settet til elementet, aldri
 i settet til typen. `assign` tek kategorien til materialet (IfcMaterial.Category, dei same elleve som i `define_type`).
+
+**Romgrenser.** Grensene til romma (IfcRelSpaceBoundary) er av første nivå: IfcRelSpaceBoundary1stLevel i IFC4 og IFC4X3, og i
+IFC2X3, som manglar klassen, ei IfcRelSpaceBoundary med namnet 1stLevel. Kvar grense er ei plan flate i koordinatane til rommet, eit
+avgrensa plan (IfcConnectionSurfaceGeometry med IfcCurveBoundedPlane) der normalen peikar bort frå rommet. Det er forma IFC gjev for
+ei plan grense i alle tre skjemaa, og IfcOpenShell teiknar ho; IfcFaceBasedSurfaceModel er avvikla i IFC4 og IFC4.3 (regelen IFC102).
+Ein vegg avgrensar rommet med sida si mot rommet innanfor veggane, frå oversida av golvet til undersida av taket, med éi grense per
+rett del av veggen (lekamen til rommet går til midtlinjene til veggane). Grensa til ei dør, eit vindauge eller ei opning ligg i flata
+til veggen der opninga er, og overlappar grensa til veggen, som ikkje blir skoren ut, og i IFC4 og seinare gjev ho grensa til veggen
+som forelder (ParentBoundary). Ei opning utan dør eller vindauge er ei virtuell grense mot opninga, unnateke i IFC2X3, der regelen
+ikkje tillèt det. Dekka under og over avgrensar rommet med oversida og undersida si innanfor veggane. Ein vegg er ytre eller indre
+etter topologien; eit dekke er ytre når det har IsExternal, er eit tak eller ei botnplate, eller er golvet i den lågaste etasjen
+eller taket over den høgaste. Når endringssettet køyrer, får romma nær det som er oppretta, endra eller sletta, grensene sine på nytt,
+så ein vegg eller eit dekke som blir laga etter romma, avgrensar dei, og flatene følgjer ei dør eller ein flytta eller sletta vegg.
+Grensene til ein sletta vegg forsvinn med han, og dei andre grensene held på GlobalId-ane sine. Eit rom der lekamen ikkje er ei rett
+ekstrudering av ein kontur, til dømes frå eit anna program, held på grensene sine. Grenser av andre nivå (for energiberekning) skriv
+ikkje appen.
 
 *Førehandsvis* køyrer endringssettet på ein kopi av modellen med IfcOpenShell i Python i appen (komponentane vert henta etter samtykke
 første gongen), teiknar resultatet i 3D med nytt grønt og endra gult, og viser kva som vert oppretta, endra og sletta saman med funna
