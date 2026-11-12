@@ -644,10 +644,16 @@
     const frame = document.createElement('iframe');
     frame.style.cssText = 'position:absolute; left:-10000px; width:360px; height:800px; border:0;';
     frame.src = new URL('../m/index.html', location.href).href;
+    const started = Date.now();
     document.body.appendChild(frame);
     let app = null;
     try {
-      const win = await waitFor(() => { const w = /** @type {any} */ (frame.contentWindow); return w && w.Dataspatium && w.Dataspatium.mobile ? w : null; }, 30000, 'the phone page');
+      // On a timeout, say how far the page got: the loader, the app's text, and what else this page still draws beside it.
+      const win = await waitFor(() => { const w = /** @type {any} */ (frame.contentWindow); return w && w.Dataspatium && w.Dataspatium.mobile ? w : null; }, 30000, 'the phone page').catch((err) => {
+        const w = /** @type {any} */ (frame.contentWindow); const root = w && w.document.getElementById('app');
+        throw new Error(`${err.message}: loader ${!!(w && w.Dataspatium)}, app ${!!(w && w.Dataspatium && w.Dataspatium.has('mobile/app'))}, text ${JSON.stringify(String(root ? root.textContent : '').trim().slice(0, 120))}, canvases here ${document.querySelectorAll('canvas').length}`);
+      });
+      const startedIn = Date.now() - started;
       const doc = frame.contentDocument;
       assert.ok(doc.querySelector('.dm-m'), 'it drew its start page');
       assert.ok(!win.Dataspatium.has('ui/modes/inhamta'), 'with the phone file list, not the whole app');
@@ -674,7 +680,7 @@
       assert.ok(urls.some((url) => /sql/i.test(url)), 'SQLite was fetched for the rules');
       for (const url of urls) assert.ok(await caches.match(url), 'kept: ' + url);
       assert.ok(await caches.match(frame.src), 'and the page itself');
-      return `${urls.length} files kept`;
+      return `${urls.length} files kept, started in ${startedIn} ms`;
     } finally {
       if (app) { await idb.setSetting('mobile.field.draft.' + form.id, null); const mobileApp = frame.contentWindow.Dataspatium.require('mobile/app'); app.destroy(); for (const b of await mobileApp.listBundles()) await mobileApp.removeBundle(b.id); }
       frame.remove();
