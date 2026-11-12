@@ -8,11 +8,12 @@
  * fixture with a proxy, a USERDEFINED covering without ObjectType and furniture outside the spatial structure counts them all, and the
  * change set refuses a PredefinedType outside the class's enumeration, naming the values it takes. Decision B-59 and the native-IFC
  * fixes: no tool text or prompt names a licensed classification system, set_site measures from grid east, a wall is SOLIDWALL or
- * PARTITIONING, an outline drops a repeated first corner and the importer takes IFC4.3 storeys' heights from their placements; with
- * the real Pyodide the wheel writes those walls, closes every polyline on its first point (GEM111), shares a classification reference
- * only for the same system, code and name, writes the system's edition, source and address on its IfcClassification, and writes
- * IFC4.3 storeys without Elevation and spaces as SPACE (IFC102). Decision B-59.1: search_bsdd asks for and answers only the open
- * dictionaries, with their licences, and the build text keeps classification to the IFC class, the type objects and free dictionaries.
+ * PARTITIONING, an outline drops a repeated first corner and the importer takes a storey's height from its placement when it has no
+ * Elevation; with the real Pyodide the wheel writes those walls, closes every polyline on its first point (GEM111), shares a
+ * classification reference only for the same system, code and name, writes the system's edition, source and address on its
+ * IfcClassification, and writes IFC4.3 storeys with Elevation and spaces as INTERNAL, as the wheel's schema documentation has them.
+ * Decision B-59.1: search_bsdd asks for and answers only the open dictionaries, with their licences, and the build text keeps
+ * classification to the IFC class, the type objects and free dictionaries.
  */
 (function () {
   'use strict';
@@ -164,7 +165,7 @@
     assert.ok(writeTools.call(cs, 'create_roof', { storey: null, shape: 'flat', outline: [[0, 0], [4, 0], [4, 4], [0, 4], [0, 0]], pitch: null, overhang: null, thickness: null, ridge: null, base: null, name: null }).ok);
     assert.equal(cs.ops[3].outline.length, 4);
     assert.ok(writeTools.call(cs, 'create_slab', { storey: null, outline: [[0, 0], [4, 0], [0, 0]], thickness: null, name: null }).error, 'two corners and a repeat are not an outline');
-    // IFC4.3 deprecates IfcBuildingStorey.Elevation (IFC102): the importer takes a storey's height from its placement.
+    // A storey without Elevation (the bSI rule IFC102 lists it as deprecated in IFC4.3): the importer takes the height from the placement.
     const text = fixtures.ifcText({ walls: 2 }).replace("FILE_SCHEMA(('IFC4'))", "FILE_SCHEMA(('IFC4X3_ADD2'))").replace(/(IFCBUILDINGSTOREY\([^;]*,\.ELEMENT\.,)[0-9.]+\)/g, '$1$)');
     assert.ok(!/IFCBUILDINGSTOREY\([^;]*\.ELEMENT\.,[0-9]/.test(text), 'the fixture without Elevation');
     const m43 = await importer.run(new File([text], 'utan-elevation.ifc', { type: 'application/octet-stream' }), { format: 'model' }, null, 'Utan Elevation');
@@ -213,7 +214,7 @@
     return 'ok';
   });
 
-  test('ifc class: Python writes SOLIDWALL and PARTITIONING, closes polylines on their first point, shares a classification reference only for the same class, writes the system\'s edition, source and address, and writes IFC4.3 storeys and spaces without deprecated values', async (assert) => {
+  test('ifc class: Python writes SOLIDWALL and PARTITIONING, closes polylines on their first point, shares a classification reference only for the same class, writes the system\'s edition, source and address, and writes IFC4.3 storeys and spaces as the wheel\'s schema documentation has them', async (assert) => {
     if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them, about 13 MB more for IfcOpenShell)';
     const writeTools = D.require('ai/write-tools');
     const ifcOps = D.require('data/ifc-ops');
@@ -264,8 +265,8 @@
     const sharing = Array.from(text.matchAll(/^#\d+=IFCRELASSOCIATESCLASSIFICATION\([^;]*\(([^)]*)\),#(\d+)\);$/gm)).filter((m) => m[2] === exterior);
     assert.ok(sharing.length === 1 && sharing[0][1].split(',').length === 2, 'both walls share the reference of the same class: ' + JSON.stringify(sharing.map((m) => m[1])));
     assert.ok(SYSTEM.test(text), 'IFC4: Source, Edition and Location on the IfcClassification');
-    // A new IFC4.3 model: storeys without Elevation, spaces SPACE with Pset_SpaceCommon.IsExternal false; the dictionary's address
-    // is the Specification.
+    // A new IFC4.3 model: the wheel's schema documentation deprecates neither Elevation nor INTERNAL, so the storey keeps its
+    // Elevation and the spaces are INTERNAL, as in IFC4; the dictionary's address is the Specification.
     const { dataset } = await D.require('data/ifc-new').create({ name: 'Klassprov 4.3', schema: 'IFC4X3_ADD2', storey: 'Plan 1' });
     created.push(dataset.id);
     const cs43 = build('Plan 1');
@@ -274,9 +275,8 @@
     const out43 = await ifcOps.previewChangeset(dataset.id, writeTools.toWheel(cs43));
     assert.equal(out43.report.errors, 0, 'IFC4.3: no errors: ' + JSON.stringify(out43.report.findings));
     const t43 = new TextDecoder().decode(out43.bytes);
-    assert.ok(/=IFCBUILDINGSTOREY\('[^']*',\$,'Plan 1',\$,\$,#\d+,\$,\$,\.ELEMENT\.,\$\);/.test(t43), 'the storey without Elevation');
-    assert.ok(/=IFCSPACE\([^;]*\.ELEMENT\.,\.SPACE\.,\$\);/.test(t43) && !/=IFCSPACE\([^;]*\.INTERNAL\./.test(t43), 'the spaces are SPACE');
-    assert.ok(t43.includes("'Pset_SpaceCommon'") && /IFCPROPERTYSINGLEVALUE\('IsExternal',\$,IFCBOOLEAN\(\.F\.\),\$\)/.test(t43), 'and not external');
+    assert.ok(/=IFCBUILDINGSTOREY\('[^']*',\$,'Plan 1',\$,\$,#\d+,\$,\$,\.ELEMENT\.,0\.\);/.test(t43), 'the storey with its Elevation');
+    assert.ok(/=IFCSPACE\([^;]*\.ELEMENT\.,\.INTERNAL\.,\$\);/.test(t43) && !/=IFCSPACE\([^;]*\.SPACE\./.test(t43), 'the spaces are INTERNAL');
     assert.ok(SYSTEM.test(t43), 'IFC4.3: Source, Edition and Specification on the IfcClassification');
     assert.deepEqual(copies(t43), [], 'closed polylines in IFC4.3 too');
     return 'ok';
