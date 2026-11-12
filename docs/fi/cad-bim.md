@@ -427,6 +427,18 @@ Lopuksi muutosjoukon luomat tai muuttamat seinät, laatat, katot, ovet ja ikkuna
 Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities ja Qto_WindowBaseQuantities) mitoista laskettuina, aukot
 vähennettyinä ja skeeman mallien nimillä.
 
+Työkalu `edit_element` muuttaa olemassa olevaa elementtiä paikallaan, niin että se säilyttää GlobalId-tunnuksensa koko elinkaarensa
+ajan: seinän alun, lopun, paksuuden, korkeuden ja tyypin, laatan ääriviivan, paksuuden ja tyypin, aukon paikan, leveyden, korkeuden ja
+alareunan yhdessä sen oven tai ikkunan kanssa, katon kaltevuuden, räystään ulottuman ja räystään korkeuden sekä minkä tahansa elementin
+nimen. Mitat luetaan elementin omasta geometriasta (seinän alku ja loppu sen akselista), ja runko, akseli, kerrokset, perusmäärät ja
+seinäliitokset tehdään uudelleen. Seinän aukot säilyttävät paikkansa seinän suunnassa niin kauan kuin seinä säilyttää suuntansa (muuten
+etäisyytensä seinän alusta), ja niiden on mahduttava seinään; katto säilyttää suorakulmionsa. Tyypitetty seinä tai laatta saa
+paksuutensa tyypistään, joten paksumpi seinä saa toisen tyypin. Elementin, jota ei ole piirretty kirjoitustyökalujen tapaan, voi vain
+nimetä uudelleen, ja vastaus kertoo, mitä tekoäly voi tehdä sen sijaan. Tekoäly siis muuttaa elementtejä poistamatta ja luomatta niitä
+uudelleen, ja poistaa vain, kun pyydät. Siirto työkalulla `transform_elements` tapahtuu kerroksen tasossa: ovi tai ikkuna siirtyy
+aukkonsa mukana, siirretty seinä liitetään seiniin, jotka se kohtaa, yhtään pistettä ei jää käyttämättä, eikä tonttia, rakennusta tai
+kerroksia koskaan siirretä, koska niiden paikka ja korkeudet koskevat koko hanketta ja muuttuvat vain sopimalla.
+
 *Esikatsele* ajaa muutosjoukon mallin kopiolle IfcOpenShellillä sovelluksen Pythonissa (komponentit haetaan suostumuksen jälkeen
 ensimmäisellä kerralla), piirtää tuloksen 3D:nä uudet vihreinä ja muutetut keltaisina ja näyttää, mitä luodaan, muutetaan ja poistetaan,
 sekä skeematarkistuksen löydökset. *Hyväksy* tekee muutoksista reseptivaiheen *Tekoälymuutos*: malli saa uuden version työtilaan,

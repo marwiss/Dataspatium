@@ -410,6 +410,18 @@ veggir, plötur, þök, hurðir og gluggar sem breytingasettið bjó til eða br
 Qto_RoofBaseQuantities, Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) reiknað út frá málunum, með opin dregin frá og með nöfnunum
 úr sniðmátum skemans.
 
+Tólið `edit_element` breytir einingu sem fyrir er á sínum stað, svo að hún heldur GlobalId sínu alla ævi: upphafi, enda, þykkt, hæð og
+gerð veggjar, útlínu, þykkt og gerð plötu, staðsetningu, breidd, hæð og neðri brún ops ásamt hurð þess eða glugga, þakhalla, þakskeggi
+og hæð þakskeggs þaks, og heiti hvaða einingar sem er. Málin eru lesin úr eigin rúmfræði einingarinnar (upphaf og endir veggjar úr ás
+hans), og bolurinn, ásinn, lögin, grunnmagnið og veggjasamskeytin eru gerð á ný. Op veggjarins halda stað sínum eftir honum meðan hann
+heldur stefnu sinni (annars fjarlægð sinni frá upphafi hans) og verða að rúmast í honum, og þakið heldur ferhyrningi sínum. Veggur eða
+plata með gerð fær þykkt sína úr gerðinni, svo að þykkari veggur fær aðra gerð. Einingu sem er ekki teiknuð eins og skrifverkfærin
+teikna má aðeins gefa nýtt heiti, og svarið segir hvað gervigreindin getur gert í staðinn. Gervigreindin breytir því einingum í stað
+þess að eyða þeim og búa þær til á ný, og eyðir aðeins þegar þú biður um það. Færsla með `transform_elements` fer fram í fleti
+hæðarinnar: hurð eða gluggi færist með opi sínu, færður veggur er tengdur veggjunum sem hann mætir, enginn punktur er skilinn eftir
+ónotaður, og lóðin, byggingin og hæðirnar eru aldrei færðar, því að staður þeirra og hæðir varða allt verkefnið og breytast aðeins
+eftir samkomulagi.
+
 *Forskoða* keyrir breytingasettið á afriti af líkaninu með IfcOpenShell í Python forritsins (íhlutirnir eru sóttir eftir samþykki í
 fyrsta sinn), teiknar niðurstöðuna í þrívídd með nýtt grænt og breytt gult og sýnir hvað er búið til, breytt og eytt ásamt niðurstöðum
 skemaathugunarinnar. *Samþykkja* gerir breytingarnar að uppskriftarskrefinu *Gervigreindarbreyting*: líkanið fær nýja útgáfu í
