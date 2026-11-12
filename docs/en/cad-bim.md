@@ -603,7 +603,8 @@ The tool `create_element` makes the building elements that have no tool of their
 IfcBuildingElementProxy: columns (IfcColumn), beams (IfcBeam), members such as studs and rafters (IfcMember), footings (IfcFooting),
 piles (IfcPile), coverings such as flooring, ceilings, cladding, roofing and insulation (IfcCovering), railings (IfcRailing), chimneys
 (IfcChimney), shading devices (IfcShadingDevice), sanitary terminals (IfcSanitaryTerminal), furniture (IfcFurniture,
-IfcFurnishingElement in IFC2X3) and straight stairs (IfcStair). The class and its PredefinedType are checked against the model's schema
+IfcFurnishingElement in IFC2X3), straight stairs (IfcStair) and curtain walls (IfcCurtainWall). The class and its PredefinedType are
+checked against the model's schema
 as in the other tools. The body is an extruded profile: a rectangle, a circle or an outline in the storey's plane, standing up from a
 height above the storey (columns, footings, coverings, furniture) or lying in a direction (beams, members and railings). The element
 lies in the storey, or is a part of a whole (`part_of`), such as a railing of a stair, and then lies in the whole and on its storey but
@@ -612,6 +613,22 @@ a part of the element (IfcRelAggregates) or lies in the space; only in IFC2X3 do
 IfcRelCoversSpaces. A straight stair (STRAIGHT_RUN_STAIR) is a sloped flight (IfcStairFlight, STRAIGHT) with the number of risers,
 the riser height, the tread length and the width as attributes and in Pset_StairFlightCommon, and on request a landing (IfcSlab,
 LANDING) at the top; the last riser is the front edge of the landing or of the floor above.
+
+A curtain wall (IfcCurtainWall), a glass façade, runs along its axis as a wall does, from a start to an end in the storey's plane, with
+its height from a base above the storey. The axis is its representation, but it has no body of its own: it is made of its parts, which
+lie in it (IfcRelAggregates) and are placed relative to it on an even grid of bays along the axis and rows up, given as counts or as
+the most a bay or a row measures in metres (with neither, at most 1.5 m). The mullions stand on the bays' lines from the base to the
+top, the outer ones flush with the ends; the transoms lie between the mullions on the rows' lines, the lowest on the base and the
+highest under the top; and a glass panel (IfcPlate CURTAIN_PANEL) fills each field in the middle of the members' depth. Mullions and
+transoms are both IfcMember MULLION: IFC's MULLION is any member between the panels, and IFC has no value of its own for transoms. The
+parts are named by the curtain wall, their kind and their place, such as Facade Mullion 1, Facade Transom 1.1 and Facade Panel 1.1 (bay
+and row). A curtain wall type from `define_type` (IfcCurtainWallType) gives the parts types of its name: an IfcPlateType CURTAIN_PANEL
+with the glass as a material layer, and an IfcMemberType MULLION with the frame's material, such as aluminium or steel, and the
+members' width and depth as its material profile (only the material in IFC2X3), so that the parts take their kind, material and sizes
+from their types. Without a type the mullions and transoms are 0.05 × 0.15 m of aluminium and the panels 0.03 m of glass, with the
+PredefinedType on the parts themselves; IFC2X3 has no PredefinedType on IfcPlate and IfcMember, and the report says so. The topology
+reads a curtain wall as a wall, so that it can close a storey together with the walls; it gets IsExternal from the topology in
+Pset_CurtainWallCommon and base quantities in Qto_CurtainWallQuantities (length, height, depth and the area of its side).
 
 `define_type` also makes types for coverings (with layers, as a slab type), columns, beams, footings, railings, doors and windows
 (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType and IfcWindowType; IfcDoorStyle and
