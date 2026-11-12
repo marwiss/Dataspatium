@@ -13,7 +13,7 @@
 
   test('i18n: seven languages with identical key sets, no empty texts and matching placeholders', async (assert) => {
     assert.deepEqual(i18n.LANGUAGES.map((l) => l.code), CODES);
-    // Only Swedish and the chosen language load at the start (2.0); the others are fetched on demand.
+    // Only the active language loads at the start (tests/i18n-start.test.js); the others are fetched on demand.
     for (const code of CODES) assert.equal(await i18n.loadLanguage(code), true, 'dictionary loaded: ' + code);
     const svKeys = i18n.keys('sv');
     assert.ok(svKeys.length > 1200, 'Swedish dictionary has ' + svKeys.length + ' keys');
