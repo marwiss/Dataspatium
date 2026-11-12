@@ -86,6 +86,47 @@ Net líkansins á þjóninum er teiknað og spurt úr *Sækja*, og hnappurinn *I
 
 Líkan grafsins, venslin og fyrirspurnirnar frá hlið Dataspatium eru í [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/is/ifc-lpg.md) hjá Dataregium.
 
+### Svið málsins og líkanskráin
+
+*Nýtt mál* tekur þau svið sem sænsk rýnivenja biður um, öll úr eigin listum verkefnisins: tegund og stöðu (alltaf stillt), forgang,
+merki, ábyrgðaraðila, úthlutun, áfanga og skilafrest. BCF hefur ekkert sérstakt svið fyrir ábyrgðaraðila, svo honum er bætt við sem
+merki. Skyndimyndin er í mesta lagi 1.500 dílar á lengstu hliðinni, eins og BCF segir. Þegar þjónninn leyfir tengir forritið málið
+við líkanskrána (`PUT /topics/{guid}/files` í BCF API): með eigin færslu verkefnisins fyrir útgáfuna sem líkanið var sótt úr, og
+annars með nafni skrárinnar, tímastimpli og IfcProject úr haus IFC-skrárinnar.
+
+### BCF-skrár
+
+Forritið skrifar BCF-skrár sem BCF-XML 3.0, snið buildingSMART fyrir mál:
+
+- Hvert mál hefur tegund og stöðu, titil, dagsetningu og höfund. Án tegundar eða stöðu verða þau Issue og Open. Höfundurinn er
+  aðgangurinn þinn á þjóninum þegar þú ert innskráð(ur), annars nafnið sem þú hefur gefið fyrir athugasemdir (*Nafn þitt*), annars
+  Dataspatium; forritið býr aldrei til nafn.
+- Athugasemdir og viewpoints eru inni í málinu, og merki, tenglar, skjalatilvísanir og tengd mál eru í sínum listum. Skráin hefur
+  `extensions.xml` með þeim tegundum, stöðum, forgangsstigum, merkjum, úthlutunum og áföngum sem hún notar.
+- Haus hvers máls nefnir líkanskrána: nafnið úr haus IFC-skrárinnar, tímastimpil skrárinnar og GlobalId IfcProject, og vistfangið
+  fyrir líkan af þjóni.
+- Skyndimyndir eru í mesta lagi 1.500 dílar á lengstu hliðinni; stærri mynd er teiknuð aftur í þeirri stærð.
+- Skjöl, eins og ljósmyndir gervigreindarprófunarinnar, eru í möppunni Documents og skráð í `documents.xml`.
+
+Forritið les BCF 3.0 og 2.1 úr öðrum forritum og eigin eldri skrár. Athugasemdir, viewpoints með myndavél og sniði, skyndimyndir,
+valdir, faldir og litaðir íhlutir og skjöl fylgja með. Lestu BCF-skrá inn í Sækja: málin verða tafla með athugasemdum og íhlutum í
+töflum við hliðina, og skráin er vistuð með málunum svo að myndirnar og sýnirnar haldist.
+
+### Rýni samkvæmt sænskri venju
+
+Í sænskri venju við rýni líkana með BCF hefur mál eina af sex stöðum. Forritið þekkir þær í eigin stöðulista verkefnisins og gefur
+þeim sömu liti og öðrum stöðum:
+
+- *Ny kommentar* (ný athugasemd) telst opin, eins og Open.
+- *Ska åtgärdas* (á að laga) og *Ny granskning* (ný rýni) teljast í vinnslu, eins og In progress: málið á að laga, eða það er tekið upp
+  í næstu rýni.
+- *Har åtgärdats* (lagað), *Avvisad* (hafnað) og *Godkänd* (samþykkt) teljast lokið: lagað eins og Resolved, hin tvö eins og Closed.
+
+Stöðurnar eru aðeins notaðar þegar verkefnið á þjóninum hefur þær í lista sínum; forritið býður þær ekki fram sjálft. Dataregium-
+verkefni hefur Open, In progress, Resolved og Closed sjálfgefið, sem svara til þeirra eins og að ofan. Svið rýnimáls eru í *Nýtt mál*
+og undir *Fleiri valkostir* í gervigreindarprófuninni: titill, lýsing, staða, úthlutun, ábyrgðaraðili (sem merki), áfangi og
+skilafrestur, og rýnandinn er sá sem er innskráður.
+
 ## Töflurnar
 
 | Tafla | Innihald |
@@ -360,8 +401,8 @@ ljósmynd án sýnilegrar skemmdar gefur ekkert atriði. Ástand einingarinnar f
 ástand og stutt lýsing) í breytingasetti sem þú forskoðar og samþykkir eins og í *Breyta*, og engar einingar eru búnar til, færðar eða
 eyddar. Atriðin birtast undir svarinu, og *Vista atriðin sem töflu* býr til nýtt gagnasafn með einu atriði í hverri línu: ljósmynd,
 eining, titill, lýsing, ástand, forgangur, aðgerð, dagsetning og staðsetning myndarinnar. *Flytja út sem BCF* hleður niður BCF-skrá
-með einu máli á hvert atriði, þar sem ljósmyndin er skyndimynd sýnarinnar og einingin er merkt, og fyrir líkan sem var sótt af þjóni
-sem þú hefur skráð þig inn á stofnar *Stofna mál á þjóninum* sömu mál í verkefni líkansins eftir staðfestingu. Ljósmyndirnar eru
+með einu máli á hvert atriði, þar sem sýnin horfir á eininguna, merkta og litaða, með mynd af líkaninu sem skyndimynd og ljósmyndina sem skjal, og fyrir líkan sem var sótt af þjóni
+sem þú hefur skráð þig inn á stofnar *Stofna mál á þjóninum* sömu mál í verkefni líkansins eftir staðfestingu; þar verður ljósmyndin skjal í verkefninu, eða eigin viewpoint með ljósmyndinni einni þegar þú mátt ekki bæta við skjölum, og málin eru tengd líkanskránni þegar þjónninn leyfir það. Undir *Fleiri valkostir* gefur þú málunum stöðu, úthlutun, ábyrgðaraðila, áfanga og skilafrest, á þjóni úr listum verkefnisins. Ljósmyndirnar eru
 sendar þjónustuveitandanum með spurningunni eftir samþykki fyrir hýsil veitandans, og þær fara aftur af tölvunni aðeins þegar þú
 stofnar mál á þjóninum.
 

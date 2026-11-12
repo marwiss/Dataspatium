@@ -91,6 +91,50 @@ Mallin verkko palvelimella piirretään ja siihen kysytään kohdasta *Nouda*, j
 
 Graafin malli, suhteet ja kyselyt Dataspatiumin puolelta ovat Dataregiumin tiedostossa [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/fi/ifc-lpg.md).
 
+### Asian kentät ja mallitiedosto
+
+*Uusi asia* ottaa kentät, joita ruotsalainen tarkastuskäytäntö edellyttää, kaikki projektin omista luetteloista: tyyppi ja tila (aina
+asetettu), prioriteetti, nimike, vastuuosapuoli, osoitettu, vaihe ja määräaika. BCF:ssä ei ole omaa kenttää vastuuosapuolelle, joten
+se lisätään nimikkeenä. Tilannekuva on enintään 1 500 pikseliä pisimmältä sivultaan, kuten BCF määrää. Kun palvelin sallii, sovellus
+liittää asian mallitiedostoon (BCF API:n `PUT /topics/{guid}/files`): projektin omalla merkinnällä siitä versiosta, josta malli
+haettiin, ja muuten tiedoston nimellä, aikaleimalla ja IfcProjectilla IFC-tiedoston otsakkeesta.
+
+### BCF-tiedostot
+
+Sovellus kirjoittaa BCF-tiedostot BCF-XML 3.0 -muodossa, joka on buildingSMARTin asioiden muoto:
+
+- Jokaisella asialla on tyyppi ja tila, otsikko, päivämäärä ja tekijä. Ilman tyyppiä tai tilaa niistä tulee Issue ja Open. Tekijä on
+  tilisi palvelimella, kun olet kirjautunut, muuten nimi, jonka olet antanut kommentteja varten (*Nimesi*), muuten Dataspatium;
+  sovellus ei koskaan keksi nimeä.
+- Kommentit ja viewpointit ovat asian sisällä, ja nimikkeet, linkit, asiakirjaviittaukset ja liittyvät asiat ovat omissa
+  luetteloissaan. Tiedostossa on `extensions.xml`, jossa ovat sen käyttämät tyypit, tilat, prioriteetit, nimikkeet, osoitetut ja
+  vaiheet.
+- Kunkin asian otsake nimeää mallitiedoston: nimen IFC-tiedoston otsakkeesta, tiedoston aikaleiman ja IfcProjectin GlobalId:n sekä
+  palvelimelta haetun mallin osoitteen.
+- Tilannekuvat ovat enintään 1 500 pikseliä pisimmältä sivultaan; suurempi kuva piirretään uudelleen siihen kokoon.
+- Asiakirjat, kuten tekoälytarkistuksen valokuvat, ovat kansiossa Documents ja luettelossa `documents.xml`.
+
+Sovellus lukee BCF 3.0:n ja 2.1:n muista ohjelmista sekä omat aiemmat tiedostonsa. Kommentit, viewpointit kameroineen ja
+leikkauksineen, tilannekuvat, valitut, piilotetut ja värjätyt komponentit sekä asiakirjat tulevat mukaan. Lue BCF-tiedosto kohdassa
+Nouda: asioista tulee taulukko, jonka viereen kommentit ja komponentit tulevat omiin taulukoihinsa, ja tiedosto tallennetaan asioiden
+kanssa, joten kuvat ja näkymät säilyvät.
+
+### Tarkastus ruotsalaisen käytännön mukaan
+
+Ruotsalaisessa käytännössä, jossa malleja tarkastetaan BCF:llä, asialla on yksi kuudesta tilasta. Sovellus tunnistaa ne projektin
+omasta tilaluettelosta ja antaa niille samat värit kuin muille tiloille:
+
+- *Ny kommentar* (uusi kommentti) on avoin, kuten Open.
+- *Ska åtgärdas* (korjattava) ja *Ny granskning* (uusi tarkastus) ovat käynnissä, kuten In progress: asia korjataan tai otetaan esiin
+  seuraavassa tarkastuksessa.
+- *Har åtgärdats* (korjattu), *Avvisad* (hylätty) ja *Godkänd* (hyväksytty) ovat valmiita: korjattu kuten Resolved, kaksi muuta kuten
+  Closed.
+
+Tiloja käytetään vain, kun palvelimen projektin luettelossa on ne; sovellus ei itse tarjoa niitä. Dataregium-projektissa on oletuksena
+Open, In progress, Resolved ja Closed, jotka vastaavat niitä edellä kuvatulla tavalla. Tarkastusasian kentät ovat kohdassa *Uusi asia*
+ja tekoälytarkistuksen kohdassa *Lisää asetuksia*: otsikko, kuvaus, tila, osoitettu, vastuuosapuoli (nimikkeenä), vaihe ja määräaika,
+ja tarkastaja on kirjautunut henkilö.
+
 ## Taulukot
 
 | Taulukko | Sisältö |
@@ -375,8 +419,8 @@ suositeltu toimenpide; valokuva, jossa ei näy vauriota, ei tuota löydöstä. E
 (arviointipäivä, kunto ja lyhyt kuvaus) muutosjoukossa, jonka esikatselet ja hyväksyt kuten *Muuta*-tilassa, eikä elementtejä luoda,
 siirretä tai poisteta. Löydökset luetellaan vastauksen alla, ja *Tallenna löydökset taulukkona* luo uuden aineiston, jossa on yksi
 löydös riviä kohti: valokuva, elementti, otsikko, kuvaus, kunto, prioriteetti, toimenpide, päivämäärä ja kuvan sijainti. *Vie
-BCF-muodossa* lataa BCF-tiedoston, jossa on yksi asia löydöstä kohti, valokuva näkymän tilannekuvana ja elementti merkittynä, ja kun
-malli on haettu palvelimelta, jolle olet kirjautunut, *Luo asiat palvelimelle* luo samat asiat mallin projektiin vahvistuksen jälkeen.
+BCF-muodossa* lataa BCF-tiedoston, jossa on yksi asia löydöstä kohti, näkymä elementtiin merkittynä ja värjättynä, mallin kuva tilannekuvana ja valokuva asiakirjana, ja kun
+malli on haettu palvelimelta, jolle olet kirjautunut, *Luo asiat palvelimelle* luo samat asiat mallin projektiin vahvistuksen jälkeen; siellä valokuvasta tulee projektin asiakirja, tai oma viewpoint pelkällä valokuvalla, jos et saa lisätä asiakirjoja, ja asiat liitetään mallitiedostoon, kun palvelin sallii sen. Kohdassa *Lisää asetuksia* annat asioille tilan, osoitetun henkilön, vastuuosapuolen, vaiheen ja määräajan, palvelimella projektin luetteloista.
 Valokuvat lähetetään toimittajalle kysymyksen mukana toimittajan isännän suostumuksen jälkeen, ja ne lähtevät tietokoneelta uudelleen
 vain, kun itse luot asiat palvelimelle.
 

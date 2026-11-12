@@ -47,6 +47,7 @@ licence. Each library, its version and licence are listed in
 | Cytoscape 3.34 with fcose, dagre and expand-collapse, sigma 3 and graphology (graphs) | MIT | Free to use and distribute with the licence text and notices |
 | neo4j-driver-lite 6.3 (Neo4j over Bolt) | Apache-2.0 | Free to use and distribute with the licence text and notices |
 | web-ifc 0.0.78 (geometry from IFC; unchanged files, source at https://github.com/ThatOpen/engine_web-ifc) | MPL-2.0 | Free to use and distribute; changes to the library's own files are shared under the same licence |
+| buildingSMART's schemas for BCF-XML 3.0 and 2.1 (XSD; only in the tests under `tests/fixtures/bcf-schemas/`, not in the folder) | CC BY-ND 4.0, © buildingSMART International Ltd. | Copied unchanged with source and licence, and used only to test the app's BCF files; the app itself does not use them. Changed schemas may not be shared |
 | three.js 0.187 (3D drawing), dxf-parser 1.1 (DXF) | MIT | Free to use and distribute with the licence text and notices |
 | Boverket's Planbestämmelsekatalog (embedded copy, `presets/plan/`) | Open data from Boverket | Free to use and distribute; Boverket and Planbestämmelsekatalogen must be named as the source |
 | Boverket's climate database (fetched on demand from api.boverket.se, not in the folder) | Open data under Boverket's terms of use (dnr 5913/2024, based on the Swedish API licence) | Free to use; Boverket and the climate database are to be named as the source, the trademark only in the source reference, and the data are used at your own risk |

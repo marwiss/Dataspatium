@@ -87,6 +87,46 @@ Modellens graf på servern ritas och frågas från *Inhämta*, och knappen *IFC-
 
 Grafens modell, relationerna och frågorna från Dataspatiums sida finns i Dataregiums [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/sv/ifc-lpg.md).
 
+### Ärendets fält och modellfilen
+
+*Nytt ärende* tar de fält som svensk granskningspraxis frågar efter, alla ur projektets egna listor: typ och status (alltid satta),
+prioritet, etikett, ansvarig part, tilldelad, skede och förfallodatum. BCF har inget eget fält för ansvarig part, så den läggs till
+som en etikett. Ögonblicksbilden är högst 1 500 bildpunkter på längsta sidan, som BCF anger. När servern låter dig knyter appen
+ärendet till modellfilen (BCF API:s `PUT /topics/{guid}/files`): med projektets egen post för den version som modellen hämtades
+från, och annars med filens namn, tidsstämpel och IfcProject ur IFC-filens rubrik.
+
+### BCF-filer
+
+Appen skriver BCF-filer enligt BCF-XML 3.0, buildingSMART:s format för ärenden:
+
+- Varje ärende har typ och status, rubrik, datum och författare. Utan typ eller status blir de Issue och Open. Författaren är ditt
+  konto på servern när du är inloggad, annars namnet du har angett för kommentarer (*Ditt namn*), annars Dataspatium; appen hittar
+  aldrig på ett namn.
+- Kommentarer och viewpoints ligger i ärendet, och etiketter, länkar, dokumentreferenser och relaterade ärenden i sina listor. Filen
+  har `extensions.xml` med de typer, statusar, prioriteter, etiketter, tilldelade och skeden som den använder.
+- Varje ärendes rubrik nämner modellfilen: namnet ur IFC-filens rubrik, filens tidsstämpel och IfcProjects GlobalId, och adressen för
+  en modell från en server.
+- Ögonblicksbilder är högst 1 500 bildpunkter på längsta sidan; en större bild ritas om i den storleken.
+- Dokument, som AI-kontrollens foton, ligger i mappen Documents och står i `documents.xml`.
+
+Appen läser BCF 3.0 och 2.1 från andra program och sina egna tidigare filer. Kommentarer, viewpoints med kamera och snitt,
+ögonblicksbilder, markerade, dolda och färgade komponenter och dokument följer med. Läs in en BCF-fil i Inhämta: ärendena blir en
+tabell med kommentarer och komponenter i tabeller bredvid, och filen sparas med ärendena så att bilderna och vyerna finns kvar.
+
+### Granskning enligt svensk praxis
+
+I svensk praxis för granskning av modeller med BCF har ett ärende en av sex statusar. Appen känner igen dem i projektets egen
+statuslista och ger dem samma färger som andra statusar:
+
+- *Ny kommentar* räknas som öppen, som Open.
+- *Ska åtgärdas* och *Ny granskning* räknas som pågående, som In progress: ärendet ska åtgärdas, eller tas upp i nästa granskning.
+- *Har åtgärdats*, *Avvisad* och *Godkänd* räknas som klara: Har åtgärdats som Resolved, de andra två som Closed.
+
+Statusarna används bara när projektet på servern har dem i sin lista; appen föreslår dem inte själv. Ett projekt i Dataregium har
+som förval Open, In progress, Resolved och Closed, som motsvarar dem som ovan. Fälten för ett granskningsärende finns i *Nytt
+ärende* och under *Fler alternativ* i AI-kontrollen: rubrik, beskrivning, status, tilldelad, ansvarig part (som etikett), skede och
+förfallodatum, och granskaren är den som är inloggad.
+
 ## Tabellerna
 
 | Tabell | Innehåll |
@@ -358,9 +398,8 @@ dåligt eller kritiskt), prioritet (låg, medel, hög eller akut) och föreslage
 Elementets skick hamnar i egenskapsmängden Pset_Condition (bedömningsdatum, skick och en kort beskrivning) i ett ändringsset som du
 förhandsvisar och godkänner som i *Ändra*, och inga element skapas, flyttas eller tas bort. Fynden listas under svaret, och *Spara
 fynden som tabell* gör en ny datamängd med ett fynd per rad: foto, element, titel, beskrivning, skick, prioritet, åtgärd, datum och
-fotots position. *Exportera som BCF* laddar ned en BCF-fil med ett ärende per fynd, där fotot är vyns ögonblicksbild och elementet är
-markerat, och för en modell hämtad från en server du är inloggad på skapar *Skapa ärenden på servern* samma ärenden i modellens
-projekt efter en bekräftelse. Fotona skickas till leverantören tillsammans med frågan efter samtycket för leverantörens värd, och de
+fotots position. *Exportera som BCF* laddar ned en BCF-fil med ett ärende per fynd, där vyn tittar på elementet, markerat och färgat, med en bild av modellen som ögonblicksbild och fotot som dokument, och för en modell hämtad från en server du är inloggad på skapar *Skapa ärenden på servern* samma ärenden i modellens
+projekt efter en bekräftelse; där blir fotot ett dokument i projektet, eller en egen viewpoint med bara fotot när du inte får lägga till dokument, och ärendena knyts till modellfilen när servern tillåter det. Under *Fler alternativ* ger du ärendena status, tilldelad, ansvarig part, skede och förfallodatum, på en server ur projektets listor. Fotona skickas till leverantören tillsammans med frågan efter samtycket för leverantörens värd, och de
 lämnar datorn igen bara när du själv skapar ärenden på servern.
 
 ## Fråga AI om modellen

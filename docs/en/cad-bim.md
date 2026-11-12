@@ -90,6 +90,47 @@ The model's graph on the server is drawn and queried from *Import*, and the butt
 
 The graph's model, relations and the queries from Dataspatium's side are in Dataregium's [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/en/ifc-lpg.md).
 
+### Issue fields and the model file
+
+*New issue* takes the fields that Swedish review practice asks for, all from the project's own lists: type and status (always set),
+priority, label, responsible party, assignee, stage and due date. BCF has no field of its own for the responsible party, so it is
+added as a label. The snapshot is at most 1,500 pixels on its longest side, as BCF says. When the server lets you, the app ties the
+issue to the model file (the BCF API's `PUT /topics/{guid}/files`): with the project's own entry for the version the model was
+fetched from, and otherwise with the file's name, time stamp and IfcProject from the IFC file's header.
+
+### BCF files
+
+The app writes BCF files as BCF-XML 3.0, buildingSMART's format for issues:
+
+- Every issue has a type and a status, a title, a date and an author. Without a type or status they become Issue and Open. The author
+  is your account on the server when you are signed in, otherwise the name you have entered for comments (*Your name*), otherwise
+  Dataspatium; the app never makes up a name.
+- Comments and viewpoints are inside the issue, and labels, links, document references and related issues are in their lists. The
+  file has `extensions.xml` with the types, statuses, priorities, labels, assignees and stages it uses.
+- The header of each issue names the model file: the name from the IFC file's header, the file's time stamp and the IfcProject's
+  GlobalId, and the address for a model from a server.
+- Snapshots are at most 1,500 pixels on the longest side; a larger picture is drawn again at that size.
+- Documents, such as the AI check's photos, are in the folder Documents and listed in `documents.xml`.
+
+The app reads BCF 3.0 and 2.1 from other programs, and its own earlier files. Comments, viewpoints with camera and section,
+snapshots, selected, hidden and coloured components, and documents come along. Read a BCF file in Import: the issues become a table
+with comments and components in tables beside it, and the file is kept with the issues so that the pictures and views stay.
+
+### Review in Swedish practice
+
+In Swedish practice for reviewing models with BCF an issue has one of six statuses. The app recognises them in the project's own
+list of statuses and gives them the same colours as other statuses:
+
+- *Ny kommentar* (new comment) counts as open, like Open.
+- *Ska åtgärdas* (to be fixed) and *Ny granskning* (new review) count as in progress, like In progress: the issue is to be fixed, or
+  is taken up in the next review.
+- *Har åtgärdats* (fixed), *Avvisad* (rejected) and *Godkänd* (approved) count as done: fixed like Resolved, the other two like Closed.
+
+The statuses are used only when the project on the server has them in its list; the app does not offer them itself. A Dataregium
+project has Open, In progress, Resolved and Closed by default, which correspond to them as above. The fields of a review issue are
+in *New issue* and under *More options* in the AI check: title, description, status, assignee, responsible party (as a label), stage
+and due date, and the reviewer is the person signed in.
+
 ## The tables
 
 | Table | Contents |
@@ -373,8 +414,8 @@ photo without visible damage gives no finding. The element's condition goes into
 condition and a short description) in a change set that you preview and approve as in *Change*, and no elements are created, moved or
 deleted. The findings are listed under the answer, and *Save the findings as a table* makes a new dataset with one finding per row:
 photo, element, title, description, condition, priority, action, date and the photo's position. *Export as BCF* downloads a BCF file
-with one issue per finding, with the photo as the viewpoint's snapshot and the element marked, and for a model fetched from a server
-you are signed in to, *Create issues on the server* creates the same issues in the model's project after a confirmation. The photos go
+with one issue per finding, with a viewpoint on the element, marked and coloured, a picture of the model as its snapshot and the photo as a document, and for a model fetched from a server
+you are signed in to, *Create issues on the server* creates the same issues in the model's project after a confirmation; there the photo becomes a document of the project, or a viewpoint of its own with only the photo when you may not add documents, and the issues are tied to the model file when the server allows it. Under *More options* you give the issues a status, an assignee, a responsible party, a stage and a due date, on a server from the project's lists. The photos go
 to the provider with the question after the consent for the provider's host, and they leave the computer again only when you create
 issues on the server yourself.
 
