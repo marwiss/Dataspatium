@@ -756,9 +756,10 @@
       // The header's FILE_NAME: name, time stamp, (author), (organisation), preprocessor, originating system, authorisation.
       var h = f.header; var fn = h.search(/FILE_NAME\s*\(/);
       if (fn >= 0) {
-        var open = h.indexOf('(', fn);
-        var fa = argsOf({ b: f.b, starts: [open], ends: [h.length] }, 0);
-        out.header = strs(fa[2]).concat(strs(fa[3]), strs(fa[6])).filter(function (s) { return !PLACEHOLDER.test(s); });
+        try {
+          var fa = argsOf({ b: f.b, starts: [h.indexOf('(', fn)], ends: [h.length] }, 0);
+          out.header = strs(fa[2]).concat(strs(fa[3]), strs(fa[6])).filter(function (s) { return !PLACEHOLDER.test(s); });
+        } catch (_e) { out.header = []; }
       }
       return out;
     }
