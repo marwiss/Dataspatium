@@ -12,7 +12,9 @@
  * *Fler alternativ* the person may give the topics a status, an assignee, a responsible party (a label), a stage and a due date, from the
  * project's own lists on a server. A topic on a server is tied to the model's file when the server allows it. A finding that fails is
  * skipped and reported, and the next press sends what is left. A server's own priorities and topic types are matched by their words, and
- * left out when none fits, since the server checks them.
+ * left out when none fits, since the server checks them. The table carries the photos as its own files (without EXIF), the element's IFC
+ * class, storey and building part (the six layers, docgen/findings.layerOf) and the building's facts, so that *Gör rapport* and *Gör
+ * underhållsplan* (which save the table first when it is not saved) open the document generator with the templates for findings.
  */
 (function () {
   'use strict';
@@ -48,10 +50,13 @@
         const labels = (prefix, codes) => ({ values: 'codes', labels: codes.map((c) => [c, word(prefix, c)]) });
         return [{ name: 'foto', type: 'text' }, { name: 'element_id', type: 'integer' }, { name: 'element_guid', type: 'text' }, { name: 'titel', type: 'text' }, { name: 'beskrivning', type: 'text' },
           { name: 'skick', type: 'text', valueLabels: labels('ai.check.condition', checkTools.CONDITIONS) }, { name: 'prioritet', type: 'text', valueLabels: labels('ai.check.priority', checkTools.PRIORITIES) },
-          { name: 'atgard', type: 'text' }, { name: 'datum', type: 'date' }, { name: 'lat', type: 'number' }, { name: 'lon', type: 'number' }];
+          { name: 'atgard', type: 'text' }, { name: 'datum', type: 'date' }, { name: 'lat', type: 'number' }, { name: 'lon', type: 'number' },
+          { name: 'ifc_klass', type: 'text' }, { name: 'element_namn', type: 'text' }, { name: 'vaning', type: 'text' },
+          { name: 'byggdel', type: 'integer', valueLabels: { values: 'codes', labels: [1, 2, 3, 4, 5, 6].map((n) => [n, t('climate.layer.' + n)]) } }];
       }
-      /** One finding as a row, in the order of the columns. @param {any} f */
-      const rowOf = (f) => [f.photoName, f.elementId, f.elementGuid, f.title, f.description, f.condition, f.priority, f.action, f.date, f.lat, f.lon];
+      /** One finding as a row, in the order of the columns; `layer` is its building part, 1–6 or null. @param {any} f @param {number|null} [layer] */
+      const rowOf = (f, layer = null) => [f.photoName, f.elementId, f.elementGuid, f.title, f.description, f.condition, f.priority, f.action, f.date, f.lat, f.lon,
+        f.elementClass || null, f.elementName || null, f.storey || null, layer];
       /** A word of a server's own list that names a level, or nothing. */
       const priorityOn = (level, allowed) => (Array.isArray(allowed) ? allowed.find((x) => PRIORITY_WORDS[level].test(String(x))) || null : null);
       function typeOn(allowed) {
@@ -148,7 +153,20 @@
         const topicOf = (f, now, fields, author) => Object.assign({ guid: bcfXml.newGuid(), title: f.title.slice(0, 255), description: descriptionOf(f), priority: BCF_PRIORITY[f.priority], topic_type: FILE_TYPE, topic_status: FILE_STATUS, creation_date: now, creation_author: author }, fields);
         const photoText = (f) => t('ai.check.photo.document', { name: f.photoName || '' });
 
-        /** The findings as a new table dataset, one finding per row (the person's action). */
+        /** The photos of the findings as the table's own files, once per name, without what their files say about place and time. */
+        function photoFiles(found) {
+          const out = new Map();
+          for (const f of found) {
+            if (!f.photoName || out.has(f.photoName) || !f.picture || !/^image\/(jpeg|png)$/.test(f.picture.mediaType)) continue;
+            const bytes = bytesOf(f.picture.data);
+            out.set(f.photoName, { name: f.photoName, kind: 'original', type: f.picture.mediaType, bytes: f.picture.mediaType === 'image/jpeg' ? exif.strip(bytes) : bytes });
+          }
+          return Array.from(out.values());
+        }
+        /**
+         * The findings as a new table dataset, one finding per row (the person's action), with the element's building part read from the
+         * model (its class, IsExternal and LoadBearing), the photos as the table's files and the building's facts in its source.
+         */
         async function save() {
           const found = list();
           if (!found.length || blocked()) return null;
@@ -157,12 +175,31 @@
           try {
             const meta = await datasets.get(options.datasetId);
             const name = meta ? meta.name : '';
-            made = await datasets.create({ name: t('ai.check.table.name', { name }), description: t('ai.check.table.description', { name, date: checkTools.today() }), columns: columns(), rows: found.map(rowOf), source: { kind: 'derived', from: options.datasetId, tool: 'ai-check' } });
-            s.saved = { id: made.id, name: made.name };
+            const findings = D.require('docgen/findings');
+            const props = await findings.elementProps(options.datasetId, found.map((f) => f.elementId));
+            const rows = found.map((f) => rowOf(f, findings.layerOf(f.elementClass, props.get(Number(f.elementId)) || {})));
+            const building = await findings.buildingFacts(options.datasetId);
+            made = await D.require('data/dataset-files').createDataset({ name: t('ai.check.table.name', { name }), kind: 'table', description: t('ai.check.table.description', { name, date: checkTools.today() }), columns: columns(), rows, files: photoFiles(found),
+              source: Object.assign({ kind: 'derived', from: options.datasetId, tool: 'ai-check' }, building ? { building } : {}) });
+            s.saved = { id: made.id, name: made.name, count: found.length };
             done(t('ai.check.table.saved', { name: made.name }));
           } catch (err) { options.fail(err); made = null; }
           s.busy = ''; options.render();
           return made;
+        }
+        /**
+         * Gör rapport and Gör underhållsplan: the findings as a table (saved first unless they are saved already, unchanged), opened in the
+         * document generator in Exportera with the template for findings (docgen/findings).
+         * @param {'report'|'plan'} which @returns {Promise<string|null>} the table's id
+         */
+        async function report(which) {
+          if (blocked()) return null;
+          const kept = s.saved && s.saved.count === list().length && (await datasets.get(s.saved.id).catch(() => null)) ? s.saved : null;
+          const saved = kept || (await save());
+          if (!saved) return null;
+          const findings = D.require('docgen/findings');
+          D.require('ui/docs/document-panel').open(_ctx, saved.id, which === 'plan' ? findings.PLAN : findings.REPORT);
+          return saved.id;
         }
         /**
          * The findings as a BCF 3.0 file, one topic per finding, offered as a download (the person's action): the model's file in the
@@ -336,11 +373,14 @@
               basic.button({ label: t('ai.check.save'), icon: 'table', size: 'sm', loading: s.busy === 'table', disabled: off, title: t('ai.check.save.hint'), 'data-ai-check-save': '', onClick: () => save() }),
               basic.button({ label: t('ai.check.bcf'), icon: 'download', size: 'sm', loading: s.busy === 'bcf', disabled: off, title: t('ai.check.bcf.hint'), 'data-ai-check-bcf': '', onClick: () => exportBcf() }),
               s.server ? basic.button({ label: t('ai.check.server'), icon: 'message-square', size: 'sm', loading: s.busy === 'server', disabled: off || !found.some((f) => !f.issued), title: t('ai.check.server.hint'), 'data-ai-check-server': '', onClick: () => createIssues() }) : null),
+            h('div', { class: 'dm-row-wrap' },
+              basic.button({ label: t('ai.check.report'), icon: 'file-text', size: 'sm', disabled: off, title: t('ai.check.report.hint'), 'data-ai-check-report': '', onClick: () => report('report') }),
+              basic.button({ label: t('ai.check.plan'), icon: 'list-ordered', size: 'sm', disabled: off, title: t('ai.check.plan.hint'), 'data-ai-check-plan': '', onClick: () => report('plan') })),
             s.saved ? h('p', { class: 'dm-help dm-xs', 'data-ai-check-saved': s.saved.id, text: t('ai.check.table.saved', { name: s.saved.name }) }) : null,
             s.sent && s.sent.made ? h('p', { class: 'dm-help dm-xs', 'data-ai-check-sent': String(s.sent.made), text: t('ai.check.server.done', { n: i18n.formatNumber(s.sent.made), project: s.sent.project }) }) : null,
             s.failed.length ? h('p', { class: 'dm-error dm-small', 'data-ai-check-failed': String(s.failed.length), text: failedText() }) : null);
         }
-        return { state: s, load, view, save, exportBcf, createIssues, viewOf, descriptionOf, loadLists };
+        return { state: s, load, view, save, report, exportBcf, createIssues, viewOf, descriptionOf, loadLists };
       }
       return { create, columns, rowOf, BCF_PRIORITY };
     });
