@@ -411,6 +411,24 @@ hjørner i andre vinkler enn rette kobles slik de er tegnet. Til slutt får de v
 endringssettet har laget eller endret, basismengder (Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities,
 Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) beregnet ut fra målene, med åpningene trukket fra og med navnene fra skjemaets maler.
 
+**Bærende, status og egenskaper.** `create_wall` og `create_slab` tar `load_bearing` (bærende eller ikke), og de og `create_roof` tar
+`status` (NEW ny, EXISTING eksisterende, DEMOLISH rives, TEMPORARY midlertidig), men bare når briefen eller du sier det: AI-en gjetter
+aldri, og en digital tvilling av en eksisterende bygning får EXISTING. Verdiene skrives som LoadBearing og Status i Pset_WallCommon,
+Pset_SlabCommon og Pset_RoofCommon, på typen når alle elementer av typen sier det samme, og ellers på elementet; IFC2X3 har ikke
+Status, og rapporten sier det. Når endringssettet kjøres, setter appen selv IsExternal ut fra topologien på veggene det har opprettet
+eller endret: sann langs etasjens ytre grense og usann inne i bygningen, og dørene og vinduene i veggene får veggens verdi. Tak og
+takplater er ytre. En etasje der veggene ikke slutter seg, får ingen IsExternal, og rapporten og AI-ens forhåndsvisning sier hvorfor;
+en verdi som modellen allerede hadde, beholdes. Det er med LoadBearing og IsExternal at klimaerklæringen skiller kategoriene fra
+hverandre.
+
+`set_properties` prøver et egenskapssett som heter Pset_… eller Qto_…, mot IfcOpenShells maler for modellens skjema: et sett eller en
+egenskap som malen mangler, avvises med de nærmeste navnene, sann og usann, mål og oppramsinger må ha riktig type, og et tall med
+enheten skrevet i verdien («40 dB») avvises. Oppgi bare tallet, lengder i meter, arealer i m², volumer i m³ og vinkler i grader, så
+skriver appen dem i filens enheter. Et sett som heter Qto_…, blir et mengdesett (IfcElementQuantity). Et eget egenskapssett må ikke
+begynne med Pset_ eller Qto_, og AI-en får rådet å kalle det land-opphav-prosjekt_Navn, for eksempel SE-ACME-42_Akustikk, med
+egenskapsnavn i PascalCase uten å, ä og ö. Egenskapene skrives i elementets eget sett, aldri i typens. `assign` tar materialets
+kategori (IfcMaterial.Category, de samme elleve som i `define_type`).
+
 *Forhåndsvis* kjører endringssettet på en kopi av modellen med IfcOpenShell i appens Python (komponentene hentes etter samtykke første
 gang), tegner resultatet i 3D med nytt grønt og endret gult, og viser hva som opprettes, endres og slettes samt skjemakontrollens funn.
 *Godkjenn* gjør endringene til oppskriftstrinnet *AI-endring*: modellen får en ny versjon i arbeidsområdet, tabellene bygges om, og
