@@ -350,6 +350,21 @@ upp að næstu hæð, flatarmálum (Qto_SpaceBaseQuantities) og mörkum að vegg
 fylla breytingasett sem spjaldið telur upp skref fyrir skref (mál í metrum; nýjar einingar fá tilvísanirnar new-1, new-2 … þar til
 skráin hefur gefið þeim auðkenni).
 
+Tólið `define_type` gerir veggjagerð, plötugerð eða þakgerð (IfcWallType, IfcSlabType eða IfcSlabType af gerðinni ROOF fyrir
+þakplöturnar) með efnislögum í metrum, fyrir vegg frá hægri hlið til vinstri séð frá upphafi að enda og fyrir plötu og þak ofan frá og
+niður. Hvert lag getur fengið flokk efnisins (þá sem IFC mælir með: concrete, steel, aluminium, block, brick, stone, wood, glass,
+gypsum, plastic og earth) og hlutverk lagsins (burðarlag, einangrun, innra eða ytra yfirborð), en aðeins þegar þau eru þekkt.
+`create_wall`, `create_slab` og `create_roof` taka gerðina: einingin fær gerðina (IfcRelDefinesByType), þykkt sína úr lögunum og lögin
+lögð á sig (IfcMaterialLayerSetUsage: lög veggjar miðjuð á línuna, lög plötu niður frá efra borði í hæð hæðarinnar og lög þakplatna
+upp frá neðra borði), og PredefinedType hennar er á gerðinni. Efni og sameiginlegir eiginleikar tilheyra gerðinni, og gervigreindin
+skilgreinir gerðirnar fyrst. Þegar breytingasettið er keyrt eru veggirnir sem það býr til tengdir veggjunum sem þeir mæta
+(IfcRelConnectsPathElements): í horni nær þykkari veggurinn (við sömu þykkt sá lengri) út fyrir hornið og hinn endar við hann, og veggur
+sem endar á línu annars endar við hlið hans, svo að hornin fá hvorki rifur né skörun og ekkert rúmmál er talið tvisvar. Miðlínur
+veggjanna haldast eins og þær voru teiknaðar, og veggir sem mætast í öðru en réttu horni eru tengdir eins og þeir eru teiknaðir. Að lokum fá
+veggir, plötur, þök, hurðir og gluggar sem breytingasettið bjó til eða breytti grunnmagn (Qto_WallBaseQuantities, Qto_SlabBaseQuantities,
+Qto_RoofBaseQuantities, Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) reiknað út frá málunum, með opin dregin frá og með nöfnunum
+úr sniðmátum skemans.
+
 *Forskoða* keyrir breytingasettið á afriti af líkaninu með IfcOpenShell í Python forritsins (íhlutirnir eru sóttir eftir samþykki í
 fyrsta sinn), teiknar niðurstöðuna í þrívídd með nýtt grænt og breytt gult og sýnir hvað er búið til, breytt og eytt ásamt niðurstöðum
 skemaathugunarinnar. *Samþykkja* gerir breytingarnar að uppskriftarskrefinu *Gervigreindarbreyting*: líkanið fær nýja útgáfu í

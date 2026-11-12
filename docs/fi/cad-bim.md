@@ -365,6 +365,21 @@ seuraavaan kerrokseen, pinta-alat (Qto_SpaceBaseQuantities) ja rajat seiniin sek
 mitään: ne täyttävät muutosjoukon, jonka paneeli luettelee vaihe vaiheelta (mitat metreinä; uudet elementit saavat viitteet new-1,
 new-2 …, kunnes tiedosto on antanut niille tunnisteet).
 
+Työkalu `define_type` tekee seinä-, laatta- tai kattotyypin (IfcWallType, IfcSlabType tai kattolaattojen IfcSlabType tyyppiä ROOF),
+jolla on materiaalikerrokset metreinä: seinällä oikealta puolelta vasemmalle alusta loppuun päin katsottuna, laatalla ja katolla
+ylhäältä alas. Kullekin kerrokselle voi antaa materiaalin luokan (IFC:n suosittelemat: concrete, steel, aluminium, block, brick, stone,
+wood, glass, gypsum, plastic ja earth) ja kerroksen tehtävän (kantava, eriste, sisä- tai ulkopinta), mutta vain kun ne tiedetään.
+`create_wall`, `create_slab` ja `create_roof` ottavat tyypin: elementti saa tyypin (IfcRelDefinesByType), paksuutensa kerroksista ja
+kerrokset sijoitettuina itseensä (IfcMaterialLayerSetUsage: seinän keskitettyinä linjalle, laatan alaspäin yläpinnasta kerroksen
+korolla ja kattolaattojen ylöspäin alapinnasta), ja sen PredefinedType on tyypissä. Materiaalit ja yhteiset ominaisuudet kuuluvat
+tyypille, ja tekoäly määrittää tyypit ensin. Kun muutosjoukko ajetaan, sen luomat seinät liitetään seiniin, jotka ne kohtaavat
+(IfcRelConnectsPathElements): nurkassa paksumpi seinä (yhtä paksuista pidempi) jatkuu nurkan yli ja toinen päättyy sitä vasten, ja
+toisen seinän linjalle päättyvä seinä päättyy sen kylkeen, joten nurkkiin ei jää rakoja eikä päällekkäisyyksiä eikä mitään tilavuutta
+lasketa kahdesti. Seinien keskilinjat pysyvät piirrettyinä, ja muussa kuin suorassa kulmassa kohtaavat seinät liitetään sellaisinaan.
+Lopuksi muutosjoukon luomat tai muuttamat seinät, laatat, katot, ovet ja ikkunat saavat perusmäärät (Qto_WallBaseQuantities,
+Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities ja Qto_WindowBaseQuantities) mitoista laskettuina, aukot
+vähennettyinä ja skeeman mallien nimillä.
+
 *Esikatsele* ajaa muutosjoukon mallin kopiolle IfcOpenShellillä sovelluksen Pythonissa (komponentit haetaan suostumuksen jälkeen
 ensimmäisellä kerralla), piirtää tuloksen 3D:nä uudet vihreinä ja muutetut keltaisina ja näyttää, mitä luodaan, muutetaan ja poistetaan,
 sekä skeematarkistuksen löydökset. *Hyväksy* tekee muutoksista reseptivaiheen *Tekoälymuutos*: malli saa uuden version työtilaan,

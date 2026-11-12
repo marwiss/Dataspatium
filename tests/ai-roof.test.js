@@ -40,7 +40,7 @@
     assert.ok(writeTools.has('create_roof') && writeTools.CREATES.includes('create_roof'), 'a write tool that creates');
     const tool = writeTools.TOOLS.find((x) => x.name === 'create_roof');
     assert.ok(tool && tool.parameters.type === 'object' && tool.description.includes('gable, hip, shed or flat'), 'the tool as the providers see it');
-    assert.deepEqual(Object.keys(tool.parameters.properties), ['storey', 'shape', 'outline', 'pitch', 'overhang', 'thickness', 'ridge', 'base', 'name']);
+    assert.deepEqual(Object.keys(tool.parameters.properties), ['storey', 'shape', 'outline', 'pitch', 'overhang', 'thickness', 'ridge', 'base', 'name', 'type'], 'type is a roof type of define_type (tests/ai-types.test.js)');
     assert.ok(agent.SYSTEM_BUILD.includes('create_roof') && agent.SYSTEM_BUILD.includes('mansardtak'), 'the build instructions make the roof with create_roof');
     const cs = writeTools.create('roof-test');
     const gable = roof(cs, { outline: BOX });

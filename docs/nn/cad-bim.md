@@ -354,6 +354,21 @@ sitt i topologien, med høgda opp til neste etasje, romareal (Qto_SpaceBaseQuant
 dei. Verktøya endrar ingenting: dei fyller eit endringssett som panelet listar steg for steg (mål i meter; nye element får referansane
 new-1, new-2 … til fila har gjeve dei id).
 
+Verktøyet `define_type` lagar ein veggtype, dekketype eller taktype (IfcWallType, IfcSlabType eller IfcSlabType av typen ROOF for
+takplatene) med materialsjikt i meter, for ein vegg frå høgre side til venstre sett frå start mot slutt og for dekke og tak ovanfrå og
+ned. Kvart sjikt kan få kategorien til materialet (dei IFC tilrår: concrete, steel, aluminium, block, brick, stone, wood, glass,
+gypsum, plastic og earth) og rolla til sjiktet (berande, isolasjon, indre eller ytre overflate), men berre når dei er kjende.
+`create_wall`, `create_slab` og `create_roof` tek typen: elementet får typen (IfcRelDefinesByType), tjukna si frå sjikta og sjikta lagde
+på seg (IfcMaterialLayerSetUsage: veggen sine sentrerte på linja, dekket sine nedover frå oversida i høgda til etasjen og takplatene
+sine oppover frå undersida), og PredefinedType står på typen. Material og felles eigenskapar høyrer til typen, og AI-en definerer typane
+først. Når endringssettet køyrer, vert veggane det lagar, kopla til veggane dei møter (IfcRelConnectsPathElements): i eit hjørne går den
+tjukkaste veggen (ved lik tjukn den lengste) forbi hjørnet og den andre sluttar mot han, og ein vegg som endar på linja til ein annan,
+sluttar mot sida hans, slik at hjørna verken får glipper eller overlapp og ikkje noko volum vert talt to gonger. Midtlinjene til
+veggane vert ikkje endra, og hjørne i andre vinklar enn rette vert kopla slik dei er teikna. Til slutt får dei veggane, dekka, taka,
+dørene og vindauga som endringssettet har laga eller endra, basismengder (Qto_WallBaseQuantities, Qto_SlabBaseQuantities,
+Qto_RoofBaseQuantities, Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) rekna ut frå måla, med opningane trekte frå og med namna
+frå malane til skjemaet.
+
 *Førehandsvis* køyrer endringssettet på ein kopi av modellen med IfcOpenShell i Python i appen (komponentane vert henta etter samtykke
 første gongen), teiknar resultatet i 3D med nytt grønt og endra gult, og viser kva som vert oppretta, endra og sletta saman med funna
 frå skjemakontrollen. *Godkjenn* gjer endringane til oppskriftssteget *AI-endring*: modellen får ein ny versjon i arbeidsområdet,
