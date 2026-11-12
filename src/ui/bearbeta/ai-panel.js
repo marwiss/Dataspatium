@@ -14,7 +14,7 @@
  * trial on the latest version and merges what does not collide, and the person decides each collision here (base, what came between,
  * the proposal) before the proposal goes again (OB-19 d). The
  * keys live in api/secrets; nothing is sent without the consent for the provider's host. The dialog `providers` adds, changes and
- * removes providers (Anthropic Messages, OpenAI-compatible, local servers). The mode Bygg ur brief (decision F43 a) builds a whole
+ * removes providers (Anthropic Messages, OpenAI-compatible, local servers). The mode Bygg från beskrivning (decision F43 a) builds a whole
  * building in an empty model from a brief, with photos and scanned drawings attached as pictures, the AI's questions answered in the
  * panel, and the same preview and approval as Ändra. The mode Kontrollera (decision F44 a) tries an existing building's model against
  * photos and a field form's measurements with the same attachments: the findings are listed under the answer (ui/bearbeta/ai-check)

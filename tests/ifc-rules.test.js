@@ -126,7 +126,7 @@
     assert.ok(['G01', 'G05', 'G06', 'G14'].every((id) => grund.text.includes(`identifier="${id}"`)) && grund.text.includes('IFCBUILDINGELEMENTPROXY'), 'names, no proxies and PredefinedTypes');
     const klimat = await presets.load('presets/ids/SE-Dataspatium_Klimatdeklaration.ids');
     assert.ok((klimat.text.match(/<specification /g) || []).length === 22 && ['LoadBearing', 'IsExternal', 'Qto_WallBaseQuantities', 'Category', 'IFCWALLSTANDARDCASE'].every((x) => klimat.text.includes(x)), 'Klimatdeklaration with 22 specifications');
-    // The panel in the mode Bygg ur brief.
+    // The panel in the mode Bygg från beskrivning.
     const ds = await theModel();
     const realRequest = http.request;
     http.request = (req) => { if (String(req.url).startsWith(BASE) && req.body) world.bodies.push(String(req.body)); return realRequest(req); };

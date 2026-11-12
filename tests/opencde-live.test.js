@@ -787,9 +787,9 @@
 
   // ------------------------------------------------------------------------------------------------------------------------------
   /*
-   * VII: the twin on the server, the milestone Ny byggnad ur en brief and the digital twin (F43 a and b, step 5). A new model
+   * VII: the twin on the server, the milestone Ny byggnad från en uppdragsbeskrivning and the digital twin (F43 a and b, step 5). A new model
    * (Ny byggnadsmodell, the default schema) goes to the project as a document and is fetched back as the twin's version 1; the AI
-   * panel in its mode Bygg ur brief previews a change set of the write tools (the storey's words, a layered wall type and slab type
+   * panel in its mode Bygg från beskrivning previews a change set of the write tools (the storey's words, a layered wall type and slab type
    * from define_type, four walls of the wall type, a slab, a door of a door type in an opening, a column of a column type from
    * create_element and edit_element on one wall), and proposes it with its operations in the ops form "dataspatium-tools/1"; the
    * server's trial must apply every operation, report the created elements by GlobalId per ref, and its approval must give version 2
@@ -888,7 +888,7 @@
     const versions = await opencde.documentVersions(shared.connector, [twin.documentId]);
     return versions.find((v) => v.document_id === twin.documentId) || null;
   }
-  /** The AI panel on the twin's version 1 in its mode Bygg ur brief, as the model view opens it. */
+  /** The AI panel on the twin's version 1 in its mode Bygg från beskrivning, as the model view opens it. */
   function twinPanel() {
     const panel = D.require('ui/bearbeta/ai-panel').create({ shell: { log: (m) => log('panel: ' + m) } }, { datasetId: twin.base.id, mode: 'build', preview: () => {} });
     document.body.appendChild(panel.el);
@@ -953,7 +953,7 @@
       log(`precheck of candidate A: ${preview.server ? preview.server.status : 'none'}`);
       const own = preview.report.proposal.changes;
       assert.ok(own.some((c) => c.guid === twin.storeyGuid && c.attribute === 'Description'), 'the base storey\'s description is a change of an existing instance: ' + JSON.stringify(own).slice(0, 300));
-      await timed('propose A', () => panel.propose({ title: 'Dataspatium: tvillingen byggs ur briefen', description: 'Plan 1 med väggar av typen YV1, bjälklaget BJ1, en dörr D1 och en pelare P1.' }));
+      await timed('propose A', () => panel.propose({ title: 'Dataspatium: tvillingen byggs från uppdragsbeskrivningen', description: 'Plan 1 med väggar av typen YV1, bjälklaget BJ1, en dörr D1 och en pelare P1.' }));
       assert.equal(panel.state.error, '', 'proposed');
       const mine = panel.state.proposed;
       assert.ok(mine && mine.guid && mine.proposalUrl && mine.approveUrl, 'a topic with its trial and approval: ' + JSON.stringify(mine && { guid: mine.guid, proposalUrl: mine.proposalUrl }));

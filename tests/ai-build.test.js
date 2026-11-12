@@ -1,8 +1,8 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Tests for Ny byggnad ur en brief (decision F43 a): the agent in build mode plans, asks the person, builds through the write tools
- * and says the plan, with pictures in the first message in each provider's form; the panel in the mode Bygg ur brief shows the brief,
+ * Tests for Ny byggnad från en uppdragsbeskrivning (decision F43 a): the agent in build mode plans, asks the person, builds through the write tools
+ * and says the plan, with pictures in the first message in each provider's form; the panel in the mode Bygg från beskrivning shows the brief,
  * takes attachments and the question box; the form in Inhämta hands a brief to the model view. Mocked providers, no network.
  */
 (function () {

@@ -58,7 +58,7 @@
         // Hantera asks for the issues of the model; the panel opens with the view.
         const askedIssues = ctx.store.get().openModelIssues;
         if (askedIssues && askedIssues.datasetId === dataset.id) { ctx.store.set({ openModelIssues: null }); if (!issues && !isDxf()) openIssues(); }
-        // Inhämta hands over a brief for a new building (F43 a): the AI panel opens in the mode Bygg ur brief with it.
+        // Inhämta hands over a brief for a new building (F43 a): the AI panel opens in the mode Bygg från beskrivning with it.
         const askedAi = ctx.store.get().openModelAi;
         if (askedAi && askedAi.datasetId === dataset.id) {
           ctx.store.set({ openModelAi: null });
