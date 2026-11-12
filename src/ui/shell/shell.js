@@ -27,7 +27,7 @@
           this.root = root;
           this.modes = new Map();
           this.active = null;
-          this.store = stateMod.createStore({ mode: null, datasets: [], selectedId: null, selectedIds: [], status: 'saved', pendingCode: null, openChartId: null, lastRun: null, lastExport: null, pendingSearch: null, lastSearch: null });
+          this.store = stateMod.createStore({ mode: null, datasets: [], selectedId: null, selectedIds: [], status: 'saved', pendingCode: null, openChartId: null, lastRun: null, lastExport: null, pendingSearch: null, lastSearch: null, pendingDocument: null });
           this.ctx = {
             store: this.store,
             shell: this,

@@ -208,10 +208,10 @@
       const meta = await panel.check.save();
       assert.ok(meta && meta.name === t('ai.check.table.name', { name: 'Kontrollhus' }), meta && meta.name);
       made.push(meta.id);
-      assert.deepEqual((await datasets.columns(meta.id)).map((c) => c.name), ['foto', 'element_id', 'element_guid', 'titel', 'beskrivning', 'skick', 'prioritet', 'atgard', 'datum', 'lat', 'lon']);
+      assert.deepEqual((await datasets.columns(meta.id)).map((c) => c.name), ['foto', 'element_id', 'element_guid', 'titel', 'beskrivning', 'skick', 'prioritet', 'atgard', 'datum', 'lat', 'lon', 'ifc_klass', 'element_namn', 'vaning', 'byggdel']);
       const saved = await datasets.query(meta.id);
-      assert.deepEqual(saved[0], ['sydfasad.jpg', walls[0].id, walls[0].guid, 'Spricka i putsen', 'En spricka från sockeln upp mot fönstret.', 'poor', 'high', 'Laga putsen före vintern', '2026-05-03', 59.3293, 18.0686]);
-      assert.deepEqual(saved[1], ['hörn.jpg', walls[1].id, walls[1].guid, 'Fuktfläck', 'Mörk fläck vid hörnet.', 'fair', 'medium', null, checkTools.today(), null, null]);
+      assert.deepEqual(saved[0], ['sydfasad.jpg', walls[0].id, walls[0].guid, 'Spricka i putsen', 'En spricka från sockeln upp mot fönstret.', 'poor', 'high', 'Laga putsen före vintern', '2026-05-03', 59.3293, 18.0686, walls[0].typ, 'Vägg 1.1', 'Plan 1', 2]);
+      assert.deepEqual(saved[1], ['hörn.jpg', walls[1].id, walls[1].guid, 'Fuktfläck', 'Mörk fläck vid hörnet.', 'fair', 'medium', null, checkTools.today(), null, null, walls[1].typ, 'Vägg 1.2', 'Plan 1', 2], 'the class, storey and building part: load-bearing walls are the frame');
       const skick = (await datasets.columns(meta.id)).find((c) => c.name === 'skick');
       assert.ok(skick.valueLabels && skick.valueLabels.labels.some(([code, label]) => code === 'poor' && label === t('ai.check.condition.poor')), 'the words as value labels');
       assert.ok(panel.el.querySelector('[data-ai-check-saved]'), 'the line about the table');

@@ -25,6 +25,8 @@ The template is Markdown: `#`, `##`, `###` for headings, empty lines between par
 numbered lists, `**bold**`, `*italic*`, `` `code` ``, `[text](https://…)` for links, `---` for a line and tables
 with pipes.
 
+A backslash before `*`, `_`, `` ` ``, `|`, `[`, `]` or `#` shows the character as it is, in a table cell too.
+
 Placeholders are written with double curly braces (Mustache). Numbers get the format of the app's language (in
 English 1,234.5; in Swedish 1 234,5).
 
@@ -74,6 +76,43 @@ and `{{dubbletter}}`; they exist when the template is marked as a codebook (a co
 that).
 
 `{{karta "dataset"}}`, `{{graf "dataset"}}`, `{{modell "dataset"}}` and `{{plan "dataset"}}` insert the dataset's own picture without a saved chart. The dataset is given by name or short name, and width and height as for `{{diagram}}`. A template says so if the dataset is missing or cannot be drawn that way.
+
+## Inspection report and maintenance plan
+
+The findings of *Check with AI* (see [cad-bim.md](cad-bim.md)) become an inspection report or a maintenance plan with the built-in
+templates **Inspection report** and **Maintenance plan**. *Make a report* and *Make a maintenance plan* in the AI panel, and the card
+*Report and maintenance plan* in Check when a table of findings is chosen, open the Documents tab with the table selected and the
+template ready; in the AI panel the findings are saved as a table first unless they are saved already. At the top come the building's
+facts from the model: building, project, site, storeys, model, file and IFC schema, and the building's id and year of construction
+when Pset_BuildingCommon has them. Then come the findings by building part, the six layers of the building after the climate
+declaration's rules (the element's IFC class, IsExternal and LoadBearing), with photo, condition, priority and recommended action;
+within a part the most urgent come first. The part is in the column `byggdel` (1–6) of the table of findings and can be corrected
+under Process. The photos go with the table of findings without their EXIF data, and the photo's position is in the document only
+if you add `{{plats}}` yourself.
+
+The maintenance plan sets a year on each measure after the rule in the template:
+
+```
+{{#underhallsregel}}prioritet: urgent 0, high 1, medium 3, low 5; skick: critical 0, poor 1, fair 3, good 10; intervall: 5{{/underhallsregel}}
+```
+
+The year of a measure is the year of the inspection (the finding's date) plus the fewer of the years that the priority and the
+condition give, so that a critical condition goes before a low priority, and the next check comes `intervall` years after the
+measure. The levels are written by their code or their word (urgent, high, medium and low; critical, poor, fair and good). Change
+the numbers in a copy of the template; the tag does not show in the document.
+
+| Placeholder | Content |
+|---|---|
+| `{{#byggdelar}} … {{/byggdelar}}` | One group per building part with `{{namn}}`, `{{antal}}` and the findings in `{{#fynd}} … {{/fynd}}` |
+| `{{#klasser}}`, `{{#plan}}` | The same kind of groups per IFC class and per year of the measure |
+| `{{#fynd}}`, `{{#tidsplan}}` | All findings in the order of the table or by year of the measure |
+| `{{nr}}`, `{{titel}}`, `{{beskrivning}}`, `{{element}}`, `{{ifc_klass}}`, `{{vaning}}`, `{{byggdel}}` | The finding and its element |
+| `{{skick}}`, `{{prioritet}}`, `{{atgard}}`, `{{datum}}`, `{{foto}}`, `{{bild}}` | Condition and priority in words, the action, the date, the photo's name and the photo as a picture |
+| `{{ar}}`, `{{nasta_kontroll}}` | The year of the measure and the year of the next check |
+| `{{#fakta}}`, `{{byggnad.namn}}` | The building's facts, with `{{namn}}` and `{{varde}}` in `{{#fakta}}` |
+| `{{antal_fynd}}`, `{{besiktningsdatum}}`, `{{#per_skick}}`, `{{#per_prioritet}}` | The number of findings, the dates of the inspection and the number per condition and priority (`{{ord}}`, `{{antal}}`) |
+
+The text of the findings comes along as it stands: characters such as `*`, `_` and `|` never become formatting.
 
 ## Formats
 

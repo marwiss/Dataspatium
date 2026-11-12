@@ -10,6 +10,8 @@
  * enclose per storey, open wall ends and the external walls per compass direction, on the button), and the card IFC-klasser (the
  * model against the right IFC class, on the button; decision B-57.2), and the card Grunduppgifter (the basic requirements of the
  * guidance Praxi in the app's own words, on the button). Other kinds have no checks yet. The inspector shows the chosen finding.
+ * A table of findings from Kontrollera med AI also gets the card Rapport och underhållsplan, whose buttons open the document
+ * generator with the table and the template for findings (docgen/findings).
  */
 (function () {
   'use strict';
@@ -111,6 +113,8 @@
         const busy = running.has(ds.id);
         const runBtn = ui.button({ label: t('kontrollera.run'), icon: 'play', variant: 'primary', title: t('kontrollera.run.hint'), loading: busy, 'data-kontrollera-run': '', onClick: () => runCheck(ds) });
         const parts = [head(ds, runBtn), h('p', { class: 'dm-help', text: t('kontrollera.table.help') })];
+        const findings = D.require('docgen/findings');
+        if (findings.isFindings(ds) || (result && findings.hasFindingColumns(result.columns.map((c) => c.name)))) parts.push(reportCard(ds));
         if (busy) parts.push(h('dm-progress', { indeterminate: true, label: t('kontrollera.running') }));
         else if (error) parts.push(h('p', { class: 'dm-error dm-small', text: error }));
         else if (!result) parts.push(h('p', { class: 'dm-help', 'data-kontrollera-waiting': '', text: large ? t('kontrollera.large', { n: i18n.formatNumber(ds.rowCount || 0) }) : t('kontrollera.running') }));
@@ -142,6 +146,18 @@
           shell.log(t('kontrollera.done', { name: ds.name, empty: i18n.formatNumber(r.columns.reduce((s, c) => s + c.empty, 0)), duplicates: i18n.formatNumber(r.duplicates) }), 'ok');
         }
         renderTable(now);
+      }
+
+      /** Rapport och underhållsplan: a table of findings in the document generator, with the template for findings. */
+      function reportCard(ds) {
+        const findings = D.require('docgen/findings');
+        const open = (templateId) => D.require('ui/docs/document-panel').open(ctx, ds.id, templateId);
+        return h('div', { class: 'dm-card dm-stack-sm', 'data-kontrollera-report': '' },
+          h('h3', { text: t('kontrollera.report') }),
+          h('p', { class: 'dm-help', text: t('kontrollera.report.help') }),
+          h('div', { class: 'dm-row-wrap' },
+            ui.button({ label: t('ai.check.report'), icon: 'file-text', size: 'sm', title: t('kontrollera.report.hint'), 'data-kontrollera-report-open': 'report', onClick: () => open(findings.REPORT) }),
+            ui.button({ label: t('ai.check.plan'), icon: 'list-ordered', size: 'sm', title: t('kontrollera.plan.hint'), 'data-kontrollera-report-open': 'plan', onClick: () => open(findings.PLAN) })));
       }
 
       const findingsBadge = (n) => h('dm-badge', { text: n ? t('kontrollera.findings', { n: i18n.formatNumber(n) }) : t('kontrollera.findings.none'), kind: n ? 'warn' : 'ok' });

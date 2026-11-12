@@ -287,6 +287,7 @@
     'src/docgen/builders.js',
     'src/docgen/builders-office.js',
     'src/docgen/documents.js',
+    'src/docgen/findings.js',
     'src/docgen/generate.js',
     'src/analysis/notebooks.js',
     // UI: language, design, components

@@ -31,7 +31,8 @@
       return M;
     }
 
-    const fmt = (v) => (v === null || v === undefined ? '' : (typeof v === 'number' ? i18n.formatNumber(v) : String(v)));
+    // NUL marks the block tokens, so a value never carries one.
+    const fmt = (v) => (v === null || v === undefined ? '' : (typeof v === 'number' ? i18n.formatNumber(v) : String(v).replace(/\u0000/g, '')));
     const pad = (n) => String(n).padStart(2, '0');
     const key = (s) => String(s).trim().toLowerCase().replace(/å/g, 'a').replace(/ä/g, 'a').replace(/ö/g, 'o');
     const valueLabelsText = datasets.valueLabelsText;
@@ -87,7 +88,7 @@
         grupp: options.group ? String(options.group.value) : '', gruppkolumn: options.group ? options.group.column : '',
         datum: `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`, tid: `${pad(now.getHours())}:${pad(now.getMinutes())}`,
         app: 'Dataspatium ' + D.version, kalla: src.publisher || src.connectorName || src.fileName || '',
-        _meta: meta, _columns: columns, _filters: filters, _datasetId: datasetId, _total: data.total,
+        _meta: meta, _columns: columns, _filters: filters, _datasetId: datasetId, _total: data.total, _rows: data.rows,
       };
     }
 
@@ -175,20 +176,23 @@
     }
 
     /**
-     * Resolve tags, run Mustache. Returns the rendered text (with block tokens) and the resolved blocks.
+     * Resolve tags, run Mustache. Returns the rendered text (with block tokens) and the resolved blocks. Pictures the context has
+     * resolved already (`_images`, say the photo of each finding, whose tokens are values in the context) come first.
      * @returns {Promise<{text: string, tables: any[], images: any[]}>}
      */
     async function renderTemplate(body, ctx) {
       const M = await ensureMustache();
       const tableSpecs = []; const chartSpecs = [];
+      const given = ctx && Array.isArray(ctx._images) ? ctx._images : [];
+      const imageToken = () => `\n${TOKEN}IMAGE:${given.length + chartSpecs.length - 1}${TOKEN}\n`;
       let text = String(body || '');
       text = text.replace(RE_TABLE, (m, spec) => { tableSpecs.push(spec); return `\n${TOKEN}TABLE:${tableSpecs.length - 1}${TOKEN}\n`; });
-      text = text.replace(RE_CHART, (m, name, rest) => { chartSpecs.push({ name, opts: parseChartOptions(rest) }); return `\n${TOKEN}IMAGE:${chartSpecs.length - 1}${TOKEN}\n`; });
-      text = text.replace(RE_IMAGE, (m, name, rest) => { chartSpecs.push({ name, image: true, opts: parseChartOptions(rest) }); return `\n${TOKEN}IMAGE:${chartSpecs.length - 1}${TOKEN}\n`; });
-      text = text.replace(RE_OWN, (m, tag, name, rest) => { chartSpecs.push({ name, own: OWN_KIND[tag], opts: parseChartOptions(rest) }); return `\n${TOKEN}IMAGE:${chartSpecs.length - 1}${TOKEN}\n`; });
+      text = text.replace(RE_CHART, (m, name, rest) => { chartSpecs.push({ name, opts: parseChartOptions(rest) }); return imageToken(); });
+      text = text.replace(RE_IMAGE, (m, name, rest) => { chartSpecs.push({ name, image: true, opts: parseChartOptions(rest) }); return imageToken(); });
+      text = text.replace(RE_OWN, (m, tag, name, rest) => { chartSpecs.push({ name, own: OWN_KIND[tag], opts: parseChartOptions(rest) }); return imageToken(); });
       text = text.replace(RE_PAGEBREAK, `\n${TOKEN}PAGEBREAK${TOKEN}\n`);
       const tables = []; for (const spec of tableSpecs) tables.push(await resolveTable(parseTableSpec(spec), ctx));
-      const images = []; for (const spec of chartSpecs) images.push(spec.image ? await resolveImage(spec, ctx) : spec.own ? await resolveOwn(spec, ctx) : await resolveChart(spec, ctx));
+      const images = given.slice(); for (const spec of chartSpecs) images.push(spec.image ? await resolveImage(spec, ctx) : spec.own ? await resolveOwn(spec, ctx) : await resolveChart(spec, ctx));
       let rendered;
       try { rendered = M.render(text, ctx); } catch (err) { throw new Error(D.t('doc.err.template', { message: (err && err.message) || err })); }
       return { text: rendered, tables, images };

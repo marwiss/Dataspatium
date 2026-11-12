@@ -561,6 +561,11 @@ malli on haettu palvelimelta, jolle olet kirjautunut, *Luo asiat palvelimelle* l
 Valokuvat lähetetään toimittajalle kysymyksen mukana toimittajan isännän suostumuksen jälkeen, ja ne lähtevät tietokoneelta uudelleen
 vain, kun itse luot asiat palvelimelle.
 
+Löydöstaulukossa on myös elementin IFC-luokka, nimi ja kerros sekä rakennusosa (`byggdel`, yksi rakennuksen kuudesta kerroksesta),
+ja sen mukana ovat valokuvat ilman EXIF-tietoja ja rakennuksen tiedot. *Tee raportti* ja *Tee kunnossapitosuunnitelma* tallentavat
+löydökset taulukkona, jos niitä ei ole jo tallennettu, ja avaavat tarkastusraportin tai kunnossapitosuunnitelman niiden kanssa
+kohdassa Vie › Asiakirjat Word-, PDF- ja muissa muodoissa (katso [dokumentmallar.md](dokumentmallar.md)).
+
 ## Kysy tekoälyltä mallista
 
 Mallinäkymän painike *Kysy tekoälyltä* avaa tarkastelijaan paneelin, jossa esität kysymyksen avoinna olevasta IFC-mallista, esimerkiksi

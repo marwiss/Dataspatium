@@ -176,12 +176,14 @@ Et udvalg fra Søg markeres i 3D-modellen, og kameraet rettes mod det.
 
 ## Kontrollér
 
-Prøv data mod krav. En tabel prøves mod enkle regler: hver kolonnes type og antal tomme værdier (manglende eller kun
-mellemrum) og antallet af dubletter blandt rækkerne. En lille tabel kontrolleres, så snart den vælges, en tabel med 10 000
-rækker eller flere først, når du trykker på *Kør kontrollen*. Inspektøren viser det valgte fund med dets andel af rækkerne, og
-*Åbn i Bearbejd* fører dig derhen for at rette det. En IFC-model viser kortet *Valider modellen* og panelet *Sammenlign
-versioner* (se [cad-bim.md](cad-bim.md)); andre slags har endnu ingen kontroller. AI-panelet får en fjerde tilstand,
-*Kontrollér*, til fotos af skader (planlagt).
+Prøv data mod krav. En tabel prøves mod enkle regler: hver kolonnes type og antal tomme værdier (manglende eller kun mellemrum) og
+antallet af dubletter blandt rækkerne. En lille tabel kontrolleres, så snart den vælges, en tabel med 10 000 rækker eller flere
+først, når du trykker på *Kør kontrollen*. Inspektøren viser det valgte fund med dets andel af rækkerne, og *Åbn i Bearbejd* fører
+dig derhen for at rette det. En IFC-model viser kortet *Valider modellen* og panelet *Sammenlign versioner* (se
+[cad-bim.md](cad-bim.md)); andre slags har endnu ingen kontroller. AI-panelets fjerde tilstand, *Kontrollér*, prøver modellen mod
+fotos af skader og gemmer fundene som tabel (se [cad-bim.md](cad-bim.md)). En sådan tabel med fund får kortet *Rapport og
+vedligeholdelsesplan*, hvis knapper *Lav rapport* og *Lav vedligeholdelsesplan* åbner inspektionsrapporten og
+vedligeholdelsesplanen under Eksportér › Dokumenter (se [dokumentmallar.md](dokumentmallar.md)).
 Kortet *Topologi* læser modellens vægge med *Kontrollér topologien* (appens Python starter første gang) og viser pr. etage, hvor mange
 rum væggene lukker om, om etagen er lukket, vægender der står løse, og ydervæggene pr. verdenshjørne.
 Kortet *Dubletter mellem modeller* prøver modellen mod andre IFC-modeller af samme bygning i arbejdsfladen: samme GlobalId i flere

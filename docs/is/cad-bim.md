@@ -538,6 +538,11 @@ sem þú hefur skráð þig inn á stofnar *Stofna mál á þjóninum* sömu má
 sendar þjónustuveitandanum með spurningunni eftir samþykki fyrir hýsil veitandans, og þær fara aftur af tölvunni aðeins þegar þú
 stofnar mál á þjóninum.
 
+Taflan með atriðum hefur líka IFC-klasa, heiti og hæð einingarinnar og byggingarhluta hennar (`byggdel`, eitt af sex lögum
+byggingarinnar), og hún geymir ljósmyndirnar án EXIF og upplýsingar um bygginguna. *Gera skýrslu* og *Gera viðhaldsáætlun* vista
+atriðin sem töflu ef þau eru ekki þegar vistuð og opna skoðunarskýrsluna eða viðhaldsáætlunina með þeim undir Flytja út › Skjöl, í
+Word, PDF og hinum sniðunum (sjá [dokumentmallar.md](dokumentmallar.md)).
+
 ## Spyrja gervigreind um líkanið
 
 Hnappurinn *Spyrja gervigreind* í líkanssýninni opnar spjald í skoðaranum þar sem þú spyrð spurningar um opna IFC-líkanið, til dæmis

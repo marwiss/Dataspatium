@@ -545,6 +545,11 @@ tilstand, prioritet, tiltak, dato og posisjonen til fotoet. *Eksporter som BCF* 
 saker på tenaren* dei same sakene i prosjektet til modellen etter ei stadfesting; der blir fotoet eit dokument i prosjektet, eller ein eigen viewpoint med berre fotoet når du ikkje får leggje til dokument, og sakene vert knytte til modellfila når tenaren tillèt det. Under *Fleire alternativ* gjev du sakene status, tildelt, ansvarleg part, fase og frist, på ein tenar frå listene til prosjektet. Fotoa vert sende til leverandøren saman med
 spørsmålet etter samtykket for verten til leverandøren, og dei forlèt datamaskina igjen berre når du sjølv opprettar saker på tenaren.
 
+Tabellen med funn har også IFC-klassen, namnet og etasjen til elementet og bygningsdelen (`byggdel`, eitt av dei seks laga i
+bygningen), og han har med seg bileta utan EXIF og opplysningane om bygningen. *Lag rapport* og *Lag vedlikehaldsplan* lagrar funna
+som tabell om dei ikkje alt er lagra, og opnar synfaringsrapporten eller vedlikehaldsplanen med dei under Eksporter › Dokument, i
+Word, PDF og dei andre formata (sjå [dokumentmallar.md](dokumentmallar.md)).
+
 ## Spør AI om modellen
 
 Knappen *Spør AI* i modellvisinga opnar eit panel i inspektøren der du stiller eit spørsmål om den opne IFC-modellen, til dømes "kva

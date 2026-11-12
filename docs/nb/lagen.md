@@ -177,12 +177,14 @@ Et utvalg fra Søk markeres i 3D-modellen, og kameraet rettes mot det.
 
 ## Kontroller
 
-Prøv data mot krav. En tabell prøves mot enkle regler: hver kolonnes type og antall tomme verdier (manglende eller bare
-mellomrom) og antall duplikater blant radene. En liten tabell kontrolleres så snart den velges, en tabell med 10 000 rader eller
-flere først når du trykker på *Kjør kontrollen*. Inspektøren viser det valgte funnet med andelen av radene, og *Åpne i Bearbeid*
-tar deg dit for å rette det. En IFC-modell viser kortet *Valider modellen* og panelet *Sammenlign versjoner* (se
-[cad-bim.md](cad-bim.md)); andre slag har ingen kontroller ennå. AI-panelet får en fjerde modus, *Kontroller*, for foto av
-skader (planlagt).
+Prøv data mot krav. En tabell prøves mot enkle regler: hver kolonnes type og antall tomme verdier (manglende eller bare mellomrom)
+og antall duplikater blant radene. En liten tabell kontrolleres så snart den velges, en tabell med 10 000 rader eller flere først
+når du trykker på *Kjør kontrollen*. Inspektøren viser det valgte funnet med andelen av radene, og *Åpne i Bearbeid* tar deg dit
+for å rette det. En IFC-modell viser kortet *Valider modellen* og panelet *Sammenlign versjoner* (se [cad-bim.md](cad-bim.md));
+andre slag har ingen kontroller ennå. AI-panelets fjerde modus, *Kontroller*, prøver modellen mot foto av skader og lagrer funnene
+som tabell (se [cad-bim.md](cad-bim.md)). En slik tabell med funn får kortet *Rapport og vedlikeholdsplan*, der knappene *Lag
+rapport* og *Lag vedlikeholdsplan* åpner befaringsrapporten og vedlikeholdsplanen under Eksporter › Dokumenter (se
+[dokumentmallar.md](dokumentmallar.md)).
 Kortet *Topologi* leser modellens vegger med *Kontroller topologien* (appens Python starter første gang) og viser per etasje hvor mange
 rom veggene lukker, om etasjen er lukket, veggender som står løse, og ytterveggene per himmelretning.
 Kortet *Duplikater mellom modeller* prøver modellen mot andre IFC-modeller av samme bygning i arbeidsflaten: samme GlobalId i flere

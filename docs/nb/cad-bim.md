@@ -539,6 +539,11 @@ dato og fotoets posisjon. *Eksporter som BCF* laster ned en BCF-fil med én sak 
 i modellens prosjekt etter en bekreftelse; der blir fotoet et dokument i prosjektet, eller en egen viewpoint med bare fotoet når du ikke får legge til dokumenter, og sakene knyttes til modellfilen når serveren tillater det. Under *Flere alternativer* gir du sakene status, tildelt, ansvarlig part, fase og frist, på en server fra prosjektets lister. Fotoene sendes til leverandøren sammen med spørsmålet etter samtykket for leverandørens
 vert, og de forlater datamaskinen igjen bare når du selv oppretter saker på serveren.
 
+Tabellen med funn har også elementets IFC-klasse, navn og etasje og bygningsdelen (`byggdel`, ett av bygningens seks lag), og den
+har med seg bildene uten EXIF og bygningens opplysninger. *Lag rapport* og *Lag vedlikeholdsplan* lagrer funnene som tabell hvis de
+ikke allerede er lagret, og åpner befaringsrapporten eller vedlikeholdsplanen med dem under Eksporter › Dokumenter, i Word, PDF og de
+andre formatene (se [dokumentmallar.md](dokumentmallar.md)).
+
 ## Spør AI om modellen
 
 Knappen *Spør AI* i modellvisningen åpner et panel i inspektøren der du stiller et spørsmål om den åpne IFC-modellen, for eksempel

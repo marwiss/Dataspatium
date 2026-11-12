@@ -3,7 +3,8 @@
 /**
  * Mode "Exportera": three tabs. Data: download a dataset as CSV (Swedish Excel profile or standard),
  * Excel, JSON or the SQLite file. Diagram: export saved charts, single or in batch. Dokument: generate
- * documents from templates in HTML, Word, PDF, Markdown or LaTeX, single or in batch.
+ * documents from templates in HTML, Word, PDF, Markdown or LaTeX, single or in batch. A `pendingDocument` in the store
+ * ({templateId}, from ui/docs/document-panel.open) opens the Dokument tab with that template.
  */
 (function () {
   'use strict';
@@ -21,12 +22,22 @@
 
       function activate(s) {
         slots = s;
-        unsubscribe = store.subscribe((state, changed) => { if (changed.includes('datasets') || changed.includes('selectedId')) { render(); } });
+        unsubscribe = store.subscribe((state, changed) => { if (changed.includes('pendingDocument') && state.pendingDocument) { takeDocument(); render(); return; } if (changed.includes('datasets') || changed.includes('selectedId')) { render(); } });
         unsubCharts = charts.subscribe(() => charts.list().then((l) => { chartList = l; if (tab === 'charts') render(); }));
         unsubDash = dashboards.subscribe(() => dashboards.list().then((l) => { dashList = l; if (tab === 'charts') render(); }));
         charts.list().then((l) => { chartList = l; if (tab === 'charts') render(); });
         dashboards.list().then((l) => { dashList = l; if (tab === 'charts') render(); });
+        takeDocument();
         render();
+      }
+      /** The template another mode asked for: the Dokument tab with it chosen. */
+      function takeDocument() {
+        const pending = store.get().pendingDocument;
+        if (!pending) return;
+        store.set({ pendingDocument: null });
+        tab = 'documents';
+        if (!docPanel) docPanel = documentPanel.create(ctx);
+        docPanel.choose(pending.templateId);
       }
       function deactivate() { slots = null; if (unsubscribe) unsubscribe(); if (unsubCharts) unsubCharts(); if (unsubDash) unsubDash(); if (docPanel) { docPanel.destroy(); docPanel = null; } }
 

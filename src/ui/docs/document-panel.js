@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * The Dokument tab in Exportera: pick or write a template, see a live preview for the selected
- * dataset, download the document in one of five formats, run a batch per group, and share templates.
+ * dataset, download the document in one of five formats, run a batch per group, and share templates. `open` brings a
+ * dataset here with a template chosen, as the buttons Gör rapport and Gör underhållsplan do with a table of findings.
  */
 (function () {
   'use strict';
@@ -16,15 +17,23 @@
     function create(ctx) {
       const { store, shell } = ctx;
       const el = h('div', { class: 'dm-stack' });
-      const state = { templates: [], doc: null, dirty: false, format: 'html', busy: false, error: '' };
+      const state = { templates: [], doc: null, dirty: false, format: 'html', busy: false, error: '', wanted: /** @type {string|null} */ (null) };
       let previewEl = null; let previewTimer = 0; let previewSeq = 0; let editor = null; let nameInput = null;
       const unsubDocs = documents.subscribe(() => reload());
       function selectedDataset() { const st = store.get(); return st.datasets.find((d) => d.id === st.selectedId) || null; }
 
       async function reload() {
         state.templates = await documents.list();
+        const wanted = state.wanted ? state.templates.find((x) => x.id === state.wanted) : null;
+        if (wanted) { state.doc = Object.assign({}, wanted); state.dirty = false; }
+        state.wanted = null;
         if (!state.doc) state.doc = Object.assign({}, state.templates[0]);
         render();
+      }
+      /** Choose a template by its id, now or as soon as the list is read. @param {string} id */
+      function choose(id) {
+        if (!state.templates.length) { state.wanted = id; return; }
+        pick(id);
       }
       function pick(id) {
         const tpl = state.templates.find((x) => x.id === id);
@@ -169,8 +178,19 @@
       function onDatasetChange() { if (state.doc) { render(); } }
       function destroy() { unsubDocs(); clearTimeout(previewTimer); }
       reload();
-      return { el, render, helpNodes, onDatasetChange, destroy, state };
+      return { el, render, helpNodes, onDatasetChange, destroy, state, choose };
     }
-    return { create };
+
+    /**
+     * Open the generator in Exportera › Dokument with a dataset selected and a template chosen (Exportera takes `pendingDocument`).
+     * @param {any} ctx shell context @param {string} datasetId @param {string} templateId @returns {boolean} whether it could
+     */
+    function open(ctx, datasetId, templateId) {
+      if (!ctx || !ctx.store || !ctx.shell || typeof ctx.shell.activate !== 'function' || !datasetId) return false;
+      ctx.store.set({ selectedId: datasetId, pendingDocument: { templateId, datasetId, at: Date.now() } });
+      ctx.shell.activate('exportera');
+      return true;
+    }
+    return { create, open };
   });
 })();

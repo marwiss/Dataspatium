@@ -23,6 +23,8 @@ Sniðið er Markdown: `#`, `##`, `###` fyrir fyrirsagnir, auðar línur milli m�
 númeraða lista, `**feitletrað**`, `*skáletrað*`, `` `kóði` ``, `[texti](https://…)` fyrir tengla, `---` fyrir línu og töflur
 með lóðstrikum.
 
+Öfugt skástrik á undan `*`, `_`, `` ` ``, `|`, `[`, `]` eða `#` sýnir stafinn eins og hann er, líka í töflureit.
+
 Staðgenglar eru skrifaðir með tvöföldum slaufusvigum (Mustache). Tölur fá snið tungumáls forritsins (á íslensku 1.234,5).
 
 | Staðgengill | Innihald |
@@ -68,6 +70,43 @@ leituð í gagnasafni sniðmátsins og síðan í öllum myndasöfnum, forskoðu
 `{{dubbletter}}`; þær eru til þegar sniðið er merkt sem kóðabók (afrit af innbyggða sniðinu heldur því).
 
 `{{karta "gagnasafn"}}`, `{{graf "gagnasafn"}}`, `{{modell "gagnasafn"}}` og `{{plan "gagnasafn"}}` setja inn eigin mynd gagnasafnsins án vistaðs myndrits. Gagnasafnið er gefið með nafni eða stuttnafni, og breidd og hæð eins og fyrir `{{diagram}}`. Sniðmát lætur vita ef gagnasafnið vantar eða ekki er hægt að teikna það þannig.
+
+## Skoðunarskýrsla og viðhaldsáætlun
+
+Atriðin úr *Athuga með gervigreind* (sjá [cad-bim.md](cad-bim.md)) verða að skoðunarskýrslu eða viðhaldsáætlun með innbyggðu
+sniðunum **Skoðunarskýrsla** og **Viðhaldsáætlun**. *Gera skýrslu* og *Gera viðhaldsáætlun* í gervigreindarspjaldinu, og kortið
+*Skýrsla og viðhaldsáætlun* í Athuga þegar tafla með atriðum er valin, opna flipann Skjöl með töfluna valda og sniðið tilbúið; í
+gervigreindarspjaldinu eru atriðin fyrst vistuð sem tafla ef þau eru ekki þegar vistuð. Efst eru upplýsingar um bygginguna úr
+líkaninu: bygging, verkefni, lóð, hæðir, líkan, skrá og IFC-skema, og auðkenni byggingarinnar og byggingarár þegar
+Pset_BuildingCommon hefur þau. Síðan koma atriðin eftir byggingarhluta, sex lögum byggingarinnar eftir reglum loftslagsyfirlýsingarinnar
+(IFC-klasi einingarinnar, IsExternal og LoadBearing), með ljósmynd, ástandi, forgangi og ráðlagðri aðgerð; innan byggingarhluta kemur
+það sem liggur mest á fyrst. Byggingarhlutinn er í dálkinum `byggdel` (1–6) í töflunni með atriðum og má leiðrétta hann undir Vinna.
+Ljósmyndirnar fylgja töflunni án EXIF-upplýsinga sinna, og staðsetning ljósmyndarinnar kemur aðeins í skjalið ef þú bætir sjálf(ur)
+við `{{plats}}`.
+
+Viðhaldsáætlunin setur ár á hverja aðgerð eftir reglunni í sniðinu:
+
+```
+{{#underhallsregel}}prioritet: urgent 0, high 1, medium 3, low 5; skick: critical 0, poor 1, fair 3, good 10; intervall: 5{{/underhallsregel}}
+```
+
+Ár aðgerðarinnar er ár skoðunarinnar (dagsetning atriðisins) að viðbættum lægsta fjölda ára sem forgangur og ástand gefa, svo að
+alvarlegt ástand gengur fyrir litlum forgangi, og næsta athugun kemur `intervall` árum eftir aðgerðina. Stigin eru skrifuð með
+kóðanum eða orðinu (brýnn, mikill, miðlungs og lítill; alvarlegt, lélegt, viðunandi og gott). Breyttu tölunum í afriti af sniðinu;
+merkið sést ekki í skjalinu.
+
+| Staðgengill | Innihald |
+|---|---|
+| `{{#byggdelar}} … {{/byggdelar}}` | Einn hópur fyrir hvern byggingarhluta með `{{namn}}`, `{{antal}}` og atriðunum í `{{#fynd}} … {{/fynd}}` |
+| `{{#klasser}}`, `{{#plan}}` | Sams konar hópar eftir IFC-klasa og eftir ári aðgerðar |
+| `{{#fynd}}`, `{{#tidsplan}}` | Öll atriði í röð töflunnar eða eftir ári aðgerðar |
+| `{{nr}}`, `{{titel}}`, `{{beskrivning}}`, `{{element}}`, `{{ifc_klass}}`, `{{vaning}}`, `{{byggdel}}` | Atriðið og eining þess |
+| `{{skick}}`, `{{prioritet}}`, `{{atgard}}`, `{{datum}}`, `{{foto}}`, `{{bild}}` | Ástand og forgangur í orðum, aðgerðin, dagsetningin, heiti ljósmyndarinnar og ljósmyndin sem mynd |
+| `{{ar}}`, `{{nasta_kontroll}}` | Ár aðgerðarinnar og ár næstu athugunar |
+| `{{#fakta}}`, `{{byggnad.namn}}` | Upplýsingar um bygginguna, með `{{namn}}` og `{{varde}}` í `{{#fakta}}` |
+| `{{antal_fynd}}`, `{{besiktningsdatum}}`, `{{#per_skick}}`, `{{#per_prioritet}}` | Fjöldi atriða, dagsetningar skoðunarinnar og fjöldi eftir ástandi og forgangi (`{{ord}}`, `{{antal}}`) |
+
+Texti atriðanna kemur með eins og hann stendur: stafir eins og `*`, `_` og `|` verða aldrei að sniði.
 
 ## Snið skráa
 

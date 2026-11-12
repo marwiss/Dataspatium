@@ -191,12 +191,14 @@ Ett urval från Söka markeras i 3D-modellen, och kameran riktas mot det.
 
 ## Kontrollera
 
-Pröva data mot krav. En tabell prövas mot enkla regler: varje kolumns typ och antal tomma värden (saknade eller bara
-mellanslag) och antalet dubbletter bland raderna. En liten tabell kontrolleras så fort den väljs, en tabell med 10 000 rader
-eller fler först när du trycker på *Kör kontrollen*. Inspektören visar det valda fyndet med dess andel av raderna, och *Öppna i
-Bearbeta* tar dig dit för att rätta det. En IFC-modell visar kortet *Validera modellen* och panelen *Jämför versioner* (se
-[cad-bim.md](cad-bim.md)); andra slag har inga kontroller än. AI-panelen får ett fjärde läge, *Kontrollera*, för foton av
-skador (planerat).
+Pröva data mot krav. En tabell prövas mot enkla regler: varje kolumns typ och antal tomma värden (saknade eller bara mellanslag)
+och antalet dubbletter bland raderna. En liten tabell kontrolleras så fort den väljs, en tabell med 10 000 rader eller fler först
+när du trycker på *Kör kontrollen*. Inspektören visar det valda fyndet med dess andel av raderna, och *Öppna i Bearbeta* tar dig
+dit för att rätta det. En IFC-modell visar kortet *Validera modellen* och panelen *Jämför versioner* (se
+[cad-bim.md](cad-bim.md)); andra slag har inga kontroller än. AI-panelens fjärde läge, *Kontrollera*, prövar modellen mot foton av
+skador och sparar fynden som tabell (se [cad-bim.md](cad-bim.md)). En sådan fyndtabell får kortet *Rapport och underhållsplan*,
+vars knappar *Gör rapport* och *Gör underhållsplan* öppnar besiktningsrapporten och underhållsplanen under Exportera › Dokument
+(se [dokumentmallar.md](dokumentmallar.md)).
 Kortet *Topologi* läser modellens väggar med *Kontrollera topologin* (appens Python startar första gången) och visar per våning hur
 många rum väggarna sluter, om våningen är sluten, väggändar som står lösa och ytterväggarna per väderstreck.
 Kortet *Dubbletter mellan modeller* prövar modellen mot andra IFC-modeller av samma byggnad i arbetsytan: samma GlobalId i flera

@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('docgen/generate', ['docgen/template', 'docgen/markdown', 'docgen/builders', 'docgen/builders-office', 'viz/data', 'platform/storage/zip', 'platform/files'], (template, markdown, builders, office, vizData, zip, files) => {
+  D.define('docgen/generate', ['docgen/template', 'docgen/findings', 'docgen/markdown', 'docgen/builders', 'docgen/builders-office', 'viz/data', 'platform/storage/zip', 'platform/files'], (template, findings, markdown, builders, office, vizData, zip, files) => {
     const FORMATS = [
       { id: 'html', label: D.t('doc.format.html'), ext: 'html', mime: 'text/html;charset=utf-8' },
       { id: 'docx', label: 'Word (DOCX)', ext: 'docx', mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
@@ -18,7 +18,7 @@
 
     /** Template + dataset -> document model. */
     async function buildAst(doc, datasetId, options = {}) {
-      const ctx = doc.codebook ? await template.codebookContext(datasetId, options) : await template.buildContext(datasetId, options);
+      const ctx = doc.findings ? await findings.context(datasetId, options, doc.body) : doc.codebook ? await template.codebookContext(datasetId, options) : await template.buildContext(datasetId, options);
       const rendered = await template.renderTemplate(doc.body, ctx);
       return { ast: markdown.parse(rendered.text, rendered), ctx };
     }
