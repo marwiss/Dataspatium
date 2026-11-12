@@ -1710,6 +1710,8 @@ class _ChangeSet:
         self.marks = {"LoadBearing": {}, "Status": {}}  # element id -> what its create step gave (write_marked)
         self.written = set()  # (element id, set, property) that set_properties wrote, which write_external may replace
         self.rejoin = set()  # ids of walls whose joins edit_element or transform_elements undid, for join_walls
+        self.moved = {}  # wall id -> (axis, thickness) before the change set first moved or resized it, for fit_spaces
+        self.slid = set()  # ids of doors and windows that moved along a wall that stayed, for fit_spaces
         self.fill_sizes = {}  # (width, height) in metres of the door and window types this change set defines, by STEP id
 
     # -- units, lookups and bookkeeping
@@ -2572,7 +2574,9 @@ class _ChangeSet:
         twice. The site, the building and the storeys (IfcSpatialStructureElement other than IfcSpace) are refused: the site's place
         and the storeys' heights are the whole project's and change only by agreement. A placement's point is moved itself when nothing
         else uses it, else replaced, so that no point is left unused (bSI rule IFC106) and nothing else moves along; a moved wall's
-        joins are undone and made anew where it meets other walls (unjoin, join_walls)."""
+        joins are undone and made anew where it meets other walls (unjoin, join_walls), and the spaces along it are fitted to the
+        rooms the walls now enclose or noted (fit_spaces). An opening that moves without its wall must stay within the wall's body
+        (opening_outside)."""
         dx, dy, dz = _cs_num(op, "dx", 0.0), _cs_num(op, "dy", 0.0), _cs_num(op, "dz", 0.0)
         moved = []
         for e in self.elements(op):
@@ -2589,6 +2593,7 @@ class _ChangeSet:
         for e in moved:
             if not any(y.id() != e.id() and self.placed_in(e, y) for y in moved):
                 if e.is_a("IfcWall"):
+                    self.moving_wall(e)
                     self.unjoin(e)
                     for end in (0, 1):
                         self.draw_out(e, end)
@@ -2596,6 +2601,16 @@ class _ChangeSet:
             self.touch(e)
             for rel in getattr(e, "VoidsElements", None) or ():
                 self.touch(rel.RelatingBuildingElement)  # the host's net quantities
+        hosts = {e.id() for e in moved}
+        for o in (e for e in moved if e.is_a("IfcOpeningElement")):
+            for wall in (r.RelatingBuildingElement for r in (getattr(o, "VoidsElements", None) or ())):
+                if wall.id() in hosts:
+                    continue
+                why = self.opening_outside(o, wall)
+                if why:
+                    raise DataspatiumError("opening #%d %r would %s; move it within the wall with edit_element (offset, sill), or move the wall with it"
+                                           % (o.id(), _ifc_text(o.Name) or "", why))
+                self.slid.update(r.RelatedBuildingElement.id() for r in (getattr(o, "HasFillings", None) or ()))
 
     # -- moving and changing in place: placements, points and items that only the element uses
     @staticmethod
@@ -2739,6 +2754,269 @@ class _ChangeSet:
         j = self.join_wall(w, False)
         if j is not None and j["box"] is not None and self.cut_end(j, end, j["a"] if end == 0 else j["b"]):
             self.touch(w)
+
+    def moving_wall(self, wall):
+        """Keep a wall's axis in the world's plan (metres) and its thickness as they were before the change set first moved or resized
+        it, for fit_spaces."""
+        if wall.id() not in self.moved:
+            try:
+                self.moved[wall.id()] = (_topo_axis(wall, self.scale), _topo_thickness(wall, self.scale))
+            except Exception:
+                self.moved[wall.id()] = (None, None)
+
+    def opening_outside(self, opening, wall):
+        """How an opening of create_opening's form (opening_box) reaches out of its wall's body of create_wall's form (wall_box): past
+        its ends, above its top or below its base, or off its thickness; None when it lies within, or when either is of another form."""
+        body, item = self.wall_box(wall), self.wall_box(opening)
+        box = self.opening_box(opening, wall) if body is not None and item is not None else None
+        if box is None:
+            return None
+        s, tol, p, q = self.scale, self.u(0.001), body.SweptArea, item.SweptArea
+        cx, cy = [float(c) for c in p.Position.Location.Coordinates][:2]
+        x0, x1, z0 = cx - float(p.XDim) / 2.0, cx + float(p.XDim) / 2.0, _cs_axes(body.Position)[3][2]
+        rel = _cs_compose(_cs_invert(_cs_placement(wall.ObjectPlacement)), _cs_placement(opening.ObjectPlacement))
+        oy = rel[3][1] + float(q.Position.Location.Coordinates[1])
+        label = "wall #%d %r" % (wall.id(), _ifc_text(wall.Name) or "")
+        if box[0] < x0 - tol or box[1] > x1 + tol:
+            return "reach past the ends of %s (%.4g to %.4g m along it, whose body runs from %.4g to %.4g m)" % (label, box[0] * s, box[1] * s, x0 * s, x1 * s)
+        if box[2] < z0 - tol or box[3] > z0 + float(body.Depth) + tol:
+            return "reach above or below %s (%.4g to %.4g m up in a body from %.4g to %.4g m)" % (label, box[2] * s, box[3] * s, z0 * s, (z0 + float(body.Depth)) * s)
+        if oy - float(q.YDim) / 2.0 > cy - float(p.YDim) / 2.0 + tol or oy + float(q.YDim) / 2.0 < cy + float(p.YDim) / 2.0 - tol:
+            return "no longer go through %s, %.4g m off its axis" % (label, (oy - cy) * s)
+        return None
+
+    def check_openings(self):
+        """After the joins: a note for each opening of the walls whose joins the change set undid that a join's cut leaves reaching out
+        of its wall's body (opening_outside)."""
+        for i in sorted(self.rejoin):
+            try:
+                wall = self.m.by_id(i)
+            except Exception:
+                continue  # deleted later in the change set
+            for o in (r.RelatedOpeningElement for r in (getattr(wall, "HasOpenings", None) or ())):
+                why = self.opening_outside(o, wall)
+                if why:
+                    self.note_once("opening %s would %s now that the wall is joined; move it with edit_element (offset, width), or ask the person"
+                                   % (self.element_label(o), why))
+
+    # -- the spaces along walls that moved (the room code of create_spaces, on the topology after the change set)
+    def fit_spaces(self):
+        """After the joins: the spaces along the walls the change set moved or resized in the plan (self.moved), per storey
+        (fit_storey), and the spaces along the walls in which doors and windows moved (refill)."""
+        storeys = {}
+        for i, (axis, thickness) in sorted(self.moved.items()):
+            try:
+                w = self.m.by_id(i)
+            except Exception:
+                continue  # deleted later in the change set
+            new, now = _topo_axis(w, self.scale), _topo_thickness(w, self.scale)
+            if not axis or not new:
+                if getattr(w, "ProvidesBoundaries", None):
+                    self.note_once("wall %s bounds spaces whose outlines stay as they were: the app cannot follow its axis" % self.element_label(w))
+                continue
+            shifted = len(axis) != len(new) or any(math.dist(a, b) > 1e-6 for a, b in zip(axis, new))
+            resized = abs(float(now or 0.0) - float(thickness or 0.0)) > 1e-9
+            s = self.container(w)
+            if (shifted or resized) and s is not None and s.is_a("IfcBuildingStorey"):
+                storeys.setdefault(s.id(), (s, {}))[1][w.id()] = (axis, new, resized)
+        for s, walls in storeys.values():
+            self.fit_storey(s, walls)
+        done = {i for _, walls in storeys.values() for i in walls}
+        for i in sorted(self.slid):
+            try:
+                f = self.m.by_id(i)
+            except Exception:
+                continue  # deleted later in the change set
+            self.refill(f, done)
+
+    def fit_storey(self, s, walls):
+        """The spaces of storey s along its walls that moved, walls {id: (old axis, new axis, resized)}: a space their old or new axis
+        runs along, or that a boundary relates to one of them, is fitted to the room the walls now enclose, as create_spaces makes it
+        (fit_space), when it is drawn as create_spaces draws it (space_body), no other such space overlaps the same room most, and
+        its outline differs from the room only within the topology's tolerance of the walls' old and new axes; else it keeps its
+        outline and quantities with a note saying why, and loses its boundaries to the moved walls that no longer run along it
+        (loosen)."""
+        from shapely.geometry import LineString, MultiPoint, Polygon
+        from shapely.ops import unary_union
+        spaces = [o for rel in (getattr(s, "IsDecomposedBy", None) or ()) for o in (rel.RelatedObjects or ()) if o.is_a("IfcSpace")]
+        topo = next((t for t in _ifc_topology(self.m, storeys={_ifc_text(s.Name)}, shapes=True) if t["_storey"].id() == s.id()), None) if spaces else None
+        if topo is None:
+            return
+        tol = topo["tolerance"]
+        meets = 2.0 * tol + 0.01  # as in _topo_plan: a wall that only meets an edge runs at most 2 * tol along it
+        lines = {i: (LineString(old), LineString(new)) for i, (old, new, _) in walls.items()}
+        zone = unary_union([MultiPoint(list(old) + list(new)).convex_hull.buffer(tol) for old, new, _ in walls.values()])
+        affected = []
+        for p in spaces:
+            outline = self.space_outline(p)
+            bounded = {b.RelatedBuildingElement.id() for b in (getattr(p, "BoundedBy", None) or ()) if getattr(b, "RelatedBuildingElement", None) is not None}
+            edge = outline.boundary.buffer(tol) if outline is not None else None
+            if bounded & set(walls) or (edge is not None and any(self.runs_along(x, edge, meets) for pair in lines.values() for x in pair)):
+                affected.append((p, outline))
+        rooms = topo["rooms"]
+        best = {}
+        for p, outline in affected:
+            top = max(((outline.intersection(r["polygon"]).area, k) for k, r in enumerate(rooms)), default=(0.0, None)) if outline is not None else (0.0, None)
+            best[p.id()] = top[1] if top[0] > 1e-6 else None
+        for p, outline in affected:
+            k, body = best[p.id()], self.space_body(p)
+            others = [q for q, _ in affected if k is not None and q.id() != p.id() and best[q.id()] == k]
+            why = None
+            if body is None or outline is None:
+                why = "it is not drawn as create_spaces draws it"
+            elif k is None:
+                why = "the walls no longer enclose a room there"
+            elif others:
+                why = "it now lies in one room with space %s" % ", ".join(self.element_label(q) for q in others)
+            elif outline.symmetric_difference(Polygon(rooms[k]["polygon"].exterior)).difference(zone).area > 1e-4:
+                why = "its outline does not follow the walls' axes where they stayed, as create_spaces draws it"
+            if why is None:
+                self.fit_space(p, body, outline, rooms[k], topo, any(walls[i][2] for i in rooms[k]["walls"] if i in walls))
+            else:
+                self.loosen(p, outline, walls, lines, tol, meets, why)
+
+    @staticmethod
+    def runs_along(line, zone, meets):
+        """Whether a wall's axis (shapely) runs within zone, the buffer of a space's edge, for more than meets metres in one piece; a
+        wall that crosses the edge, or only meets it, does not."""
+        part = line.intersection(zone)
+        return max([g.length for g in getattr(part, "geoms", [part])] or [0.0]) > meets
+
+    def space_body(self, space):
+        """(the extruded solid, the absolute matrix of its profile's plane) of a space drawn as create_spaces draws it: one
+        IfcExtrudedAreaSolid of an arbitrary closed profile of polylines (holes too), extruded straight up in an upright frame; else
+        None."""
+        rep = getattr(space, "Representation", None)
+        bodies = [r for r in (rep.Representations if rep is not None else ()) if (r.RepresentationIdentifier or "") == "Body"]
+        items = list(bodies[0].Items or ()) if len(bodies) == 1 else []
+        if len(items) != 1 or not items[0].is_a("IfcExtrudedAreaSolid") or len(getattr(rep, "ShapeOfProduct", None) or ()) > 1:
+            return None
+        item, m = items[0], _cs_placement(getattr(space, "ObjectPlacement", None))
+        p, d = item.SweptArea, _cs_unit([float(c) for c in item.ExtrudedDirection.DirectionRatios])
+        curves = [getattr(p, "OuterCurve", None)] + list(getattr(p, "InnerCurves", None) or ())
+        if not p.is_a("IfcArbitraryClosedProfileDef") or any(c is None or not c.is_a("IfcPolyline") for c in curves) or m is None or d is None:
+            return None
+        frame = _cs_compose(m, _cs_axes(item.Position))
+        return (item, frame) if abs(d[2] - 1.0) < 1e-9 and abs(frame[2][2] - 1.0) < 1e-6 else None
+
+    def room_profile(self, frame, poly, name=None):
+        """A room's outline (shapely, metres in the world's plan) as an arbitrary closed profile, with its holes as voids, in the plane
+        of the absolute matrix `frame`, as make_space draws it."""
+        back = _cs_invert(frame)
+
+        def curve(ring):
+            return self.closed([_cs_at(back, (c[0] / self.scale, c[1] / self.scale, frame[3][2]))[:2] for c in ring.coords])
+        if poly.interiors:
+            return self.m.createIfcArbitraryProfileDefWithVoids("AREA", name, curve(poly.exterior), [curve(r) for r in poly.interiors])
+        return self.m.createIfcArbitraryClosedProfileDef("AREA", name, curve(poly.exterior))
+
+    @staticmethod
+    def space_values(room, height):
+        """Qto_SpaceBaseQuantities of a room of the topology `height` metres high, as space_quantities gives them, for write_qto."""
+        gross, net = room["polygon"].area, room["net_area"]
+        return {"Height": ("length", height), "GrossPerimeter": ("length", room["polygon"].length), "GrossFloorArea": ("area", gross),
+                "NetFloorArea": ("area", net), "GrossVolume": ("volume", gross * height), "NetVolume": ("volume", net * height)}
+
+    def fit_space(self, space, body, outline, room, topo, resized):
+        """A space fitted to its room: its profile drawn anew when its outline differs (with a note), its boundaries made anew when they
+        differ (rebound), and its quantities when either changed or a wall along it changed its thickness; the space keeps its
+        GlobalId, its height and everything else."""
+        item, frame = body
+        poly = room["polygon"]
+        from shapely.geometry import Polygon
+        reshaped = outline.symmetric_difference(Polygon(poly.exterior)).area > 1e-4 or bool(poly.interiors) != bool(getattr(item.SweptArea, "InnerCurves", None))
+        if reshaped:
+            old = item.SweptArea
+            item.SweptArea = self.room_profile(frame, poly, old.ProfileName)
+            self.drop(old)
+            self.notes.append("space %s was fitted to the room its walls now enclose: %.2f m² instead of %.2f m²" % (self.element_label(space), poly.area, outline.area))
+        if self.rebound(space, room, topo, reshaped) or reshaped or resized:
+            self.write_qto(space, "Qto_SpaceBaseQuantities", self.space_values(room, float(item.Depth) * self.scale))
+            self.touch(space)
+
+    @staticmethod
+    def bounds_wall(b):
+        """Whether a space boundary relates its space to a wall, a door or a window, as create_spaces makes them."""
+        e = getattr(b, "RelatedBuildingElement", None) if b.is_a("IfcRelSpaceBoundary") else None
+        return e is not None and (e.is_a("IfcWall") or e.is_a("IfcDoor") or e.is_a("IfcWindow"))
+
+    def unbound(self, b):
+        """Remove a space boundary with its connection geometry, when nothing else uses that."""
+        geometry = getattr(b, "ConnectionGeometry", None)
+        self.m.remove(b)
+        self.drop(geometry)
+
+    def rebound(self, space, room, topo, force=False):
+        """A fitted space's boundaries to walls, doors and windows as create_spaces makes them: to the room's walls (external where the
+        topology finds the wall external) and to the doors and windows in them whose middle stands on the room's edge. Made anew when
+        they differ from the space's (or with force), and then True."""
+        external = {x["wall"] for x in topo["external"]}
+        want = []
+        for wall in (self.m.by_id(i) for i in room["walls"]):
+            want.append((wall, wall.id() in external))
+            for f in self.fillings(wall):
+                mid = self.plan_point(f, float(getattr(f, "OverallWidth", None) or 0.0) / 2.0)
+                if mid is not None and room["polygon"].boundary.distance(_topo_point(mid)) <= topo["tolerance"]:
+                    want.append((f, wall.id() in external))
+        have = [b for b in (getattr(space, "BoundedBy", None) or ()) if self.bounds_wall(b)]
+        if not force and sorted((b.RelatedBuildingElement.id(), b.InternalOrExternalBoundary == "EXTERNAL") for b in have) == sorted((e.id(), x) for e, x in want):
+            return False
+        for b in have:
+            self.unbound(b)
+        for e, x in want:
+            self.bound(space, e, x)
+        return True
+
+    @staticmethod
+    def host_of(e):
+        """The wall (or other element) whose opening a door or window fills; None."""
+        o = next((r.RelatingOpeningElement for r in (getattr(e, "FillsVoids", None) or ())), None)
+        return next((r.RelatingBuildingElement for r in (getattr(o, "VoidsElements", None) or ())), None) if o is not None else None
+
+    def loosen(self, space, outline, walls, lines, tol, meets, why):
+        """A space the moved walls no longer fit keeps its outline and quantities, with a note: its boundaries to the moved walls whose
+        new axis no longer runs along its edge go, and those to the doors and windows in the moved walls whose middle no longer stands
+        on it."""
+        lost = []
+        for b in ([b for b in (getattr(space, "BoundedBy", None) or ()) if self.bounds_wall(b)] if outline is not None else ()):
+            e = b.RelatedBuildingElement
+            host = e if e.is_a("IfcWall") else self.host_of(e)
+            if host is None or host.id() not in walls:
+                continue
+            if e.is_a("IfcWall"):
+                gone = not self.runs_along(lines[e.id()][1], outline.boundary.buffer(tol), meets)
+            else:
+                mid = self.plan_point(e, float(getattr(e, "OverallWidth", None) or 0.0) / 2.0)
+                gone = mid is None or outline.boundary.distance(_topo_point(mid)) > tol
+            if gone:
+                lost.append(self.element_label(e))
+                self.unbound(b)
+        self.notes.append("space %s keeps its outline and quantities as they were, since %s%s; the person decides whether to move the walls so that they enclose it again, or to delete it and make it anew with create_spaces"
+                          % (self.element_label(space), why, "; its boundaries to %s went, as they no longer run along it" % ", ".join(lost) if lost else ""))
+        if lost:
+            self.touch(space)
+
+    def refill(self, f, done):
+        """A door or window that moved along a wall the change set did not move (done: the walls fit_storey followed) bounds the wall's
+        spaces whose edge its middle stands on, as create_opening gives it, and no others."""
+        wall = self.host_of(f)
+        if wall is None or wall.id() in done or not (f.is_a("IfcDoor") or f.is_a("IfcWindow")):
+            return
+        mid = self.plan_point(f, float(getattr(f, "OverallWidth", None) or 0.0) / 2.0)
+        tol = self.wall_thickness(wall) * self.scale / 2.0 + 0.05
+        have = {b.RelatingSpace.id(): b for b in (getattr(f, "ProvidesBoundaries", None) or ())}
+        for b in list(getattr(wall, "ProvidesBoundaries", None) or ()):
+            space = b.RelatingSpace
+            outline = self.space_outline(space) if space is not None and space.is_a("IfcSpace") else None
+            if outline is None:
+                continue
+            on = mid is not None and outline.boundary.distance(_topo_point(mid)) <= tol
+            if on and space.id() not in have:
+                have[space.id()] = self.bound(space, f, b.InternalOrExternalBoundary == "EXTERNAL")
+                self.touch(space)
+            elif not on and space.id() in have:
+                self.unbound(have.pop(space.id()))
+                self.touch(space)
 
     # -- edit_element (recommendation 7 of the Praxi study, 17 of the native IFC study)
     EDITS = {"wall": ("start", "end", "thickness", "height", "type"), "slab": ("outline", "thickness", "type"),
@@ -2890,7 +3168,8 @@ class _ChangeSet:
         anew from start to end; thickness and height size its body. Its openings keep their place along it when its direction stays the
         same, else their offset from its start, get its new thickness and must stay within it. A new type types it with the layers
         centred as create_wall lays them; a typed wall takes its thickness from its layers. Its joins are undone and made anew at the
-        end (unjoin, join_walls); the spaces it bounds keep their outlines, which the report notes."""
+        end (unjoin, join_walls), its openings are checked against its body once it is joined (check_openings), and the spaces along
+        it are fitted to the rooms the walls now enclose or noted (fit_spaces)."""
         s = self.scale
         f = self.wall_frame(wall)
         start = _cs_xy(op["start"], "start") if op.get("start") is not None else f["start"]
@@ -2932,6 +3211,7 @@ class _ChangeSet:
                                        % (label, wall.id(), (x0 - lo) * s, (x1 - lo) * s, (hi - lo) * s, (box[3] - f["base"]) * s, height))
             plan.append((o, item, (nx, ny, oz), _cs_placement(opl), self.loose_fillings(o) if moving else []))
         if moving or resizing:
+            self.moving_wall(wall)
             self.unjoin(wall)
         if moving:
             self.place_wall(wall, f, start, u)
@@ -2954,8 +3234,6 @@ class _ChangeSet:
         if typ is not None:
             self.untype(wall)
             self.give_type(wall, typ, "AXIS2", "POSITIVE", f["off"] * s - thickness / 2.0)
-        if (moving or resizing) and getattr(wall, "ProvidesBoundaries", None):
-            self.notes.append("wall #%d %r bounds spaces whose outlines stay as they were" % (wall.id(), _ifc_text(wall.Name) or ""))
         self.touch(wall)
 
     def place_wall(self, wall, f, start, u):
@@ -3099,7 +3377,8 @@ class _ChangeSet:
         """edit_element on an opening (opening_frame) or the door or window in it: offset (metres from the wall's start, along it), sill
         (above the wall's base), width and height, the opening and its doors and windows together; the opening must stay within the
         wall's body. A door or window placed in the opening follows it (one placed elsewhere is moved as much), and their bodies,
-        OverallWidth and OverallHeight take the new size."""
+        OverallWidth and OverallHeight take the new size; a door or window that moved bounds the spaces whose edge it then stands on
+        (fit_spaces)."""
         f = self.opening_frame(e)
         opening, wall, item, fillings = f["opening"], f["wall"], f["item"], f["fillings"]
         offset, width, sill, height = f["offset"], f["width"], f["sill"], f["height"]
@@ -3122,6 +3401,7 @@ class _ChangeSet:
             before = _cs_placement(opening.ObjectPlacement)
             self.shift(opening, _cs_placement(wall.ObjectPlacement), d)
             self.follow(opening, before, loose)
+            self.slid.update(x.id() for x in fillings)  # the spaces they bound (fit_spaces)
         if resize:
             for b in boxes:
                 self.resize_box(b, self.u(new["width"]), self.u(new["height"]))
@@ -4108,9 +4388,11 @@ class _ChangeSet:
         return self.m.createIfcExtrudedAreaSolid(profile, position, self.direction(0, 0, 1), u(width))
 
     def finish(self):
-        """After the operations: the joins of the walls the change set created (join_walls), then the base quantities of what it
-        created or changed (base_quantities). A fault in either becomes a note in the report, and the operations stand."""
-        for step, what in ((self.join_walls, "the wall joins"), (self.base_quantities, "the base quantities")):
+        """After the operations: the joins of the walls the change set created (join_walls), the openings of the walls joined anew
+        (check_openings) and the spaces along the walls it moved (fit_spaces), then the base quantities of what it created or changed
+        (base_quantities). A fault in any becomes a note in the report, and the operations stand."""
+        for step, what in ((self.join_walls, "the wall joins"), (self.check_openings, "the check of the openings in the joined walls"),
+                           (self.fit_spaces, "the spaces along the moved walls"), (self.base_quantities, "the base quantities")):
             try:
                 step()
             except Exception as exc:

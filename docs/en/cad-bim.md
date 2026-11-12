@@ -633,9 +633,15 @@ not create itself. The wall's openings keep their place along it as long as it k
 start) and must fit within it, and the roof keeps its rectangle. A typed wall or slab takes its thickness from its type, so a thicker
 wall gets another type. An element not drawn the way the write tools draw it can only be renamed, and the answer says what the AI can
 do instead. The AI therefore changes elements instead of deleting and recreating them, and deletes only when you ask it to. A move with
-`transform_elements` happens in the storey's plane: a door or window moves with its opening, a moved wall is joined with the walls it
-meets, no point is left unused, and the site, the building and the storeys are never moved, since their place and heights belong to the
-whole project and change only by agreement.
+`transform_elements` happens in the storey's plane: a door or window moves with its opening and must fit within the wall, no point is
+left unused, and the site, the building and the storeys are never moved, since their place and heights belong to the whole project and
+change only by agreement. A wall that moves, with `transform_elements` or with a new start and end in `edit_element`, lets go of its
+joins and is joined with the walls it meets after the move, its corners resolved as when it was created, and the neighbours' ends and
+all the walls' base quantities are made anew. The spaces along the wall follow: a space that `create_spaces` made and that the walls
+still enclose gets a new outline, new room areas and new boundaries from the topology and keeps its GlobalId. A space that the walls no
+longer enclose, that now lies in one room with another, or that is drawn another way keeps its outline and room areas but loses its
+boundaries to the moved walls that no longer run along it, and the report says why; you decide whether the walls go back or the space
+is made anew. Doors and windows moved along the wall bound the space they then stand in.
 The AI writes product identities only when you give them, and never invents them: the GTIN (GlobalTradeItemNumber), the manufacturer
 (Manufacturer) and the model (ModelLabel) in Pset_ManufacturerTypeInformation on the type, and the serial number (SerialNumber) and
 barcode (BarCode) in Pset_ManufacturerOccurrence on the element. IFC2X3 has no GTIN.

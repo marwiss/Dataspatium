@@ -621,9 +621,15 @@ oprettet. Væggens åbninger beholder deres plads langs væggen, så længe den 
 skal kunne være i den, og taget beholder sit rektangel. En væg eller et dæk med type får sin tykkelse fra typen, så en tykkere væg får
 en anden type. Et element, der ikke er tegnet, som skriveværktøjerne tegner, kan kun få nyt navn, og svaret siger, hvad AI'en kan gøre
 i stedet. AI'en ændrer derfor elementer i stedet for at slette og oprette dem på ny og sletter kun, når du beder om det. Flytning med
-`transform_elements` sker i etagens plan: en dør eller et vindue flyttes med sin åbning, en flyttet væg forbindes med de vægge, den
-møder, intet punkt bliver tilbage uden brug, og grunden, bygningen og etagerne flyttes aldrig, fordi deres placering og højder gælder
-hele projektet og kun ændres efter aftale.
+`transform_elements` sker i etagens plan: en dør eller et vindue flyttes med sin åbning og skal kunne være i væggen, intet punkt bliver
+tilbage uden brug, og grunden, bygningen og etagerne flyttes aldrig, fordi deres placering og højder gælder hele projektet og kun
+ændres efter aftale. En væg, der flyttes, med `transform_elements` eller med ny start og nyt slut i `edit_element`, slipper sine
+samlinger og forbindes med de vægge, den møder efter flytningen, med hjørnerne løst som da den blev oprettet, og nabovæggenes ender og
+alle væggenes basismængder laves på ny. Rummene langs væggen følger med: et rum, som `create_spaces` har oprettet, og som væggene
+stadig lukker om, får ny kontur, nye rumarealer og nye grænser fra topologien og beholder sit GlobalId. Et rum, som væggene ikke
+længere lukker om, som nu deler rum med et andet, eller som er tegnet på en anden måde, beholder sin kontur og sine rumarealer, men
+mister grænserne mod de flyttede vægge, der ikke længere løber langs det, og rapporten siger hvorfor; du afgør, om væggene skal
+tilbage, eller rummet skal laves på ny. Døre og vinduer, der flyttes langs væggen, afgrænser det rum, de derefter står i.
 Produktidentiteter skriver AI'en kun, når du angiver dem, og den finder aldrig på dem: GTIN (GlobalTradeItemNumber), producent
 (Manufacturer) og model (ModelLabel) i Pset_ManufacturerTypeInformation på typen, og serienummer (SerialNumber) og stregkode
 (BarCode) i Pset_ManufacturerOccurrence på bygningsdelen. IFC2X3 har intet GTIN.

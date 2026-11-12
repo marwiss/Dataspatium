@@ -643,9 +643,16 @@ kauan kuin seinä säilyttää suuntansa (muuten etäisyytensä seinän alusta),
 suorakulmionsa. Tyypitetty seinä tai laatta saa paksuutensa tyypistään, joten paksumpi seinä saa toisen tyypin. Elementin, jota ei ole
 piirretty kirjoitustyökalujen tapaan, voi vain nimetä uudelleen, ja vastaus kertoo, mitä tekoäly voi tehdä sen sijaan. Tekoäly siis
 muuttaa elementtejä poistamatta ja luomatta niitä uudelleen, ja poistaa vain, kun pyydät. Siirto työkalulla `transform_elements`
-tapahtuu kerroksen tasossa: ovi tai ikkuna siirtyy aukkonsa mukana, siirretty seinä liitetään seiniin, jotka se kohtaa, yhtään pistettä
-ei jää käyttämättä, eikä tonttia, rakennusta tai kerroksia koskaan siirretä, koska niiden paikka ja korkeudet koskevat koko hanketta ja
-muuttuvat vain sopimalla.
+tapahtuu kerroksen tasossa: ovi tai ikkuna siirtyy aukkonsa mukana, ja sen on mahduttava seinään, yhtään pistettä ei jää käyttämättä,
+eikä tonttia, rakennusta tai kerroksia koskaan siirretä, koska niiden paikka ja korkeudet koskevat koko hanketta ja muuttuvat vain
+sopimalla. Seinä, jota siirretään työkalulla `transform_elements` tai uudella alulla ja lopulla työkalussa `edit_element`, irrottaa
+liitoksensa ja liitetään siirron jälkeen seiniin, jotka se kohtaa, ja kulmat ratkaistaan kuten seinää luotaessa; naapuriseinien päät ja
+kaikkien seinien perusmäärät tehdään uudelleen. Seinän varrella olevat tilat seuraavat mukana: tila, jonka `create_spaces` on tehnyt ja
+jota seinät yhä rajaavat, saa topologiasta uuden ääriviivan, uudet pinta-alat ja uudet rajat ja säilyttää GlobalId-tunnuksensa. Tila,
+jota seinät eivät enää rajaa, joka on nyt samassa huoneessa toisen tilan kanssa tai joka on piirretty toisin, säilyttää ääriviivansa ja
+pinta-alansa mutta menettää rajansa niihin siirrettyihin seiniin, jotka eivät enää kulje sen reunalla, ja raportti kertoo syyn; sinä
+päätät, siirretäänkö seinät takaisin vai tehdäänkö tila uudelleen. Seinää pitkin siirretyt ovet ja ikkunat rajaavat sen tilan, jossa ne
+sen jälkeen ovat.
 Tuotetunnisteet tekoäly kirjoittaa vain, kun annat ne, eikä se koskaan keksi niitä: GTIN (GlobalTradeItemNumber), valmistaja
 (Manufacturer) ja malli (ModelLabel) joukossa Pset_ManufacturerTypeInformation tyypissä sekä sarjanumero (SerialNumber) ja
 viivakoodi (BarCode) joukossa Pset_ManufacturerOccurrence rakennusosassa. IFC2X3:ssa ei ole GTIN:ää.
