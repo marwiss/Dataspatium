@@ -465,8 +465,10 @@
     ] },
   ];
   const PAGE = globalThis.DATASPATIUM_PROFILE;
+  /** Every group at start: the test page, and `?groups=all` for debugging and screenshot scripts (never the mobile page). */
   let everything = PAGE === 'all';
   try { everything = everything || new URLSearchParams(location.search).get('groups') === 'all'; } catch (_e) { /* the start list only */ }
+  everything = everything && PAGE !== 'mobile';
   /** The groups of this page: none on the mobile page, whose list is complete. */
   const groups = PAGE === 'mobile' ? [] : GROUPS.map((g) => ({ name: g.name, needs: g.needs.slice(), scripts: g.scripts.slice() }));
   const scripts = PAGE === 'mobile' ? MOBILE : (everything ? full.concat(...groups.map((g) => g.scripts)) : full);
