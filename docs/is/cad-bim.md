@@ -122,10 +122,12 @@ töflum við hliðina, og skráin er vistuð með málunum svo að myndirnar og 
   í næstu rýni.
 - *Har åtgärdats* (lagað), *Avvisad* (hafnað) og *Godkänd* (samþykkt) teljast lokið: lagað eins og Resolved, hin tvö eins og Closed.
 
-Stöðurnar eru aðeins notaðar þegar verkefnið á þjóninum hefur þær í lista sínum; forritið býður þær ekki fram sjálft. Dataregium-
-verkefni hefur Open, In progress, Resolved og Closed sjálfgefið, sem svara til þeirra eins og að ofan. Svið rýnimáls eru í *Nýtt mál*
-og undir *Fleiri valkostir* í gervigreindarprófuninni: titill, lýsing, staða, úthlutun, ábyrgðaraðili (sem merki), áfangi og
-skilafrestur, og rýnandinn er sá sem er innskráður.
+Stöðurnar eru aðeins notaðar þegar verkefnið á þjóninum hefur þær í lista sínum; forritið býður þær ekki fram sjálft.
+Dataregium-verkefni hefur Open, In progress, Resolved og Closed sjálfgefið, sem svara til þeirra eins og að ofan. Í Dataregium
+stillir stjórnandi stöðulista verkefnisins (`topic_status`) á síðu verkefnisins undir `/admin`. Hnappurinn *Använd Praxis statusar*
+(nota stöður Praxis) á sama stað setur sex stöðurnar hér að ofan í listann og lætur aðra lista verkefnisins óbreytta. Svið rýnimáls
+eru í *Nýtt mál* og undir *Fleiri valkostir* í gervigreindarprófuninni: titill, lýsing, staða, úthlutun, ábyrgðaraðili (sem merki),
+áfangi og skilafrestur, og rýnandinn er sá sem er innskráður.
 
 ## Töflurnar
 
@@ -584,7 +586,8 @@ IfcFurnishingElement) og beina stiga (IfcStair). Flokkurinn og PredefinedType ha
 verkfærunum. Formið er pressaður prófíll: rétthyrningur, hringur eða útlína í plani hæðarinnar, uppréttur frá hæð yfir hæðinni (súlur,
 undirstöður, klæðningar, húsgögn) eða liggjandi í stefnu (bitar, stoðir og handrið). Hlutinn er á hæðinni eða hluti af heild
 (`part_of`), til dæmis handrið stiga, og er þá í heildinni og á hæð hennar en ekki beint á hæðinni. Klæðning getur tilgreint hvað hún
-klæðir (`host`): byggingarhluta (IfcRelCoversBldgElements) eða rými (IfcRelCoversSpaces). Beinn stigi (STRAIGHT_RUN_STAIR) er hallandi
+klæðir (`host`): byggingarhluta eða rými. Í IFC4 og síðar verður hún hluti af byggingarhlutanum (IfcRelAggregates) eða liggur í
+rýminu; aðeins í IFC2X3 fær hún IfcRelCoversBldgElements eða IfcRelCoversSpaces. Beinn stigi (STRAIGHT_RUN_STAIR) er hallandi
 stigahluti (IfcStairFlight, STRAIGHT) með fjölda þrepa, uppstigi, framstigi og breidd sem eigindum og í Pset_StairFlightCommon og, ef
 óskað er, stigapalli (IfcSlab, LANDING) efst; síðasta uppstigið er frambrún pallsins eða plötunnar fyrir ofan.
 

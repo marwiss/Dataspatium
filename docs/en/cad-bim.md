@@ -127,9 +127,11 @@ list of statuses and gives them the same colours as other statuses:
 - *Har åtgärdats* (fixed), *Avvisad* (rejected) and *Godkänd* (approved) count as done: fixed like Resolved, the other two like Closed.
 
 The statuses are used only when the project on the server has them in its list; the app does not offer them itself. A Dataregium
-project has Open, In progress, Resolved and Closed by default, which correspond to them as above. The fields of a review issue are
-in *New issue* and under *More options* in the AI check: title, description, status, assignee, responsible party (as a label), stage
-and due date, and the reviewer is the person signed in.
+project has Open, In progress, Resolved and Closed by default, which correspond to them as above. In Dataregium an administrator sets
+a project's list of statuses (`topic_status`) on the project's page under `/admin`. There the button *Använd Praxis statusar* (use
+Praxis statuses) gives the list the six statuses above and leaves the project's other lists as they are. The fields of a review issue
+are in *New issue* and under *More options* in the AI check: title, description, status, assignee, responsible party (as a label),
+stage and due date, and the reviewer is the person signed in.
 
 ## The tables
 
@@ -600,8 +602,9 @@ IfcFurnishingElement in IFC2X3) and straight stairs (IfcStair). The class and it
 as in the other tools. The body is an extruded profile: a rectangle, a circle or an outline in the storey's plane, standing up from a
 height above the storey (columns, footings, coverings, furniture) or lying in a direction (beams, members and railings). The element
 lies in the storey, or is a part of a whole (`part_of`), such as a railing of a stair, and then lies in the whole and on its storey but
-not directly in the storey. A covering can name what it covers (`host`): a building element (IfcRelCoversBldgElements) or a space
-(IfcRelCoversSpaces). A straight stair (STRAIGHT_RUN_STAIR) is a sloped flight (IfcStairFlight, STRAIGHT) with the number of risers,
+not directly in the storey. A covering can name what it covers (`host`): a building element or a space. In IFC4 and later it becomes
+a part of the element (IfcRelAggregates) or lies in the space; only in IFC2X3 does it get IfcRelCoversBldgElements or
+IfcRelCoversSpaces. A straight stair (STRAIGHT_RUN_STAIR) is a sloped flight (IfcStairFlight, STRAIGHT) with the number of risers,
 the riser height, the tread length and the width as attributes and in Pset_StairFlightCommon, and on request a landing (IfcSlab,
 LANDING) at the top; the last riser is the front edge of the landing or of the floor above.
 

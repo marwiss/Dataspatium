@@ -122,10 +122,12 @@ statuslista och ger dem samma färger som andra statusar:
 - *Ska åtgärdas* och *Ny granskning* räknas som pågående, som In progress: ärendet ska åtgärdas, eller tas upp i nästa granskning.
 - *Har åtgärdats*, *Avvisad* och *Godkänd* räknas som klara: Har åtgärdats som Resolved, de andra två som Closed.
 
-Statusarna används bara när projektet på servern har dem i sin lista; appen föreslår dem inte själv. Ett projekt i Dataregium har
-som förval Open, In progress, Resolved och Closed, som motsvarar dem som ovan. Fälten för ett granskningsärende finns i *Nytt
-ärende* och under *Fler alternativ* i AI-kontrollen: rubrik, beskrivning, status, tilldelad, ansvarig part (som etikett), skede och
-förfallodatum, och granskaren är den som är inloggad.
+Statusarna används bara när projektet på servern har dem i sin lista; appen föreslår dem inte själv. Ett projekt i Dataregium har som
+förval Open, In progress, Resolved och Closed, som motsvarar dem som ovan. I Dataregium ställer en administratör in projektets
+statuslista (`topic_status`) på projektets sida under `/admin`. Där ger knappen *Använd Praxis statusar* listan de sex statusarna
+ovan och lämnar projektets övriga listor som de är. Fälten för ett granskningsärende finns i *Nytt ärende* och under *Fler
+alternativ* i AI-kontrollen: rubrik, beskrivning, status, tilldelad, ansvarig part (som etikett), skede och förfallodatum, och
+granskaren är den som är inloggad.
 
 ## Tabellerna
 
@@ -579,10 +581,11 @@ IfcFurnishingElement) och raka trappor (IfcStair). Klassen och dess PredefinedTy
 verktygen. Kroppen är en extruderad profil: en rektangel, en cirkel eller en kontur i våningens plan, stående uppåt från en höjd över
 våningen (pelare, grundläggning, beklädnader, möbler) eller liggande i en riktning (balkar, stänger och räcken). Elementet ligger i
 våningen eller är en del av en helhet (`part_of`), till exempel ett räcke i en trappa, och ligger då i helheten och på dess våning men
-inte direkt i våningen. En beklädnad kan ange vad den täcker (`host`): en byggdel (IfcRelCoversBldgElements) eller ett rum
-(IfcRelCoversSpaces). En rak trappa (STRAIGHT_RUN_STAIR) består av ett lutande trapplopp (IfcStairFlight, STRAIGHT) med antal steg,
-steghöjd, stegdjup och bredd som attribut och i Pset_StairFlightCommon, och på begäran ett vilplan (IfcSlab, LANDING) överst; den sista
-steghöjden är vilplanets eller bjälklagets framkant.
+inte direkt i våningen. En beklädnad kan ange vad den täcker (`host`): en byggdel eller ett rum. I IFC4 och senare blir den en del av
+byggdelen (IfcRelAggregates) eller ligger i rummet; bara i IFC2X3 får den IfcRelCoversBldgElements eller IfcRelCoversSpaces. En rak
+trappa (STRAIGHT_RUN_STAIR) består av ett lutande trapplopp (IfcStairFlight, STRAIGHT) med antal steg, steghöjd, stegdjup och bredd
+som attribut och i Pset_StairFlightCommon, och på begäran ett vilplan (IfcSlab, LANDING) överst; den sista steghöjden är vilplanets
+eller bjälklagets framkant.
 
 `define_type` gör också typer för beklädnader (med skikt, som en bjälklagstyp), pelare, balkar, grundläggning, räcken, dörrar och
 fönster (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType och IfcWindowType; i IFC2X3

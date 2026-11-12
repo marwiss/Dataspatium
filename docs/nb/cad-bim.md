@@ -125,9 +125,11 @@ statusliste og gir dem de samme fargene som andre statuser:
   som Closed.
 
 Statusene brukes bare når prosjektet på serveren har dem i listen sin; appen foreslår dem ikke selv. Et Dataregium-prosjekt har Open,
-In progress, Resolved og Closed som standard, som svarer til dem som ovenfor. Feltene for en gjennomgangssak finnes i *Ny sak* og
-under *Flere alternativer* i AI-kontrollen: tittel, beskrivelse, status, tildelt, ansvarlig part (som etikett), fase og frist, og den
-som går gjennom, er den som er logget inn.
+In progress, Resolved og Closed som standard, som svarer til dem som ovenfor. I Dataregium stiller en administrator inn prosjektets
+statusliste (`topic_status`) på prosjektets side under `/admin`. Knappen *Använd Praxis statusar* (bruk Praxis-statuser) samme sted
+gir listen de seks statusene ovenfor og lar prosjektets øvrige lister være som de er. Feltene for en gjennomgangssak finnes i *Ny
+sak* og under *Flere alternativer* i AI-kontrollen: tittel, beskrivelse, status, tildelt, ansvarlig part (som etikett), fase og
+frist, og den som går gjennom, er den som er logget inn.
 
 ## Tabellene
 
@@ -584,10 +586,11 @@ IfcFurnishingElement) og rette trapper (IfcStair). Klassen og dens PredefinedTyp
 verktøyene. Kroppen er en ekstrudert profil: et rektangel, en sirkel eller et omriss i etasjens plan, stående oppover fra en høyde over
 etasjen (søyler, fundamenter, kledninger, møbler) eller liggende i en retning (bjelker, staver og rekkverk). Elementet ligger i etasjen
 eller er en del av en helhet (`part_of`), for eksempel et rekkverk i en trapp, og ligger da i helheten og i dens etasje, men ikke
-direkte i etasjen. En kledning kan angi hva den kler (`host`): en bygningsdel (IfcRelCoversBldgElements) eller et rom
-(IfcRelCoversSpaces). En rett trapp (STRAIGHT_RUN_STAIR) består av et skrånende trappeløp (IfcStairFlight, STRAIGHT) med antall trinn,
-opptrinn, inntrinn og bredde som attributter og i Pset_StairFlightCommon og på forespørsel en repos (IfcSlab, LANDING) øverst; det
-siste opptrinnet er reposens eller dekkets forkant.
+direkte i etasjen. En kledning kan angi hva den kler (`host`): en bygningsdel eller et rom. I IFC4 og senere blir den en del av
+bygningsdelen (IfcRelAggregates) eller ligger i rommet; bare i IFC2X3 får den IfcRelCoversBldgElements eller IfcRelCoversSpaces. En
+rett trapp (STRAIGHT_RUN_STAIR) består av et skrånende trappeløp (IfcStairFlight, STRAIGHT) med antall trinn, opptrinn, inntrinn og
+bredde som attributter og i Pset_StairFlightCommon og på forespørsel en repos (IfcSlab, LANDING) øverst; det siste opptrinnet er
+reposens eller dekkets forkant.
 
 `define_type` lager også typer for kledninger (med sjikt, som en dekketype), søyler, bjelker, fundamenter, rekkverk, dører og vinduer
 (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType og IfcWindowType; i IFC2X3 IfcDoorStyle og

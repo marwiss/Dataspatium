@@ -126,9 +126,11 @@ statusliste og giver dem de samme farver som andre statusser:
   som Closed.
 
 Statusserne bruges kun, når projektet på serveren har dem i sin liste; appen foreslår dem ikke selv. Et Dataregium-projekt har Open,
-In progress, Resolved og Closed som standard, som svarer til dem som ovenfor. Felterne for en gennemgangssag findes i *Ny sag* og
-under *Flere indstillinger* i AI-kontrollen: titel, beskrivelse, status, tildelt, ansvarlig part (som etiket), fase og frist, og den,
-der gennemgår, er den, der er logget ind.
+In progress, Resolved og Closed som standard, som svarer til dem som ovenfor. I Dataregium indstiller en administrator projektets
+statusliste (`topic_status`) på projektets side under `/admin`. Knappen *Använd Praxis statusar* (brug Praxis-statusser) samme sted
+giver listen de seks statusser ovenfor og lader projektets øvrige lister være, som de er. Felterne for en gennemgangssag findes i *Ny
+sag* og under *Flere indstillinger* i AI-kontrollen: titel, beskrivelse, status, tildelt, ansvarlig part (som etiket), fase og frist,
+og den, der gennemgår, er den, der er logget ind.
 
 ## Tabellerne
 
@@ -588,8 +590,9 @@ IfcFurnishingElement) og lige trapper (IfcStair). Klassen og dens PredefinedType
 værktøjer. Kroppen er en ekstruderet profil: et rektangel, en cirkel eller et omrids i etagens plan, stående opad fra en højde over
 etagen (søjler, fundamenter, beklædninger, møbler) eller liggende i en retning (bjælker, stænger og rækværker). Elementet ligger på
 etagen eller er en del af en helhed (`part_of`), for eksempel et rækværk på en trappe, og ligger da i helheden og på dens etage, men
-ikke direkte på etagen. En beklædning kan angive, hvad den beklæder (`host`): en bygningsdel (IfcRelCoversBldgElements) eller et rum
-(IfcRelCoversSpaces). En lige trappe (STRAIGHT_RUN_STAIR) består af et skrånende trappeløb (IfcStairFlight, STRAIGHT) med antal trin,
+ikke direkte på etagen. En beklædning kan angive, hvad den beklæder (`host`): en bygningsdel eller et rum. I IFC4 og senere bliver
+den en del af bygningsdelen (IfcRelAggregates) eller ligger i rummet; kun i IFC2X3 får den IfcRelCoversBldgElements eller
+IfcRelCoversSpaces. En lige trappe (STRAIGHT_RUN_STAIR) består af et skrånende trappeløb (IfcStairFlight, STRAIGHT) med antal trin,
 trinhøjde, trindybde og bredde som attributter og i Pset_StairFlightCommon og efter ønske en repos (IfcSlab, LANDING) øverst; den
 sidste stigning er reposens eller dækkets forkant.
 

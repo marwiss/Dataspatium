@@ -130,10 +130,12 @@ omasta tilaluettelosta ja antaa niille samat värit kuin muille tiloille:
 - *Har åtgärdats* (korjattu), *Avvisad* (hylätty) ja *Godkänd* (hyväksytty) ovat valmiita: korjattu kuten Resolved, kaksi muuta kuten
   Closed.
 
-Tiloja käytetään vain, kun palvelimen projektin luettelossa on ne; sovellus ei itse tarjoa niitä. Dataregium-projektissa on oletuksena
-Open, In progress, Resolved ja Closed, jotka vastaavat niitä edellä kuvatulla tavalla. Tarkastusasian kentät ovat kohdassa *Uusi asia*
-ja tekoälytarkistuksen kohdassa *Lisää asetuksia*: otsikko, kuvaus, tila, osoitettu, vastuuosapuoli (nimikkeenä), vaihe ja määräaika,
-ja tarkastaja on kirjautunut henkilö.
+Tiloja käytetään vain, kun palvelimen projektin luettelossa on ne; sovellus ei itse tarjoa niitä. Dataregium-projektissa on
+oletuksena Open, In progress, Resolved ja Closed, jotka vastaavat niitä edellä kuvatulla tavalla. Dataregiumissa ylläpitäjä määrittää
+projektin tilaluettelon (`topic_status`) projektin sivulla polun `/admin` alla. Siellä painike *Använd Praxis statusar* (käytä
+Praxis-tiloja) asettaa tilaluetteloon edellä luetellut kuusi tilaa ja jättää projektin muut luettelot ennalleen. Tarkastusasian
+kentät ovat kohdassa *Uusi asia* ja tekoälytarkistuksen kohdassa *Lisää asetuksia*: otsikko, kuvaus, tila, osoitettu, vastuuosapuoli
+(nimikkeenä), vaihe ja määräaika, ja tarkastaja on kirjautunut henkilö.
 
 ## Taulukot
 
@@ -610,10 +612,10 @@ PredefinedType tarkistetaan mallin skeemaa vasten kuten muissakin työkaluissa. 
 ääriviiva kerroksen tasossa, pystyssä ylöspäin korkeudelta kerroksen yläpuolella (pilarit, anturat, verhoukset, kalusteet) tai
 vaakasuorassa johonkin suuntaan (palkit, sauvat ja kaiteet). Elementti on kerroksessa tai osa kokonaisuutta (`part_of`), esimerkiksi
 portaan kaide, ja on silloin kokonaisuudessa ja sen kerroksessa mutta ei suoraan kerroksessa. Verhous voi kertoa, mitä se verhoaa
-(`host`): rakennusosan (IfcRelCoversBldgElements) tai tilan (IfcRelCoversSpaces). Suora porras (STRAIGHT_RUN_STAIR) on kalteva
-porrassyöksy (IfcStairFlight, STRAIGHT), jonka askelmien määrä, nousu, etenemä ja leveys ovat attribuutteina ja
-Pset_StairFlightCommonissa, ja pyydettäessä ylhäällä lepotaso (IfcSlab, LANDING); viimeinen nousu on lepotason tai yläpuolisen laatan
-etureuna.
+(`host`): rakennusosan tai tilan. IFC4:ssä ja myöhemmin siitä tulee rakennusosan osa (IfcRelAggregates) tai se on tilassa; vain
+IFC2X3:ssa se saa suhteen IfcRelCoversBldgElements tai IfcRelCoversSpaces. Suora porras (STRAIGHT_RUN_STAIR) on kalteva porrassyöksy
+(IfcStairFlight, STRAIGHT), jonka askelmien määrä, nousu, etenemä ja leveys ovat attribuutteina ja Pset_StairFlightCommonissa, ja
+pyydettäessä ylhäällä lepotaso (IfcSlab, LANDING); viimeinen nousu on lepotason tai yläpuolisen laatan etureuna.
 
 `define_type` tekee myös tyypit verhouksille (kerroksineen kuten laattatyyppi), pilareille, palkeille, anturoille, kaiteille, oville ja
 ikkunoille (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType ja IfcWindowType; IFC2X3:ssa
