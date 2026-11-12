@@ -553,6 +553,11 @@ you are signed in to, *Create issues on the server* creates the same issues in t
 to the provider with the question after the consent for the provider's host, and they leave the computer again only when you create
 issues on the server yourself.
 
+The table of findings also has the element's IFC class, name and storey and its building part (`byggdel`, one of the six layers
+of the building), and it carries the photos without EXIF and the building's facts. *Make a report* and *Make a maintenance plan*
+save the findings as a table unless they are saved already and open the inspection report or the maintenance plan with them under
+Export › Documents, in Word, PDF and the other formats (see [dokumentmallar.md](dokumentmallar.md)).
+
 ## Ask AI about the model
 
 The button *Ask AI* in the model view opens a panel in the inspector where you ask a question about the open IFC model, for example

@@ -176,12 +176,14 @@ Val úr Leita er merkt í þrívíddarlíkaninu, og myndavélinni er beint að �
 
 ## Athuga
 
-Prófa gögn gegn kröfum. Tafla er prófuð gegn einföldum reglum: gerð hvers dálks og fjöldi tómra gilda (sem vantar eða
-innihalda aðeins bil) og fjöldi tvítaka meðal raða. Lítil tafla er athuguð um leið og hún er valin, en tafla með 10 000 röðum eða
-fleiri ekki fyrr en þú ýtir á *Keyra athugunina*. Eiginleikaspjaldið sýnir valið frávik með hlutfalli þess af röðunum, og *Opna í
-Vinna* fer með þig þangað til að lagfæra það. IFC-líkan sýnir kortið *Sannprófa líkanið* og spjaldið *Bera saman útgáfur* (sjá
-[cad-bim.md](cad-bim.md)); aðrar tegundir hafa engar athuganir enn. Gervigreindarspjaldið fær fjórða ham, *Athuga*, fyrir
-ljósmyndir af skemmdum (fyrirhugað).
+Prófa gögn gegn kröfum. Tafla er prófuð gegn einföldum reglum: gerð hvers dálks og fjöldi tómra gilda (sem vantar eða innihalda
+aðeins bil) og fjöldi tvítaka meðal raða. Lítil tafla er athuguð um leið og hún er valin, en tafla með 10 000 röðum eða fleiri
+ekki fyrr en þú ýtir á *Keyra athugunina*. Eiginleikaspjaldið sýnir valið frávik með hlutfalli þess af röðunum, og *Opna í Vinna*
+fer með þig þangað til að lagfæra það. IFC-líkan sýnir kortið *Sannprófa líkanið* og spjaldið *Bera saman útgáfur* (sjá
+[cad-bim.md](cad-bim.md)); aðrar tegundir hafa engar athuganir enn. Fjórði hamur gervigreindarspjaldsins, *Athuga*, prófar líkanið
+gegn ljósmyndum af skemmdum og vistar atriðin sem töflu (sjá [cad-bim.md](cad-bim.md)). Slík tafla með atriðum fær kortið *Skýrsla
+og viðhaldsáætlun*, þar sem hnapparnir *Gera skýrslu* og *Gera viðhaldsáætlun* opna skoðunarskýrsluna og viðhaldsáætlunina undir
+Flytja út › Skjöl (sjá [dokumentmallar.md](dokumentmallar.md)).
 Kortið *Grannfræði* les veggi líkansins með *Athuga grannfræðina* (Python forritsins ræsist í fyrsta sinn) og sýnir á hverri hæð hve
 mörg herbergi veggirnir loka, hvort hæðin er lokuð, veggenda sem standa lausir og útveggina eftir áttum.
 

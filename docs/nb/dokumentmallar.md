@@ -24,6 +24,8 @@ Malen er Markdown: `#`, `##`, `###` for overskrifter, tomme linjer mellom avsnit
 nummererte lister, `**fet**`, `*kursiv*`, `` `kode` ``, `[tekst](https://…)` for lenker, `---` for en linje og tabeller med
 loddrette streker.
 
+En omvendt skråstrek foran `*`, `_`, `` ` ``, `|`, `[`, `]` eller `#` viser tegnet som det er, også i en tabellcelle.
+
 Plassholdere skrives med doble krøllparenteser (Mustache). Tall får formatet til appens språk (på norsk 1 234,5).
 
 | Plassholder | Innhold |
@@ -69,6 +71,41 @@ først i malens datasett og deretter i alle bildesamlinger, forhåndsvisningen b
 de finnes når malen er merket som kodebok (en kopi av den innebygde malen beholder det).
 
 `{{karta "datasett"}}`, `{{graf "datasett"}}`, `{{modell "datasett"}}` og `{{plan "datasett"}}` setter inn datasettets eget bilde uten et lagret diagram. Datasettet angis med navn eller kortnavn, og bredde og høyde som for `{{diagram}}`. En mal sier fra hvis datasettet mangler eller ikke kan tegnes på den måten.
+
+## Befaringsrapport og vedlikeholdsplan
+
+Funnene fra *Kontroller med AI* (se [cad-bim.md](cad-bim.md)) blir en befaringsrapport eller en vedlikeholdsplan med de innebygde
+malene **Befaringsrapport** og **Vedlikeholdsplan**. *Lag rapport* og *Lag vedlikeholdsplan* i AI-panelet, og kortet *Rapport og
+vedlikeholdsplan* i Kontroller når en tabell med funn er valgt, åpner fanen Dokumenter med tabellen valgt og malen klar; i AI-panelet
+lagres funnene som tabell først hvis de ikke allerede er lagret. Øverst står bygningens opplysninger fra modellen: bygning, prosjekt,
+tomt, etasjer, modell, fil og IFC-skjema, og bygningens id og byggeår når Pset_BuildingCommon har dem. Så kommer funnene etter
+bygningsdel, bygningens seks lag etter klimaerklæringens regler (elementets IFC-klasse, IsExternal og LoadBearing), med foto,
+tilstand, prioritet og anbefalt tiltak; innenfor en bygningsdel kommer det mest presserende først. Bygningsdelen står i kolonnen
+`byggdel` (1–6) i tabellen med funn og kan rettes under Bearbeid. Bildene følger med tabellen uten EXIF-opplysningene sine, og
+bildets posisjon kommer bare med i dokumentet hvis du selv legger til `{{plats}}`.
+
+Vedlikeholdsplanen setter et år på hvert tiltak etter regelen i malen:
+
+```
+{{#underhallsregel}}prioritet: urgent 0, high 1, medium 3, low 5; skick: critical 0, poor 1, fair 3, good 10; intervall: 5{{/underhallsregel}}
+```
+
+Året for tiltaket er befaringens år (funnets dato) pluss det laveste antallet år som prioriteten og tilstanden gir, slik at en kritisk
+tilstand går foran en lav prioritet, og neste kontroll kommer `intervall` år etter tiltaket. Nivåene skrives med koden eller ordet
+(akutt, høy, middels og lav; kritisk, dårlig, akseptabel og god). Endre tallene i en kopi av malen; taggen vises ikke i dokumentet.
+
+| Plassholder | Innhold |
+|---|---|
+| `{{#byggdelar}} … {{/byggdelar}}` | En gruppe per bygningsdel med `{{namn}}`, `{{antal}}` og funnene i `{{#fynd}} … {{/fynd}}` |
+| `{{#klasser}}`, `{{#plan}}` | Samme slags grupper per IFC-klasse og per år for tiltaket |
+| `{{#fynd}}`, `{{#tidsplan}}` | Alle funn i tabellens rekkefølge eller etter år for tiltaket |
+| `{{nr}}`, `{{titel}}`, `{{beskrivning}}`, `{{element}}`, `{{ifc_klass}}`, `{{vaning}}`, `{{byggdel}}` | Funnet og elementet |
+| `{{skick}}`, `{{prioritet}}`, `{{atgard}}`, `{{datum}}`, `{{foto}}`, `{{bild}}` | Tilstand og prioritet i ord, tiltaket, datoen, bildets navn og bildet |
+| `{{ar}}`, `{{nasta_kontroll}}` | Året for tiltaket og året for neste kontroll |
+| `{{#fakta}}`, `{{byggnad.namn}}` | Bygningens opplysninger, med `{{namn}}` og `{{varde}}` i `{{#fakta}}` |
+| `{{antal_fynd}}`, `{{besiktningsdatum}}`, `{{#per_skick}}`, `{{#per_prioritet}}` | Antall funn, befaringens datoer og antallet per tilstand og prioritet (`{{ord}}`, `{{antal}}`) |
+
+Teksten i funnene kommer med slik den står: tegn som `*`, `_` og `|` blir aldri formatering.
 
 ## Formater
 

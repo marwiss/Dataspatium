@@ -187,7 +187,10 @@ arvojen määrä (arvo puuttuu tai sisältää vain välilyöntejä) sekä rivie
 heti, kun se valitaan, ja taulukko, jossa on 10 000 riviä tai enemmän, vasta kun painat *Suorita tarkistus*. Tarkastelupaneeli
 näyttää valitun löydöksen ja sen osuuden riveistä, ja *Avaa Muokkaa-tilassa* vie sinut korjaamaan sen. IFC-malli näyttää kortin
 *Validoi malli* ja paneelin *Vertaa versioita* (katso [cad-bim.md](cad-bim.md)); muille lajeille ei ole vielä tarkistuksia.
-Tekoälypaneeli saa neljännen tilan, *Tarkista*, vaurioista otettuja valokuvia varten (suunniteltu).
+Tekoälypaneelin neljäs tila, *Tarkista*, tarkistaa mallin vaurioista otettuja valokuvia vasten ja tallentaa löydökset taulukkona
+(katso [cad-bim.md](cad-bim.md)). Tällainen löydöstaulukko saa kortin *Raportti ja kunnossapitosuunnitelma*, jonka painikkeet *Tee
+raportti* ja *Tee kunnossapitosuunnitelma* avaavat tarkastusraportin ja kunnossapitosuunnitelman kohdassa Vie › Asiakirjat (katso
+[dokumentmallar.md](dokumentmallar.md)).
 Kortti *Topologia* lukee mallin seinät painikkeella *Tarkista topologia* (sovelluksen Python käynnistyy ensimmäisellä kerralla) ja
 näyttää kerroksittain, kuinka monta huonetta seinät rajaavat, onko kerros suljettu, avoimeksi jääneet seinänpäät ja ulkoseinät
 ilmansuunnittain.

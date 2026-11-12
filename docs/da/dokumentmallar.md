@@ -24,6 +24,8 @@ Skabelonen er Markdown: `#`, `##`, `###` til overskrifter, tomme linjer mellem a
 nummererede lister, `**fed**`, `*kursiv*`, `` `kode` ``, `[tekst](https://…)` til links, `---` til en linje og tabeller med
 lodrette streger.
 
+En omvendt skråstreg foran `*`, `_`, `` ` ``, `|`, `[`, `]` eller `#` viser tegnet, som det er, også i en tabelcelle.
+
 Pladsholdere skrives med dobbelte krøllede parenteser (Mustache). Tal får formatet for appens sprog (på dansk 1.234,5).
 
 | Pladsholder | Indhold |
@@ -70,6 +72,42 @@ angivne bredde (standard højst 720 px; `hojd` kan også angives). Tagget virker
 `{{dubbletter}}`; de findes, når skabelonen er markeret som kodebog (en kopi af den indbyggede skabelon bevarer det).
 
 `{{karta "datasæt"}}`, `{{graf "datasæt"}}`, `{{modell "datasæt"}}` og `{{plan "datasæt"}}` indsætter datasættets eget billede uden et gemt diagram. Datasættet angives med navn eller kortnavn, og bredde og højde som for `{{diagram}}`. En skabelon siger til, hvis datasættet mangler eller ikke kan tegnes på den måde.
+
+## Inspektionsrapport og vedligeholdelsesplan
+
+Fundene fra *Kontrollér med AI* (se [cad-bim.md](cad-bim.md)) bliver til en inspektionsrapport eller en vedligeholdelsesplan med de
+indbyggede skabeloner **Inspektionsrapport** og **Vedligeholdelsesplan**. *Lav rapport* og *Lav vedligeholdelsesplan* i AI-panelet, og
+kortet *Rapport og vedligeholdelsesplan* i Kontrollér, når en tabel med fund er valgt, åbner fanen Dokumenter med tabellen valgt og
+skabelonen klar; i AI-panelet gemmes fundene først som tabel, hvis de ikke allerede er gemt. Øverst står bygningens oplysninger fra
+modellen: bygning, projekt, grund, etager, model, fil og IFC-skema, og bygningens id og opførelsesår, når Pset_BuildingCommon har dem.
+Derefter kommer fundene efter bygningsdel, bygningens seks lag efter klimaerklæringens regler (elementets IFC-klasse, IsExternal og
+LoadBearing), med foto, stand, prioritet og anbefalet tiltag; inden for en bygningsdel kommer det mest presserende først.
+Bygningsdelen står i kolonnen `byggdel` (1–6) i tabellen med fund og kan rettes under Bearbejd. Fotoene følger med tabellen uden
+deres EXIF-oplysninger, og fotoets position kommer kun med i dokumentet, hvis du selv tilføjer `{{plats}}`.
+
+Vedligeholdelsesplanen sætter et år på hvert tiltag efter reglen i skabelonen:
+
+```
+{{#underhallsregel}}prioritet: urgent 0, high 1, medium 3, low 5; skick: critical 0, poor 1, fair 3, good 10; intervall: 5{{/underhallsregel}}
+```
+
+Året for tiltaget er inspektionens år (fundets dato) plus det laveste antal år, som prioriteten og standen giver, så en kritisk
+stand går forud for en lav prioritet, og næste kontrol kommer `intervall` år efter tiltaget. Niveauerne skrives med koden eller
+ordet (akut, høj, middel og lav; kritisk, dårlig, acceptabel og god). Ret tallene i en kopi af skabelonen; tagget ses ikke i
+dokumentet.
+
+| Pladsholder | Indhold |
+|---|---|
+| `{{#byggdelar}} … {{/byggdelar}}` | En gruppe pr. bygningsdel med `{{namn}}`, `{{antal}}` og fundene i `{{#fynd}} … {{/fynd}}` |
+| `{{#klasser}}`, `{{#plan}}` | Samme slags grupper pr. IFC-klasse og pr. år for tiltaget |
+| `{{#fynd}}`, `{{#tidsplan}}` | Alle fund i tabellens rækkefølge eller efter år for tiltaget |
+| `{{nr}}`, `{{titel}}`, `{{beskrivning}}`, `{{element}}`, `{{ifc_klass}}`, `{{vaning}}`, `{{byggdel}}` | Fundet og dets element |
+| `{{skick}}`, `{{prioritet}}`, `{{atgard}}`, `{{datum}}`, `{{foto}}`, `{{bild}}` | Stand og prioritet i ord, tiltaget, datoen, fotoets navn og fotoet som billede |
+| `{{ar}}`, `{{nasta_kontroll}}` | Året for tiltaget og året for næste kontrol |
+| `{{#fakta}}`, `{{byggnad.namn}}` | Bygningens oplysninger, med `{{namn}}` og `{{varde}}` i `{{#fakta}}` |
+| `{{antal_fynd}}`, `{{besiktningsdatum}}`, `{{#per_skick}}`, `{{#per_prioritet}}` | Antallet af fund, inspektionens datoer og antallet pr. stand og prioritet (`{{ord}}`, `{{antal}}`) |
+
+Fundenes tekst kommer med, som den står: tegn som `*`, `_` og `|` bliver aldrig til formatering.
 
 ## Formater
 

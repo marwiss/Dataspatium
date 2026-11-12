@@ -534,6 +534,11 @@ fotots position. *Exportera som BCF* laddar ned en BCF-fil med ett ärende per f
 projekt efter en bekräftelse; där blir fotot ett dokument i projektet, eller en egen viewpoint med bara fotot när du inte får lägga till dokument, och ärendena knyts till modellfilen när servern tillåter det. Under *Fler alternativ* ger du ärendena status, tilldelad, ansvarig part, skede och förfallodatum, på en server ur projektets listor. Fotona skickas till leverantören tillsammans med frågan efter samtycket för leverantörens värd, och de
 lämnar datorn igen bara när du själv skapar ärenden på servern.
 
+Fyndtabellen har också elementets IFC-klass, namn och våning och dess byggdel (`byggdel`, ett av byggnadens sex skikt), och den
+bär fotona utan EXIF och byggnadens uppgifter. *Gör rapport* och *Gör underhållsplan* sparar fynden som tabell om de inte redan är
+sparade och öppnar besiktningsrapporten eller underhållsplanen med dem under Exportera › Dokument, i Word, PDF och de andra formaten
+(se [dokumentmallar.md](dokumentmallar.md)).
+
 ## Fråga AI om modellen
 
 Knappen *Fråga AI* i modellvyn öppnar en panel i inspektören där du ställer en fråga om den öppna IFC-modellen, till exempel "vilka dörrar

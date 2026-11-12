@@ -180,12 +180,14 @@ A selection from Search is marked in the 3D model, and the camera turns to it.
 
 ## Check
 
-Try data against requirements. A table is tried against simple rules: every column's type and number of empty values (missing
-or only spaces) and the number of duplicate rows. A small table is checked as soon as it is chosen, a table with 10,000 rows or
-more only when you press *Run the check*. The inspector shows the chosen finding with its share of the rows, and *Open in
-Process* takes you there to correct it. An IFC model shows the card *Validate the model* and the panel *Compare versions* (see
-[cad-bim.md](cad-bim.md)); other kinds have no checks yet. The AI panel will get a fourth mode, *Check*, for photos of damage
-(planned).
+Try data against requirements. A table is tried against simple rules: every column's type and number of empty values (missing or
+only spaces) and the number of duplicate rows. A small table is checked as soon as it is chosen, a table with 10,000 rows or more
+only when you press *Run the check*. The inspector shows the chosen finding with its share of the rows, and *Open in Process*
+takes you there to correct it. An IFC model shows the card *Validate the model* and the panel *Compare versions* (see
+[cad-bim.md](cad-bim.md)); other kinds have no checks yet. The AI panel's fourth mode, *Check*, tries the model against photos of
+damage and saves the findings as a table (see [cad-bim.md](cad-bim.md)). Such a table of findings gets the card *Report and
+maintenance plan*, whose buttons *Make a report* and *Make a maintenance plan* open the inspection report and the maintenance plan
+under Export › Documents (see [dokumentmallar.md](dokumentmallar.md)).
 The card *Topology* reads the model's walls with *Check the topology* (the app's Python starts the first time) and shows per storey how
 many rooms the walls enclose, whether the storey is closed, wall ends left open and the external walls per compass direction.
 

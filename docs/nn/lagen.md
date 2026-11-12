@@ -177,12 +177,14 @@ Eit utval frå Søk blir merkt i 3D-modellen, og kameraet blir retta mot det.
 
 ## Kontroller
 
-Prøv data mot krav. Ein tabell blir prøvd mot enkle reglar: typen og talet på tomme verdiar (manglande eller berre mellomrom)
-for kvar kolonne og talet på duplikat blant radene. Ein liten tabell blir kontrollert så snart han blir vald, ein tabell med
-10 000 rader eller fleire først når du trykkjer på *Køyr kontrollen*. Inspektøren viser det valde funnet med delen av radene,
-og *Opne i Bearbeid* tek deg dit for å rette det. Ein IFC-modell viser kortet *Valider modellen* og panelet *Samanlikn
-versjonar* (sjå [cad-bim.md](cad-bim.md)); andre slag har ingen kontrollar enno. AI-panelet får ein fjerde modus,
-*Kontroller*, for foto av skadar (planlagt).
+Prøv data mot krav. Ein tabell blir prøvd mot enkle reglar: typen og talet på tomme verdiar (manglande eller berre mellomrom) for
+kvar kolonne og talet på duplikat blant radene. Ein liten tabell blir kontrollert så snart han blir vald, ein tabell med 10 000
+rader eller fleire først når du trykkjer på *Køyr kontrollen*. Inspektøren viser det valde funnet med delen av radene, og *Opne i
+Bearbeid* tek deg dit for å rette det. Ein IFC-modell viser kortet *Valider modellen* og panelet *Samanlikn versjonar* (sjå
+[cad-bim.md](cad-bim.md)); andre slag har ingen kontrollar enno. Den fjerde modusen i AI-panelet, *Kontroller*, prøver modellen
+mot foto av skadar og lagrar funna som tabell (sjå [cad-bim.md](cad-bim.md)). Ein slik tabell med funn får kortet *Rapport og
+vedlikehaldsplan*, der knappane *Lag rapport* og *Lag vedlikehaldsplan* opnar synfaringsrapporten og vedlikehaldsplanen under
+Eksporter › Dokument (sjå [dokumentmallar.md](dokumentmallar.md)).
 Kortet *Topologi* les veggane i modellen med *Kontroller topologien* (Python i appen startar første gongen) og viser per etasje kor
 mange rom veggane lukkar, om etasjen er lukka, veggendar som står lause, og ytterveggane per himmelretning.
 

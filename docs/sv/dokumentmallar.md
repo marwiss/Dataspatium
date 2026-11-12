@@ -22,6 +22,8 @@ Mallen är Markdown: `#`, `##`, `###` för rubriker, tomma rader mellan stycken,
 numrerade listor, `**fet**`, `*kursiv*`, `` `kod` ``, `[text](https://…)` för länkar, `---` för en linje och tabeller
 med lodstreck.
 
+Ett omvänt snedstreck före `*`, `_`, `` ` ``, `|`, `[`, `]` eller `#` visar tecknet som det är, också i en tabellcell.
+
 Platshållare skrivs med dubbla klammerparenteser (Mustache). Tal får svenskt format med mellanslag som
 tusentalsavgränsare och decimalkomma.
 
@@ -70,6 +72,41 @@ kolumn samt `{{dubbletter}}`; de finns när mallen är markerad som kodbok (en k
 det).
 
 `{{karta "datamängd"}}`, `{{graf "datamängd"}}`, `{{modell "datamängd"}}` och `{{plan "datamängd"}}` lägger in datamängdens egen bild utan att du behöver spara ett diagram. Datamängden anges med namn eller kortnamn, och bredd och höjd anges som för `{{diagram}}`. En mall säger till om datamängden saknas eller inte kan ritas på det sättet.
+
+## Besiktningsrapport och underhållsplan
+
+Fynden från *Kontrollera med AI* (se [cad-bim.md](cad-bim.md)) blir en besiktningsrapport eller en underhållsplan med de inbyggda
+mallarna **Besiktningsrapport** och **Underhållsplan**. *Gör rapport* och *Gör underhållsplan* i AI-panelen, och kortet *Rapport och
+underhållsplan* i Kontrollera när en fyndtabell är vald, öppnar fliken Dokument med tabellen vald och mallen klar; i AI-panelen sparas
+fynden som tabell först om de inte redan är sparade. Överst står byggnadens uppgifter ur modellen: byggnad, projekt, plats, våningar,
+modell, fil och IFC-schema, och byggnadens id och byggår när Pset_BuildingCommon har dem. Sedan kommer fynden per byggdel, byggnadens
+sex skikt efter klimatdeklarationens regler (elementets IFC-klass, IsExternal och LoadBearing), med foto, skick, prioritet och
+rekommenderad åtgärd; inom en byggdel kommer det mest brådskande först. Byggdelen står i fyndtabellens kolumn `byggdel` (1–6) och kan
+rättas under Bearbeta. Fotona följer med fyndtabellen utan sina EXIF-uppgifter, och fotots position kommer med i dokumentet bara om du
+själv lägger till `{{plats}}`.
+
+Underhållsplanen sätter ett år på varje åtgärd efter regeln i mallen:
+
+```
+{{#underhallsregel}}prioritet: urgent 0, high 1, medium 3, low 5; skick: critical 0, poor 1, fair 3, good 10; intervall: 5{{/underhallsregel}}
+```
+
+Åtgärdsåret är besiktningens år (fyndets datum) plus det lägsta antalet år som prioriteten och skicket ger, så att ett kritiskt
+skick går före en låg prioritet, och nästa kontroll är `intervall` år efter åtgärden. Nivåerna skrivs med koden eller ordet (akut,
+hög, medel och låg; kritiskt, dåligt, godtagbart och bra). Ändra talen i en kopia av mallen; taggen syns inte i dokumentet.
+
+| Platshållare | Innehåll |
+|---|---|
+| `{{#byggdelar}} … {{/byggdelar}}` | En grupp per byggdel med `{{namn}}`, `{{antal}}` och fynden i `{{#fynd}} … {{/fynd}}` |
+| `{{#klasser}}`, `{{#plan}}` | Samma slags grupper per IFC-klass och per åtgärdsår |
+| `{{#fynd}}`, `{{#tidsplan}}` | Alla fynd i tabellens ordning eller efter åtgärdsår |
+| `{{nr}}`, `{{titel}}`, `{{beskrivning}}`, `{{element}}`, `{{ifc_klass}}`, `{{vaning}}`, `{{byggdel}}` | Fyndet och dess element |
+| `{{skick}}`, `{{prioritet}}`, `{{atgard}}`, `{{datum}}`, `{{foto}}`, `{{bild}}` | Skick och prioritet i ord, åtgärden, datumet, fotots namn och fotot som bild |
+| `{{ar}}`, `{{nasta_kontroll}}` | Åtgärdsåret och året för nästa kontroll |
+| `{{#fakta}}`, `{{byggnad.namn}}` | Byggnadens uppgifter, med `{{namn}}` och `{{varde}}` i `{{#fakta}}` |
+| `{{antal_fynd}}`, `{{besiktningsdatum}}`, `{{#per_skick}}`, `{{#per_prioritet}}` | Antalet fynd, besiktningens datum och antalet per skick och prioritet (`{{ord}}`, `{{antal}}`) |
+
+Fyndens text kommer med som den står: tecken som `*`, `_` och `|` blir aldrig formatering.
 
 ## Format
 
