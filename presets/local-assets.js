@@ -42,6 +42,12 @@ Dataspatium.assets.addEntries({
   "size": 6051,
   "library": "dataspatium"
  },
+ "presets/api/boverket-klimatdatabas.api.json": {
+  "file": "presets/api/boverket-klimatdatabas.api.json.js",
+  "encoding": "text",
+  "size": 14088,
+  "library": "dataspatium"
+ },
  "presets/api/boverket-planbestammelsekatalogen.api.json": {
   "file": "presets/api/boverket-planbestammelsekatalogen.api.json.js",
   "encoding": "text",

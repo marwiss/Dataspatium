@@ -203,6 +203,7 @@
     'src/api/graph-source.js',
     'src/api/families/geodata.js',
     'src/api/runner.js',
+    'src/api/klimatdatabas.js',
     'src/api/bridge.js',
     // Visualisation
     'src/viz/locale.js',
@@ -222,6 +223,7 @@
     'src/engines/ocr/ocr-engine.js',
     'src/viz/model-draw.js',
     'src/analysis/model.js',
+    'src/analysis/climate.js',
     'src/analysis/geo.js',
     'src/analysis/graph.js',
     'src/analysis/cypher.js',
@@ -309,6 +311,7 @@
     'src/ui/analysis/geo-panel.js',
     'src/ui/analysis/plan-panel.js',
     'src/ui/analysis/graph-panel.js',
+    'src/ui/analysis/climate-panel.js',
     'src/ui/analysis/model-panel.js',
     'src/ui/bearbeta/document-view.js',
     'src/ui/bearbeta/gallery-view.js',

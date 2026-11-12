@@ -1,0 +1,128 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "boverket-klimatdatabas",
+  "name": "Boverkets klimatdatabas",
+  "publisher": "Boverket",
+  "description": "Generiska klimatdata för drygt 200 byggprodukter: klimatpåverkan (GWP-GHG) för A1–A3 som typiskt och konservativt värde, A4 och A5 (spill), med omräkning till volym eller area och spillfaktor. Öppet API utan nyckel; ange Boverket och klimatdatabasen som källa. Verktyget Klimatdeklaration för modeller i Analysera hämtar samma data.",
+  "docs": "https://www.boverket.se/sv/om-boverket/oppna-data/boverkets-klimatdatabas/",
+  "license": { "name": "Öppna data enligt Boverkets användarvillkor (dnr 5913/2024): fri användning med Boverket och klimatdatabasen angivna som källa", "url": "https://www.boverket.se/contentassets/eb39a37752af4f74a61ccf92ac21cd5b/anvandarvillkor-for-oppna-data-for-boverkets-klimatdatabas.pdf" },
+  "level": 1,
+  "country": "SE",
+  "baseUrl": "https://api.boverket.se/klimatdatabas",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 5, "perSeconds": 1 },
+  "endpoints": [
+    {
+      "id": "resurser",
+      "name": "Resurser",
+      "description": "Alla byggprodukter i en version av databasen: namn på svenska och engelska, enhet, omräkning till volym eller area, spillfaktor, kategori och klimatpåverkan per modul.",
+      "method": "GET",
+      "path": "/api/Klimat/v2/GetAllResources/{version}/{culture}/json",
+      "params": [
+        { "name": "version", "in": "path", "label": "Version", "type": "string", "required": true, "default": "02.07.000", "optionsFrom": { "endpoint": "versioner", "value": "value" } },
+        { "name": "culture", "in": "path", "label": "Språk", "type": "enum", "required": true, "default": "sv", "options": [{ "value": "sv", "label": "Svenska" }, { "value": "en", "label": "Engelska" }] }
+      ],
+      "response": { "format": "json", "path": "Resources", "drop": ["TechnologyDescriptionAndIncludedProcesses", "AnnualSupplyOrProductionVolume", "GeographicalRepresentativenessDescription", "TimeRepresentativenessDescription", "RefServiceLifeNormalComment", "ComparativeProperty", "A4ValueBackground", "TransportItems"] },
+      "dataset": { "name": "Boverkets klimatdatabas {version}" }
+    },
+    {
+      "id": "senaste-version",
+      "name": "Senaste version",
+      "description": "Den version av databasen som gäller nu.",
+      "method": "GET",
+      "path": "/api/Klimat/v2/GetLatestVersion/{culture}/json",
+      "params": [
+        { "name": "culture", "in": "path", "label": "Språk", "type": "enum", "required": true, "default": "sv", "options": [{ "value": "sv", "label": "Svenska" }, { "value": "en", "label": "Engelska" }] }
+      ],
+      "response": { "format": "json" },
+      "dataset": { "name": "Klimatdatabasen: senaste version" }
+    },
+    {
+      "id": "versioner",
+      "name": "Versioner",
+      "description": "Alla publicerade versioner av databasen.",
+      "method": "GET",
+      "path": "/api/Klimat/v2/GetAllVersions/{culture}/json",
+      "params": [
+        { "name": "culture", "in": "path", "label": "Språk", "type": "enum", "required": true, "default": "sv", "options": [{ "value": "sv", "label": "Svenska" }, { "value": "en", "label": "Engelska" }] }
+      ],
+      "response": { "format": "json" },
+      "dataset": { "name": "Klimatdatabasen: versioner" }
+    }
+  ],
+  "notes": "Hela databasen är cirka 0,9 MB i ett svar. Klimatdata för byggprodukter är konservativt satta, cirka 25 procent högre än genomsnittet, enligt Boverket. Kontrollerad för CORS (även från en lokalt öppnad fil) i november 2026.",
+  "i18n": {
+    "en": {
+      "name": "Boverket climate database",
+      "publisher": "Boverket (Swedish National Board of Housing, Building and Planning)",
+      "description": "Generic climate data for some 200 building products: climate impact (GWP-GHG) for A1–A3 as a typical and a conservative value, A4 and A5 (waste), with conversion to volume or area and a waste factor. Open API without a key; name Boverket and the climate database as the source. The tool Climate declaration for models in Analyse fetches the same data.",
+      "notes": "The whole database is about 0.9 MB in one answer. According to Boverket the climate data for building products are set conservatively, about 25 per cent above the average. Checked for CORS (also from a file opened locally) in November 2026.",
+      "endpoints": {
+        "resurser": { "name": "Resources", "description": "Every building product in one version of the database: names in Swedish and English, unit, conversion to volume or area, waste factor, category and climate impact per module.", "params": { "version": { "label": "Version" }, "culture": { "label": "Language", "options": { "sv": "Swedish", "en": "English" } } } },
+        "senaste-version": { "name": "Latest version", "description": "The version of the database that applies now.", "params": { "culture": { "label": "Language", "options": { "sv": "Swedish", "en": "English" } } } },
+        "versioner": { "name": "Versions", "description": "Every published version of the database.", "params": { "culture": { "label": "Language", "options": { "sv": "Swedish", "en": "English" } } } }
+      },
+      "dataset": { "resurser": "Boverket climate database {version}", "senaste-version": "Climate database: latest version", "versioner": "Climate database: versions" }
+    },
+    "da": {
+      "name": "Boverkets klimadatabase",
+      "publisher": "Boverket (Sveriges bolig-, bygge- og planmyndighed)",
+      "description": "Generiske klimadata for godt 200 byggevarer: klimapåvirkning (GWP-GHG) for A1–A3 som typisk og konservativ værdi, A4 og A5 (spild), med omregning til volumen eller areal og spildfaktor. Åbent API uden nøgle; angiv Boverket og klimadatabasen som kilde. Værktøjet Klimaerklæring for modeller i Analysér henter de samme data.",
+      "notes": "Hele databasen er omkring 0,9 MB i ét svar. Ifølge Boverket er klimadata for byggevarer sat konservativt, omkring 25 procent over gennemsnittet. Kontrolleret for CORS (også fra en lokalt åbnet fil) i november 2026.",
+      "endpoints": {
+        "resurser": { "name": "Ressourcer", "description": "Alle byggevarer i en version af databasen: navne på svensk og engelsk, enhed, omregning til volumen eller areal, spildfaktor, kategori og klimapåvirkning pr. modul.", "params": { "version": { "label": "Version" }, "culture": { "label": "Sprog", "options": { "sv": "Svensk", "en": "Engelsk" } } } },
+        "senaste-version": { "name": "Seneste version", "description": "Den version af databasen, der gælder nu.", "params": { "culture": { "label": "Sprog", "options": { "sv": "Svensk", "en": "Engelsk" } } } },
+        "versioner": { "name": "Versioner", "description": "Alle offentliggjorte versioner af databasen.", "params": { "culture": { "label": "Sprog", "options": { "sv": "Svensk", "en": "Engelsk" } } } }
+      },
+      "dataset": { "resurser": "Boverkets klimadatabase {version}", "senaste-version": "Klimadatabasen: seneste version", "versioner": "Klimadatabasen: versioner" }
+    },
+    "nb": {
+      "name": "Boverkets klimadatabase",
+      "publisher": "Boverket (Sveriges bolig-, bygg- og planmyndighet)",
+      "description": "Generiske klimadata for drøyt 200 byggevarer: klimapåvirkning (GWP-GHG) for A1–A3 som typisk og konservativ verdi, A4 og A5 (svinn), med omregning til volum eller areal og svinnfaktor. Åpent API uten nøkkel; oppgi Boverket og klimadatabasen som kilde. Verktøyet Klimaerklæring for modeller i Analyser henter de samme dataene.",
+      "notes": "Hele databasen er omtrent 0,9 MB i ett svar. Ifølge Boverket er klimadata for byggevarer satt konservativt, omtrent 25 prosent over gjennomsnittet. Kontrollert for CORS (også fra en lokalt åpnet fil) i november 2026.",
+      "endpoints": {
+        "resurser": { "name": "Ressurser", "description": "Alle byggevarer i en versjon av databasen: navn på svensk og engelsk, enhet, omregning til volum eller areal, svinnfaktor, kategori og klimapåvirkning per modul.", "params": { "version": { "label": "Versjon" }, "culture": { "label": "Språk", "options": { "sv": "Svensk", "en": "Engelsk" } } } },
+        "senaste-version": { "name": "Siste versjon", "description": "Den versjonen av databasen som gjelder nå.", "params": { "culture": { "label": "Språk", "options": { "sv": "Svensk", "en": "Engelsk" } } } },
+        "versioner": { "name": "Versjoner", "description": "Alle publiserte versjoner av databasen.", "params": { "culture": { "label": "Språk", "options": { "sv": "Svensk", "en": "Engelsk" } } } }
+      },
+      "dataset": { "resurser": "Boverkets klimadatabase {version}", "senaste-version": "Klimadatabasen: siste versjon", "versioner": "Klimadatabasen: versjoner" }
+    },
+    "nn": {
+      "name": "Boverkets klimadatabase",
+      "publisher": "Boverket (Sveriges bustad-, bygg- og planstyresmakt)",
+      "description": "Generiske klimadata for drygt 200 byggjevarer: klimapåverknad (GWP-GHG) for A1–A3 som typisk og konservativ verdi, A4 og A5 (svinn), med omrekning til volum eller areal og svinnfaktor. Ope API utan nøkkel; oppgi Boverket og klimadatabasen som kjelde. Verktøyet Klimaerklæring for modellar i Analyser hentar dei same dataa.",
+      "notes": "Heile databasen er om lag 0,9 MB i eitt svar. Ifølgje Boverket er klimadata for byggjevarer sette konservativt, om lag 25 prosent over gjennomsnittet. Kontrollert for CORS (også frå ei lokalt opna fil) i november 2026.",
+      "endpoints": {
+        "resurser": { "name": "Ressursar", "description": "Alle byggjevarer i ein versjon av databasen: namn på svensk og engelsk, eining, omrekning til volum eller areal, svinnfaktor, kategori og klimapåverknad per modul.", "params": { "version": { "label": "Versjon" }, "culture": { "label": "Språk", "options": { "sv": "Svensk", "en": "Engelsk" } } } },
+        "senaste-version": { "name": "Siste versjon", "description": "Den versjonen av databasen som gjeld no.", "params": { "culture": { "label": "Språk", "options": { "sv": "Svensk", "en": "Engelsk" } } } },
+        "versioner": { "name": "Versjonar", "description": "Alle publiserte versjonar av databasen.", "params": { "culture": { "label": "Språk", "options": { "sv": "Svensk", "en": "Engelsk" } } } }
+      },
+      "dataset": { "resurser": "Boverkets klimadatabase {version}", "senaste-version": "Klimadatabasen: siste versjon", "versioner": "Klimadatabasen: versjonar" }
+    },
+    "fi": {
+      "name": "Boverket: ilmastotietokanta",
+      "publisher": "Boverket (Ruotsin asunto-, rakennus- ja suunnitteluvirasto)",
+      "description": "Yleiset ilmastotiedot runsaalle 200 rakennustuotteelle: ilmastovaikutus (GWP-GHG) vaiheille A1–A3 tyypillisenä ja varovaisena arvona, A4 ja A5 (hukka), muunnos tilavuuteen tai pinta-alaan ja hukkakerroin. Avoin API ilman avainta; mainitse lähteenä Boverket ja ilmastotietokanta. Mallien työkalu Ilmastoselvitys Analysoi-tilassa noutaa samat tiedot.",
+      "notes": "Koko tietokanta on noin 0,9 MB yhtenä vastauksena. Boverketin mukaan rakennustuotteiden ilmastotiedot on asetettu varovaisesti, noin 25 prosenttia keskiarvon yläpuolelle. CORS tarkistettu (myös paikallisesti avatusta tiedostosta) marraskuussa 2026.",
+      "endpoints": {
+        "resurser": { "name": "Resurssit", "description": "Kaikki tietokannan version rakennustuotteet: nimet ruotsiksi ja englanniksi, yksikkö, muunnos tilavuuteen tai pinta-alaan, hukkakerroin, luokka ja ilmastovaikutus moduuleittain.", "params": { "version": { "label": "Versio" }, "culture": { "label": "Kieli", "options": { "sv": "Ruotsi", "en": "Englanti" } } } },
+        "senaste-version": { "name": "Uusin versio", "description": "Tietokannan nyt voimassa oleva versio.", "params": { "culture": { "label": "Kieli", "options": { "sv": "Ruotsi", "en": "Englanti" } } } },
+        "versioner": { "name": "Versiot", "description": "Kaikki tietokannan julkaistut versiot.", "params": { "culture": { "label": "Kieli", "options": { "sv": "Ruotsi", "en": "Englanti" } } } }
+      },
+      "dataset": { "resurser": "Boverketin ilmastotietokanta {version}", "senaste-version": "Ilmastotietokanta: uusin versio", "versioner": "Ilmastotietokanta: versiot" }
+    },
+    "is": {
+      "name": "Boverket: loftslagsgagnagrunnur",
+      "publisher": "Boverket (Húsnæðis- og skipulagsstofnun Svíþjóðar)",
+      "description": "Almenn loftslagsgögn fyrir rúmlega 200 byggingarvörur: loftslagsáhrif (GWP-GHG) fyrir A1–A3 sem dæmigert og varfærið gildi, A4 og A5 (rýrnun), með umreikningi í rúmmál eða flatarmál og rýrnunarstuðli. Opið API án lykils; tilgreindu Boverket og loftslagsgagnagrunninn sem heimild. Tólið Loftslagsyfirlýsing fyrir líkön í Greina sækir sömu gögn.",
+      "notes": "Allur gagnagrunnurinn er um 0,9 MB í einu svari. Samkvæmt Boverket eru loftslagsgögn byggingarvara sett varfærið, um 25 prósentum yfir meðaltali. Athugað fyrir CORS (líka úr skrá sem er opnuð staðbundið) í nóvember 2026.",
+      "endpoints": {
+        "resurser": { "name": "Auðlindir", "description": "Allar byggingarvörur í einni útgáfu gagnagrunnsins: heiti á sænsku og ensku, eining, umreikningur í rúmmál eða flatarmál, rýrnunarstuðull, flokkur og loftslagsáhrif eftir einingu.", "params": { "version": { "label": "Útgáfa" }, "culture": { "label": "Tungumál", "options": { "sv": "Sænska", "en": "Enska" } } } },
+        "senaste-version": { "name": "Nýjasta útgáfa", "description": "Sú útgáfa gagnagrunnsins sem gildir nú.", "params": { "culture": { "label": "Tungumál", "options": { "sv": "Sænska", "en": "Enska" } } } },
+        "versioner": { "name": "Útgáfur", "description": "Allar útgefnar útgáfur gagnagrunnsins.", "params": { "culture": { "label": "Tungumál", "options": { "sv": "Sænska", "en": "Enska" } } } }
+      },
+      "dataset": { "resurser": "Loftslagsgagnagrunnur Boverket {version}", "senaste-version": "Loftslagsgagnagrunnur: nýjasta útgáfa", "versioner": "Loftslagsgagnagrunnur: útgáfur" }
+    }
+  }
+}
