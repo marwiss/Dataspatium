@@ -183,6 +183,11 @@ monelle rakennusosalle (`spatial_products`) ja kuinka monta epäonnistui (`spati
 ajanut laskennan, joten kysele ehdolla `bbox_centre IS NOT NULL`. Esimerkki *Rakennusosat rakennusosan lähellä* Neo4j-lähteessä
 luettelee sen, mikä on 1,2 m:n sisällä rakennusosan keskipisteestä, funktiolla `point.distance`, samoin Neo4j:ssä ja Memgraphissa.
 
+Palvelin kertoo kyvykkyysasiakirjassaan, mikä tietokanta säilyttää verkon (`graph_store`: `neo4j` tai `memgraph`, myöhemmin `grafeo`
+tai `postgresql`). Muussa tietokannassa kuin Neo4j:ssä ja Memgraphissa, kuten Grafeossa, laatikot ovat lukulistoja eivätkä pisteitä:
+silloin kortti IFC-LPG jättää pois esimerkit, jotka tarvitsevat pisteitä, kuten *Rakennusosat rakennusosan lähellä*, ja laatikko
+näkyy silti muodossa `x y z`, aivan kuten piste.
+
 ## Lisää työkaluja Verkko-välilehdellä
 
 - **PageRank** (vaimennus 0,85), **Yhteisöt** (tunnisteiden leviäminen, numeroitu koon mukaan) ja **Keskeisyys**

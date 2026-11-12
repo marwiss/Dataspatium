@@ -178,6 +178,11 @@ marga byggingarhluta (`spatial_products`) og hve margir mistókust (`spatial_fai
 keyrt útreikninginn, svo spurðu með `bbox_centre IS NOT NULL`. Dæmið *Byggingarhlutar nálægt byggingarhluta* í Neo4j-uppsprettunni
 telur upp það sem liggur innan 1,2 m frá miðju byggingarhluta með `point.distance`, eins í Neo4j og Memgraph.
 
+Þjónninn segir í getuskjali sínu hvaða gagnagrunnur geymir netið (`graph_store`: `neo4j` eða `memgraph`, síðar `grafeo` eða
+`postgresql`). Í öðrum gagnagrunni en Neo4j og Memgraph, eins og Grafeo, eru kassarnir listar af tölum en ekki punktar: þá sleppir
+spjaldið IFC-LPG dæmunum sem þurfa punkta, eins og *Byggingarhlutar nálægt byggingarhluta*, og kassi birtist samt sem `x y z`,
+alveg eins og punktur.
+
 ## Fleiri tól í flipanum Net
 
 - **PageRank** (deyfing 0,85), **Samfélög** (merkimiðadreifing, númeruð eftir stærð) og **Miðlægni** (harmónísk nálægð
