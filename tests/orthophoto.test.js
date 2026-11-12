@@ -58,16 +58,19 @@
 
   test('orthophoto: the presets parse and carry an open licence, an attribution, a source in Web Mercator and, where a key is asked, its parameter and sign-up page', async (assert) => {
     const list = await orthophotos.list();
-    assert.deepEqual(list.map((b) => b.id), ['ortho-dk', 'ortho-fi', 'ortho-is'], 'Denmark, Finland and Iceland');
+    assert.deepEqual(list.map((b) => b.id), ['ortho-dk', 'ortho-fi', 'ortho-is', 'ortho-se'], 'Denmark, Finland, Iceland and Sweden');
     for (const b of list) {
       assert.ok(/^CC (BY 4\.0|0)/.test(b.license.name) && b.license.url.startsWith('https://creativecommons.org/'), b.id + ': an open licence: ' + b.license.name);
       assert.ok(b.attribution.includes(b.publisher), b.id + ': the attribution names the provider: ' + b.attribution);
-      assert.ok(/^https:\/\//.test(orthophotos.sourceFor(b, 3857).url), b.id + ': a source in Web Mercator');
+      // Sweden's is read from Lantmäteriet's files per view (tests/orthophoto-cog.test.js), not from tiles.
+      assert.ok(orthophotos.isView(b) ? b.stac.connector === 'lantmateriet-stac' && /^https:\/\//.test(b.stac.search) : /^https:\/\//.test(orthophotos.sourceFor(b, 3857).url), b.id + ': a source in Web Mercator');
       assert.ok(Array.isArray(b.bounds) && b.bounds.length === 4 && b.terms && b.docs, b.id + ': area, terms and documentation');
       assert.ok(t('map.basemap.' + b.id) !== 'map.basemap.' + b.id, b.id + ': a label');
     }
-    const is = list.find((b) => b.id === 'ortho-is'); const dk = list.find((b) => b.id === 'ortho-dk'); const fi = list.find((b) => b.id === 'ortho-fi');
+    const is = list.find((b) => b.id === 'ortho-is'); const dk = list.find((b) => b.id === 'ortho-dk'); const fi = list.find((b) => b.id === 'ortho-fi'); const se = list.find((b) => b.id === 'ortho-se');
     assert.ok(!is.key && dk.key.param === 'apikey' && fi.key.param === 'api-key', 'Iceland needs no key; Denmark and Finland name their parameter');
+    assert.ok(se.key.connector === 'lantmateriet-stac' && se.key.signupUrl.includes('geotorget.lantmateriet.se') && se.attribution === 'Ortofoto © Lantmäteriet', 'Sweden: the Geotorget key of the STAC connector');
+    assert.deepEqual(orthophotos.grids(se).sort((x, y) => x - y), [3006, 3857], 'Sweden in Web Mercator and SWEREF 99 TM');
     assert.ok(dk.key.signupUrl.includes('datafordeler.dk') && fi.key.signupUrl.includes('maanmittauslaitos.fi'), 'the sign-up pages');
     assert.deepEqual(orthophotos.grids(is).sort((x, y) => x - y), [3057, 3857], 'Iceland also in ISN93');
     assert.deepEqual(orthophotos.grids(dk).sort((x, y) => x - y), [3857, 25832], 'Denmark also in UTM 32N');
@@ -173,12 +176,13 @@
     try {
       await withConsent(() => { throw new Error('the consent must not be asked'); }, async (asked) => {
         const values = async (where) => (await choice.options(where)).map((o) => o.value);
-        assert.deepEqual(await values(), ['ortho-dk', 'ortho-fi', 'ortho-is'], 'all in Web Mercator');
+        assert.deepEqual(await values(), ['ortho-dk', 'ortho-fi', 'ortho-is', 'ortho-se'], 'all in Web Mercator');
         assert.deepEqual(await values({ grid: 3057 }), ['ortho-is'], 'ISN93');
         assert.deepEqual(await values({ grid: 25832 }), ['ortho-dk'], 'UTM 32N');
-        assert.deepEqual(await values({ grid: 3006 }), [], 'none in SWEREF 99 TM');
-        assert.deepEqual(await values({ box: { minX: 12.5, minY: 55.6, maxX: 12.6, maxY: 55.7 } }), ['ortho-dk'], 'a place in Copenhagen');
-        assert.deepEqual(await values({ box: { minX: 18.0, minY: 59.3, maxX: 18.1, maxY: 59.4 } }), [], 'none in Stockholm');
+        assert.deepEqual(await values({ grid: 3006 }), ['ortho-se'], 'Sweden\'s in SWEREF 99 TM');
+        assert.deepEqual(await values({ box: { minX: 12.5, minY: 55.6, maxX: 12.6, maxY: 55.7 } }), ['ortho-dk'], 'a place in Copenhagen: not Sweden\'s, by its outline');
+        assert.deepEqual(await values({ box: { minX: 18.0, minY: 59.3, maxX: 18.1, maxY: 59.4 } }), ['ortho-se'], 'Stockholm');
+        assert.deepEqual(await values({ box: { minX: 10.7, minY: 59.9, maxX: 10.8, maxY: 59.95 } }), [], 'none in Oslo');
         const labels = (await choice.options()).map((o) => o.label);
         assert.ok(labels.includes(t('map.basemap.ortho-is')), labels.join(', '));
         assert.equal(await choice.ensure('ortho-is'), true, 'a keyless orthophoto is ready without a dialog');
@@ -192,7 +196,7 @@
       try {
         for (const code of i18n.LANGUAGES.map((l) => l.code)) {
           await i18n.loadLanguage(code); i18n.setLanguage(code, { persist: false });
-          for (const key of ['map.basemap.ortho-dk', 'map.basemap.ortho-fi', 'map.basemap.ortho-is', 'map.site', 'map.site.ortho.none', 'map.basemap.key.help']) assert.ok(t(key) !== key, code + ': ' + key);
+          for (const key of ['map.basemap.ortho-dk', 'map.basemap.ortho-fi', 'map.basemap.ortho-is', 'map.basemap.ortho-se', 'map.site', 'map.site.ortho.none', 'map.basemap.key.help', 'ortho.se.key.help', 'ortho.se.load', 'ortho.se.load.hint', 'ortho.se.idle', 'ortho.se.loading', 'ortho.se.shown', 'ortho.se.processed', 'ortho.se.denied', 'ortho.se.err.none', 'ortho.se.err.outside', 'ortho.se.err.large', 'ortho.se.err.file']) assert.ok(t(key) !== key, code + ': ' + key);
         }
       } finally { i18n.setLanguage(before, { persist: false }); }
     } finally { el.remove(); }
@@ -203,7 +207,7 @@
     const model = await datasets.create({ name: 'Ny byggnad (prov)', columns: [{ name: 'id', type: 'integer' }], rows: [[1]] });
     created.push(model.id);
     const iceland = await footprint('Tomt Egilsstaðir', -14.4035, 65.2653);
-    const sweden = await footprint('Tomt Stockholm', 18.0686, 59.3293);
+    const norway = await footprint('Tomt Oslo', 10.7522, 59.9139);
     const made = [];
     const panel = D.require('ui/bearbeta/ai-panel').create({ shell: { log() {} } }, { datasetId: model.id, mode: 'build', tileFactory: (url, opts) => { made.push({ url, opts }); return { addTo: () => {} }; } });
     document.body.appendChild(panel.el);
@@ -227,11 +231,11 @@
         const kept = panel.site.handle;
         panel.setMode('build');
         assert.ok(panel.el.querySelector('[data-site-map]') === details && panel.site.handle === kept, 'the map survives the panel\'s drawing');
-        // A place in Sweden: no open orthophoto, and the note says why.
-        panel.state.factsFrom = sweden.id;
+        // A place in Norway: no open orthophoto, and the note says why (Sweden's is in tests/orthophoto-cog.test.js).
+        panel.state.factsFrom = norway.id;
         panel.setMode('build');
-        await waitFor(() => panel.site.state.datasetId === sweden.id && panel.site.handle && panel.site.handle !== kept && /\S/.test(panel.el.querySelector('[data-site-map-note]').textContent), 8000, 'the Swedish place');
-        assert.deepEqual(/** @type {any} */ (panel.el.querySelector('[data-site-map-basemap]')).options.map((o) => o.value), ['none', 'osm'], 'no orthophoto in Stockholm');
+        await waitFor(() => panel.site.state.datasetId === norway.id && panel.site.handle && panel.site.handle !== kept && /\S/.test(panel.el.querySelector('[data-site-map-note]').textContent), 8000, 'the Norwegian place');
+        assert.deepEqual(/** @type {any} */ (panel.el.querySelector('[data-site-map-basemap]')).options.map((o) => o.value), ['none', 'osm'], 'no orthophoto in Oslo');
         assert.ok(panel.el.querySelector('[data-site-map-note]').textContent.includes(t('map.site.ortho.none')), 'the note');
       });
     } finally { panel.destroy(); panel.el.remove(); }
@@ -252,7 +256,7 @@
       shell.activate('bearbeta');
       shell.store.set({ selectedId: place.id });
       const sel = await waitFor(() => root.querySelector('.dm-center [data-map-basemap]'), 8000, 'the choice in Bearbeta');
-      assert.ok(['none', 'osm', 'ortho-dk', 'ortho-fi', 'ortho-is'].every((v) => values(sel).includes(v)), 'Bearbeta: ' + values(sel).join(', '));
+      assert.ok(['none', 'osm', 'ortho-dk', 'ortho-fi', 'ortho-is', 'ortho-se'].every((v) => values(sel).includes(v)), 'Bearbeta: ' + values(sel).join(', '));
       assert.equal(/** @type {any} */ (sel).value, 'none', 'no background map until one is chosen');
       const chart = charts.create('map', place, 'Ortofotovy');
       chart.map = leaflet.defaultMap(await datasets.columns(place.id), place);
@@ -260,7 +264,7 @@
       shell.store.set({ openChartId: chartId });
       shell.activate('visualisera');
       const side = await waitFor(() => { const s = root.querySelector('[data-map-basemap]'); return s && values(s).includes('ortho-is') ? s : null; }, 8000, 'the choice in Visualisera');
-      assert.deepEqual(values(side), ['none', 'osm', 'ortho-dk', 'ortho-fi', 'ortho-is', 'custom', 'wms'], 'Visualisera: the orthophotos after OpenStreetMap');
+      assert.deepEqual(values(side), ['none', 'osm', 'ortho-dk', 'ortho-fi', 'ortho-is', 'ortho-se', 'custom', 'wms'], 'Visualisera: the orthophotos after OpenStreetMap');
       return 'ok';
     } finally {
       if (chartId) await charts.remove(chartId).catch(() => {});

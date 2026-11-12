@@ -81,7 +81,7 @@
           if (!s.orthos.length) notes.push(t('map.site.ortho.none'));
           if (hd.info.basemapDenied) notes.push(t('map.basemap.denied'));
           if (hd.info.basemapKey) notes.push(basemapChoice.keyNotice(hd.info));
-          if (hd.info.basemapImage) notes.push(t('ortho.se.shown', { years: hd.info.basemapImage.years.join(', '), resolution: base.i18n.formatNumber(hd.info.basemapImage.resolution) }));
+          if (hd.info.basemapImage) notes.push(t('ortho.se.shown', { years: hd.info.basemapImage.years.join(', '), resolution: base.i18n.formatNumber(hd.info.basemapImage.resolution, { maximumFractionDigits: 2 }) }));
           s.note = notes.join(' ');
           renderBar();
         } catch (err) {

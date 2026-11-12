@@ -366,7 +366,7 @@
       const blob = await encode(pixels, width, height, empty);
       const years = Array.from(new Set(read.map((x) => x.item.year).filter(Boolean))).sort((a, b) => b - a);
       const out = {
-        url: URL.createObjectURL(blob), blob, type: blob.type, bounds, width, height, grid, resolution: Math.round(r * 100) / 100,
+        url: URL.createObjectURL(blob), blob, type: blob.type, bounds, width, height, grid, resolution: r,
         items: read.map((x) => ({ id: x.item.id, collection: x.item.collection, year: x.item.year, kind: x.item.kind, res: x.item.res, level: x.level })),
         years, attribution: ATTRIBUTION + (years.length ? ` (${years.join(', ')})` : ''),
       };
