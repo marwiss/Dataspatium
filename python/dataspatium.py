@@ -1703,6 +1703,8 @@ class _ChangeSet:
             with part_names (optional, the person's words; null: Panel, Mullion, Transom). A curtain wall type types them and gives
             their sizes and materials (create_curtain_wall). It gets Qto_CurtainWallQuantities, and IsExternal in
             Pset_CurtainWallCommon from the topology, which reads it as a wall.
+        delete_elements
+            a whole goes with its parts (a curtain wall's, a stair's, a roof's), so that none is left in no storey and no whole.
     """
 
     CREATES = ("create_wall", "create_slab", "create_roof", "create_opening", "create_spaces", "define_type", "create_element")
@@ -3289,8 +3291,22 @@ class _ChangeSet:
             out.update(kind=None, note=str(exc))
         return out
 
+    @staticmethod
+    def parts_of(e):
+        """The parts an element aggregates, and theirs in turn (a curtain wall's mullions, transoms and panels, a stair's flight and
+        landing, a roof's slabs); none for a spatial element, whose spaces are not parts to delete with it."""
+        if not e.is_a("IfcElement"):
+            return []
+        out = []
+        for rel in getattr(e, "IsDecomposedBy", None) or ():
+            for p in rel.RelatedObjects or ():
+                if p.is_a("IfcElement"):
+                    out += [p] + _ChangeSet.parts_of(p)
+        return out
+
     def op_delete_elements(self, op):
-        """Delete elements; the doors and windows in an element's openings go with it, so nothing is left hanging in the air."""
+        """Delete elements; the doors and windows in an element's openings go with it, and so do the parts of a whole (parts_of), so
+        nothing is left hanging in the air."""
         import ifcopenshell.api.root
         if op.get("confirm") is not True:
             raise DataspatiumError("deleting needs confirm: true, which the person gives")
@@ -3303,7 +3319,9 @@ class _ChangeSet:
                 for f in (getattr(opening, "HasFillings", None) or ()):
                     if f.RelatedBuildingElement.id() not in ids:
                         fillings.append(f.RelatedBuildingElement)
-            for f in fillings + [e]:
+            parts = [p for p in self.parts_of(e) if p.id() not in ids]
+            ids |= {p.id() for p in parts}
+            for f in fillings + parts + [e]:
                 rec = self.record(f, self.container(f))
                 if f is not e:
                     rec["with"] = e.id()

@@ -9,7 +9,7 @@
  * (IfcMember MULLION) and panels (IfcPlate CURTAIN_PANEL) aggregated in them and placed relative to them on the grid, the parts'
  * types and their layer and profile set usages, IsExternal from the topology, the quantities and no rule failures; a second change
  * set takes the type by its GlobalId and its sizes from the types' material sets; IFC4 and IFC2X3 make the same with the schemas'
- * differences.
+ * differences, and deleting a curtain wall takes its parts with it.
  */
 (function () {
   'use strict';
@@ -283,6 +283,18 @@
       assert.deepEqual(f.curtains['Glasvägg'].kinds, want[schema].untyped, schema + ': the untyped partition\'s parts: ' + JSON.stringify(f.curtains['Glasvägg'].kinds));
       assert.ok(f.curtains.Fasad.external === true && f.curtains['Glasvägg'].external === false && nearAll(f.curtains.Fasad.box, [0, 7.9, 0, 12, 8.1, 3]), schema + ': IsExternal and the grid: ' + JSON.stringify(Object.assign({}, f.curtains.Fasad, { parts: undefined })));
       assert.ok(Object.values(f.curtains.Fasad.parts).every((p) => !p.contained && p.rel), schema + ': the parts aggregated and placed relative to the façade');
+      if (schema !== 'IFC4') continue;
+      // Deleting the partition takes its parts with it, so that none is left in no storey and no whole (SPS007).
+      const partition = (res.report.created || []).find((e) => e.ifc_class === 'IfcCurtainWall' && e.name === 'Glasvägg');
+      const again = await importer.run(new File([res.bytes], 'glasfasad-ifc4.ifc', { type: 'application/octet-stream' }), { format: 'model' }, null, 'Glasfasad IFC4 2');
+      created.push(again.id);
+      const cs2 = writeTools.create(again.id);
+      assert.ok(writeTools.call(cs2, 'delete_elements', { ids: [partition.guid], confirm: true }).ok);
+      const gone = await ifcOps.previewChangeset(again.id, writeTools.toWheel(cs2));
+      assert.ok(gone.report.errors === 0 && gone.report.rules.errors === 0, 'deleted without errors: ' + JSON.stringify(gone.report.findings).slice(0, 2000));
+      assert.equal((gone.report.deleted || []).length, 1 + 9 + 4, 'the partition with its 13 parts: ' + JSON.stringify(gone.report.deleted).slice(0, 600));
+      const g = await factsOf(gone.bytes, CURTAINS);
+      assert.ok(Object.keys(g.curtains).join() === 'Fasad' && Object.keys(g.curtains.Fasad.parts).length === 49, 'the façade and its 49 parts stay: ' + Object.keys(g.curtains).join());
     }
     return 'ok';
   }, 900000);
