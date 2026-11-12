@@ -1279,7 +1279,8 @@ def _ifc_apply(in_file, table_file, key, out_file):
 # previews and approves in the app; only then does _ifc_changeset() apply it, as a recipe step with undo. Lengths are metres and
 # are scaled to the file's unit. A created element gets a ref ("new-1", "new-2", ...) in the order of the operations
 # create_wall, create_slab, create_roof and create_opening, so that a later operation can name it before the file has given it an id;
-# so does the type of define_type, which create_wall, create_slab and create_roof name as their type.
+# so does the type of define_type, which create_wall, create_slab and create_roof name as their type, and the element of create_element,
+# which create_element names as part_of or host and whose type is a define_type ref as well.
 
 
 def _cs_num(op, key, default=None, positive=False, unit="metres"):
@@ -1533,9 +1534,28 @@ class _ChangeSet:
 
     At the end of apply the walls the change set created are joined where their axes meet (join_walls), and what it created or
     changed gets its base quantities (base_quantities).
+
+    Since recommendations 4 and 11 of the native IFC study (2026-11-12), with new optional fields and one new operation:
+
+        define_type {kind: ... | covering | column | beam | footing | railing | door | window, ..., material, material_category,
+                     operation, partitioning, width, height, lining_depth}
+            covering is layered as a slab is (IfcCoveringType); column, beam, footing and railing (IfcColumnType, IfcBeamType,
+            IfcFootingType, IfcRailingType) take layers null and an optional material; door and window (IfcDoorType and IfcWindowType,
+            IfcDoorStyle and IfcWindowStyle in IFC2X3) take operation (OperationType, DOOR_OPERATIONS) or partitioning
+            (PartitioningType, WINDOW_PARTITIONS), width and height (metres) and lining_depth (metres), and get IfcOpenShell's door or
+            window geometry as the type's representation map and their lining (and a door's panel) properties (define_element_type).
+        create_element {storey, ifc_class, predefined_type, object_type, type, name, at: [x, y], z, rotation,
+                        shape: {profile: rectangle | circle | polygon, x, y, radius, outline, depth, along: z | x}, stair, part_of, host}
+            an element of ELEMENT_CLASSES with a ref: a SweptSolid contained in the storey, or aggregated in part_of (and on its
+            storey) and never both; host is what an IfcCovering covers; IfcStair takes stair: {risers, riser_height, tread_length,
+            width, thickness, landing} instead of shape and aggregates a sloped IfcStairFlight STRAIGHT with Pset_StairFlightCommon
+            and, with a landing, an IfcSlab LANDING (op_create_element, create_stair).
+        create_opening {..., type, side}
+            type (optional) is a door or window type; the filling takes its size and its mapped geometry, stands flush with the
+            wall's left face (side right: the right face) and a door opens toward that side (place_typed_fill).
     """
 
-    CREATES = ("create_wall", "create_slab", "create_roof", "create_opening", "create_spaces", "define_type")
+    CREATES = ("create_wall", "create_slab", "create_roof", "create_opening", "create_spaces", "define_type", "create_element")
     ROOF_TYPES = {"gable": "GABLE_ROOF", "hip": "HIP_ROOF", "shed": "SHED_ROOF", "flat": "FLAT_ROOF"}
 
     def __init__(self, model):
@@ -1556,6 +1576,7 @@ class _ChangeSet:
         self._body = None
         self._axis = None
         self._schema = None
+        self.fill_sizes = {}  # (width, height) in metres of the door and window types this change set defines, by STEP id
 
     # -- units, lookups and bookkeeping
     def u(self, metres):
@@ -2032,9 +2053,12 @@ class _ChangeSet:
         fill = op.get("fill")
         if fill not in (None, "", "door", "window"):
             raise DataspatiumError("fill must be door, window or null")
+        typed = self.fill_type(op, fill or None)  # a door or window type gives the fill, its size and its geometry
+        if typed is not None:
+            fill = typed["fill"]
         offset = _cs_num(op, "offset", 0.0)
-        width = _cs_num(op, "width", 0.9, positive=True)
-        height = _cs_num(op, "height", 2.1, positive=True)
+        width = typed["width"] if typed else _cs_num(op, "width", 0.9, positive=True)
+        height = typed["height"] if typed else _cs_num(op, "height", 2.1, positive=True)
         sill = _cs_num(op, "sill", 0.0)
         thickness = self.wall_thickness(wall)
         storey = self.container(wall)
@@ -2050,16 +2074,22 @@ class _ChangeSet:
             return
         self.register(opening, storey, ref=False)
         e = self.root("IfcDoor" if fill == "door" else "IfcWindow", op.get("name") or ("Door" if fill == "door" else "Window"))
-        e.ObjectPlacement = self.placement(opening.ObjectPlacement, 0, 0, 0)
-        leaf = self.u(0.05)
-        e.Representation = self.box(self.u(width), leaf, self.u(height), 0, -leaf / 2.0, 0)
+        if typed is None:
+            e.ObjectPlacement = self.placement(opening.ObjectPlacement, 0, 0, 0)
+            leaf = self.u(0.05)
+            e.Representation = self.box(self.u(width), leaf, self.u(height), 0, -leaf / 2.0, 0)
+        else:
+            self.place_typed_fill(e, opening, wall, typed, thickness, op.get("side"))
         e.OverallHeight = self.u(height)
         e.OverallWidth = self.u(width)
-        self.predefined(e, "DOOR" if fill == "door" else "WINDOW")
+        if typed is None:
+            self.predefined(e, "DOOR" if fill == "door" else "WINDOW")
         ifcopenshell.api.feature.add_filling(self.m, opening=opening, element=e)
         if storey is not None:
             self.contain(e, storey)
         self.register(e, storey)
+        if typed is not None:
+            self.relate_type(e, typed["type"])
         # A door or window in a wall that already bounds spaces bounds the one whose edge it stands on, as create_spaces would have.
         mid = self.plan_point(e, self.u(width) / 2.0)
         for b in list(getattr(wall, "ProvidesBoundaries", None) or ()):
@@ -2456,7 +2486,8 @@ class _ChangeSet:
             self.touch(conversion)
 
     # -- types with material layers, wall joins and base quantities (recommendations 3, 5 and 6 of the native IFC study)
-    TYPE_KINDS = {"wall": ("IfcWallType", "NOTDEFINED"), "slab": ("IfcSlabType", "FLOOR"), "roof": ("IfcSlabType", "ROOF")}
+    TYPE_KINDS = {"wall": ("IfcWallType", "NOTDEFINED"), "slab": ("IfcSlabType", "FLOOR"), "roof": ("IfcSlabType", "ROOF"),
+                  "covering": ("IfcCoveringType", "NOTDEFINED")}
     MAX_LAYERS = 20
     # IfcMaterial.Category: the categories IfcOpenShell's add_material recommends; IfcMaterialLayer.Category: the keywords of the
     # schema's documentation of the attribute, (IFC4, IFC4X3). IFC2X3 has neither attribute.
@@ -2467,7 +2498,8 @@ class _ChangeSet:
     def op_define_type(self, op):
         """A type with its material layers and a ref, for the type of later create steps: kind wall makes an IfcWallType, slab an
         IfcSlabType and roof an IfcSlabType ROOF for create_roof's roof slabs (the IfcRoof only aggregates them, and IFC2X3 has no
-        IfcRoofType), with an IfcMaterialLayerSet named after it. The layers come in metres from a wall's right side to its left,
+        IfcRoofType), and covering an IfcCoveringType for create_element's coverings (its layers from the outer face in), with an
+        IfcMaterialLayerSet named after it; the kinds without layers go to define_element_type. The layers come in metres from a wall's right side to its left,
         seen from its start toward its end, and from a slab's or a roof's top down; a roof type keeps them from the bottom up, the
         order in which its slabs' usage lays them from the underside. A layer's optional category goes to its material
         (IfcMaterial.Category, one of MATERIAL_CATEGORIES; a material the file has already keeps its own and takes one it lacks) and
@@ -2476,8 +2508,10 @@ class _ChangeSet:
         schema (_cs_type_values). A type of the same class and name, in any case, in the file is an error that names its GlobalId, to
         give as type instead (a server's copy of the file keeps the GlobalIds, not necessarily the STEP ids)."""
         kind = str(op.get("kind") or "").strip().lower()
+        if kind in self.ELEMENT_TYPE_KINDS:
+            return self.define_element_type(op, kind)
         if kind not in self.TYPE_KINDS:
-            raise DataspatiumError("kind must be wall, slab or roof")
+            raise DataspatiumError("kind must be wall, slab, roof, covering, column, beam, footing, railing, door or window")
         ifc_class, default = self.TYPE_KINDS[kind]
         name = str(op.get("name") or "").strip()[:255]
         if not name:
@@ -2597,6 +2631,529 @@ class _ChangeSet:
             e.PredefinedType = None
         if getattr(e, "ObjectType", None) is not None:
             e.ObjectType = None
+
+    # -- more building elements, straight stairs, and door and window types (recommendations 4 and 11 of the native IFC study)
+    # The classes create_element makes; IfcFurniture is IfcFurnishingElement in IFC2X3, and IfcStair is a straight stair.
+    ELEMENT_CLASSES = ("IfcColumn", "IfcBeam", "IfcMember", "IfcFooting", "IfcPile", "IfcCovering", "IfcRailing", "IfcChimney",
+                       "IfcShadingDevice", "IfcSanitaryTerminal", "IfcFurniture", "IfcFurnishingElement", "IfcStair")
+    ELEMENT_TYPE_KINDS = {"column": ("IfcColumnType", "COLUMN"), "beam": ("IfcBeamType", "BEAM"), "footing": ("IfcFootingType", "NOTDEFINED"),
+                          "railing": ("IfcRailingType", "NOTDEFINED"), "door": ("IfcDoorType", "DOOR"), "window": ("IfcWindowType", "WINDOW")}
+    # The OperationTypes and PartitioningTypes whose geometry IfcOpenShell draws; a window's as (panels, columns, rows).
+    DOOR_OPERATIONS = ("SINGLE_SWING_LEFT", "SINGLE_SWING_RIGHT", "DOUBLE_SWING_LEFT", "DOUBLE_SWING_RIGHT", "DOUBLE_DOOR_SINGLE_SWING",
+                       "DOUBLE_DOOR_DOUBLE_SWING", "SLIDING_TO_LEFT", "SLIDING_TO_RIGHT", "DOUBLE_DOOR_SLIDING")
+    WINDOW_PARTITIONS = {"SINGLE_PANEL": (1, 1, 1), "DOUBLE_PANEL_VERTICAL": (2, 2, 1), "DOUBLE_PANEL_HORIZONTAL": (2, 1, 2),
+                         "TRIPLE_PANEL_VERTICAL": (3, 3, 1), "TRIPLE_PANEL_HORIZONTAL": (3, 1, 3), "TRIPLE_PANEL_BOTTOM": (3, 2, 2),
+                         "TRIPLE_PANEL_TOP": (3, 2, 2), "TRIPLE_PANEL_LEFT": (3, 2, 2), "TRIPLE_PANEL_RIGHT": (3, 2, 2)}
+    LINING = 0.05  # metres: IfcOpenShell's lining thickness and the least lining depth
+    PANEL = 0.035  # the depth of a door panel and of a window frame
+    PANEL_X = 0.025  # from the lining's side to the panel or frame
+    THRESHOLD = 0.025  # a door's threshold, high
+    MAX_RISERS = 60
+
+    def make(self, ifc_class, **values):
+        """An entity with the attributes the file's schema gives its class; the others, and those given as None, are left out."""
+        names = {a.name() for a in self.check_class(ifc_class).all_attributes()}
+        return self.m.create_entity(ifc_class, **{k: v for k, v in values.items() if k in names and v is not None})
+
+    def property_definition(self, ifc_class, name, **values):
+        """A rooted property definition of the type, such as IfcDoorLiningProperties, with lengths already in file units."""
+        import ifcopenshell.guid
+        return self.make(ifc_class, GlobalId=ifcopenshell.guid.new(), OwnerHistory=self.owner, Name=name, **values)
+
+    def relate_type(self, e, t):
+        """Type an occurrence that has no layers: the type's IfcRelDefinesByType (one per type), and no PredefinedType or ObjectType of
+        the occurrence's own when the type has a PredefinedType other than NOTDEFINED (OJT001). Its material is the type's."""
+        import ifcopenshell.guid
+        rel = next(iter(getattr(t, "Types", None) or getattr(t, "ObjectTypeOf", None) or ()), None)
+        if rel is None:
+            self.m.create_entity("IfcRelDefinesByType", GlobalId=ifcopenshell.guid.new(), OwnerHistory=self.owner, RelatedObjects=[e], RelatingType=t)
+        else:
+            rel.RelatedObjects = list(rel.RelatedObjects or ()) + [e]
+        own = str(getattr(t, "PredefinedType", None) or "")
+        if own and own != "NOTDEFINED":
+            if getattr(e, "PredefinedType", None) is not None:
+                e.PredefinedType = None
+            if getattr(e, "ObjectType", None) is not None:
+                e.ObjectType = None
+
+    def define_element_type(self, op, kind):
+        """define_type for the kinds without layers: an IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType or
+        IfcWindowType (IfcDoorStyle and IfcWindowStyle in IFC2X3) with a ref, its PredefinedType (by default COLUMN, BEAM,
+        NOTDEFINED, NOTDEFINED, DOOR and WINDOW) checked against the class's list, and the material, when given, as an IfcMaterial of
+        the type that its occurrences take. A door and a window get their geometry (door_geometry, window_geometry). A type of the
+        same class and name in the file is an error that names its GlobalId."""
+        ifc_class, default = self.ELEMENT_TYPE_KINDS[kind]
+        old = self.m.schema == "IFC2X3"
+        if old and kind in ("door", "window"):
+            ifc_class = "IfcDoorStyle" if kind == "door" else "IfcWindowStyle"
+        name = str(op.get("name") or "").strip()[:255]
+        if not name:
+            raise DataspatiumError("the type needs a name")
+        if op.get("layers"):
+            raise DataspatiumError("a %s type has no layers; give its material as material, or null" % kind)
+        self.check_class(ifc_class)
+        twin = next((t for t in self.m.by_type(ifc_class) if str(t.Name or "").strip().lower() == name.lower()), None)
+        if twin is not None:
+            raise DataspatiumError("the model has an %s named %r already (GlobalId %s, id %d); give its GlobalId as type, or choose another name"
+                                   % (ifc_class, _ifc_text(twin.Name), twin.GlobalId, twin.id()))
+        value = str(op.get("predefined_type") or "").strip().upper() or None
+        if value == "USERDEFINED":
+            raise DataspatiumError("USERDEFINED needs the name of a kind of its own, which define_type does not take; choose a value from the class's list, or NOTDEFINED")
+        category = str(op.get("material_category") or "").strip().lower() or None
+        if category is not None and category not in self.MATERIAL_CATEGORIES:
+            raise DataspatiumError("material_category must be one of %s, or null" % ", ".join(self.MATERIAL_CATEGORIES))
+        t = self.root(ifc_class, name)
+        if _ifc_enum_items(self.check_class(ifc_class)) is not None:
+            self.check_enum(t, value or default)
+            t.PredefinedType = value or default
+        elif value:
+            self.notes.append("type %s: %s has no PredefinedType in %s, so %s was left out" % (name, ifc_class, self.m.schema, value))
+        material = str(op.get("material") or "").strip()[:255]
+        if material:
+            if old and category:
+                self.notes.append("type %s: IFC2X3 has no material categories, so it was left out" % name)
+            self.associate(t, self.named_material(material, None if old else category))
+        if kind == "door":
+            self.door_geometry(t, op)
+        elif kind == "window":
+            self.window_geometry(t, op)
+        self.register(t)
+
+    def fill_size(self, op, width, height):
+        """(width, height, lining depth) in metres of a door or window type: the op's, else the defaults given and LINING."""
+        w = _cs_num(op, "width", width, positive=True)
+        h = _cs_num(op, "height", height, positive=True)
+        d = _cs_num(op, "lining_depth", self.LINING, positive=True)
+        if not 0.3 <= w <= 20.0 or not 0.3 <= h <= 20.0:
+            raise DataspatiumError("width and height must be 0.3 to 20 m")
+        if not self.LINING <= d <= 2.0:
+            raise DataspatiumError("lining_depth must be %g to 2 m" % self.LINING)
+        return w, h, d
+
+    def type_geometry(self, t, rep, width, height):
+        """The type's geometry as its representation map, which its occurrences map; the size for create_opening."""
+        t.RepresentationMaps = list(t.RepresentationMaps or ()) + [self.m.createIfcRepresentationMap(self.axis3(0, 0, 0), rep)]
+        self.fill_sizes[t.id()] = (width, height)
+
+    def door_geometry(self, t, op):
+        """A door type's OperationType (one of DOOR_OPERATIONS), its lining and panel properties and IfcOpenShell's door geometry in
+        the type's coordinates: x across the opening from 0 to the width, z up from the floor, and the lining from y = 0 to the lining
+        depth with the panel at its far side, flush with y = depth, so that the door opens toward +y; a *_LEFT door has its hinges at
+        x = 0, on the left as seen in the direction it opens. The threshold fills the lining's depth and there are no casings, which a
+        lining shallower than the wall would leave hanging in the air."""
+        import ifcopenshell.api.geometry
+        operation = str(op.get("operation") or "SINGLE_SWING_LEFT").strip().upper()
+        if operation not in self.DOOR_OPERATIONS:
+            raise DataspatiumError("operation must be one of %s" % ", ".join(self.DOOR_OPERATIONS))
+        self.check_enum(t, operation, "OperationType")
+        t.OperationType = operation
+        if self.m.schema == "IFC2X3":
+            t.ConstructionType = "NOTDEFINED"
+            t.Sizeable = False
+        t.ParameterTakesPrecedence = False  # the geometry, not the properties, is the door
+        w, h, d = self.fill_size(op, 0.9, 2.1)
+        u = self.u
+        panel_y = d - self.PANEL
+        rep = ifcopenshell.api.geometry.add_door_representation(
+            self.m, context=self.body(), overall_height=u(h), overall_width=u(w), operation_type=operation, unit_scale=self.scale,
+            lining_properties={"LiningDepth": u(d), "LiningThickness": u(self.LINING), "LiningOffset": 0.0, "LiningToPanelOffsetX": u(self.PANEL_X),
+                               "LiningToPanelOffsetY": u(panel_y), "TransomThickness": 0.0, "CasingThickness": 0.0, "ThresholdDepth": u(d),
+                               "ThresholdThickness": u(self.THRESHOLD), "ThresholdOffset": 0.0},
+            panel_properties={"PanelDepth": u(self.PANEL), "FrameDepth": u(self.PANEL), "FrameThickness": u(self.PANEL)})
+        how = "SLIDING" if "SLIDING" in operation else "DOUBLE_ACTING" if "DOUBLE_SWING" in operation else "SWINGING"
+        panels = [("LEFT", 0.5), ("RIGHT", 0.5)] if "DOUBLE_DOOR" in operation else [("MIDDLE", 1.0)]
+        lining = self.property_definition("IfcDoorLiningProperties", "Lining", LiningDepth=u(d), LiningThickness=u(self.LINING), ThresholdDepth=u(d),
+                                          ThresholdThickness=u(self.THRESHOLD), LiningOffset=0.0, ThresholdOffset=0.0,
+                                          LiningToPanelOffsetX=u(self.PANEL_X), LiningToPanelOffsetY=u(panel_y))
+        leaves = [self.property_definition("IfcDoorPanelProperties", "Panel %d" % (i + 1), PanelDepth=u(self.PANEL), PanelOperation=how,
+                                           PanelWidth=share, PanelPosition=where) for i, (where, share) in enumerate(panels)]
+        t.HasPropertySets = list(t.HasPropertySets or ()) + [lining] + leaves
+        self.type_geometry(t, rep, w, h)
+
+    def window_geometry(self, t, op):
+        """A window type's PartitioningType (OperationType in IFC2X3; one of WINDOW_PARTITIONS), its lining properties and
+        IfcOpenShell's window geometry in the type's coordinates, as a door's (door_geometry): the lining from y = 0 to its depth, the
+        frames flush with y = depth, and the mullions and transoms dividing the width and the height evenly."""
+        import ifcopenshell.api.geometry
+        part = str(op.get("partitioning") or "SINGLE_PANEL").strip().upper()
+        if part not in self.WINDOW_PARTITIONS:
+            raise DataspatiumError("partitioning must be one of %s" % ", ".join(self.WINDOW_PARTITIONS))
+        old = self.m.schema == "IFC2X3"
+        attribute = "OperationType" if old else "PartitioningType"
+        self.check_enum(t, part, attribute)
+        setattr(t, attribute, part)
+        if old:
+            t.ConstructionType = "NOTDEFINED"
+            t.Sizeable = False
+        t.ParameterTakesPrecedence = False
+        w, h, d = self.fill_size(op, 1.2, 1.2)
+        u = self.u
+        panels, cols, rows = self.WINDOW_PARTITIONS[part]
+        lining = {"LiningDepth": u(d), "LiningThickness": u(self.LINING), "LiningOffset": 0.0, "LiningToPanelOffsetX": u(self.PANEL_X),
+                  "LiningToPanelOffsetY": 0.0, "MullionThickness": u(self.LINING), "TransomThickness": u(self.LINING),
+                  "FirstMullionOffset": u(w / cols), "SecondMullionOffset": u(2.0 * w / 3.0), "FirstTransomOffset": u(h / rows), "SecondTransomOffset": u(2.0 * h / 3.0)}
+        rep = ifcopenshell.api.geometry.add_window_representation(
+            self.m, context=self.body(), overall_height=u(h), overall_width=u(w), partition_type=part, unit_scale=self.scale, lining_properties=lining,
+            panel_properties=[{"FrameDepth": u(self.PANEL), "FrameThickness": u(self.PANEL)} for _ in range(panels)])
+        # The lining properties give the mullions' and transoms' offsets as shares of the width and the height.
+        extra = {}
+        if cols > 1:
+            extra.update(MullionThickness=u(self.LINING), FirstMullionOffset=1.0 / cols, SecondMullionOffset=2.0 / 3.0 if cols == 3 else None)
+        if rows > 1:
+            extra.update(TransomThickness=u(self.LINING), FirstTransomOffset=1.0 / rows, SecondTransomOffset=2.0 / 3.0 if rows == 3 else None)
+        props = self.property_definition("IfcWindowLiningProperties", "Lining", LiningDepth=u(d), LiningThickness=u(self.LINING), LiningOffset=0.0,
+                                         LiningToPanelOffsetX=u(self.PANEL_X), LiningToPanelOffsetY=u(d - self.PANEL), **extra)
+        t.HasPropertySets = list(t.HasPropertySets or ()) + [props]
+        self.type_geometry(t, rep, w, h)
+
+    FILL_TYPES = {"IfcDoorType": "door", "IfcDoorStyle": "door", "IfcWindowType": "window", "IfcWindowStyle": "window"}
+
+    def fill_type(self, op, fill):
+        """For create_opening with a type: {type, fill, width, height, depth, map}, the fill from the type's class (a fill given must
+        match it), the size in metres from define_type, else from a door or window of the type in the file (OverallWidth and
+        OverallHeight), else the op's width and height, which must otherwise equal it; the lining's depth from the type's lining
+        properties (0 without them), and the type's Body representation map; None without a type."""
+        ref = op.get("type")
+        if ref is None or str(ref).strip() == "":
+            return None
+        t = self.entity(ref)
+        kind = self.FILL_TYPES.get(t.is_a())
+        if kind is None:
+            raise DataspatiumError("type must name a door or window type (IfcDoorType, IfcWindowType), as define_type makes them, not the %s %r" % (t.is_a(), _ifc_text(getattr(t, "Name", None))))
+        if fill and fill != kind:
+            raise DataspatiumError("type %r is a %s type, so fill must be %s or null" % (_ifc_text(t.Name), kind, kind))
+        size = self.fill_sizes.get(t.id())
+        if size is None:
+            for rel in getattr(t, "Types", None) or getattr(t, "ObjectTypeOf", None) or ():
+                size = next(((float(o.OverallWidth) * self.scale, float(o.OverallHeight) * self.scale) for o in rel.RelatedObjects or ()
+                             if getattr(o, "OverallWidth", None) and getattr(o, "OverallHeight", None)), None)
+        if size is None:
+            if op.get("width") is None or op.get("height") is None:
+                raise DataspatiumError("type %r has no %s in the model to take its size from; give width and height" % (_ifc_text(t.Name), kind))
+            size = (_cs_num(op, "width", positive=True), _cs_num(op, "height", positive=True))
+        for key, v in zip(("width", "height"), size):
+            if op.get(key) is not None and abs(_cs_num(op, key, positive=True) - v) > 0.0005:
+                raise DataspatiumError("%s %g m differs from the %g m of type %r; leave width and height null" % (key, _cs_num(op, key), v, _ifc_text(t.Name)))
+        lining = next((p for p in (getattr(t, "HasPropertySets", None) or ()) if p.is_a() in ("IfcDoorLiningProperties", "IfcWindowLiningProperties")), None)
+        depth = float(lining.LiningDepth) * self.scale if lining is not None and lining.LiningDepth else 0.0
+        maps = [r for r in (t.RepresentationMaps or ()) if (r.MappedRepresentation.RepresentationIdentifier or "") == "Body"]
+        return {"type": t, "fill": kind, "width": size[0], "height": size[1], "depth": depth, "map": maps[0] if maps else None}
+
+    def place_typed_fill(self, e, opening, wall, typed, thickness, side):
+        """A typed door or window in its opening, which lies along the wall: flush with the wall's left face (seen from the wall's
+        start toward its end; the inside of an outer wall drawn counter-clockwise), its axes the wall's, so that a door opens toward
+        that face and a *_LEFT door's hinges are at the opening's side nearest the wall's start; side right turns it around, flush
+        with the right face, opening toward it, the hinges of a *_LEFT door at the side nearest the wall's end. The type's
+        representation map is mapped as it is; a type without one gets the plain panel of an untyped filling, with a note."""
+        side = str(side or "left").strip().lower()
+        if side not in ("left", "right"):
+            raise DataspatiumError("side must be left or right (seen from the wall's start toward its end), or null for left")
+        name = _ifc_text(typed["type"].Name)
+        half, depth = thickness / 2.0, self.u(typed["depth"])
+        if typed["depth"] <= 0:
+            self.notes.append("type %s gives no lining depth (IfcDoorLiningProperties or IfcWindowLiningProperties), so it stands at the wall's face" % name)
+        elif depth > thickness + self.u(0.001):
+            self.notes.append("the lining of type %s (%.3g m) is deeper than wall %s (%.3g m), so it stands out of the wall's other face"
+                              % (name, typed["depth"], _ifc_text(wall.Name), thickness * self.scale))
+        if side == "left":
+            e.ObjectPlacement = self.placement(opening.ObjectPlacement, 0.0, half - depth, 0.0)
+        else:
+            e.ObjectPlacement = self.placement(opening.ObjectPlacement, self.u(typed["width"]), depth - half, 0.0, -1.0, 0.0)
+        rmap = typed["map"]
+        if rmap is None:
+            self.notes.append("type %s has no geometry to map, so the %s is drawn as a plain panel" % (name, typed["fill"]))
+            leaf = self.u(0.05)
+            e.Representation = self.box(self.u(typed["width"]), leaf, self.u(typed["height"]), 0, depth - leaf, 0)  # inside the wall's face
+            return
+        target = self.m.createIfcCartesianTransformationOperator3D(self.direction(1, 0, 0), self.direction(0, 1, 0), self.point(0, 0, 0), 1.0, self.direction(0, 0, 1))
+        rep = self.m.createIfcShapeRepresentation(rmap.MappedRepresentation.ContextOfItems, "Body", "MappedRepresentation", [self.m.createIfcMappedItem(rmap, target)])
+        e.Representation = self.m.createIfcProductDefinitionShape(None, None, [rep])
+
+    def op_create_element(self, op):
+        """A building element of ELEMENT_CLASSES with a ref: its class (element_class), PredefinedType and ObjectType checked against
+        the schema (element_predefined), a SweptSolid body (element_body) placed at `at` and z in the storey's plane, turned by
+        rotation (element_placement), and contained in the storey, or for a part (part_of) aggregated in its whole and on the whole's
+        storey, never both; a covering's host gets IfcRelCoversBldgElements or IfcRelCoversSpaces (cover), and a type its
+        IfcRelDefinesByType (relate_type). IfcStair goes to create_stair."""
+        import ifcopenshell.api.aggregate
+        cls = self.element_class(op.get("ifc_class"))
+        if cls == "IfcStair":
+            return self.create_stair(op)
+        if op.get("stair") is not None:
+            raise DataspatiumError("stair is for IfcStair; %s takes shape" % cls)
+        shape = self.element_shape(op.get("shape"))
+        whole, storey = self.element_storey(op)
+        typ = self.element_type(op, cls)
+        depth = shape["depth"]
+        layers = self.type_layers(typ) if typ is not None and cls == "IfcCovering" else None
+        if layers is not None:
+            total = round(sum(float(x.LayerThickness or 0.0) for x in layers.MaterialLayers or ()) * self.scale, 9)
+            if depth is not None and abs(depth - total) > 0.0005:
+                raise DataspatiumError("depth %g m differs from the %g m of the layers of type %r; leave depth null" % (depth, total, _ifc_text(typ.Name)))
+            depth = total
+        if depth is None or depth <= 0:
+            raise DataspatiumError("shape.depth is required (metres)")
+        if op.get("host") not in (None, "") and cls != "IfcCovering":
+            raise DataspatiumError("host is for IfcCovering: the element or space it covers; a part of a whole is part_of")
+        e = self.root(cls, str(op.get("name") or "").strip()[:255] or cls[3:])
+        object_type = str(op.get("object_type") or "").strip()[:255]
+        if object_type:
+            e.ObjectType = object_type
+        self.element_predefined(e, typ, op.get("predefined_type"))
+        e.ObjectPlacement = self.element_placement(op, shape, storey, whole)
+        e.Representation = self.element_body(shape, depth)
+        if whole is not None:
+            ifcopenshell.api.aggregate.assign_object(self.m, products=[e], relating_object=whole)
+            self.touch(whole)
+        else:
+            self.contain(e, storey)
+        self.cover(op.get("host"), e)
+        self.register(e, storey)
+        if typ is not None:
+            self.relate_type(e, typ)
+
+    def element_class(self, value):
+        """The class create_element writes, checked against the file's schema: IfcFurniture and IfcFurnishingElement are IfcFurniture
+        in IFC4 and later and IfcFurnishingElement in IFC2X3; a class the schema lacks (IfcChimney in IFC2X3) is an error."""
+        name = str(value or "").strip()
+        cls = next((c for c in self.ELEMENT_CLASSES if c.lower() == name.lower()), None)
+        if cls is None:
+            raise DataspatiumError("ifc_class must be one of %s; walls, slabs, roofs, openings with their doors and windows, and spaces have tools of their own"
+                                   % ", ".join(self.ELEMENT_CLASSES))
+        if cls in ("IfcFurniture", "IfcFurnishingElement"):
+            cls = "IfcFurnishingElement" if self.m.schema == "IFC2X3" else "IfcFurniture"
+            if cls.lower() != name.lower():
+                self.notes.append("%s is written as %s in %s" % (name, cls, self.m.schema))
+        try:
+            self.check_class(cls)
+        except DataspatiumError as exc:
+            raise DataspatiumError("%s; create_element cannot make it in this file's schema, so leave it out or ask the person" % exc)
+        return cls
+
+    def element_shape(self, shape):
+        """create_element's shape, checked: {profile, x, y, radius, outline, depth, along} in metres, depth None when not given."""
+        if not isinstance(shape, dict):
+            raise DataspatiumError("shape must be {profile, x, y, radius, outline, depth, along}")
+        profile = str(shape.get("profile") or "").strip().lower()
+        along = str(shape.get("along") or "z").strip().lower()
+        if along not in ("z", "x"):
+            raise DataspatiumError("shape.along must be z (standing, extruded up) or x (lying, extruded along the rotation)")
+        out = {"profile": profile, "along": along, "depth": None if shape.get("depth") is None else _cs_num(shape, "depth", positive=True)}
+        if profile == "rectangle":
+            out.update(x=_cs_num(shape, "x", positive=True), y=_cs_num(shape, "y", positive=True))
+        elif profile == "circle":
+            out.update(radius=_cs_num(shape, "radius", positive=True))
+        elif profile == "polygon":
+            if along != "z":
+                raise DataspatiumError("a polygon is an outline in the plan, so shape.along must be z")
+            outline = shape.get("outline")
+            if not isinstance(outline, (list, tuple)) or len(outline) < 3:
+                raise DataspatiumError("shape.outline must be at least three [x, y] corners in metres")
+            out.update(outline=[_cs_xy(p, "shape.outline") for p in outline])
+        else:
+            raise DataspatiumError("shape.profile must be rectangle, circle or polygon")
+        return out
+
+    def element_storey(self, op):
+        """(whole, storey): without part_of no whole and the named storey; with part_of the whole, an element that can have parts (a
+        stair, a roof, a railing ...), and its storey, which a storey given must be."""
+        ref = op.get("part_of")
+        if ref is None or str(ref).strip() == "":
+            return None, self.storey(op.get("storey"))
+        whole = self.entity(ref)
+        if not whole.is_a("IfcElement") or whole.is_a("IfcFeatureElement") or whole.is_a("IfcDoor") or whole.is_a("IfcWindow"):
+            raise DataspatiumError("part_of must name an element that has parts, such as a stair or a roof, not the %s %r" % (whole.is_a(), _ifc_text(getattr(whole, "Name", None))))
+        storey = self.container(whole)
+        if storey is None or not storey.is_a("IfcBuildingStorey"):
+            raise DataspatiumError("the whole %s %r lies on no storey, so its parts cannot be placed" % (whole.is_a(), _ifc_text(whole.Name)))
+        if op.get("storey") not in (None, "") and self.storey(op.get("storey")).id() != storey.id():
+            raise DataspatiumError("a part lies on its whole's storey %r; leave storey null" % _ifc_text(storey.Name))
+        return whole, storey
+
+    def element_type(self, op, cls):
+        """The type of a create_element step (a ref, id or GlobalId), which must be of the class's type class in the file's schema
+        (IfcColumnType for IfcColumn ...; furniture in IFC2X3 also IfcFurnitureType); None without one."""
+        ref = op.get("type")
+        if ref is None or str(ref).strip() == "":
+            return None
+        t = self.entity(ref)
+        schema = self.schema_def()
+        names = [cls + "Type"] + (["IfcFurnitureType", "IfcSystemFurnitureElementType"] if cls == "IfcFurnishingElement" else [])
+        allowed = [n for n in names if _ifc_declaration(schema, n) is not None]
+        if not allowed:
+            raise DataspatiumError("%s has no type class in %s; leave type null" % (cls, schema.name()))
+        if not any(t.is_a(n) for n in allowed):
+            raise DataspatiumError("type must name an %s, as define_type makes them, not the %s %r" % (" or ".join(allowed), t.is_a(), _ifc_text(getattr(t, "Name", None))))
+        return t
+
+    def element_predefined(self, e, typ, value):
+        """The element's PredefinedType: none when its type has one other than NOTDEFINED (OJT001), and a value given must then be
+        the type's; otherwise the value, checked against the class's list (USERDEFINED needs ObjectType), or NOTDEFINED. A class
+        without PredefinedType in the file's schema (columns in IFC2X3) takes none, with a note when one was given."""
+        value = str(value or "").strip().upper() or None
+        if _ifc_enum_items(self.check_class(e.is_a())) is None:
+            if value:
+                self.notes.append("%s %s: %s has no PredefinedType in %s, so %s was left out" % (e.is_a(), _ifc_text(e.Name), e.is_a(), self.m.schema, value))
+            return
+        own = str(getattr(typ, "PredefinedType", None) or "") if typ is not None else ""
+        if own and own != "NOTDEFINED":
+            if value and value != own:
+                raise DataspatiumError("its type %r is %s, which the element takes; leave predefined_type null or give %s" % (_ifc_text(typ.Name), own, own))
+            return
+        self.predefined(e, value or "NOTDEFINED")
+
+    def local_placement(self, storey, whole, x, y, z, dx, dy):
+        """A placement at (x, y, z) metres in the storey's plane with its x axis along (dx, dy): under the storey's placement, or for a
+        part under its whole's, with the same place expressed in the whole's coordinates."""
+        if whole is None:
+            return self.placement(storey.ObjectPlacement, self.u(x), self.u(y), self.u(z), dx, dy)
+        s, w = _cs_placement(storey.ObjectPlacement), _cs_placement(whole.ObjectPlacement)
+        if s is None or w is None:
+            raise DataspatiumError("the placement of the whole %r cannot be read, so its part cannot be placed in it" % _ifc_text(whole.Name))
+        here = _cs_compose(s, [[dx, dy, 0.0], [-dy, dx, 0.0], [0.0, 0.0, 1.0], [self.u(x), self.u(y), self.u(z)]])
+        m = _cs_compose(_cs_invert(w), here)
+        r = [[round(c, 9) + 0.0 for c in v] for v in m]
+        return self.m.createIfcLocalPlacement(whole.ObjectPlacement, self.m.createIfcAxis2Placement3D(self.point(*r[3]), self.direction(*r[2]), self.direction(*r[0])))
+
+    def element_placement(self, op, shape, storey, whole):
+        """create_element's placement: at [x, y] and z metres in the storey's plane, its x axis turned rotation degrees counter-clockwise
+        from the storey's; a polygon's at the storey's origin, z up, unturned, since its outline is in the storey's plane."""
+        z = _cs_num(op, "z", 0.0)
+        if shape["profile"] == "polygon":
+            return self.local_placement(storey, whole, 0.0, 0.0, z, 1.0, 0.0)
+        x, y = _cs_xy(op.get("at"), "at")
+        a = math.radians(_cs_num(op, "rotation", 0.0, unit="degrees"))
+        return self.local_placement(storey, whole, x, y, z, round(math.cos(a), 12) + 0.0, round(math.sin(a), 12) + 0.0)
+
+    def element_body(self, shape, depth):
+        """The SweptSolid body of create_element's shape, depth metres: along z the profile in the element's plan, centred on its
+        placement (a polygon's outline as given), extruded up; along x the profile across the element's x axis, x its width along y
+        and y its height along z, centred on the axis, extruded along x."""
+        u = self.u
+        if shape["profile"] == "polygon":
+            profile = self.m.createIfcArbitraryClosedProfileDef("AREA", None, self.closed([(u(px), u(py)) for px, py in shape["outline"]]))
+        else:
+            centre = self.m.createIfcAxis2Placement2D(self.point(0.0, 0.0), None)
+            if shape["profile"] == "rectangle":
+                profile = self.m.createIfcRectangleProfileDef("AREA", None, centre, u(shape["x"]), u(shape["y"]))
+            else:
+                profile = self.m.createIfcCircleProfileDef("AREA", None, centre, u(shape["radius"]))
+        if shape["along"] == "z":
+            position = self.axis3(0, 0, 0)
+        else:  # the profile's x across (the element's y), its y up (z), extruded along the element's x
+            position = self.m.createIfcAxis2Placement3D(self.point(0, 0, 0), self.direction(1, 0, 0), self.direction(0, 1, 0))
+        return self.shape(self.m.createIfcExtrudedAreaSolid(profile, position, self.direction(0, 0, 1), u(depth)))
+
+    def cover(self, host_ref, covering):
+        """The covering covers its host: IfcRelCoversBldgElements for a building element, IfcRelCoversSpaces for a space (RelatedSpace
+        in IFC2X3), one relationship per host; nothing without a host."""
+        import ifcopenshell.guid
+        if host_ref is None or str(host_ref).strip() == "":
+            return
+        host = self.entity(host_ref)
+        if host.is_a("IfcSpace"):
+            rel_class, relating = "IfcRelCoversSpaces", "RelatedSpace" if self.m.schema == "IFC2X3" else "RelatingSpace"
+        elif host.is_a("IfcElement") and not host.is_a("IfcFeatureElement") and not host.is_a("IfcCovering"):
+            rel_class, relating = "IfcRelCoversBldgElements", "RelatingBuildingElement"
+        else:
+            raise DataspatiumError("host must name a building element or a space, not the %s %r" % (host.is_a(), _ifc_text(getattr(host, "Name", None))))
+        rel = next((r for r in self.m.by_type(rel_class) if getattr(r, relating, None) == host), None)
+        if rel is None:
+            self.m.create_entity(rel_class, GlobalId=ifcopenshell.guid.new(), OwnerHistory=self.owner, RelatedCoverings=[covering], **{relating: host})
+        else:
+            rel.RelatedCoverings = list(rel.RelatedCoverings or ()) + [covering]
+        self.touch(host)
+
+    def create_stair(self, op):
+        """create_element's IfcStair: a straight stair (STRAIGHT_RUN_STAIR; ShapeType in IFC2X3) with a ref, contained in the storey at
+        `at` and z, rising in the direction of rotation, that aggregates one sloped IfcStairFlight STRAIGHT (flight_solid) with its
+        number of risers and treads, riser height and tread length as attributes and in Pset_StairFlightCommon, and with a landing
+        an IfcSlab LANDING at the top: the flight's width, `landing` metres long, its top at the stair's height and as thick as the
+        flight. The parts get no refs; a railing is create_element's part_of the stair."""
+        import ifcopenshell.api.aggregate
+        import ifcopenshell.api.pset
+        if op.get("shape") is not None:
+            raise DataspatiumError("an IfcStair takes stair, not shape")
+        if op.get("part_of") not in (None, "") or op.get("host") not in (None, ""):
+            raise DataspatiumError("a stair is not part_of another element and covers nothing, so part_of and host must be null")
+        st = op.get("stair")
+        if not isinstance(st, dict):
+            raise DataspatiumError("an IfcStair needs stair: {risers, riser_height, tread_length, width, thickness, landing}")
+        n = st.get("risers")
+        if isinstance(n, float) and n.is_integer():
+            n = int(n)
+        if not isinstance(n, int) or isinstance(n, bool) or not 2 <= n <= self.MAX_RISERS:
+            raise DataspatiumError("stair.risers must be a whole number from 2 to %d" % self.MAX_RISERS)
+        h = _cs_num(st, "riser_height", positive=True)
+        g = _cs_num(st, "tread_length", positive=True)
+        width = _cs_num(st, "width", 1.0, positive=True)
+        t = _cs_num(st, "thickness", max(0.2, h), positive=True)
+        if t < h - 1e-9:
+            raise DataspatiumError("stair.thickness (%g m, the waist at right angles to the slope) must be at least the riser height (%g m)" % (t, h))
+        landing = None if st.get("landing") is None else _cs_num(st, "landing", positive=True)
+        value = str(op.get("predefined_type") or "").strip().upper() or "STRAIGHT_RUN_STAIR"
+        if value != "STRAIGHT_RUN_STAIR":
+            raise DataspatiumError("create_element makes straight stairs of one flight: predefined_type STRAIGHT_RUN_STAIR or null")
+        storey = self.storey(op.get("storey"))
+        x, y = _cs_xy(op.get("at"), "at")
+        z = _cs_num(op, "z", 0.0)
+        a = math.radians(_cs_num(op, "rotation", 0.0, unit="degrees"))
+        typ = self.element_type(op, "IfcStair")
+        name = str(op.get("name") or "").strip()[:255] or "Stair"
+        stair = self.root("IfcStair", name)
+        object_type = str(op.get("object_type") or "").strip()[:255]
+        if object_type:
+            stair.ObjectType = object_type
+        stair.ObjectPlacement = self.placement(storey.ObjectPlacement, self.u(x), self.u(y), self.u(z), round(math.cos(a), 12) + 0.0, round(math.sin(a), 12) + 0.0)
+        if self.m.schema == "IFC2X3":
+            if self.check_enum(stair, value, "ShapeType"):
+                stair.ShapeType = value
+        else:
+            self.element_predefined(stair, typ, value if typ is None or str(getattr(typ, "PredefinedType", None) or "NOTDEFINED") == "NOTDEFINED" else None)
+        self.contain(stair, storey)
+        self.register(stair, storey)
+        flight = self.root("IfcStairFlight", "%s 1" % name)
+        flight.ObjectPlacement = self.placement(stair.ObjectPlacement, 0, 0, 0)
+        flight.Representation = self.shape(self.flight_solid(n, h, g, width, t))
+        self.predefined(flight, "STRAIGHT")
+        names = {d.name() for d in self.check_class("IfcStairFlight").all_attributes()}
+        for key, v in (("NumberOfRisers", n), ("NumberOfRiser", n), ("NumberOfTreads", n - 1), ("RiserHeight", self.u(h)), ("TreadLength", self.u(g))):
+            if key in names:
+                setattr(flight, key, v)
+        parts = [flight]
+        if landing is not None:
+            slab = self.root("IfcSlab", "%s 2" % name)
+            slab.ObjectPlacement = self.placement(stair.ObjectPlacement, 0, 0, 0)
+            slab.Representation = self.box(self.u(landing), self.u(width), self.u(t), self.u((n - 1) * g), -self.u(width) / 2.0, self.u(n * h - t))
+            self.predefined(slab, "LANDING")
+            parts.append(slab)
+        ifcopenshell.api.aggregate.assign_object(self.m, products=parts, relating_object=stair)
+        for part in parts:
+            self.register(part, storey, ref=False)
+        pset = ifcopenshell.api.pset.add_pset(self.m, product=flight, name="Pset_StairFlightCommon")
+        ifcopenshell.api.pset.edit_pset(self.m, pset=pset, properties={"NumberOfRiser": n, "NumberOfTreads": n - 1, "RiserHeight": self.u(h), "TreadLength": self.u(g)})
+        if typ is not None:
+            self.relate_type(stair, typ)
+
+    def flight_solid(self, n, h, g, width, t):
+        """A straight flight in its stair's coordinates (metres in, file units out): the steps' profile in the vertical plane of the
+        walking line, x the run and z the rise from the first riser's foot at (0, 0), extruded across the width centred on that line.
+        It has the first n - 1 risers of h and the n - 1 treads of g; the last riser is the front edge of the landing or the floor
+        above, which begins at x = (n - 1) g, where the flight ends in a vertical cut. Its underside runs parallel to the nosings' line,
+        t below it at right angles, and meets the floor, on which the first step stands."""
+        drop = t * math.hypot(g, h) / g  # the waist measured vertically, more than h since t >= h
+        run, rise = (n - 1) * g, n * h
+        pts = [(0.0, 0.0)]
+        for i in range(n - 1):
+            pts += [(i * g, (i + 1) * h), ((i + 1) * g, (i + 1) * h)]
+        if rise - drop <= 1e-9:
+            pts.append((run, 0.0))  # a short, thick flight is one block
+        else:
+            pts += [(run, rise - drop), ((drop - h) * g / h, 0.0)]
+        u = self.u
+        profile = self.m.createIfcArbitraryClosedProfileDef("AREA", None, self.closed([(u(px), u(pz)) for px, pz in pts]))
+        position = self.m.createIfcAxis2Placement3D(self.point(0.0, u(width) / 2.0, 0.0), self.direction(0, -1, 0), self.direction(1, 0, 0))
+        return self.m.createIfcExtrudedAreaSolid(profile, position, self.direction(0, 0, 1), u(width))
 
     def finish(self):
         """After the operations: the joins of the walls the change set created (join_walls), then the base quantities of what it
@@ -3431,7 +3988,7 @@ def _topo_axis(wall, scale):
         for item in (r.Items or ()):
             pts = _topo_curve(item)
             if pts and len(pts) >= 2:
-                m = placement.get_local_placement(wall.ObjectPlacement)
+                m = (getattr(placement, "get_local_placement", None) or placement.get_placement)(wall.ObjectPlacement)  # get_placement since IfcOpenShell 0.9.1
                 return [((m[0][0] * x + m[0][1] * y + m[0][3]) * scale, (m[1][0] * x + m[1][1] * y + m[1][3]) * scale) for x, y in pts]
     return None
 
@@ -3697,7 +4254,7 @@ def _topo_elevation(storey, scale):
         return float(storey.Elevation) * scale
     try:
         import ifcopenshell.util.placement as placement
-        return float(placement.get_local_placement(storey.ObjectPlacement)[2][3]) * scale
+        return float((getattr(placement, "get_local_placement", None) or placement.get_placement)(storey.ObjectPlacement)[2][3]) * scale
     except Exception:
         return 0.0
 
