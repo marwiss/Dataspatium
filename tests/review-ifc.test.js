@@ -9,7 +9,8 @@
  * offers keep, pseudonymise or remove. With the wheel stubbed the copy is cleaned before the columns, its tables are built anew
  * from the cleaned file, selected rows follow their elements and a bundle carries the cleaned model, while the dataset stays.
  * With the real Pyodide (`?python=1` or cached components) IfcOpenShell removes and pseudonymises every part, the codes are those
- * of dm_hash with the same salt, the GlobalIds stay, and a removed copy has nothing left for the review to find.
+ * of dm_hash with the same salt, the GlobalIds stay, an actor of a person at an organisation keeps the organisation alone, and a
+ * removed copy has nothing left for the review to find (tests/party.test.js: an actor that is an organisation alone is not listed).
  */
 (function () {
   'use strict';
@@ -204,7 +205,10 @@
     const goneText = asText((await model.original(gone.id)).bytes);
     for (const word of ['Andersson', 'anna.andersson@example.se', 'Testgatan', '+46 70', 'info@arkitekt', 'Bo Berg', 'Cecilia', 'bo.berg@example.se', '19121212-1212']) assert.ok(!goneText.includes(word), 'removed: ' + word);
     assert.ok(/FILE_NAME\('[^']*','[^']*',\(''\),\(''\),'[^']*','[^']*',''\)/.test(goneText), 'an empty header: ' + (goneText.match(/FILE_NAME[^;]*/) || [''])[0]);
-    assert.ok(!/IFCOWNERHISTORY|IFCACTOR|IFCOCCUPANT/.test(goneText), 'no owner history, actor or occupant in IFC4');
+    assert.ok(!/IFCOWNERHISTORY|IFCOCCUPANT/.test(goneText), 'no owner history or occupant in IFC4');
+    // The actor of a person at an organisation keeps the organisation alone, without the person, its name and its description.
+    const actor = /IFCACTOR\('[^']{22}',\$,\$,\$,\$,#(\d+)\);/.exec(goneText);
+    assert.ok(actor && new RegExp(`#${actor[1]}=IFCORGANIZATION\\(\\$,'Arkitektkontoret Test AB',`).test(goneText) && (goneText.match(/IFCACTOR\(/g) || []).length === 1, 'the actor stays as its organisation: ' + (goneText.match(/IFCACTOR\([^;]*;/) || [''])[0]);
     assert.ok(goneText.includes('Kontakt [***]') && goneText.includes('Kontrollant [***]'), 'the free text masked, the rest kept');
     assert.deepEqual((await rows(gone.id, 'select guid from data order by guid')).map((r) => r[0]), guids, 'every element with its GlobalId');
     assert.deepEqual((await shareScan.inspect(gone.id)).parts.filter((p) => p.kind.startsWith('ifc.')), [], 'nothing left to find');

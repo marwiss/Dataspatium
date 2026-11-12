@@ -466,6 +466,18 @@ solids and space boundaries among others, buildingSMART rule IFC430), so the hea
 service flags it, and a recipient who requires a view names it. A file the app changes keeps its own author, organisation and
 originating system, and its view when the validation service accepts it.
 
+### Responsible party
+
+A model can say which party is responsible for it: the organisation (the company or authority), its role from IFC's list and, if you
+wish, the designation the project gives the party, for example the letter in the file names. The app writes it in the IFC file as an
+actor with an organisation and a role, assigned to the project (IfcActor, IfcOrganization, IfcActorRole and IfcRelAssignsToActor), so
+that other programs can read it. Set it under *Responsible party (optional)* in *New building model* or with *Set responsible party*
+among the model's facts in Process; the change becomes a step that can be undone. The AI can set it with the tool
+`set_responsible_party`. New issues get the party's designation, otherwise the organisation, as the default *Responsible party*. A
+contact role is written as a role, not as a name. A contact person is optional; a name is personal data, and the review before
+sharing shows it so that you can keep, pseudonymise or remove it in the copy while the organisation stays. An actor that is only an
+organisation does not count as personal data.
+
 ## A new building from a brief
 
 Write a brief in the form *New building model* ("a two-storey house 12 × 8 m with a gable roof, brick façade, entrance to the south …")

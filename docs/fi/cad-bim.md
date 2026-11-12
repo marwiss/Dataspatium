@@ -475,6 +475,17 @@ jota tiedosto ei noudata; buildingSMARTin validointipalvelu merkitsee sen, ja va
 Tiedosto, jota sovellus muuttaa, säilyttää oman tekijänsä, organisaationsa ja alkuperäisen ohjelmansa sekä näkymänsä, kun
 validointipalvelu hyväksyy sen.
 
+### Vastuuosapuoli
+
+Malli voi kertoa, mikä osapuoli vastaa siitä: organisaatio (yritys tai viranomainen), sen rooli IFC:n luettelosta ja halutessasi
+tunnus, jonka hanke antaa osapuolelle, esimerkiksi tiedostonimien kirjain. Sovellus kirjoittaa sen IFC-tiedostoon toimijana, jolla on
+organisaatio ja rooli ja joka on liitetty hankkeeseen (IfcActor, IfcOrganization, IfcActorRole ja IfcRelAssignsToActor), jotta muut
+ohjelmat voivat lukea sen. Anna se kohdassa *Vastuuosapuoli (valinnainen)* lomakkeessa *Uusi rakennusmalli* tai painikkeella *Anna
+vastuuosapuoli* mallin tietojen joukossa; muutoksesta tulee vaihe, jonka voi perua. Tekoäly voi asettaa sen työkalulla
+`set_responsible_party`. Uudet asiat saavat osapuolen tunnuksen, muuten organisaation, *Vastuuosapuolen* oletukseksi. Yhteysrooli
+kirjoitetaan roolina eikä nimenä. Yhteyshenkilö on valinnainen; nimi on henkilötieto, ja tarkistus ennen jakamista näyttää sen, jotta
+voit säilyttää, pseudonymisoida tai poistaa sen kopiosta organisaation jäädessä. Pelkkä organisaatio ei ole henkilötieto.
+
 ## Uusi rakennus toimeksiannon kuvauksesta
 
 Kirjoita toimeksiannon kuvaus lomakkeeseen *Uusi rakennusmalli* ("kaksikerroksinen talo 12 × 8 m harjakatolla, tiilijulkisivu, sisäänkäynti etelään …")

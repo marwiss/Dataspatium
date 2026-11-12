@@ -453,6 +453,18 @@ buildingSMART-regeln IFC430), så huvudet säger
 kräver en vy anger den. En fil som appen ändrar behåller sin egen upphovsperson, organisation och sitt ursprungsprogram, och sin vy
 när valideringstjänsten godtar den.
 
+### Ansvarig part
+
+En modell kan ange vilken part som svarar för den: organisationen (företaget eller myndigheten), dess roll ur IFC:s lista och, om du
+vill, den beteckning projektet ger parten, till exempel bokstaven i filnamnen. Appen skriver det i IFC-filen som en aktör med
+organisation och roll, knuten till projektet (IfcActor, IfcOrganization, IfcActorRole och IfcRelAssignsToActor), så att andra program
+kan läsa det. Ange den under *Ansvarig part (valfritt)* i *Ny byggnadsmodell* eller med *Ange ansvarig part* bland modellens
+uppgifter i Bearbeta; ändringen blir ett steg som går att ångra. AI:n kan sätta den med verktyget `set_responsible_party`. Nya
+ärenden får partens beteckning, annars organisationen, som förval för *Ansvarig part*. En kontaktroll skrivs som en roll och inte som
+ett namn. En kontaktperson är frivillig; ett namn är en personuppgift, och granskningen före delning visar den så att du kan behålla,
+pseudonymisera eller ta bort den i kopian, medan organisationen står kvar. En aktör som bara är en organisation räknas inte som
+personuppgift.
+
 ## Ny byggnad från en uppdragsbeskrivning
 
 Skriv en uppdragsbeskrivning i formuläret *Ny byggnadsmodell* ("ett tvåvåningshus 12 × 8 m med sadeltak, tegelfasad, entré mot söder …") och välj

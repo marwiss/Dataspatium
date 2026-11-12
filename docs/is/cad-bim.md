@@ -453,6 +453,17 @@ ReferenceView_V1.2 fyrir IFC4. IFC4X3 hefur enga opinbera sýn fyrir líkan í �
 merkir það, og viðtakandi sem krefst sýnar tilgreinir hana. Skrá sem forritið breytir heldur eigin höfundi, stofnun og
 upprunaforriti, og sýn sinni þegar staðfestingarþjónustan samþykkir hana.
 
+### Ábyrgðaraðili
+
+Líkan getur sagt hvaða aðili ber ábyrgð á því: fyrirtækið eða stofnunin, hlutverk þess úr lista IFC og, ef þú vilt, auðkennið sem
+verkefnið gefur aðilanum, til dæmis stafinn í skráarheitunum. Forritið skrifar það í IFC-skrána sem geranda með fyrirtæki og
+hlutverki, tengdan verkefninu (IfcActor, IfcOrganization, IfcActorRole og IfcRelAssignsToActor), svo að önnur forrit geti lesið það.
+Settu það undir *Ábyrgðaraðili (valfrjálst)* í *Nýtt byggingarlíkan* eða með *Setja ábyrgðaraðila* meðal upplýsinga líkansins;
+breytingin verður skref sem hægt er að afturkalla. Gervigreindin getur sett það með tólinu `set_responsible_party`. Ný mál fá
+auðkenni aðilans, annars fyrirtækið, sem sjálfgefinn *Ábyrgðaraðila*. Tengiliðahlutverk er skrifað sem hlutverk en ekki nafn.
+Tengiliður er valfrjáls; nafn er persónuupplýsing, og yfirferðin fyrir deilingu sýnir það svo að þú getir haldið því, gert það
+dulnefnt eða fjarlægt það í afritinu en fyrirtækið stendur eftir. Gerandi sem er aðeins fyrirtæki telst ekki persónuupplýsing.
+
 ## Ný bygging úr lýsingu
 
 Skrifaðu lýsingu í eyðublaðið *Nýtt byggingarlíkan* ("tveggja hæða hús 12 × 8 m með risþaki, múrsteinshlið, inngangur mót suðri …") og

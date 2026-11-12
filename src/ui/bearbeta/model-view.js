@@ -10,7 +10,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/model-view', ['ui/base', 'data/datasets', 'data/model', 'viz/model-draw', 'viz/charts'], (base, datasets, model, draw, charts) => {
+  D.define('ui/bearbeta/model-view', ['ui/base', 'data/datasets', 'data/model', 'viz/model-draw', 'viz/charts', 'ui/bearbeta/party'], (base, datasets, model, draw, charts, party) => {
     const { h, t, i18n, replace } = base;
     const q = (s) => '"' + String(s).replace(/"/g, '""') + '"';
 
@@ -534,7 +534,10 @@
             { label: t('model.field.elements'), value: i18n.formatNumber(f.elements || 0) },
             f.units && f.units.LENGTHUNIT ? { label: t('model.field.units'), value: f.units.LENGTHUNIT } : null,
             handle ? { label: t('model.field.triangles'), value: i18n.formatNumber(handle.info.triangles) } : null,
-          ]));
+          ].concat(party.facts(ds))));
+          // The responsible party is written in the file as a step of the recipe (ui/bearbeta/party); the new version redraws the view.
+          if (f.geometry !== 'server') parts.push(h('div', { class: 'dm-row-wrap' }, ui.button({ label: t(party.of(ds) ? 'party.change' : 'party.set'), icon: 'building-2', size: 'sm', title: t('party.button.hint'), 'data-model-party': '',
+            onClick: () => party.open(ctx, ds).catch((err) => shell.log(String((err && err.message) || err), 'error')) })));
         }
         if (proposals && !isDxf()) parts.push(proposals.el);
         const selected = s.selected ? await model.element(ds.id, s.selected) : null;

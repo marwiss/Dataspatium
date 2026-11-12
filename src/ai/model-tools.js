@@ -22,7 +22,7 @@
     const bool = () => ({ type: ['boolean', 'null'] });
     /** The tools as the providers see them. */
     const TOOLS = [
-      { name: 'get_model_overview', description: 'The model: file, schema, number of elements, the storeys, the element classes with counts, and the property sets in use.', parameters: { type: 'object', properties: {} } },
+      { name: 'get_model_overview', description: 'The model: file, schema, number of elements, the storeys, the element classes with counts, the property sets in use, and the responsible parties when the file names them.', parameters: { type: 'object', properties: {} } },
       { name: 'list_storeys', description: 'The building storeys in order, with the number of elements on each.', parameters: { type: 'object', properties: {} } },
       { name: 'query_elements', description: 'Elements that match every given filter. ifc_class is an IFC class such as IfcDoor or IfcWall (exact, case-insensitive); storey is a storey name; name_contains matches the element name; property_set and property_name name a property (values are compared as text, property_value matches part of the value, case-insensitive); missing_property true returns the elements that LACK the named property instead. Returns id (STEP id), guid, ifc_class, name, storey, and the property value when a property was named. limit at most 500 (default 200).',
         parameters: { type: 'object', properties: { ifc_class: str(), storey: str(), name_contains: str(), property_set: str(), property_name: str(), property_value: str(), missing_property: bool(), limit: int() } } },
@@ -57,7 +57,9 @@
       const psets = objects(await e.exec('select uppsattning as property_set, count(distinct namn) as properties, count(distinct id) as elements from _properties group by uppsattning order by elements desc limit 30'));
       const total = rowsOf(await e.exec("select count(*) from data where kategori = 'byggdel'"))[0][0];
       const facts = (meta && meta.model) || {};
-      return { name: meta ? meta.name : '', file: facts.file || '', schema: facts.schema || '', elements: Number(total) || 0, storeys, classes, property_sets: psets };
+      // The model's parties as the file names them (data/ifc-step), without whom to contact.
+      const parties = Array.isArray(facts.parties) ? facts.parties.map((p) => ({ organization: p.organization, role: p.role || null, user_role: p.userRole || null, designation: p.designation || null })) : [];
+      return Object.assign({ name: meta ? meta.name : '', file: facts.file || '', schema: facts.schema || '', elements: Number(total) || 0, storeys, classes, property_sets: psets }, parties.length ? { responsible_parties: parties } : {});
     }
     async function storeys(datasetId) {
       const e = await engineOf(datasetId);

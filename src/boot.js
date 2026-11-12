@@ -308,6 +308,8 @@
     'src/data/issues.js',
     'src/data/ifc-validation.js',
     'src/ui/bearbeta/issue-fields.js',
+    'src/ai/write-tools.js',
+    'src/ui/bearbeta/party.js',
     'src/ui/bearbeta/model-issues.js',
     'src/ui/share/review.js',
     'src/data/kinds.js',
@@ -427,7 +429,6 @@
     { name: 'ai', needs: ['bearbeta', 'ai-tools'], scripts: [
       'src/data/model-material.js',
       'src/ai/build-input.js',
-      'src/ai/write-tools.js',
       'src/ai/check-tools.js',
       'src/ai/agent.js',
       'src/ui/bearbeta/site-map.js',

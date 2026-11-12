@@ -261,8 +261,53 @@
         // For BCF's header: the IfcProject's GlobalId and the name the file gives itself in FILE_NAME.
         projectGuid: project === undefined ? '' : String(argsOf(f, project)[0] || ''), headerName: facts.name,
         units: units.names, entities: f.count, types: counts.map(function (t) { return { name: t.name, count: t.count }; }).slice(0, 400),
-        elementTypes: elementTypes.map(function (t) { return { name: t.name, count: t.count }; }), storeys: storeys,
+        elementTypes: elementTypes.map(function (t) { return { name: t.name, count: t.count }; }), storeys: storeys, parties: partiesOf(f),
       };
+    }
+
+    /**
+     * The model's parties (recommendation 8 of the study of the IFC and BCF guidelines): each IfcActor, not an occupant, that an
+     * IfcRelAssignsToActor assigns the project, a site or a building to, the project's first. Per party the organisation's name, the
+     * role (the assignment's ActingRole, else the organisation's first; IFC2X3's COMISSIONINGENGINEER read as IFC4 spells it) with
+     * its own name for USERDEFINED, the actor's Name (the designation) and Description (whom to contact), and whether it names a
+     * person other than the app's neutral user: never the person's name.
+     */
+    function partiesOf(f) {
+      var at = function (v) { var id = v && v.r !== undefined ? v.r : null; var k = id === null ? -1 : f.indexOf[id]; return k === undefined || k < 0 ? -1 : k; };
+      var typeAt = function (k) { return k < 0 ? '' : f.typeNames[f.types[k]]; };
+      var str = function (v) { return typeof v === 'string' ? v.trim() : (v && v.t !== undefined && typeof v.v === 'string' ? v.v.trim() : ''); };
+      var rel = f.typeNames.indexOf('IFCRELASSIGNSTOACTOR');
+      if (rel < 0) return [];
+      var ON = { IFCPROJECT: 'IfcProject', IFCBUILDING: 'IfcBuilding', IFCSITE: 'IfcSite' };
+      var RANK = { IfcProject: 0, IfcBuilding: 1, IfcSite: 2 };
+      var roleOf = function (k) {
+        if (typeAt(k) !== 'IFCACTORROLE') return null;
+        var r = argsOf(f, k); var role = r[0] && r[0].e ? r[0].e : '';
+        return { role: role === 'COMISSIONINGENGINEER' ? 'COMMISSIONINGENGINEER' : role, userRole: str(r[1]) };
+      };
+      var named = function (k) {
+        if (typeAt(k) !== 'IFCPERSON') return false;
+        var p = argsOf(f, k); var names = [p[1], p[2]].concat(p[3] || [], p[4] || [], p[5] || []).map(str).filter(Boolean);
+        return !((!str(p[0]) || str(p[0]) === 'user') && names.every(function (n) { return n === 'User'; }) && !(Array.isArray(p[7]) && p[7].length));
+      };
+      var out = [];
+      for (var k = 0; k < f.count && out.length < 20; k++) {
+        if (f.types[k] !== rel) continue;
+        var a = argsOf(f, k);
+        var on = '';
+        (Array.isArray(a[4]) ? a[4] : []).forEach(function (x) { var n = ON[typeAt(at(x))]; if (n && (!on || RANK[n] < RANK[on])) on = n; });
+        var actor = at(a[6]);
+        if (!on || typeAt(actor) !== 'IFCACTOR') continue;
+        var act = argsOf(f, actor); var who = at(act[5]); var org = -1; var person = false;
+        if (typeAt(who) === 'IFCORGANIZATION') org = who;
+        else if (typeAt(who) === 'IFCPERSONANDORGANIZATION') { var po = argsOf(f, who); org = at(po[1]); person = named(at(po[0])); }
+        else person = named(who);
+        var orgArgs = typeAt(org) === 'IFCORGANIZATION' ? argsOf(f, org) : null;
+        var role = roleOf(at(a[7])) || (orgArgs && Array.isArray(orgArgs[3]) && orgArgs[3].length ? roleOf(at(orgArgs[3][0])) : null);
+        out.push({ organization: orgArgs ? str(orgArgs[1]) : '', role: role ? role.role : '', userRole: role ? role.userRole : '', designation: str(act[2]), contact: str(act[3]), person: person, on: on });
+      }
+      // The project's parties first, then the building's and the site's, each in the file's order.
+      return out.map(function (p, i) { return [p, i]; }).sort(function (x, y) { return RANK[x[0].on] - RANK[y[0].on] || x[1] - y[1]; }).map(function (x) { return x[0]; });
     }
     function isProductName(n) { return !ROOT_NOT_PRODUCT.test(n) && !NOT_ELEMENT[n] && ROOTED_NAME.test(n); }
     /** Names that can only be geometry or resources: never products, so the summary's list stays clean. */
@@ -702,7 +747,8 @@
     /**
      * What in the file can be personal data, for the review before sharing: the people (IfcPerson with names, identification and
      * addresses), the organisations' addresses (postal and telecom), the owner histories whose user is a person, the header's
-     * author, organisation and authorisation, the actors and occupants, and the strings in Name, Description and properties that
+     * author, organisation and authorisation, the occupants and the actors that name a person (not an actor that is an
+     * organisation alone, such as a model's responsible party), and the strings in Name, Description and properties that
      * may hold an e-mail address or an identity number ('@' or eight digits; the page confirms them with the app's own detectors).
      * The app's own neutral owner (identification "user", family name "User", no address) is not a person.
      */
@@ -790,6 +836,9 @@
       out.owner.users = Array.from(users); out.owner.applications = Array.from(apps).filter(Boolean);
       actors.forEach(function (j) {
         var a = argsOf(f, j);
+        // An actor that is an organisation alone (a model's responsible party) names nobody; an occupant may be a tenant.
+        var whoType = typeAt(at(ref(a[5])));
+        if (typeAt(j) === 'IFCACTOR' && !((whoType === 'IFCPERSON' || whoType === 'IFCPERSONANDORGANIZATION') && whoOf(ref(a[5])) !== null)) return;
         out.actors.push({ id: f.ids[j], type: prettyType(typeAt(j)), label: [str(a[2]), whoOf(ref(a[5]))].filter(Boolean).join(': ') || ('#' + f.ids[j]) });
       });
       // The header's FILE_NAME: name, time stamp, (author), (organisation), preprocessor, originating system, authorisation.
@@ -904,7 +953,7 @@
     /**
      * What in an IFC file can be personal data (the review before sharing, data/share-scan): `persons` and `organizations` (with
      * addresses) as {id, label}, `owner` {count, users, applications} for the owner histories whose user is a person, `header` the
-     * FILE_NAME author, organisation and authorisation, `actors` (IfcActor, IfcOccupant) as {id, type, label}, and `texts`, the
+     * FILE_NAME author, organisation and authorisation, `actors` (IfcOccupant, and IfcActor that names a person) as {id, type, label}, and `texts`, the
      * strings in Name, Description and properties that may hold an e-mail address or an identity number. The worker stays.
      * @param {Uint8Array} bytes @param {{onProgress?: (share: number) => void}} [options]
      * @returns {Promise<{persons: any[], organizations: any[], owner: {count: number, users: string[], applications: string[]}, header: string[], actors: any[], texts: string[]}>}

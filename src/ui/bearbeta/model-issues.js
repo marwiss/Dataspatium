@@ -227,8 +227,9 @@
         const ext = s.ext || {};
         const title = /** @type {any} */ (h('dm-input', { label: t('issues.new.title') }));
         const description = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '3', label: t('common.description') }));
-        // Type and status always have a value; the other fields of review practice are the person's choice.
-        const fields = issueFields.create(ext, { required: ['topic_type', 'topic_status'] });
+        // Type and status always have a value; the other fields of review practice are the person's choice, the responsible party
+        // starting on the model's own when it names one.
+        const fields = issueFields.create(ext, { required: ['topic_type', 'topic_status'], initial: { responsible: D.require('ui/bearbeta/party').labels((await datasets.get(ds.id)) || ds) } });
         const ok = await ui.dialog.open({
           title: t('issues.new'), size: 'md', help: 'cad-bim#ärenden-från-ett-cde',
           body: h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help', text: marked.length ? t('issues.new.marked', { n: i18n.formatNumber(marked.length) }) : t('issues.new.unmarked') }), title, description, ...fields.nodes),

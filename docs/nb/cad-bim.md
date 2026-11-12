@@ -457,6 +457,18 @@ hodet sier `notYetAssigned` i stedet for en visning filen ikke følger; building
 mottaker som krever en visning, angir den. En fil appen endrer, beholder sin egen forfatter, organisasjon og sitt
 opprinnelsesprogram, og sin visning når valideringstjenesten godtar den.
 
+### Ansvarlig part
+
+En modell kan angi hvilken part som er ansvarlig for den: organisasjonen (selskapet eller myndigheten), rollen fra IFCs liste og, om
+du vil, betegnelsen prosjektet gir parten, for eksempel bokstaven i filnavnene. Appen skriver det i IFC-filen som en aktør med
+organisasjon og rolle, knyttet til prosjektet (IfcActor, IfcOrganization, IfcActorRole og IfcRelAssignsToActor), slik at andre
+programmer kan lese det. Angi den under *Ansvarlig part (valgfritt)* i *Ny bygningsmodell* eller med *Angi ansvarlig part* blant
+modellens opplysninger; endringen blir et steg som kan angres. AI-en kan sette den med verktøyet `set_responsible_party`. Nye saker
+får partens betegnelse, ellers organisasjonen, som forvalg for *Ansvarlig part*. En kontaktrolle skrives som en rolle og ikke som et
+navn. En kontaktperson er valgfri; et navn er en personopplysning, og gjennomgangen før deling viser den slik at du kan beholde,
+pseudonymisere eller fjerne den i kopien, mens organisasjonen står igjen. En aktør som bare er en organisasjon, regnes ikke som
+personopplysning.
+
 ## En ny bygning fra en oppdragsbeskrivelse
 
 Skriv en oppdragsbeskrivelse i skjemaet *Ny bygningsmodell* ("et toetasjes hus 12 × 8 m med saltak, teglfasade, inngang mot sør …") og velg *Bygg fra

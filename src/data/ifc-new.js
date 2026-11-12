@@ -50,9 +50,10 @@
      * with a site name entered as its LongName) and is its Pset_LandRegistration.LandID; a building number names the building
      * (IfcBuilding.Name) and the building's name is its LongName (else the building entered, when there is a number); the national
      * building id goes to Pset_BuildingCommon.BuildingID; the first storey's description to its Description; author and organisation,
-     * personal data, to the file's header only when entered.
+     * personal data, to the file's header only when entered; `party` (organisation, role, designation, contact) becomes the model's
+     * responsible party (recommendation 8 of the study of the IFC and BCF guidelines).
      * @param {{[key: string]: any}} input the form's values
-     * @returns {{site?: string, site_long_name?: string, land_id?: string, building?: string, building_long_name?: string, building_id?: string, storey_description?: string, author?: string, organization?: string}}
+     * @returns {{site?: string, site_long_name?: string, land_id?: string, building?: string, building_long_name?: string, building_id?: string, storey_description?: string, author?: string, organization?: string, party?: any}}
      */
     function identity(input = {}) {
       const v = (key) => clean(input[key], '');
@@ -64,6 +65,13 @@
       const longName = v('building_name') || (number ? v('building') : '');
       if (longName) out.building_long_name = longName;
       for (const key of ['building_id', 'storey_description', 'author', 'organization']) if (v(key)) out[key] = v(key);
+      // The responsible party (the form of ui/bearbeta/party), checked as the wheel's set_responsible_party takes it.
+      const party = input.party && typeof input.party === 'object' ? input.party : null;
+      if (party && Object.values(party).some((x) => clean(x, ''))) {
+        const op = D.require('ai/write-tools').partyOp(party, { person: true });
+        delete op.tool;
+        out.party = op;
+      }
       return out;
     }
 

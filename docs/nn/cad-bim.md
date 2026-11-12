@@ -463,6 +463,18 @@ hovudet seier `notYetAssigned` i staden for ei vising fila ikkje følgjer; valid
 mottakar som krev ei vising, gjev ho. Ei fil appen endrar, held på sin eigen forfattar, organisasjon og sitt opphavsprogram, og
 visinga si når valideringstenesta godtek ho.
 
+### Ansvarleg part
+
+Ein modell kan seie kva part som er ansvarleg for han: organisasjonen (selskapet eller styresmakta), rolla frå lista i IFC og, om du
+vil, nemninga prosjektet gir parten, til dømes bokstaven i filnamna. Appen skriv det i IFC-fila som ein aktør med organisasjon og
+rolle, knytt til prosjektet (IfcActor, IfcOrganization, IfcActorRole og IfcRelAssignsToActor), slik at andre program kan lese det.
+Set han under *Ansvarleg part (valfritt)* i *Ny bygningsmodell* eller med *Set ansvarleg part* blant opplysningane om modellen;
+endringa blir eit steg som kan angrast. AI-en kan setje han med verktøyet `set_responsible_party`. Nye saker får nemninga til parten,
+elles organisasjonen, som førehandsval for *Ansvarleg part*. Ei kontaktrolle blir skriven som ei rolle og ikkje som eit namn. Ein
+kontaktperson er valfri; eit namn er ei personopplysning, og gjennomgangen før deling viser han slik at du kan behalde,
+pseudonymisere eller fjerne han i kopien, medan organisasjonen står att. Ein aktør som berre er ein organisasjon, blir ikkje rekna
+som personopplysning.
+
 ## Ein ny bygning frå ei oppdragsskildring
 
 Skriv ei oppdragsskildring i skjemaet *Ny bygningsmodell* ("eit toetasjes hus 12 × 8 m med saltak, teglfasade, inngang mot sør …") og vel *Bygg frå
