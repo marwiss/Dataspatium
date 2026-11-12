@@ -161,7 +161,7 @@
         assert.ok(btn && !btn.disabled && btn.getAttribute('label') === t('ai.check.report') && view.querySelector('[data-ai-check-plan]').getAttribute('label') === t('ai.check.plan'), 'Gör rapport and Gör underhållsplan');
         await waitFor(() => btn.querySelector('button[data-tip]'), 2000, 'the tip');
         assert.equal(btn.querySelector('button').getAttribute('data-tip'), t('ai.check.report.hint'), 'with a tip');
-        shell.activate('bearbeta');
+        shell.activate('hantera');
         press(btn);
         await waitFor(() => shell.store.get().mode === 'exportera', 8000, 'Exportera opened');
         const id = shell.store.get().selectedId;
@@ -170,7 +170,7 @@
         await waitFor(() => chosen() === findings.REPORT, 8000, 'the report chosen');
         await waitFor(() => { const h1 = root.querySelector('.dm-doc-preview h1'); return h1 && h1.textContent.includes('Testhuset'); }, 20000, 'the preview of the report');
         assert.equal(shell.store.get().pendingDocument, null, 'the request is taken');
-        shell.activate('bearbeta');
+        shell.activate('hantera');
         assert.equal(await check.report('plan'), id, 'the same table again while the findings are unchanged');
         await waitFor(() => shell.store.get().mode === 'exportera' && chosen() === findings.PLAN, 8000, 'the plan chosen');
       } finally { view.remove(); }

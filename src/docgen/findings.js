@@ -110,10 +110,13 @@
       if (!modelId || !wanted.length) return out;
       try {
         const engine = (await datasets.ensureOpen(modelId)).engine;
-        const r = await engine.exec(`select id, namn, varde from _properties where id in (${wanted.join(', ')}) and namn in ('IsExternal', 'LoadBearing')`);
-        for (const [id, name, value] of (r[0] ? r[0].values : [])) {
+        const where = `where id in (${wanted.join(', ')}) and namn in ('IsExternal', 'LoadBearing') and uppsattning like 'Pset%Common'`;
+        // A model read before the properties had a source has no column kalla.
+        const r = await engine.exec(`select id, namn, varde, kalla from _properties ${where}`).catch(() => engine.exec(`select id, namn, varde, 'objekt' from _properties ${where}`));
+        for (const [id, name, value, source] of (r[0] ? r[0].values : [])) {
           const o = out.get(Number(id)) || {};
-          o[String(name)] = value;
+          // The occurrence's value goes before its type's, as in the climate declaration.
+          if (o[name] === undefined || (source === 'objekt' && o[name + ':typ'])) { o[String(name)] = value; o[name + ':typ'] = source !== 'objekt'; }
           out.set(Number(id), o);
         }
       } catch (err) { D.log('findings', 'properties', err); }
