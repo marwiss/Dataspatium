@@ -12,7 +12,10 @@
   D.define('tests/fixtures/ifc', [], () => {
     const guid = (n) => ('0Dataspatium' + String(n).padStart(10, '0')).slice(0, 22);
 
-    /** The IFC text. @param {{walls?: number, name?: string}} [options] walls per storey (at least 2) */
+    /**
+     * The IFC text. @param {{walls?: number, name?: string, classes?: boolean}} [options] walls per storey (at least 2); classes adds
+     * a proxy, a USERDEFINED covering without ObjectType and furniture outside the spatial structure on the first storey
+     */
     function ifcText(options = {}) {
       const walls = Math.max(2, options.walls || 2);
       const lines = [];
@@ -89,6 +92,13 @@
           const door = add(`IFCDOOR('${G()}',#${owner},'Dörr 1',$,$,#${placeAt(0, 0, 0, storeyPl[0])},$,'D1',2100.,900.,.DOOR.,$,$)`);
           contained.push(door);
           add(`IFCRELASSOCIATESCLASSIFICATION('${G()}',#${owner},$,$,(#${door}),#${code})`);
+          if (options.classes) {
+            // For the class check: a proxy, a covering USERDEFINED without ObjectType, and furniture outside the spatial structure.
+            // The letters outside ASCII in STEP's own encoding, which IfcOpenShell reads (raw UTF-8 it drops).
+            contained.push(add(`IFCBUILDINGELEMENTPROXY('${G()}',#${owner},'Ok\\X2\\00E4\\X0\\nd l\\X2\\00E5\\X0\\da',$,'L\\X2\\00E5\\X0\\da',#${placeAt(8000, 1000, 0, storeyPl[0])},$,'P1',$)`));
+            contained.push(add(`IFCCOVERING('${G()}',#${owner},'Golvbel\\X2\\00E4\\X0\\ggning',$,$,#${placeAt(0, 2000, 0, storeyPl[0])},$,'C1',.USERDEFINED.)`));
+            add(`IFCFURNITURE('${G()}',#${owner},'L\\X2\\00F6\\X0\\s stol',$,$,#${placeAt(1000, 1000, 0, storeyPl[0])},$,'M1',$)`);
+          }
         }
         add(`IFCRELCONTAINEDINSPATIALSTRUCTURE('${G()}',#${owner},$,$,(${contained.map((c) => '#' + c).join(',')}),#${storey})`);
       });

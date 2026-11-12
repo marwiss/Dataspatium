@@ -93,8 +93,9 @@
     assert.ok(modelTools.names().includes('search_bsdd'), 'the read tool exists');
     bsdd.setBase(BASE + '/bsdd');
     try {
+      // The stub's dictionary is none of the open ones (decision B-59.1), so the tool drops its class; ifc-class.test.js has the rest.
       const got = await modelTools.call(created[0], 'search_bsdd', { text: 'vägg', limit: 5 });
-      assert.ok(got && got.classes && got.classes[0].code === 'W1', JSON.stringify(got));
+      assert.ok(got && Array.isArray(got.classes) && !got.classes.length && got.dictionaries.length === 3, JSON.stringify(got));
     } finally { bsdd.setBase(null); }
     return 'ok';
   });

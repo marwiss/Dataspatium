@@ -204,6 +204,8 @@ Kortet **Projektprofil** i källans vy under *Inhämta → OpenCDE* visar det va
   ordböckerna eller alla; *Ordböcker* listar ordböckerna så att du kan lägga till dem i profilen. I *Ändra med AI* kan AI:n söka med
   verktyget `search_bsdd` och klassificera byggdelar med `set_classification`, som skrivs som `IfcClassificationReference` i
   ändringssetet du godkänner.
+  `search_bsdd` söker bara i fria ordböcker vars licens har lästs (IFC 4.3, Uniclass 2015 och ETIM 10.1) och svarar med ordbok och
+  licens för varje klass, och `set_classification` skriver systemets utgåva, utgivare och adress på dess `IfcClassification`.
 
 Serverns buildingSMART-regler visas på kortet *Validera modellen* i Hantera; välj en regel i listan bredvid *Markera i modellen* för att
 markera bara de byggdelar som den regeln träffar.
@@ -394,6 +396,16 @@ Anger servern värdena per krock visar panelen för varje krock värdet i basen,
 per krock att behålla ditt förslag eller ta det som kom emellan. *Föreslå igen med mina val* skickar förslaget mot den senaste
 versionen, med de behållna ändringarna och utan de strukna, och servern prövar det på nytt innan det kan godkännas. Sammanfogningen
 sker på servern; webbläsaren hanterar bara själva krockarna.
+
+## Rätt IFC-klass
+
+I IFC är klassen den första klassificeringen: den mest specifika klassen med sin PredefinedType, ObjectType bara när PredefinedType är
+USERDEFINED, och ett typobjekt; andra klassificeringssystem läggs ovanpå. AI:n söker klassen för en sak med läsverktyget
+`search_ifc_class`, med engelska IFC-ord som *sink* eller *handrail*, i dokumentationen av modellens schema som följer med
+IfcOpenShell, och ändringssetet godtar bara klasser som finns och inte är abstrakta i modellens schema och PredefinedType ur klassens
+lista. Kortet *IFC-klasser* i Kontrollera (och läsverktyget `get_class_report`) räknar proxyelement (IfcBuildingElementProxy),
+USERDEFINED utan namn, element utan typ, PredefinedType på både typ och element (regeln OJT001) och element utanför den rumsliga
+strukturen (SPS007), med exempel.
 
 ## Jämför versioner
 

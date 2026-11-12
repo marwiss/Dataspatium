@@ -207,6 +207,8 @@ server og prosjekt.
   ordbøkene eller alle; *Ordbøker* lister ordbøkene så du kan legge dem til i profilen. I *Endre med AI* kan AI-en søke med verktøyet
   `search_bsdd` og klassifisere bygningsdeler med `set_classification`, som skrives som `IfcClassificationReference` i endringssettet
   du godkjenner.
+  `search_bsdd` søker bare i frie ordbøker der lisensen er lest (IFC 4.3, Uniclass 2015 og ETIM 10.1), og svarer med ordbok og lisens
+  for hver klasse, og `set_classification` skriver systemets utgave, utgiver og adresse på dets `IfcClassification`.
 
 Serverens buildingSMART-regler vises på kortet *Valider modellen* i Håndter; velg en regel i listen ved siden av *Marker i modellen* for å
 markere bare de bygningsdelene som den regelen treffer.
@@ -397,6 +399,16 @@ Oppgir serveren verdiene per kollisjon, viser panelet for hver kollisjon verdien
 du velger per kollisjon å beholde forslaget ditt eller ta det som kom imellom. *Foreslå igjen med mine valg* sender forslaget mot den
 nyeste versjonen med de beholdte endringene og uten de strøkne, og serveren prøver det på nytt før det kan godkjennes.
 Sammenflettingen skjer på serveren; nettleseren håndterer bare selve kollisjonene.
+
+## Riktig IFC-klasse
+
+I IFC er klassen den første klassifiseringen: den mest spesifikke klassen med sin PredefinedType, ObjectType bare når PredefinedType er
+USERDEFINED, og et typeobjekt; andre klassifiseringssystemer legges oppå. AI-en finner klassen for en ting med leseverktøyet
+`search_ifc_class`, med engelske IFC-ord som *sink* eller *handrail*, i dokumentasjonen av modellens skjema som følger med
+IfcOpenShell, og endringssettet godtar bare klasser som finnes og ikke er abstrakte i modellens skjema, og PredefinedType fra klassens
+liste. Kortet *IFC-klasser* i Kontroller (og leseverktøyet `get_class_report`) teller proxyelementer (IfcBuildingElementProxy),
+USERDEFINED uten navn, elementer uten type, PredefinedType på både type og element (regelen OJT001) og elementer utenfor den romlige
+strukturen (SPS007), med eksempler.
 
 ## Sammenlign versjoner
 

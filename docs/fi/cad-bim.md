@@ -214,6 +214,9 @@ tähän selaimeen palvelinta ja projektia kohden.
   `api.bsdd.buildingsmart.org`, valituista sanakirjoista tai kaikista; *Sanakirjat* luettelee sanakirjat, jotta voit lisätä ne
   profiiliin. *Muuta tekoälyllä* -tilassa tekoäly voi hakea työkalulla `search_bsdd` ja luokitella rakennusosia työkalulla
   `set_classification`, joka kirjoitetaan `IfcClassificationReference`-viittauksena hyväksymääsi muutosjoukkoon.
+  `search_bsdd` hakee vain vapaista sanakirjoista, joiden lisenssi on luettu (IFC 4.3, Uniclass 2015 ja ETIM 10.1), ja kertoo jokaisen
+  luokan sanakirjan ja lisenssin, ja `set_classification` kirjoittaa järjestelmän painoksen, julkaisijan ja osoitteen sen
+  `IfcClassification`-kohteeseen.
 
 Palvelimen buildingSMART-säännöt näkyvät kortissa *Validoi malli* Hallitse-tilassa; valitse sääntö luettelosta painikkeen *Merkitse malliin*
 vieressä, niin vain sen säännön osumat rakennusosat merkitään.
@@ -411,6 +414,16 @@ Kun palvelin antaa arvot ristiriitaa kohden, paneeli näyttää kunkin ristiriid
 ehdotuksesi, ja valitset ristiriita kerrallaan, pidätkö ehdotuksesi vai otatko välissä tulleen. *Ehdota uudelleen valinnoillani*
 lähettää ehdotuksen uusinta versiota vasten pidetyin muutoksin ja ilman poistettuja, ja palvelin kokeilee sen uudelleen ennen kuin
 sen voi hyväksyä. Yhdistäminen tapahtuu palvelimella; selain käsittelee vain itse ristiriidat.
+
+## Oikea IFC-luokka
+
+IFC:ssä luokka on ensimmäinen luokitus: tarkin luokka PredefinedTypeineen, ObjectType vain kun PredefinedType on USERDEFINED, ja
+tyyppiobjekti; muut luokitusjärjestelmät tulevat sen päälle. Tekoäly etsii asialle luokan lukutyökalulla `search_ifc_class`
+englanninkielisillä IFC-sanoilla, kuten *sink* tai *handrail*, IfcOpenShellin mukana tulevasta mallin skeeman dokumentaatiosta, ja
+muutosjoukko hyväksyy vain luokat, jotka ovat mallin skeemassa eivätkä ole abstrakteja, ja PredefinedTypen luokan luettelosta.
+Tarkista-tilan kortti *IFC-luokat* (ja lukutyökalu `get_class_report`) laskee proxy-elementit (IfcBuildingElementProxy), nimettömät
+USERDEFINED-arvot, tyypittömät elementit, PredefinedTypen sekä tyypissä että elementissä (sääntö OJT001) ja spatiaalisen rakenteen
+ulkopuoliset elementit (SPS007) esimerkkeineen.
 
 ## Vertaa versioita
 

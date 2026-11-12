@@ -208,6 +208,8 @@ projekt.
   ordbøger eller alle; *Ordbøger* viser ordbøgerne, så du kan føje dem til profilen. I *Ændr med AI* kan AI'en søge med værktøjet
   `search_bsdd` og klassificere bygningsdele med `set_classification`, som skrives som `IfcClassificationReference` i det
   ændringssæt, du godkender.
+  `search_bsdd` søger kun i frie ordbøger, hvis licens er læst (IFC 4.3, Uniclass 2015 og ETIM 10.1), og svarer med ordbog og licens for
+  hver klasse, og `set_classification` skriver systemets udgave, udgiver og adresse på dets `IfcClassification`.
 
 Serverens buildingSMART-regler vises på kortet *Valider modellen* i Håndter; vælg en regel i listen ved siden af *Markér i modellen* for kun
 at markere de bygningsdele, som den regel rammer.
@@ -399,6 +401,16 @@ Angiver serveren værdierne pr. kollision, viser panelet for hver kollision vær
 du vælger pr. kollision at beholde dit forslag eller tage det, der kom imellem. *Foreslå igen med mine valg* sender forslaget mod den
 nyeste version med de beholdte ændringer og uden de strøgne, og serveren afprøver det igen, før det kan godkendes. Sammenfletningen
 sker på serveren; browseren håndterer kun selve kollisionerne.
+
+## Den rigtige IFC-klasse
+
+I IFC er klassen den første klassifikation: den mest specifikke klasse med sin PredefinedType, ObjectType kun når PredefinedType er
+USERDEFINED, og et typeobjekt; andre klassifikationssystemer lægges ovenpå. AI'en finder klassen for en ting med læseværktøjet
+`search_ifc_class`, med engelske IFC-ord som *sink* eller *handrail*, i dokumentationen af modellens skema, som følger med
+IfcOpenShell, og ændringssættet accepterer kun klasser, der findes og ikke er abstrakte i modellens skema, og PredefinedType fra
+klassens liste. Kortet *IFC-klasser* i Kontrollér (og læseværktøjet `get_class_report`) tæller proxyelementer
+(IfcBuildingElementProxy), USERDEFINED uden navn, elementer uden type, PredefinedType på både type og element (reglen OJT001) og
+elementer uden for den rumlige struktur (SPS007), med eksempler.
 
 ## Sammenlign versioner
 

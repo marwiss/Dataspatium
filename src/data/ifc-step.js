@@ -219,6 +219,27 @@
       return v;
     }
 
+    /**
+     * The height of an object placement above the world's origin, in file units, along its IfcLocalPlacement chain (the parents'
+     * rotations left aside, as for a storey); null without a placement or for one the reader cannot follow.
+     */
+    function placementZ(f, ref) {
+      if (!ref || ref.r === undefined) return null;
+      var z = 0;
+      for (var depth = 0; ref && ref.r !== undefined && depth < 64; depth++) {
+        var k = f.indexOf[ref.r];
+        if (k === undefined || k < 0 || f.typeNames[f.types[k]] !== 'IFCLOCALPLACEMENT') return null;
+        var a = argsOf(f, k);
+        var axis = a[1] && a[1].r !== undefined ? f.indexOf[a[1].r] : -1;
+        if (axis === undefined || axis < 0) return null;
+        var loc = argsOf(f, axis)[0];
+        var at = loc && loc.r !== undefined && f.indexOf[loc.r] >= 0 ? argsOf(f, f.indexOf[loc.r])[0] : null;
+        z += Array.isArray(at) && typeof at[2] === 'number' ? at[2] : 0;
+        ref = a[0];
+      }
+      return z;
+    }
+
     function summaryOf(f) {
       var rooted = rootedIndex(f);
       var project = rooted.of('IFCPROJECT')[0];
@@ -229,7 +250,11 @@
       var counts = f.typeNames.map(function (n, i) { return { name: prettyType(n), count: f.typeCounts[i], raw: n }; }).sort(function (a, b) { return b.count - a.count; });
       var elementTypes = counts.filter(function (t) { return isProductName(t.raw); });
       var units = projectUnits(f, rooted.of);
-      var storeys = rooted.of('IFCBUILDINGSTOREY').map(function (k) { var a = argsOf(f, k); return { id: f.ids[k], name: a[2] || '', elevation: typeof a[9] === 'number' ? Math.round(a[9] * units.factors.LENGTHUNIT * 1e6) / 1e6 : null }; });
+      var storeys = rooted.of('IFCBUILDINGSTOREY').map(function (k) {
+        var a = argsOf(f, k);
+        var z = typeof a[9] === 'number' ? a[9] : placementZ(f, a[5]);  // IFC4.3 deprecates Elevation: then the placement says it
+        return { id: f.ids[k], name: a[2] || '', elevation: typeof z === 'number' ? Math.round(z * units.factors.LENGTHUNIT * 1e6) / 1e6 : null };
+      });
       storeys.sort(function (a, b) { return (a.elevation === null ? 0 : a.elevation) - (b.elevation === null ? 0 : b.elevation); });
       return {
         format: 'ifc', schema: facts.schema, timestamp: facts.timestamp, application: facts.application || facts.preprocessor, project: nameOf(project), site: nameOf(site), building: nameOf(building),

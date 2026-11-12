@@ -8,7 +8,8 @@
  * so the step is logged, undoable and replayable like any other, and the original file in `_files` is always the
  * current version of the model. The dataset is never changed by Python directly. `ifc_changeset` is the approved change set of
  * Ändra med AI (ai/write-tools), applied by the wheel's _ifc_changeset with the schema check; `previewChangeset` runs it on a copy.
- * `topologyOf` reads the building's topology (rooms, neighbours, external walls with their facing, open wall ends) from the model.
+ * `topologyOf` reads the building's topology (rooms, neighbours, external walls with their facing, open wall ends) from the model;
+ * `classSearch` finds the IFC class for a thing and `classReportOf` reports the model's class faults (decision B-57.2).
  */
 (function () {
   'use strict';
@@ -116,6 +117,33 @@
       const out = await bridge().runIfcTopology(await handle.engine.export());
       return Array.isArray(out) ? out : [];
     }
-    return { python, applyTable, changeset, previewChangeset, topologyOf, IDS: ['ifc_apply_table', 'ifc_python'] };
+    /** The model dataset an IFC tool reads (IFC, not DXF), or the error the person can act on. @param {string} datasetId */
+    async function modelMeta(datasetId) {
+      const meta = await datasets.get(datasetId);
+      if (!meta || !model.isModel(meta) || model.isDxf(meta)) throw new Error(D.t('op.err.ifc.notmodel'));
+      return meta;
+    }
+    /**
+     * The IFC classes for a thing named in English IFC words, in the model's schema (decision B-57.2; python/ `_ifc_class_search`):
+     * per hit the class, its matching PredefinedTypes with their docs, a description, spec_url and the type class. Like the preview it
+     * starts Python when it is not running, so only the person's action may call it while Python is idle.
+     * @param {string} datasetId @param {string} query @param {number} [limit] @returns {Promise<any[]>}
+     */
+    async function classSearch(datasetId, query, limit) {
+      const meta = await modelMeta(datasetId);
+      const out = await bridge().runIfcClassSearch(String((meta.model && meta.model.schema) || 'IFC4'), String(query || ''), limit);
+      return Array.isArray(out) ? out : [];
+    }
+    /**
+     * The model's class report (decision B-57.2; python/ `_ifc_class_report`): counts and examples of proxies, USERDEFINED without a
+     * name, untyped elements, type and occurrence conflicts (OJT001) and elements outside the spatial structure (SPS007). Python
+     * starts as for classSearch. @param {string} datasetId @returns {Promise<any>}
+     */
+    async function classReportOf(datasetId) {
+      await modelMeta(datasetId);
+      const handle = await datasets.ensureOpen(datasetId);
+      return (await bridge().runIfcClassReport(await handle.engine.export())) || {};
+    }
+    return { python, applyTable, changeset, previewChangeset, topologyOf, classSearch, classReportOf, IDS: ['ifc_apply_table', 'ifc_python'] };
   });
 })();

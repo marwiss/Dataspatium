@@ -209,6 +209,8 @@ nettlesaren per tenar og prosjekt.
   ordbøkene eller alle; *Ordbøker* listar ordbøkene så du kan leggje dei til i profilen. I *Endre med AI* kan AI-en søkje med
   verktøyet `search_bsdd` og klassifisere bygningsdelar med `set_classification`, som vert skrive som `IfcClassificationReference` i
   endringssettet du godkjenner.
+  `search_bsdd` søkjer berre i frie ordbøker der lisensen er lesen (IFC 4.3, Uniclass 2015 og ETIM 10.1), og svarar med ordbok og lisens
+  for kvar klasse, og `set_classification` skriv utgåva, utgjevaren og adressa til systemet på `IfcClassification` for det.
 
 buildingSMART-reglane til tenaren vert viste på kortet *Valider modellen* i Handter; vel ein regel i lista ved sida av *Merk i modellen* for
 å markere berre dei bygningsdelane som den regelen treffer.
@@ -401,6 +403,16 @@ Gjev tenaren verdiane per kollisjon, viser panelet for kvar kollisjon verdien i 
 vel per kollisjon å halde på framlegget ditt eller ta det som kom imellom. *Foreslå igjen med vala mine* sender framlegget mot den
 nyaste versjonen med dei haldne endringane og utan dei strokne, og tenaren prøver det på nytt før det kan godkjennast.
 Samanflettinga skjer på tenaren; nettlesaren handterer berre sjølve kollisjonane.
+
+## Rett IFC-klasse
+
+I IFC er klassen den første klassifiseringa: den mest spesifikke klassen med PredefinedType, ObjectType berre når PredefinedType er
+USERDEFINED, og eit typeobjekt; andre klassifiseringssystem blir lagde oppå. AI-en finn klassen for ein ting med lesverktøyet
+`search_ifc_class`, med engelske IFC-ord som *sink* eller *handrail*, i dokumentasjonen av skjemaet til modellen som følgjer med
+IfcOpenShell, og endringssettet godtek berre klassar som finst og ikkje er abstrakte i skjemaet til modellen, og PredefinedType frå
+lista til klassen. Kortet *IFC-klassar* i Kontroller (og lesverktøyet `get_class_report`) tel proxyelement (IfcBuildingElementProxy),
+USERDEFINED utan namn, element utan type, PredefinedType på både type og element (regelen OJT001) og element utanfor den romlege
+strukturen (SPS007), med døme.
 
 ## Samanlikn versjonar
 

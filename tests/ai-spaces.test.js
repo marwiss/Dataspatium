@@ -59,7 +59,7 @@
     assert.ok(all.ok && !all.refs && cs.refs === 6, 'every room: no refs: ' + JSON.stringify(all));
     assert.equal(cs.ops[7].default_name, t('ai.change.spaces.name'), 'the person\'s word for a room, with {n} for the wheel');
     assert.ok(cs.ops[7].default_name.includes('{n}'));
-    assert.ok(/create_spaces after the walls and before the slabs\.$/.test(agent.SYSTEM_BUILD), 'the build text says when');
+    assert.ok(/create_spaces after the walls and before the slabs\./.test(agent.SYSTEM_BUILD), 'the build text says when');
     return 'ok';
   });
 

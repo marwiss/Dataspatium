@@ -6,8 +6,9 @@
  * on the button for a large one. An IFC model shows the checks that exist elsewhere, reused as they are: the card Validera
  * modellen (the server's check of the file, the schema, IDS and clash detection with their latest results; the checks
  * themselves run in Analysera under Mängder) and the panel Jämför versioner, and the card Topologi (the rooms the walls
- * enclose per storey, open wall ends and the external walls per compass direction, on the button). Other kinds have no checks
- * yet. The inspector shows the chosen finding.
+ * enclose per storey, open wall ends and the external walls per compass direction, on the button), and the card IFC-klasser (the
+ * model against the right IFC class, on the button; decision B-57.2). Other kinds have no checks yet. The inspector shows the
+ * chosen finding.
  */
 (function () {
   'use strict';
@@ -19,6 +20,8 @@
     const ICON = 'list-checks';
     /** The compass sectors the topology names, in the order of kontrollera.topology.facings. */
     const FACINGS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    /** The checks of the class report (python/dataspatium.py `_ifc_class_report`), in the card's order. */
+    const CLASS_CHECKS = ['proxies', 'userdefined', 'untyped', 'type_conflicts', 'outside'];
 
     /**
      * The rules a table is tried against, counted in its SQL engine: the empty values of every column (null, or text that
@@ -204,7 +207,7 @@
         compare = compareModule.create(ctx, ds, {});
         const openBtn = ui.button({ label: t('import.open.bearbeta'), icon: 'box', title: t('kontrollera.model.open.hint'), onClick: () => { store.set({ selectedId: ds.id }); shell.activate('bearbeta'); } });
         replace(slots.center, head(ds, openBtn), h('p', { class: 'dm-help', text: t('kontrollera.model.help') }),
-          h('div', { class: 'dm-stack', 'data-kontrollera-model': '' }, cards.validationCard(ctx, ds), compare.el, topologyCard(ds)));
+          h('div', { class: 'dm-stack', 'data-kontrollera-model': '' }, cards.validationCard(ctx, ds), compare.el, topologyCard(ds), classCard(ds)));
         replace(slots.right, h('p', { class: 'dm-help', text: t('kontrollera.model.inspector') }));
       }
 
@@ -249,6 +252,50 @@
             state.storeys && !shown.length ? h('p', { class: 'dm-help dm-small', 'data-topology-none': '', text: t('kontrollera.topology.none') }) : null,
             shown.map(storey),
             shown.length ? h('p', { class: 'dm-help dm-xs', text: t('kontrollera.topology.north.' + (['map', 'true_north'].includes(shown[0].north) ? shown[0].north : 'model')) }) : null);
+        }
+        draw();
+        return el;
+      }
+
+      /**
+       * The card IFC-klasser (decision B-57.2): the model against the right IFC class, read by the wheel (data/ifc-ops.classReportOf)
+       * on the button, which may start Python as the topology's does. Each check is counted with its rule and first examples.
+       */
+      function classCard(ds) {
+        const el = h('div', { class: 'dm-card dm-stack-sm', 'data-card': 'classes' });
+        const state = { busy: false, error: '', report: /** @type {any} */ (null) };
+        const SHOWN = 5;
+        async function run() {
+          if (state.busy) return;
+          state.busy = true; state.error = ''; state.report = null; draw();
+          try { state.report = await D.require('data/ifc-ops').classReportOf(ds.id); } catch (err) { state.error = String((err && err.message) || err); }
+          state.busy = false; draw();
+        }
+        /** One example as a line: id, class, name and what the check found. */
+        function line(x) {
+          const found = x.type ? `${x.predefined_type} / ${x.type.ifc_class} ${x.type.predefined_type}` : (x.type_classes || []).length ? '→ ' + x.type_classes.join(', ') : x.object_type || '';
+          return ['#' + x.id, x.ifc_class, x.name || '', found].filter(Boolean).join(' · ');
+        }
+        function check(key) {
+          const c = (state.report && state.report[key]) || { count: 0, examples: [] };
+          const n = Number(c.count) || 0;
+          const byClass = c.by_class ? Object.entries(c.by_class).map(([k, v]) => `${k} ${i18n.formatNumber(v)}`).join(' · ') : '';
+          return h('div', { class: 'dm-stack-xs', 'data-classes-check': key, 'data-classes-count': String(n) },
+            h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t('kontrollera.classes.' + key) }), h('dm-badge', { text: n ? i18n.formatNumber(n) : t('kontrollera.findings.none'), kind: n ? 'warn' : 'ok' })),
+            h('p', { class: 'dm-help dm-xs', text: t('kontrollera.classes.' + key + '.help') + (c.rule ? ` (${c.rule})` : '') }),
+            n && byClass ? h('p', { class: 'dm-small', text: byClass }) : null,
+            n ? h('ul', { class: 'dm-stack-xs' }, (c.examples || []).slice(0, SHOWN).map((x) => h('li', { class: 'dm-small', 'data-classes-example': String(x.id), text: line(x) }))) : null,
+            n > SHOWN ? h('p', { class: 'dm-help dm-xs', text: t('kontrollera.classes.more', { n: i18n.formatNumber(n - SHOWN) }) }) : null);
+        }
+        function draw() {
+          const r = state.report;
+          replace(el,
+            h('h3', { text: t('kontrollera.classes') }),
+            h('p', { class: 'dm-help', text: t('kontrollera.classes.help') }),
+            h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('kontrollera.classes.run'), icon: 'tags', size: 'sm', loading: state.busy, title: t('kontrollera.classes.run.hint'), 'data-classes-run': '', onClick: run })),
+            state.error ? h('p', { class: 'dm-error dm-small', 'data-classes-error': '', text: state.error }) : null,
+            r ? h('p', { class: 'dm-help dm-small', 'data-classes-summary': '', text: t('kontrollera.classes.summary', { n: i18n.formatNumber(Number(r.elements) || 0), schema: String(r.schema || '') }) }) : null,
+            r ? CLASS_CHECKS.map(check) : null);
         }
         draw();
         return el;

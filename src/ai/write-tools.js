@@ -24,6 +24,7 @@
     const num = () => ({ type: ['number', 'null'] });
     const xy = () => ({ type: ['array', 'null'], items: { type: 'number' } });
     const ids = () => ({ type: 'array', items: { type: ['integer', 'string'] } });
+    const bool = () => ({ type: ['boolean', 'null'] });
     const CREATES = ['create_wall', 'create_slab', 'create_roof', 'create_opening', 'create_spaces'];
     const ROOF_SHAPES = ['gable', 'hip', 'shed', 'flat'];
     const MAX_ROOMS = 200;
@@ -33,8 +34,8 @@
         parameters: { type: 'object', properties: {
           storeys: { type: ['array', 'null'], items: { type: 'object', properties: { name: { type: 'string' }, elevation: { type: 'number' } }, required: ['name', 'elevation'], additionalProperties: false } },
           grid: { type: ['object', 'null'], properties: { x_spacing: { type: 'number' }, x_count: { type: 'integer' }, y_spacing: { type: 'number' }, y_count: { type: 'integer' } }, required: ['x_spacing', 'x_count', 'y_spacing', 'y_count'], additionalProperties: false } } } },
-      { name: 'create_wall', description: 'Add a wall on a storey (null: the lowest) from start [x, y] to end [x, y] in metres in the storey\'s plane, with its thickness centred on that line and its height from the storey. Defaults: thickness 0.2, height 3. Answers the ref of the wall.',
-        parameters: { type: 'object', properties: { storey: str(), start: xy(), end: xy(), thickness: num(), height: num(), name: str() } } },
+      { name: 'create_wall', description: 'Add a wall on a storey (null: the lowest) from start [x, y] to end [x, y] in metres in the storey\'s plane, with its thickness centred on that line and its height from the storey. Defaults: thickness 0.2, height 3. partition true makes a non-load-bearing interior wall (PredefinedType PARTITIONING); otherwise the wall is SOLIDWALL. Answers the ref of the wall.',
+        parameters: { type: 'object', properties: { storey: str(), start: xy(), end: xy(), thickness: num(), height: num(), name: str(), partition: bool() } } },
       { name: 'create_slab', description: 'Add a floor slab on a storey, with its top at the storey\'s elevation. outline is a list of [x, y] corners in metres, or null to follow the grid\'s extent. Default thickness 0.25. Answers the ref of the slab.',
         parameters: { type: 'object', properties: { storey: str(), outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, thickness: num(), name: str() } } },
       { name: 'create_roof', description: 'Add a roof on the walls of a storey (null: the top storey), as an IfcRoof of roof slabs: shape is gable, hip, shed or flat. outline is the [x, y] corners in metres of the rectangle it covers, or null for the bounding box of the storey\'s walls; an outline that is not a rectangle along x and y is replaced by its bounding box for now. pitch is degrees, more than 0 and at most 75 (defaults: 30 for gable and hip, 10 for shed; flat ignores it). overhang is metres beyond the outline at the eaves (default 0.4, for flat 0), thickness metres (default 0.25). ridge is x or y: for gable the direction of the ridge (null: along the longer side), for shed the axis it falls along, down toward negative x or y (null: y, so to the south when y points north); hip and flat ignore it. base is the eaves height in metres above the storey (null: the top of the storey\'s walls, else 2.7). Answers the ref of the roof.',
@@ -45,15 +46,15 @@
         parameters: { type: 'object', properties: { storey: str(), rooms: { type: ['array', 'null'], items: { type: 'object', properties: { at: xy(), index: { type: ['integer', 'null'] }, name: { type: 'string' }, long_name: str() }, required: ['at', 'index', 'name', 'long_name'], additionalProperties: false } }, height: num() } } },
       { name: 'set_properties', description: 'Set properties in one property set (pset, such as Pset_WallCommon) on elements (ids: ids or refs): properties is a list of {name, value} with string, number or boolean values. Missing sets are created.',
         parameters: { type: 'object', properties: { ids: ids(), pset: { type: 'string' }, properties: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, value: { type: ['string', 'number', 'boolean'] } }, required: ['name', 'value'], additionalProperties: false } } } } },
-      { name: 'set_classification', description: 'Classify elements (ids or refs) with a class of a classification system such as a bSDD dictionary: system is the dictionary\'s name, name the class name, code its code and uri its address (a bSDD class uri). Written as an IfcClassificationReference. Use search_bsdd first to find the class.',
-        parameters: { type: 'object', properties: { ids: ids(), system: { type: 'string' }, name: { type: 'string' }, code: str(), uri: str() } } },
+      { name: 'set_classification', description: 'Classify elements (ids or refs) with a class of the classification system the person names; never assume a system. The IFC class with its PredefinedType is the classification itself (choose it with search_ifc_class); this adds a system on top. system is that system\'s name, name the class name, code its code and uri its address (for a bSDD class its uri). Written as an IfcClassificationReference under the system\'s IfcClassification, shared only when the system, the code and the uri match. edition, source and dictionary_uri describe the system (its edition, its publisher and the dictionary\'s address) and are written on its IfcClassification; the same system with another edition or dictionary_uri is another IfcClassification. search_bsdd finds a class in a free bSDD dictionary: take its dictionary as system with its edition, source and dictionary_uri. Never invent a code or an edition; null when not known.',
+        parameters: { type: 'object', properties: { ids: ids(), system: { type: 'string' }, name: { type: 'string' }, code: str(), uri: str(), edition: str(), source: str(), dictionary_uri: str() } } },
       { name: 'assign', description: 'Move elements (ids or refs) to a storey (by name) and/or give them a material (by name, created when missing). Either may be null.',
         parameters: { type: 'object', properties: { ids: ids(), storey: str(), material: str() } } },
       { name: 'transform_elements', description: 'Move elements (ids or refs) by dx, dy, dz metres.',
         parameters: { type: 'object', properties: { ids: ids(), dx: num(), dy: num(), dz: num() } } },
       { name: 'delete_elements', description: 'Delete elements (ids or refs) with what depends on them. Only when the person asked for it in this conversation; confirm must be true to say so, and the person confirms again before approval.',
         parameters: { type: 'object', properties: { ids: ids(), confirm: { type: ['boolean', 'null'] } } } },
-      { name: 'set_site', description: 'Set the model\'s place on earth: the site\'s latitude and longitude in WGS 84 degrees (south and west negative), its elevation in metres above sea level, and, when the model is drawn in a projected coordinate system, the map conversion: crs is the EPSG code (such as EPSG:3006 for SWEREF 99 TM), eastings and northings the coordinates of the model\'s origin in metres, and rotation the angle in degrees from grid north to the model\'s X axis (counter-clockwise positive; 0 when null). crs, eastings and northings go together; site_name renames the site. One call per model is enough: a second call replaces the first.',
+      { name: 'set_site', description: 'Set the model\'s place on earth: the site\'s latitude and longitude in WGS 84 degrees (south and west negative), its elevation in metres above sea level, and, when the model is drawn in a projected coordinate system, the map conversion: crs is the EPSG code (such as EPSG:3006 for SWEREF 99 TM), eastings and northings the coordinates of the model\'s origin in metres, and rotation the angle in degrees from grid east (the map\'s x axis, along the eastings) to the model\'s X axis, counter-clockwise positive, as IfcMapConversion measures it (0 when null: the model\'s X axis points east and its Y axis north). crs, eastings and northings go together; site_name renames the site. One call per model is enough: a second call replaces the first.',
         parameters: { type: 'object', properties: { latitude: { type: 'number' }, longitude: { type: 'number' }, elevation: num(), crs: str(), eastings: num(), northings: num(), rotation: num(), site_name: str() } } },
       { name: 'manage_changeset', description: 'The open change set: action list shows its steps, remove_last drops the last step, clear empties it.',
         parameters: { type: 'object', properties: { action: { type: 'string' } } } },
@@ -100,6 +101,12 @@
       if (!Number.isInteger(n) || n < 1) throw new Error(`${key} must hold element ids (integers), GlobalIds or refs (new-1, …)`);
       return n;
     }
+    /** [x, y] corners without a repeat of the first one at the end: the wheel closes an outline on its first point (GEM111). @param {number[][]} pts */
+    function corners(pts) {
+      const out = pts.slice();
+      while (out.length > 1 && out[out.length - 1][0] === out[0][0] && out[out.length - 1][1] === out[0][1]) out.pop();
+      return out;
+    }
     /** The bounding box [x0, y0, x1, y1] of [x, y] points. @param {number[][]} pts */
     const bounds = (pts) => pts.reduce((b, p) => [Math.min(b[0], p[0]), Math.min(b[1], p[1]), Math.max(b[2], p[0]), Math.max(b[3], p[1])], [Infinity, Infinity, -Infinity, -Infinity]);
     /** Whether [x, y] points are the four corners of their bounding box (a closing corner may repeat the first). @param {number[][]} pts */
@@ -129,17 +136,19 @@
         case 'create_wall': {
           const start = point(a.start, 'start'); const end = point(a.end, 'end');
           if (Math.hypot(end[0] - start[0], end[1] - start[1]) < 0.01) throw new Error('start and end are the same point');
-          return { tool: name, storey: text(a, 'storey'), start, end, thickness: number(a, 'thickness', { fallback: 0.2, positive: true }), height: number(a, 'height', { fallback: 3, positive: true }), name: text(a, 'name') };
+          const op = { tool: name, storey: text(a, 'storey'), start, end, thickness: number(a, 'thickness', { fallback: 0.2, positive: true }), height: number(a, 'height', { fallback: 3, positive: true }), name: text(a, 'name') };
+          if (a.partition === true) op.partition = true;  // PARTITIONING in the wheel; SOLIDWALL otherwise
+          return op;
         }
         case 'create_slab': {
-          const outline = given(a.outline) ? (Array.isArray(a.outline) ? a.outline.map((p) => point(p, 'outline')) : null) : null;
+          const outline = given(a.outline) ? (Array.isArray(a.outline) ? corners(a.outline.map((p) => point(p, 'outline'))) : null) : null;
           if (given(a.outline) && (!outline || outline.length < 3)) throw new Error('outline must be at least three [x, y] points, or null for the grid\'s extent');
           return { tool: name, storey: text(a, 'storey'), outline, thickness: number(a, 'thickness', { fallback: 0.25, positive: true }), name: text(a, 'name') };
         }
         case 'create_roof': {
           const shape = given(a.shape) ? String(a.shape).toLowerCase() : '';
           if (!ROOF_SHAPES.includes(shape)) throw new Error('shape must be gable, hip, shed or flat');
-          const outline = given(a.outline) ? (Array.isArray(a.outline) ? a.outline.map((p) => point(p, 'outline')) : null) : null;
+          const outline = given(a.outline) ? (Array.isArray(a.outline) ? corners(a.outline.map((p) => point(p, 'outline'))) : null) : null;
           if (given(a.outline) && (!outline || outline.length < 3)) throw new Error('outline must be at least three [x, y] points, or null for the bounding box of the storey\'s walls');
           if (outline) { const b = bounds(outline); if (b[2] - b[0] < 0.1 || b[3] - b[1] < 0.1) throw new Error('outline must span at least 0.1 m along x and along y'); }
           const flat = shape === 'flat';
@@ -192,7 +201,9 @@
         case 'set_classification': {
           const system = text(a, 'system', { required: true });
           const className = text(a, 'name', { required: true });
-          return { tool: name, ids: idList(cs, a.ids), system, code: text(a, 'code'), name: className, uri: text(a, 'uri') };
+          const op = { tool: name, ids: idList(cs, a.ids), system, code: text(a, 'code'), name: className, uri: text(a, 'uri') };
+          for (const key of ['edition', 'source', 'dictionary_uri']) { const v = text(a, key); if (v) op[key] = v; }  // the system's facts, when given
+          return op;
         }
         case 'assign': {
           const storey = text(a, 'storey'); const material = text(a, 'material');
@@ -265,7 +276,7 @@
     function describe(op) {
       switch (op.tool) {
         case 'create_storeys_and_grid': return t('ai.change.create_storeys_and_grid', { storeys: (op.storeys || []).map((s) => `${s.name} (${fmt(s.elevation)} m)`).join(', ') || '–', grid: op.grid ? t('ai.change.grid', { x: fmt(op.grid.x_spacing), y: fmt(op.grid.y_spacing), nx: fmt(op.grid.x_count), ny: fmt(op.grid.y_count) }) : '' });
-        case 'create_wall': return t('ai.change.create_wall', { ref: op.ref || '', name: op.name || '', storey: op.storey || t('ai.change.storey.lowest'), x1: fmt(op.start[0]), y1: fmt(op.start[1]), x2: fmt(op.end[0]), y2: fmt(op.end[1]), thickness: fmt(op.thickness), height: fmt(op.height) });
+        case 'create_wall': return t('ai.change.create_wall', { ref: op.ref || '', name: op.name || '', storey: op.storey || t('ai.change.storey.lowest'), x1: fmt(op.start[0]), y1: fmt(op.start[1]), x2: fmt(op.end[0]), y2: fmt(op.end[1]), thickness: fmt(op.thickness), height: fmt(op.height) }) + (op.partition ? t('ai.change.wall.partition') : '');
         case 'create_slab': return t('ai.change.create_slab', { ref: op.ref || '', name: op.name || '', storey: op.storey || t('ai.change.storey.lowest'), thickness: fmt(op.thickness), outline: op.outline ? t('ai.change.outline.points', { n: String(op.outline.length) }) : t('ai.change.outline.grid') });
         case 'create_roof': {
           const b = op.outline ? bounds(op.outline) : null;
@@ -280,7 +291,7 @@
           return t('ai.change.create_spaces', { ref: refs.length > 1 ? `${refs[0]}–${refs[refs.length - 1]}` : refs[0] || '', storey: op.storey || t('ai.change.spaces.every'), rooms, height: op.height ? t('ai.change.spaces.height', { height: fmt(op.height) }) : '' });
         }
         case 'set_properties': return t('ai.change.set_properties', { pset: op.pset, ids: idsText(op.ids), props: Object.entries(op.properties || {}).map(([k, v]) => `${k} = ${fmt(v)}`).join(', ') });
-        case 'set_classification': return t('ai.change.set_classification', { ids: idsText(op.ids), system: op.system, cls: [op.code, op.name].filter(Boolean).join(' ') });
+        case 'set_classification': return t('ai.change.set_classification', { ids: idsText(op.ids), system: [op.system, op.edition].filter(Boolean).join(' '), cls: [op.code, op.name].filter(Boolean).join(' ') });
         case 'assign': return t('ai.change.assign', { ids: idsText(op.ids), storey: op.storey ? t('ai.change.assign.storey', { storey: op.storey }) : '', material: op.material ? t('ai.change.assign.material', { material: op.material }) : '' });
         case 'transform_elements': return t('ai.change.transform_elements', { ids: idsText(op.ids), dx: fmt(op.dx), dy: fmt(op.dy), dz: fmt(op.dz) });
         case 'delete_elements': return t('ai.change.delete_elements', { ids: idsText(op.ids) });

@@ -1505,6 +1505,7 @@ class _ChangeSet:
         self.owner = owners[0] if owners else None
         self._body = None
         self._axis = None
+        self._schema = None
 
     # -- units, lookups and bookkeeping
     def u(self, metres):
@@ -1543,7 +1544,7 @@ class _ChangeSet:
         if not storeys:
             raise DataspatiumError("the model has no storey; create one with create_storeys_and_grid first")
         if name is None or str(name).strip() == "":
-            ordered = sorted(storeys, key=lambda s: float(s.Elevation or 0))
+            ordered = sorted(storeys, key=lambda s: _topo_elevation(s, self.scale))  # IFC4.3's storeys have their height in the placement
             return ordered[-1] if top else ordered[0]
         for exact in (True, False):
             for s in storeys:
@@ -1577,9 +1578,53 @@ class _ChangeSet:
             return
         self.changed[e.id()] = self.record(e, self.container(e))
 
+    # -- the right class (decision B-57.2): every class and enumeration value an operation sets is checked against the schema
+    def schema_def(self):
+        if self._schema is None:
+            self._schema = _ifc_schema(getattr(self.m, "schema_identifier", None) or self.m.schema)
+        return self._schema
+
+    def check_class(self, ifc_class):
+        """The entity's declaration in the file's schema; a DataspatiumError, with the classes to use instead, when it does not exist
+        there or is abstract."""
+        schema = self.schema_def()
+        decl = _ifc_declaration(schema, ifc_class)
+        if decl is not None and decl.as_entity() is not None and not decl.is_abstract():
+            return decl
+        if decl is not None and decl.as_entity() is not None:
+            raise DataspatiumError("%s is abstract in %s; use one of %s" % (ifc_class, schema.name(), ", ".join(_ifc_concrete(decl)[:30])))
+        import difflib
+        near = difflib.get_close_matches(str(ifc_class), [d.name() for d in schema.declarations() if d.as_entity() is not None and not d.is_abstract()], 8, 0.6)
+        raise DataspatiumError("%s is not an entity of %s%s" % (ifc_class, schema.name(), "; near: " + ", ".join(near) if near else ""))
+
+    def check_enum(self, e, value, attribute="PredefinedType"):
+        """Whether the schema gives the element the enumeration `attribute`; a DataspatiumError that lists the allowed values for one
+        it does not take, and for USERDEFINED without the name of the type (ObjectType on an occurrence, ElementType on a type)."""
+        items = _ifc_enum_items(self.check_class(e.is_a()), attribute)
+        if items is None:
+            return False
+        gone = DEPRECATED_VALUES.get(self.m.schema, {}).get(e.is_a(), ()) if attribute == "PredefinedType" else ()
+        allowed = [i for i in items if i not in gone]
+        if value in gone:
+            raise DataspatiumError("%s is deprecated for %s in %s (bSI rule IFC102); use one of %s" % (value, e.is_a(), self.schema_def().name(), ", ".join(allowed)))
+        if value not in items:
+            raise DataspatiumError("%s is not a %s of %s in %s; it takes %s" % (value, attribute, e.is_a(), self.schema_def().name(), ", ".join(allowed)))
+        if value == "USERDEFINED" and attribute == "PredefinedType":
+            named = "ElementType" if e.is_a("IfcTypeObject") else "ObjectType"
+            if not str(getattr(e, named, None) or "").strip():
+                raise DataspatiumError("%s USERDEFINED needs %s, the name of the user-defined type; or use one of %s" % (e.is_a(), named, ", ".join(i for i in allowed if i not in ("USERDEFINED", "NOTDEFINED"))))
+        return True
+
+    def predefined(self, e, value):
+        """Set the element's PredefinedType after check_enum; an entity whose schema has none (walls, doors and windows in IFC2X3)
+        takes nothing."""
+        if self.check_enum(e, value):
+            e.PredefinedType = value
+
     # -- the file's structure
     def root(self, ifc_class, name):
         import ifcopenshell.guid
+        self.check_class(ifc_class)
         e = self.m.create_entity(ifc_class, GlobalId=ifcopenshell.guid.new(), Name=str(name))
         if self.owner is not None:
             e.OwnerHistory = self.owner
@@ -1602,13 +1647,6 @@ class _ChangeSet:
             return
         import ifcopenshell.api.owner.settings as settings
         settings.get_user, settings.get_application = previous
-
-    @staticmethod
-    def predefined(e, value):
-        try:
-            e.PredefinedType = value
-        except Exception:
-            pass
 
     def building(self):
         import ifcopenshell.api.aggregate
@@ -1710,12 +1748,20 @@ class _ChangeSet:
         profile = self.m.createIfcRectangleProfileDef("AREA", None, position, float(length), float(width))
         return self.shape(self.m.createIfcExtrudedAreaSolid(profile, self.axis3(0, 0, z0), self.direction(0, 0, 1), float(height)))
 
+    def closed(self, outline):
+        """A closed IfcPolyline through (x, y) corners: a repeated first corner at the end is dropped, and the line closes on the first
+        corner's own IfcCartesianPoint, not a copy of it (bSI rule GEM111)."""
+        corners = [tuple(float(v) for v in p) for p in outline]
+        while len(corners) > 1 and corners[-1] == corners[0]:
+            corners.pop()
+        if len(corners) < 3:
+            raise DataspatiumError("an outline needs at least three different corners")
+        pts = [self.point(x, y) for x, y in corners]
+        return self.m.createIfcPolyline(pts + pts[:1])
+
     def prism(self, outline, height, z0=0.0):
         """A closed outline of (x, y) points extruded height along Z from z0."""
-        pts = [self.point(x, y) for x, y in outline]
-        if outline[0] != outline[-1]:
-            pts.append(pts[0])
-        profile = self.m.createIfcArbitraryClosedProfileDef("AREA", None, self.m.createIfcPolyline(pts))
+        profile = self.m.createIfcArbitraryClosedProfileDef("AREA", None, self.closed(outline))
         return self.shape(self.m.createIfcExtrudedAreaSolid(profile, self.axis3(0, 0, z0), self.direction(0, 0, 1), float(height)))
 
     def wall_thickness(self, wall):
@@ -1788,7 +1834,8 @@ class _ChangeSet:
             elevation = _cs_num(s, "elevation", 0.0)
             storey = self.root("IfcBuildingStorey", s["name"])
             storey.CompositionType = "ELEMENT"
-            storey.Elevation = self.u(elevation)
+            if self.m.schema != "IFC4X3":
+                storey.Elevation = self.u(elevation)  # deprecated in IFC4.3 (IFC102): there the placement alone gives the height
             storey.ObjectPlacement = self.placement(building.ObjectPlacement, 0, 0, self.u(elevation))
             ifcopenshell.api.aggregate.assign_object(self.m, products=[storey], relating_object=building)
             self.register(storey, ref=False)
@@ -1830,7 +1877,8 @@ class _ChangeSet:
         # The centreline as the wall's 'Axis' (Curve2D), after the body, so that the topology reads it without the geometry kernel.
         axis = self.m.createIfcPolyline([self.point(0, 0), self.point(self.u(length), 0)])
         wall.Representation.Representations = list(wall.Representation.Representations) + [self.m.createIfcShapeRepresentation(self.axis_context(), "Axis", "Curve2D", [axis])]
-        self.predefined(wall, "STANDARD")
+        # STANDARD is deprecated (IFC102): a wall the AI calls a non-load-bearing interior wall partitions, any other is solid.
+        self.predefined(wall, "PARTITIONING" if op.get("partition") is True else "SOLIDWALL")
         self.contain(wall, storey)
         self.register(wall, storey)
 
@@ -1892,7 +1940,8 @@ class _ChangeSet:
         roof = self.root("IfcRoof", name)
         roof.ObjectPlacement = self.placement(storey.ObjectPlacement, self.u(x0), self.u(y0), self.u(base))
         if self.m.schema == "IFC2X3":
-            roof.ShapeType = self.ROOF_TYPES[shape]
+            if self.check_enum(roof, self.ROOF_TYPES[shape], "ShapeType"):
+                roof.ShapeType = self.ROOF_TYPES[shape]
         else:
             self.predefined(roof, self.ROOF_TYPES[shape])
         self.contain(roof, storey)
@@ -1907,7 +1956,7 @@ class _ChangeSet:
             along, up, normal = (-fy, fx, 0.0), (-fx * cos, -fy * cos, sin), (fx * sin, fy * sin, cos)
             o = pts[0]
             face = [[self.u(_cs_dot([q[k] - o[k] for k in range(3)], axis)) for axis in (along, up)] for q in pts]  # in the face's plane
-            profile = self.m.createIfcArbitraryClosedProfileDef("AREA", None, self.m.createIfcPolyline([self.point(u, v) for u, v in face + face[:1]]))
+            profile = self.m.createIfcArbitraryClosedProfileDef("AREA", None, self.closed(face))
             position = self.m.createIfcAxis2Placement3D(self.point(self.u(o[0]), self.u(o[1]), self.u(o[2])), self.direction(*normal), self.direction(*along))
             slab = self.root("IfcSlab", "%s %d" % (name, i + 1))
             slab.ObjectPlacement = self.placement(roof.ObjectPlacement, 0, 0, 0)
@@ -2048,8 +2097,7 @@ class _ChangeSet:
         back = _cs_invert(frame)
 
         def curve(ring):
-            pts = [_cs_at(back, (c[0] / self.scale, c[1] / self.scale, frame[3][2])) for c in ring.coords]
-            return self.m.createIfcPolyline([self.point(p[0], p[1]) for p in pts])
+            return self.closed([_cs_at(back, (c[0] / self.scale, c[1] / self.scale, frame[3][2]))[:2] for c in ring.coords])
         poly = room["polygon"]
         if poly.interiors:
             profile = self.m.createIfcArbitraryProfileDefWithVoids("AREA", None, curve(poly.exterior), [curve(r) for r in poly.interiors])
@@ -2059,7 +2107,10 @@ class _ChangeSet:
         space.LongName = long_name
         space.CompositionType = "ELEMENT"
         if self.m.schema == "IFC2X3":
-            space.InteriorOrExteriorSpace = "INTERNAL"
+            if self.check_enum(space, "INTERNAL", "InteriorOrExteriorSpace"):
+                space.InteriorOrExteriorSpace = "INTERNAL"
+        elif self.m.schema == "IFC4X3":
+            self.predefined(space, "SPACE")  # INTERNAL is deprecated in IFC4.3 (IFC102); that the room is inside is IsExternal false
         else:
             self.predefined(space, "INTERNAL")
         space.ObjectPlacement = self.placement(storey.ObjectPlacement, 0, 0, 0)
@@ -2143,6 +2194,10 @@ class _ChangeSet:
             ifcopenshell.api.aggregate.assign_object(self.m, products=spaces, relating_object=s)
             for space, (room, _, _) in zip(spaces, chosen):
                 self.space_quantities(space, room, h)
+                if self.m.schema == "IFC4X3":
+                    import ifcopenshell.api.pset
+                    pset = ifcopenshell.api.pset.add_pset(self.m, product=space, name="Pset_SpaceCommon")
+                    ifcopenshell.api.pset.edit_pset(self.m, pset=pset, properties={"IsExternal": False})
                 self.register(space, s, ref=listed)
         if not made:
             raise DataspatiumError("every room the walls enclose has a space already")
@@ -2162,19 +2217,64 @@ class _ChangeSet:
             self.touch(e)
 
     def op_set_classification(self, op):
+        """A reference to a class of the system the person names, on the elements. A reference is reused only when its system, its
+        code (Identification; ItemReference in IFC2X3) and its Location all match, and without a code its name too; otherwise it is
+        made under that system's IfcClassification. (IfcOpenShell's add_reference reuses any reference with the same code in the
+        file, whatever its system, and any reference without a code when none is given.) The system's own facts, when given (edition,
+        source and dictionary_uri), go on its IfcClassification as Edition, Source and Location (IFC4) or Specification (IFC4.3); a
+        system of the same name with another edition or address is another IfcClassification. Nothing is fetched: the facts come from
+        the call. IFC2X3 requires Source and Edition, so an empty label stands for one not given, and its IfcClassification is not
+        related to the project (IFC2X3 relates only references)."""
         import ifcopenshell.api.classification
+        import ifcopenshell.guid
         system = str(op.get("system") or "").strip()
         name = str(op.get("name") or "").strip()
         if not system or not name:
             raise DataspatiumError("system and name are required")
-        found = [c for c in self.m.by_type("IfcClassification") if str(c.Name or "") == system]
-        classification = found[0] if found else ifcopenshell.api.classification.add_classification(self.m, classification=system)
+        edition, source, address = (str(op.get(key) or "").strip() or None for key in ("edition", "source", "dictionary_uri"))
+        address_attribute = {"IFC4": "Location", "IFC4X3": "Specification"}.get(self.m.schema)
+
+        def same_system(c):
+            here = getattr(c, address_attribute, None) if address_attribute else None
+            return (str(c.Name or "") == system and not (edition and c.Edition and str(c.Edition) != edition)
+                    and not (address and here and str(here) != address))
+        classification = next((c for c in self.m.by_type("IfcClassification") if same_system(c)), None)
+        if classification is None and self.m.schema == "IFC2X3":
+            classification = self.m.create_entity("IfcClassification", Source=source or "", Edition=edition or "", Name=system)
+        elif classification is None:
+            classification = ifcopenshell.api.classification.add_classification(self.m, classification=system)
+        if edition and not classification.Edition:
+            classification.Edition = edition
+        if source and not classification.Source:
+            classification.Source = source
+        if address and address_attribute and not getattr(classification, address_attribute, None):
+            setattr(classification, address_attribute, address)
         code = str(op.get("code") or "").strip() or None
         uri = str(op.get("uri") or "").strip() or None
-        for e in self.elements(op):
-            ref = ifcopenshell.api.classification.add_reference(self.m, products=[e], identification=code, name=name, classification=classification)
-            if uri and ref is not None and hasattr(ref, "Location"):
-                ref.Location = uri
+        code_attribute = "ItemReference" if self.m.schema == "IFC2X3" else "Identification"
+
+        def system_of(ref):
+            source = ref.ReferencedSource
+            for _ in range(16):  # a reference may hang under another reference of the same system
+                if source is None or not source.is_a("IfcClassificationReference"):
+                    break
+                source = source.ReferencedSource
+            return source
+        # Without a code a class is known by its name alone, so the name must match as well.
+        ref = next((r for r in self.m.by_type("IfcClassificationReference") if system_of(r) == classification
+                    and (getattr(r, code_attribute, None) or None) == code and (r.Location or None) == uri
+                    and (code is not None or str(r.Name or "") == name)), None)
+        if ref is None:
+            ref = self.m.create_entity("IfcClassificationReference", Location=uri, Name=name, ReferencedSource=classification, **{code_attribute: code})
+        elements = self.elements(op)
+        rel = next((r for r in self.m.by_type("IfcRelAssociatesClassification") if r.RelatingClassification == ref), None)
+        if rel is None:
+            rel = self.m.create_entity("IfcRelAssociatesClassification", GlobalId=ifcopenshell.guid.new(), RelatedObjects=elements, RelatingClassification=ref)
+            if self.owner is not None:
+                rel.OwnerHistory = self.owner
+        else:
+            rel.RelatedObjects = list(rel.RelatedObjects) + [e for e in elements if e not in rel.RelatedObjects]
+        for e in elements:
             self.touch(e)
 
     def op_assign(self, op):
@@ -3126,6 +3226,236 @@ def _ifc_topology_file(in_file, out_file):
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
     model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "topology-in.ifc"), data)
     text = json.dumps(_ifc_topology(model), ensure_ascii=False, default=str)
+    with open(out_file, "w", encoding="utf-8") as fh:
+        fh.write(text)
+    return text
+
+
+# ---- the right IFC class (decision B-57.2) ------------------------------------------------------------
+# In native IFC the class is the classification (decision B-59): the most specific entity with its PredefinedType, an ObjectType
+# only for USERDEFINED, and a type object; a system the person names comes on top through set_classification. _ifc_class_search
+# finds the class for a thing from its English words in IfcOpenShell's documentation of the schema; _ifc_class_report lists what
+# in a model falls short of that.
+
+CLASS_ROOTS = ("IfcElement", "IfcSpatialElement", "IfcSpatialStructureElement", "IfcTypeProduct")
+# PredefinedTypes the IFC releases deprecate (bSI rule IFC102), by the file's schema family: never written, flagged in the search.
+DEPRECATED_VALUES = {
+    "IFC4": {"IfcWall": ("STANDARD", "POLYGONAL", "ELEMENTEDWALL"), "IfcWallType": ("STANDARD", "POLYGONAL", "ELEMENTEDWALL")},
+    "IFC4X3": {"IfcWall": ("STANDARD", "POLYGONAL"), "IfcWallType": ("STANDARD", "POLYGONAL"), "IfcSpace": ("INTERNAL", "EXTERNAL"),
+               "IfcSpaceType": ("INTERNAL", "EXTERNAL"), "IfcBuildingElementProxy": ("PROVISIONFORSPACE", "PROVISIONFORVOID")},
+}
+CLASS_RULES = {
+    "userdefined": "IFC CorrectPredefinedType; ifc-gherkin-rules OJT001 Object Predefined Type",
+    "type_conflicts": "ifc-gherkin-rules OJT001 Object Predefined Type (concept template 4.1.3.2)",
+    "outside": "ifc-gherkin-rules SPS007 Spatial Containment",
+}
+
+
+def _ifc_schema(name):
+    """IfcOpenShell's definition of a schema by its name (IFC2X3, IFC4, IFC4X3_ADD2 ...), or by the one of its line that the app's
+    IfcOpenShell carries (a file header's IFC4X3 or IFC2X3_TC1)."""
+    import ifcopenshell
+    upper = str(name or "").upper()
+    for candidate in (str(name), next((s for s in IFC_NEW_SCHEMAS if upper.startswith(s.split("_")[0])), None)):
+        try:
+            return ifcopenshell.schema_by_name(candidate)
+        except Exception:
+            continue
+    raise DataspatiumError("unknown IFC schema %r; the app reads %s" % (name, ", ".join(IFC_NEW_SCHEMAS)))
+
+
+def _ifc_declaration(schema, name):
+    """A declaration of the schema by name; None for one it lacks."""
+    try:
+        return schema.declaration_by_name(str(name))
+    except Exception:
+        return None
+
+
+def _ifc_enum_items(decl, attribute="PredefinedType"):
+    """The items of an entity's enumeration attribute; None when the entity has no such attribute."""
+    import ifcopenshell.util.attribute
+    attr = next((a for a in decl.all_attributes() if a.name() == attribute), None)
+    if attr is None:
+        return None
+    try:
+        return list(ifcopenshell.util.attribute.get_enum_items(attr))
+    except Exception:
+        return None
+
+
+def _ifc_concrete(decl):
+    """The names of the non-abstract entities at or below a declaration, in order."""
+    out, stack = set(), [decl]
+    while stack:
+        d = stack.pop()
+        if not d.is_abstract():
+            out.add(d.name())
+        stack.extend(d.subtypes())
+    return sorted(out)
+
+
+def _ifc_below(decl, name):
+    """Whether a declaration is the entity `name` or one of its subtypes."""
+    while decl is not None:
+        if decl.name() == name:
+            return True
+        decl = decl.supertype()
+    return False
+
+
+def _ifc_clip(text, n=300):
+    text = " ".join(str(text or "").split())
+    return text if len(text) <= n else text[:n].rsplit(" ", 1)[0] + " …"
+
+
+def _ifc_class_search(schema, query, limit=12):
+    """The classes of a schema for a thing named in English IFC words (decision B-57.2). Every word of the query must occur, in any
+    case, in the class's name, its description, a PredefinedType's name or doc, or a name IfcOpenShell suggests for the class
+    (ifcopenshell.util.doc; without its data the schema's names and enumerations alone). Among the non-abstract elements, spatial
+    elements and type products, hits on the class's own name come first, then those on a PredefinedType's name, then the rest, and
+    occurrences before types; a type whose occurrence class is a hit is left out. Per hit: class, the matching PredefinedTypes with
+    their docs (all of them when the class's name matched; deprecated ones last and marked, IFC102), a description clipped to about
+    300 characters, spec_url when known, and the type class (for a type, the occurrence class)."""
+    import re
+    import ifcopenshell.util.doc as doc
+    import ifcopenshell.util.type as types
+    s = _ifc_schema(schema)
+    family = "IFC4X3" if s.name().upper().startswith("IFC4X3") else s.name().upper()
+    words = [w for w in re.split(r"[^0-9a-z]+", str(query).lower()) if w]
+    if not words:
+        raise DataspatiumError("give the thing to look for in English IFC words, such as sink, handrail or curtain wall")
+    try:
+        docs = (doc.get_db(s.name()) or {}).get("entities") or {}
+    except Exception:
+        docs = {}
+    roots = [d for d in (_ifc_declaration(s, n) for n in CLASS_ROOTS) if d is not None]
+    found = []
+    for name in sorted({n for r in roots for n in _ifc_concrete(r)}):
+        decl = s.declaration_by_name(name)
+        info = docs.get(name) or {}
+        pt_docs = info.get("predefined_types") or {}
+        pts = list(dict.fromkeys((_ifc_enum_items(decl) or []) + list(pt_docs)))
+        try:
+            suggested = doc.get_class_suggestions(s.name(), name) or []
+        except Exception:
+            suggested = []
+        lname, ldesc = name.lower(), str(info.get("description") or "").lower()
+
+        def in_pt(w, pt):
+            return w in pt.lower() or w in str(pt_docs.get(pt) or "").lower()
+        said = [x for x in suggested if any(w in str(x.get("name", "")).lower() for w in words)]
+        if not all(w in lname or w in ldesc or any(in_pt(w, pt) for pt in pts) or any(w in str(x.get("name", "")).lower() for x in said) for w in words):
+            continue
+        by_name = all(w in lname for w in words)
+        tier = 0 if by_name else 1 if all(w in lname or any(w in pt.lower() for pt in pts) for w in words) else 2
+        chosen = pts if by_name else [pt for pt in pts if any(in_pt(w, pt) for w in words) or any(x.get("predefined_type") == pt for x in said)]
+        gone = set(DEPRECATED_VALUES.get(family, {}).get(name, ())) | {pt for pt in pts if ".deprecated" in str(pt_docs.get(pt) or "")}
+        hit = {"class": name, "predefined_types": [dict({"name": pt, "doc": _ifc_clip(str(pt_docs.get(pt) or "").replace("{ .deprecated}", ""), 200) or None},
+                                                        **({"deprecated": True} if pt in gone else {})) for pt in sorted(chosen, key=lambda p: p in gone)],
+               "description": _ifc_clip(info.get("description")) or None}
+        if info.get("spec_url"):
+            hit["spec_url"] = info["spec_url"]
+        if said:
+            hit["known_as"] = [str(x.get("name")) for x in said]
+        is_type = _ifc_below(decl, "IfcTypeProduct")
+        try:
+            pair = types.get_applicable_entities(name, schema=s.name()) if is_type else types.get_applicable_types(name, schema=s.name())
+        except Exception:
+            pair = []
+        pair = [getattr(x, "ifc_class", x) for x in pair]
+        hit["occurrence_class" if is_type else "type_class"] = pair[0] if pair else None
+        if len(pair) > 1:
+            hit["occurrence_classes" if is_type else "type_classes"] = pair[:8]
+        found.append(((tier, is_type, len(name), name), hit))
+    found.sort(key=lambda x: x[0])
+    # A type is left out when its occurrence class matched as well (IFC2X3 keeps IfcSanitaryTerminalType over IfcFlowTerminal).
+    tiers = {h["class"]: key[0] for key, h in found}
+    hits = [h for key, h in found if tiers.get(h.get("occurrence_class"), 9) > key[0]]
+    return hits[:max(1, min(50, int(limit or 12)))]
+
+
+def _ifc_class_report(model, limit=50):
+    """What in a model falls short of the right IFC class (decision B-57.2), as counts and up to `limit` examples each: proxies
+    (IfcBuildingElementProxy); USERDEFINED without the name of the type, ObjectType on an occurrence or ElementType on a type (the
+    schema's CorrectPredefinedType and OJT001); elements without a type although their class has a type class; occurrences with a
+    PredefinedType of their own while their type has one other than NOTDEFINED (OJT001: the occurrence's must then be empty; IFC4
+    and later); and elements outside the spatial structure, neither contained nor part of an element that is (SPS007). Feature
+    elements (openings) are left out of the last three, as SPS007 does."""
+    import ifcopenshell.util.element as el
+    import ifcopenshell.util.type as types
+    schema = getattr(model, "schema_identifier", None) or model.schema
+    pairs = {}
+
+    def type_classes(cls):
+        if cls not in pairs:
+            try:
+                pairs[cls] = list(types.get_applicable_types(cls, schema=schema))[:5]
+            except Exception:
+                pairs[cls] = []
+        return pairs[cls]
+
+    def bucket(rule=None):
+        return dict({"count": 0, "examples": []}, **({"rule": rule} if rule else {}))
+
+    def add(b, e, **extra):
+        b["count"] += 1
+        if len(b["examples"]) < limit:
+            rec = {"id": e.id(), "guid": getattr(e, "GlobalId", None), "ifc_class": e.is_a(), "name": _ifc_text(getattr(e, "Name", None))}
+            rec.update({k: v for k, v in extra.items() if v is not None})
+            b["examples"].append(rec)
+
+    def located(e, depth=0):
+        if getattr(e, "ContainedInStructure", None):
+            return True
+        wholes = [r.RelatingObject for inverse in ("Decomposes", "Nests") for r in (getattr(e, inverse, None) or ())]
+        return depth < 32 and any(hasattr(w, "ContainsElements") or located(w, depth + 1) for w in wholes)
+
+    proxies, untyped = bucket(), dict(bucket(), by_class={})
+    userdefined = dict(bucket(CLASS_RULES["userdefined"]), occurrences=0, types=0)
+    conflicts, outside = bucket(CLASS_RULES["type_conflicts"]), bucket(CLASS_RULES["outside"])
+    elements = model.by_type("IfcElement")
+    for e in elements:
+        if e.is_a("IfcBuildingElementProxy"):
+            add(proxies, e, object_type=_ifc_text(getattr(e, "ObjectType", None)), predefined_type=getattr(e, "PredefinedType", None))
+        if e.is_a("IfcFeatureElement"):
+            continue
+        if el.get_type(e) is None and type_classes(e.is_a()):
+            add(untyped, e, type_classes=type_classes(e.is_a()))
+            untyped["by_class"][e.is_a()] = untyped["by_class"].get(e.is_a(), 0) + 1
+        if not located(e):
+            add(outside, e)
+    untyped["by_class"] = dict(sorted(untyped["by_class"].items(), key=lambda x: (-x[1], x[0]))[:30])
+    for o in model.by_type("IfcObject"):
+        if getattr(o, "PredefinedType", None) == "USERDEFINED" and not str(getattr(o, "ObjectType", None) or "").strip():
+            userdefined["occurrences"] += 1
+            add(userdefined, o, kind="occurrence")
+    for t in model.by_type("IfcTypeObject"):
+        named = next((a for a in ("ElementType", "ProcessType", "ResourceType") if hasattr(t, a)), None)
+        if named and getattr(t, "PredefinedType", None) == "USERDEFINED" and not str(getattr(t, named, None) or "").strip():
+            userdefined["types"] += 1
+            add(userdefined, t, kind="type")
+    if model.schema != "IFC2X3":
+        for rel in model.by_type("IfcRelDefinesByType"):
+            t = rel.RelatingType
+            tpt = getattr(t, "PredefinedType", None)
+            if tpt is None or str(tpt).startswith("NOTDEFINED"):
+                continue
+            for o in (rel.RelatedObjects or ()):
+                if getattr(o, "PredefinedType", None) is not None:
+                    add(conflicts, o, predefined_type=o.PredefinedType, differs=o.PredefinedType != tpt,
+                        type={"id": t.id(), "ifc_class": t.is_a(), "name": _ifc_text(getattr(t, "Name", None)), "predefined_type": tpt})
+    return {"schema": schema, "elements": len(elements), "proxies": proxies, "userdefined": userdefined, "untyped": untyped,
+            "type_conflicts": conflicts, "outside": outside}
+
+
+def _ifc_class_report_file(in_file, out_file):
+    """The class report (_ifc_class_report) of the model kept in a dataset file, for the read tool get_class_report and the card
+    IFC-klasser in Kontrollera: the original IFC is read from the SQLite file, and the JSON is written to out_file and returned."""
+    _, data = _ifc_original_from(in_file)
+    os.makedirs(os.path.dirname(out_file), exist_ok=True)
+    model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "classes-in.ifc"), data)
+    text = json.dumps(_ifc_class_report(model), ensure_ascii=False, default=str)
     with open(out_file, "w", encoding="utf-8") as fh:
         fh.write(text)
     return text

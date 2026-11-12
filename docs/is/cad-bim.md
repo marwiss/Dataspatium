@@ -204,6 +204,9 @@ Spjaldið **Verkefnissnið** í sýn gagnalindarinnar undir *Sækja → OpenCDE*
   völdu orðabókunum eða öllum; *Orðabækur* sýnir orðabækurnar svo þú getir bætt þeim við sniðið. Í *Breyta með gervigreind* getur
   gervigreindin leitað með tólinu `search_bsdd` og flokkað byggingarhluta með `set_classification`, sem er skrifað sem
   `IfcClassificationReference` í breytingasettið sem þú samþykkir.
+  `search_bsdd` leitar aðeins í frjálsum orðabókum þar sem leyfisskilmálarnir hafa verið lesnir (IFC 4.3, Uniclass 2015 og ETIM 10.1) og
+  gefur upp orðabók og leyfi hvers flokks, og `set_classification` skrifar útgáfu, útgefanda og vefslóð kerfisins á `IfcClassification`
+  þess.
 
 buildingSMART-reglur þjónsins sjást á spjaldinu *Sannprófa líkanið* í Umsjón; veldu reglu í listanum við hlið *Merkja í líkaninu* til að
 auðkenna aðeins byggingarhlutana sem sú regla hittir.
@@ -396,6 +399,16 @@ Gefi þjónninn gildin fyrir hvern árekstur sýnir spjaldið fyrir hvern þeirr
 og þú velur fyrir hvern árekstur hvort þú heldur tillögu þinni eða tekur það sem kom á milli. *Leggja til aftur með mínu vali* sendir
 tillöguna gagnvart nýjustu útgáfunni með þeim breytingum sem haldið er og án þeirra sem strikaðar eru, og þjónninn reynir hana aftur
 áður en hægt er að samþykkja hana. Sameiningin fer fram á þjóninum; vafrinn sér aðeins um sjálfa árekstrana.
+
+## Réttur IFC-flokkur
+
+Í IFC er flokkurinn fyrsta flokkunin: nákvæmasti flokkurinn með PredefinedType sínu, ObjectType aðeins þegar PredefinedType er
+USERDEFINED, og gerðarhlutur; önnur flokkunarkerfi koma ofan á. Gervigreindin finnur flokkinn fyrir hlut með lestrartólinu
+`search_ifc_class`, með enskum IFC-orðum eins og *sink* eða *handrail*, í skjölun skema líkansins sem fylgir IfcOpenShell, og
+breytingasettið tekur aðeins við flokkum sem eru til og eru ekki óhlutbundnir í skema líkansins, og PredefinedType af lista flokksins.
+Kortið *IFC-flokkar* í Athuga (og lestrartólið `get_class_report`) telur staðgengilshluta (IfcBuildingElementProxy), USERDEFINED án
+nafns, byggingarhluta án gerðar, PredefinedType bæði á gerð og hluta (reglan OJT001) og hluta utan rýmisskipanarinnar (SPS007), með
+dæmum.
 
 ## Bera saman útgáfur
 
