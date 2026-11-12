@@ -184,6 +184,9 @@ Vinna* fer með þig þangað til að lagfæra það. IFC-líkan sýnir kortið 
 ljósmyndir af skemmdum (fyrirhugað).
 Kortið *Grannfræði* les veggi líkansins með *Athuga grannfræðina* (Python forritsins ræsist í fyrsta sinn) og sýnir á hverri hæð hve
 mörg herbergi veggirnir loka, hvort hæðin er lokuð, veggenda sem standa lausir og útveggina eftir áttum.
+Kortið *Tvítök milli líkana* prófar líkanið gegn öðrum IFC-líkönum af sömu byggingu á vinnufletinum: sama GlobalId í fleiri
+líkönum, sami byggingarhluti í tveimur líkönum og hæðir með sama heiti í mismunandi hæðarlegu, með frávikin sem töflu, merkingu í
+líkanasýninni og BCF-mál (sjá [cad-bim.md](cad-bim.md)).
 
 ## Greina
 

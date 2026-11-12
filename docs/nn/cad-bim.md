@@ -787,3 +787,34 @@ versjon lasta opp som heil fil har ingen endringssett. Det er ei tredje kjelde v
 Med *Versjonane til tenaren* vert dei andre versjonane av dokumentet på Dataregium henta som val i lista *Samanlikn med*. Vel du ein
 av dei, vert samanlikninga rekna av tenaren (diffen mellom versjonar, etter GlobalId og attributt, med plassering, form, behaldar og
 type som eigne felt) og vist som dei same listene og fargane her, men utan den andre versjonen i 3D; hent den versjonen om du vil sjå han.
+
+## Duplikat mellom modellar
+
+Kortet **Duplikat mellom modellar** i Kontroller prøver den valde IFC-modellen mot andre IFC-modellar av same bygning i
+arbeidsflata, til dømes modellen til arkitekten mot modellen til konstruktøren når dei skal samordnast. Vel modellane under *Prøv
+mot* og trykk på *Søk etter duplikat*. Kontrollen arbeider på dei same trekantane som 3D-visinga og kollisjonskontrollen, i ein
+eigen tråd, og treng verken Python eller nett. Modellane må dele koordinatsystem.
+
+- **Same GlobalId**: ein bygningsdel eller eit rom har same GlobalId i meir enn éin modell. Kvart objekt skal ha sin eigen; det
+  skjer til dømes når ein modell har fått med element frå ein annan. Har begge geometri, blir det òg målt kor mykje dei overlappar.
+  Prosjekt, tomt, bygning og etasjar med same GlobalId i fleire modellar blir berre talde, fordi modellar som byggjer på same
+  grunnlag, held på dei.
+- **Same bygningsdel to gonger**: bygningsdelar av same klasse i to modellar som overlappar minst *Overlapp* (90 % om ikkje noko
+  anna er sett). StandardCase og ElementedCase blir rekna som klassen sin, og tak blir rekna som dekke og trappeløp som trapper,
+  fordi dei kan stå for det same. Overlappet er det felles volumet delt på volumet til det største elementet, målt med strålar
+  gjennom punkt i eit rutenett der flatene er lukka; kan volumet ikkje målast, avgjer boksane rundt elementa. Ein vegg på 200 mm
+  inne i ein på 250 mm overlappar altså 80 %. Par med same GlobalId høyrer til den første kontrollen.
+- **Etasjar på ulik høgd**: ein etasje med same namn (utan omsyn til store bokstavar og mellomrom) har høgder som skil seg meir enn
+  ein millimeter i to modellar.
+
+Funna blir viste i ein tabell med modell, id, GlobalId, type og namn for begge elementa, overlappet i volum og i boksane, høgdene
+til etasjane og eit punkt i koordinatane til modellane. Vel ei rad for å sjå funnet i inspektøren, der *Vis i* opnar kvart av
+elementa i modellvisinga i Bearbeid. Derifrå:
+
+- *Merk i* merkjer elementa til ein modell i funna i modellvisinga i Bearbeid.
+- *Lagre som BCF* lagrar éi sak per funn i ei BCF-fil, med ei vising av staden og elementa merkte og farga, og filene til begge
+  modellane i hovudet til saka. Etasjane har ingen stad og får inga vising.
+- *Send som saker* opprettar sakene i prosjektet til modellen på tenaren, for ein modell som er henta frå eit CDE.
+- *Opprett datasett* lagrar tabellen.
+
+Bygningsdelar som 3D-visinga ikkje kan teikne, blir ikkje prøvde som duplikat, og resultatet seier kor mange dei er.

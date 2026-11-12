@@ -5,7 +5,8 @@
  * number of empty values and the number of duplicate rows, counted in the dataset's SQL engine: at once for a small table,
  * on the button for a large one. An IFC model shows the checks that exist elsewhere, reused as they are: the card Validera
  * modellen (the server's check of the file, the schema, IDS and clash detection with their latest results; the checks
- * themselves run in Analysera under Mängder) and the panel Jämför versioner, and the card Topologi (the rooms the walls
+ * themselves run in Analysera under Mängder) and the panel Jämför versioner, and the card Dubbletter mellan modeller (the model
+ * against other IFC models of the building in the workspace, on the button; ui/kinds/federated-card), and the card Topologi (the rooms the walls
  * enclose per storey, open wall ends and the external walls per compass direction, on the button), and the card IFC-klasser (the
  * model against the right IFC class, on the button; decision B-57.2), and the card Grunduppgifter (the basic requirements of the
  * guidance Praxi in the app's own words, on the button). Other kinds have no checks yet. The inspector shows the chosen finding.
@@ -13,7 +14,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/kontrollera', ['ui/base', 'data/kinds', 'ui/kinds/insight-cards', 'ui/bearbeta/model-compare'], (base, kinds, cards, compareModule) => {
+  D.define('ui/modes/kontrollera', ['ui/base', 'data/kinds', 'ui/kinds/insight-cards', 'ui/bearbeta/model-compare', 'ui/kinds/federated-card'], (base, kinds, cards, compareModule, federatedModule) => {
     const { h, t, i18n, replace } = base;
     /** A table with fewer rows than this is checked as soon as it is chosen; a larger one waits for the button. */
     const AUTO_ROWS = 10000;
@@ -60,6 +61,8 @@
       let chosen = null;
       /** The panel Jämför versioner, reused from Bearbeta's model view. */
       let compare = null;
+      /** The card Dubbletter mellan modeller, while a model is shown. */
+      let federated = null;
 
       function activate(s) {
         slots = s;
@@ -67,7 +70,7 @@
         render();
       }
       function deactivate() { slots = null; currentId = null; result = null; error = ''; chosen = null; if (unsubscribe) { unsubscribe(); unsubscribe = null; } dropCompare(); }
-      function dropCompare() { if (compare) { compare.destroy(); compare = null; } }
+      function dropCompare() { if (compare) { compare.destroy(); compare = null; } federated = null; }
       function current() { const state = store.get(); return state.datasets.find((d) => d.id === state.selectedId) || null; }
       const typeLabel = (type) => (i18n.has('type.' + type) ? t('type.' + type) : String(type || ''));
 
@@ -83,8 +86,9 @@
           replace(slots.right, h('p', { class: 'dm-help', text: t('kontrollera.empty.hint') }));
           return;
         }
-        // The work area is drawn anew for another dataset, or when the dataset's content has changed; otherwise it stays.
-        if (currentId === ds.id && ds.updatedAt === lastUpdated) return;
+        // The work area is drawn anew for another dataset, or when the dataset's content has changed; otherwise it stays, and the
+        // card Dubbletter mellan modeller follows the models in the workspace.
+        if (currentId === ds.id && ds.updatedAt === lastUpdated) { if (federated) federated.refresh(); return; }
         currentId = ds.id; lastUpdated = ds.updatedAt; result = null; error = ''; chosen = null; dropCompare();
         renderMain(ds);
       }
@@ -208,10 +212,12 @@
       function renderModel(ds) {
         dropCompare();
         compare = compareModule.create(ctx, ds, {});
+        const hint = () => h('p', { class: 'dm-help', text: t('kontrollera.model.inspector') });
+        federated = federatedModule.create(ctx, ds, { inspect: (x) => { if (slots) replace(slots.right, x || hint()); } });
         const openBtn = ui.button({ label: t('import.open.bearbeta'), icon: 'box', title: t('kontrollera.model.open.hint'), onClick: () => { store.set({ selectedId: ds.id }); shell.activate('bearbeta'); } });
         replace(slots.center, head(ds, openBtn), h('p', { class: 'dm-help', text: t('kontrollera.model.help') }),
-          h('div', { class: 'dm-stack', 'data-kontrollera-model': '' }, cards.validationCard(ctx, ds), compare.el, topologyCard(ds), classCard(ds), basicsCard(ds)));
-        replace(slots.right, h('p', { class: 'dm-help', text: t('kontrollera.model.inspector') }));
+          h('div', { class: 'dm-stack', 'data-kontrollera-model': '' }, cards.validationCard(ctx, ds), compare.el, federated.el, topologyCard(ds), classCard(ds), basicsCard(ds)));
+        replace(slots.right, hint());
       }
 
       /**

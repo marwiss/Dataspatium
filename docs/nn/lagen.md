@@ -185,6 +185,9 @@ versjonar* (sjå [cad-bim.md](cad-bim.md)); andre slag har ingen kontrollar enno
 *Kontroller*, for foto av skadar (planlagt).
 Kortet *Topologi* les veggane i modellen med *Kontroller topologien* (Python i appen startar første gongen) og viser per etasje kor
 mange rom veggane lukkar, om etasjen er lukka, veggendar som står lause, og ytterveggane per himmelretning.
+Kortet *Duplikat mellom modellar* prøver modellen mot andre IFC-modellar av same bygning i arbeidsflata: same GlobalId i fleire
+modellar, same bygningsdel i to modellar og etasjar med same namn på ulik høgd, med funna som tabell, merking i modellvisinga og
+BCF-saker (sjå [cad-bim.md](cad-bim.md)).
 
 ## Analyser
 

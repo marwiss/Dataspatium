@@ -783,3 +783,34 @@ som hel fil har intet ændringssæt. Det er en tredje kilde ved siden af øjebli
 Med *Serverens versioner* hentes dokumentets øvrige versioner på Dataregium som valg i listen *Sammenlign med*. Vælger du en af dem,
 beregnes sammenligningen af serveren (dens diff mellem versioner, efter GlobalId og attribut, med placering, form, beholder og type
 som egne felter) og vises som de samme lister og farver her, men uden den anden version i 3D; hent den version, hvis du vil se den.
+
+## Dubletter mellem modeller
+
+Kortet **Dubletter mellem modeller** i Kontrollér prøver den valgte IFC-model mod andre IFC-modeller af samme bygning i
+arbejdsfladen, for eksempel arkitektens mod konstruktørens, når de skal koordineres. Vælg modellerne under *Prøv mod*, og tryk på
+*Søg dubletter*. Kontrollen arbejder på de samme trekanter som 3D-visningen og kollisionskontrollen, i en egen tråd, og kræver
+hverken Python eller net. Modellerne skal dele koordinatsystem.
+
+- **Samme GlobalId**: en bygningsdel eller et rum har samme GlobalId i mere end én model. Hvert objekt skal have sit eget; det sker
+  for eksempel, når en model har fået elementer med fra en anden. Har begge geometri, måles det også, hvor meget de overlapper.
+  Projekt, grund, bygning og etager med samme GlobalId i flere modeller tælles kun, fordi modeller, der bygger på samme grundlag,
+  beholder dem.
+- **Samme bygningsdel to gange**: bygningsdele af samme klasse i to modeller, der overlapper mindst *Overlap* (90 %, hvis intet
+  andet er angivet). StandardCase og ElementedCase tæller som deres klasse, og tag tæller som dæk og trappeløb som trapper, fordi de
+  kan stå for det samme. Overlappet er det fælles volumen delt med det største elements volumen, målt med stråler gennem punkter i
+  et gitter, hvor fladerne er lukkede; kan volumenet ikke måles, afgør kasserne omkring elementerne. En væg på 200 mm inde i en på
+  250 mm overlapper altså 80 %. Par med samme GlobalId hører til den første kontrol.
+- **Etager i forskellig højde**: en etage med samme navn (uden hensyn til store bogstaver og mellemrum) har højder, der adskiller
+  sig mere end en millimeter i to modeller.
+
+Fundene vises i en tabel med begge elementers model, id, GlobalId, type og navn, overlappet i volumen og i kasserne, etagernes
+højder og et punkt i modellernes koordinater. Vælg en række for at se fundet i inspektøren, hvor *Vis i* åbner hvert af elementerne
+i modelvisningen i Bearbejd. Derfra:
+
+- *Markér i* markerer en models elementer i fundene i modelvisningen i Bearbejd.
+- *Gem som BCF* gemmer en sag pr. fund i en BCF-fil med en visning af stedet og elementerne markeret og farvet og begge modellers
+  filer i sagens hoved. Etagerne har intet sted og får ingen visning.
+- *Send som sager* opretter sagerne i modellens projekt på serveren for en model, der er hentet fra et CDE.
+- *Opret datasæt* gemmer tabellen.
+
+Bygningsdele, som 3D-visningen ikke kan tegne, prøves ikke som dubletter, og resultatet siger, hvor mange de er.

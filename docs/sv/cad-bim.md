@@ -772,3 +772,33 @@ som laddats upp som hel fil har inget ändringsset. Det är en tredje källa bre
 Med *Serverns versioner* hämtas dokumentets övriga versioner på Dataregium som val i listan *Jämför med*. Väljer du en av dem räknas
 jämförelsen av servern (dess diff mellan versioner, efter GlobalId och attribut, med placering, form, behållare och typ som egna
 fält) och visas som samma listor och färger här, men utan den andra versionen i 3D; hämta den versionen om du vill se den.
+
+## Dubbletter mellan modeller
+
+Kortet **Dubbletter mellan modeller** i Kontrollera prövar den valda IFC-modellen mot andra IFC-modeller av samma byggnad i
+arbetsytan, till exempel arkitektens mot konstruktörens när de ska samordnas. Välj modellerna under *Pröva mot* och tryck på *Sök
+dubbletter*. Kontrollen arbetar på samma trianglar som 3D-vyn och kollisionskontrollen, i en egen tråd, och behöver varken Python
+eller nät. Modellerna måste dela koordinatsystem.
+
+- **Samma GlobalId**: en byggdel eller ett rum har samma GlobalId i mer än en modell. Varje objekt ska ha ett eget; det händer till
+  exempel när en modell har fått med element ur en annan. Har båda geometri mäts också hur mycket de överlappar. Projekt, plats,
+  byggnad och våningar med samma GlobalId i flera modeller räknas bara, eftersom modeller som utgår från samma grund behåller dem.
+- **Samma byggdel två gånger**: byggdelar av samma klass i två modeller som överlappar till minst *Överlapp* (90 % om inget annat
+  anges). StandardCase och ElementedCase räknas som sin klass, och tak räknas som bjälklag och trapplopp som trappor, eftersom de kan
+  stå för samma sak. Överlappet är den gemensamma volymen delad med det större elementets volym, mätt med strålar genom punkter i ett
+  rutnät där ytorna är slutna; går volymen inte att mäta avgör lådorna runt elementen. En vägg på 200 mm inne i en på 250 mm
+  överlappar alltså till 80 %. Par med samma GlobalId hör till den första kontrollen.
+- **Våningar på olika höjd**: en våning med samma namn (utan hänsyn till versaler och mellanslag) har höjder som skiljer mer än en
+  millimeter i två modeller.
+
+Fynden visas i en tabell med båda elementens modell, id, GlobalId, typ och namn, överlappet i volym och i lådorna, våningarnas höjder
+och en punkt i modellernas koordinater. Välj en rad för att se fyndet i inspektören, där *Visa i* öppnar vart och ett av elementen i
+modellvyn i Bearbeta. Därifrån:
+
+- *Markera i* markerar en modells element i fynden i modellvyn i Bearbeta.
+- *Spara som BCF* sparar ett ärende per fynd i en BCF-fil, med en vy på platsen och elementen markerade och färgade, och båda
+  modellernas filer i ärendets huvud. Våningarna har ingen plats och får ingen vy.
+- *Skicka som ärenden* skapar ärendena i modellens projekt på servern, för en modell som hämtats från ett CDE.
+- *Skapa datamängd* sparar tabellen.
+
+Byggdelar som 3D-vyn inte kan rita prövas inte som dubbletter, och resultatet säger hur många de är.

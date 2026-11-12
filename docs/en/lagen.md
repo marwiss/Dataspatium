@@ -188,6 +188,9 @@ Process* takes you there to correct it. An IFC model shows the card *Validate th
 (planned).
 The card *Topology* reads the model's walls with *Check the topology* (the app's Python starts the first time) and shows per storey how
 many rooms the walls enclose, whether the storey is closed, wall ends left open and the external walls per compass direction.
+The card *Duplicates between models* tries the model against other IFC models of the same building in the workspace: the same
+GlobalId in several models, the same building part in two models and storeys of the same name at different elevations, with the
+findings as a table, a mark in the model view and BCF issues (see [cad-bim.md](cad-bim.md)).
 
 ## Analyse
 

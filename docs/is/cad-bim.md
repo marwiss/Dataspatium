@@ -778,3 +778,33 @@ upp sem heilli skrá hefur ekkert breytingasett. Það er þriðja uppsprettan v
 Með *Útgáfur þjónsins* eru hinar útgáfur skjalsins á Dataregium sóttar sem valkostir í listann *Bera saman við*. Veljir þú eina
 þeirra reiknar þjónninn samanburðinn (mismun hans milli útgáfa, eftir GlobalId og eigindi, með staðsetningu, lögun, íláti og gerð sem
 eigin reitum) og hann er sýndur sem sömu listar og litir hér, en án hinnar útgáfunnar í þrívídd; sæktu þá útgáfu til að sjá hana.
+
+## Tvítök milli líkana
+
+Kortið **Tvítök milli líkana** í Athuga prófar valið IFC-líkan gegn öðrum IFC-líkönum af sömu byggingu á vinnufletinum, til dæmis
+líkan arkitektsins gegn líkani burðarþolshönnuðarins þegar á að samræma þau. Veldu líkönin undir *Prófa gegn* og ýttu á *Leita að
+tvítökum*. Athugunin vinnur á sömu þríhyrningum og þrívíddarsýnin og árekstrarathugunin, í eigin þræði, og þarf hvorki Python né
+net. Líkönin verða að deila hnitakerfi.
+
+- **Sama GlobalId**: byggingarhluti eða rými hefur sama GlobalId í fleiri en einu líkani. Hver hlutur á að hafa sitt eigið; það
+  gerist til dæmis þegar líkan hefur fengið með sér einingar úr öðru. Hafi báðir rúmfræði er skörun þeirra líka mæld. Verkefni,
+  lóð, bygging og hæðir með sama GlobalId í fleiri líkönum eru aðeins taldar, því líkön sem byggja á sama grunni halda þeim.
+- **Sami byggingarhluti tvisvar**: byggingarhlutar af sama flokki í tveimur líkönum sem skarast að minnsta kosti *Skörun* (90 % nema
+  annað sé valið). StandardCase og ElementedCase teljast til síns flokks, og þak telst plata og stigahlaup stigi, því þau geta staðið
+  fyrir það sama. Skörunin er sameiginlega rúmmálið deilt með rúmmáli stærri einingarinnar, mælt með geislum gegnum punkta í neti þar
+  sem fletirnir eru lokaðir; ef ekki er hægt að mæla rúmmálið ráða kassarnir utan um einingarnar. Veggur sem er 200 mm inni í öðrum
+  sem er 250 mm skarast því um 80 %. Pör með sama GlobalId heyra undir fyrstu athugunina.
+- **Hæðir í mismunandi hæðarlegu**: hæð með sama heiti (óháð hástöfum og bilum) hefur hæðarlegu sem munar meira en millimetra á
+  milli tveggja líkana.
+
+Frávikin eru sýnd í töflu með líkani, auðkenni, GlobalId, tegund og heiti beggja eininga, skörun að rúmmáli og í kössunum,
+hæðarlegu hæðanna og punkti í hnitum líkananna. Veldu röð til að sjá frávikið á eiginleikaspjaldinu, þar sem *Sýna í* opnar hverja
+einingu í líkanasýninni í Vinna. Þaðan:
+
+- *Merkja í* merkir einingar eins líkans í frávikunum í líkanasýninni í Vinna.
+- *Vista sem BCF* vistar eitt mál fyrir hvert frávik í BCF-skrá, með sýn á staðinn og einingarnar merktar og litaðar, og skrár beggja
+  líkananna í haus málsins. Hæðirnar hafa engan stað og fá enga sýn.
+- *Senda sem mál* býr til málin í verkefni líkansins á þjóninum, fyrir líkan sem var sótt úr CDE.
+- *Búa til gagnasafn* vistar töfluna.
+
+Byggingarhlutar sem þrívíddarsýnin getur ekki teiknað eru ekki prófaðir sem tvítök, og niðurstaðan segir hve margir þeir eru.
