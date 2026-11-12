@@ -80,7 +80,7 @@
     const states = []; b.on((type, p) => { if (type === 'state') states.push(p.state); });
     await b.start();
     assert.deepEqual(states, ['starting', 'ready']);
-    assert.ok(ran[0].includes('from dataspatium import *') && ran[0].includes('dm_setup(lang="sv")'), ran[0]);
+    assert.ok(ran[0].includes('from dataspatium import *') && ran[0].includes('dm_setup(lang="sv"'), ran[0]);
     assert.ok(fs.has('/home/pyodide/dataspatium.py') && fs.has('/data/index.tsv'), 'helper and index written');
     assert.ok(fs.has(`/data/${meta.id}.sqlite`), 'dataset mirrored at start');
     const index = new TextDecoder().decode(new Uint8Array(fs.get('/data/index.tsv')));

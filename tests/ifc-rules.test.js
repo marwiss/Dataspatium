@@ -139,7 +139,7 @@
     const seen = [];
     bridge.runIfcChangeset = async (changes, bytes, options) => { seen.push(options || {}); return { bytes: new Uint8Array(4), info: REPORT, log: [] }; };
     try {
-      await waitFor(() => panel.state.providers.length, 3000, 'the providers');
+      await waitFor(() => panel.el.querySelector('[data-ai-form="purpose"]'), 3000, 'the form');
       const pick = (selector, value) => { const el = /** @type {any} */ (panel.el.querySelector(selector)); el.value = value; el.dispatchEvent(new Event('change')); };
       pick('[data-ai-form="purpose"]', 'permit');
       assert.ok(panel.state.detail === 'main' && panel.state.ids === 'SE-Dataspatium_Grund.ids', 'a building permit: main features and Grund');
@@ -254,7 +254,7 @@
       assert.ok(writeTools.call(cs, 'define_type', { kind: 'wall', name: 'YV1', layers: [{ material: 'Betong', thickness: 0.2, category: 'concrete', role: 'load_bearing' }], predefined_type: null }).ok);
       for (const [start, end] of [[[0, 0], [12, 0]], [[12, 0], [12, 8]], [[12, 8], [0, 8]], [[0, 8], [0, 0]]]) assert.ok(writeTools.call(cs, 'create_wall', { storey: 'Plan 3', start, end, thickness: null, height: 3, name: 'Vägg', type: 'new-1' }).ok);
       assert.ok(writeTools.call(cs, 'create_slab', { storey: 'Plan 3', outline: [[0, 0], [12, 0], [12, 8], [0, 8]], thickness: 0.25, name: 'Golv' }).ok);
-      assert.ok(writeTools.call(cs, 'set_properties', { ids: ['new-2'], pset: 'Pset_WallCommon', properties: { IsExternal: true, LoadBearing: true } }).ok);
+      assert.ok(writeTools.call(cs, 'set_properties', { ids: ['new-2'], pset: 'Pset_WallCommon', properties: [{ name: 'IsExternal', value: true }, { name: 'LoadBearing', value: true }] }).ok);
       if (bad) assert.ok(writeTools.call(cs, 'create_slab', { storey: 'Plan 3', outline: [[0, 0], [4, 4], [4, 0], [0, 4]], thickness: 0.2, name: 'Korsad' }).ok);
       return writeTools.toWheel(cs);
     };

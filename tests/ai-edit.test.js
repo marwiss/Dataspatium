@@ -67,7 +67,7 @@
     '            return {q.Name: round(float(q[3]), 6) for q in d.Quantities}',
     '    return {}',
     'def at(e, x=0.0, y=0.0):',
-    '    M = pl.get_local_placement(e.ObjectPlacement)',
+    '    M = (getattr(pl, "get_placement", None) or pl.get_local_placement)(e.ObjectPlacement)',
     '    return [round((M[0][0] * x + M[0][1] * y + M[0][3]) * scale, 6), round((M[1][0] * x + M[1][1] * y + M[1][3]) * scale, 6), round(M[2][3] * scale, 6)]',
     'walls, feet, others = {}, [], {}',
     'for w in m.by_type("IfcWall"):',

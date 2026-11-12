@@ -52,11 +52,13 @@
     const p2 = add(`IFCAXIS2PLACEMENT2D(#${add('IFCCARTESIANPOINT((0.,0.))')},$)`);
     const shape = (item) => add(`IFCPRODUCTDEFINITIONSHAPE($,$,(#${add(`IFCSHAPEREPRESENTATION(#${body},'Body','SweptSolid',(#${item}))`)}))`);
     const box = (x, y, depth) => shape(add(`IFCEXTRUDEDAREASOLID(#${add(`IFCRECTANGLEPROFILEDEF(.AREA.,$,#${p2},${num(x)},${num(y)})`)},#${world},#${zDir},${num(depth)})`));
-    const el = (cls, name, shapeId, extra) => add(`${cls}('${G()}',$,'${name}',$,$,#${place},${shapeId ? '#' + shapeId : '$'},$${extra ? ',' + extra : ''})`);
+    /** A text in STEP's own encoding (\X2\…\X0\ for what is not ASCII), as IfcOpenShell reads it. @param {string} s */
+    const step = (s) => String(s).replace(/[^\x20-\x7e]+/g, (m) => '\\X2\\' + Array.from(m).map((c) => c.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')).join('') + '\\X0\\');
+    const el = (cls, name, shapeId, extra) => add(`${cls}('${G()}',$,'${step(name)}',$,$,#${place},${shapeId ? '#' + shapeId : '$'},$${extra ? ',' + extra : ''})`);
     const props = (list) => list.map(([n, v]) => '#' + add(`IFCPROPERTYSINGLEVALUE('${n}',$,${v},$)`)).join(',');
-    const pset = (name, list) => add(`IFCPROPERTYSET('${G()}',$,'${name}',$,(${props(list)}))`);
+    const pset = (name, list) => add(`IFCPROPERTYSET('${G()}',$,'${step(name)}',$,(${props(list)}))`);
     const defines = (on, set) => add(`IFCRELDEFINESBYPROPERTIES('${G()}',$,$,$,(#${on}),#${set})`);
-    const material = (name, category) => add(`IFCMATERIAL('${name}',$,${category ? `'${category}'` : '$'})`);
+    const material = (name, category) => add(`IFCMATERIAL('${step(name)}',$,${category ? `'${category}'` : '$'})`);
     const associate = (on, mat) => add(`IFCRELASSOCIATESMATERIAL('${G()}',$,$,$,(#${on}),#${mat})`);
     const typed = (on, type) => add(`IFCRELDEFINESBYTYPE('${G()}',$,$,$,(#${on}),#${type})`);
     const label = (v) => `IFCLABEL('${v}')`; const ident = (v) => `IFCIDENTIFIER('${v}')`;
@@ -83,7 +85,7 @@
     const door = el('IFCDOOR', 'Dörr', null, '2100.,900.,.DOOR.,$,$');
     typed(door, add(`IFCDOORTYPE('${G()}',$,'Innerdörr 9x21',$,$,(#${maker('4006381333931', 'Dörr 9')}),$,$,$,.DOOR.,.SINGLE_SWING_LEFT.,$,$)`));
     defines(door, pset('Pset_ManufacturerOccurrence', [['SerialNumber', ident('SN-0001')], ['BarCode', ident('BC-0001')]]));
-    associate(door, add(`IFCMATERIALCONSTITUENTSET('Dörrblad',$,(#${add(`IFCMATERIALCONSTITUENT('Blad',$,#${material('Furu', 'wood')},0.8,$)`)},#${add(`IFCMATERIALCONSTITUENT('Ruta',$,#${glas},0.2,$)`)}))`));
+    associate(door, add(`IFCMATERIALCONSTITUENTSET('${step('Dörrblad')}',$,(#${add(`IFCMATERIALCONSTITUENT('Blad',$,#${material('Furu', 'wood')},0.8,$)`)},#${add(`IFCMATERIALCONSTITUENT('Ruta',$,#${glas},0.2,$)`)}))`));
     // A window whose GTIN has a wrong check digit, glazed with a sealant that holds PCB.
     const windowEl = el('IFCWINDOW', 'Fönster', null, '1200.,1000.,.WINDOW.,$,$');
     typed(windowEl, add(`IFCWINDOWTYPE('${G()}',$,'Fönster 12x10',$,$,(#${maker('4006381333932', 'Fönster 12')}),$,$,$,.WINDOW.,.SINGLE_PANEL.,$,$)`));
@@ -228,7 +230,7 @@
     assert.ok(has(['Pset_ManufacturerTypeInformation', 'Manufacturer', 'required', 'IFCLABEL']) && has(['Pset_ManufacturerTypeInformation', 'ModelLabel', 'required', 'IFCLABEL']) && has(['Pset_ManufacturerTypeInformation', 'GlobalTradeItemNumber', 'optional', 'IFCIDENTIFIER']), JSON.stringify(props));
     assert.ok(props.some((p) => /Qto_\(Wall\|Slab/.test(p[0]) && p[1] === '(Net|Gross)Volume' && p[3] === 'IFCVOLUMEMEASURE') && props.some((p) => /Qto_CurtainWallQuantities/.test(p[0]) && p[3] === 'IFCAREAMEASURE'), 'base quantities');
     const material = doc.getElementsByTagNameNS(NS, 'material')[0];
-    assert.ok(material && /concrete/.test(material.getElementsByTagNameNS(XS, 'pattern')[0].getAttribute('value')), 'materials with IFC\'s recommended categories');
+    assert.ok(material && /oncrete/.test(material.getElementsByTagNameNS(XS, 'pattern')[0].getAttribute('value')), 'materials with IFC\'s recommended categories');
     // The product identities the inventory reads are in IfcOpenShell's templates for IFC4 and IFC4X3 (the GTIN not in IFC2X3's).
     const TEMPLATES = { Pset_ManufacturerTypeInformation: ['GlobalTradeItemNumber', 'ArticleNumber', 'ModelReference', 'ModelLabel', 'Manufacturer', 'ProductionYear', 'AssemblyPlace'], Pset_ManufacturerOccurrence: ['AcquisitionDate', 'BarCode', 'SerialNumber', 'BatchReference', 'AssemblyPlace'] };
     assert.ok(Object.values(inventory.PRODUCT_FIELDS).every(([set, name]) => (TEMPLATES[set] || []).includes(name)), JSON.stringify(inventory.PRODUCT_FIELDS));

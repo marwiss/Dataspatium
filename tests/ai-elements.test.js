@@ -132,6 +132,8 @@
     'print(json.dumps({"scale": scale, "fills": facts}))',
   ];
 
+  /** The wheel's notes other than those every new change set may carry: IsExternal left out on an open storey, no CRS yet. */
+  const ownNotes = (notes) => (notes || []).filter((n) => !/^IsExternal was left out|^GRF003/.test(String(n)));
   test('ai elements: create_element is a create with a ref for the classes without a tool of their own, never a proxy, and checks its shape, PredefinedType, type, part_of and host', async (assert) => {
     assert.ok(writeTools.has('create_element') && writeTools.CREATES.includes('create_element'), 'a write tool that creates');
     const tool = writeTools.TOOLS.find((x) => x.name === 'create_element');
@@ -297,7 +299,7 @@
     for (const [name, args] of STEPS) { const out = writeTools.call(cs, name, args); if (!out.ok) throw new Error(name + ': ' + JSON.stringify(out)); }
     const res = await ifcOps.previewChangeset(meta.id, writeTools.toWheel(cs));
     assert.equal(res.report.errors, 0, 'no errors: ' + JSON.stringify(res.report.findings));
-    assert.deepEqual(res.report.notes || [], [], 'nothing left out in IFC4');
+    assert.deepEqual(ownNotes(res.report.notes), [], 'nothing left out in IFC4');
     const refs = (res.report.created || []).filter((e) => e.ref).map((e) => [e.ref, e.ifc_class, e.name]);
     assert.deepEqual(refs.slice(1), [['new-2', 'IfcColumnType', 'P1'], ['new-3', 'IfcColumn', 'Pelare A'], ['new-4', 'IfcBeam', 'Balk'], ['new-5', 'IfcFooting', 'Sula'], ['new-6', 'IfcCoveringType', 'Golv1'],
       ['new-7', 'IfcCovering', 'Golv'], ['new-8', 'IfcCovering', 'Panel'], ['new-9', 'IfcStair', 'Trappa'], ['new-10', 'IfcRailing', 'Ledstång'], ['new-11', 'IfcFurniture', 'Bord']], 'the refs the panel gave');
@@ -339,7 +341,7 @@
     for (const [name, args] of steps) { const out = writeTools.call(cs, name, args); if (!out.ok) throw new Error(name + ': ' + JSON.stringify(out)); }
     const res = await ifcOps.previewChangeset(dataset.id, writeTools.toWheel(cs));
     assert.equal(res.report.errors, 0, 'no errors: ' + JSON.stringify(res.report.findings));
-    assert.deepEqual(res.report.notes || [], [], 'no notes');
+    assert.deepEqual(ownNotes(res.report.notes), [], 'no notes');
     const { fills: f } = await factsOf(res.bytes, FILLS);
     for (const name of ['Vänster', 'Höger', 'Fönster']) {
       const e = f[name];
