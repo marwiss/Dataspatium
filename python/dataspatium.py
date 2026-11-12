@@ -1544,7 +1544,7 @@ class _ChangeSet:
         if not storeys:
             raise DataspatiumError("the model has no storey; create one with create_storeys_and_grid first")
         if name is None or str(name).strip() == "":
-            ordered = sorted(storeys, key=lambda s: float(s.Elevation or 0))
+            ordered = sorted(storeys, key=lambda s: _topo_elevation(s, self.scale))  # IFC4.3's storeys have their height in the placement
             return ordered[-1] if top else ordered[0]
         for exact in (True, False):
             for s in storeys:
@@ -1603,12 +1603,16 @@ class _ChangeSet:
         items = _ifc_enum_items(self.check_class(e.is_a()), attribute)
         if items is None:
             return False
+        gone = DEPRECATED_VALUES.get(self.m.schema, {}).get(e.is_a(), ()) if attribute == "PredefinedType" else ()
+        allowed = [i for i in items if i not in gone]
+        if value in gone:
+            raise DataspatiumError("%s is deprecated for %s in %s (bSI rule IFC102); use one of %s" % (value, e.is_a(), self.schema_def().name(), ", ".join(allowed)))
         if value not in items:
-            raise DataspatiumError("%s is not a %s of %s in %s; it takes %s" % (value, attribute, e.is_a(), self.schema_def().name(), ", ".join(items)))
+            raise DataspatiumError("%s is not a %s of %s in %s; it takes %s" % (value, attribute, e.is_a(), self.schema_def().name(), ", ".join(allowed)))
         if value == "USERDEFINED" and attribute == "PredefinedType":
             named = "ElementType" if e.is_a("IfcTypeObject") else "ObjectType"
             if not str(getattr(e, named, None) or "").strip():
-                raise DataspatiumError("%s USERDEFINED needs %s, the name of the user-defined type; or use one of %s" % (e.is_a(), named, ", ".join(i for i in items if i not in ("USERDEFINED", "NOTDEFINED"))))
+                raise DataspatiumError("%s USERDEFINED needs %s, the name of the user-defined type; or use one of %s" % (e.is_a(), named, ", ".join(i for i in allowed if i not in ("USERDEFINED", "NOTDEFINED"))))
         return True
 
     def predefined(self, e, value):
@@ -1744,12 +1748,20 @@ class _ChangeSet:
         profile = self.m.createIfcRectangleProfileDef("AREA", None, position, float(length), float(width))
         return self.shape(self.m.createIfcExtrudedAreaSolid(profile, self.axis3(0, 0, z0), self.direction(0, 0, 1), float(height)))
 
+    def closed(self, outline):
+        """A closed IfcPolyline through (x, y) corners: a repeated first corner at the end is dropped, and the line closes on the first
+        corner's own IfcCartesianPoint, not a copy of it (bSI rule GEM111)."""
+        corners = [tuple(float(v) for v in p) for p in outline]
+        while len(corners) > 1 and corners[-1] == corners[0]:
+            corners.pop()
+        if len(corners) < 3:
+            raise DataspatiumError("an outline needs at least three different corners")
+        pts = [self.point(x, y) for x, y in corners]
+        return self.m.createIfcPolyline(pts + pts[:1])
+
     def prism(self, outline, height, z0=0.0):
         """A closed outline of (x, y) points extruded height along Z from z0."""
-        pts = [self.point(x, y) for x, y in outline]
-        if outline[0] != outline[-1]:
-            pts.append(pts[0])
-        profile = self.m.createIfcArbitraryClosedProfileDef("AREA", None, self.m.createIfcPolyline(pts))
+        profile = self.m.createIfcArbitraryClosedProfileDef("AREA", None, self.closed(outline))
         return self.shape(self.m.createIfcExtrudedAreaSolid(profile, self.axis3(0, 0, z0), self.direction(0, 0, 1), float(height)))
 
     def wall_thickness(self, wall):
@@ -1822,7 +1834,8 @@ class _ChangeSet:
             elevation = _cs_num(s, "elevation", 0.0)
             storey = self.root("IfcBuildingStorey", s["name"])
             storey.CompositionType = "ELEMENT"
-            storey.Elevation = self.u(elevation)
+            if self.m.schema != "IFC4X3":
+                storey.Elevation = self.u(elevation)  # deprecated in IFC4.3 (IFC102): there the placement alone gives the height
             storey.ObjectPlacement = self.placement(building.ObjectPlacement, 0, 0, self.u(elevation))
             ifcopenshell.api.aggregate.assign_object(self.m, products=[storey], relating_object=building)
             self.register(storey, ref=False)
@@ -1864,7 +1877,8 @@ class _ChangeSet:
         # The centreline as the wall's 'Axis' (Curve2D), after the body, so that the topology reads it without the geometry kernel.
         axis = self.m.createIfcPolyline([self.point(0, 0), self.point(self.u(length), 0)])
         wall.Representation.Representations = list(wall.Representation.Representations) + [self.m.createIfcShapeRepresentation(self.axis_context(), "Axis", "Curve2D", [axis])]
-        self.predefined(wall, "STANDARD")
+        # STANDARD is deprecated (IFC102): a wall the AI calls a non-load-bearing interior wall partitions, any other is solid.
+        self.predefined(wall, "PARTITIONING" if op.get("partition") is True else "SOLIDWALL")
         self.contain(wall, storey)
         self.register(wall, storey)
 
@@ -1942,7 +1956,7 @@ class _ChangeSet:
             along, up, normal = (-fy, fx, 0.0), (-fx * cos, -fy * cos, sin), (fx * sin, fy * sin, cos)
             o = pts[0]
             face = [[self.u(_cs_dot([q[k] - o[k] for k in range(3)], axis)) for axis in (along, up)] for q in pts]  # in the face's plane
-            profile = self.m.createIfcArbitraryClosedProfileDef("AREA", None, self.m.createIfcPolyline([self.point(u, v) for u, v in face + face[:1]]))
+            profile = self.m.createIfcArbitraryClosedProfileDef("AREA", None, self.closed(face))
             position = self.m.createIfcAxis2Placement3D(self.point(self.u(o[0]), self.u(o[1]), self.u(o[2])), self.direction(*normal), self.direction(*along))
             slab = self.root("IfcSlab", "%s %d" % (name, i + 1))
             slab.ObjectPlacement = self.placement(roof.ObjectPlacement, 0, 0, 0)
@@ -2083,8 +2097,7 @@ class _ChangeSet:
         back = _cs_invert(frame)
 
         def curve(ring):
-            pts = [_cs_at(back, (c[0] / self.scale, c[1] / self.scale, frame[3][2])) for c in ring.coords]
-            return self.m.createIfcPolyline([self.point(p[0], p[1]) for p in pts])
+            return self.closed([_cs_at(back, (c[0] / self.scale, c[1] / self.scale, frame[3][2]))[:2] for c in ring.coords])
         poly = room["polygon"]
         if poly.interiors:
             profile = self.m.createIfcArbitraryProfileDefWithVoids("AREA", None, curve(poly.exterior), [curve(r) for r in poly.interiors])
@@ -2096,6 +2109,8 @@ class _ChangeSet:
         if self.m.schema == "IFC2X3":
             if self.check_enum(space, "INTERNAL", "InteriorOrExteriorSpace"):
                 space.InteriorOrExteriorSpace = "INTERNAL"
+        elif self.m.schema == "IFC4X3":
+            self.predefined(space, "SPACE")  # INTERNAL is deprecated in IFC4.3 (IFC102); that the room is inside is IsExternal false
         else:
             self.predefined(space, "INTERNAL")
         space.ObjectPlacement = self.placement(storey.ObjectPlacement, 0, 0, 0)
@@ -2179,6 +2194,10 @@ class _ChangeSet:
             ifcopenshell.api.aggregate.assign_object(self.m, products=spaces, relating_object=s)
             for space, (room, _, _) in zip(spaces, chosen):
                 self.space_quantities(space, room, h)
+                if self.m.schema == "IFC4X3":
+                    import ifcopenshell.api.pset
+                    pset = ifcopenshell.api.pset.add_pset(self.m, product=space, name="Pset_SpaceCommon")
+                    ifcopenshell.api.pset.edit_pset(self.m, pset=pset, properties={"IsExternal": False})
                 self.register(space, s, ref=listed)
         if not made:
             raise DataspatiumError("every room the walls enclose has a space already")
@@ -2198,7 +2217,12 @@ class _ChangeSet:
             self.touch(e)
 
     def op_set_classification(self, op):
+        """A reference to a class of the system the person names, on the elements. A reference is reused only when its system, its
+        code (Identification; ItemReference in IFC2X3) and its Location all match, and without a code its name too; otherwise it is
+        made under that system's IfcClassification. (IfcOpenShell's add_reference reuses any reference with the same code in the
+        file, whatever its system, and any reference without a code when none is given.)"""
         import ifcopenshell.api.classification
+        import ifcopenshell.guid
         system = str(op.get("system") or "").strip()
         name = str(op.get("name") or "").strip()
         if not system or not name:
@@ -2207,10 +2231,30 @@ class _ChangeSet:
         classification = found[0] if found else ifcopenshell.api.classification.add_classification(self.m, classification=system)
         code = str(op.get("code") or "").strip() or None
         uri = str(op.get("uri") or "").strip() or None
-        for e in self.elements(op):
-            ref = ifcopenshell.api.classification.add_reference(self.m, products=[e], identification=code, name=name, classification=classification)
-            if uri and ref is not None and hasattr(ref, "Location"):
-                ref.Location = uri
+        code_attribute = "ItemReference" if self.m.schema == "IFC2X3" else "Identification"
+
+        def system_of(ref):
+            source = ref.ReferencedSource
+            for _ in range(16):  # a reference may hang under another reference of the same system
+                if source is None or not source.is_a("IfcClassificationReference"):
+                    break
+                source = source.ReferencedSource
+            return source
+        # Without a code a class is known by its name alone, so the name must match as well.
+        ref = next((r for r in self.m.by_type("IfcClassificationReference") if system_of(r) == classification
+                    and (getattr(r, code_attribute, None) or None) == code and (r.Location or None) == uri
+                    and (code is not None or str(r.Name or "") == name)), None)
+        if ref is None:
+            ref = self.m.create_entity("IfcClassificationReference", Location=uri, Name=name, ReferencedSource=classification, **{code_attribute: code})
+        elements = self.elements(op)
+        rel = next((r for r in self.m.by_type("IfcRelAssociatesClassification") if r.RelatingClassification == ref), None)
+        if rel is None:
+            rel = self.m.create_entity("IfcRelAssociatesClassification", GlobalId=ifcopenshell.guid.new(), RelatedObjects=elements, RelatingClassification=ref)
+            if self.owner is not None:
+                rel.OwnerHistory = self.owner
+        else:
+            rel.RelatedObjects = list(rel.RelatedObjects) + [e for e in elements if e not in rel.RelatedObjects]
+        for e in elements:
             self.touch(e)
 
     def op_assign(self, op):
@@ -3168,11 +3212,18 @@ def _ifc_topology_file(in_file, out_file):
 
 
 # ---- the right IFC class (decision B-57.2) ------------------------------------------------------------
-# In native IFC the class is the first classification: the most specific entity with its PredefinedType, an ObjectType only for
-# USERDEFINED, and a type object; CoClass and other systems come on top. _ifc_class_search finds the class for a thing from its
-# English words in IfcOpenShell's documentation of the schema; _ifc_class_report lists what in a model falls short of that.
+# In native IFC the class is the classification (decision B-59): the most specific entity with its PredefinedType, an ObjectType
+# only for USERDEFINED, and a type object; a system the person names comes on top through set_classification. _ifc_class_search
+# finds the class for a thing from its English words in IfcOpenShell's documentation of the schema; _ifc_class_report lists what
+# in a model falls short of that.
 
 CLASS_ROOTS = ("IfcElement", "IfcSpatialElement", "IfcSpatialStructureElement", "IfcTypeProduct")
+# PredefinedTypes the IFC releases deprecate (bSI rule IFC102), by the file's schema family: never written, flagged in the search.
+DEPRECATED_VALUES = {
+    "IFC4": {"IfcWall": ("STANDARD", "POLYGONAL", "ELEMENTEDWALL"), "IfcWallType": ("STANDARD", "POLYGONAL", "ELEMENTEDWALL")},
+    "IFC4X3": {"IfcWall": ("STANDARD", "POLYGONAL"), "IfcWallType": ("STANDARD", "POLYGONAL"), "IfcSpace": ("INTERNAL", "EXTERNAL"),
+               "IfcSpaceType": ("INTERNAL", "EXTERNAL"), "IfcBuildingElementProxy": ("PROVISIONFORSPACE", "PROVISIONFORVOID")},
+}
 CLASS_RULES = {
     "userdefined": "IFC CorrectPredefinedType; ifc-gherkin-rules OJT001 Object Predefined Type",
     "type_conflicts": "ifc-gherkin-rules OJT001 Object Predefined Type (concept template 4.1.3.2)",
@@ -3244,12 +3295,13 @@ def _ifc_class_search(schema, query, limit=12):
     (ifcopenshell.util.doc; without its data the schema's names and enumerations alone). Among the non-abstract elements, spatial
     elements and type products, hits on the class's own name come first, then those on a PredefinedType's name, then the rest, and
     occurrences before types; a type whose occurrence class is a hit is left out. Per hit: class, the matching PredefinedTypes with
-    their docs (all of them when the class's name matched), a description clipped to about 300 characters, spec_url when known, and
-    the type class (for a type, the occurrence class)."""
+    their docs (all of them when the class's name matched; deprecated ones last and marked, IFC102), a description clipped to about
+    300 characters, spec_url when known, and the type class (for a type, the occurrence class)."""
     import re
     import ifcopenshell.util.doc as doc
     import ifcopenshell.util.type as types
     s = _ifc_schema(schema)
+    family = "IFC4X3" if s.name().upper().startswith("IFC4X3") else s.name().upper()
     words = [w for w in re.split(r"[^0-9a-z]+", str(query).lower()) if w]
     if not words:
         raise DataspatiumError("give the thing to look for in English IFC words, such as sink, handrail or curtain wall")
@@ -3278,7 +3330,9 @@ def _ifc_class_search(schema, query, limit=12):
         by_name = all(w in lname for w in words)
         tier = 0 if by_name else 1 if all(w in lname or any(w in pt.lower() for pt in pts) for w in words) else 2
         chosen = pts if by_name else [pt for pt in pts if any(in_pt(w, pt) for w in words) or any(x.get("predefined_type") == pt for x in said)]
-        hit = {"class": name, "predefined_types": [{"name": pt, "doc": _ifc_clip(pt_docs.get(pt), 200) or None} for pt in chosen],
+        gone = set(DEPRECATED_VALUES.get(family, {}).get(name, ())) | {pt for pt in pts if ".deprecated" in str(pt_docs.get(pt) or "")}
+        hit = {"class": name, "predefined_types": [dict({"name": pt, "doc": _ifc_clip(str(pt_docs.get(pt) or "").replace("{ .deprecated}", ""), 200) or None},
+                                                        **({"deprecated": True} if pt in gone else {})) for pt in sorted(chosen, key=lambda p: p in gone)],
                "description": _ifc_clip(info.get("description")) or None}
         if info.get("spec_url"):
             hit["spec_url"] = info["spec_url"]
