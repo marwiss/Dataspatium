@@ -813,6 +813,77 @@
      */
     const createDocumentReference = (connector, projectId, topicGuid, body, options = {}) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/document_references`, { method: 'POST', json: body, signal: options.signal });
 
+    // ---------------------------------------------------------------------------- a topic's model file and documents
+    /**
+     * Whether the signed-in person may do something with a topic: the topic's own `authorization` when it has one, the project's
+     * defaults in its extensions otherwise (BCF 3.2.8). @param {any} ext the project's extensions @param {any} topic @param {string} action
+     */
+    function topicMay(ext, topic, action) {
+      const own = topic && topic.authorization && Array.isArray(topic.authorization.topic_actions) ? topic.authorization.topic_actions : null;
+      return (own || (ext && Array.isArray(ext.topic_actions) ? ext.topic_actions : [])).includes(action);
+    }
+    /** Whether the project's extensions allow an action on the project (BCF 3.1.5), such as createDocument. */
+    const projectMay = (ext, action) => !!(ext && Array.isArray(ext.project_actions) && ext.project_actions.includes(action));
+    /** The model files in a topic's header (3.3.2). */
+    const topicFiles = (connector, projectId, topicGuid) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/files`);
+    /**
+     * Files in the form the connector's version takes: 3.0 names the file `filename`, 2.1 `file_name`; empty values are left out.
+     * @param {any} connector @param {any[]} files @returns {any[]}
+     */
+    function filesBody(connector, files) {
+      const nameKey = bcfVersion(connector) === '2.1' ? 'file_name' : 'filename';
+      return (files || []).filter(Boolean).map((f) => {
+        const out = {};
+        for (const key of ['ifc_project', 'ifc_spatial_structure_element', 'date', 'reference']) if (f[key] !== undefined && f[key] !== null && f[key] !== '') out[key] = f[key];
+        const name = f.filename || f.file_name;
+        if (name) out[nameKey] = name;
+        return out;
+      });
+    }
+    /** The topic's header files replaced (3.3.3); the server allows it with `updateFiles`. */
+    const setTopicFiles = (connector, projectId, topicGuid, files) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/files`, { method: 'PUT', json: filesBody(connector, files) });
+    /**
+     * The model file a topic is about: the project's own entry (files_information, 3.3.1) for the document version the model dataset
+     * came from, which the server must take, with the IfcProject added when the entry has none; otherwise `fallback`, the file's own
+     * header facts (data/bcf-xml.headerOf). Null when there is neither.
+     * @param {any} connector @param {string} projectId @param {any} cde the model dataset's `source.cde` @param {any} [fallback]
+     */
+    async function modelFile(connector, projectId, cde, fallback) {
+      if (cde && bcfVersion(connector) !== '2.1' && cde.connectorId === connector.id && cde.projectId === projectId && (cde.reference || cde.documentId)) {
+        const info = await filesInformation(connector, projectId).catch(() => []);
+        const sameVersion = (ref) => { const m = /\/documents\/([^/]+)\/versions\/(\d+)\/download/.exec(String(ref || '')); return !!m && decodeURIComponent(m[1]) === cde.documentId && Number(m[2]) === Number(cde.versionIndex); };
+        const hit = (Array.isArray(info) ? info : []).map((e) => e && e.file).filter(Boolean).find((f) => (cde.reference && f.reference === cde.reference) || (cde.documentId && sameVersion(f.reference)));
+        if (hit) return Object.assign({}, hit, { filename: hit.filename || hit.file_name || (fallback && fallback.filename) || undefined }, !hit.ifc_project && fallback && fallback.ifc_project ? { ifc_project: fallback.ifc_project } : {});
+      }
+      return fallback || null;
+    }
+    /**
+     * Ties a topic to its model file (3.3.3) when the person may (`updateFiles`). Returns the files the server keeps, or null when it does
+     * not offer it or there is no file. @param {any} connector @param {string} projectId @param {any} topic @param {any} ext @param {any} file
+     */
+    async function linkTopic(connector, projectId, topic, ext, file) {
+      if (!file || !topic || !topic.guid || !topicMay(ext, topic, 'updateFiles')) return null;
+      return setTopicFiles(connector, projectId, topic.guid, [file]);
+    }
+    /**
+     * A file attached to a topic as a document of the project (3.8.2) and a document reference to it (3.7.2), when the person may do
+     * both (`createDocument`, `updateDocumentReferences`) and the server speaks 3.0. Null when not, so that the caller can do otherwise.
+     * @param {any} connector @param {string} projectId @param {string} topicGuid @param {File} file @param {string} description @param {any} ext
+     * @returns {Promise<{document: any, reference: any}|null>}
+     */
+    async function attachDocument(connector, projectId, topicGuid, file, description, ext) {
+      if (bcfVersion(connector) === '2.1' || !projectMay(ext, 'createDocument') || !topicMay(ext, null, 'updateDocumentReferences')) return null;
+      const document = await uploadBcfDocument(connector, projectId, file);
+      if (!document || !document.guid) throw new Error(t('api.err.service', { message: connector.name }));
+      const reference = await createDocumentReference(connector, projectId, topicGuid, Object.assign({ document_guid: document.guid }, description ? { description } : {}));
+      return { document, reference };
+    }
+    /** The signed-in person's id on the server, for the author of a BCF file; null when not signed in or the server does not say. */
+    async function identity(connector) {
+      if (!connector || !signedIn(connector)) return null;
+      try { const me = await currentUser(connector); const id = me && (me.id || me.email || me.name); return id ? String(id) : null; } catch (_e) { return null; }
+    }
+
     // ---------------------------------------------------------------------------- Documents API: upload
     /**
      * Upload a file through the Documents API (1.0 upload flow): the server's own page asks the user for title, version and
@@ -1112,6 +1183,7 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference };
+    return { ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
+      topicMay, projectMay, topicFiles, filesBody, setTopicFiles, modelFile, linkTopic, attachDocument, identity };
   });
 })();

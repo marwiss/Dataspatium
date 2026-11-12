@@ -3,8 +3,10 @@
 /**
  * Tests for Kontrollera med AI (decision F44 a): record_finding checks each call and resolves the photo and the element, a check writes
  * only Pset_Condition, the agent in check mode records findings and sets the condition through set_properties while create_wall is
- * refused, the panel in the mode Kontrollera lists the findings and saves them as a table and as a BCF file read back with bcf-xml (the
- * photos without their EXIF), and Skapa ärenden på servern creates one topic per finding with a viewpoint on a virtual Dataregium.
+ * refused, the panel in the mode Kontrollera lists the findings and saves them as a table and as a BCF 3.0 file read back with bcf-xml and
+ * checked against the schema (a picture of the model as the snapshot, the photo as a document without its EXIF), and Skapa ärenden på
+ * servern creates one topic per finding with a viewpoint of the element, the photo as a document or a viewpoint of its own, the chosen
+ * fields and the model file, on a virtual Dataregium.
  * Mocked provider, no network.
  */
 (function () {
@@ -38,7 +40,7 @@
   const CORNER = { name: 'hörn.jpg', label: 'photo', mediaType: 'image/jpeg', data: PIXEL };
   /** The requests the virtual servers were sent, with their bodies; the virtual handlers themselves only see addresses. */
   const sent = [];
-  const cde = { topics: 0, failTopic: 0 };
+  const cde = { topics: 0, failTopic: 0, rights: false, documents: 0 };
   let realRequest = null; let ds = null; let anthropic = null; let connector = null; let walls = []; const made = [];
   D.net.virtual('tests/ai-check/', async (url) => {
     if (!String(url).endsWith('/v1/messages')) return json({ error: { message: 'no such path' } }, 404);
@@ -54,7 +56,14 @@
     if (path === '/foundation/1.0/auth') return Promise.resolve(json({ oauth2_auth_url: CDE + '/foundation/oauth2/auth', oauth2_token_url: CDE + '/foundation/oauth2/token' }));
     if (path === '/foundation/oauth2/token') return Promise.resolve(json({ access_token: 'tok', refresh_token: 'r', expires_in: 3600 }));
     if (path === '/foundation/1.0/current-user') return Promise.resolve(json({ id: 'granskare', name: 'Granskare' }));
-    if (path === '/bcf/3.0/projects/p-1/extensions') return Promise.resolve(json({ topic_type: ['Issue', 'Request', 'Inspection'], topic_status: ['Open', 'Closed'], priority: ['Low', 'Medium', 'High', 'Critical'] }));
+    // The rights to add documents and to tie a topic to its file come and go with cde.rights.
+    if (path === '/bcf/3.0/projects/p-1/extensions') return Promise.resolve(json(Object.assign({ topic_type: ['Issue', 'Request', 'Inspection'], topic_status: ['Open', 'Closed'], priority: ['Low', 'Medium', 'High', 'Critical'], users: ['granskare', 'projektor'], topic_label: ['Arkitekt'], stage: ['Design'] }, cde.rights ? { project_actions: ['createTopic', 'createDocument'], topic_actions: ['createViewpoint', 'updateDocumentReferences', 'updateFiles'] } : {})));
+    if (path === '/bcf/3.0/projects/p-1/files_information') return Promise.resolve(json([{ display_information: [{ field_display_name: 'Source', field_value: 'Documents API' }], file: { filename: 'kontrollhus.ifc', reference: CDE + '/documents/1.0/documents/doc-1/versions/1/download' } }]));
+    if (path === '/bcf/3.0/projects/p-1/documents') { cde.documents++; return Promise.resolve(json({ guid: 'doc-' + cde.documents, filename: 'photo' }, 201)); }
+    const ref = /^\/bcf\/3\.0\/projects\/p-1\/topics\/(t-\d+)\/document_references$/.exec(path);
+    if (ref) return Promise.resolve(json({ guid: 'ref-' + ref[1] }, 201));
+    const filesOf = /^\/bcf\/3\.0\/projects\/p-1\/topics\/(t-\d+)\/files$/.exec(path);
+    if (filesOf) return Promise.resolve(json([]));
     if (path === '/bcf/3.0/projects/p-1/topics') {
       cde.topics++;
       if (cde.topics === cde.failTopic) return Promise.resolve(json({ message: 'priority is not one of the project\'s values' }, 400));
@@ -69,14 +78,15 @@
     const t0 = performance.now();
     for (;;) { const v = await fn(); if (v) return v; if (performance.now() - t0 > timeoutMs) throw new Error('timeout waiting for ' + label); await wait(30); }
   }
-  const bodiesTo = (suffix) => sent.filter((r) => r.url.startsWith(CDE) && r.url.split('?')[0].endsWith(suffix) && r.method === 'POST').map((r) => JSON.parse(r.body));
+  const bodiesTo = (suffix, method = 'POST') => sent.filter((r) => r.url.startsWith(CDE) && r.url.split('?')[0].endsWith(suffix) && r.method === method).map((r) => JSON.parse(r.body));
+  const sentTo = (suffix) => sent.filter((r) => r.url.startsWith(CDE) && r.url.split('?')[0].endsWith(suffix));
   const condition = (id, value, text) => ['set_properties', { ids: [id], pset: 'Pset_Condition', properties: [{ name: 'AssessmentDate', value: checkTools.today() }, { name: 'AssessmentCondition', value }, { name: 'AssessmentDescription', value: text }] }];
   const crack = () => ({ photo: 1, element_id: walls[0].id, title: 'Spricka i putsen', description: 'En spricka från sockeln upp mot fönstret.', condition: 'poor', priority: 'high', action: 'Laga putsen före vintern' });
   const damp = (photo) => ({ photo, element_id: walls[1].guid, title: 'Fuktfläck', description: 'Mörk fläck vid hörnet.', condition: 'fair', priority: 'medium', action: null });
 
   test('ai check: record_finding checks each call and resolves the photo and the element, and a check writes only Pset_Condition', async (assert) => {
     realRequest = http.request;
-    http.request = (req) => { const u = String(req.url); if ((u.startsWith(BASE) || u.startsWith(CDE)) && req.body !== undefined) sent.push({ url: u, method: String(req.method || 'GET'), body: String(req.body) }); return realRequest(req); };
+    http.request = (req) => { const u = String(req.url); if ((u.startsWith(BASE) || u.startsWith(CDE)) && req.body !== undefined) sent.push({ url: u, method: String(req.method || 'GET'), body: String(req.body), headers: req.headers || {} }); return realRequest(req); };
     ds = await importer.run(fixtures.ifcFile({ walls: 2 }), { format: 'model' }, null, 'Kontrollhus');
     const engine = (await datasets.ensureOpen(ds.id)).engine;
     const r = await engine.exec("select id, guid, typ, namn from data where namn in ('Vägg 1.1', 'Vägg 1.2') order by namn");
@@ -157,7 +167,10 @@
 
   test('ai check: the panel in the mode Kontrollera lists the findings, saves them as a table and exports them as BCF', async (assert) => {
     const bounds = (ids) => (ids.includes(walls[0].id) ? { min: [0, 0, 0], max: [4, 0.2, 2.5] } : null);
-    const panel = D.require('ui/bearbeta/ai-panel').create({ shell: { log() {} } }, { datasetId: ds.id, mode: 'check', preview: () => {}, bounds });
+    // The model view's pictures: a canvas larger than BCF allows, so that the limit shows.
+    const shots = [];
+    const pictures = async (list) => { shots.push(...list); const c = document.createElement('canvas'); c.width = 1600; c.height = 1000; c.getContext('2d').fillRect(0, 0, 10, 10); return list.map(() => c.toDataURL('image/png')); };
+    const panel = D.require('ui/bearbeta/ai-panel').create({ shell: { log() {} } }, { datasetId: ds.id, mode: 'check', preview: () => {}, bounds, pictures });
     document.body.appendChild(panel.el);
     const realDownload = platformFiles.download;
     const downloads = [];
@@ -215,9 +228,23 @@
       assert.ok(topic.description.includes('En spricka från sockeln') && topic.description.includes(t('ai.check.badge.condition', { condition: t('ai.check.condition.poor') })) && topic.description.includes(walls[0].guid), topic.description);
       const selected = (guid) => read.components.filter((x) => x.topic_guid === guid && x.role === 'selection').map((x) => x.ifc_guid);
       assert.deepEqual(selected(topic.guid), [walls[0].guid]); assert.deepEqual(selected(other.guid), [walls[1].guid]);
+      // The snapshot is a picture of the model from the viewpoint's camera with the element coloured; the photo is a document.
       const snaps = read.snapshots.filter((x) => x.topic_guid === topic.guid);
-      assert.ok(snaps.length === 1 && snaps[0].type === 'image/jpeg' && snaps[0].bytes[0] === 0xff && snaps[0].bytes[1] === 0xd8, 'the photo as the snapshot');
-      assert.equal(read.snapshots.length, 2);
+      const size = snaps[0] && bcfXml.imageSize(snaps[0].bytes);
+      assert.ok(snaps.length === 1 && snaps[0].type === 'image/png' && size && size.width === 1500 && size.height === 938, 'a picture of the model within 1500 px: ' + JSON.stringify(size));
+      assert.equal(read.snapshots.length, 2, 'both findings have an element');
+      assert.ok(shots.length === 2 && shots[0].viewpoint.perspective_camera && shots[0].colors[0].ids[0] === walls[0].id && shots[1].colors[0].ids[0] === walls[1].id, 'the model view drew each element coloured from its camera');
+      const photoRef = topic.document_references.find((r) => r.document_guid);
+      const photoDoc = photoRef && read.documents.find((d) => d.guid === photoRef.document_guid);
+      assert.ok(photoDoc && photoDoc.filename === 'sydfasad.jpg' && photoDoc.bytes[0] === 0xff && photoDoc.bytes[1] === 0xd8 && photoRef.description === t('ai.check.photo.document', { name: 'sydfasad.jpg' }), 'the photo as a document of the topic');
+      assert.deepEqual(read.documents.map((d) => d.filename), ['sydfasad.jpg', 'hörn.jpg'], 'one photo per finding');
+      const colored = read.components.filter((x) => x.topic_guid === topic.guid && x.role === 'coloring');
+      assert.ok(colored.length === 1 && colored[0].ifc_guid === walls[0].guid && /^[0-9A-F]{6}$/.test(colored[0].color), 'the element coloured: ' + JSON.stringify(colored));
+      assert.ok(topic.header_files.length === 1 && topic.header_files[0].filename === 'testhus.ifc' && bcfXml.isIfcGuid(topic.header_files[0].ifc_project) && topic.header_files[0].date === '2026-11-04T12:00:00', 'the model file in the header: ' + JSON.stringify(topic.header_files));
+      assert.equal(topic.creation_author, bcfXml.authorOf(null, await D.require('data/comments').author()), 'the name entered for comments, or the tool');
+      assert.ok(topic.topic_status === 'Open' && read.extensions.topic_type.includes('Inspection'), 'a status, and extensions.xml');
+      const invalid = await D.require('tests/bcf-schema-check').checkBlob(downloads[0].blob);
+      if (invalid) assert.deepEqual(invalid, [], 'valid BCF 3.0');
       const vp = read.viewpoints.find((x) => x.topic_guid === topic.guid);
       const p = vp && vp.perspective_camera && vp.perspective_camera.camera_view_point;
       assert.ok(p && p.x > 2 && p.y < 0.1 && p.z > 1.25, 'the camera frames the wall from the south-east above: ' + JSON.stringify(p));
@@ -227,13 +254,13 @@
       assert.ok(Number.isFinite(exif.parse(tagged).lat), 'the photo carries a position');
       const view = panel.check.viewOf({ picture: { mediaType: 'image/jpeg', data: btoa(String.fromCharCode(...tagged)) }, elementGuid: null, elementId: null });
       let lat = null;
-      try { const m = exif.parse(view.snapshot.bytes); lat = m && m.lat; } catch (_e) { lat = null; }
-      assert.ok(!Number.isFinite(lat) && btoa(String.fromCharCode(...view.snapshot.bytes)) === PIXEL, 'the snapshot is the picture without its EXIF');
+      try { const m = exif.parse(view.photo.bytes); lat = m && m.lat; } catch (_e) { lat = null; }
+      assert.ok(!Number.isFinite(lat) && btoa(String.fromCharCode(...view.photo.bytes)) === PIXEL && !view.viewpoint, 'the photo without its EXIF, and no viewpoint without an element');
     } finally { platformFiles.download = realDownload; panel.destroy(); panel.el.remove(); }
     return 'ok';
   }, 30000);
 
-  test('ai check: Skapa ärenden på servern makes one topic per finding with a viewpoint on a virtual Dataregium, and sends a failed one again', async (assert) => {
+  test('ai check: Skapa ärenden på servern makes one topic per finding with a viewpoint of the element, the photo as a document or a viewpoint of its own, the chosen fields and the model file, and sends a failed one again', async (assert) => {
     connector = (await families.createConnector('opencde', { baseUrl: CDE, clientId: 'dataspatium', clientSecret: '' })).connector;
     const meta = await datasets.get(ds.id);
     await datasets.updateMeta(ds.id, { source: Object.assign({}, meta.source || { kind: 'file' }, { cde: { connectorId: connector.id, connectorName: connector.name, host: 'tests', projectId: 'p-1', projectName: 'Testprojekt', documentId: 'doc-1', versionIndex: 1 } }) });
@@ -250,7 +277,8 @@
       panel.attach([]);
       const button = /** @type {any} */ (panel.el.querySelector('[data-ai-check-server]'));
       assert.ok(button && !button.disabled, 'signed in: Skapa ärenden på servern');
-      sent.length = 0; cde.topics = 0; cde.failTopic = 2;
+      // First press: the person may not add documents or tie topics to files, and the second topic fails.
+      sent.length = 0; cde.topics = 0; cde.failTopic = 2; cde.rights = false; cde.documents = 0;
       const first = await panel.check.createIssues({ confirmed: true });
       assert.ok(first && first.made === 1 && first.failed.length === 1 && first.failed[0].n === 2, JSON.stringify(first));
       assert.ok(panel.el.querySelector('[data-ai-check-failed]') && /Fuktfläck/.test(panel.el.querySelector('[data-ai-check-failed]').textContent), 'the failed finding reported');
@@ -258,20 +286,34 @@
       assert.equal(topics.length, 2, 'two topics tried');
       assert.ok(topics[0].title === 'Spricka i putsen' && topics[0].priority === 'High' && topics[0].topic_type === 'Inspection' && topics[0].description.includes('En spricka från sockeln'), JSON.stringify(topics[0]).slice(0, 300));
       assert.ok(!topics[0].description.includes('59.329'), 'the photo\'s position stays out unless kept: ' + topics[0].description);
+      assert.ok(!('topic_status' in topics[0]) && !('assigned_to' in topics[0]), 'nothing chosen: the server\'s defaults');
       const vps = bodiesTo('/topics/t-1/viewpoints');
-      assert.equal(vps.length, 1, 'a viewpoint on the topic');
-      assert.ok(vps[0].snapshot && vps[0].snapshot.snapshot_type === 'jpg' && vps[0].snapshot.snapshot_data === PIXEL, 'the photo as the snapshot');
-      assert.ok(vps[0].components.selection.length === 1 && vps[0].components.selection[0].ifc_guid === walls[0].guid && vps[0].perspective_camera, 'the element selected, with a camera');
-      // The next press sends the one left.
-      cde.failTopic = 0;
-      const second = await panel.check.createIssues({ confirmed: true });
-      assert.ok(second && second.made === 1 && !second.failed.length, JSON.stringify(second));
+      assert.equal(vps.length, 2, 'a viewpoint of the element, and one of the photo');
+      assert.ok(!vps[0].snapshot && vps[0].perspective_camera && vps[0].components.selection[0].ifc_guid === walls[0].guid && vps[0].components.coloring[0].components[0].ifc_guid === walls[0].guid, 'the element selected and coloured, with a camera');
+      assert.ok(vps[1].snapshot && vps[1].snapshot.snapshot_type === 'jpg' && vps[1].snapshot.snapshot_data === PIXEL && !vps[1].perspective_camera && !vps[1].components, 'without the right to add documents, the photo is a viewpoint of its own');
+      assert.ok(!sentTo('/projects/p-1/documents').length && !sentTo('/topics/t-1/files').length, 'no document and no file without the rights');
+      // Second press: with the rights, the fields the person chose, and a third finding with a photo.
+      await checkTools.call(panel.state.findings, Object.assign(crack(), { title: 'Rost på räcket' }), { photos: [SOUTH] });
+      cde.failTopic = 0; cde.rights = true;
+      const fields = { topic_status: 'Closed', assigned_to: 'projektor', labels: ['Arkitekt', 'Okänd part'], stage: 'Design', due_date: '2026-12-01T00:00:00Z' };
+      const second = await panel.check.createIssues({ confirmed: true, fields });
+      assert.ok(second && second.made === 2 && !second.failed.length, JSON.stringify(second));
       const again = bodiesTo('/projects/p-1/topics');
-      assert.ok(again.length === 3 && again[2].title === 'Fuktfläck' && again[2].priority === 'Critical', 'urgent as the project\'s Critical');
+      assert.ok(again.length === 4 && again[2].title === 'Fuktfläck' && again[2].priority === 'Critical' && again[3].title === 'Rost på räcket', 'urgent as the project\'s Critical');
+      assert.ok(again[2].topic_status === 'Closed' && again[2].assigned_to === 'projektor' && again[2].stage === 'Design' && again[2].due_date === '2026-12-01T00:00:00Z', 'the chosen status, assignee, stage and due date: ' + JSON.stringify(again[2]).slice(0, 300));
+      assert.deepEqual(again[2].labels, ['Arkitekt'], 'the responsible party as a label, only from the project\'s list');
       const vp2 = bodiesTo('/topics/t-3/viewpoints');
       assert.ok(vp2.length === 1 && !vp2[0].snapshot && vp2[0].components.selection[0].ifc_guid === walls[1].guid && vp2[0].perspective_camera, 'no photo: the element alone');
-      assert.equal(panel.el.querySelectorAll('[data-ai-check-issued]').length, 2, 'both rows say so');
-      assert.equal(panel.el.querySelector('[data-ai-check-sent]').getAttribute('data-ai-check-sent'), '2');
+      assert.equal(bodiesTo('/topics/t-4/viewpoints').length, 1, 'the photo is no viewpoint now');
+      const upload = sentTo('/projects/p-1/documents');
+      assert.ok(upload.length === 1 && /filename="sydfasad\.jpg"/.test(upload[0].headers['Content-Disposition']) && upload[0].headers['Content-Type'] === 'image/jpeg', 'the photo as a project document');
+      assert.deepEqual(bodiesTo('/topics/t-4/document_references'), [{ document_guid: 'doc-1', description: t('ai.check.photo.document', { name: 'sydfasad.jpg' }) }], 'and a document reference on the topic');
+      const facts = (await datasets.get(ds.id)).model;
+      const want = [{ ifc_project: facts.projectGuid, reference: CDE + '/documents/1.0/documents/doc-1/versions/1/download', filename: 'kontrollhus.ifc' }];
+      assert.deepEqual(bodiesTo('/topics/t-3/files', 'PUT'), [want], 'the topic tied to the model\'s entry in files_information, with the IfcProject');
+      assert.deepEqual(bodiesTo('/topics/t-4/files', 'PUT'), [want]);
+      assert.equal(panel.el.querySelectorAll('[data-ai-check-issued]').length, 3, 'every row says so');
+      assert.equal(panel.el.querySelector('[data-ai-check-sent]').getAttribute('data-ai-check-sent'), '3');
       assert.equal(await panel.check.createIssues({ confirmed: true }), null, 'nothing left to send');
     } finally {
       panel.destroy(); panel.el.remove();

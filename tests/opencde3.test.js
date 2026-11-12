@@ -55,7 +55,7 @@
   const json = (data) => ({ kind: 'text', data: JSON.stringify(data) });
   const text = (data) => ({ kind: 'text', data });
   const uuid = (n) => `${String(n).padStart(8, '0')}-0000-4000-8000-000000000000`;
-  const world = { tokens: 0, topics: [], comments: new Map(), viewpoints: new Map(), parts: [], documents: [], registrations: 0 };
+  const world = { tokens: 0, topics: [], comments: new Map(), viewpoints: new Map(), files: new Map(), parts: [], documents: [], registrations: 0 };
   let snapshotBytes = null;
   function png() {
     const canvas = document.createElement('canvas'); canvas.width = 40; canvas.height = 30;
@@ -81,7 +81,7 @@
     if (path === '/foundation/1.0/current-user') return Promise.resolve(json({ id: 'officer', name: 'Handläggaren' }));
     if (path === '/bcf/3.0/projects') return Promise.resolve(json([{ project_id: PROJECT, name: 'Bygglovet' }]));
     if (path === p) return Promise.resolve(json({ project_id: PROJECT, name: 'Bygglovet', authorization: { project_actions: ['createTopic', 'createDocument'] } }));
-    if (path === `${p}/extensions`) return Promise.resolve(json({ topic_type: ['Issue', 'Request'], topic_status: ['Open', 'In progress', 'Closed'], topic_label: ['Safety'], priority: ['Low', 'High'], users: ['officer', 'developer'], project_actions: ['createTopic', 'createDocument'], topic_actions: ['update', 'createComment', 'createViewpoint'], comment_actions: ['update'] }));
+    if (path === `${p}/extensions`) return Promise.resolve(json({ topic_type: ['Issue', 'Request'], topic_status: ['Open', 'In progress', 'Closed'], topic_label: ['Safety'], priority: ['Low', 'High'], users: ['officer', 'developer'], project_actions: ['createTopic', 'createDocument'], topic_actions: ['update', 'createComment', 'createViewpoint', 'updateFiles'], comment_actions: ['update'] }));
     if (path === `${p}/topics`) {
       if (method === 'POST') { const tp = Object.assign({ guid: uuid(100 + world.topics.length), server_assigned_id: 'K-' + (100 + world.topics.length), creation_author: 'officer', creation_date: '2026-11-05T10:00:00Z', labels: [] }, body); world.topics.push(tp); return Promise.resolve(json(tp)); }
       if (u.searchParams.get('$skip') && u.searchParams.get('$skip') !== '0') return Promise.resolve(json([]));
@@ -110,6 +110,11 @@
       if (r[3] === 'coloring') return Promise.resolve(json({ coloring: c.coloring || [] }));
       if (r[3] === 'visibility') return Promise.resolve(json({ visibility: c.visibility || { default_visibility: true } }));
       return Promise.resolve({ kind: 'binary', data: snapshotBytes || (snapshotBytes = png()) });
+    }
+    // A topic's model files (BCF 3.3.2 and 3.3.3): what was put is what is given.
+    if ((r = m(/^\/bcf\/3\.0\/projects\/[^/]+\/topics\/([^/]+)\/files$/))) {
+      if (method === 'PUT') world.files.set(r[1], Array.isArray(bodyOf(req)) ? bodyOf(req) : []);
+      return Promise.resolve(json(world.files.get(r[1]) || []));
     }
     if (path === `${p}/documents`) { const doc = { guid: uuid(900 + world.documents.length), filename: /filename="([^"]+)"/.exec(String((req.headers || {})['Content-Disposition'] || ''))?.[1] || 'document' }; world.documents.push(doc); return Promise.resolve(json(doc)); }
     if (path === '/documents/1.0/upload-documents') return Promise.resolve(json({ upload_ui_url: BASE + '/documents/1.0/upload-ui/tok', expires_in: 600, max_size_in_bytes: 1073741824, files: body.files }));
@@ -189,6 +194,10 @@
       const dir = vp.perspective_camera.camera_direction; const up = vp.perspective_camera.camera_up_vector;
       assert.ok(Math.abs(Math.hypot(dir.x, dir.y, dir.z) - 1) < 0.01 && Math.abs(dir.x * up.x + dir.y * up.y + dir.z * up.z) < 0.02, 'direction unit, up at right angles');
       assert.deepEqual(vp.components.selection.map((c) => c.ifc_guid), [firstWall.guid], 'the marked wall is the selection');
+      // The new topic is tied to the model's file: the server offers updateFiles, and the file's own header gives the facts.
+      const put = await waitFor(() => spy.requests.filter((r) => (r.method || 'GET') === 'PUT' && /\/topics\/[^/]+\/files$/.test(r.url)).map(bodyOf).pop(), 5000, 'the files');
+      const facts = (await datasets.get(model.id)).model;
+      assert.deepEqual(put, [{ ifc_project: facts.projectGuid, date: '2026-11-04T12:00:00', filename: 'testhus.ifc' }], 'PUT /topics/{guid}/files with the IfcProject, the time stamp and the name');
       assert.ok(panel.querySelector('[data-issue-detail]'), 'the new issue is chosen');
       await waitFor(() => panel.querySelector('[data-issue-detail] img'), 8000, 'its snapshot shows');
     });
@@ -245,6 +254,8 @@
     assert.ok(saved.name.endsWith('.bcfzip'), saved.name);
     const read = await bcfXml.read(await saved.blob.arrayBuffer());
     assert.equal(read.version, '3.0');
+    const invalid = await D.require('tests/bcf-schema-check').checkBlob(saved.blob);
+    if (invalid) assert.deepEqual(invalid, [], 'the project file is valid BCF 3.0');
     assert.equal(read.topics.length, 1);
     assert.equal(read.topics[0].title, 'Väggen lutar');
     assert.equal(read.topics[0].topic_status, 'In progress');
@@ -256,6 +267,8 @@
     assert.ok(read.snapshots[0].bytes.length > 50, 'the snapshot bytes');
     assert.ok(read.viewpoints[0].perspective_camera && read.viewpoints[0].perspective_camera.field_of_view === 45, 'the camera came through');
     assert.equal(read.project.name, 'Bygglovet');
+    assert.deepEqual(read.topics[0].header_files.map((f) => f.filename), ['testhus.ifc'], 'the model file in the topic header');
+    assert.equal(read.topics[0].creation_author, 'officer', 'the author the server gave');
     // Back in: three tables, the first one an issues table.
     const file = new File([saved.blob], 'bygglovet.bcfzip', { type: 'application/zip' });
     const before = (await datasets.list()).length;
@@ -275,18 +288,22 @@
   }, 60000);
 
   test('opencde III: the pure writer and reader keep what the API gives', async (assert) => {
+    // Components are IFC GlobalIds of 22 characters, as BCF requires.
+    const G1 = '0Dataspatium0000000g01'; const G2 = '0Dataspatium0000000g02'; const G3 = '0Dataspatium0000000g03';
     const camera = bcfXml.cameraFromView({ position: [10, 2, 5], target: [0, 2, 0], fov: 50, aspect: 1.5 });
     assert.ok(Math.abs(camera.camera_direction.x + 0.894) < 0.01 && Math.abs(camera.camera_direction.z + 0.447) < 0.01, JSON.stringify(camera.camera_direction));
     assert.deepEqual(camera.camera_up_vector, { x: 0, y: 1, z: 0 }, 'Y stays up when the view is level');
     const items = [{
       topic: { guid: 'c1d2e3f4-0000-4000-8000-000000000001', title: 'Två <väggar> & en dörr', topic_status: 'Open', labels: ['Safety', 'MEP'], description: 'Rad 1\nRad 2', document_references: [{ guid: 'c1d2e3f4-0000-4000-8000-000000000009', url: 'https://example.org/a.pdf', description: 'Ritning' }], related_topics: [{ related_topic_guid: 'c1d2e3f4-0000-4000-8000-000000000002' }] },
       comments: [{ guid: 'c1d2e3f4-0000-4000-8000-000000000005', date: '2026-11-05T12:00:00Z', author: 'a', comment: 'Hej "citat"', viewpoint_guid: 'c1d2e3f4-0000-4000-8000-000000000007' }],
-      viewpoints: [{ viewpoint: { guid: 'c1d2e3f4-0000-4000-8000-000000000007', perspective_camera: camera, components: { selection: [{ ifc_guid: 'g1' }], coloring: [{ color: 'FF0000', components: [{ ifc_guid: 'g2' }] }], visibility: { default_visibility: false, exceptions: [{ ifc_guid: 'g3' }] } } }, snapshot: { bytes: new Uint8Array([137, 80, 78, 71, 1, 2, 3]), type: 'image/png' } }],
+      viewpoints: [{ viewpoint: { guid: 'c1d2e3f4-0000-4000-8000-000000000007', perspective_camera: camera, components: { selection: [{ ifc_guid: G1 }], coloring: [{ color: 'FF0000', components: [{ ifc_guid: G2 }] }], visibility: { default_visibility: false, exceptions: [{ ifc_guid: G3 }] } } }, snapshot: { bytes: new Uint8Array([137, 80, 78, 71, 1, 2, 3]), type: 'image/png' } }],
       header: [{ filename: 'hus.ifc', ifc_project: '0Dataspatium0000000001', reference: 'https://example.org/hus.ifc' }],
     }, { topic: { guid: 'c1d2e3f4-0000-4000-8000-000000000002', title: 'Den andra' }, comments: [], viewpoints: [] }];
     const blob = await bcfXml.write(items, { projectName: 'Projektet' });
     const read = await bcfXml.read(await blob.arrayBuffer());
     assert.equal(read.topics.length, 2);
+    const invalid = await D.require('tests/bcf-schema-check').checkBlob(blob);
+    if (invalid) assert.deepEqual(invalid, [], 'valid BCF 3.0');
     const first = read.topics.find((x) => x.guid === 'c1d2e3f4-0000-4000-8000-000000000001');
     assert.equal(first.title, 'Två <väggar> & en dörr');
     assert.deepEqual(first.labels, ['Safety', 'MEP']);
@@ -299,8 +316,8 @@
     const vp = read.viewpoints[0];
     assert.deepEqual(vp.perspective_camera.camera_view_point, { x: 10, y: 2, z: 5 });
     assert.equal(vp.components.visibility.default_visibility, false);
-    assert.deepEqual(vp.components.visibility.exceptions.map((c) => c.ifc_guid), ['g3']);
-    assert.deepEqual(read.components.map((c) => [c.role, c.ifc_guid, c.color]), [['selection', 'g1', null], ['coloring', 'g2', 'FF0000']]);
+    assert.deepEqual(vp.components.visibility.exceptions.map((c) => c.ifc_guid), [G3]);
+    assert.deepEqual(read.components.map((c) => [c.role, c.ifc_guid, c.color]), [['selection', G1, null], ['coloring', G2, 'FF0000']]);
     assert.deepEqual(Array.from(read.snapshots[0].bytes), [137, 80, 78, 71, 1, 2, 3]);
     const bad = await bcfXml.read(await (await D.require('platform/storage/zip').createZip({ 'a.txt': new TextEncoder().encode('x') })).arrayBuffer()).catch((e) => e);
     assert.ok(bad instanceof Error && bad.message === t('bcf.err.notbcf'));

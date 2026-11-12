@@ -340,7 +340,13 @@
       }
       async function saveBcf(ds, r) {
         try {
-          const blob = await D.require('analysis/clash').bcfFile(r, { t, projectName: ds.name, colors: clashColors() });
+          // The model's file in each topic's header, and the person's name as the author (the server's identity when signed in).
+          const bcfXml = D.require('data/bcf-xml');
+          const cde = ds.source && ds.source.cde;
+          const connector = cde && cde.connectorId ? await D.require('api/connectors').get(cde.connectorId).catch(() => null) : null;
+          const opencde = D.require('api/families/opencde');
+          const author = bcfXml.authorOf(connector && opencde.isOpenCde(connector) ? await opencde.identity(connector) : null, await D.require('data/comments').author());
+          const blob = await D.require('analysis/clash').bcfFile(r, { t, projectName: ds.name, colors: clashColors(), header: bcfXml.headerOf(ds), author });
           const name = `${ds.name.replace(/[\\/:*?"<>|]+/g, '_')} ${t('model.tool.clash').toLowerCase()}.bcfzip`;
           D.require('platform/files').download(blob, name);
           shell.log(t('clash.bcf.saved', { n: i18n.formatNumber(r.clashes.length), name }), 'ok');
@@ -367,6 +373,8 @@
           const pick = (list, wanted) => { const l = Array.isArray(list) ? list : []; return l.find((x) => wanted.test(String(x))) || l[0] || null; };
           const type = pick(ext.topic_type, /clash|kollision/i); const status = pick(ext.topic_status, /open|öppen/i);
           const colors = clashColors();
+          // Each topic tied to the model's file when the server allows it (BCF 3.3.3).
+          const file = await opencde.modelFile(connector, cde.projectId, cde, D.require('data/bcf-xml').headerOf(ds)[0]).catch(() => null);
           let sent = 0;
           for (const c of r.clashes) {
             const text = clash.topicText(c, t);
@@ -375,6 +383,7 @@
             if (status) body.topic_status = status;
             const topic = await opencde.createTopic(connector, cde.projectId, body);
             await opencde.createViewpoint(connector, cde.projectId, topic.guid, clash.viewpointOf(c, colors));
+            if (file) await opencde.linkTopic(connector, cde.projectId, topic, ext, file).catch((err) => shell.log(t('issues.files.failed', { message: String((err && err.message) || err) }), 'warn'));
             sent++;
             if (sent % 5 === 0) shell.log(t('clash.send.progress', { done: i18n.formatNumber(sent), total: i18n.formatNumber(r.clashes.length) }), 'info');
           }
