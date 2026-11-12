@@ -16,7 +16,7 @@
 'use strict';
 
 /** Changes with every release (release procedure in CLAUDE.md, outside the repo), so old caches are dropped on activation. */
-const CACHE = 'dataspatium-3.0.0-2026-11-12b'; // 3.0.0 is re-released with the same number; a new cache name makes installed apps fetch the new files
+const CACHE = 'dataspatium-3.0.0-2026-11-12c'; // 3.0.0 is re-released with the same number; a new cache name makes installed apps fetch the new files
 const CACHE_FIRST = /\/(vendor|presets|src|r|python)\//;
 /** Files shared into the mobile page (manifest share_target) wait here until m/index.html reads them. */
 const INBOX = 'dataspatium-inbox';
@@ -36,6 +36,16 @@ function isolated(response) {
   headers.set('Cross-Origin-Embedder-Policy', 'credentialless');
   headers.set('Cross-Origin-Resource-Policy', 'same-origin');
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
+/** A GET from the network, tried once more after a short pause when the connection fails or the server answers 5xx. */
+async function network(request) {
+  try {
+    const first = await fetch(request);
+    if (first.status < 500) return first;
+  } catch (_err) { /* tried again below */ }
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  return fetch(request);
 }
 
 self.addEventListener('fetch', (event) => {
@@ -66,12 +76,12 @@ self.addEventListener('fetch', (event) => {
     if (CACHE_FIRST.test(url.pathname)) {
       const hit = await cache.match(request);
       if (hit) return isolated(hit);
-      const fresh = await fetch(request);
+      const fresh = await network(request);
       if (fresh.ok) cache.put(request, fresh.clone()).catch(() => {});
       return isolated(fresh);
     }
     try {
-      const fresh = await fetch(request);
+      const fresh = await network(request);
       if (fresh.ok) cache.put(request, fresh.clone()).catch(() => {});
       return isolated(fresh);
     } catch (err) {

@@ -456,31 +456,49 @@
     else send();
   }
 
+  /** Scripts on their way at once: enough to hide the round trips, few enough that a web server never sees several hundred. */
+  const IN_FLIGHT = 8;
+  /** Over http(s) a failed start is tried once more by reloading the page, as one file in hundreds may fail on the way. */
+  const RETRY = 'dataspatium.boot.retry';
+
   /**
-   * Every script goes in at once: with `async = false` the browser fetches them in parallel and runs them in the order
-   * they were added, so a page from a web server waits for one round trip instead of one per file (several hundred).
-   * The page is ready when the last one has run; the first one that fails ends the start with its path.
+   * The scripts go in a few at a time: with `async = false` the browser fetches those added in parallel and runs them in
+   * the order they were added, and each one that has run lets the next one in. So a page from a web server waits for a
+   * fraction of the round trips, and the server is never asked for every file at once (GitHub Pages then drops some).
+   * The page is ready when the last one has run; the first one that fails ends the start with its path, after one reload
+   * over http(s).
    */
   function loadAll() {
     let left = scripts.length;
+    let next = 0;
     let failed = false;
+    const web = /^https?:$/.test(location.protocol);
     if (!left) { announce('dataspatium:ready'); return; }
-    for (const path of scripts) {
+    function add() {
+      if (failed || next >= scripts.length) return;
+      const path = scripts[next++];
       const el = document.createElement('script');
       el.src = base + path;
       el.async = false;
       el.onload = function () {
         left -= 1;
-        if (!left && !failed) announce('dataspatium:ready');
+        if (left) { add(); return; }
+        if (failed) return;
+        try { sessionStorage.removeItem(RETRY); } catch (_e) { /* no session storage */ }
+        announce('dataspatium:ready');
       };
       el.onerror = function () {
         console.error('[boot] failed to load', el.src);
         if (failed) return;
         failed = true;
+        let again = false;
+        try { again = web && sessionStorage.getItem(RETRY) !== '1'; if (again) sessionStorage.setItem(RETRY, '1'); } catch (_e) { again = false; }
+        if (again) { location.reload(); return; }
         announce('dataspatium:boot-error', path);
       };
       document.head.appendChild(el);
     }
+    for (let i = 0; i < IN_FLIGHT; i++) add();
   }
   isolate().then(loadAll);
 })();
