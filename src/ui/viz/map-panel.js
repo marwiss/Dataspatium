@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * Map charts in Visualisera: layers from datasets with geometry or coordinates and from the bundled boundaries,
- * colours by category or class, labels, a background map after consent, the saved view; the live map on the right
+ * colours by category or class, labels, a background map after consent (OpenStreetMap, an orthophoto, an XYZ template
+ * or a WMS), the saved view; the live map on the right
  * with a click showing a feature's attributes in the inspector. Export and thumbnails are drawn headless by
  * viz/leaflet (no tiles).
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/viz/map-panel', ['ui/base', 'ui/basic', 'viz/leaflet', 'data/datasets', 'data/boundaries', 'data/kinds'], (base, basic, leaflet, datasets, boundaries, kinds) => {
+  D.define('ui/viz/map-panel', ['ui/base', 'ui/basic', 'viz/leaflet', 'data/datasets', 'data/boundaries', 'data/kinds', 'ui/viz/basemap-choice'], (base, basic, leaflet, datasets, boundaries, kinds, basemapChoice) => {
     const { h, t, i18n, replace } = base;
     const MODES = ['none', 'category', 'graduated'];
 
@@ -49,6 +50,9 @@
       const columnsOf = (id) => { if (!colsCache.has(id)) colsCache.set(id, datasets.columns(id).catch(() => [])); return colsCache.get(id); };
       let allDatasets = [];
       datasets.list().then((list) => { allDatasets = list; renderSide(); }).catch(() => {});
+      /** @type {Array<{value: string, label: string}>} the orthophotos, after OpenStreetMap in the choice */
+      let orthos = [];
+      basemapChoice.options().then((list) => { orthos = list; renderSide(); }).catch(() => {});
 
       const changed = (redraw = true) => { options.onChange(def); if (redraw) schedule(); };
       function schedule(delay = 300) { clearTimeout(timer); timer = setTimeout(draw, delay); }
@@ -64,6 +68,7 @@
           const parts = [t('viz.rows.used', { rows: i18n.formatNumber(hd.info.rows), total: i18n.formatNumber(hd.info.total) })];
           if (hd.info.truncated) parts.push(t('map.truncated', { n: i18n.formatNumber(Math.max(...def.layers.map((l) => l.maxRows || leaflet.MAX_ROWS))) }));
           if (hd.info.basemapDenied) parts.push(t('map.basemap.denied'));
+          if (hd.info.basemapKey) { parts.push(basemapChoice.keyNotice(hd.info)); basemapChoice.notifyKey(hd.info, draw); }
           if (hd.info.crsUnknown && hd.info.crsUnknown.length) parts.push(t('map.crs.unknown', { crs: hd.info.crsUnknown.join(', ') }));
           info.textContent = parts.join(' · ');
           if (options.onInspect) options.onInspect();
@@ -78,7 +83,11 @@
       function renderSide() { replace(side, generalCard(), layersCard(), addCard()); }
       function generalCard() {
         const items = [
-          select(t('map.basemap'), leaflet.BASEMAPS.map((b) => ({ value: b, label: t('map.basemap.' + b) })), def.basemap || 'none', (v) => { def.basemap = v; renderSide(); changed(); }),
+          select(t('map.basemap'), leaflet.BASEMAPS.slice(0, 2).map((b) => ({ value: b, label: t('map.basemap.' + b) })).concat(orthos, leaflet.BASEMAPS.slice(2).map((b) => ({ value: b, label: t('map.basemap.' + b) }))), def.basemap || 'none', async (v) => {
+            // An orthophoto that needs a key asks for it first; a cancelled key keeps the background map as it was.
+            if (!(await basemapChoice.ensure(v))) { renderSide(); return; }
+            def.basemap = v; renderSide(); changed();
+          }, { 'data-map-basemap': '' }),
         ];
         if (def.basemap === 'custom') {
           items.push(input(t('map.custom.url'), def.custom.url, (v) => { def.custom.url = v.trim(); changed(); }, { placeholder: 'https://…/{z}/{x}/{y}.png', help: t('map.custom.url.help') }));

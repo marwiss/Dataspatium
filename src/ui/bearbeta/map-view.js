@@ -3,13 +3,13 @@
 /**
  * Map view in Bearbeta for tables with a geometry column or coordinate columns: the dataset drawn with Leaflet
  * (zoom and pan, click on a feature shows its attributes in the inspector), an optional background map after
- * consent, and buttons to save the map as a chart for Visualisera and to switch to the table. The dataset itself
+ * consent (OpenStreetMap or an orthophoto, ui/viz/basemap-choice), and buttons to save the map as a chart for Visualisera and to switch to the table. The dataset itself
  * is always the table; what is done there (filter, correct, remove rows) shows here too.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/map-view', ['ui/base', 'data/datasets', 'viz/leaflet', 'viz/charts', 'data/kinds'], (base, datasets, leaflet, charts, kinds) => {
+  D.define('ui/bearbeta/map-view', ['ui/base', 'data/datasets', 'viz/leaflet', 'viz/charts', 'data/kinds', 'ui/viz/basemap-choice'], (base, datasets, leaflet, charts, kinds, basemapChoice) => {
     /** More marks than this say nothing that the list of rows does not say better. */
     const MAX_MARKS = 5000;
     const { h, t, i18n, replace } = base;
@@ -45,11 +45,16 @@
         slots = target;
         const my = ++seq;
         await load(dataset);
+        const orthos = await basemapChoice.options();
         if (my !== seq || !slots) return;
-        const basemapSel = /** @type {any} */ (h('dm-select', { 'aria-label': t('map.basemap'), inline: true }));
-        basemapSel.options = [{ value: 'none', label: t('map.basemap.none') }, { value: 'osm', label: t('map.basemap.osm') }];
+        const basemapSel = /** @type {any} */ (h('dm-select', { 'aria-label': t('map.basemap'), inline: true, 'data-map-basemap': '' }));
+        basemapSel.options = [{ value: 'none', label: t('map.basemap.none') }, { value: 'osm', label: t('map.basemap.osm') }].concat(orthos);
         basemapSel.value = s.basemap;
-        basemapSel.addEventListener('change', () => { s.basemap = basemapSel.value; s.chart.map.basemap = s.basemap; draw(); });
+        basemapSel.addEventListener('change', async () => {
+          // An orthophoto that needs a key asks for it before anything is drawn; a cancelled key keeps the map as it was.
+          if (!(await basemapChoice.ensure(basemapSel.value))) { basemapSel.value = s.basemap; return; }
+          s.basemap = basemapSel.value; s.chart.map.basemap = s.basemap; draw();
+        });
         mapEl = h('div', { class: 'dm-map-view dm-center-fill', 'aria-label': t('map.view') });
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
@@ -74,6 +79,7 @@
           if (my !== seq) { hd.finalize(); return; }
           handle = hd;
           if (hd.info.basemapDenied) ui.toast.show(t('map.basemap.denied'), { kind: 'warn' });
+          basemapChoice.notifyKey(hd.info, draw);
           if (hd.info.crsUnknown.length) ui.toast.show(t('map.crs.unknown', { crs: hd.info.crsUnknown.join(', ') }), { kind: 'warn', timeout: 9000 });
           await markSelection();
           await showPending();

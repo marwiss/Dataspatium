@@ -308,6 +308,7 @@
     'src/ui/api/api-view.js',
     'src/ui/api/bridge-view.js',
     'src/ui/api/family-dialog.js',
+    'src/ui/viz/basemap-choice.js',
     'src/ui/viz/export-dialog.js',
     'src/ui/viz/vega-controls.js',
     'src/ui/viz/d3-controls.js',
