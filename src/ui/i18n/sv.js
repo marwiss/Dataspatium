@@ -6403,6 +6403,7 @@
     'ai.change.create_storeys_and_grid': 'Våningar: {storeys}{grid}',
     'ai.change.grid': '; rutnät {nx}×{ny} fack om {x}×{y} m',
     'ai.change.create_wall': '{ref} Vägg {name} på {storey} från ({x1}, {y1}) till ({x2}, {y2}), {thickness} m tjock, {height} m hög',
+    'ai.change.wall.partition': ', icke bärande innervägg',
     'ai.change.create_slab': '{ref} Bjälklag {name} på {storey}, {thickness} m tjockt{outline}',
     'ai.change.outline.grid': ', efter rutnätet',
     'ai.change.outline.points': ', {n} hörn',

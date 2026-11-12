@@ -6381,6 +6381,7 @@
     'ai.change.create_storeys_and_grid': 'Hæðir: {storeys}{grid}',
     'ai.change.grid': '; hnitanet með {nx}×{ny} reitum, {x}×{y} m',
     'ai.change.create_wall': '{ref} Veggur {name} á {storey} frá ({x1}, {y1}) til ({x2}, {y2}), {thickness} m þykkur, {height} m hár',
+    'ai.change.wall.partition': ', óburðarveggur innanhúss',
     'ai.change.create_slab': '{ref} Plata {name} á {storey}, {thickness} m þykk{outline}',
     'ai.change.outline.grid': ', eftir hnitanetinu',
     'ai.change.outline.points': ', {n} horn',

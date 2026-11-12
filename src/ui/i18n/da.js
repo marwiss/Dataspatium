@@ -6381,6 +6381,7 @@
     'ai.change.create_storeys_and_grid': 'Etager: {storeys}{grid}',
     'ai.change.grid': '; net med {nx}×{ny} fag på {x}×{y} m',
     'ai.change.create_wall': '{ref} Væg {name} på {storey} fra ({x1}, {y1}) til ({x2}, {y2}), {thickness} m tyk, {height} m høj',
+    'ai.change.wall.partition': ', ikke-bærende indervæg',
     'ai.change.create_slab': '{ref} Dæk {name} på {storey}, {thickness} m tykt{outline}',
     'ai.change.outline.grid': ', efter nettet',
     'ai.change.outline.points': ', {n} hjørner',

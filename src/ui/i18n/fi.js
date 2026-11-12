@@ -6381,6 +6381,7 @@
     'ai.change.create_storeys_and_grid': 'Kerrokset: {storeys}{grid}',
     'ai.change.grid': '; moduuliverkko {nx}×{ny} ruutua, {x}×{y} m',
     'ai.change.create_wall': '{ref} Seinä {name} kerroksessa {storey} pisteestä ({x1}, {y1}) pisteeseen ({x2}, {y2}), paksuus {thickness} m, korkeus {height} m',
+    'ai.change.wall.partition': ', kantamaton väliseinä',
     'ai.change.create_slab': '{ref} Laatta {name} kerroksessa {storey}, paksuus {thickness} m{outline}',
     'ai.change.outline.grid': ', moduuliverkon mukaan',
     'ai.change.outline.points': ', {n} kulmaa',

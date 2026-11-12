@@ -6381,6 +6381,7 @@
     'ai.change.create_storeys_and_grid': 'Storeys: {storeys}{grid}',
     'ai.change.grid': '; grid of {nx}×{ny} bays of {x}×{y} m',
     'ai.change.create_wall': '{ref} Wall {name} on {storey} from ({x1}, {y1}) to ({x2}, {y2}), {thickness} m thick, {height} m high',
+    'ai.change.wall.partition': ', a non-load-bearing interior wall',
     'ai.change.create_slab': '{ref} Slab {name} on {storey}, {thickness} m thick{outline}',
     'ai.change.outline.grid': ', following the grid',
     'ai.change.outline.points': ', {n} corners',

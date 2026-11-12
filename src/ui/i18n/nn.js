@@ -6381,6 +6381,7 @@
     'ai.change.create_storeys_and_grid': 'Etasjar: {storeys}{grid}',
     'ai.change.grid': '; rutenett med {nx}×{ny} fag på {x}×{y} m',
     'ai.change.create_wall': '{ref} Vegg {name} i {storey} frå ({x1}, {y1}) til ({x2}, {y2}), {thickness} m tjukk, {height} m høg',
+    'ai.change.wall.partition': ', ikkje-berande innervegg',
     'ai.change.create_slab': '{ref} Dekke {name} i {storey}, {thickness} m tjukt{outline}',
     'ai.change.outline.grid': ', etter rutenettet',
     'ai.change.outline.points': ', {n} hjørne',
