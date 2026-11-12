@@ -13,7 +13,7 @@
 # URL -> cde, HELPER -> cdehelper, CLIENT -> cdeclient, USER -> cdeuser (the signed-in user's id, dm_manager by default), PROJECT -> cdeproject, GRAPH -> cdegraph, GRAPH_DB -> cdegraphdb,
 # GRAPH_USER -> cdegraphuser, GRAPH_PASS -> cdegraphpass, ADMIN_HELPER -> cdeadminhelper, BCF -> cdebcf (2.1 runs the suite through BCF API 2.1),
 # VAL_DOC -> cdevaldoc, VAL_VER -> cdevalver, VAL_NAME -> cdevalname (the card Validera modellen against a version the server has checked). The page must
-# then be served over http.
+# then be served over http. The twin's proposals (VII) also need python=1 in --url, such as "http://localhost:8080/tests/index.html?python=1".
 # CHROME and FIREFOX name the browser binaries when they are not on PATH; DATASPATIUM_CHROME_FLAGS adds flags (root gets
 # --no-sandbox by itself, as containers need).
 set -u
