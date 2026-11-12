@@ -39,7 +39,7 @@ måles intet. Med `&profil-exit=1` afsluttes målingen som en test, så den kan 
 `-Url "m/index.html?lang=sv&profil=start&profil-exit=1"` for mobilsiden (`-Browsers firefox` for Firefox). Mod en webserver
 (`python -m http.server 8092 --bind 127.0.0.1` i mappen) bliver adressen
 `http://127.0.0.1:8092/index.html?lang=sv&profil=start&profil-exit=1`. `lang=sv` (eller `lang=da`) vælger sproget på forhånd, da den
-allerførste start indlæser alle syv sprog og venter på sprogvalget.
+allerførste start venter på sprogvalget.
 
 ## Kan jeg afbryde R-kode, der hænger?
 
@@ -110,6 +110,8 @@ Ja. Første gang appen åbnes, vælger du sprog; derefter åbner sprogknappen ø
 kommandoen *Sprog* i paletten det samme valg. Svensk, dansk, norsk (bokmål og nynorsk), finsk, islandsk og engelsk findes. Appen
 genindlæses på det valgte sprog, når ugemte ændringer er gemt. Valget gemmes i browseren, så hver computer og profil har
 sit eget. Dokumentationen findes på de samme sprog i mappen `docs`.
+Kun det valgte sprog indlæses, når appen starter; første gang indlæses browserens sprog og de få ord, som sprogvalget
+viser på hvert sprog.
 
 ## Findes der kilder fra andre nordiske lande?
 

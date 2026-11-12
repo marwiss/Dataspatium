@@ -39,7 +39,7 @@ window from the folder: `powershell -File tools/run-tests.ps1 -Browsers edge -Ur
 and with `-Url "m/index.html?lang=sv&profil=start&profil-exit=1"` for the mobile page (`-Browsers firefox` for Firefox). Against a web
 server (`python -m http.server 8092 --bind 127.0.0.1` in the folder) the address becomes
 `http://127.0.0.1:8092/index.html?lang=sv&profil=start&profil-exit=1`. `lang=sv` (or `lang=en`) picks the language in advance, since
-the very first start loads all seven languages and waits for the language choice.
+the very first start waits for the language choice.
 
 ## Can I interrupt R code that is stuck?
 
@@ -111,6 +111,8 @@ Yes. The first time the app is opened you choose a language; afterwards the lang
 icon with letters) or the command *Language* in the palette opens the same chooser. Swedish, Danish, Norwegian
 (Bokmål and Nynorsk), Finnish, Icelandic and English are available. The app reloads in the chosen language after unsaved
 changes have been saved. The choice is stored in the browser, so each computer and profile has its own.
+Only the chosen language is loaded when the app starts; the first time, the browser's language is loaded together with
+the few words the chooser shows in each language.
 
 ## Are there sources from the other Nordic countries?
 

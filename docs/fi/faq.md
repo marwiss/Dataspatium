@@ -42,7 +42,7 @@ joten sen voi ajaa ilman ikkunaa kansiosta:
 `-Url "m/index.html?lang=sv&profil=start&profil-exit=1"` (Firefoxille `-Browsers firefox`). Verkkopalvelinta vasten
 (`python -m http.server 8092 --bind 127.0.0.1` kansiossa) osoite on
 `http://127.0.0.1:8092/index.html?lang=sv&profil=start&profil-exit=1`. `lang=sv` (tai `lang=fi`) valitsee kielen etukäteen, koska
-aivan ensimmäinen käynnistys lataa kaikki seitsemän kieltä ja odottaa kielen valintaa.
+aivan ensimmäinen käynnistys odottaa kielen valintaa.
 
 ## Voinko keskeyttää jumittuneen R-koodin?
 
@@ -113,6 +113,8 @@ Voit. Kun sovellus avataan ensimmäisen kerran, valitset kielen; sen jälkeen oi
 paletin komento *Kieli* avaa saman valinnan. Saatavilla ovat ruotsi, tanska, norja (bokmål ja nynorsk), suomi, islanti ja englanti.
 Sovellus latautuu uudelleen valitulla kielellä, kun tallentamattomat muutokset on tallennettu. Valinta tallennetaan selaimeen,
 joten jokaisella tietokoneella ja profiililla on omansa. Dokumentaatio on samoilla kielillä kansiossa `docs`.
+Sovellus lataa käynnistyessään vain valitun kielen; ensimmäisellä kerralla se lataa selaimen kielen ja ne harvat sanat,
+jotka kielivalinta näyttää kullakin kielellä.
 
 ## Onko lähteitä muista Pohjoismaista?
 

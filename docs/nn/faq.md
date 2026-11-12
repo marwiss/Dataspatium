@@ -39,7 +39,7 @@ mappa: `powershell -File tools/run-tests.ps1 -Browsers edge -Url "index.html?lan
 `-Url "m/index.html?lang=sv&profil=start&profil-exit=1"` for mobilsida (`-Browsers firefox` for Firefox). Mot ein webserver
 (`python -m http.server 8092 --bind 127.0.0.1` i mappa) blir adressa
 `http://127.0.0.1:8092/index.html?lang=sv&profil=start&profil-exit=1`. `lang=sv` (eller `lang=nn`) vel språket på førehand, sidan den
-aller første starten lastar alle sju språka og ventar på språkvalet.
+aller første starten ventar på språkvalet.
 
 ## Kan eg avbryte R-kode som har hengt seg?
 
@@ -110,6 +110,8 @@ Ja. Første gongen appen blir opna, vel du språk; deretter opnar språkknappen 
 kommandoen *Språk* i paletten det same valet. Svensk, dansk, norsk (bokmål og nynorsk), finsk, islandsk og engelsk finst. Appen
 blir lasta på nytt på det valde språket når ulagra endringar er lagra. Valet blir lagra i nettlesaren, så kvar datamaskin og
 profil har sitt eige. Dokumentasjonen finst på dei same språka i mappa `docs`.
+Berre det valde språket blir lasta når appen startar; første gongen blir språket til nettlesaren lasta saman med dei få
+orda som språkvalet viser på kvart språk.
 
 ## Finst det kjelder frå andre nordiske land?
 

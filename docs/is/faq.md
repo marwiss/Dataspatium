@@ -38,7 +38,7 @@ glugga úr möppunni: `powershell -File tools/run-tests.ps1 -Browsers edge -Url 
 `-Url "m/index.html?lang=sv&profil=start&profil-exit=1"` fyrir farsímasíðuna (`-Browsers firefox` fyrir Firefox). Gegn vefþjóni
 (`python -m http.server 8092 --bind 127.0.0.1` í möppunni) verður slóðin
 `http://127.0.0.1:8092/index.html?lang=sv&profil=start&profil-exit=1`. `lang=sv` (eða `lang=is`) velur tungumálið fyrirfram, því allra
-fyrsta ræsingin hleður öll sjö tungumálin og bíður eftir vali á tungumáli.
+fyrsta ræsingin bíður eftir vali á tungumáli.
 
 ## Get ég rofið R-kóða sem hefur fest?
 
@@ -108,6 +108,8 @@ Já. Í fyrsta skipti sem forritið er opnað velurðu tungumál; eftir það op
 bókstöfum) eða skipunin *Tungumál* í spjaldinu sama val. Sænska, danska, norska (bókmál og nýnorska), finnska, íslenska og enska eru í boði.
 Forritið endurhleðst á valda tungumálinu þegar óvistaðar breytingar hafa verið vistaðar. Valið er vistað í vafranum, svo hver
 tölva og snið hefur sitt eigið. Skjölunin er á sömu tungumálum í möppunni `docs`.
+Aðeins valda tungumálið er hlaðið þegar forritið ræsist; í fyrsta skipti er tungumál vafrans hlaðið ásamt þeim fáu orðum
+sem tungumálavalið sýnir á hverju tungumáli.
 
 ## Eru til upprunar frá öðrum norrænum löndum?
 
