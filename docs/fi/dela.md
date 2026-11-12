@@ -74,6 +74,36 @@ kohdassa *Mitä muuta paketti sisältää* ja peitetään kopiossa, ellet valits
 **GitHub**-synkronointi on voitava noutaa takaisin sellaisena kuin se oli, joten siinä mitään ei voi pseudonymisoida. Sovellus näyttää sen sijaan ennen lähetystä, mikä voi olla henkilötietoja.
 **Julkaise** luo HTML-sivun kaavioiden näyttämistä arvoista, joten tarkista ne ennen sivun julkaisemista.
 
+### Henkilötiedot IFC-mallissa
+
+Viranomaiselle luovutetusta mallista tulee julkinen asiakirja, ja IFC-tiedosto sisältää enemmän kuin 3D-näkymässä näkyy. IFC-mallin tarkistus katsoo siksi itse
+tiedoston sisään. Elementtien ja ominaisuuksien taulukot muodostetaan tiedostosta, eikä niitä näytetä erikseen.
+
+| Mallin osa | Mitä löydetään |
+|---|---|
+| Henkilöt (IfcPerson) | Nimet, tunniste ja henkilön osoitteet sähköposteineen ja puhelinnumeroineen |
+| Organisaatioiden osoitteet | Postiosoitteet, sähköpostit ja puhelinnumerot (IfcPostalAddress, IfcTelecomAddress) |
+| Omistajahistoria (IfcOwnerHistory) | Käyttäjä, joka omistaa tai viimeksi muutti kohteet, sekä ohjelma |
+| Tiedoston otsake (FILE_NAME) | Tekijä, organisaatio ja tiedoston hyväksyjä |
+| Toimijat ja tilan käyttäjät (IfcActor, IfcOccupant) | Roolit ja henkilöt, joihin ne viittaavat |
+| Vapaa teksti | Sähköpostiosoitteet, henkilötunnukset ja puhelinnumerot nimissä, kuvauksissa ja ominaisuuksissa samoilla tarkistuksilla kuin taulukoissa |
+
+Jokaisen osan voi säilyttää, pseudonymisoida tai poistaa kopiosta. Oletuksena henkilöt, omistajahistoria ja toimijat pseudonymisoidaan, ja osoitteet, otsake ja
+vapaan tekstin osumat poistetaan.
+
+- *Pseudonymisoi* korvaa nimet, tunnisteet ja osoitteet koodeilla. Sama arvo antaa saman koodin tiedostossa ja taulukoissa. Omistajahistorian ohjelma säilyy.
+- *Poista kopiosta* tyhjentää otsakkeen ja poistaa osoitteet, toimijat ja omistajahistorian. IFC2X3:ssa, jossa jokaisella kohteella on oltava omistajahistoria,
+  kohteet saavat sen sijaan sovelluksen neutraalin. Jäljelle jäävistä henkilöistä tulee sovelluksen neutraali käyttäjä, ja vapaan tekstin osumista tulee [***].
+- Henkilö, joka oli vain omistajahistoriassa tai toimijalla, katoaa sen mukana.
+- GlobalId-tunnisteet, kerrokset, elementit, tyypit ja geometria säilyvät, ja kopion taulukot muodostetaan uudelleen puhdistetusta tiedostosta.
+
+Tämän tekee IfcOpenShell sovelluksen Pythonissa. Jos Python ei ole käynnissä, voit vain säilyttää osat tai peruuttaa, ja valintaikkuna kertoo miksi. *Käynnistä
+Python* käynnistää sen (ensimmäisellä kerralla se haetaan suostumuksesi jälkeen), ja sitten osilla on kaikki vaihtoehdot. Ominaisuuksiin tavallisena tekstinä
+kirjoitettuja nimiä ei tunnisteta, joten arvioi ne itse.
+
+Mallin tarkistus koskee kaikkia reittejä ulos: paketteja, laitteita, jakovalikkoa, julkaisua ja OpenCDE:tä myös silloin, kun mallin oma IFC-tiedosto lähetetään.
+Synkronointi GitHubiin ei voi muuttaa mitään, joten siinä tarkistus vain näyttää, mitä mukana menee.
+
 ## Jakovalikko
 
 Tietokoneen tai puhelimen oma jakovalikko: lähetä tiedosto sähköpostiin, Teamsiin, viestisovelluksiin tai muihin
