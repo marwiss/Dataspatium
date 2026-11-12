@@ -162,9 +162,10 @@
     const round = climate.round;
     const col = (name, type) => ({ name, type, label: t('inventory.col.' + name) });
     const layerLabel = (n) => (n ? t('climate.layer.' + n) : t('climate.cat.oklar'));
-    const add = (a, v) => (typeof v === 'number' && Number.isFinite(v) ? a + v : a);
+    /** A sum that stays null until some value is a number, so that "none known" never reads as zero. */
+    const add = (a, v) => (typeof v === 'number' && Number.isFinite(v) ? (a === null ? 0 : a) + v : a);
     function sums(list) {
-      const ids = new Set(); let volume = 0; let area = 0; let mass = 0; let noMass = 0; let none = 0;
+      const ids = new Set(); let volume = null; let area = null; let mass = null; let noMass = 0; let none = 0;
       for (const r of list) {
         ids.add(r.id); volume = add(volume, r.volume); area = add(area, r.area); mass = add(mass, r.mass);
         if (r.mass === null) noMass++;
