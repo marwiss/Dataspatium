@@ -5,7 +5,8 @@
  * status, priority, a label, the responsible party (which BCF has no field for, so it goes in as a label), the assignee, the stage and
  * the due date. With a project's own lists (the BCF API's extensions) a field is a choice among the project's values and a list the
  * project lacks gives no field; without a project (a BCF file) status, assignee, stage and responsible party are free text. Nothing is
- * filled in for the person: an optional field starts empty.
+ * filled in for the person but what the caller gives as `initial`: the responsible party starts on the model's own when it names one
+ * (ui/bearbeta/party labels), matched in the project's list without regard to case.
  */
 (function () {
   'use strict';
@@ -20,7 +21,8 @@
     /**
      * @param {any} ext the project's extensions, or null for a file
      * @param {{fields?: string[], required?: string[], initial?: Record<string, any>}} [options] `required` fields start on the
-     *   project's first value and have no "none"; the others start empty (or on `initial`)
+     *   project's first value and have no "none"; the others start empty (or on `initial`, where a field may give candidates as a
+     *   list, best first)
      * @returns {{nodes: HTMLElement[], values: () => any, inputs: Record<string, any>}}
      */
     function create(ext, options = {}) {
@@ -40,14 +42,18 @@
           continue;
         }
         const list = ext && Array.isArray(ext[LISTS[name]]) ? ext[LISTS[name]].filter((v) => v !== null && v !== undefined && String(v).trim()) : null;
+        // The responsible party may start on the model's (ui/bearbeta/party labels: its designation, then its organisation).
+        const wish = (Array.isArray(initial[name]) ? initial[name] : [initial[name]]).filter((v) => v !== null && v !== undefined && String(v).trim()).map(String);
         if (list && list.length) {
           const sel = /** @type {any} */ (h('dm-select', Object.assign({ label, 'data-issue-field': name }, help ? { help } : {})));
           sel.options = (required.has(name) ? [] : [{ value: '', label: t('issues.field.none') }]).concat(list.map((v) => ({ value: String(v), label: String(v) })));
-          sel.value = initial[name] && list.includes(initial[name]) ? String(initial[name]) : sel.options[0].value;
+          const same = (a, b) => (name === 'responsible' ? a.trim().toLowerCase() === b.trim().toLowerCase() : a === b);
+          const hit = wish.map((w) => list.find((v) => same(String(v), w))).find((v) => v !== undefined);
+          sel.value = hit !== undefined ? String(hit) : sel.options[0].value;
           inputs[name] = sel;
         } else if (!ext && FREE.has(name)) {
           const el = /** @type {any} */ (h('dm-input', Object.assign({ label, 'data-issue-field': name }, help ? { help } : {})));
-          el.value = initial[name] ? String(initial[name]) : '';
+          el.value = wish.length ? wish[0] : '';
           inputs[name] = el;
         }
       }

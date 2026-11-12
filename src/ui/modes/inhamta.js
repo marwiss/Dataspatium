@@ -354,7 +354,7 @@
       }
       /** The local database bridge (api/bridge): connection, source, tables, preview, own SQL and import. */
       // ---- a new, empty building model (OB-06 Schemaval för nya modeller) ----
-      const newModel = { schema: '', values: {}, busy: false, error: '', result: null };
+      const newModel = { schema: '', values: {}, party: {}, busy: false, error: '', result: null };
       /**
        * The optional designations of a new model (data/ifc-new identity: property designation, building number and name, national
        * building id, the first storey's description, and the header's author and organisation), folded under their own heading.
@@ -369,6 +369,20 @@
             h('p', { class: 'dm-help dm-xs', text: t('newmodel.identity.lead') }),
             keys.map((key) => field(key, { placeholder: t('newmodel.' + key + '.placeholder'), help: t('newmodel.' + key + '.help') }))));
       }
+      /**
+       * The new model's responsible party (ui/bearbeta/party form: organisation, role, designation, contact), folded under its own
+       * heading; written by the wheel's set_responsible_party with the model. @returns {{el: HTMLElement, check: () => string}}
+       */
+      function newModelParty() {
+        const f = D.require('ui/bearbeta/party').form(newModel.party);
+        const keep = () => { newModel.party = f.values(); };
+        for (const input of Object.values(f.inputs)) { input.addEventListener('input', keep); input.addEventListener('change', keep); }
+        const filled = Object.keys(newModel.party).length > 0;
+        const el = h('details', { class: 'dm-more', open: filled ? '' : null, 'data-newmodel-party': '' },
+          h('summary', { text: t('newmodel.party') }),
+          h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help dm-xs', text: t('party.lead') }), ...f.nodes));
+        return { el, check: () => (Object.keys(newModel.party).length ? f.check() : '') };
+      }
       function renderNewModel() {
         const ifcNew = D.require('data/ifc-new');
         const field = (key, extra) => {
@@ -380,11 +394,14 @@
         schema.options = ifcNew.SCHEMAS.map((s) => ({ value: s, label: t('newmodel.schema.' + s.toLowerCase()) }));
         schema.value = newModel.schema || ifcNew.DEFAULT_SCHEMA;
         schema.addEventListener('change', () => { newModel.schema = schema.value; });
+        const party = newModelParty();
         const create = async () => {
           if (newModel.busy) return;
+          const missing = party.check();
+          if (missing) { newModel.error = missing; renderNewModel(); return; }
           newModel.busy = true; newModel.error = ''; newModel.result = null; renderNewModel();
           try {
-            const res = await ifcNew.create(Object.assign({}, newModel.values, { schema: newModel.schema || ifcNew.DEFAULT_SCHEMA }));
+            const res = await ifcNew.create(Object.assign({}, newModel.values, { schema: newModel.schema || ifcNew.DEFAULT_SCHEMA, party: newModel.party }));
             newModel.result = res.dataset;
             const msg = t('newmodel.done', { name: res.dataset.name, schema: (res.dataset.source && res.dataset.source.schema) || '' });
             shell.log(msg, 'ok'); ui.toast.show(msg, { kind: 'ok' });
@@ -404,6 +421,7 @@
             field('building', { placeholder: t('newmodel.default.building') }), field('storey', { placeholder: t('newmodel.default.storey') }),
             field('elevation', { type: 'number', placeholder: '0' }),
             newModelIdentity(field),
+            party.el,
             field('brief', { type: 'textarea', rows: '5', placeholder: t('newmodel.brief.placeholder'), help: t('newmodel.brief.help') }),
             newModel.error ? h('p', { class: 'dm-error dm-small', 'data-newmodel-error': '', text: newModel.error }) : null,
             h('div', { class: 'dm-row' }, ui.button({ label: newModel.busy ? t('newmodel.creating') : t('newmodel.create'), icon: 'box', variant: 'primary', loading: newModel.busy, title: t('newmodel.create.hint'), 'data-newmodel-create': '', onClick: create })),

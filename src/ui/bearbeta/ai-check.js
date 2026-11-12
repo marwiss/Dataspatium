@@ -71,7 +71,7 @@
        *   bounds?: (ids: number[]) => ({min: number[], max: number[]}|null), pictures?: (shots: Array<{viewpoint: any, selected: number[], colors: Array<{color: string, ids: number[]}>}>) => Promise<string[]>}} options
        */
       function create(_ctx, options) {
-        const s = { busy: '', server: null, saved: null, sent: null, failed: [], fields: {}, ext: null, extBusy: false, more: false };
+        const s = { busy: '', server: null, saved: null, sent: null, failed: [], fields: {}, ext: null, extBusy: false, more: false, party: /** @type {string[]} */ ([]) };
         const list = () => { const c = options.findings(); return c && Array.isArray(c.findings) ? c.findings : []; };
         const blocked = () => !!s.busy || !!(options.busy && options.busy());
         const done = (msg) => { options.log(msg, 'ok'); overlays.toast.show(msg, { kind: 'ok', timeout: 8000 }); };
@@ -80,6 +80,7 @@
         async function load(meta) {
           s.server = null; s.ext = null;
           const m = meta || (await datasets.get(options.datasetId));
+          s.party = D.require('ui/bearbeta/party').labels(m);  // the model's responsible party, for Ansvarig part under Fler alternativ
           const cde = m && m.source && m.source.cde;
           if (!cde || !cde.connectorId || !cde.projectId) return;
           const c = await connectors.get(cde.connectorId).catch(() => null);
@@ -302,7 +303,9 @@
           });
           if (!s.more) return box;
           if (s.server && !s.ext) { box.append(h('p', { class: 'dm-help dm-xs', text: s.extBusy ? t('ai.check.fields.loading') : t('ai.check.fields.none') })); return box; }
-          const form = issueFields.create(s.server ? s.ext : null, { fields: FIELDS, initial: s.fields });
+          const form = issueFields.create(s.server ? s.ext : null, { fields: FIELDS, initial: Object.assign({ responsible: s.party || [] }, s.fields) });
+          // The model's party, once shown, is chosen like a value the person gave; a field left empty stays empty.
+          if (s.fields.responsible === undefined && form.inputs.responsible && form.inputs.responsible.value) s.fields.responsible = String(form.inputs.responsible.value);
           for (const [name, input] of Object.entries(form.inputs)) {
             const keep = () => { s.fields[name] = String(input.value || ''); };
             input.addEventListener('change', keep); input.addEventListener('input', keep);

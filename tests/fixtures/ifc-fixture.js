@@ -13,11 +13,12 @@
     const guid = (n) => ('0Dataspatium' + String(n).padStart(10, '0')).slice(0, 22);
 
     /**
-     * The IFC text. @param {{walls?: number, name?: string, classes?: boolean, persons?: boolean}} [options] walls per storey (at least 2);
+     * The IFC text. @param {{walls?: number, name?: string, classes?: boolean, persons?: boolean, party?: boolean|'contact'}} [options] walls per storey (at least 2);
      * classes adds a proxy, a USERDEFINED covering without ObjectType and furniture outside the spatial structure on the first storey;
      * persons gives made-up people for the review before sharing: the header's author, organisation and authorisation, a person with
      * a home address, e-mail and phone as the owner, an organisation with its own address, an actor and an occupant (other people),
-     * an e-mail address in a wall's description and an identity number in a property of the type
+     * an e-mail address in a wall's description and an identity number in a property of the type; party gives the model a responsible
+     * party (an organisation with its role assigned to the project; 'contact' with a contact at it)
      */
     function ifcText(options = {}) {
       const walls = Math.max(2, options.walls || 2);
@@ -67,6 +68,15 @@
         add(`IFCACTOR('${G()}',#${owner},'Byggherre',$,$,#${add(`IFCPERSONANDORGANIZATION(#${bo},#${org},$)`)})`);
         const tenant = add(`IFCOCCUPANT('${G()}',#${owner},'Hyresg\\X2\\00E4\\X0\\st',$,$,#${add("IFCPERSON($,'Ek','Cecilia',$,$,$,$,$)")},.TENANT.)`);
         add(`IFCRELASSIGNSTOACTOR('${G()}',#${owner},$,$,(#${building}),$,#${tenant},$)`);
+      }
+      if (options.party) {
+        // A responsible party as the app writes it (a made-up company): an organisation with its role, assigned to the project;
+        // party 'contact' adds a contact at the organisation, named by a role word, never a person's name.
+        const role = add('IFCACTORROLE(.ARCHITECT.,$,$)');
+        const firm = add(`IFCORGANIZATION($,'Exempel Arkitekter AB',$,(#${role}),$)`);
+        const who = options.party === 'contact' ? add(`IFCPERSONANDORGANIZATION(#${add("IFCPERSON($,'Kontaktperson',$,$,$,$,$,$)")},#${firm},$)`) : firm;
+        const actor = add(`IFCACTOR('${G()}',#${owner},'A','Uppdragsansvarig',$,#${who})`);
+        add(`IFCRELASSIGNSTOACTOR('${G()}',#${owner},$,$,(#${project}),$,#${actor},#${role})`);
       }
       const solid = (xDim, yDim, depth) => {
         const p2d = add(`IFCAXIS2PLACEMENT2D(#${add('IFCCARTESIANPOINT((0.,0.))')},#${add('IFCDIRECTION((1.,0.))')})`);
