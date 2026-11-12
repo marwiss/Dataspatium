@@ -277,20 +277,22 @@
     /**
      * The posts of one element: one per material (a layer's volume is its share of the thickness, a constituent's its fraction),
      * or the element itself keyed by its type. A post has a key, a label, the name and the IfcMaterial Category resources are
-     * matched on, the layer thickness and its volume, area and mass with their sources.
+     * matched on, the layer thickness and its volume, area and mass with their sources, and the IfcMaterial's id (`material`, null
+     * for a post keyed by its type). The material inventory passes `whole: false` to count doors and windows per material too.
      * @param {any} el {cls, typnamn} @param {any} q quantitiesOf
-     * @param {any} materials {kind, items: [name, thickness, fraction, item category, material category][]}
+     * @param {any} materials {kind, items: [name, thickness, fraction, item category, material category, material id][]}
+     * @param {{whole?: boolean}} [options]
      */
-    function postsOf(el, q, materials) {
-      const whole = (key, label, name, category) => [{ key, label, name, materialCategory: category || null, thickness: null, volume: q.volume, area: q.area, mass: q.mass, sources: q.sources, notes: q.notes.slice() }];
+    function postsOf(el, q, materials, options = {}) {
+      const whole = (key, label, name, category, material) => [{ key, label, name, materialCategory: category || null, material: material === undefined ? null : material, thickness: null, volume: q.volume, area: q.area, mass: q.mass, sources: q.sources, notes: q.notes.slice() }];
       const items = materials && Array.isArray(materials.items) ? materials.items : [];
       const named = items.filter((i) => i && String(i[0] || '').trim());
-      if (WHOLE_PRODUCTS.has(classKey(el.cls)) || !named.length) {
+      if ((options.whole !== false && WHOLE_PRODUCTS.has(classKey(el.cls))) || !named.length) {
         const name = String(el.typnamn || el.cls || '').trim();
-        return whole(typeKey(el), t('climate.material.type', { name }), el.typnamn ? name : '', null);
+        return whole(typeKey(el), t('climate.material.type', { name }), el.typnamn ? name : '', null, null);
       }
-      if (named.length === 1 && materials.kind !== 'layers') return whole(materialKey(named[0][0]), String(named[0][0]).trim(), String(named[0][0]).trim(), named[0][4]);
-      const post = (i, volume, area, sources) => ({ key: materialKey(i[0]), label: String(i[0]).trim(), name: String(i[0]).trim(), materialCategory: i[4] || null, thickness: typeof i[1] === 'number' ? i[1] : null, volume, area, mass: null, sources, notes: q.notes.slice() });
+      if (named.length === 1 && materials.kind !== 'layers') return whole(materialKey(named[0][0]), String(named[0][0]).trim(), String(named[0][0]).trim(), named[0][4], named[0][5]);
+      const post = (i, volume, area, sources) => ({ key: materialKey(i[0]), label: String(i[0]).trim(), name: String(i[0]).trim(), materialCategory: i[4] || null, material: i[5] === undefined ? null : i[5], thickness: typeof i[1] === 'number' ? i[1] : null, volume, area, mass: null, sources, notes: q.notes.slice() });
       if (materials.kind === 'layers') {
         const total = items.reduce((s, i) => s + (typeof i[1] === 'number' && i[1] > 0 ? i[1] : 0), 0);
         // Every layer covers the element's whole area; without an area the volume over the total thickness gives it, and the
@@ -559,8 +561,10 @@
      * occurrence's before its type's), the element each belongs to and the one a door or window sits in, and the posts with their
      * quantities. The facts from the original file are read in the IFC reader's worker; a model without its file (geometry from
      * the server) has classes and properties only. An element made of parts is counted in its parts. Nothing is decided here.
-     * @param {string} id @param {{onProgress?: (share: number) => void}} [options]
-     * @returns {Promise<{elements: any[], posts: any[], containers: number, hasFile: boolean}>}
+     * `wholeProducts: false` counts doors and windows per material (the material inventory); `materialProps` are the materials'
+     * own properties from the file (data/ifc-step.climate).
+     * @param {string} id @param {{onProgress?: (share: number) => void, wholeProducts?: boolean}} [options]
+     * @returns {Promise<{elements: any[], posts: any[], containers: number, hasFile: boolean, materialProps: any[][]}>}
      */
     async function gather(id, options = {}) {
       const rows = await exec(id, "select id, guid, typ, namn, vaning, typnamn from data where kategori = 'byggdel' order by id");
@@ -579,10 +583,13 @@
       }
       const original = await model.original(id).catch(() => null);
       const facts = new Map();
+      let materialProps = [];
       if (original) {
         const out = await step.climate(original.bytes, { onProgress: options.onProgress });
         for (const f of out.elements) facts.set(f[0], { predefined: f[1], typePredefined: f[2], materials: f[3], overall: f[4], volume: f[5], clipped: f[6], geometry: f[7], parent: f[8], hasParts: f[9], openings: f[10], host: f[11] });
+        materialProps = out.materialProps || [];
       }
+      const postOptions = { whole: options.wholeProducts !== false };
       const elements = []; const posts = []; let containers = 0;
       for (let i = 0; i < rows.length; i++) {
         const [eid, guid, typ, namn, vaning, typnamn] = rows[i];
@@ -593,10 +600,10 @@
           parent: fact ? fact.parent : null, host: fact ? fact.host : null, hasParts: !!(fact && fact.hasParts) };
         elements.push(el);
         if (el.hasParts) containers++;
-        else for (const post of postsOf(el, quantitiesOf(el.cls, qtos.get(eid), fact), fact ? fact.materials : null)) posts.push(Object.assign(post, { id: eid, guid, typ, namn, vaning, typnamn }));
+        else for (const post of postsOf(el, quantitiesOf(el.cls, qtos.get(eid), fact), fact ? fact.materials : null, postOptions)) posts.push(Object.assign(post, { id: eid, guid, typ, namn, vaning, typnamn }));
         if (i % 2000 === 1999) await pause();
       }
-      return { elements, posts, containers, hasFile: !!original };
+      return { elements, posts, containers, hasFile: !!original, materialProps };
     }
 
     return { CATEGORIES, DECLARED, LAYERS, RULES, SERVICES, MATERIAL_GROUPS, classify, predefinedOf, bool, externalFromTopology, decide, quantitiesOf, postsOf, materialKey, typeKey, kindsOf, compatible, groupsOf, score, suggest, materialsOf, resolve, amountOf, compute,
