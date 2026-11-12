@@ -114,6 +114,8 @@
     const real = /[?&]python=1\b/.test(location.search) || (await catalog.cachedRuntime());
     if (!real) return 'skipped: Python components not cached';
     const bridge = D.require('data/python-bridge').bridge;
+    // An earlier test may still be finishing a run in the shared Python: wait for it instead of failing on "busy".
+    for (let i = 0; i < 600 && bridge.state === 'busy'; i++) await new Promise((r) => setTimeout(r, 200));
     const all = await everyKind('Pykod');
     for (const [name, ds] of Object.entries(all)) {
       for (const piece of await starters.forDataset(await datasets.get(ds.id), 'python')) {
