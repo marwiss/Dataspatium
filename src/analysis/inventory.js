@@ -145,9 +145,16 @@
       const decided = climate.decide(data, { settled: options.settled || null });
       const facts = materialFacts(data.materialProps || []);
       const own = data.hazards || new Map();
+      // A model has few materials and many posts: each name and category is decided once.
+      const memo = new Map();
+      const fractionFor = (name, category) => {
+        const key = String(name || '') + '\u0001' + String(category || '');
+        if (!memo.has(key)) memo.set(key, fractionOf(name, category));
+        return memo.get(key);
+      };
       const rows = decided.posts.map((p) => {
         const hasMaterial = String(p.key || '').startsWith('m:');
-        const f = hasMaterial ? fractionOf(p.name, p.materialCategory) : fractionOf('', null);
+        const f = hasMaterial ? fractionFor(p.name, p.materialCategory) : fractionFor('', null);
         const mid = hasMaterial && p.material !== null && p.material !== undefined ? p.material : null;
         const density = mid !== null && facts.density.has(mid) ? facts.density.get(mid) : null;
         let mass = typeof p.mass === 'number' ? p.mass : null; let massFrom = mass !== null ? 'qto' : null;
