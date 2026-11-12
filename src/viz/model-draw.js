@@ -191,7 +191,8 @@
      * @param {HTMLElement} container
      * @param {{datasetId: string, visible?: number[]|null, selected?: number[], view?: any, colors?: Array<{color: string, ids: number[]}>|null, bytes?: Uint8Array|ArrayBuffer|null}} def
      * @param {{onSelect?: (id: number|null) => void, onProgress?: (elements: number) => void, navigation?: boolean, label?: string,
-     *   onProjection?: (kind: string) => void, onSection?: (planes: any[]) => void}} [options] `navigation` adds the keys and the double click of an interactive view
+     *   onProjection?: (kind: string) => void, onSection?: (planes: any[]) => void, pixelRatio?: number}} [options] `navigation` adds the keys and the double click of an interactive view;
+     *   `pixelRatio` draws at that many pixels per CSS pixel instead of the screen's (1 for pictures of a set size)
      * @returns {Promise<any>} handle: info, select(ids, {fit}), setVisible(ids), fit(ids, dir), standardView(name),
      *   setProjection(kind), projection(), pivotAt(x, y), setViewpoint(vp), onView(fn), view(), png(scale), resize(), destroy()
      */
@@ -205,7 +206,7 @@
       const tk = theme.tokens();
       const width = () => Math.max(1, container.clientWidth || options.width || 800);
       const height = () => Math.max(1, container.clientHeight || options.height || 500);
-      renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio || 1, 2));
+      renderer.setPixelRatio(options.pixelRatio || Math.min(globalThis.devicePixelRatio || 1, 2));
       renderer.localClippingEnabled = true;
       renderer.setSize(width(), height());
       const canvas = renderer.domElement;
@@ -657,6 +658,33 @@
       const bytes = Uint8Array.from(atob(url.split(',')[1]), (c) => c.charCodeAt(0));
       return new Blob([bytes], { type: 'image/png' });
     }
+    /**
+     * Pictures of a model from BCF viewpoints, drawn off screen in one view: for each shot the camera goes to the viewpoint (or frames
+     * the selected elements when it has none), the elements are coloured (or marked, without colours), and the picture is a PNG data URL of the given
+     * size (1200 by 750 by default, the aspect of the cameras the app writes), within BCF's 1500 px. For the snapshots of findings.
+     * @param {string} datasetId @param {Array<{viewpoint?: any, selected?: number[], colors?: Array<{color: string, ids: number[]}>}>} shots
+     * @param {{width?: number, height?: number}} [opts] @returns {Promise<string[]>}
+     */
+    async function pictures(datasetId, shots, opts = {}) {
+      const width = Math.min(opts.width || 1200, 1500); const height = Math.min(opts.height || 750, 1500);
+      const host = document.createElement('div');
+      host.style.cssText = `position:absolute;left:-20000px;top:0;width:${width}px;height:${height}px;`;
+      document.body.appendChild(host);
+      let hd = null;
+      try {
+        hd = await render(host, { datasetId }, { preserve: true, width, height, pixelRatio: 1 });
+        const out = [];
+        for (const shot of shots) {
+          const selected = shot.selected || [];
+          // Coloured elements are not also marked, so that their colour shows.
+          hd.select(shot.colors && shot.colors.length ? [] : selected);
+          hd.setColors(shot.colors || []);
+          if (!(shot.viewpoint && hd.setViewpoint(shot.viewpoint))) hd.fit(selected.length ? selected : null);
+          out.push(hd.png());
+        }
+        return out;
+      } finally { if (hd) hd.destroy(); host.remove(); }
+    }
     /** A DXF drawing as a standalone SVG: its size, a background, and only the chosen layers. */
     async function drawingSvg(id, def, width, height) {
       const text = await model.drawing(id);
@@ -718,6 +746,6 @@
       return `<img src="${url}" alt="" width="${width}" height="${height}" style="max-width:100%;height:auto">${legend}`;
     }
 
-    return { ensureThree, meshesOf, clearCache, render, toBlob, htmlFor, drawingSvg, toIfc, fromIfc, fromIfcDir, VIEWS, VIEW_ORDER, boxPlanes, boxOfPlanes };
+    return { ensureThree, meshesOf, clearCache, render, toBlob, htmlFor, pictures, drawingSvg, toIfc, fromIfc, fromIfcDir, VIEWS, VIEW_ORDER, boxPlanes, boxOfPlanes };
   });
 })();

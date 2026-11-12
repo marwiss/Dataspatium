@@ -185,6 +185,8 @@
         assert.ok(/\.bcfzip$/.test(file.name), file.name);
         const read = await D.require('data/bcf-xml').read(await file.blob.arrayBuffer());
         assert.equal(read.topics.length, 1, JSON.stringify(Object.keys(read)));
+        const invalid = await D.require('tests/bcf-schema-check').checkBlob(file.blob);
+        if (invalid) assert.deepEqual(invalid, [], 'the clash file is valid BCF 3.0');
         const vps = read.viewpoints.filter((v) => v.topic_guid === read.topics[0].guid);
         assert.ok(vps.length === 1 && vps[0].perspective_camera, 'one viewpoint with a camera');
         const sel = (vps[0].components && vps[0].components.selection) || [];

@@ -12,11 +12,11 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/model-issues', ['ui/base', 'data/datasets', 'api/families/opencde', 'api/connectors', 'data/bcf-xml', 'data/issues', 'viz/charts', 'api/runner'], (base, datasets, opencde, connectors, bcfXml, issuesLogic, charts, runner) => {
+  D.define('ui/bearbeta/model-issues', ['ui/base', 'data/datasets', 'api/families/opencde', 'api/connectors', 'data/bcf-xml', 'data/issues', 'viz/charts', 'api/runner', 'ui/bearbeta/issue-fields'], (base, datasets, opencde, connectors, bcfXml, issuesLogic, charts, runner, issueFields) => {
     const { h, t, i18n, replace } = base;
-    /** Badge colours follow what a status usually means; unknown statuses are plain. */
-    const BADGE = [[/open|öppe|ny|new|active|aktiv/i, 'warn'], [/progress|pågå|under/i, 'accent'], [/resolved|löst|closed|stäng|done|klar/i, 'ok']];
-    const badgeKind = (status) => { const hit = BADGE.find(([re]) => re.test(String(status || ''))); return hit ? hit[1] : undefined; };
+    /** Badge colours follow what a status means (data/issues.rank, also the Swedish review statuses); unknown statuses are plain. */
+    const BADGE = ['warn', 'accent', 'ok'];
+    const badgeKind = (status) => BADGE[issuesLogic.rank(status)];
     /** Fields the server owns; a PUT sends everything else back. */
     const SERVER_FIELDS = ['guid', 'server_assigned_id', 'creation_author', 'creation_date', 'modified_author', 'modified_date', 'authorization'];
 
@@ -204,10 +204,22 @@
           const pt = (v) => ({ x: Math.round(v[0] * 1000) / 1000, y: Math.round(v[1] * 1000) / 1000, z: Math.round(v[2] * 1000) / 1000 });
           vp.clipping_planes = view.section.map((c) => ({ location: pt(c.location), direction: pt(c.direction) }));
         }
-        if (picture) vp.snapshot = { snapshot_type: 'png', snapshot_data: picture.split(',')[1] };
+        // The picture at most 1500 px on its longest side, as BCF asks: the canvas has the screen's pixels.
+        const fitted = picture ? await bcfXml.fitDataUrl(picture) : null;
+        if (fitted) vp.snapshot = { snapshot_type: fitted.snapshotType, snapshot_data: fitted.base64 };
         vp.components = { selection: guids.map((g) => ({ ifc_guid: g, originating_system: 'Dataspatium' })), visibility: { default_visibility: true } };
         if (!view && !picture && !guids.length) return null;
         return vp;
+      }
+      /**
+       * The new topic tied to this model's file (BCF 3.3.3) when the server lets the person: the project's own entry for the model's
+       * document version, or the file's name, IfcProject and time stamp. A refusal leaves the topic as it is and is logged.
+       */
+      async function linkToModel(topic) {
+        try {
+          const file = await opencde.modelFile(s.connector, s.projectId, ds.source && ds.source.cde, bcfXml.headerOf(ds)[0]);
+          if (await opencde.linkTopic(s.connector, s.projectId, topic, s.ext, file)) shell.log(t('issues.files.linked', { file: file.filename || file.reference || '' }), 'info');
+        } catch (err) { shell.log(t('issues.files.failed', { message: String((err && err.message) || err) }), 'warn'); }
       }
       /** A new issue from what is marked: the dialog takes the words, the view gives the viewpoint. */
       async function newTopic() {
@@ -215,29 +227,23 @@
         const ext = s.ext || {};
         const title = /** @type {any} */ (h('dm-input', { label: t('issues.new.title') }));
         const description = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '3', label: t('common.description') }));
-        const selects = {};
-        for (const [name, list] of [['topic_type', ext.topic_type], ['topic_status', ext.topic_status], ['priority', ext.priority], ['labels', ext.topic_label], ['assigned_to', ext.users]]) {
-          if (!Array.isArray(list) || !list.length) continue;
-          const sel = /** @type {any} */ (h('dm-select', { label: t('issues.field.' + name) }));
-          sel.options = (name === 'labels' || name === 'assigned_to' || name === 'priority' ? [{ value: '', label: t('issues.field.none') }] : []).concat(list.map((v) => ({ value: v, label: v })));
-          sel.value = sel.options[0].value;
-          selects[name] = sel;
-        }
+        // Type and status always have a value; the other fields of review practice are the person's choice.
+        const fields = issueFields.create(ext, { required: ['topic_type', 'topic_status'] });
         const ok = await ui.dialog.open({
           title: t('issues.new'), size: 'md', help: 'cad-bim#ärenden-från-ett-cde',
-          body: h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help', text: marked.length ? t('issues.new.marked', { n: i18n.formatNumber(marked.length) }) : t('issues.new.unmarked') }), title, description, ...Object.values(selects)),
+          body: h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help', text: marked.length ? t('issues.new.marked', { n: i18n.formatNumber(marked.length) }) : t('issues.new.unmarked') }), title, description, ...fields.nodes),
           actions: [{ label: t('common.cancel'), value: false }, { label: t('issues.new.create'), variant: 'primary', value: true, primary: true }],
         });
         if (ok !== true) return;
         if (!title.value.trim()) { ui.toast.show(t('issues.err.title'), { kind: 'warn' }); return; }
         s.busy = 'write'; s.error = ''; render();
         try {
-          const body = { title: title.value.trim() };
+          const body = Object.assign({ title: title.value.trim() }, fields.values());
           if (description.value.trim()) body.description = description.value.trim();
-          for (const [name, sel] of Object.entries(selects)) { if (!sel.value) continue; body[name] = name === 'labels' ? [sel.value] : sel.value; }
           const topic = await opencde.createTopic(s.connector, s.projectId, body);
           const vp = await viewpointFromView(marked);
           if (vp) await opencde.createViewpoint(s.connector, s.projectId, topic.guid, vp);
+          await linkToModel(topic);
           shell.log(t('issues.created', { id: topic.server_assigned_id || topic.guid, title: topic.title }), 'ok');
           ui.toast.show(t('issues.created', { id: topic.server_assigned_id || topic.guid, title: topic.title }), { kind: 'ok' });
           s.busy = '';
@@ -303,10 +309,15 @@
               if (vp.snapshot) { try { const got = await opencde.binary(s.connector, base + '/snapshot', 'image/*'); snapshot = { bytes: new Uint8Array(got.buffer), type: got.contentType }; } catch (err) { D.log('issues', 'snapshot', err); } }
               vps.push({ viewpoint: full, snapshot });
             }
-            items.push({ topic: tp, comments, viewpoints: vps });
+            // The topic's own model files when the server has them, else this model's file for a topic that points at it.
+            const own = await opencde.topicFiles(s.connector, s.projectId, tp.guid).catch(() => null);
+            const header = Array.isArray(own) && own.length ? own : (elementIds(tp).length ? bcfXml.headerOf(ds) : []);
+            items.push({ topic: tp, comments, viewpoints: vps, header });
           }
           const project = (s.projects || []).find((p) => p.project_id === s.projectId);
-          const blob = await bcfXml.write(items, { projectName: project ? project.name : '', projectId: s.projectId });
+          const author = bcfXml.authorOf(await opencde.identity(s.connector), await D.require('data/comments').author());
+          // The project's lists go into extensions.xml, except its users: only those the topics are assigned to go with the file.
+          const blob = await bcfXml.write(items, { projectName: project ? project.name : '', projectId: s.projectId, author, extensions: s.ext ? Object.assign({}, s.ext, { users: null }) : undefined });
           services.files.download(blob, services.files.safeName(project ? project.name : 'arenden', 'bcfzip'));
           shell.log(t('issues.bcf.saved', { n: i18n.formatNumber(items.length) }), 'ok');
         } catch (err) { fail(err); }
@@ -392,7 +403,7 @@
         const nodes = [
           h('strong', { text: chosen.title || '' }),
           chosen.description ? h('p', { class: 'dm-small', text: chosen.description }) : null,
-          h('p', { class: 'dm-help dm-small', text: [chosen.creation_author, chosen.creation_date ? i18n.formatDateTime(chosen.creation_date) : '', chosen.priority, chosen.due_date ? t('issues.due', { date: String(chosen.due_date).slice(0, 10) }) : ''].filter(Boolean).join(' · ') }),
+          h('p', { class: 'dm-help dm-small', text: [chosen.creation_author, chosen.creation_date ? i18n.formatDateTime(chosen.creation_date) : '', chosen.priority, chosen.stage, Array.isArray(chosen.labels) ? chosen.labels.join(', ') : '', chosen.assigned_to ? t('issues.assigned', { who: chosen.assigned_to }) : '', chosen.due_date ? t('issues.due', { date: String(chosen.due_date).slice(0, 10) }) : ''].filter(Boolean).join(' · ') }),
           s.snapshot ? h('img', { class: 'dm-model-issue-snapshot', src: s.snapshot, alt: t('issues.snapshot') }) : null,
           s.comments.length ? h('ul', { class: 'dm-stack-xs' }, s.comments.map((c) => commentItem(c, canAnswer))) : h('p', { class: 'dm-help dm-small', text: t('issues.comments.none') }),
         ];

@@ -45,6 +45,7 @@ leyfi eru í [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.md) ásamt ley
 | Cytoscape 3.34 með fcose, dagre og expand-collapse, sigma 3 og graphology (net) | MIT | Frjálst að nota og dreifa með leyfistexta og tilkynningum |
 | neo4j-driver-lite 6.3 (Neo4j yfir Bolt) | Apache-2.0 | Frjálst að nota og dreifa með leyfistexta og tilkynningum |
 | web-ifc 0.0.78 (rúmfræði úr IFC; óbreyttar skrár, frumkóði á https://github.com/ThatOpen/engine_web-ifc) | MPL-2.0 | Frjálst að nota og dreifa; breytingum á eigin skrám safnsins er deilt með sama leyfi |
+| Skemu buildingSMART fyrir BCF-XML 3.0 og 2.1 (XSD; aðeins í prófunum undir `tests/fixtures/bcf-schemas/`, ekki í möppunni) | CC BY-ND 4.0, © buildingSMART International Ltd. | Afrituð óbreytt með uppruna og leyfi, og aðeins notuð til að prófa BCF-skrár forritsins; forritið sjálft notar þau ekki. Breytt skemu má ekki dreifa |
 | three.js 0.187 (þrívíddarteikning), dxf-parser 1.1 (DXF) | MIT | Frjálst að nota og dreifa með leyfistexta og tilkynningum |
 | Planbestämmelsekatalog Boverket (innbyggt eintak, `presets/plan/`) | Opin gögn frá Boverket | Frjálst að nota og dreifa; tilgreina skal Boverket og Planbestämmelsekatalogen sem heimild |
 | Loftslagsgagnagrunnur Boverket (sóttur eftir þörfum frá api.boverket.se, ekki í möppunni) | Opin gögn samkvæmt notkunarskilmálum Boverket (dnr 5913/2024, byggja á sænska API-leyfinu) | Frjáls til notkunar; Boverket og loftslagsgagnagrunnurinn skulu tilgreind sem heimild, vörumerkið aðeins í heimildartilvísun, og gögnin eru notuð á eigin ábyrgð |

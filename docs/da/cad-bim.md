@@ -88,6 +88,48 @@ Modellens graf på serveren tegnes og forespørges fra *Hent*, og knappen *IFC-L
 
 Grafens model, relationerne og forespørgslerne fra Dataspatiums side findes i Dataregiums [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/da/ifc-lpg.md).
 
+### Sagens felter og modelfilen
+
+*Ny sag* tager de felter, som svensk gennemgangspraksis beder om, alle fra projektets egne lister: type og status (altid sat),
+prioritet, etiket, ansvarlig part, tildelt, fase og frist. BCF har intet eget felt til den ansvarlige part, så den tilføjes som en
+etiket. Øjebliksbilledet er højst 1.500 pixel på den længste side, som BCF angiver. Når serveren tillader det, knytter appen sagen
+til modelfilen (BCF API'ets `PUT /topics/{guid}/files`): med projektets egen post for den version, modellen blev hentet fra, og
+ellers med filens navn, tidsstempel og IfcProject fra IFC-filens header.
+
+### BCF-filer
+
+Appen skriver BCF-filer som BCF-XML 3.0, buildingSMART's format for sager:
+
+- Hver sag har en type og en status, en titel, en dato og en forfatter. Uden type eller status bliver de Issue og Open. Forfatteren
+  er din konto på serveren, når du er logget ind, ellers det navn, du har angivet til kommentarer (*Dit navn*), ellers Dataspatium;
+  appen finder aldrig på et navn.
+- Kommentarer og viewpoints ligger i sagen, og etiketter, links, dokumentreferencer og relaterede sager ligger i deres lister.
+  Filen har `extensions.xml` med de typer, statusser, prioriteter, etiketter, tildelte og faser, den bruger.
+- Hver sags header nævner modelfilen: navnet fra IFC-filens header, filens tidsstempel og IfcProjects GlobalId, og adressen for en
+  model fra en server.
+- Øjebliksbilleder er højst 1.500 pixel på den længste side; et større billede tegnes igen i den størrelse.
+- Dokumenter, som AI-kontrollens fotos, ligger i mappen Documents og står i `documents.xml`.
+
+Appen læser BCF 3.0 og 2.1 fra andre programmer og sine egne tidligere filer. Kommentarer, viewpoints med kamera og snit,
+øjebliksbilleder, markerede, skjulte og farvede komponenter og dokumenter følger med. Læs en BCF-fil ind i Hent: sagerne bliver en
+tabel med kommentarer og komponenter i tabeller ved siden af, og filen gemmes med sagerne, så billederne og visningerne bliver.
+
+### Gennemgang efter svensk praksis
+
+I svensk praksis for gennemgang af modeller med BCF har en sag én af seks statusser. Appen genkender dem i projektets egen
+statusliste og giver dem de samme farver som andre statusser:
+
+- *Ny kommentar* (ny kommentar) regnes som åben, som Open.
+- *Ska åtgärdas* (skal udbedres) og *Ny granskning* (ny gennemgang) regnes som i gang, som In progress: sagen skal udbedres eller
+  tages op i næste gennemgang.
+- *Har åtgärdats* (er udbedret), *Avvisad* (afvist) og *Godkänd* (godkendt) regnes som færdige: udbedret som Resolved, de to andre
+  som Closed.
+
+Statusserne bruges kun, når projektet på serveren har dem i sin liste; appen foreslår dem ikke selv. Et Dataregium-projekt har Open,
+In progress, Resolved og Closed som standard, som svarer til dem som ovenfor. Felterne for en gennemgangssag findes i *Ny sag* og
+under *Flere indstillinger* i AI-kontrollen: titel, beskrivelse, status, tildelt, ansvarlig part (som etiket), fase og frist, og den,
+der gennemgår, er den, der er logget ind.
+
 ## Tabellerne
 
 | Tabel | Indhold |
@@ -489,9 +531,8 @@ acceptabel, dårlig eller kritisk), prioritet (lav, middel, høj eller akut) og 
 fund. Elementets stand lægges i egenskabssættet Pset_Condition (vurderingsdato, stand og en kort beskrivelse) i et ændringssæt, som du
 forhåndsviser og godkender som i *Ændr*, og ingen elementer oprettes, flyttes eller slettes. Fundene vises under svaret, og *Gem
 fundene som tabel* opretter et nyt datasæt med ét fund per række: foto, element, titel, beskrivelse, stand, prioritet, tiltag, dato og
-fotoets position. *Eksportér som BCF* downloader en BCF-fil med én sag per fund, hvor fotoet er visningens øjebliksbillede og
-elementet er markeret, og for en model hentet fra en server, du er logget ind på, opretter *Opret sager på serveren* de samme sager i
-modellens projekt efter en bekræftelse. Fotoene sendes til leverandøren sammen med spørgsmålet efter samtykket for leverandørens vært,
+fotoets position. *Eksportér som BCF* downloader en BCF-fil med én sag per fund, hvor visningen ser på elementet, markeret og farvet, med et billede af modellen som øjebliksbillede og fotoet som dokument, og for en model hentet fra en server, du er logget ind på, opretter *Opret sager på serveren* de samme sager i
+modellens projekt efter en bekræftelse; der bliver fotoet et dokument i projektet, eller en egen viewpoint med kun fotoet, når du ikke må tilføje dokumenter, og sagerne knyttes til modelfilen, når serveren tillader det. Under *Flere indstillinger* giver du sagerne status, tildelt, ansvarlig part, fase og frist, på en server fra projektets lister. Fotoene sendes til leverandøren sammen med spørgsmålet efter samtykket for leverandørens vært,
 og de forlader kun computeren igen, når du selv opretter sager på serveren.
 
 ## Spørg AI om modellen

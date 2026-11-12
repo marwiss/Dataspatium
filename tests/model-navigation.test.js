@@ -326,8 +326,11 @@
     const xml = bcfXml.viewpointXml({ guid: 'a', perspective_camera: camera, clipping_planes: clip });
     assert.ok(xml.indexOf('<ClippingPlanes>') > xml.indexOf('</PerspectiveCamera>'), 'after the camera, as the schema has it');
     const items = [{ topic: { guid: 'c1d2e3f4-0000-4000-8000-0000000000a1', title: 'Snitt' }, comments: [], viewpoints: [{ viewpoint: { guid: 'c1d2e3f4-0000-4000-8000-0000000000a2', perspective_camera: camera, clipping_planes: clip, components: { selection: [] } } }] }];
-    const read = await bcfXml.read(await (await bcfXml.write(items, { projectName: 'Projektet' })).arrayBuffer());
+    const written = await bcfXml.write(items, { projectName: 'Projektet' });
+    const read = await bcfXml.read(await written.arrayBuffer());
     assert.deepEqual(read.viewpoints[0].clipping_planes, clip, 'the planes come back');
+    const invalid = await D.require('tests/bcf-schema-check').checkBlob(written);
+    if (invalid) assert.deepEqual(invalid, [], 'valid BCF 3.0');
     return 'ok';
   }, 60000);
 

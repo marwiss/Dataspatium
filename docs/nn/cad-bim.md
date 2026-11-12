@@ -87,6 +87,48 @@ Grafen til modellen på tenaren blir teikna og spurd frå *Hent*, og knappen *IF
 
 Modellen til grafen, relasjonane og spørjingane frå Dataspatium si side finst i [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/nn/ifc-lpg.md) hos Dataregium.
 
+### Felta i saka og modellfila
+
+*Ny sak* tek felta som svensk gjennomgangspraksis ber om, alle frå dei eigne listene til prosjektet: type og status (alltid sette),
+prioritet, etikett, ansvarleg part, tildelt, fase og frist. BCF har ikkje noko eige felt for ansvarleg part, så han vert lagd til som
+ein etikett. Augneblinksbiletet er høgst 1 500 pikslar på den lengste sida, slik BCF seier. Når tenaren let deg, knyter appen saka til
+modellfila (`PUT /topics/{guid}/files` i BCF API): med den eigne posten til prosjektet for versjonen modellen vart henta frå, og elles
+med namnet, tidsstempelet og IfcProject frå hovudet i IFC-fila.
+
+### BCF-filer
+
+Appen skriv BCF-filer som BCF-XML 3.0, formatet til buildingSMART for saker:
+
+- Kvar sak har ein type og ein status, ein tittel, ein dato og ein forfattar. Utan type eller status blir dei Issue og Open.
+  Forfattaren er kontoen din på tenaren når du er logga inn, elles namnet du har gjeve for kommentarar (*Namnet ditt*), elles
+  Dataspatium; appen finn aldri på eit namn.
+- Kommentarar og viewpoints ligg i saka, og etikettar, lenkjer, dokumentreferansar og relaterte saker ligg i listene sine. Fila har
+  `extensions.xml` med typane, statusane, prioritetane, etikettane, dei tildelte og fasane ho brukar.
+- Hovudet i kvar sak nemner modellfila: namnet frå hovudet i IFC-fila, tidsstempelet til fila og GlobalId-en til IfcProject, og
+  adressa for ein modell frå ein tenar.
+- Augneblinksbilete er høgst 1 500 pikslar på den lengste sida; eit større bilete vert teikna på nytt i den storleiken.
+- Dokument, som fotoa til AI-kontrollen, ligg i mappa Documents og står i `documents.xml`.
+
+Appen les BCF 3.0 og 2.1 frå andre program og sine eigne tidlegare filer. Kommentarar, viewpoints med kamera og snitt,
+augneblinksbilete, merkte, skjulte og farga komponentar og dokument blir med. Les inn ei BCF-fil i Hent: sakene blir ein tabell med
+kommentarar og komponentar i tabellar ved sida av, og fila vert lagra med sakene slik at bileta og visingane blir med.
+
+### Gjennomgang etter svensk praksis
+
+I svensk praksis for gjennomgang av modellar med BCF har ei sak ein av seks statusar. Appen kjenner dei att i den eigne statuslista
+til prosjektet og gjev dei dei same fargane som andre statusar:
+
+- *Ny kommentar* (ny kommentar) vert rekna som open, som Open.
+- *Ska åtgärdas* (skal utbetrast) og *Ny granskning* (ny gjennomgang) vert rekna som pågåande, som In progress: saka skal utbetrast,
+  eller vert teken opp i neste gjennomgang.
+- *Har åtgärdats* (er utbetra), *Avvisad* (avvist) og *Godkänd* (godkjend) vert rekna som ferdige: utbetra som Resolved, dei to andre
+  som Closed.
+
+Statusane vert berre brukte når prosjektet på tenaren har dei i lista si; appen føreslår dei ikkje sjølv. Eit Dataregium-prosjekt har
+Open, In progress, Resolved og Closed som standard, som svarar til dei som ovanfor. Felta for ei gjennomgangssak finst i *Ny sak* og
+under *Fleire alternativ* i AI-kontrollen: tittel, skildring, status, tildelt, ansvarleg part (som etikett), fase og frist, og den som
+går gjennom, er den som er logga inn.
+
 ## Tabellane
 
 | Tabell | Innhald |
@@ -492,9 +534,8 @@ dårleg eller kritisk), prioritet (låg, middels, høg eller akutt) og tilrådd 
 Tilstanden til elementet vert lagd i eigenskapssettet Pset_Condition (vurderingsdato, tilstand og ei kort skildring) i eit
 endringssett som du førehandsviser og godkjenner som i *Endre*, og ingen element vert oppretta, flytte eller sletta. Funna vert lista
 under svaret, og *Lagre funna som tabell* opprettar eit nytt datasett med eitt funn per rad: foto, element, tittel, skildring,
-tilstand, prioritet, tiltak, dato og posisjonen til fotoet. *Eksporter som BCF* lastar ned ei BCF-fil med éi sak per funn, der fotoet
-er augneblinksbiletet i visinga og elementet er merkt, og for ein modell henta frå ein tenar du er logga inn på, opprettar *Opprett
-saker på tenaren* dei same sakene i prosjektet til modellen etter ei stadfesting. Fotoa vert sende til leverandøren saman med
+tilstand, prioritet, tiltak, dato og posisjonen til fotoet. *Eksporter som BCF* lastar ned ei BCF-fil med éi sak per funn, der visinga ser på elementet, merkt og farga, med eit bilete av modellen som augneblinksbilete og fotoet som dokument, og for ein modell henta frå ein tenar du er logga inn på, opprettar *Opprett
+saker på tenaren* dei same sakene i prosjektet til modellen etter ei stadfesting; der blir fotoet eit dokument i prosjektet, eller ein eigen viewpoint med berre fotoet når du ikkje får leggje til dokument, og sakene vert knytte til modellfila når tenaren tillèt det. Under *Fleire alternativ* gjev du sakene status, tildelt, ansvarleg part, fase og frist, på ein tenar frå listene til prosjektet. Fotoa vert sende til leverandøren saman med
 spørsmålet etter samtykket for verten til leverandøren, og dei forlèt datamaskina igjen berre når du sjølv opprettar saker på tenaren.
 
 ## Spør AI om modellen

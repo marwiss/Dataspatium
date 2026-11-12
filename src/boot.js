@@ -323,6 +323,7 @@
     'src/ui/bearbeta/graph-view.js',
     'src/data/issues.js',
     'src/data/ifc-validation.js',
+    'src/ui/bearbeta/issue-fields.js',
     'src/ui/bearbeta/model-issues.js',
     'src/ui/bearbeta/model-compare.js',
     'src/ui/bearbeta/model-view.js',

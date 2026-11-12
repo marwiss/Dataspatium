@@ -163,7 +163,7 @@
       var h = f.header;
       var schema = (/FILE_SCHEMA\s*\(\s*\(\s*'([^']*)'/.exec(h) || [])[1] || '';
       var fileName = /FILE_NAME\s*\(\s*'((?:[^']|'')*)'\s*,\s*'((?:[^']|'')*)'\s*,\s*\(([^)]*)\)\s*,\s*\(([^)]*)\)\s*,\s*'((?:[^']|'')*)'\s*,\s*'((?:[^']|'')*)'/.exec(h);
-      return { schema: schema, timestamp: fileName ? fileName[2] : '', preprocessor: fileName ? fileName[5] : '', application: fileName ? fileName[6] : '' };
+      return { schema: schema, name: fileName ? fileName[1].replace(/''/g, "'") : '', timestamp: fileName ? fileName[2] : '', preprocessor: fileName ? fileName[5] : '', application: fileName ? fileName[6] : '' };
     }
 
     /** Conversion factors to SI and display names of the project's units. */
@@ -258,6 +258,8 @@
       storeys.sort(function (a, b) { return (a.elevation === null ? 0 : a.elevation) - (b.elevation === null ? 0 : b.elevation); });
       return {
         format: 'ifc', schema: facts.schema, timestamp: facts.timestamp, application: facts.application || facts.preprocessor, project: nameOf(project), site: nameOf(site), building: nameOf(building),
+        // For BCF's header: the IfcProject's GlobalId and the name the file gives itself in FILE_NAME.
+        projectGuid: project === undefined ? '' : String(argsOf(f, project)[0] || ''), headerName: facts.name,
         units: units.names, entities: f.count, types: counts.map(function (t) { return { name: t.name, count: t.count }; }).slice(0, 400),
         elementTypes: elementTypes.map(function (t) { return { name: t.name, count: t.count }; }), storeys: storeys,
       };

@@ -35,7 +35,7 @@
 
       /**
        * @param {any} ctx shell context
-       * @param {{datasetId: string, mode?: string, brief?: string, onMarked?: Function, preview?: (preview: {bytes?: Uint8Array|null, colors?: Array<{color: string, ids: number[]}>}|null) => any, onApproved?: Function, bounds?: (ids: number[]) => ({min: number[], max: number[]}|null)}} options
+       * @param {{datasetId: string, mode?: string, brief?: string, onMarked?: Function, preview?: (preview: {bytes?: Uint8Array|null, colors?: Array<{color: string, ids: number[]}>}|null) => any, onApproved?: Function, bounds?: (ids: number[]) => ({min: number[], max: number[]}|null), pictures?: (shots: any[]) => Promise<string[]>}} options
        */
       function create(ctx, options) {
         const { shell } = ctx;
@@ -54,7 +54,7 @@
         const checking = () => s.mode === 'check';
         // Pictures go with the brief and with a check (decision F44 a), each with its caption.
         const withPictures = () => building() || checking();
-        const check = aiCheck.create(ctx, { datasetId: options.datasetId, findings: () => s.findings, bounds: options.bounds, busy: () => s.busy, log, fail: (err) => { fail(err); render(); }, render: () => render() });
+        const check = aiCheck.create(ctx, { datasetId: options.datasetId, findings: () => s.findings, bounds: options.bounds, pictures: options.pictures, busy: () => s.busy, log, fail: (err) => { fail(err); render(); }, render: () => render() });
 
         async function load() {
           s.providers = await providers.list();

@@ -15,6 +15,21 @@
       [/resolved|löst|closed|stäng|done|klar|avslut|rejected|avvis/i, 2],
       [/open|öppe|\bny\b|new|active|aktiv|request|begär|todo|att göra/i, 0],
     ];
+    /**
+     * The six review statuses of Swedish practice (BEAst's status words, which Praxi uses for review with BCF), as a mapping only: what
+     * each means in the app (0 open, 1 in progress, 2 done) and the nearest default status of a Dataregium project. The words are
+     * recognised in a project's own list of statuses; the app never offers them as values. A new comment is open; one to be fixed, or
+     * sent on to a new review, is in progress; one fixed, rejected or approved is done.
+     */
+    const REVIEW_STATUSES = [
+      { status: 'Ny kommentar', rank: 0, like: 'Open' },
+      { status: 'Ska åtgärdas', rank: 1, like: 'In progress' },
+      { status: 'Ny granskning', rank: 1, like: 'In progress' },
+      { status: 'Har åtgärdats', rank: 2, like: 'Resolved' },
+      { status: 'Avvisad', rank: 2, like: 'Closed' },
+      { status: 'Godkänd', rank: 2, like: 'Closed' },
+    ];
+    const REVIEW_RANK = new Map(REVIEW_STATUSES.map((r) => [r.status.toLowerCase(), r.rank]));
     const TOPIC_FIELDS = ['guid', 'server_assigned_id', 'title', 'topic_type', 'topic_status', 'priority', 'stage', 'labels', 'assigned_to', 'creation_author', 'creation_date', 'modified_author', 'modified_date', 'due_date', 'description'];
     const ELEMENT_FIELDS = ['element_guid', 'element_typ', 'element_namn', 'element_vaning'];
     const COLUMNS = TOPIC_FIELDS.concat(ELEMENT_FIELDS);
@@ -24,6 +39,8 @@
     /** @param {any} status @returns {number} 0 open, 1 in progress, 2 done, 3 unknown */
     function rank(status) {
       const s = String(status || '');
+      const review = REVIEW_RANK.get(s.trim().replace(/\s+/g, ' ').toLowerCase());
+      if (review !== undefined) return review;
       const hit = RANKS.find(([re]) => re.test(s));
       return hit ? hit[1] : 3;
     }
@@ -140,6 +157,6 @@
       return (list || []).filter(own).sort((a, b) => Number(!!(model && b.source.cde.modelId === model.id)) - Number(!!(model && a.source.cde.modelId === model.id)) || String(a.name).localeCompare(String(b.name)));
     }
 
-    return { rank, statusColors, colorGroups, tableOf, summary, tablesFor, COLUMNS, TOPIC_FIELDS, ELEMENT_FIELDS, SUMMARY_GROUPS };
+    return { rank, statusColors, colorGroups, tableOf, summary, tablesFor, COLUMNS, TOPIC_FIELDS, ELEMENT_FIELDS, SUMMARY_GROUPS, REVIEW_STATUSES };
   });
 })();
