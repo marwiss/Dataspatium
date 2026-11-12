@@ -675,6 +675,7 @@ Därför skriver appen inte heller själv det som IFC102 avvecklar. I IFC4 och s
 byggdelen den täcker (IfcRelAggregates) eller ligger i rummet, i stället för IfcRelCoversBldgElements och IfcRelCoversSpaces, och
 trappans antal steg och mått står bara i Pset_StairFlightCommon. I IFC 4.3 står karmens och dörrbladens egenskaper i
 Pset_DoorLiningProperties, Pset_DoorPanelProperties och Pset_WindowLiningProperties, som ersätter IfcDoorLiningProperties och de andra.
+En standarduppsättning som kom först med IFC4, till exempel Pset_Condition i en IFC2X3-fil, ger bara en varning av PSE001.
 
 *Godkänn* kör dessutom schemats EXPRESS-regler (WHERE-regler och funktioner) med IfcOpenShell; pytest hämtas för dem som komponent
 första gången. Ett ändringsset som bryter mot en regel som modellen klarade förut godkänns inte, och meddelandet namnger regeln; be

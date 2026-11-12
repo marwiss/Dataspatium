@@ -684,6 +684,7 @@ Derfor skriver appen heller ikke selv det, IFC102 udfaser. I IFC4 og senere bliv
 bygningsdel, den beklæder (IfcRelAggregates), eller ligger i rummet, i stedet for IfcRelCoversBldgElements og IfcRelCoversSpaces, og
 trappens antal trin og mål står kun i Pset_StairFlightCommon. I IFC 4.3 står karmens og dørbladenes egenskaber i
 Pset_DoorLiningProperties, Pset_DoorPanelProperties og Pset_WindowLiningProperties, som erstatter IfcDoorLiningProperties og de andre.
+Et standardsæt, der først kom med IFC4, for eksempel Pset_Condition i en IFC2X3-fil, giver kun en advarsel fra PSE001.
 
 *Godkend* kører desuden skemaets EXPRESS-regler (WHERE-regler og funktioner) med IfcOpenShell; pytest hentes til dem som komponent
 første gang. Et ændringssæt, der bryder en regel, som modellen overholdt før, godkendes ikke, og meddelelsen nævner reglen; bed AI'en

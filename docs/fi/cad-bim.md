@@ -707,6 +707,7 @@ peittämänsä rakennusosan osaksi (IfcRelAggregates) tai on tilassa, IfcRelCove
 ja portaan askelmien määrä ja mitat ovat vain joukossa Pset_StairFlightCommon. IFC 4.3:ssa karmin ja ovilehtien ominaisuudet ovat
 joukoissa Pset_DoorLiningProperties, Pset_DoorPanelProperties ja Pset_WindowLiningProperties, jotka korvaavat IfcDoorLiningPropertiesin
 ja muut.
+Vasta IFC4:n mukana tullut standardijoukko, kuten Pset_Condition IFC2X3-tiedostossa, antaa PSE001:ltä vain varoituksen.
 
 *Hyväksy* ajaa lisäksi skeeman EXPRESS-säännöt (WHERE-säännöt ja funktiot) IfcOpenShellillä; pytest haetaan niitä varten komponenttina
 ensimmäisellä kerralla. Muutosjoukkoa, joka rikkoo säännön, jonka malli täytti aiemmin, ei hyväksytä, ja viesti nimeää säännön; pyydä

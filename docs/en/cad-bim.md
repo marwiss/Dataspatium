@@ -696,6 +696,7 @@ of the element it covers (IfcRelAggregates) or lies in the space, instead of Ifc
 stair's number of steps and measures stand in Pset_StairFlightCommon only. In IFC 4.3 the properties of the lining and the door panels
 stand in Pset_DoorLiningProperties, Pset_DoorPanelProperties and Pset_WindowLiningProperties, which replace IfcDoorLiningProperties and
 the others.
+A standard set that came with IFC4, such as Pset_Condition in an IFC2X3 file, gives PSE001 only a warning.
 
 *Approve* also runs the schema's EXPRESS rules (WHERE rules and functions) with IfcOpenShell; pytest is fetched for them as a component
 the first time. A change set that breaks a rule the model met before is not approved, and the message names the rule; ask the AI to

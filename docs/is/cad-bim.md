@@ -678,6 +678,7 @@ grannfræðina. Forritið hefur ekki allt reglusafnið: GRF005 þekkir einingu h
 byggingarhlutanum sem hún klæðir (IfcRelAggregates) eða liggur í rýminu, í stað IfcRelCoversBldgElements og IfcRelCoversSpaces, og
 fjöldi þrepa og mál stigans standa aðeins í Pset_StairFlightCommon. Í IFC 4.3 standa eiginleikar karms og hurðarblaða í
 Pset_DoorLiningProperties, Pset_DoorPanelProperties og Pset_WindowLiningProperties, sem koma í stað IfcDoorLiningProperties og hinna.
+Staðlað sett sem kom fyrst með IFC4, til dæmis Pset_Condition í IFC2X3-skrá, gefur aðeins viðvörun frá PSE001.
 
 *Samþykkja* keyrir að auki EXPRESS-reglur skemans (WHERE-reglur og föll) með IfcOpenShell; pytest er sótt fyrir þær sem íhlutur í
 fyrsta sinn. Breytingasett sem brýtur reglu sem líkanið uppfyllti áður er ekki samþykkt, og skilaboðin nefna regluna; biddu
