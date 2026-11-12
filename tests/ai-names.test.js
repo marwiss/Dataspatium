@@ -115,9 +115,9 @@
       const form = await waitFor(() => root.querySelector('[data-newmodel-form]'), 3000, 'the form');
       const section = /** @type {HTMLDetailsElement} */ (await waitFor(() => form.querySelector('[data-newmodel-identity]'), 3000, 'the section'));
       assert.ok(!section.open, 'folded while empty');
-      assert.ok(section.querySelector('summary').textContent.includes(t('newmodel.identity')), 'its heading');
+      assert.ok(/** @type {any} */ (section.querySelector('summary')).textContent.includes(t('newmodel.identity')), 'its heading');
       for (const key of ifcNew.IDENTITY_FIELDS) assert.ok(section.querySelector(`[data-newmodel="${key}"]`), key + ' in the section');
-      assert.ok(!form.querySelector('[data-newmodel="brief"]').closest('[data-newmodel-identity]'), 'the brief stays outside it');
+      assert.ok(!(/** @type {any} */ (form.querySelector('[data-newmodel="brief"]'))).closest('[data-newmodel-identity]'), 'the brief stays outside it');
       const set = (key, value) => { const el = /** @type {any} */ (form.querySelector(`[data-newmodel="${key}"]`)); el.value = value; el.dispatchEvent(new Event('input')); };
       set('name', 'Formularnamn'); set('property', 'Kommun Trakt 1:23'); set('building_number', '1001'); set('building_name', 'Hus A'); set('storey_description', 'Entreplan');
       /** @type {any} */ (form.querySelector('[data-newmodel-create]')).click();
