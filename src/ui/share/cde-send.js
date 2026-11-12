@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * Dela: a dataset, or its original file, to a project on an OpenCDE server. The dataset is written in a file format from a copy
- * that has been through the review, or the original is sent after the warning, and the file goes up through the Documents API
+ * that has been through the review, or the original is sent after the warning (an IFC model's file through the review, which
+ * looks inside it and cleans the copy), and the file goes up through the Documents API
  * (the server's own page asks for title and version) or as a BCF document. A dataset that came from the CDE can go back as a new
  * version of the same document. A workspace bundle (the package dialog, through the review) goes the same way, so that two
  * Dataspatium users share through the server; the source view's files card receives it on the other side.
@@ -61,6 +62,7 @@
           if (!res || !picked) return null;
           return new File([picked.blob], picked.name, { type: 'application/zip' });
         }
+        if (s.what === 'original' && (await shareScan.isIfc(d.id))) return reviewedModel(d);
         if (s.what === 'original') {
           if (!(await review.warn(ctx, [d.id]))) return null;
           const out = await services.exporter.exportDataset(d.id, kinds.of(d).wholeFormat);
@@ -70,6 +72,21 @@
         if (!reviewed) return null;
         const out = await shareScan.exportCopy(d, s.format, reviewed.transform[d.id] || {});
         return new File([out.blob], out.filename, { type: out.blob.type || 'application/octet-stream' });
+      }
+      /**
+       * An IFC model's own file, through the review: the people, addresses, owner history and header inside it are kept,
+       * pseudonymised or removed in the copy (IfcOpenShell in the app's Python), and the copy's file is what goes up.
+       */
+      async function reviewedModel(d) {
+        const reviewed = await review.review(ctx, [d.id]);
+        if (!reviewed) return null;
+        const tr = reviewed.transform[d.id] || {};
+        const format = kinds.of(d).wholeFormat;
+        // The copy keeps the file's own name, as the model's file does when it goes up unchanged.
+        const out = shareScan.changes(tr) ? await shareScan.exportCopy(d, format, tr, { filename: null }) : await services.exporter.exportDataset(d.id, format);
+        const note = review.summary(reviewed.transform);
+        if (note) shell.log(note, 'info');
+        return new File([out.blob], out.filename || D.require('platform/files').safeName(d.name, 'ifc'), { type: out.blob.type || 'application/octet-stream' });
       }
       /**
        * Send the chosen dataset. `asVersionOf` makes it a new version of that Documents API document.

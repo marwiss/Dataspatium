@@ -674,8 +674,9 @@
     /**
      * The file of a dataset with columns pseudonymised or dropped in the copy only (the review before sharing);
      * the dataset itself is untouched. Hashing uses dm_hash with the salt (random when not given), dropped columns
-     * leave _columns too and the remaining positions close up.
-     * @param {string} id @param {{drop?: string[], hash?: string[], salt?: string}} [options]
+     * leave _columns too and the remaining positions close up. `before(engine)` runs on the copy first (a model's file cleaned and
+     * its tables built anew, data/share-scan), `after(engine)` last.
+     * @param {string} id @param {{drop?: string[], hash?: string[], salt?: string, before?: (engine: any) => Promise<void>, after?: (engine: any) => Promise<void>}} [options]
      * @returns {Promise<ArrayBuffer>}
      */
     async function exportBytesTransformed(id, options = {}) {
@@ -684,6 +685,7 @@
       const bytes = await exportBytes(id);
       const engine = await newEngine(bytes);
       try {
+        if (options.before) await options.before(engine);
         const names = (await readColumns(engine)).map((c) => c.name);
         const salt = options.salt || Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, '0')).join('');
         for (const name of hash) {
