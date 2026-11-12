@@ -66,8 +66,9 @@
             await this.engine.writeFile(`${HELPER_DIR}/dataspatium.py`, new TextEncoder().encode(src).buffer);
             // User-facing messages follow the app's language (see MESSAGES in python/dataspatium.py).
             const lang = D.require('ui/i18n').language();
-            // __dm_format_result lets the worker show figures as plots instead of their repr (see python-engine.js).
-            const setup = await this.engine.run(`import sys\nif ${JSON.stringify(HELPER_DIR)} not in sys.path: sys.path.insert(0, ${JSON.stringify(HELPER_DIR)})\nimport dataspatium as _dataspatium\nfrom dataspatium import *\n__dm_format_result = _dataspatium._format_result\n_dataspatium.dm_setup(lang=${JSON.stringify(lang)})\n`);
+            // __dm_format_result lets the worker show figures as plots instead of their repr (see python-engine.js). The app's version
+            // goes into the header of the IFC files the wheel writes (_ifc_header).
+            const setup = await this.engine.run(`import sys\nif ${JSON.stringify(HELPER_DIR)} not in sys.path: sys.path.insert(0, ${JSON.stringify(HELPER_DIR)})\nimport dataspatium as _dataspatium\nfrom dataspatium import *\n__dm_format_result = _dataspatium._format_result\n_dataspatium.dm_setup(lang=${JSON.stringify(lang)}, version=${JSON.stringify(String(D.version || ''))})\n`);
             if (!setup.ok) throw new Error(setup.error);
             this.streams = [];
             await this.mirrorAll();
@@ -437,14 +438,18 @@
       /**
        * A new, empty model written by the wheel (OB-06 Schemaval för nya modeller): project, units, contexts, site, building and a
        * first storey in the schema chosen.
+       * The optional names (site_long_name, land_id, building_long_name, building_id, storey_description, author, organization)
+       * are documented at _ifc_new_model; options.fileName is the name the file's header gives.
        * @param {string} schema IFC4X3_ADD2, IFC4 or IFC2X3 @param {{project: string, site: string, building: string, storey: string, elevation: number}} names
+       * @param {{fileName?: string}} [options]
        * @returns {Promise<{bytes: Uint8Array, info: any, log: Array<{kind: string, text: string}>}>}
        */
-      async runIfcNewModel(schema, names) {
+      async runIfcNewModel(schema, names, options = {}) {
         return this.ifcJob(async () => {
           await this.ensurePackages(['ifcopenshell']);
           this.streams = [];
-          const info = await this.engine.evalJson(`_dataspatium._ifc_new_model(${JSON.stringify(String(schema))}, ${JSON.stringify(JSON.stringify(names || {}))}, "/data/step/new-model.ifc")`);
+          const settings = Object.assign({}, names || {}, options.fileName ? { file_name: String(options.fileName) } : {});
+          const info = await this.engine.evalJson(`_dataspatium._ifc_new_model(${JSON.stringify(String(schema))}, ${JSON.stringify(JSON.stringify(settings))}, "/data/step/new-model.ifc")`);
           return this.takeIfc('/data/step/new-model.ifc', info, []);
         });
       }

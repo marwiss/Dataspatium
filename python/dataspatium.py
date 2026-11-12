@@ -719,10 +719,13 @@ def _plot_export(key, fmt, path, width=7, height=5, dpi=150):
 
 # ---- session setup -----------------------------------------------------------------------------
 
-def dm_setup(lang="sv"):
-    """Called once by the app after Python has started. lang: sv, da, nb, fi, is or en."""
+def dm_setup(lang="sv", version=None):
+    """Called once by the app after Python has started. lang: sv, da, nb, fi, is or en; version: the app's (src/platform/registry.js),
+    which the IFC files the app writes name in their header (_ifc_header)."""
     if isinstance(lang, str) and lang in MESSAGES:
         _state["lang"] = lang
+    if isinstance(version, str) and version.strip():
+        _state["version"] = version.strip()
     os.makedirs(DATA_DIR, exist_ok=True)
     os.makedirs(OUT_DIR, exist_ok=True)
     # Importing pandas takes a moment in WebAssembly; do it now, while the user is still typing.
@@ -881,6 +884,7 @@ def dm_ifc_write(model, name=None, description=""):
     os.makedirs(OUT_DIR, exist_ok=True)
     did = "ds_ifc%s%d" % (_dt.datetime.now(_dt.timezone.utc).strftime("%Y%m%d%H%M%S"), random.randint(1000, 9999))
     path = os.path.join(OUT_DIR, did + ".ifc")
+    _ifc_header(model, info.get("file") or (str(name) + ".ifc"))
     model.write(path)
     with open(path + ".json", "w", encoding="utf-8") as fh:
         json.dump({"name": str(name), "description": str(description or ""), "file": info.get("file") or (str(name) + ".ifc"),
@@ -1259,6 +1263,7 @@ def _ifc_step(code, in_file, out_file, name=""):
         out = model
     if not isinstance(out, ifcopenshell.file):
         raise DataspatiumError(_msg("ifc.step.notmodel"))
+    _ifc_header(out, file_name)
     out.write(out_file)
     return json.dumps({"elements": len(out.by_type("IfcElement")), "entities": len(list(out)), "file": file_name, "name": name})
 
@@ -1270,6 +1275,7 @@ def _ifc_apply(in_file, table_file, key, out_file):
     model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "apply-in.ifc"), data)
     df = _read_file(table_file)
     changed = dm_ifc_set(model, df, key=key or "guid")
+    _ifc_header(model, file_name)
     model.write(out_file)
     return json.dumps({"changed": changed, "rows": int(len(df)), "file": file_name})
 
@@ -1326,14 +1332,56 @@ def _cs_angle(degrees):
     return [sign * d, sign * m, sign * s, sign * micro]
 
 
+# SWEREF 99's twelve local zones in the order of their EPSG codes 3007 to 3018; the compound codes with RH 2000 heights follow the
+# same order: 5845 is SWEREF 99 TM + RH 2000 (3006) and 5846 to 5857 the local zones + RH 2000 (3007 to 3018).
+CS_SWEREF_ZONES = ("12 00", "13 30", "15 00", "16 30", "18 00", "14 15", "15 45", "17 15", "18 45", "20 15", "21 45", "23 15")
+CS_COMPOUND_RH2000 = (5845, 5857)
+CS_RH2000 = "RH 2000"
+
+
+def _cs_crs_plan(code):
+    """The projected code of a compound code with RH 2000 (5845 to 5857 give 3006 to 3018), any other code as it is."""
+    return code - 2839 if CS_COMPOUND_RH2000[0] <= code <= CS_COMPOUND_RH2000[1] else code
+
+
+def _cs_crs_height(code):
+    """The height system a compound EPSG code gives (RH 2000 for 5845 to 5857), None for a projected code without heights."""
+    return CS_RH2000 if CS_COMPOUND_RH2000[0] <= code <= CS_COMPOUND_RH2000[1] else None
+
+
+def _cs_crs_vertical(code, given=None):
+    """IfcProjectedCRS.VerticalDatum: None when the code gives the height system itself (the compound codes), else the one given,
+    else RH 2000 for SWEREF 99 (3006 to 3018), Sweden's height system, else None."""
+    if _cs_crs_height(code):
+        return None
+    if given and str(given).strip():
+        return str(given).strip()[:255]
+    return CS_RH2000 if 3006 <= code <= 3018 else None
+
+
+def _cs_crs_description(code, vertical=None):
+    """IfcProjectedCRS.Description in plain words, such as 'SWEREF 99 18 00 + RH 2000' or 'ETRS89 / UTM zone 32N', with the height
+    system of the code or the vertical datum; None for a code outside the table of _cs_crs_facts."""
+    datum, projection, zone = _cs_crs_facts("EPSG:%d" % _cs_crs_plan(code))
+    if datum is None:
+        return None
+    if datum == "SWEREF99":
+        text = "SWEREF 99 %s" % zone
+    else:
+        text = "%s / %s" % ({"WGS84": "WGS 84"}.get(datum, datum), zone.replace("UTM ", "UTM zone ") if zone else projection)
+    height = _cs_crs_height(code) or vertical
+    return "%s + %s" % (text, height) if height else text
+
+
 def _cs_crs_facts(crs):
-    """The datum, projection and zone an EPSG code stands for, for the projected systems the Nordic countries draw in; (None, None,
-    None) for a code outside the table. IFC4 requires the datum on IfcProjectedCRS, IFC4X3 does not."""
-    code = int(crs[5:])
+    """The datum, projection and zone an EPSG code stands for, for the projected systems the Nordic countries draw in (and the
+    compound codes of SWEREF 99 with RH 2000, whose plan is the projected code's); (None, None, None) for a code outside the table.
+    IFC4 requires the datum on IfcProjectedCRS, IFC4X3 does not."""
+    code = _cs_crs_plan(int(crs[5:]))
     if code == 3006:
         return "SWEREF99", "Transverse Mercator", "TM"
     if 3007 <= code <= 3018:
-        return "SWEREF99", "Transverse Mercator", ("12 00", "13 30", "15 00", "16 30", "18 00", "14 15", "15 45", "17 15", "18 45", "20 15", "21 45", "23 15")[code - 3007]
+        return "SWEREF99", "Transverse Mercator", CS_SWEREF_ZONES[code - 3007]
     if 25828 <= code <= 25838:
         return "ETRS89", "Transverse Mercator", "UTM %dN" % (code - 25800)
     if code == 3067:
@@ -1533,6 +1581,21 @@ class _ChangeSet:
 
     At the end of apply the walls the change set created are joined where their axes meet (join_walls), and what it created or
     changed gets its base quantities (base_quantities).
+
+    Since recommendations 2 and 3 of the Praxi study and 14 of the native IFC study (2026-11-12), all optional:
+
+        create_storeys_and_grid {storeys: [{..., description, long_name}]}
+            a storey's Description (such as "Plan 2 (Entré)") and LongName; given for a storey that exists, they are set on it.
+        create_spaces {rooms: [{..., number, room_type}]}
+            with number the space's Name is the number (unique among the model's spaces), its LongName the name and its
+            Description the long_name; without one the name is the Name and long_name the LongName, as before. room_type is the
+            room's type: ObjectType with PredefinedType USERDEFINED (IFC2X3: ObjectType alone).
+        set_site {..., vertical_datum}
+            the height system of the elevation for IfcProjectedCRS.VerticalDatum, when the EPSG code does not give it; null takes
+            RH 2000 for SWEREF 99 (3006 to 3018). The compound codes 5845 to 5857 (SWEREF 99 TM and the local zones with RH 2000)
+            are known; the CRS gets a Description in plain words and the metre as MapUnit, every parent representation context its
+            own IfcMapConversion with the same values and the file's unit as Scale, and IFC4 and IFC2X3 buildings the height in
+            ElevationOfRefHeight (map_conversion, building_height).
     """
 
     CREATES = ("create_wall", "create_slab", "create_roof", "create_opening", "create_spaces", "define_type")
@@ -1879,11 +1942,13 @@ class _ChangeSet:
                 raise DataspatiumError("every storey needs a name")
             existing = [x for x in self.m.by_type("IfcBuildingStorey") if str(x.Name or "") == str(s["name"])]
             if existing:
+                self.storey_texts(existing[0], s, touch=True)
                 made.append(existing[0])
                 continue
             elevation = _cs_num(s, "elevation", 0.0)
             storey = self.root("IfcBuildingStorey", s["name"])
             storey.CompositionType = "ELEMENT"
+            self.storey_texts(storey, s)
             if self.m.schema != "IFC4X3":
                 storey.Elevation = self.u(elevation)  # deprecated in IFC4.3 (IFC102): there the placement alone gives the height
             storey.ObjectPlacement = self.placement(building.ObjectPlacement, 0, 0, self.u(elevation))
@@ -1894,6 +1959,18 @@ class _ChangeSet:
             if not isinstance(grid, dict):
                 raise DataspatiumError("grid must be an object with x_spacing, x_count, y_spacing and y_count")
             self.make_grid(grid, made[0] if made else self.storey(None))
+
+    def storey_texts(self, storey, s, touch=False):
+        """A storey's optional description (Description, such as 'Plan 2 (Entré)': the entrance level said in words) and long name
+        (LongName), recommendation 2 of the Praxi study; on a storey that exists already only what differs is set, and it is changed."""
+        changed = False
+        for key, attribute in (("description", "Description"), ("long_name", "LongName")):
+            value = str(s.get(key) or "").strip()[:255]
+            if value and getattr(storey, attribute, None) != value:
+                setattr(storey, attribute, value)
+                changed = True
+        if changed and touch:
+            self.touch(storey)
 
     def make_grid(self, grid, storey):
         xs = _cs_num(grid, "x_spacing", positive=True)
@@ -2146,8 +2223,28 @@ class _ChangeSet:
             if room["index"] in seen:
                 raise DataspatiumError("rooms %d and %d are the same room (%s)" % (seen[room["index"]], i + 1, where(room)))
             seen[room["index"]] = i + 1
-            out.append((room, str(entry["name"]).strip()[:255], str(entry.get("long_name") or "").strip()[:255] or None))
+            out.append(self.room_names(room, entry, i, out))
         return out
+
+    def room_names(self, room, entry, i, before):
+        """(room, Name, LongName) of a listed room. With a number (optional, recommendation 2 of the Praxi study) the number is the
+        Name, unique among the model's spaces and the rooms listed before, the name the LongName and long_name the Description;
+        without one the name is the Name and long_name the LongName, as before numbers came. room_type (optional) is the room's
+        type, written as ObjectType with PredefinedType USERDEFINED by make_space, which reads it and the Description from room["ifc"]
+        (the topology's room dicts are made for this operation alone)."""
+        name = str(entry["name"]).strip()[:255]
+        long_name = str(entry.get("long_name") or "").strip()[:255] or None
+        number = str(entry.get("number") if entry.get("number") is not None else "").strip()[:255]
+        room["ifc"] = {"room_type": str(entry.get("room_type") or "").strip()[:255] or None}
+        if not number:
+            return room, name, long_name
+        if number in {n for _, n, _ in before}:
+            raise DataspatiumError("room %d: the number %s is listed twice; a room number is unique in the building" % (i + 1, number))
+        taken = next((s for s in self.m.by_type("IfcSpace") if str(s.Name or "") == number), None)
+        if taken is not None:
+            raise DataspatiumError("room %d: the number %s is the space %s's already (#%d); a room number is unique in the building" % (i + 1, number, _ifc_text(taken.LongName) or number, taken.id()))
+        room["ifc"]["description"] = long_name
+        return room, number, name
 
     def make_space(self, storey, frame, room, name, long_name, height):
         """An IfcSpace with the room's outline (holes as voids) in the storey's plane, extruded height metres up from the storey."""
@@ -2163,9 +2260,16 @@ class _ChangeSet:
         space = self.root("IfcSpace", name)
         space.LongName = long_name
         space.CompositionType = "ELEMENT"
+        extra = room.get("ifc") or {}
+        if extra.get("description"):
+            space.Description = extra["description"]
+        if extra.get("room_type"):
+            space.ObjectType = extra["room_type"]  # the room's type (Praxi: ObjectType with USERDEFINED); IFC2X3 has no PredefinedType
         if self.m.schema == "IFC2X3":
             if self.check_enum(space, "INTERNAL", "InteriorOrExteriorSpace"):
                 space.InteriorOrExteriorSpace = "INTERNAL"
+        elif extra.get("room_type"):
+            self.predefined(space, "USERDEFINED")
         elif self.m.schema == "IFC4X3":
             self.predefined(space, "SPACE")  # INTERNAL is deprecated in IFC4.3 (IFC102); that the room is inside is IsExternal false
         else:
@@ -2251,7 +2355,7 @@ class _ChangeSet:
             ifcopenshell.api.aggregate.assign_object(self.m, products=spaces, relating_object=s)
             for space, (room, _, _) in zip(spaces, chosen):
                 self.space_quantities(space, room, h)
-                if self.m.schema == "IFC4X3":
+                if self.m.schema == "IFC4X3" or (self.m.schema == "IFC4" and space.PredefinedType == "USERDEFINED"):  # no INTERNAL to say it
                     import ifcopenshell.api.pset
                     pset = ifcopenshell.api.pset.add_pset(self.m, product=space, name="Pset_SpaceCommon")
                     ifcopenshell.api.pset.edit_pset(self.m, pset=pset, properties={"IsExternal": False})
@@ -2412,6 +2516,7 @@ class _ChangeSet:
         site.RefLongitude = _cs_angle(longitude)
         if elevation is not None:
             site.RefElevation = self.u(elevation)
+            self.building_height(elevation)
         if site_name:
             site.Name = site_name
         self.touch(site)
@@ -2420,23 +2525,55 @@ class _ChangeSet:
         if self.m.schema == "IFC2X3":
             self.notes.append("the map conversion to %s was skipped: IFC2X3 has no IfcMapConversion; the site's latitude, longitude and elevation were set" % crs)
             return
-        self.map_conversion(crs, eastings, northings, 0.0 if elevation is None else elevation, rotation)
+        self.map_conversion(crs, eastings, northings, 0.0 if elevation is None else elevation, rotation, op.get("vertical_datum"))
 
-    def map_conversion(self, crs, eastings, northings, height, rotation):
-        """One IfcProjectedCRS named by the EPSG code and one IfcMapConversion from the model context to it, made or updated, never
-        doubled. Lengths come in metres and are written in the file's unit, which is also the map unit."""
-        context = self.model_context()
-        conversions = self.m.by_type("IfcMapConversion")
-        conversion = next((c for c in conversions if c.SourceCRS is not None and c.SourceCRS.id() == context.id()), conversions[0] if conversions else None)
-        target = conversion.TargetCRS if conversion is not None and conversion.TargetCRS is not None and conversion.TargetCRS.is_a("IfcProjectedCRS") else None
+    def building_height(self, elevation):
+        """The buildings' height above the sea in IfcBuilding.ElevationOfRefHeight (the model origin's elevation plus the building's
+        placement), as the Swedish guidance asks, in IFC4 and IFC2X3. IFC4X3 deprecates the attribute (bSI rule IFC102, decision
+        B-60.2): there the height is the map conversion's OrthogonalHeight alone."""
+        if self.m.schema == "IFC4X3":
+            return
+        for building in self.m.by_type("IfcBuilding"):
+            frame = _cs_placement(building.ObjectPlacement)
+            building.ElevationOfRefHeight = self.u(elevation) + (frame[3][2] if frame is not None else 0.0)
+            self.touch(building)
+
+    def parent_contexts(self):
+        """The representation contexts that are not sub-contexts (Model, Plan …), the model context made when the file has none."""
+        found = [c for c in self.m.by_type("IfcGeometricRepresentationContext") if not c.is_a("IfcGeometricRepresentationSubContext")]
+        return found or [self.model_context()]
+
+    def metre(self):
+        """An IfcSIUnit for the metre, the MapUnit of a projected CRS: the project's length unit when that is the metre, else one the
+        file has, else a new one (bSI rule GRF005: the CRS in metres, the conversion's Scale from the file's unit)."""
+        def plain(u):
+            return u is not None and u.is_a("IfcSIUnit") and u.UnitType == "LENGTHUNIT" and u.Name == "METRE" and not u.Prefix
+        unit = self.length_unit()
+        if plain(unit):
+            return unit
+        return next((u for u in self.m.by_type("IfcSIUnit") if plain(u)), None) or self.m.create_entity("IfcSIUnit", UnitType="LENGTHUNIT", Name="METRE")
+
+    def map_conversion(self, crs, eastings, northings, height, rotation, vertical=None):
+        """One IfcProjectedCRS named by the EPSG code, with its datum, projection and zone, a Description in plain words and the
+        VerticalDatum when the code does not give the height system (RH 2000 by default for SWEREF 99), and one IfcMapConversion to it
+        from every parent representation context, all with the same values (bSI rule GRF001), made or updated, never doubled. The
+        MapUnit is the metre and the conversion's Scale the file's length unit in metres (GRF005), so the eastings, northings and
+        height, which come in metres, are written as they are. The height is the model origin's height above the vertical datum,
+        which in IFC4X3 also carries the building's height (IfcBuilding.ElevationOfRefHeight is deprecated there)."""
+        contexts = self.parent_contexts()
+        conversions = list(self.m.by_type("IfcMapConversion"))
+        target = next((c.TargetCRS for c in conversions if c.TargetCRS is not None and c.TargetCRS.is_a("IfcProjectedCRS")), None)
         if target is None:
             found = self.m.by_type("IfcProjectedCRS")
             target = found[0] if found else None
+        code = int(crs[5:])
         datum, projection, zone = _cs_crs_facts(crs)
         if datum is None and self.m.schema == "IFC4":
             datum = ""  # IFC4 requires a datum; an empty identifier says the app does not know this code's
             self.notes.append("the geodetic datum of %s is not known to the app; IFC4 requires one, so it is written empty" % crs)
-        values = {"Name": crs, "GeodeticDatum": datum, "MapProjection": projection, "MapZone": zone, "MapUnit": self.length_unit()}
+        vertical = _cs_crs_vertical(code, vertical)
+        values = {"Name": crs, "Description": _cs_crs_description(code, vertical), "GeodeticDatum": datum, "VerticalDatum": vertical,
+                  "MapProjection": projection, "MapZone": zone, "MapUnit": self.metre()}
         if target is None:
             target = self.m.create_entity("IfcProjectedCRS", **values)
             self.register(target, ref=False)
@@ -2445,15 +2582,17 @@ class _ChangeSet:
                 setattr(target, key, value)
             self.touch(target)
         angle = math.radians(rotation)
-        values = {"SourceCRS": context, "TargetCRS": target, "Eastings": self.u(eastings), "Northings": self.u(northings), "OrthogonalHeight": self.u(height),
-                  "XAxisAbscissa": math.cos(angle), "XAxisOrdinate": math.sin(angle), "Scale": 1.0}
-        if conversion is None:
-            conversion = self.m.create_entity("IfcMapConversion", **values)
-            self.register(conversion, ref=False)
-        else:
-            for key, value in values.items():
-                setattr(conversion, key, value)
-            self.touch(conversion)
+        for context in contexts:
+            conversion = next((c for c in conversions if c.SourceCRS is not None and c.SourceCRS.id() == context.id()), None)
+            values = {"SourceCRS": context, "TargetCRS": target, "Eastings": float(eastings), "Northings": float(northings), "OrthogonalHeight": float(height),
+                      "XAxisAbscissa": math.cos(angle), "XAxisOrdinate": math.sin(angle), "Scale": float(self.scale)}
+            if conversion is None:
+                conversion = self.m.create_entity("IfcMapConversion", **values)
+                self.register(conversion, ref=False)
+            else:
+                for key, value in values.items():
+                    setattr(conversion, key, value)
+                self.touch(conversion)
 
     # -- types with material layers, wall joins and base quantities (recommendations 3, 5 and 6 of the native IFC study)
     TYPE_KINDS = {"wall": ("IfcWallType", "NOTDEFINED"), "slab": ("IfcSlabType", "FLOOR"), "roof": ("IfcSlabType", "ROOF")}
@@ -3779,6 +3918,10 @@ def _ifc_changeset(in_file, changeset_json, out_file):
     cs = _ChangeSet(model)
     cs.apply(ops)
     findings, errors = cs.findings()
+    note = _ifc_crs_note(model) if cs.created else None
+    if note:
+        cs.notes.append(note)
+    _ifc_header(model, file_name)
     model.write(out_file)
     # The base opened once more: the old values for the proposal are the file's, and only what the change set broke counts.
     base = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "changeset-base.ifc"), data)
@@ -4051,6 +4194,64 @@ def _ifc_class_report_file(in_file, out_file):
 IFC_NEW_SCHEMAS = ("IFC4X3_ADD2", "IFC4", "IFC2X3")
 
 
+# The view definition the header of a file the app writes declares, per schema family (recommendation 11 of the Praxi study). Only
+# the names buildingSMART's validation service accepts per schema count (github.com/buildingSMART/validate, header_policy
+# valid_descriptions.yaml; the header guide in github.com/buildingSMART/IFC4.x-IF, docs/IFC-file-header): CoordinationView_V2.0
+# for IFC2X3 and ReferenceView_V1.2 for IFC4, which cover the extrusions, openings, material layers and spaces the write tools make.
+# IFC4X3_ADD2 accepts only ReferenceView and Alignment-basedView, and bSI rule IFC430 places IfcExtrudedAreaSolid,
+# IfcMaterialLayerSetUsage, IfcRelConnectsPathElements and IfcRelSpaceBoundary outside the IFC4.3 Reference View, so no official
+# view fits a model the app authors in the full schema. There the header says 'ViewDefinition [notYetAssigned]', the neutral form
+# of buildingSMART's own example files, rather than claim a view the file does not follow; the validation service flags it as it
+# would flag no view at all, and a recipient who requires a view says which in the EIR.
+IFC_HEADER_VIEWS = {"IFC2X3": "CoordinationView_V2.0", "IFC4": "ReferenceView_V1.2", "IFC4X3": None}
+IFC_HEADER_VALID = {"IFC2X3": ("CoordinationView_V2.0", "SpaceBoundaryAddonView", "BasicFMHandoverView", "StructuralAnalysisView"),
+                    "IFC4": ("ReferenceView_V1.2", "IFC4Precast"), "IFC4X3": ("ReferenceView", "Alignment-basedView")}
+
+
+def _ifc_header_view(entries, schema, new):
+    """FILE_DESCRIPTION.description: the entries (Comment, ExchangeRequirement, Option …) kept, and the ViewDefinition entry the
+    app's for the schema (IFC_HEADER_VIEWS) on a new file, or on a file whose own one names no view the validation service accepts
+    for its schema; a file's valid view stays, since it is its author's statement."""
+    import re
+    entries = [str(e) for e in (entries or ()) if str(e).strip()]
+    views = [e for e in entries if e.strip().startswith("ViewDefinition")]
+    named = []
+    for e in views:
+        found = re.search(r"\[(.*)\]", e)
+        named += [v.strip() for v in (found.group(1) if found else "").split(",") if v.strip()]
+    valid = IFC_HEADER_VALID.get(schema, ())
+    if not new and named and all(v in valid or "AddOnView" in v for v in named) and all(re.match(r"^ViewDefinition \[", e.strip()) for e in views):
+        return tuple(entries)
+    own = "ViewDefinition [%s]" % (IFC_HEADER_VIEWS.get(schema) or "notYetAssigned")
+    return tuple([own] + [e for e in entries if e not in views])
+
+
+def _ifc_header(model, file_name, new=False, author=None, organization=None):
+    """The STEP header of a file the app writes (recommendation 11 of the Praxi study; the header guide of buildingSMART):
+    FILE_DESCRIPTION with the view definition (_ifc_header_view) and implementation level '2;1', and FILE_NAME with the file's name,
+    the time in ISO 8601 (UTC), the preprocessor (Dataspatium with its version and IfcOpenShell's) and the originating system in the
+    form the validation service reads ('Dataspatium - Dataspatium - <version>'). The author and organisation are empty on a new
+    file unless the person entered them (they are personal data), and kept as they are on a file the app changes, as are its
+    authorisation and an originating system of another program."""
+    import ifcopenshell
+    header = model.header
+    schema = "IFC4X3" if str(model.schema).upper().startswith("IFC4X3") else str(model.schema).upper()
+    header.file_description.description = _ifc_header_view(header.file_description.description, schema, new)
+    header.file_description.implementation_level = "2;1"
+    version = _state.get("version") or "0"
+    name = header.file_name
+    name.name = os.path.basename(str(file_name or "")) or "model.ifc"
+    name.time_stamp = _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat()
+    name.preprocessor_version = "Dataspatium %s (IfcOpenShell %s)" % (version, ifcopenshell.version)
+    origin = str(name.originating_system or "").strip()
+    if new or not origin or origin.startswith("IfcOpenShell") or origin.startswith("Dataspatium"):
+        name.originating_system = "Dataspatium - Dataspatium - %s" % version
+    if new:
+        name.author = (str(author or "").strip()[:255],)
+        name.organization = (str(organization or "").strip()[:255],)
+        name.authorization = ""
+
+
 def _ifc_new_owner(model):
     """IFC2X3 needs an owner history on every IfcRoot: the application as its own user, with no person's name."""
     import time
@@ -4069,7 +4270,14 @@ def _ifc_new_model(schema, settings_json, out_file):
 
     The names come from settings_json ({"project", "site", "building", "storey", "elevation"}); the storeys, walls and the rest
     are added afterwards by Ändra med AI, whose change sets work on this file like on any other. Returns the report: the schema,
-    the counts and the schema check's findings.
+    the counts, the schema check's findings and notes (the missing CRS, bSI rule GRF003, until set_site gives one).
+
+    Optional keys, each written only when given (recommendations 2, 11 and 15 of the Praxi and native IFC studies, B3 of Boverket's
+    report 2024:26): site_long_name (IfcSite.LongName; the app names the site after the property designation when there is one),
+    land_id (the property designation as Pset_LandRegistration.LandID), building_long_name (IfcBuilding.LongName; the name is the
+    building number when there is one), building_id (the national building id as Pset_BuildingCommon.BuildingID with
+    IsPermanentID true), storey_description (the first storey's Description), author and organization (the header's, personal
+    data the person enters) and file_name (the header's name of the file). The model contexts are Model with Body and Axis.
     """
     import ifcopenshell.api.aggregate
     import ifcopenshell.api.context
@@ -4097,6 +4305,8 @@ def _ifc_new_model(schema, settings_json, out_file):
         ifcopenshell.api.unit.assign_unit(model, units=units)
         context = ifcopenshell.api.context.add_context(model, context_type="Model")
         ifcopenshell.api.context.add_context(model, context_type="Model", context_identifier="Body", target_view="MODEL_VIEW", parent=context)
+        # The walls' Axis representations have their sub-context from the start (recommendation 15 of the native IFC study).
+        ifcopenshell.api.context.add_context(model, context_type="Model", context_identifier="Axis", target_view="GRAPH_VIEW", parent=context)
         site = cs.root("IfcSite", name("site", "Site"))
         site.CompositionType = "ELEMENT"
         site.ObjectPlacement = cs.placement(None, 0, 0, 0)
@@ -4105,13 +4315,50 @@ def _ifc_new_model(schema, settings_json, out_file):
         building.CompositionType = "ELEMENT"
         building.ObjectPlacement = cs.placement(site.ObjectPlacement, 0, 0, 0)
         ifcopenshell.api.aggregate.assign_object(model, products=[building], relating_object=site)
+        _ifc_new_names(model, site, building, opts)
     finally:
         cs.restore_owner_settings(previous)
     cs.scale = 1.0
-    cs.apply([{"tool": "create_storeys_and_grid", "storeys": [{"name": name("storey", "Level 1"), "elevation": _cs_num(opts, "elevation", 0.0)}]}])
+    first = {"name": name("storey", "Level 1"), "elevation": _cs_num(opts, "elevation", 0.0)}
+    if name("storey_description", None):
+        first["description"] = name("storey_description", None)
+    cs.apply([{"tool": "create_storeys_and_grid", "storeys": [first]}])
     findings, errors = cs.findings()
+    notes = [n for n in [_ifc_crs_note(model)] if n]
+    _ifc_header(model, opts.get("file_name") or out_file, new=True, author=opts.get("author"), organization=opts.get("organization"))
     os.makedirs(os.path.dirname(out_file) or ".", exist_ok=True)
     model.write(out_file)
     return json.dumps({"schema": model.schema_identifier if hasattr(model, "schema_identifier") else schema, "entities": len(list(model)),
-                       "storeys": len(model.by_type("IfcBuildingStorey")), "findings": findings[:20], "errors": errors},
+                       "storeys": len(model.by_type("IfcBuildingStorey")), "findings": findings[:20], "errors": errors, "notes": notes},
                       ensure_ascii=False, default=str)
+
+
+def _ifc_new_names(model, site, building, opts):
+    """The Swedish names and numbers of a new model, each only when given (see _ifc_new_model): the site's long name and the
+    property designation in Pset_LandRegistration.LandID, the building's long name, and the national building id in
+    Pset_BuildingCommon.BuildingID with IsPermanentID true (Boverket's B3: one lasting identity per building)."""
+    import ifcopenshell.api.pset
+
+    def text(key):
+        return str(opts.get(key) or "").strip()[:255] or None
+    if text("site_long_name"):
+        site.LongName = text("site_long_name")
+    if text("land_id"):
+        pset = ifcopenshell.api.pset.add_pset(model, product=site, name="Pset_LandRegistration")
+        ifcopenshell.api.pset.edit_pset(model, pset=pset, properties={"LandID": text("land_id")})
+    if text("building_long_name"):
+        building.LongName = text("building_long_name")
+    if text("building_id"):
+        pset = ifcopenshell.api.pset.add_pset(model, product=building, name="Pset_BuildingCommon")
+        ifcopenshell.api.pset.edit_pset(model, pset=pset, properties={"BuildingID": text("building_id"), "IsPermanentID": True})
+
+
+def _ifc_crs_note(model):
+    """The report's note when a model with a site or a building has no coordinate reference system (bSI rule GRF003, industry
+    practice); None when it has one, and in IFC2X3, which has none to give."""
+    if model.schema == "IFC2X3" or model.by_type("IfcCoordinateReferenceSystem"):
+        return None
+    if not (model.by_type("IfcSite") or model.by_type("IfcBuilding")):
+        return None
+    return ("GRF003: the model has no coordinate reference system yet; place it with set_site and an EPSG code (for a building in "
+            "Sweden SWEREF 99 with RH 2000) when its place is known")
