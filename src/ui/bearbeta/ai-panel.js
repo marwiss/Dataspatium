@@ -26,8 +26,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/ai-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ai/providers', 'ai/agent', 'ai/write-tools', 'ai/check-tools', 'ui/bearbeta/ai-check', 'data/selection', 'data/recipes', 'data/ifc-ops', 'data/datasets', 'data/ifc-validation', 'api/connectors', 'api/families/opencde', 'platform/storage/idb', 'analysis/ids-presets'],
-    (base, basic, overlays, icons, providers, agent, writeTools, checkTools, aiCheck, selection, recipes, ifcOps, datasets, validation, connectors, opencde, idb, idsPresets) => {
+  D.define('ui/bearbeta/ai-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ai/providers', 'ai/agent', 'ai/write-tools', 'ai/check-tools', 'ui/bearbeta/ai-check', 'data/selection', 'data/recipes', 'data/ifc-ops', 'data/datasets', 'data/ifc-validation', 'api/connectors', 'api/families/opencde', 'platform/storage/idb', 'analysis/ids-presets', 'ui/bearbeta/site-map'],
+    (base, basic, overlays, icons, providers, agent, writeTools, checkTools, aiCheck, selection, recipes, ifcOps, datasets, validation, connectors, opencde, idb, idsPresets, siteMap) => {
       const { h, t, i18n, replace } = base;
       const LAST_SETTING = 'ai.lastProvider';
       const MODES = ['ask', 'change', 'build', 'check'];
@@ -35,7 +35,7 @@
 
       /**
        * @param {any} ctx shell context
-       * @param {{datasetId: string, mode?: string, brief?: string, onMarked?: Function, preview?: (preview: {bytes?: Uint8Array|null, colors?: Array<{color: string, ids: number[]}>}|null) => any, onApproved?: Function, bounds?: (ids: number[]) => ({min: number[], max: number[]}|null), pictures?: (shots: any[]) => Promise<string[]>}} options
+       * @param {{datasetId: string, mode?: string, brief?: string, tileFactory?: Function, onMarked?: Function, preview?: (preview: {bytes?: Uint8Array|null, colors?: Array<{color: string, ids: number[]}>}|null) => any, onApproved?: Function, bounds?: (ids: number[]) => ({min: number[], max: number[]}|null), pictures?: (shots: any[]) => Promise<string[]>}} options
        */
       function create(ctx, options) {
         const { shell } = ctx;
@@ -55,6 +55,9 @@
         // Pictures go with the brief and with a check (decision F44 a), each with its caption.
         const withPictures = () => building() || checking();
         const check = aiCheck.create(ctx, { datasetId: options.datasetId, findings: () => s.findings, bounds: options.bounds, pictures: options.pictures, busy: () => s.busy, log, fail: (err) => { fail(err); render(); }, render: () => render() });
+        // The place of the building on a map, over an orthophoto when the person chooses one (decision B-64); made once and kept
+        // between the panel's drawings, so that an open map is not drawn again.
+        const site = siteMap.create(ctx, { tileFactory: options.tileFactory });
 
         async function load() {
           // The providers are set last, so that a panel with its providers is one whose lists are all in place.
@@ -328,11 +331,18 @@
               pick, pick ? basic.button({ label: t('ai.build.pictures.add'), icon: 'image', size: 'sm', disabled: !s.picturesFrom, 'data-ai-pictures-add': '', onClick: () => addPictures(s.picturesFrom) }) : null, input,
               s.material && building() && D.has('data/model-material') ? basic.button({ label: t('ai.build.material'), icon: 'upload', size: 'sm', title: t('ai.build.material.hint'), loading: s.uploading, disabled: !s.question.trim() && !s.attachments.length, 'data-ai-material': '', onClick: uploadMaterial }) : null),
             s.tables.length ? h('div', { class: 'dm-row-wrap' },
-              basic.select(t('ai.build.facts'), [{ value: '', label: '–' }].concat(s.tables.map((d) => ({ value: d.id, label: d.name }))), s.factsFrom, (v) => { s.factsFrom = v; }),
+              basic.select(t('ai.build.facts'), [{ value: '', label: '–' }].concat(s.tables.map((d) => ({ value: d.id, label: d.name }))), s.factsFrom, (v) => { s.factsFrom = v; if (building()) render(); }),
               basic.button({ label: t('ai.build.facts.add'), icon: 'table', size: 'sm', disabled: !s.factsFrom, title: t(checking() ? 'ai.check.facts.hint' : 'ai.build.facts.hint'), 'data-ai-facts-add': '', onClick: () => addFacts(s.factsFrom) }),
               s.heightsSource && building() ? heightsSwitch() : null) : null,
+            building() && s.factsFrom ? siteView() : null,
             s.attachments.length ? h('div', { class: 'dm-row-wrap' }, s.attachments.map((a, i) => h('dm-badge', { text: a.label && a.label !== 'photo' ? `${a.name} · ${t('ai.build.label.' + a.label)}` : a.name, title: t('ai.build.remove'), 'data-ai-attachment': a.name, 'data-ai-attachment-label': a.label || 'photo', onclick: () => { s.attachments.splice(i, 1); render(); } }))) : null,
             h('p', { class: 'dm-help dm-xs', text: s.attachments.length ? t(checking() ? 'ai.check.consent' : 'ai.build.consent', { n: i18n.formatNumber(s.attachments.length) }) : hint }));
+        }
+        /** The chosen dataset's place on a map, with the orthophoto a choice away. */
+        function siteView() {
+          site.setDataset(s.factsFrom);
+          setTimeout(() => site.refresh(), 0);
+          return site.el;
         }
         function questionView() {
           const { q, resolve } = s.questionBox;
@@ -715,9 +725,9 @@
             s.exchanges.length > 1 ? h('p', { class: 'dm-help dm-xs', text: t('ai.history', { n: String(s.exchanges.length) }) }) : null);
           renderSteps();
         }
-        function destroy() { unsubscribe(); cancel(); if (s.preview && options.preview) { s.preview = null; Promise.resolve(options.preview(null)).catch(() => {}); } }
+        function destroy() { unsubscribe(); cancel(); site.destroy(); if (s.preview && options.preview) { s.preview = null; Promise.resolve(options.preview(null)).catch(() => {}); } }
         load().then(render);
-        return { el, destroy, state: s, check, ask: (question) => { s.question = question; return askNow(); }, attach: (list) => { s.attachments = s.attachments.concat(list || []); render(); }, addFacts, mark, load, preview: previewNow, approve: approveNow, reject: rejectNow, propose: proposeNow, approveOnServer, resolveConflicts: resolveNow, setMode: (m) => { s.mode = MODES.includes(m) ? m : 'ask'; render(); } };
+        return { el, destroy, state: s, check, site, ask: (question) => { s.question = question; return askNow(); }, attach: (list) => { s.attachments = s.attachments.concat(list || []); render(); }, addFacts, mark, load, preview: previewNow, approve: approveNow, reject: rejectNow, propose: proposeNow, approveOnServer, resolveConflicts: resolveNow, setMode: (m) => { s.mode = MODES.includes(m) ? m : 'ask'; render(); } };
       }
 
       /** The dialog that lists the providers and adds, changes or removes one; the key is written, never shown. */

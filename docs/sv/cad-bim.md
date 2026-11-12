@@ -476,6 +476,11 @@ bild bifogas som foto, fasad mot norr, öster, söder eller väster, insida elle
 (EXIF) får dem i sin bildtext, så att AI:n vet vad den ser. Uppgifterna ur en datamängd ger också byggnadsytans sydvästra hörn på
 kartan, så att AI:n placerar modellen med `set_site` (läge, höjd och SWEREF 99 TM), och med *Med markhöjd i hörnen*, som visas när
 Lantmäteriets källa är tillagd, markhöjden i varje hörn ur höjdmodellen: ett nätanrop med din nyckel efter samtycke.
+När en datamängd är vald visar *Platsen på kartan* byggnadsytan nära, och i valet av bakgrundskarta finns ortofotot som täcker platsen:
+byggnaden syns då uppifrån medan du placerar den. Kartan ritas när du öppnar den, och bilderna hämtas först när du väljer bakgrund och
+ger samtycke. Danmark, Finland och Island har öppna ortofoton som rutor; i Sverige läser appen Lantmäteriets ortofoto för platsen och
+250 m runt den ur Lantmäteriets filer med din nyckel från Geotorget (samma som för markhöjden); Norge saknar öppet ortofoto (se
+[kartor.md](kartor.md#ortofoton)).
 Efter väggarna på varje våning läser förhandsvisningen byggnadens topologi: väggarnas mittlinjer blir rum, och våningen är sluten när
 väggarna sluter minst ett rum och ingen väggände står lös; AI:n lagar lösa ändar genom att flytta eller lägga till väggar innan den
 lägger bjälklagen. Ytterväggarna med sina väderstreck låter AI:n para ett foto av fasaden mot söder med rätt väggar (läsverktyget

@@ -493,6 +493,11 @@ photo whose file carries a position and a time (EXIF) gets them in its caption, 
 dataset also give the footprint's south-west corner on the map, so that the AI places the model with `set_site` (position, height and
 SWEREF 99 TM), and with *With the ground height at the corners*, shown when Lantmäteriet's source is added, the ground height at every
 corner from the terrain model: a network call with your key after consent.
+When a dataset is chosen, *The place on the map* shows the footprint close up, and the choice of background map offers the orthophoto
+that covers the place: you see the building from above while you place it. The map is drawn when you open it, and the images are fetched
+only when you choose a background and give your consent. Denmark, Finland and Iceland have open orthophotos as tiles; in Sweden the app
+reads Lantmäteriet's orthophoto for the place and 250 m around it from Lantmäteriet's files with your key from Geotorget (the same as
+for the ground height); Norway has no open orthophoto (see [kartor.md](kartor.md#orthophotos)).
 After the walls of each storey the preview reads the building's topology: the walls' centrelines become rooms, and the storey is closed
 when the walls enclose at least one room and no wall end is left open; the AI mends open ends by moving or adding walls before it lays
 the slabs. The external walls with their compass directions let the AI match a photo of the south façade to the right walls (the read

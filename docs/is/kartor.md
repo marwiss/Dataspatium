@@ -28,7 +28,7 @@ Ef hnitin eru í öðru kerfi en SWEREF 99 TM velur þú það við innflutning,
 
 Kortið sýnir fitjur gagnasafnsins í lit forritsins. Þysjaðu með hjólinu eða hnöppunum, færðu með því að draga (kvarðinn neðst til vinstri sýnir fjarlægðina í metrum), og
 smelltu á fitju til að sjá eigindi hennar í skoðaranum; *Breyta í töflunni* fer með þig á röðina í töflunni.
-Tækjastikan hefur bakgrunnskort (ekkert eða OpenStreetMap), *Þysja að öllu*, *Vista sem kortasýn* (vistar kortið með
+Tækjastikan hefur bakgrunnskort (ekkert, OpenStreetMap eða [loftmynd](#loftmyndir)), *Þysja að öllu*, *Vista sem kortasýn* (vistar kortið með
 lögum og núverandi sýn sem myndrit í Myndgera) og *Sýna sem töflu*. Allt sem þú gerir í töflunni (sía, leiðrétta, eyða
 röðum) sést á kortinu.
 
@@ -41,7 +41,7 @@ Myndasöfn með staðsetningu hafa hnappinn *Sýna á kortinu*. Smelltu á stað
 
 *Nýtt myndrit → Kort* býr til kortasýn með valda gagnasafnið sem fyrsta lag. Stillingarnar til vinstri:
 
-- **Bakgrunnskort**: ekkert (sjálfgefið), OpenStreetMap eða eigin kortaþjónn með slóðarmynstri eins og
+- **Bakgrunnskort**: ekkert (sjálfgefið), OpenStreetMap, [loftmynd](#loftmyndir) eða eigin kortaþjónn með slóðarmynstri eins og
   `https://…/{z}/{x}/{y}.png` og heimildartexta, eða **WMS-þjónusta** (vistfang, lög, myndsnið og gegnsæi; *Lesa lög* sækir lagalista
   þjónustunnar). Bakgrunnskort eru sótt af netinu og spurt er um samþykki í fyrsta
   sinn (tilgangurinn *Bakgrunnskort* undir Umsjón → Netaðgangur).
@@ -57,6 +57,55 @@ Skoðarinn sýnir skýringarnar og fitjuna sem þú smelltir á. Kortasýn er fl
 hvern flokk, verður PowerPoint og má setja í skjalasniðmát með `{{diagram "Heiti"}}`. Útflutningurinn teiknar lögin
 án bakgrunnskorts. Í stjórnborðum, kynningum og birtu HTML er kortið gagnvirkt; birt HTML fær Leaflet innfellt og
 fitjurnar sem GeoJSON, og bakgrunnskortið sækir þá vafri lesandans.
+
+## Loftmyndir
+
+Hornrétt loftmynd (réttmynd) er loftmynd sem hefur verið leiðrétt svo hún liggi eins og kort. Fjórar opnar loftmyndir eru í vali á
+bakgrunnskorti í Vinna, í kortasýnum í Myndgera, á skipulagskortinu og undir staðsetningu nýrrar byggingar (sjá [cad-bim.md](cad-bim.md)):
+
+| Loftmynd | Útgefandi og þjónusta | Hnitakerfi | Leyfi og tilvísun | Lykill |
+|---|---|---|---|---|
+| Danmörk: GeoDanmark ortofoto forår | Klimadatastyrelsen, WMS á `wms.datafordeler.dk` | Web Mercator, ETRS89 / UTM 32N (25832) | CC BY 4.0, "GeoDanmark ortofoto forår © Klimadatastyrelsen" | Ókeypis API-lykill frá Datafordeleren: stofnaðu notanda með netfangi á portal.datafordeler.dk og síðan API-lykil (gildir í tvö ár) |
+| Finnland: Ortokuva | Maanmittauslaitos, WMTS á `avoin-karttakuva.maanmittauslaitos.fi` | Web Mercator | CC BY 4.0, "Ortokuva © Maanmittauslaitos" | Ókeypis API-lykill frá Maanmittauslaitos: stofnaðu aðgang í Oma tili (omatili.maanmittauslaitos.fi) og síðan nýjan API-lykil |
+| Ísland: Grunnkort – Loftmynd | Náttúrufræðistofnun, WMS á `gis.natt.is` | Web Mercator, ISN93 (3057) | CC BY 4.0, "Grunnkort – Loftmynd © Náttúrufræðistofnun" | Enginn |
+| Svíþjóð: Ortofoto (STAC) | Lantmäteriet, skýjabestaðar GeoTIFF-skrár í STAC-skránni á `api.lantmateriet.se/stac-bild`, skrárnar á `dl1.lantmateriet.se` | Web Mercator (umreiknað), SWEREF 99 TM (3006) | CC BY 4.0, "Ortofoto © Lantmäteriet (ár)", unnin fyrir kortið | Neytendalykill og neytendaleyndarmál af ókeypis aðgangi í Geotorget (geotorget.lantmateriet.se) þar sem Ortofoto Nedladdning hefur verið pöntuð; sami lykill og fyrir hæðarlíkanið |
+
+- Tilvísunin og leyfið standa í horni kortsins á meðan loftmyndin er sýnd.
+- Myndirnar eru aðeins sóttar þegar þú velur loftmynd, eftir samþykki fyrir *Bakgrunnskort*; spurningin nefnir hýsil þjónustunnar.
+- Þurfi loftmyndin lykil spyr forritið um hann þegar þú velur hana. Lykillinn gildir í lotunni eða er vistaður dulkóðaður með
+  lykilsetningu eins og aðrir lyklar forritsins, er aðeins sendur til eigin þjónustu í slóðum myndanna og er aldrei vistaður í kortasýninni.
+  Birt HTML tekur aðeins með loftmyndir sem þurfa ekki lykil.
+- Á skipulagskortinu í eigin hnitakerfi skipulagsins eru þær loftmyndir sem þjónustan býður í því kerfi (Danmörk í UTM 32N, Ísland í ISN93).
+- Mósaík Íslands nær enn ekki yfir allt landið og er stækkuð á hverju ári. Opin þjónusta Finnlands gefur myndirnar upp að aðdráttarstigi 16
+  og stækkar þær eftir það.
+- Noregur hefur enga opna loftmyndaþjónustu: Norge i bilder er aðeins opin meðlimum Norge digitalt. Svíþjóð hefur enga opna
+  tíglaþjónustu (Ortofoto Visning frá Lantmäteriet ber leyfisgjald), en loftmyndir Lantmäteriet eru opin gögn sem skrár, og forritið les
+  þær fyrir eina sýn í einu (hér á eftir).
+
+### Svíþjóð: loftmyndir Lantmäteriet
+
+- Veldu *Loftmynd – Lantmäteriet (STAC)*. Hún er í vali á bakgrunnskorti í Vinna, í kortasýnum í Myndgera, á skipulagskortinu (í Web
+  Mercator eða SWEREF 99 TM) og, þegar staðurinn er í Svíþjóð, undir staðsetningu nýrrar byggingar.
+- Forritið leitar í myndaskrá Lantmäteriet (STAC, söfnin `orto-<svæði>-<ár>`) að nýjustu litmyndunum yfir það sem kortið sýnir og les
+  aðeins þann hluta sem þarf úr skránum. Skrárnar eru reitir sem eru 2,5 × 2,5 km í SWEREF 99 TM með 16 cm á myndeiningu frá 2019 (25
+  eða 50 cm áður); stærri sýn er lesin úr grófara yfirlitsstigi í skránni. Þar sem nýjasta flugið endar fyllir það næstnýjasta í.
+- Myndin gildir fyrir sýnina sem þú sóttir hana fyrir, í mesta lagi 1 km² (fyrir staðsetningu nýrrar byggingar staðinn og 250 m í
+  kring). Lengsta hliðin er í mesta lagi 2.048 myndeiningar og aldrei fínni en skráin. Ef þú færir kortið sækir hnappurinn *Sækja
+  loftmynd fyrir sýnina* myndina fyrir nýju sýnina; kort sem er teiknað aftur yfir sömu sýn notar myndina sem þegar var sótt. Stærri sýn
+  gefur skilaboð um að þysja inn.
+- Á korti í Web Mercator er myndin umreiknuð myndeiningu fyrir myndeiningu úr SWEREF 99 TM, svo hún liggur rétt (minna en ein myndeining
+  frávik); á skipulagskortinu í SWEREF 99 TM liggur hún eins og í skránni.
+- Skrárnar krefjast lykils: neytendalykils og neytendaleyndarmáls af ókeypis aðgangi í Geotorget þar sem varan Ortofoto Nedladdning
+  hefur verið pöntuð (Lantmäteriet fer yfir pöntunina og samþykkja þarf skilmálana). Það er sami lykill og uppsprettan *Landupplýsingar
+  Lantmäteriet með lykli (STAC)* og hæðarlíkanið nota; vanti hann spyr forritið um hann þegar þú velur loftmyndina, með tengli á
+  Geotorget. Með lyklinum sækir forritið aðgangstákn frá `apimanager.lantmateriet.se`, og táknið er aðeins sent til
+  `dl1.lantmateriet.se`. Leitin í skránni þarf engan lykil.
+- Ekkert er sótt fyrr en þú velur loftmyndina eða ýtir á hnappinn. Þá spyr forritið einu sinni um samþykki fyrir *Vefþjónustum* og
+  nefnir hýslana. Vistuð kortasýn sækir ekkert þegar hún er opnuð; hún sýnir hnappinn.
+- Heimildin í horni kortsins fylgir skilmálum Lantmäteriet: "Ortofoto © Lantmäteriet (ár), unnin fyrir kortið (CC BY 4.0)". Myndin
+  fylgir ekki með í útflutningi (SVG, PNG, PDF), vistuðum kortasýnum eða birtu HTML.
+- Skrárnar eru lesnar einn reit í einu með hléi á milli, og umreikningurinn fer fram í lotum, svo síðan frýs ekki; sýn upp á 1 km² tekur
+  nokkrar sekúndur.
 
 ## Landfræðitól í Greina
 

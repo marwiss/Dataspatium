@@ -68,6 +68,17 @@ og dei finske frå Statistikcentralen, begge under CC BY 4.0 (kjeldetilvising «
 Statistikcentralen»). Sjå `presets/geo/KALLA.md`. Data som blir henta frå dei opne
 API-a, er omfatta av lisensen til den einskilde utgjevaren, som blir vist saman med kjelda i appen.
 
+Ortofotoa i valet av bakgrunnskart følgjer ikkje med appen: nettlesaren din hentar bileta frå tenestene til utgjevarane når du vel
+dei, etter samtykke. Alle tre er CC BY 4.0: GeoDanmark ortofoto forår frå Klimadatastyrelsen (kjeldetilvising «GeoDanmark ortofoto
+forår © Klimadatastyrelsen»), Ortokuva frå Maanmittauslaitos («Ortokuva © Maanmittauslaitos») og Grunnkort – Loftmynd frå
+Náttúrufræðistofnun («Grunnkort – Loftmynd © Náttúrufræðistofnun»). Kjeldetilvisinga og lisensen blir viste i hjørnet av kartet og skal
+følgje med eit bilete av kartet som du brukar vidare. Førehandsinnstillingane står i `presets/geodata/orthophotos.json`; sjå
+[kartor.md](kartor.md#ortofoto).
+
+Ortofotoa til Lantmäteriet (Sverige) blir lesne frå filene til Lantmäteriet med nøkkelen din og følgjer heller ikkje med appen. Dei er
+CC BY 4.0 etter bruksvilkåra til Lantmäteriet for verdfulle datasett, som ber om produktnamnet, ©Lantmäteriet, at informasjonen er
+bearbeidd, og lisensen; hjørnet av kartet viser difor "Ortofoto © Lantmäteriet (år), bearbeidd for kartet (CC BY 4.0)".
+
 ## Dataregium og Dataspatium
 
 [Dataregium OpenCDE server](https://github.com/marwiss/Dataregium) er eit eige verk under AGPL-3.0 og ingen del av Dataspatium. Same person har opphavsretten til begge verka og har 2026-11-05 tillate to ting mellom dei: Dataregium gjev att utsjånaden til Dataspatium (designvariablane i `src/ui/design/tokens.css` og stilane til komponentane er skrivne av der under AGPL, slik at dei to ser ut som eitt produkt), og Dataspatium får bruke kode og ressursar frå Dataregium, til dømes testfiler, dømetekstar og API-skildringar. Lisensane for kvart verk gjeld elles uendra; alt anna dei har felles (ordliste, README-struktur, feilkodar, kapabilitetsdokument), blir skapt på nytt som fakta i kvart repositorium.

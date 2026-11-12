@@ -408,6 +408,12 @@ Dataspatium.assets.addEntries({
   "size": 112022,
   "library": "dataspatium"
  },
+ "presets/geodata/orthophotos.json": {
+  "file": "presets/geodata/orthophotos.json.js",
+  "encoding": "text",
+  "size": 5245,
+  "library": "dataspatium"
+ },
  "presets/geodata/services.json": {
   "file": "presets/geodata/services.json.js",
   "encoding": "text",
@@ -615,7 +621,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kartor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 8877,
+  "size": 14285,
   "library": "dataspatium"
  },
  "docs/sv/planer.md": {
@@ -633,7 +639,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/cad-bim.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 70948,
+  "size": 71539,
   "library": "dataspatium"
  },
  "docs/sv/floden.md": {
@@ -681,13 +687,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/licenser.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 9220,
+  "size": 10318,
   "library": "dataspatium"
  },
  "docs/sv/sakerhet.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 17786,
+  "size": 19578,
   "library": "dataspatium"
  },
  "docs/da/kom-igang.md": {
@@ -783,7 +789,7 @@ Dataspatium.assets.addEntries({
  "docs/da/kartor.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 8816,
+  "size": 14250,
   "library": "dataspatium"
  },
  "docs/da/planer.md": {
@@ -801,7 +807,7 @@ Dataspatium.assets.addEntries({
  "docs/da/cad-bim.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 70815,
+  "size": 71425,
   "library": "dataspatium"
  },
  "docs/da/floden.md": {
@@ -849,13 +855,13 @@ Dataspatium.assets.addEntries({
  "docs/da/licenser.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 9188,
+  "size": 10257,
   "library": "dataspatium"
  },
  "docs/da/sakerhet.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 17732,
+  "size": 19553,
   "library": "dataspatium"
  },
  "docs/nb/kom-igang.md": {
@@ -951,7 +957,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/kartor.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 8687,
+  "size": 14080,
   "library": "dataspatium"
  },
  "docs/nb/planer.md": {
@@ -969,7 +975,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/cad-bim.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 70010,
+  "size": 70600,
   "library": "dataspatium"
  },
  "docs/nb/floden.md": {
@@ -1017,13 +1023,13 @@ Dataspatium.assets.addEntries({
  "docs/nb/licenser.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 9100,
+  "size": 10179,
   "library": "dataspatium"
  },
  "docs/nb/sakerhet.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 17558,
+  "size": 19377,
   "library": "dataspatium"
  },
  "docs/nn/kom-igang.md": {
@@ -1119,7 +1125,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/kartor.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 8768,
+  "size": 14202,
   "library": "dataspatium"
  },
  "docs/nn/planer.md": {
@@ -1137,7 +1143,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/cad-bim.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 71328,
+  "size": 71931,
   "library": "dataspatium"
  },
  "docs/nn/floden.md": {
@@ -1185,13 +1191,13 @@ Dataspatium.assets.addEntries({
  "docs/nn/licenser.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 9388,
+  "size": 10501,
   "library": "dataspatium"
  },
  "docs/nn/sakerhet.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 17925,
+  "size": 19757,
   "library": "dataspatium"
  },
  "docs/fi/kom-igang.md": {
@@ -1287,7 +1293,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/kartor.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 9640,
+  "size": 15320,
   "library": "dataspatium"
  },
  "docs/fi/planer.md": {
@@ -1305,7 +1311,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/cad-bim.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 75951,
+  "size": 76556,
   "library": "dataspatium"
  },
  "docs/fi/floden.md": {
@@ -1353,13 +1359,13 @@ Dataspatium.assets.addEntries({
  "docs/fi/licenser.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 10063,
+  "size": 11209,
   "library": "dataspatium"
  },
  "docs/fi/sakerhet.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 18825,
+  "size": 20719,
   "library": "dataspatium"
  },
  "docs/is/kom-igang.md": {
@@ -1455,7 +1461,7 @@ Dataspatium.assets.addEntries({
  "docs/is/kartor.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 8874,
+  "size": 14551,
   "library": "dataspatium"
  },
  "docs/is/planer.md": {
@@ -1473,7 +1479,7 @@ Dataspatium.assets.addEntries({
  "docs/is/cad-bim.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 74891,
+  "size": 75549,
   "library": "dataspatium"
  },
  "docs/is/floden.md": {
@@ -1521,13 +1527,13 @@ Dataspatium.assets.addEntries({
  "docs/is/licenser.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 9633,
+  "size": 10759,
   "library": "dataspatium"
  },
  "docs/is/sakerhet.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 18793,
+  "size": 20648,
   "library": "dataspatium"
  },
  "docs/en/kom-igang.md": {
@@ -1623,7 +1629,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kartor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 8841,
+  "size": 14327,
   "library": "dataspatium"
  },
  "docs/en/planer.md": {
@@ -1641,7 +1647,7 @@ Dataspatium.assets.addEntries({
  "docs/en/cad-bim.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 71973,
+  "size": 72612,
   "library": "dataspatium"
  },
  "docs/en/floden.md": {
@@ -1689,13 +1695,13 @@ Dataspatium.assets.addEntries({
  "docs/en/licenser.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 9463,
+  "size": 10603,
   "library": "dataspatium"
  },
  "docs/en/sakerhet.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 17704,
+  "size": 19501,
   "library": "dataspatium"
  }
 });

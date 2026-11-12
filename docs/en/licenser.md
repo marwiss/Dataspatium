@@ -70,6 +70,18 @@ Finland, both under CC BY 4.0 (attribution "© Kartverket" and "Tilastokeskus / 
 `presets/geo/KALLA.md`. Data fetched from the open APIs is covered by each publisher's licence, which is shown
 with the source in the app.
 
+The orthophotos in the choice of background map are not shipped with the app: your browser fetches the images from the providers'
+services when you choose them, after consent. All three are CC BY 4.0: GeoDanmark ortofoto forår from Klimadatastyrelsen (attribution
+"GeoDanmark ortofoto forår © Klimadatastyrelsen"), Ortokuva from Maanmittauslaitos ("Ortokuva © Maanmittauslaitos") and Grunnkort –
+Loftmynd from Náttúrufræðistofnun ("Grunnkort – Loftmynd © Náttúrufræðistofnun"). The attribution and the licence are shown in the
+corner of the map and must go with a picture of the map that you use further. The presets are in `presets/geodata/orthophotos.json`;
+see [kartor.md](kartor.md#orthophotos).
+
+Lantmäteriet's orthophotos (Sweden) are read from Lantmäteriet's files with your key and are not included in the app either. They are CC
+BY 4.0 under Lantmäteriet's terms of use for high-value datasets, which ask for the product name, ©Lantmäteriet, that the information
+has been processed and the licence; the corner of the map therefore shows "Ortofoto © Lantmäteriet (year), processed for the map (CC BY
+4.0)".
+
 ## Dataregium and Dataspatium
 
 [Dataregium OpenCDE server](https://github.com/marwiss/Dataregium) is a separate work under AGPL-3.0 and no part of Dataspatium. The same person holds the copyright of both works and on 2026-11-05 permitted two things between them: Dataregium reproduces Dataspatium's look (the design tokens in `src/ui/design/tokens.css` and the component styles are transcribed there under the AGPL, so that the two look like one product), and Dataspatium may use code and resources from Dataregium, for example test files, example texts and API descriptions. The licences of each work are otherwise unchanged; everything else they share (glossary, README structure, error codes, capabilities document) is recreated as facts in each repository.

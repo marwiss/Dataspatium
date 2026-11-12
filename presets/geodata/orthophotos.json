@@ -1,0 +1,82 @@
+{
+ "format": "dataspatium-basemaps/1",
+ "note": "Open orthophotos for the background map (decision B-64), checked 2026-11-12. Tiles are images: Leaflet shows them without CORS, and the app never reads their pixels. Every service is contacted only after the consent for background maps, with its host named. A key lives in api/secrets under basemap:<id>, goes only into the image addresses of its own service, and never into a saved map view, the log or published HTML. Sweden and Norway have no open orthophoto view service: Lantmäteriet's Ortofoto Visning carries a licence fee (fee document 2026-10-20, version 2.32) and Norge i bilder is open only to the members of Norge digitalt. Sweden's orthophotos are open as files instead (ortho-se, service stac, checked 2026-11-12): the image catalogue of Lantmäteriet's STAC is searched without a key, and api/orthophoto-cog reads only the window a small area needs from the cloud-optimised GeoTIFF files, after the consent for API fetches and with the key of the connector lantmateriet-stac sent only to the file host; the image is drawn over the map's view on the person's action, never as tiles.",
+ "basemaps": [
+  {
+   "id": "ortho-dk",
+   "kind": "orthophoto",
+   "country": "DK",
+   "name": "GeoDanmark ortofoto forår",
+   "publisher": "Klimadatastyrelsen",
+   "service": "wms",
+   "sources": {
+    "3857": { "url": "https://wms.datafordeler.dk/GeoDanmarkOrto/orto_foraar/1.0.0/WMS", "layers": "orto_foraar", "format": "image/jpeg" },
+    "25832": { "url": "https://wms.datafordeler.dk/GeoDanmarkOrto/orto_foraar/1.0.0/WMS", "layers": "orto_foraar", "format": "image/jpeg" }
+   },
+   "bounds": [8.0, 54.5, 15.3, 57.8],
+   "maxZoom": 20,
+   "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+   "attribution": "GeoDanmark ortofoto forår © Klimadatastyrelsen",
+   "terms": "https://www.klimadatastyrelsen.dk/om-klimadatastyrelsen/vilkaar-og-priser",
+   "docs": "https://confluence.kds.dk/pages/viewpage.action?pageId=153134324",
+   "key": { "param": "apikey", "signupUrl": "https://portal.datafordeler.dk/" }
+  },
+  {
+   "id": "ortho-fi",
+   "kind": "orthophoto",
+   "country": "FI",
+   "name": "Ortokuva",
+   "publisher": "Maanmittauslaitos",
+   "service": "xyz",
+   "sources": {
+    "3857": { "url": "https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0/ortokuva/default/WGS84_Pseudo-Mercator/{z}/{y}/{x}.jpg", "maxNativeZoom": 16 }
+   },
+   "bounds": [19.0, 59.4, 31.6, 70.1],
+   "maxZoom": 19,
+   "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+   "attribution": "Ortokuva © Maanmittauslaitos",
+   "terms": "https://www.maanmittauslaitos.fi/en/opendata-licence-cc40",
+   "docs": "https://www.maanmittauslaitos.fi/en/rajapinnat/api-avaimen-ohje",
+   "key": { "param": "api-key", "signupUrl": "https://omatili.maanmittauslaitos.fi/" }
+  },
+  {
+   "id": "ortho-is",
+   "kind": "orthophoto",
+   "country": "IS",
+   "name": "Grunnkort – Loftmynd",
+   "publisher": "Náttúrufræðistofnun",
+   "service": "wms",
+   "sources": {
+    "3857": { "url": "https://gis.natt.is/mapcache/web-mercator/wms", "layers": "grunnkort-loftmynd", "format": "image/png" },
+    "3057": { "url": "https://gis.natt.is/mapcache/isn93/wms", "layers": "grunnkort-loftmynd", "format": "image/png" }
+   },
+   "bounds": [-24.6, 63.2, -13.3, 66.6],
+   "maxZoom": 19,
+   "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+   "attribution": "Grunnkort – Loftmynd © Náttúrufræðistofnun",
+   "terms": "https://www.natt.is/is/midlun/opin-gogn",
+   "docs": "https://gatt.natt.is/geonetwork/srv/api/records/bd0e7245-2f62-4b2a-82c3-3e6e10b7f9ee"
+  },
+  {
+   "id": "ortho-se",
+   "kind": "orthophoto",
+   "country": "SE",
+   "name": "Ortofoto (STAC)",
+   "publisher": "Lantmäteriet",
+   "service": "stac",
+   "stac": { "connector": "lantmateriet-stac", "search": "https://api.lantmateriet.se/stac-bild/v1/search", "fileHost": "dl1.lantmateriet.se" },
+   "sources": {
+    "3857": {},
+    "3006": {}
+   },
+   "bounds": [10.8, 55.2, 24.3, 69.2],
+   "area": [[12.7, 55.25], [12.75, 55.85], [12.62, 56.02], [12.35, 56.25], [12.3, 56.6], [11.9, 56.95], [11.4, 57.55], [11.0, 58.2], [10.85, 58.95], [11.2, 59.1], [11.65, 59.45], [11.9, 59.9], [12.4, 60.25], [12.55, 61.0], [12.15, 61.7], [12.05, 62.6], [11.95, 63.3], [13.1, 64.05], [13.9, 64.9], [14.4, 65.6], [15.3, 66.3], [16.1, 67.2], [16.8, 67.95], [17.8, 68.45], [20.2, 69.15], [21.1, 68.95], [22.7, 68.45], [23.7, 67.4], [23.9, 66.6], [24.25, 65.8], [24.0, 65.35], [21.4, 64.2], [20.9, 63.55], [20.0, 62.5], [19.3, 60.35], [19.5, 59.95], [19.55, 59.45], [19.55, 58.0], [19.55, 56.8], [16.0, 55.85], [14.6, 55.25]],
+   "maxZoom": 20,
+   "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+   "attribution": "Ortofoto © Lantmäteriet",
+   "terms": "https://www.lantmateriet.se/globalassets/geodata/geodataprodukter/anvandningsvillkor_for_vardefulla_datamangder.pdf",
+   "docs": "https://www.lantmateriet.se/contentassets/6b85c93c6954407e855c896da5a415f2/guide_radiant_earth_ortofoto.pdf",
+   "key": { "connector": "lantmateriet-stac", "signupUrl": "https://geotorget.lantmateriet.se/" }
+  }
+ ]
+}

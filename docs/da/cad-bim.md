@@ -484,6 +484,11 @@ filen (EXIF) får dem med i sin billedtekst, så AI'en ved, hvad den ser. Oplysn
 sydvestlige hjørne på kortet, så AI'en placerer modellen med `set_site` (placering, højde og SWEREF 99 TM), og med *Med terrænhøjde i
 hjørnerne*, som vises når Lantmäteriets kilde er tilføjet, terrænhøjden i hvert hjørne fra højdemodellen: et netværkskald med din nøgle
 efter samtykke.
+Når et datasæt er valgt, viser *Stedet på kortet* bygningens grundflade tæt på, og valget af baggrundskort tilbyder det ortofoto, der
+dækker stedet: du ser bygningen oppefra, mens du placerer den. Kortet tegnes, når du åbner det, og billederne hentes først, når du
+vælger baggrund og giver samtykke. Danmark, Finland og Island har åbne ortofotos som fliser; i Sverige læser appen Lantmäteriets
+ortofoto for stedet og 250 m omkring det fra Lantmäteriets filer med din nøgle fra Geotorget (den samme som til terrænhøjden); Norge har
+intet åbent ortofoto (se [kartor.md](kartor.md#ortofotos)).
 Efter væggene på hver etage læser forhåndsvisningen bygningens topologi: væggenes midterlinjer bliver til rum, og etagen er lukket, når
 væggene lukker om mindst ét rum, og ingen vægende står løs; AI'en retter løse ender ved at flytte eller tilføje vægge, før den lægger
 dækkene. Ydervæggene med deres verdenshjørner lader AI'en parre et foto af facaden mod syd med de rigtige vægge (læseværktøjet

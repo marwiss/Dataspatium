@@ -66,6 +66,16 @@ sem nota má og deila með tilvísun í heimild; þau norsku koma úr N1000 Kart
 Finnlands, bæði undir CC BY 4.0 (heimild „© Kartverket“ og „Tilastokeskus / Hagstofa Finnlands“). Sjá `presets/geo/KALLA.md`. Gögn sem sótt eru úr opnu vefþjónustunum falla undir leyfi hvers
 útgefanda, sem birtist með upprunanum í forritinu.
 
+Loftmyndirnar í vali á bakgrunnskorti fylgja ekki forritinu: vafrinn þinn sækir myndirnar frá þjónustum útgefendanna þegar þú
+velur þær, eftir samþykki. Allar þrjár eru undir CC BY 4.0: GeoDanmark ortofoto forår frá Klimadatastyrelsen (heimild „GeoDanmark
+ortofoto forår © Klimadatastyrelsen“), Ortokuva frá Maanmittauslaitos („Ortokuva © Maanmittauslaitos“) og Grunnkort – Loftmynd frá
+Náttúrufræðistofnun („Grunnkort – Loftmynd © Náttúrufræðistofnun“). Heimildin og leyfið birtast í horni kortsins og eiga að fylgja
+mynd af kortinu sem þú notar áfram. Forstillingarnar eru í `presets/geodata/orthophotos.json`; sjá [kartor.md](kartor.md#loftmyndir).
+
+Loftmyndir Lantmäteriet (Svíþjóð) eru lesnar úr skrám Lantmäteriet með lyklinum þínum og fylgja ekki heldur með forritinu. Þær eru CC BY
+4.0 samkvæmt notkunarskilmálum Lantmäteriet fyrir verðmæt gagnasöfn, sem biðja um vöruheitið, ©Lantmäteriet, að upplýsingarnar hafi
+verið unnar og leyfið; horn kortsins sýnir því "Ortofoto © Lantmäteriet (ár), unnin fyrir kortið (CC BY 4.0)".
+
 ## Dataregium og Dataspatium
 
 [Dataregium OpenCDE server](https://github.com/marwiss/Dataregium) er sjálfstætt verk undir AGPL-3.0 og enginn hluti af Dataspatium. Sama manneskja á höfundarrétt beggja verkanna og heimilaði 2026-11-05 tvennt milli þeirra: Dataregium endurgerir útlit Dataspatium (hönnunarbreyturnar í `src/ui/design/tokens.css` og stílar íhlutanna eru afritaðir þar undir AGPL, svo að þau tvö líti út sem ein vara), og Dataspatium má nota kóða og tilföng úr Dataregium, til dæmis prófunarskrár, sýnitexta og API-lýsingar. Leyfi hvers verks gilda að öðru leyti óbreytt; allt annað sem þau eiga sameiginlegt (orðalisti, README-uppbygging, villukóðar, getuskjal) er endurskapað sem staðreyndir í hverri geymslu.

@@ -501,6 +501,11 @@ valokuva, jonka tiedostossa on sijainti ja ajankohta (EXIF), saa ne kuvatekstiin
 tiedot antavat myös rakennuksen pohjan lounaiskulman kartalla, joten tekoäly sijoittaa mallin työkalulla `set_site` (sijainti, korkeus
 ja SWEREF 99 TM), ja valinnalla *Maanpinnan korkeus kulmissa mukaan*, joka näkyy kun Lantmäterietin lähde on lisätty, maanpinnan
 korkeuden jokaisessa kulmassa korkeusmallista: verkkokutsu avaimellasi suostumuksen jälkeen.
+Kun aineisto on valittu, *Paikka kartalla* näyttää rakennuksen pohjan läheltä, ja taustakartan valinnassa on paikan kattava ortokuva:
+näet rakennuksen ylhäältä, kun sijoitat sen. Kartta piirretään, kun avaat sen, ja kuvat haetaan vasta, kun valitset taustan ja annat
+suostumuksen. Tanskalla, Suomella ja Islannilla on avoimet ortokuvat ruutuina; Ruotsissa sovellus lukee Lantmäterietin ortokuvan
+paikalle ja 250 m sen ympäriltä Lantmäterietin tiedostoista Geotorget-avaimellasi (sama kuin maanpinnan korkeudelle); Norjalla ei ole
+avointa ortokuvaa (katso [kartor.md](kartor.md#ortokuvat)).
 Kunkin kerroksen seinien jälkeen esikatselu lukee rakennuksen topologian: seinien keskilinjoista muodostuu huoneita, ja kerros on
 suljettu, kun seinät rajaavat vähintään yhden huoneen eikä yksikään seinänpää jää avoimeksi; tekoäly korjaa avoimet päät siirtämällä
 tai lisäämällä seiniä ennen kuin se lisää laatat. Ulkoseinät ilmansuuntineen antavat tekoälyn yhdistää eteläjulkisivun valokuvan

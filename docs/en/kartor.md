@@ -28,7 +28,7 @@ If the coordinates are in another system than SWEREF 99 TM, you choose it when y
 
 The map shows the dataset's features in the app's colour. Zoom with the wheel or the buttons, pan by dragging (the scale bar at the bottom left gives the distance in metres), and
 click a feature to see its attributes in the inspector; *Edit in the table* takes you to the row in the table. The
-toolbar has the background map (none or OpenStreetMap), *Zoom to all*, *Save as map view* (saves the map with its
+toolbar has the background map (none, OpenStreetMap or an [orthophoto](#orthophotos)), *Zoom to all*, *Save as map view* (saves the map with its
 layers and current view as a chart in Visualise) and *Show as table*. Everything you do in the table (filter,
 correct, remove rows) shows on the map.
 
@@ -41,7 +41,7 @@ Picture collections with positions have the button *Show on the map*. Click a pl
 
 *New chart → Map* creates a map view with the selected dataset as its first layer. The settings on the left:
 
-- **Background map**: none (default), OpenStreetMap, or your own map server with an address template such as
+- **Background map**: none (default), OpenStreetMap, an [orthophoto](#orthophotos), or your own map server with an address template such as
   `https://…/{z}/{x}/{y}.png` and an attribution, or a **WMS service** (address, layers, image format and transparency; *Read layers* fetches the
   service's layer list). Background maps are fetched from the net and ask for consent the
   first time (the purpose *Background maps* under Manage → Internet access).
@@ -57,6 +57,57 @@ The inspector shows the legend and the feature you clicked. A map view exports t
 group, becomes PowerPoint and can be placed in document templates with `{{diagram "Name"}}`. Exports draw the layers
 without the background map. In dashboards, presentations and published HTML the map is interactive; published HTML
 gets Leaflet embedded and the features as GeoJSON, and the background map is then fetched by the reader's browser.
+
+## Orthophotos
+
+An orthophoto is an aerial photograph corrected so that it lies like a map. Four open orthophotos are in the choice of background map
+in Process, in the map views in Visualise, on the plan map and under the place of a new building (see [cad-bim.md](cad-bim.md)):
+
+| Orthophoto | Provider and service | Coordinate systems | Licence and attribution | Key |
+|---|---|---|---|---|
+| Denmark: GeoDanmark ortofoto forår | Klimadatastyrelsen, WMS at `wms.datafordeler.dk` | Web Mercator, ETRS89 / UTM 32N (25832) | CC BY 4.0, "GeoDanmark ortofoto forår © Klimadatastyrelsen" | Free API key from Datafordeleren: create a user with your e-mail address at portal.datafordeler.dk, then an API key (valid for two years) |
+| Finland: Ortokuva | Maanmittauslaitos, WMTS at `avoin-karttakuva.maanmittauslaitos.fi` | Web Mercator | CC BY 4.0, "Ortokuva © Maanmittauslaitos" | Free API key from Maanmittauslaitos: create an account in Oma tili (omatili.maanmittauslaitos.fi), then a new API key |
+| Iceland: Grunnkort – Loftmynd | Náttúrufræðistofnun, WMS at `gis.natt.is` | Web Mercator, ISN93 (3057) | CC BY 4.0, "Grunnkort – Loftmynd © Náttúrufræðistofnun" | None |
+| Sweden: Ortofoto (STAC) | Lantmäteriet, cloud-optimised GeoTIFF files in the STAC catalogue at `api.lantmateriet.se/stac-bild`, the files at `dl1.lantmateriet.se` | Web Mercator (converted), SWEREF 99 TM (3006) | CC BY 4.0, "Ortofoto © Lantmäteriet (year)", processed for the map | Consumer key and consumer secret from a free account in Geotorget (geotorget.lantmateriet.se) in which Ortofoto Nedladdning has been ordered; the same key as for the height model |
+
+- The attribution and the licence stand in the corner of the map as long as the orthophoto is shown.
+- The images are fetched only when you choose an orthophoto, after consent for *Background maps*; the question names the service's host.
+- When an orthophoto needs a key, the app asks for it when you choose it. The key holds for the session or is saved encrypted with a
+  passphrase like the app's other keys, goes only to its own service in the addresses of the images, and is never saved in the map view.
+  Published HTML includes only orthophotos that need no key.
+- On the plan map in the plan's own coordinate system, the orthophotos whose service offers that system are listed (Denmark in UTM 32N,
+  Iceland in ISN93).
+- Iceland's mosaic does not yet cover the whole country and grows every year. Finland's open service gives the images up to zoom level 16
+  and enlarges them beyond it.
+- Norway has no open orthophoto service: Norge i bilder is open only to the members of Norge digitalt. Sweden has no open service with
+  tiles (Lantmäteriet's Ortofoto Visning carries a licence fee), but Lantmäteriet's orthophotos are open data as files, and the app
+  reads those for one view at a time (below).
+
+### Sweden: Lantmäteriet's orthophotos
+
+- Choose *Orthophoto – Lantmäteriet (STAC)*. It is in the choice of background map in Process, in the map views in Visualise, on the
+  plan map (in Web Mercator or SWEREF 99 TM) and, when the place is in Sweden, under the place of a new building.
+- The app searches Lantmäteriet's image catalogue (STAC, the collections `orto-<area>-<year>`) for the newest colour images over what
+  the map shows and reads only the part it needs from the files. The files are squares of 2.5 × 2.5 km in SWEREF 99 TM with 16 cm per
+  pixel since 2019 (25 or 50 cm before); a larger view is read from a coarser overview in the file. Where the newest flight ends, the
+  next newest fills in.
+- The image holds for the view you fetched it for, at most 1 km² (for the place of a new building, the place and 250 m around it). Its
+  longest side is at most 2,048 pixels and never finer than the file. When you move the map, the button *Fetch orthophoto for the view*
+  fetches the image for the new view; a map drawn again over the same view uses the image already fetched. A larger view gives a message
+  to zoom in.
+- On a map in Web Mercator the image is converted pixel by pixel from SWEREF 99 TM, so that it lies right (less than a pixel off); on
+  the plan map in SWEREF 99 TM it lies as in the file.
+- The files need a key: the consumer key and consumer secret of a free account in Geotorget in which the product Ortofoto Nedladdning
+  has been ordered (Lantmäteriet reviews the order, and its terms must be accepted). It is the same key that the source *Lantmäteriet
+  geodata with a key (STAC)* and the height model use; when it is missing, the app asks for it when you choose the orthophoto, with a
+  link to Geotorget. With the key the app gets an access token from `apimanager.lantmateriet.se`, and the token goes only to
+  `dl1.lantmateriet.se`. The search in the catalogue needs no key.
+- Nothing is fetched until you choose the orthophoto or press the button. Then the app asks once for consent to *API fetches* and names
+  the hosts. A saved map view fetches nothing when it is opened; it shows the button.
+- The attribution in the corner of the map follows Lantmäteriet's terms: "Ortofoto © Lantmäteriet (year), processed for the map (CC BY
+  4.0)". The image is not included in export (SVG, PNG, PDF), saved map views or published HTML.
+- The files are read one tile at a time with a pause in between, and the conversion runs in rounds, so that the page does not freeze; a
+  view of 1 km² takes a few seconds.
 
 ## Geo tools in Analyse
 

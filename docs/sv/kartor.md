@@ -28,7 +28,7 @@ Namnen räcker inte. Appen kontrollerar också värdena: en geometrikolumn måst
 
 Kartan visar datamängdens objekt i appens färg. Zooma med hjulet eller knapparna, panorera genom att dra (skalstocken nere till vänster visar avståndet i meter), och klicka
 på ett objekt så visar inspektören dess attribut; *Redigera i tabellen* tar dig till raden i tabellen. Verktygsraden
-har bakgrundskarta (ingen eller OpenStreetMap), *Zooma till allt*, *Spara som kartvy* (sparar kartan med lager och
+har bakgrundskarta (ingen, OpenStreetMap eller ett [ortofoto](#ortofoton)), *Zooma till allt*, *Spara som kartvy* (sparar kartan med lager och
 aktuell vy som ett diagram i Visualisera) och *Visa som tabell*. Allt du gör i tabellen (filtrera, rätta, ta bort
 rader) syns på kartan.
 
@@ -41,7 +41,7 @@ Bildsamlingar med position har knappen *Visa på kartan*. Klicka på en plats s�
 
 *Nytt diagram → Karta* skapar en kartvy med den valda datamängden som första lager. Inställningarna till vänster:
 
-- **Bakgrundskarta**: ingen (standard), OpenStreetMap, eller en egen kartserver med en adressmall som
+- **Bakgrundskarta**: ingen (standard), OpenStreetMap, ett [ortofoto](#ortofoton), eller en egen kartserver med en adressmall som
   `https://…/{z}/{x}/{y}.png` och källtext, eller en **WMS-tjänst** (adress, lager, bildformat och genomskinlighet; *Läs lager* hämtar tjänstens
   lagerlista). Bakgrundskartor hämtas från nätet och frågar efter samtycke första
   gången (ändamålet *Bakgrundskartor* under Hantera → Internetåtkomst).
@@ -57,6 +57,55 @@ Inspektören visar teckenförklaringen och det objekt du klickat på. Kartvyn ex
 batch per grupp, blir PowerPoint och kan läggas in i dokumentmallar med `{{diagram "Namn"}}`. Exporten ritar lagren
 utan bakgrundskarta. I dashboards, presentationer och publicerad HTML är kartan interaktiv; publicerad HTML får
 Leaflet inbäddat och objekten som GeoJSON, och bakgrundskartan hämtas då av läsarens webbläsare.
+
+## Ortofoton
+
+Ett ortofoto är en flygbild som är rättad så att den ligger som en karta. Fyra öppna ortofoton finns i valet av bakgrundskarta i
+Bearbeta, i kartvyerna i Visualisera, på plankartan och under platsen för en ny byggnad (se [cad-bim.md](cad-bim.md)):
+
+| Ortofoto | Utgivare och tjänst | Koordinatsystem | Licens och källangivelse | Nyckel |
+|---|---|---|---|---|
+| Danmark: GeoDanmark ortofoto forår | Klimadatastyrelsen, WMS på `wms.datafordeler.dk` | Web Mercator, ETRS89 / UTM 32N (25832) | CC BY 4.0, "GeoDanmark ortofoto forår © Klimadatastyrelsen" | Gratis API-nyckel från Datafordeleren: skapa en användare med e-post på portal.datafordeler.dk och sedan en API-nyckel (gäller två år) |
+| Finland: Ortokuva | Maanmittauslaitos, WMTS på `avoin-karttakuva.maanmittauslaitos.fi` | Web Mercator | CC BY 4.0, "Ortokuva © Maanmittauslaitos" | Gratis API-nyckel från Maanmittauslaitos: skapa ett konto i Oma tili (omatili.maanmittauslaitos.fi) och sedan en ny API-nyckel |
+| Island: Grunnkort – Loftmynd | Náttúrufræðistofnun, WMS på `gis.natt.is` | Web Mercator, ISN93 (3057) | CC BY 4.0, "Grunnkort – Loftmynd © Náttúrufræðistofnun" | Ingen |
+| Sverige: Ortofoto (STAC) | Lantmäteriet, molnoptimerade GeoTIFF-filer i STAC-katalogen på `api.lantmateriet.se/stac-bild`, filerna på `dl1.lantmateriet.se` | Web Mercator (omräknad), SWEREF 99 TM (3006) | CC BY 4.0, "Ortofoto © Lantmäteriet (år)", bearbetad för kartan | Konsumentnyckel och konsumenthemlighet från ett kostnadsfritt konto i Geotorget (geotorget.lantmateriet.se) där Ortofoto Nedladdning är beställd; samma nyckel som för höjdmodellen |
+
+- Källangivelsen och licensen står i kartans hörn så länge ortofotot visas.
+- Bilderna hämtas först när du väljer ett ortofoto, efter samtycke för *Bakgrundskartor*; frågan namnger tjänstens värd.
+- Behöver ortofotot en nyckel frågar appen efter den när du väljer det. Nyckeln gäller sessionen eller sparas krypterad med lösenfras som
+  appens andra nycklar, skickas bara till sin egen tjänst i bildernas adresser och sparas aldrig i kartvyn. Publicerad HTML tar bara med
+  ortofoton som inte behöver nyckel.
+- På plankartan i planens eget koordinatsystem finns de ortofoton vars tjänst ger det systemet (Danmark i UTM 32N, Island i ISN93).
+- Islands mosaik täcker ännu inte hela landet och byggs ut varje år. Finlands öppna tjänst ger bilderna till zoomnivå 16 och förstorar
+  dem därefter.
+- Norge saknar öppen ortofototjänst: Norge i bilder är öppen bara för medlemmarna i Norge digitalt. Sverige saknar en öppen tjänst med
+  rutor (Lantmäteriets Ortofoto Visning har en licensavgift), men Lantmäteriets ortofoton är öppna data som filer, och dem läser appen
+  för en vy i taget (nedan).
+
+### Sverige: Lantmäteriets ortofoton
+
+- Välj *Ortofoto – Lantmäteriet (STAC)*. Det finns i valet av bakgrundskarta i Bearbeta, i kartvyerna i Visualisera, på plankartan (i
+  Web Mercator eller SWEREF 99 TM) och, när platsen ligger i Sverige, under platsen för en ny byggnad.
+- Appen söker i Lantmäteriets bildkatalog (STAC, samlingarna `orto-<område>-<år>`) efter de nyaste färgbilderna över det som kartan
+  visar och läser bara det utsnitt som behövs ur filerna. Filerna är rutor om 2,5 × 2,5 km i SWEREF 99 TM med 16 cm per bildpunkt sedan
+  2019 (25 eller 50 cm tidigare); en större vy läses ur en grövre översiktsnivå i filen. Där den nyaste flygningen slutar fyller den
+  näst nyaste i.
+- Bilden gäller den vy som du hämtade den för, högst 1 km² (för platsen för en ny byggnad platsen och 250 m runt den). Längsta sidan är
+  högst 2 048 bildpunkter och aldrig finare än filen. Flyttar du kartan hämtar knappen *Hämta ortofoto för vyn* bilden för den nya vyn;
+  en karta som ritas om över samma vy använder bilden som redan är hämtad. En större vy ger ett meddelande om att zooma in.
+- På en karta i Web Mercator räknas bilden om bildpunkt för bildpunkt från SWEREF 99 TM, så att den ligger rätt (mindre än en bildpunkt
+  fel); på plankartan i SWEREF 99 TM ligger den som i filen.
+- Filerna kräver nyckel: konsumentnyckel och konsumenthemlighet från ett kostnadsfritt konto i Geotorget där produkten Ortofoto
+  Nedladdning är beställd (Lantmäteriet prövar beställningen, och villkoren ska godkännas). Det är samma nyckel som källan *Lantmäteriet
+  geodata med nyckel (STAC)* och höjdmodellen använder; saknas den frågar appen efter den när du väljer ortofotot, med en länk till
+  Geotorget. Med nyckeln hämtar appen en åtkomsttoken från `apimanager.lantmateriet.se`, och token skickas bara till
+  `dl1.lantmateriet.se`. Sökningen i katalogen går utan nyckel.
+- Inget hämtas förrän du väljer ortofotot eller trycker på knappen. Då frågar appen en gång om samtycke för *API-hämtning* och namnger
+  värdarna. En sparad kartvy hämtar inget när den öppnas; den visar knappen.
+- Källangivelsen i kartans hörn följer Lantmäteriets villkor: "Ortofoto © Lantmäteriet (år), bearbetad för kartan (CC BY 4.0)". Bilden
+  följer inte med i export (SVG, PNG, PDF), sparade kartvyer eller publicerad HTML.
+- Filerna läses en ruta i taget med en paus emellan, och omräkningen sker i omgångar, så att sidan inte låser sig; en vy på 1 km² tar
+  några sekunder.
 
 ## Geoverktyg i Analysera
 

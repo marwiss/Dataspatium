@@ -3,14 +3,15 @@
 /**
  * Plan view in Bearbeta for datasets of kind "plan": a detailed development plan drawn as a plan map (uses filled
  * with Boverket's colours, property and administrative provisions as outlines, designations as labels, the plan
- * boundary on top) or a comprehensive plan by theme, with zoom and pan, an optional background map after consent,
+ * boundary on top) or a comprehensive plan by theme, with zoom and pan, an optional background map after consent
+ * (OpenStreetMap, an orthophoto in the grids its service offers, or a WMS),
  * the provisions listed in the inspector and the clicked provision explained from the embedded catalogue. The
  * dataset itself is always the table of plan objects; the table is one click away.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/plan-view', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'data/geo', 'viz/leaflet', 'viz/charts', 'viz/data', 'platform/files'], (base, datasets, plan, catalog, geo, leaflet, charts, vizData, files) => {
+  D.define('ui/bearbeta/plan-view', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'data/geo', 'viz/leaflet', 'viz/charts', 'viz/data', 'platform/files', 'ui/viz/basemap-choice'], (base, datasets, plan, catalog, geo, leaflet, charts, vizData, files, basemapChoice) => {
     const { h, t, i18n, replace } = base;
     const MAX_ROWS = 20000;
     const OUTLINE_STYLES = {
@@ -29,6 +30,13 @@
       const { ui, shell, store } = ctx;
       const s = { id: null, basemap: 'none', wms: null, projection: 'web', labels: true, hidden: new Set(), selected: null, rows: [], info: null, slag: 'detaljplan', updatedAt: null };
       let ds = null; let slots = null; let mapEl = null; let handle = null; let seq = 0; let groups = []; let labelLayer = null; let L = null;
+      /** Sweden's orthophoto: read on the next drawing, because the person chose it (for the plan's extent, at most a square kilometre). */
+      let orthoLoad = false;
+      async function loadOrtho(hd, load) {
+        const status = await basemapChoice.drawView(hd, { load, redraw: () => { orthoLoad = true; draw(); } });
+        if (status === 'idle') ui.toast.show(t('ortho.se.idle'), { kind: 'info', timeout: 9000 });
+        return status;
+      }
 
       /** Read the plan's rows (objects) and facts. */
       async function load(dataset) {
@@ -80,6 +88,10 @@
         if (my !== seq || !slots) return;
         // The map in Web Mercator (as web maps are) or in the plan's own grid (SWEREF 99 TM or its zone), with north up as on the plan map.
         const grid = planGrid();
+        // The orthophotos whose service offers the map's grid (Web Mercator or the plan's own).
+        const orthos = await basemapChoice.options({ grid: s.projection === 'plan' ? grid : 0 });
+        if (my !== seq || !slots) return;
+        if (s.basemap.startsWith('ortho-') && !orthos.some((o) => o.value === s.basemap)) { ui.toast.show(t('map.projection.ortho', { name: t('map.basemap.' + s.basemap), crs: geo.crsLabel(grid) }), { kind: 'info', timeout: 9000 }); s.basemap = 'none'; }
         const projectionSel = /** @type {any} */ (h('dm-select', { 'aria-label': t('map.projection'), inline: true, 'data-plan-projection': '' }));
         projectionSel.options = [{ value: 'web', label: t('map.projection.web') }, { value: 'plan', label: geo.crsLabel(grid) }];
         projectionSel.value = s.projection;
@@ -88,19 +100,23 @@
           if (s.projection === 'plan' && s.basemap === 'osm') { s.basemap = 'none'; ui.toast.show(t('map.projection.osm', { crs: geo.crsLabel(grid) }), { kind: 'info', timeout: 9000 }); }
           render(dataset, target);
         });
-        // OpenStreetMap exists in Web Mercator only; a WMS can be asked for in either system.
+        // OpenStreetMap exists in Web Mercator only; an orthophoto in the grids its service offers; a WMS can be asked for in either system.
         const basemapSel = /** @type {any} */ (h('dm-select', { 'aria-label': t('map.basemap'), inline: true, 'data-plan-basemap': '' }));
-        basemapSel.options = [{ value: 'none', label: t('map.basemap.none') }].concat(s.projection === 'web' ? [{ value: 'osm', label: t('map.basemap.osm') }] : [], [{ value: 'wms', label: t('map.basemap.wms') }]);
+        basemapSel.options = [{ value: 'none', label: t('map.basemap.none') }].concat(s.projection === 'web' ? [{ value: 'osm', label: t('map.basemap.osm') }] : [], orthos, [{ value: 'wms', label: t('map.basemap.wms') }]);
         basemapSel.value = s.basemap;
         basemapSel.addEventListener('change', async () => {
+          if (!(await basemapChoice.ensure(basemapSel.value))) { basemapSel.value = s.basemap; return; }
           if (basemapSel.value === 'wms' && !(s.wms && s.wms.url && s.wms.layers)) {
             const w = await wmsDialog();
             if (!w) { basemapSel.value = s.basemap; return; }
             s.wms = w;
           }
           s.basemap = basemapSel.value;
+          orthoLoad = basemapChoice.isView(s.basemap);
           render(dataset, target);
         });
+        // Sweden's orthophoto covers the view it was read for; after a move the person reads it for the new view.
+        const orthoBtn = basemapChoice.isView(s.basemap) ? ui.button({ label: t('ortho.se.load'), icon: 'image', 'icon-only': true, title: t('ortho.se.load.hint'), 'data-map-ortho-load': '', onClick: () => { if (handle) loadOrtho(handle, true); } }) : null;
         const wmsEdit = s.basemap === 'wms' ? ui.button({ label: t('map.wms.edit'), icon: 'pencil', 'icon-only': true, title: t('map.wms.edit.hint'), 'data-plan-wms-edit': '', onClick: async () => { const w = await wmsDialog(); if (w) { s.wms = w; draw(); } } }) : null;
         const labels = /** @type {any} */ (h('dm-switch', { label: t('plan.labels') }));
         labels.checked = s.labels;
@@ -110,7 +126,7 @@
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon('layers', 20), dataset.name, ' ', h('dm-badge', { text: t('plan.slag.' + s.slag) }), info.land && info.land !== 'SE' ? h('dm-badge', { text: t('plan.land.' + info.land) }) : null, info.status ? h('dm-badge', { kind: /laga kraft|antagen|vedtaget|í gildi|voimassa|^13$/i.test(info.status) ? 'ok' : 'accent', text: info.status }) : null),
-            h('div', { class: 'dm-toolbar' }, projectionSel, basemapSel, wmsEdit, labels,
+            h('div', { class: 'dm-toolbar' }, projectionSel, basemapSel, wmsEdit, orthoBtn, labels,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: fit }),
               ui.button({ label: t('map.save.chart'), icon: 'save', title: t('plan.save.chart.hint'), onClick: saveChart }),
               s.slag === 'detaljplan' ? ui.button({ label: t('plan.provisions.export'), icon: 'file-text', title: t('plan.provisions.export.hint'), onClick: exportProvisions }) : null,
@@ -136,6 +152,7 @@
           handle = hd;
           L = /** @type {any} */ (globalThis).L;
           if (hd.info.basemapDenied) ui.toast.show(t('map.basemap.denied'), { kind: 'warn' });
+          basemapChoice.notifyKey(hd.info, () => { orthoLoad = true; draw(); });
           if (hd.info.basemapProjection) ui.toast.show(t('map.projection.osm', { crs: geo.crsLabel(planGrid()) }), { kind: 'info', timeout: 9000 });
           for (const key of groupKeys()) {
             const rows = s.rows.filter((r) => keyOf(r) === key && r.geometri);
@@ -153,6 +170,8 @@
           fit();
           openPending();
           renderInspector();
+          // Sweden's orthophoto for the plan's extent, under the plan objects, once the map has fitted them.
+          if (hd.info.basemapView) { const load = orthoLoad; orthoLoad = false; await loadOrtho(hd, load); }
         } catch (err) {
           if (my !== seq) return;
           replace(mapEl, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) }));

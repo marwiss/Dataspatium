@@ -29,7 +29,7 @@ Jos koordinaatit ovat muussa koordinaatistossa kuin SWEREF 99 TM, valitset sen t
 
 Kartta näyttää aineiston kohteet sovelluksen värillä. Lähennä rullalla tai painikkeilla, panoroi vetämällä (mittakaavajana vasemmassa alakulmassa näyttää etäisyyden metreinä) ja
 napsauta kohdetta, niin tarkastelupaneeli näyttää sen ominaisuudet; *Muokkaa taulukossa* vie riville taulukossa.
-Työkalupalkissa ovat taustakartta (ei mitään tai OpenStreetMap), *Sovita kaikki*, *Tallenna karttanäkymänä*
+Työkalupalkissa ovat taustakartta (ei mitään, OpenStreetMap tai [ortokuva](#ortokuvat)), *Sovita kaikki*, *Tallenna karttanäkymänä*
 (tallentaa kartan tasoineen ja nykyisine näkymineen kaaviona Visualisoi-tilaan) ja *Näytä taulukkona*. Kaikki, mitä
 teet taulukossa (suodatat, korjaat, poistat rivejä), näkyy kartalla.
 
@@ -42,7 +42,7 @@ Kuvakokoelmissa, joissa on sijainteja, on painike *Näytä kartalla*. Napsauta p
 
 *Uusi kaavio → Kartta* luo karttanäkymän, jonka ensimmäinen taso on valittu aineisto. Asetukset vasemmalla:
 
-- **Taustakartta**: ei mitään (oletus), OpenStreetMap tai oma karttapalvelin osoitemallilla, kuten
+- **Taustakartta**: ei mitään (oletus), OpenStreetMap, [ortokuva](#ortokuvat) tai oma karttapalvelin osoitemallilla, kuten
   `https://…/{z}/{x}/{y}.png`, ja lähdetekstillä, tai **WMS-palvelu** (osoite, tasot, kuvamuoto ja läpinäkyvyys; *Lue tasot* hakee palvelun
   tasoluettelon). Taustakartat noudetaan verkosta, ja ensimmäisellä kerralla kysytään
   suostumus (tarkoitus *Taustakartat* kohdassa Hallitse → Internet-yhteys).
@@ -59,6 +59,56 @@ eräajona ryhmää kohti, muuttuu PowerPointiksi ja voidaan sijoittaa asiakirjam
 `{{diagram "Nimi"}}`. Vienti piirtää tasot ilman taustakarttaa. Koontinäytöissä, esityksissä ja julkaistussa
 HTML:ssä kartta on vuorovaikutteinen; julkaistuun HTML:ään upotetaan Leaflet ja kohteet GeoJSON-muodossa, ja
 taustakartan noutaa silloin lukijan selain.
+
+## Ortokuvat
+
+Ortokuva on ilmakuva, joka on oikaistu niin, että se asettuu kuin kartta. Neljä avointa ortokuvaa on taustakartan valinnassa
+Muokkaa-tilan kartassa, Visualisoi-tilan karttanäkymissä, kaavakartalla ja uuden rakennuksen paikan alla (katso [cad-bim.md](cad-bim.md)):
+
+| Ortokuva | Julkaisija ja palvelu | Koordinaattijärjestelmät | Lisenssi ja lähdemaininta | Avain |
+|---|---|---|---|---|
+| Tanska: GeoDanmark ortofoto forår | Klimadatastyrelsen, WMS osoitteessa `wms.datafordeler.dk` | Web Mercator, ETRS89 / UTM 32N (25832) | CC BY 4.0, "GeoDanmark ortofoto forår © Klimadatastyrelsen" | Maksuton API-avain Datafordelerenilta: luo käyttäjä sähköpostiosoitteella osoitteessa portal.datafordeler.dk ja sitten API-avain (voimassa kaksi vuotta) |
+| Suomi: Ortokuva | Maanmittauslaitos, WMTS osoitteessa `avoin-karttakuva.maanmittauslaitos.fi` | Web Mercator | CC BY 4.0, "Ortokuva © Maanmittauslaitos" | Maksuton API-avain Maanmittauslaitokselta: luo tili Oma tili -palveluun (omatili.maanmittauslaitos.fi) ja sitten uusi API-avain |
+| Islanti: Grunnkort – Loftmynd | Náttúrufræðistofnun, WMS osoitteessa `gis.natt.is` | Web Mercator, ISN93 (3057) | CC BY 4.0, "Grunnkort – Loftmynd © Náttúrufræðistofnun" | Ei tarvita |
+| Ruotsi: Ortofoto (STAC) | Lantmäteriet, pilvioptimoidut GeoTIFF-tiedostot STAC-luettelossa osoitteessa `api.lantmateriet.se/stac-bild`, tiedostot osoitteessa `dl1.lantmateriet.se` | Web Mercator (muunnettuna), SWEREF 99 TM (3006) | CC BY 4.0, "Ortofoto © Lantmäteriet (vuosi)", käsitelty karttaa varten | Kuluttaja-avain ja kuluttajasalaisuus maksuttomalta Geotorget-tililtä (geotorget.lantmateriet.se), jolla Ortofoto Nedladdning on tilattu; sama avain kuin korkeusmallissa |
+
+- Lähdemaininta ja lisenssi näkyvät kartan kulmassa niin kauan kuin ortokuva on näkyvissä.
+- Kuvat haetaan vasta, kun valitset ortokuvan, *Taustakartat*-suostumuksen jälkeen; kysymys nimeää palvelun palvelimen.
+- Jos ortokuva vaatii avaimen, sovellus kysyy sitä, kun valitset kuvan. Avain on voimassa istunnon ajan tai tallennetaan salattuna
+  tunnuslauseella kuten sovelluksen muut avaimet, lähetetään vain omaan palveluunsa kuvien osoitteissa eikä sitä koskaan tallenneta
+  karttanäkymään. Julkaistu HTML ottaa mukaan vain ortokuvat, jotka eivät vaadi avainta.
+- Kaavakartalla kaavan omassa koordinaattijärjestelmässä ovat ne ortokuvat, joiden palvelu tarjoaa järjestelmän (Tanska UTM 32N:ssä,
+  Islanti ISN93:ssa).
+- Islannin mosaiikki ei vielä kata koko maata, ja sitä laajennetaan joka vuosi. Suomen avoin palvelu antaa kuvat zoomaustasolle 16 asti ja
+  suurentaa niitä sen jälkeen.
+- Norjalla ei ole avointa ortokuvapalvelua: Norge i bilder on avoin vain Norge digitalt -yhteistyön jäsenille. Ruotsilla ei ole avointa
+  ruutupalvelua (Lantmäterietin Ortofoto Visning on lisenssimaksullinen), mutta Lantmäterietin ortokuvat ovat avointa dataa tiedostoina,
+  ja sovellus lukee niitä näkymä kerrallaan (alla).
+
+### Ruotsi: Lantmäterietin ortokuvat
+
+- Valitse *Ortokuva – Lantmäteriet (STAC)*. Se on taustakartan valinnassa Muokkaa-tilan kartassa, Visualisoi-tilan karttanäkymissä,
+  kaavakartalla (Web Mercatorissa tai SWEREF 99 TM:ssä) ja, kun paikka on Ruotsissa, uuden rakennuksen paikan alla.
+- Sovellus hakee Lantmäterietin kuvaluettelosta (STAC, kokoelmat `orto-<alue>-<vuosi>`) uusimmat värikuvat sen alueen päältä, jonka
+  kartta näyttää, ja lukee tiedostoista vain tarvittavan rajauksen. Tiedostot ovat 2,5 × 2,5 km:n ruutuja SWEREF 99 TM:ssä, 16 cm
+  kuvapistettä kohden vuodesta 2019 (aiemmin 25 tai 50 cm); suurempi näkymä luetaan tiedoston karkeammalta yleiskuvatasolta. Missä uusin
+  kuvauslento päättyy, seuraavaksi uusin täydentää.
+- Kuva koskee näkymää, jolle haet sen, enintään 1 km² (uuden rakennuksen paikalle paikka ja 250 m sen ympäriltä). Sen pisin sivu on
+  enintään 2 048 kuvapistettä eikä koskaan tiedostoa tarkempi. Kun siirrät karttaa, painike *Hae ortokuva näkymälle* hakee kuvan uudelle
+  näkymälle; samaan näkymään uudelleen piirretty kartta käyttää jo haettua kuvaa. Suuremmasta näkymästä tulee kehotus lähentää.
+- Web Mercator -kartalla kuva muunnetaan SWEREF 99 TM:stä kuvapiste kuvapisteeltä, joten se on oikealla paikallaan (alle kuvapisteen
+  virhe); SWEREF 99 TM -kaavakartalla se on kuten tiedostossa.
+- Tiedostot vaativat avaimen: kuluttaja-avaimen ja kuluttajasalaisuuden maksuttomalta Geotorget-tililtä, jolla tuote Ortofoto
+  Nedladdning on tilattu (Lantmäteriet käsittelee tilauksen, ja ehdot on hyväksyttävä). Se on sama avain, jota lähde *Lantmäteriet
+  paikkatiedot avaimella (STAC)* ja korkeusmalli käyttävät; jos se puuttuu, sovellus kysyy sitä, kun valitset ortokuvan, ja antaa linkin
+  Geotorgetiin. Avaimella sovellus hakee käyttötunnisteen osoitteesta `apimanager.lantmateriet.se`, ja tunniste lähetetään vain
+  osoitteeseen `dl1.lantmateriet.se`. Haku luettelosta ei vaadi avainta.
+- Mitään ei haeta, ennen kuin valitset ortokuvan tai painat painiketta. Silloin sovellus kysyy kerran suostumusta *API-hakuun* ja nimeää
+  palvelimet. Tallennettu karttanäkymä ei hae mitään, kun se avataan; se näyttää painikkeen.
+- Lähdemerkintä kartan kulmassa noudattaa Lantmäterietin ehtoja: "Ortofoto © Lantmäteriet (vuosi), käsitelty karttaa varten (CC BY
+  4.0)". Kuva ei sisälly vientiin (SVG, PNG, PDF), tallennettuihin karttanäkymiin eikä julkaistuun HTML:ään.
+- Tiedostot luetaan ruutu kerrallaan tauon kanssa, ja muunnos tehdään erissä, joten sivu ei jumitu; 1 km²:n näkymä vie muutaman
+  sekunnin.
 
 ## Paikkatietotyökalut Analysoi-tilassa
 
