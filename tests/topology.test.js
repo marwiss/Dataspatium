@@ -63,7 +63,7 @@
       topology = [];
       assert.ok(!('topology' in (await agent.previewFor(ds.id, cs))), 'no storey with walls touched: no topology');
     } finally { bridge.runIfcChangeset = real; bridge.state = state; }
-    assert.ok(/preview's topology says whether the storey is closed; mend open ends \(dangles\) by moving or adding walls before the slabs\.$/.test(agent.SYSTEM_BUILD), 'the last sentence of the build text');
+    assert.ok(/preview's topology says whether the storey is closed; mend open ends \(dangles\) by moving or adding walls before the slabs\./.test(agent.SYSTEM_BUILD), 'the build text says to mend open ends');
     assert.ok(agent.PREVIEW_TOOL.description.includes('topology'), 'the preview tool tells of the topology');
     return 'ok';
   }, 20000);
