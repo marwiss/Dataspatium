@@ -10,6 +10,8 @@
  * 2.34: the capabilities document (/.well-known/dataregium) and the server's error codes in the user's words. Runs only when the page is
  * served over http and given ?cde=<server>&cdehelper=<helper>&cdeclient=<client id>[&cdeproject=<name>][&cdebcf=2.1]; otherwise it is
  * skipped. With cdebcf=2.1 the suite speaks BCF API 2.1, and checks that each version's answers hold what its specification says. The helper (tools/cde-helper.py) plays the user at the server's own pages. See docs/utveckling.md.
+ * VII (F43 a and b, step 5): the twin on the server, a new model built with the write tools as the brief mode builds it, proposed in the
+ * ops form, tried, approved, and a second proposal against the old base resolved with keep_theirs (needs &python=1, see its comment).
  */
 (function () {
   'use strict';
@@ -42,7 +44,7 @@
   const ifcBytes = () => new TextEncoder().encode(IFC_TEXT).buffer;
   const log = (text) => console.log('DATASPATIUM-LOG: cde ' + text);
   const finding = (text) => console.log('DATASPATIUM-LOG: cde FINDING ' + text);
-  const shared = { connector: null, projectId: '', topic: null, other: null, viewpoint: null, documentId: '', created: [], bcfDocument: null };
+  const shared = { connector: null, projectId: '', topic: null, other: null, viewpoint: null, documentId: '', created: [], bcfDocument: null, proposalTopics: [] };
   const timed = async (label, fn) => { const t0 = performance.now(); const out = await fn(); log(`${label}: ${Math.round(performance.now() - t0)} ms`); return out; };
   async function helper(path, query) {
     const q = new URLSearchParams(query);
@@ -783,8 +785,296 @@
     return `${summary.status}, ${checks.length} checks` + (s ? `, IDS ${s.passed}/${s.total} passed` : '');
   }, 120000);
 
+  // ------------------------------------------------------------------------------------------------------------------------------
+  /*
+   * VII: the twin on the server, the milestone Ny byggnad ur en brief and the digital twin (F43 a and b, step 5). A new model
+   * (Ny byggnadsmodell, the default schema) goes to the project as a document and is fetched back as the twin's version 1; the AI
+   * panel in its mode Bygg ur brief previews a change set of the write tools (the storey's words, a layered wall type and slab type
+   * from define_type, four walls of the wall type, a slab, a door of a door type in an opening, a column of a column type from
+   * create_element and edit_element on one wall), and proposes it with its operations in the ops form "dataspatium-tools/1"; the
+   * server's trial must apply every operation, report the created elements by GlobalId per ref, and its approval must give version 2
+   * whose elements are the preview's (the base's own GlobalIds kept, a created one's the trial's for its ref). Then a second proposal
+   * against the old version 1 gives the storey another description: the approval answers 412 with the collision, the panel gives the
+   * change up as keep_theirs, the server tries it on version 2, and version 3 keeps version 2's description and gains the column.
+   * Run with the suite's parameters and Python:
+   *   tests/index.html?only=opencde%20live&cde=<server>&cdehelper=<helper>&cdeclient=<client id>[&cdeproject=<name>][&cdeuser=<user id>]&python=1
+   * (python=1 fetches Pyodide and IfcOpenShell after consent; components cached from an earlier run do as well; not with cdebcf=2.1,
+   * since proposals are BCF 3.0). The server: Dataregium 3.0.0 in its fourteenth release, whose ifc_changes takes the ops form as
+   * Dataspatium 437982f writes it (define_type with door and column types, create_element, edit_element, the storey's description),
+   * with the IFC-LPG module on (`ifc_changes.tried`), and the helper's user a manager of the project. The proposals' topics go in the
+   * cleanup; the documents and their versions stay, since the Documents API removes none.
+   */
+  const writeTools = D.require('ai/write-tools');
+  const twin = { base: null, documentId: '', storeyGuid: '', v1: null, a: null, v2: null };
+  const A_DESC = 'Plan 1 (Entré)';
+  const B_DESC = 'Plan 1 (Huvudentré)';
+  const GLOBAL_ID = /^[0-9A-Za-z_$]{22}$/;
+  const TWIN_FIELDS = ['typ', 'namn', 'beskrivning', 'objekttyp', 'vaning', 'typnamn', 'material'];
+  const HOUSE = [['Syd', [0, 0], [10, 0]], ['Öst', [10, 0], [10, 8]], ['Norr', [10, 8], [0, 8]], ['Väst', [0, 8], [0, 0]]];
+  const layer = (material, thickness, category, role) => ({ material, thickness, category, role });
+  const rect = (x, y, depth) => ({ profile: 'rectangle', x, y, radius: null, outline: null, depth, along: null });
+  /** A create_element call as a provider sends it: every field, null where not given. */
+  const element = (patch) => Object.assign({ storey: 'Plan 1', ifc_class: 'IfcColumn', predefined_type: null, object_type: null, type: null, name: null, at: [0, 0], z: null, rotation: null, shape: rect(0.3, 0.3, 3), stair: null, part_of: null, host: null }, patch);
+  const NO_ELEMENT_TYPE = { material: null, material_category: null, operation: null, partitioning: null, width: null, height: null, lining_depth: null };
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  async function waitUntil(fn, ms, label) {
+    const t0 = performance.now();
+    for (;;) { const v = await fn(); if (v) return v; if (performance.now() - t0 > ms) throw new Error('timeout waiting for ' + label); await sleep(250); }
+  }
+  async function pythonReady() {
+    if (params.get('python') === '1') return true;
+    try { return !!(await D.require('engines/python/catalog').cachedRuntime()); } catch (_e) { return false; }
+  }
+  /** One write-tool call into the change set; its ref when it creates. */
+  function step(cs, name, args) {
+    const out = writeTools.call(cs, name, args);
+    if (!out.ok) throw new Error(`${name}: ${JSON.stringify(out)}`);
+    return out.ref || null;
+  }
+  /** The house of the first proposal, in the order the brief mode builds: the storey, the types, the walls, the slab, the door, the column, an edit. */
+  function buildHouse(cs) {
+    step(cs, 'create_storeys_and_grid', { storeys: [{ name: 'Plan 1', elevation: 0, description: A_DESC, long_name: 'Entréplan' }], grid: null });
+    const wallType = step(cs, 'define_type', Object.assign({ kind: 'wall', name: 'YV1', layers: [layer('Puts', 0.02, null, 'outer_finish'), layer('Lättbetong', 0.25, 'block', 'load_bearing'), layer('Puts', 0.03, null, 'inner_finish')], predefined_type: 'SOLIDWALL' }, NO_ELEMENT_TYPE));
+    const slabType = step(cs, 'define_type', Object.assign({ kind: 'slab', name: 'BJ1', layers: [layer('Parkett', 0.015, 'wood', 'inner_finish'), layer('Betong', 0.2, 'concrete', 'load_bearing'), layer('Cellplast', 0.035, 'plastic', 'insulation')], predefined_type: null }, NO_ELEMENT_TYPE));
+    const doorType = step(cs, 'define_type', { kind: 'door', name: 'D1', layers: null, predefined_type: null, material: 'Trä', material_category: 'wood', operation: 'SINGLE_SWING_LEFT', partitioning: null, width: 1, height: 2.1, lining_depth: 0.1 });
+    const columnType = step(cs, 'define_type', Object.assign({ kind: 'column', name: 'P1', layers: null, predefined_type: null }, NO_ELEMENT_TYPE, { material: 'Stål', material_category: 'steel' }));
+    const walls = {};
+    for (const [name, start, end] of HOUSE) walls[name] = step(cs, 'create_wall', { storey: 'Plan 1', start, end, thickness: null, height: 3, name, type: wallType, partition: null, load_bearing: true, status: 'NEW' });
+    const slab = step(cs, 'create_slab', { storey: 'Plan 1', outline: [[0, 0], [10, 0], [10, 8], [0, 8]], thickness: null, name: 'Bjälklag', type: slabType, load_bearing: true, status: 'NEW' });
+    const door = step(cs, 'create_opening', { wall_id: walls.Syd, offset: 4, width: null, height: null, sill: 0, fill: 'door', name: 'Entrédörr', type: doorType, side: null });
+    const column = step(cs, 'create_element', element({ name: 'Pelare 1', type: columnType, at: [5, 4] }));
+    step(cs, 'edit_element', { id: walls.Norr, name: 'Yttervägg norr', start: null, end: null, thickness: null, height: 3.2, type: null, outline: null, offset: null, width: null, sill: null, pitch: null, overhang: null, base: null });
+    return { walls, slab, door, column, types: [wallType, slabType, doorType, columnType] };
+  }
+  /** A model dataset's elements by GlobalId: the attributes compared, and the properties beside. */
+  async function elementsOf(id) {
+    const handle = await datasets.ensureOpen(id);
+    const res = await handle.engine.exec(`select guid, ${TWIN_FIELDS.join(', ')}, egenskaper from data where guid is not null`);
+    const out = new Map();
+    for (const r of (res[0] ? res[0].values : [])) {
+      /** @type {any} */ const e = { egenskaper: r[TWIN_FIELDS.length + 1] };
+      TWIN_FIELDS.forEach((f, i) => { e[f] = r[i + 1] === undefined ? null : r[i + 1]; });
+      out.set(String(r[0]), e);
+    }
+    return out;
+  }
+  const fieldsOf = (e) => JSON.stringify(TWIN_FIELDS.map((f) => (e[f] === null || e[f] === undefined ? '' : String(e[f]))));
+  const findElement = (els, typ, namn) => Array.from(els.entries()).find(([, e]) => e.typ === typ && e.namn === namn) || null;
+  /**
+   * The app's elements against the server's: by GlobalId, a created one through `map` (the app's GlobalId to the server's for the same
+   * ref); what neither reaches is compared by its attributes alone.
+   */
+  function matchElements(app, server, map) {
+    const differ = []; const props = []; const restApp = []; const used = new Set();
+    for (const [guid, e] of app) {
+      const theirs = map.get(guid) || guid;
+      const s = server.get(theirs);
+      if (!s) { restApp.push(fieldsOf(e)); continue; }
+      used.add(theirs);
+      if (fieldsOf(e) !== fieldsOf(s)) differ.push(`${guid}: ${fieldsOf(e)} / ${fieldsOf(s)}`);
+      if (String(e.egenskaper || '') !== String(s.egenskaper || '')) props.push(String(e.namn || guid));
+    }
+    const restServer = Array.from(server).filter(([g]) => !used.has(g)).map(([, e]) => fieldsOf(e));
+    return { differ, props, restApp: restApp.sort(), restServer: restServer.sort() };
+  }
+  /** A document version from the server as a model dataset of its own. */
+  async function importVersion(version, name) {
+    const file = await opencde.downloadVersion(shared.connector, version);
+    const meta = await importer.run(file, {}, null, name);
+    shared.created.push(meta.id);
+    return meta;
+  }
+  async function latestVersion() {
+    const versions = await opencde.documentVersions(shared.connector, [twin.documentId]);
+    return versions.find((v) => v.document_id === twin.documentId) || null;
+  }
+  /** The AI panel on the twin's version 1 in its mode Bygg ur brief, as the model view opens it. */
+  function twinPanel() {
+    const panel = D.require('ui/bearbeta/ai-panel').create({ shell: { log: (m) => log('panel: ' + m) } }, { datasetId: twin.base.id, mode: 'build', preview: () => {} });
+    document.body.appendChild(panel.el);
+    return panel;
+  }
+  /** The panel's trial once it is over (the panel polls the server itself). */
+  const untilTried = (panel, label) => waitUntil(() => { const p = panel.state.proposed; return p && p.trial && !['queued', 'running'].includes(p.trial.state) ? p.trial : null; }, 300000, label);
+  const trialWords = (trial) => `${trial.state}, ${trial.applied}/${trial.count} applied, ${trial.issues} issues${trial.error ? ', ' + trial.error : ''}: ${JSON.stringify((trial.list || []).slice(0, 5).map((i) => [i.kind, i.severity, i.op, i.tool, String(i.message || '').slice(0, 160)]))}`;
+  const plain = (v) => (v && typeof v === 'object' && 'value' in v ? v.value : v);
+
+  test('opencde live VII: a new building model goes to the project as the first version of the twin', async (assert) => {
+    if (V21) return 'skipped: change proposals are BCF 3.0 (run without cdebcf=2.1)';
+    if (!(await pythonReady())) return 'skipped: the twin needs the app\'s Python (add &python=1, or cache the components)';
+    assert.ok(shared.projectId && opencde.signedIn(shared.connector), 'signed in with a project from the tests before');
+    const caps = await opencde.capabilities(shared.connector, { force: true });
+    const ext = (caps.extensions || {}).ifc_changes || null;
+    assert.ok(opencde.hasExtension(caps, 'ifc_changes') && ext.tried && ext.proposal_url && ext.approve_url && ext.ifc_proposals_url, 'the server tries and approves change proposals (ifc_changes, the IFC-LPG module on): ' + JSON.stringify(ext).slice(0, 300));
+    assert.equal(await opencde.opsForm(shared.connector), opencde.OPS_FORM, 'the server takes the write tools\' operations');
+    if (Array.isArray(ext.ops_tools)) for (const tool of ['create_storeys_and_grid', 'define_type', 'create_wall', 'create_slab', 'create_opening', 'create_element', 'edit_element']) assert.ok(ext.ops_tools.includes(tool), 'ops_tools names ' + tool + ': ' + ext.ops_tools.join(','));
+    assert.equal(await opencde.canPropose(shared.connector, shared.projectId), true, 'the helper\'s user may propose');
+    const { bridge } = D.require('data/python-bridge');
+    await bridge.start();
+    await waitUntil(() => bridge.state !== 'busy', 120000, 'Python free');
+    const made = await timed('new model', () => D.require('data/ifc-new').create({ name: 'Tvillingprov', storey: 'Plan 1' }));
+    shared.created.push(made.dataset.id);
+    const original = await D.require('data/model').original(made.dataset.id);
+    assert.ok(original && original.bytes && original.bytes.byteLength > 100, 'the new model\'s file');
+    const popupUpload = async (url) => (await helper('/upload', { url, project: shared.projectId, title: 'Tvillingprov', version: '1' })).callback;
+    const file = new File([original.bytes], original.name, { type: 'application/octet-stream' });
+    const version = await timed('upload the twin', () => opencde.uploadDocument(shared.connector, file, { redirectUri: REDIRECT, popup: popupUpload }));
+    assert.ok(version && version.document_id && Number(version.version_index) === 1, 'a new document: ' + JSON.stringify(version).slice(0, 200));
+    twin.documentId = version.document_id;
+    const entry = (await opencde.filesList(shared.connector, shared.projectId)).find((f) => f.documentId === twin.documentId);
+    assert.ok(entry && entry.model && Number(entry.versionIndex) === 1, 'the twin in the project\'s files: ' + JSON.stringify(entry));
+    const base = await timed('fetch the twin', () => opencde.importFile(shared.connector, { project_id: shared.projectId, name: PROJECT_NAME }, entry, { name: 'Tvilling v1' }));
+    shared.created.push(base.id);
+    assert.ok(base.source.cde.documentId === twin.documentId && Number(base.source.cde.versionIndex) === 1, 'it remembers its document and version: ' + JSON.stringify(base.source.cde));
+    twin.v1 = await elementsOf(base.id);
+    const storey = findElement(twin.v1, 'IfcBuildingStorey', 'Plan 1');
+    assert.ok(storey && GLOBAL_ID.test(storey[0]), 'the first storey: ' + JSON.stringify(Array.from(twin.v1.values())));
+    twin.storeyGuid = storey[0];
+    twin.base = base;
+    log(`twin: document ${twin.documentId} v1 (${original.name}, ${original.bytes.byteLength} bytes), ${twin.v1.size} elements`);
+    return `${twin.documentId} v1`;
+  }, 900000);
+
+  test('opencde live VII: the brief mode\'s write tools go as a proposal in the ops form, the trial makes them, and the approved version is the preview', async (assert) => {
+    if (!twin.base) return 'skipped: no twin on the server (see the test before)';
+    const panel = twinPanel();
+    try {
+      const cs = panel.state.changeset;
+      const house = buildHouse(cs);
+      await timed('preview A', () => panel.preview());
+      assert.equal(panel.state.error, '', 'the preview');
+      const preview = panel.state.preview;
+      assert.ok(preview && preview.report && Number(preview.report.errors) === 0, 'no errors in the preview: ' + JSON.stringify(preview && preview.report && preview.report.findings).slice(0, 400));
+      const appRefs = new Map((preview.report.created || []).filter((e) => e.ref && e.guid).map((e) => [e.ref, e]));
+      assert.deepEqual(Array.from(appRefs.keys()), cs.ops.filter((op) => op.ref).map((op) => op.ref), 'one ref per create, as the panel gave them');
+      assert.ok(panel.state.cde && panel.state.cde.documentId === twin.documentId, 'the panel knows the twin on the server');
+      assert.equal(panel.state.opsForm, opencde.OPS_FORM, 'the panel saw the ops form');
+      assert.equal(panel.state.canPropose, true, 'and may propose');
+      log(`precheck of candidate A: ${preview.server ? preview.server.status : 'none'}`);
+      const own = preview.report.proposal.changes;
+      assert.ok(own.some((c) => c.guid === twin.storeyGuid && c.attribute === 'Description'), 'the base storey\'s description is a change of an existing instance: ' + JSON.stringify(own).slice(0, 300));
+      await timed('propose A', () => panel.propose({ title: 'Dataspatium: tvillingen byggs ur briefen', description: 'Plan 1 med väggar av typen YV1, bjälklaget BJ1, en dörr D1 och en pelare P1.' }));
+      assert.equal(panel.state.error, '', 'proposed');
+      const mine = panel.state.proposed;
+      assert.ok(mine && mine.guid && mine.proposalUrl && mine.approveUrl, 'a topic with its trial and approval: ' + JSON.stringify(mine && { guid: mine.guid, proposalUrl: mine.proposalUrl }));
+      shared.proposalTopics.push(mine.guid);
+      const sent = mine.changeSet;
+      assert.equal(sent.ops_form, opencde.OPS_FORM, 'the snippet names the ops form');
+      assert.deepEqual(sent.ops.map((op) => op.tool), writeTools.toWheel(cs).map((op) => op.tool), 'every step went, in order');
+      assert.ok(sent.ops.every((op) => !('ref' in op) && !('refs' in op)), 'without the refs, which the server counts itself');
+      assert.deepEqual(sent.base, { document_id: twin.documentId, version_index: 1 }, 'against the version fetched');
+      assert.deepEqual(sent.changes, own, 'the wheel\'s changes of existing instances beside');
+      const trial = await untilTried(panel, 'the trial of A');
+      assert.equal(trial.state, 'clean', 'the server\'s trial: ' + trialWords(trial));
+      const report = await opencde.proposalTrial(shared.connector, mine.proposalUrl);
+      assert.ok(report.base && report.base.document_id === twin.documentId && Number(report.base.version_index) === 1, 'tried on version 1: ' + JSON.stringify(report.base));
+      assert.equal(Number(report.change_count), sent.ops.length + sent.changes.length, 'the operations and the changes counted');
+      assert.equal(Number(report.applied), Number(report.change_count), 'all of them applied');
+      assert.ok(!(report.issues || []).some((i) => i.kind === 'op' || i.kind === 'proposal'), 'no operation or change refused: ' + JSON.stringify(report.issues).slice(0, 300));
+      const created = report.created || {};
+      assert.deepEqual(Object.keys(created).sort(), Array.from(appRefs.keys()).sort(), 'the server names each created element by its ref: ' + JSON.stringify(created));
+      assert.ok(Object.values(created).every((g) => GLOBAL_ID.test(String(g))) && new Set(Object.values(created)).size === appRefs.size, 'by distinct GlobalIds');
+      for (const ref of house.types) assert.ok(created[ref], 'the type ' + ref + ' from define_type');
+      log(`trial A: ${report.applied}/${report.change_count} applied, ${Object.keys(created).length} created, notes ${JSON.stringify(report.notes || [])}`);
+      await timed('approve A', () => panel.approveOnServer({ confirmed: true }));
+      assert.equal(panel.state.error, '', 'approved');
+      assert.ok(mine.approved && mine.approved.index === 2, 'version 2: ' + JSON.stringify(mine.approved));
+      const from = await opencde.versionChanges(shared.connector, twin.documentId, 2);
+      assert.ok(from && from.change_set_id === mine.guid && Number(from.base.version_index) === 1, 'approved from the topic\'s change set on version 1: ' + JSON.stringify(from).slice(0, 200));
+      // The new version, fetched as Hantera fetches a newer one, against the preview.
+      const check = await opencde.newerVersion(shared.connector, await datasets.get(twin.base.id));
+      assert.ok(check.newer && Number(check.version.version_index) === 2, 'the twin has a newer version: ' + JSON.stringify({ have: check.have, newer: check.newer }));
+      const v2 = await elementsOf((await importVersion(check.version, 'Tvilling v2')).id);
+      const candidate = await importer.run(new File([preview.bytes.slice()], 'tvilling-forslag.ifc', { type: 'application/octet-stream' }), { format: 'model' }, null, 'Tvilling förhandsvisning');
+      shared.created.push(candidate.id);
+      const app = await elementsOf(candidate.id);
+      const map = new Map(Array.from(appRefs).map(([ref, e]) => [String(e.guid), String(created[ref])]));
+      for (const guid of twin.v1.keys()) assert.ok(app.has(guid) && v2.has(guid), 'the base keeps its GlobalId in both: ' + guid);
+      const m = matchElements(app, v2, map);
+      assert.deepEqual(m.differ, [], 'each element as in the preview');
+      assert.deepEqual(m.restServer, m.restApp, 'and nothing else');
+      assert.equal(v2.size, app.size, 'as many elements');
+      if (m.props.length) finding(`properties differ between the preview and version 2 for ${m.props.join(', ')}`);
+      const at = (ref) => v2.get(String(created[ref])) || {};
+      assert.ok(HOUSE.every(([name]) => at(house.walls[name]).typ === 'IfcWall' && at(house.walls[name]).typnamn === 'YV1'), 'four walls of the type YV1');
+      assert.equal(at(house.walls.Norr).namn, 'Yttervägg norr', 'the edited wall keeps its GlobalId with its new name');
+      assert.ok(at(house.slab).typnamn === 'BJ1' && at(house.door).typ === 'IfcDoor' && at(house.door).typnamn === 'D1' && at(house.column).typ === 'IfcColumn' && at(house.column).typnamn === 'P1', 'the slab, the door and the column with their types');
+      assert.equal(v2.get(twin.storeyGuid).beskrivning, A_DESC, 'the storey\'s description');
+      twin.a = { guid: mine.guid };
+      twin.v2 = v2;
+      log(`version 2: ${v2.size} elements, ${map.size} created matched by ref`);
+      return `v2 with ${v2.size} elements`;
+    } finally { panel.destroy(); panel.el.remove(); }
+  }, 900000);
+
+  test('opencde live VII: a second proposal against the old base collides with the approved one, gives its change up with keep_theirs and becomes version 3', async (assert) => {
+    if (!twin.v2) return 'skipped: no approved version 2 (see the test before)';
+    const panel = twinPanel();
+    try {
+      const cs = panel.state.changeset;
+      step(cs, 'create_storeys_and_grid', { storeys: [{ name: 'Plan 1', elevation: 0, description: B_DESC, long_name: null }], grid: null });
+      const column = step(cs, 'create_element', element({ name: 'Pelare 2', at: [2, 4], shape: rect(0.25, 0.25, 3) }));
+      await timed('preview B', () => panel.preview());
+      assert.ok(panel.state.preview && Number(panel.state.preview.report.errors) === 0 && panel.state.error === '', 'previewed on version 1: ' + panel.state.error);
+      assert.equal(Number(panel.state.cde.versionIndex), 1, 'the local twin is still version 1');
+      await timed('propose B', () => panel.propose({ title: 'Dataspatium: tvillingen från den gamla versionen', description: 'En pelare till och en annan beskrivning av Plan 1.' }));
+      assert.equal(panel.state.error, '', 'proposed');
+      const mine = panel.state.proposed;
+      assert.ok(mine && mine.guid && mine.proposalUrl, 'a topic with its trial');
+      shared.proposalTopics.push(mine.guid);
+      assert.equal(mine.changeSet.base.version_index, 1, 'against the old base');
+      const first = await untilTried(panel, 'the trial of B on version 1');
+      assert.equal(first.state, 'clean', 'clean on its base: ' + trialWords(first));
+      await timed('approve B (412)', () => panel.approveOnServer({ confirmed: true }));
+      assert.ok(!mine.approved, 'not approved over version 2');
+      assert.ok(Array.isArray(mine.conflicts) && mine.conflicts.length && !mine.conflicts.includes('*'), '412 with the colliding keys, not a whole file between: ' + JSON.stringify(mine.conflicts) + ' ' + panel.state.error);
+      assert.ok(Array.isArray(mine.details) && mine.details.length === mine.conflicts.length, 'with the three values per collision: ' + JSON.stringify(mine.details).slice(0, 300));
+      assert.equal(panel.state.error, t('ai.change.approve.server.conflict.choose', { k: D.require('ui/i18n').formatNumber(mine.details.length) }), 'told to choose');
+      const d = mine.details.find((x) => x.guid === twin.storeyGuid && x.attribute === 'Description');
+      assert.ok(d && mine.conflicts.includes(String(d.key)) && plain(d.ours) === B_DESC, 'the storey\'s description collides, ours the proposal\'s: ' + JSON.stringify(mine.details).slice(0, 300));
+      if (plain(d.theirs) === null || plain(d.theirs) === undefined) finding('the conflict has no value of the latest version: ' + JSON.stringify(d));
+      else assert.equal(plain(d.theirs), A_DESC, 'theirs is version 2\'s');
+      log(`conflict ${d.key}: base ${JSON.stringify(d.base)}, theirs ${JSON.stringify(d.theirs)}, ours ${JSON.stringify(d.ours)}, in version ${d.version_index}`);
+      const keys = mine.details.map((x) => String(x.key));
+      const ops = mine.changeSet.ops;
+      await timed('resolve B', () => panel.resolveConflicts(mine.details.map(() => 'theirs')));
+      assert.equal(panel.state.error, '', 'sent again');
+      const resent = mine.changeSet;
+      assert.equal(resent.base.version_index, 2, 'against the latest version');
+      assert.deepEqual((resent.keep_theirs || []).slice().sort(), keys.slice().sort(), 'the collisions given up as keep_theirs');
+      assert.ok(!resent.changes.some((c) => c.guid === twin.storeyGuid && c.attribute === 'Description'), 'and out of the changes');
+      assert.deepEqual(resent.ops, ops, 'the operations as they were');
+      const second = await untilTried(panel, 'the trial of B on version 2');
+      assert.equal(second.state, 'clean', 'clean on version 2: ' + trialWords(second));
+      const report = await opencde.proposalTrial(shared.connector, mine.proposalUrl);
+      assert.equal(Number(report.base && report.base.version_index), 2, 'tried on version 2');
+      assert.ok(report.created && GLOBAL_ID.test(String(report.created[column])), 'the new column by GlobalId: ' + JSON.stringify(report.created));
+      await timed('approve B', () => panel.approveOnServer({ confirmed: true }));
+      assert.equal(panel.state.error, '', 'approved');
+      assert.ok(mine.approved && mine.approved.index === 3, 'version 3: ' + JSON.stringify(mine.approved));
+      const latest = await latestVersion();
+      assert.equal(Number(latest && latest.version_index), 3, 'the document\'s latest');
+      const v3 = await elementsOf((await importVersion(latest, 'Tvilling v3')).id);
+      assert.equal((v3.get(twin.storeyGuid) || {}).beskrivning, A_DESC, 'the storey keeps version 2\'s description (keep_theirs)');
+      const col = v3.get(String(report.created[column]));
+      assert.ok(col && col.typ === 'IfcColumn' && col.namn === 'Pelare 2' && col.vaning === 'Plan 1', 'the column came: ' + JSON.stringify(col));
+      for (const [guid, e] of twin.v2) assert.ok(v3.has(guid) && fieldsOf(v3.get(guid)) === fieldsOf(e), 'version 2\'s element unchanged: ' + guid + ' ' + fieldsOf(e));
+      assert.deepEqual(Array.from(v3.keys()).filter((g) => !twin.v2.has(g)), [String(report.created[column])], 'and nothing else new');
+      const from = await opencde.versionChanges(shared.connector, twin.documentId, 3);
+      if (!from) finding('version 3, approved from operations alone, has no change set at …/ifc-changes');
+      else assert.equal(from.change_set_id, mine.guid, 'approved from the second topic');
+      // The document's proposals as the card Ändringsförslag på servern lists them.
+      const rows = await opencde.ifcProposals(shared.connector, shared.projectId, twin.documentId);
+      const row = (guid) => (rows || []).find((r) => r.topic_guid === guid) || {};
+      assert.ok(row(twin.a.guid).state === 'approved' && Number(row(twin.a.guid).version_index) === 2, 'the first proposal listed as version 2: ' + JSON.stringify(row(twin.a.guid)));
+      assert.ok(row(mine.guid).state === 'approved' && Number(row(mine.guid).version_index) === 3, 'the second as version 3: ' + JSON.stringify(row(mine.guid)));
+      log(`version 3: ${v3.size} elements; proposals listed ${(rows || []).length}`);
+      return 'v3 with keep_theirs';
+    } finally { panel.destroy(); panel.el.remove(); }
+  }, 900000);
+
   test('opencde live: cleanup', async (assert) => {
-    for (const tp of [shared.topic, shared.other]) if (tp) await opencde.api(shared.connector, `${BCF}/projects/${shared.projectId}/topics/${tp.guid}`, { method: 'DELETE' }).catch((e) => log('delete topic: ' + e.message));
+    for (const tp of [shared.topic, shared.other].concat(shared.proposalTopics.map((guid) => ({ guid })))) if (tp) await opencde.api(shared.connector, `${BCF}/projects/${shared.projectId}/topics/${tp.guid}`, { method: 'DELETE' }).catch((e) => log('delete topic: ' + e.message));
     const left = await opencde.fetchTopics(shared.connector, shared.projectId);
     log(`topics left in the project: ${left.rows.length}`);
     await opencde.logout(shared.connector);
