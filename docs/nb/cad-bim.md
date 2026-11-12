@@ -616,9 +616,15 @@ laget. Veggens åpninger beholder plassen sin langs veggen så lenge den beholde
 i den, og taket beholder rektangelet sitt. En vegg eller et dekke med type får tykkelsen fra typen, så en tykkere vegg får en annen
 type. Et element som ikke er tegnet slik skriveverktøyene tegner, kan bare få nytt navn, og svaret sier hva AI-en kan gjøre i stedet.
 AI-en endrer derfor elementer i stedet for å slette og lage dem på nytt, og sletter bare når du ber om det. Flytting med
-`transform_elements` skjer i etasjens plan: en dør eller et vindu flyttes med åpningen sin, en flyttet vegg kobles til veggene den
-møter, ingen punkter blir liggende ubrukt, og tomten, bygningen og etasjene flyttes aldri, fordi plasseringen og høydene deres gjelder
-hele prosjektet og bare endres etter avtale.
+`transform_elements` skjer i etasjens plan: en dør eller et vindu flyttes med åpningen sin og må få plass i veggen, ingen punkter blir
+liggende ubrukt, og tomten, bygningen og etasjene flyttes aldri, fordi plasseringen og høydene deres gjelder hele prosjektet og bare
+endres etter avtale. En vegg som flyttes, med `transform_elements` eller med ny start og ny slutt i `edit_element`, slipper skjøtene
+sine og kobles til veggene den møter etter flyttingen, med hjørnene løst som da den ble laget, og naboveggenes ender og alle veggenes
+basismengder lages på nytt. Rommene langs veggen følger med: et rom som `create_spaces` har laget, og som veggene fortsatt lukker, får
+nytt omriss, nye romarealer og nye grenser fra topologien og beholder sin GlobalId. Et rom som veggene ikke lenger lukker, som nå deler
+rom med et annet, eller som er tegnet på en annen måte, beholder omrisset og romarealene, men mister grensene mot de flyttede veggene
+som ikke lenger går langs det, og rapporten sier hvorfor; du avgjør om veggene skal tilbake eller rommet lages på nytt. Dører og
+vinduer som flyttes langs veggen, avgrenser rommet de deretter står i.
 Produktidentiteter skriver AI-en bare når du oppgir dem, og den finner aldri på dem: GTIN (GlobalTradeItemNumber), produsent
 (Manufacturer) og modell (ModelLabel) i Pset_ManufacturerTypeInformation på typen, og serienummer (SerialNumber) og strekkode
 (BarCode) i Pset_ManufacturerOccurrence på bygningsdelen. IFC2X3 har ikke GTIN.

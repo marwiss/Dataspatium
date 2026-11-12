@@ -624,9 +624,15 @@ element han ikkje sjølv har laga. Opningane i veggen held på plassen sin langs
 frå starten) og må få plass i han, og taket held på rektangelet sitt. Ein vegg eller eit dekke med type får tjukna frå typen, så ein
 tjukkare vegg får ein annan type. Eit element som ikkje er teikna slik skriveverktøya teiknar, kan berre få nytt namn, og svaret seier
 kva AI-en kan gjere i staden. AI-en endrar difor element i staden for å slette og lage dei på nytt, og slettar berre når du ber om det.
-Flytting med `transform_elements` skjer i planet til etasjen: ei dør eller eit vindauge vert flytt med opninga si, ein flytt vegg vert
-kopla til veggane han møter, ingen punkt vert liggjande ubrukte, og tomta, bygningen og etasjane vert aldri flytte, fordi plasseringa
-og høgdene deira gjeld heile prosjektet og berre vert endra etter avtale.
+Flytting med `transform_elements` skjer i planet til etasjen: ei dør eller eit vindauge vert flytt med opninga si og må få plass i
+veggen, ingen punkt vert liggjande ubrukte, og tomta, bygningen og etasjane vert aldri flytte, fordi plasseringa og høgdene deira gjeld
+heile prosjektet og berre vert endra etter avtale. Ein vegg som vert flytt, med `transform_elements` eller med ny start og ny slutt i
+`edit_element`, slepper skøytane sine og vert kopla til veggane han møter etter flyttinga, med hjørna løyste som då han vart laga, og
+endane til grannveggane og basismengdene til alle veggane vert laga på nytt. Romma langs veggen følgjer med: eit rom som
+`create_spaces` har laga, og som veggane framleis lukkar, får nytt omriss, nye romareal og nye grenser frå topologien og held på
+GlobalId-en sin. Eit rom som veggane ikkje lenger lukkar, som no deler rom med eit anna, eller som er teikna på ein annan måte, held på
+omrisset og romareala, men mistar grensene mot dei flytte veggane som ikkje lenger går langs det, og rapporten seier kvifor; du avgjer
+om veggane skal tilbake eller rommet lagast på nytt. Dører og vindauge som vert flytte langs veggen, avgrensar så rommet dei står i.
 Produktidentitetar skriv AI-en berre når du oppgjev dei, og han finn aldri på dei: GTIN (GlobalTradeItemNumber), produsent
 (Manufacturer) og modell (ModelLabel) i Pset_ManufacturerTypeInformation på typen, og serienummer (SerialNumber) og strekkode
 (BarCode) i Pset_ManufacturerOccurrence på bygningsdelen. IFC2X3 har ikkje GTIN.

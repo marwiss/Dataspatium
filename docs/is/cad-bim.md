@@ -616,9 +616,15 @@ stað sínum eftir honum meðan hann heldur stefnu sinni (annars fjarlægð sinn
 heldur ferhyrningi sínum. Veggur eða plata með gerð fær þykkt sína úr gerðinni, svo að þykkari veggur fær aðra gerð. Einingu sem er
 ekki teiknuð eins og skrifverkfærin teikna má aðeins gefa nýtt heiti, og svarið segir hvað gervigreindin getur gert í staðinn.
 Gervigreindin breytir því einingum í stað þess að eyða þeim og búa þær til á ný, og eyðir aðeins þegar þú biður um það. Færsla með
-`transform_elements` fer fram í fleti hæðarinnar: hurð eða gluggi færist með opi sínu, færður veggur er tengdur veggjunum sem hann
-mætir, enginn punktur er skilinn eftir ónotaður, og lóðin, byggingin og hæðirnar eru aldrei færðar, því að staður þeirra og hæðir varða
-allt verkefnið og breytast aðeins eftir samkomulagi.
+`transform_elements` fer fram í fleti hæðarinnar: hurð eða gluggi færist með opi sínu og verður að rúmast í veggnum, enginn punktur er
+skilinn eftir ónotaður, og lóðin, byggingin og hæðirnar eru aldrei færðar, því að staður þeirra og hæðir varða allt verkefnið og
+breytast aðeins eftir samkomulagi. Veggur sem er færður, með `transform_elements` eða með nýju upphafi og enda í `edit_element`,
+sleppir samskeytum sínum og er tengdur veggjunum sem hann mætir eftir færsluna, með hornin leyst eins og þegar hann var búinn til, og
+endar nágrannaveggjanna og grunnmagn allra veggjanna eru gerð á ný. Rýmin meðfram veggnum fylgja með: rými sem `create_spaces` bjó til
+og veggirnir loka enn fær nýja útlínu, ný flatarmál og ný mörk úr grannfræðinni og heldur GlobalId sínu. Rými sem veggirnir loka ekki
+lengur, sem er nú í sama herbergi og annað rými eða sem er teiknað á annan hátt heldur útlínu sinni og flatarmálum en missir mörk sín
+að færðu veggjunum sem liggja ekki lengur meðfram því, og skýrslan segir hvers vegna; þú ákveður hvort veggirnir verði færðir til baka
+eða rýmið gert á ný. Hurðir og gluggar sem eru færðir eftir veggnum afmarka rýmið sem þeir standa síðan í.
 Vöruauðkenni skrifar gervigreindin aðeins þegar þú gefur þau upp, og hún býr þau aldrei til: GTIN (GlobalTradeItemNumber),
 framleiðanda (Manufacturer) og gerð (ModelLabel) í Pset_ManufacturerTypeInformation á gerðinni, og raðnúmer (SerialNumber) og
 strikamerki (BarCode) í Pset_ManufacturerOccurrence á byggingarhlutanum. IFC2X3 hefur ekkert GTIN.
