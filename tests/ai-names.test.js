@@ -55,7 +55,7 @@
     const text = writeTools.describe(cs.ops[1]);
     assert.ok(text.includes('101 Kok') && text.includes('102 Vardagsrum') && text.includes('Hall'), text);
     const twice = writeTools.call(cs, 'create_spaces', { storey: 'Plan 1', rooms: [room({ at: [1, 1], number: '201' }), room({ at: [5, 1], number: '201' })], height: null });
-    assert.ok(twice.error && /201 is listed twice/.test(twice.error) && cs.ops.length === 2, 'a number twice is refused: ' + JSON.stringify(twice));
+    assert.ok(twice.error && /has the number of room/.test(twice.error) && !/201/.test(twice.error) && cs.ops.length === 2, 'a number twice is refused, by position and without quoting it: ' + JSON.stringify(twice));
     assert.ok(/Number the storeys for the whole project by height/.test(agent.SYSTEM_BUILD) && /the storey's number and two digits \(101, 102/.test(agent.SYSTEM_BUILD), 'the build text numbers storeys and rooms');
     return 'ok';
   });

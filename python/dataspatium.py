@@ -2344,10 +2344,11 @@ class _ChangeSet:
         if not number:
             return room, name, long_name
         if number in {n for _, n, _ in before}:
-            raise DataspatiumError("room %d: the number %s is listed twice; a room number is unique in the building" % (i + 1, number))
+            first = next(k for k, (_, n, _) in enumerate(before) if n == number)
+            raise DataspatiumError("room %d has the number of room %d; a room number is unique in the building" % (i + 1, first + 1))
         taken = next((s for s in self.m.by_type("IfcSpace") if str(s.Name or "") == number), None)
         if taken is not None:
-            raise DataspatiumError("room %d: the number %s is the space %s's already (#%d); a room number is unique in the building" % (i + 1, number, _ifc_text(taken.LongName) or number, taken.id()))
+            raise DataspatiumError("room %d: the space #%d has its number already; a room number is unique in the building" % (i + 1, taken.id()))
         room["ifc"]["description"] = long_name
         return room, number, name
 
@@ -2441,7 +2442,7 @@ class _ChangeSet:
             chosen = [c for c, (_, _, space) in zip(chosen, covered) if space is None]
             twice = [n for _, n, _ in chosen if n in {str(p.Name or "") for p, _ in others}]
             if twice:
-                raise DataspatiumError("storey %r has a space named %r already" % (_ifc_text(s.Name), twice[0]))
+                raise DataspatiumError("storey #%d has a space with the name or number of a listed room already" % s.id())
             if not chosen:
                 continue
             made += len(chosen)
@@ -3447,8 +3448,8 @@ class _ChangeSet:
                 raise DataspatiumError("layer %d: %s" % (i + 1, exc))
         twin = next((t for t in self.m.by_type(ifc_class) if str(t.Name or "").strip().lower() == name.lower()), None)
         if twin is not None:
-            raise DataspatiumError("the model has an %s named %r already (GlobalId %s, id %d); give its GlobalId as type, or choose another name"
-                                   % (ifc_class, _ifc_text(twin.Name), twin.GlobalId, twin.id()))
+            raise DataspatiumError("the model has an %s of the same name already (GlobalId %s, id %d); give its GlobalId as type, or choose another name"
+                                   % (ifc_class, twin.GlobalId, twin.id()))
         value = str(op.get("predefined_type") or "").strip().upper() or default
         allowed = _cs_type_values(self.m, ifc_class, kind)
         if value not in allowed:
@@ -3624,8 +3625,8 @@ class _ChangeSet:
         self.check_class(ifc_class)
         twin = next((t for t in self.m.by_type(ifc_class) if str(t.Name or "").strip().lower() == name.lower()), None)
         if twin is not None:
-            raise DataspatiumError("the model has an %s named %r already (GlobalId %s, id %d); give its GlobalId as type, or choose another name"
-                                   % (ifc_class, _ifc_text(twin.Name), twin.GlobalId, twin.id()))
+            raise DataspatiumError("the model has an %s of the same name already (GlobalId %s, id %d); give its GlobalId as type, or choose another name"
+                                   % (ifc_class, twin.GlobalId, twin.id()))
         value = str(op.get("predefined_type") or "").strip().upper() or None
         if value == "USERDEFINED":
             raise DataspatiumError("USERDEFINED needs the name of a kind of its own, which define_type does not take; choose a value from the class's list, or NOTDEFINED")

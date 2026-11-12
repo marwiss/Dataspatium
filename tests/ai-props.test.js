@@ -171,7 +171,7 @@
     const cs = writeTools.create('props-test-2');
     for (const [value, number] of [['52 dB', '52'], ['0,18 W/m²K', '0.18'], ['40dB', '40'], ['-5 °C', '-5'], ['2.5 m', '2.5'], ['30 %', '30']]) {
       const out = props(cs, 'Pset_WallCommon', [['X', value]]);
-      assert.ok(out.error && out.error.includes('give the number only') && out.error.includes(`(${number}, not "${value}")`), value + ': ' + JSON.stringify(out));
+      assert.ok(out.error && out.error.includes('give the number only') && out.error.includes(`(${number})`) && !out.error.includes(value) && out.error.startsWith('property 1:'), value + ': the number, by position and without quoting the value: ' + JSON.stringify(out));
     }
     for (const value of ['EI60', '1 A', '12 Main Street', 'R\'w 52', '3']) assert.ok(props(cs, 'Pset_WallCommon', [['X', value]]).ok, 'no unit after a number: ' + value);
     assert.ok(String(props(cs, 'Pset_', [['A', 'b']]).error).includes('no set\'s name'), 'Pset_ alone');

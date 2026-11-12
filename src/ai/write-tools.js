@@ -269,7 +269,7 @@
       const code = Number(String(crs).slice(5));
       if (code >= RH2000_CODES[0] && code <= RH2000_CODES[1]) {
         if (datum.replace(/\s+/g, '').toUpperCase() === 'RH2000') return op;
-        throw new Error(`${crs.toUpperCase()} gives its heights in RH 2000 already; leave vertical_datum null, or give the plan code EPSG:${code - 2839} with vertical_datum ${datum}`);
+        throw new Error(`${crs.toUpperCase()} gives its heights in RH 2000 already; leave vertical_datum null, or give the plan code EPSG:${code - 2839} with this vertical_datum`);
       }
       op.vertical_datum = datum.slice(0, 60);
       return op;
@@ -420,7 +420,7 @@
     /** No two define_type steps of one type class with the same name (in any case). */
     function noTwin(cs, kind, typeName) {
       const twin = cs.ops.find((op) => op.tool === 'define_type' && TYPE_CLASS[op.kind] === TYPE_CLASS[kind] && op.name.toLowerCase() === typeName.toLowerCase());
-      if (twin) throw new Error(`${twin.ref} is a ${twin.kind} type named ${twin.name} already; give its ref as type, or choose another name`);
+      if (twin) throw new Error(`${twin.ref} is a ${twin.kind} type of the same name already; give its ref as type, or choose another name`);
     }
     /** define_type for a kind without layers: its material, and a door's operation or a window's partitioning with the size and lining. */
     function elementTypeOp(cs, tool, kind, typeName, a) {
@@ -584,8 +584,9 @@
               if (given(r.index)) indexes.add(r.index);
               return roomExtras(r, { at: given(r.at) ? point(r.at, `${which}: at`) : null, index: given(r.index) ? r.index : null, name: String(r.name).slice(0, 200), long_name: text(r, 'long_name') });
             });
-            const twice = rooms.find((r, i) => r.number && rooms.findIndex((o) => o.number === r.number) !== i);
-            if (twice) throw new Error(`room number ${twice.number} is listed twice; a room number is unique in the building`);
+            // Said by position, not by the number itself: a message never quotes what the AI sent (prompt injection, SA-94).
+            const twice = rooms.findIndex((r, i) => r.number && rooms.findIndex((o) => o.number === r.number) !== i);
+            if (twice >= 0) throw new Error(`room ${twice + 1} has the number of room ${rooms.findIndex((o) => o.number === rooms[twice].number) + 1}; a room number is unique in the building`);
           }
           // Without a list the wheel names the rooms itself: the person's word for a room with {n} for its index.
           return { tool: name, storey, rooms, height: number(a, 'height', { positive: true }), default_name: rooms ? null : t('ai.change.spaces.name') };
@@ -595,10 +596,10 @@
           if (!Array.isArray(a.properties) || !a.properties.length) throw new Error('properties must be a list of {name, value}');
           if (/^(pset|qto)_$/i.test(pset.trim())) throw new Error(`${pset} is no set's name: give IFC's set, such as Pset_WallCommon, or a set of your own, such as SE-ACME-42_Acoustics`);
           const properties = {};
-          for (const p of a.properties) {
+          for (const [k, p] of a.properties.entries()) {
             if (!p || !given(p.name) || !['string', 'number', 'boolean'].includes(typeof p.value)) throw new Error('every property needs a name and a string, number or boolean value');
             const unit = unitIn(p.value);
-            if (unit) throw new Error(`${pset}.${p.name}: give the number only, without its unit (${unit[0].replace(',', '.')}, not "${p.value}"): IFC gives the property its unit`);
+            if (unit) throw new Error(`property ${k + 1}: give the number only, without its unit (${unit[0].replace(',', '.')}): IFC gives the property its unit`);
             properties[String(p.name).slice(0, 200)] = typeof p.value === 'string' ? p.value.slice(0, 1000) : p.value;
           }
           return { tool: name, ids: idList(cs, a.ids), pset, properties };
