@@ -8,7 +8,10 @@
  * get_parameters reads a box's walls from their axes, its door, window, slab and roof, and the wheel moves an inner wall, gives an outer wall a
  * thicker type, widens a door, lowers a window, enlarges a slab and steepens a roof in a second change set, keeping every GlobalId,
  * with the joins, layers and base quantities made anew and no point left unused (rule IFC106); and transform_elements moves a window
- * with its opening and a wall with its joins, while it refuses a storey, as edit_element refuses what does not fit.
+ * with its opening and a wall with its joins, while it refuses a storey, as edit_element refuses what does not fit. With the box's
+ * rooms made into spaces, a wall moved away with its door loses its joins and the spaces are noted and lose their boundaries to it,
+ * and moved back it is joined, bounds and measures as before; an inner wall moved by transform_elements or edit_element has the
+ * spaces fitted to the rooms anew; and a door moved along its wall bounds the room it then stands in, never reaching out of the wall.
  */
 (function () {
   'use strict';
@@ -321,6 +324,143 @@
     await refusal([['edit_element', { id: guid['IfcWall Syd'], thickness: 0.25 }]], "comes from its type 'YV1'", 'a typed wall\'s thickness');
     await refusal([['edit_element', { id: guid['IfcDoor Dörr'], offset: 11.5 }]], 'would reach beyond wall', 'a door beyond its wall');
     await refusal([['edit_element', { id: guid['IfcSlab Tak 1'], pitch: 20 }]], 'edit the roof', 'a roof slab');
+    return 'ok';
+  }, 900000);
+
+  /** FACTS with the spaces by name: their GlobalId, the area of their outline, Qto_SpaceBaseQuantities and their boundaries. */
+  const ROOM_FACTS = FACTS.slice(0, -1).concat([
+    'QTO["IfcSpace"] = "Qto_SpaceBaseQuantities"',
+    'spaces = {}',
+    'for s in m.by_type("IfcSpace"):',
+    '    ring = [q.Coordinates[:2] for q in s.Representation.Representations[0].Items[0].SweptArea.OuterCurve.Points]',
+    '    bounds = sorted([b.RelatedBuildingElement.is_a(), b.RelatedBuildingElement.Name, b.InternalOrExternalBoundary] for b in s.BoundedBy or ())',
+    '    spaces[s.Name] = {"guid": s.GlobalId, "area": round(Polygon(ring).area, 6), "qto": qto(s), "bounds": bounds}',
+    'facts["spaces"] = spaces',
+    'print(json.dumps(facts))',
+  ]);
+  /** A change set of [tool, args] steps on a dataset, previewed. */
+  async function preview(id, steps) {
+    const cs = writeTools.create(id);
+    for (const [name, args] of steps) { const out = name === 'edit_element' ? edit(cs, args) : writeTools.call(cs, name, args); if (!out.ok) throw new Error(name + ': ' + JSON.stringify(out)); }
+    return ifcOps.previewChangeset(id, writeTools.toWheel(cs));
+  }
+  async function imported(bytes, name) {
+    const meta = await importer.run(new File([bytes], name + '.ifc', { type: 'application/octet-stream' }), { format: 'model' }, null, name);
+    created.push(meta.id);
+    return meta;
+  }
+  const sameQto = (assert, a, b, label) => {
+    assert.deepEqual(Object.keys(a).sort(), Object.keys(b).sort(), label + ': the same quantities');
+    for (const k of Object.keys(b)) assert.ok(near(a[k], b[k]), label + ' ' + k + ': ' + a[k] + ' and ' + b[k]);
+  };
+  /** The box with its two rooms made into spaces, Sovrum west of Mitt and Vardagsrum east of it, imported as a model of its own. */
+  let roomed = null;
+  function buildRooms() {
+    if (!roomed) {
+      roomed = (async () => {
+        const { meta, guid: boxGuid } = await buildBox();
+        const room = (at, name) => ({ at, index: null, name, long_name: null, number: null, room_type: null });
+        const res = await preview(meta.id, [['create_spaces', { storey: 'Plan 3', rooms: [room([3, 4], 'Sovrum'), room([9, 4], 'Vardagsrum')], height: null }]]);
+        if (res.report.errors) throw new Error('the rooms have errors: ' + JSON.stringify(res.report.findings));
+        const guid = Object.assign({}, boxGuid);
+        for (const e of res.report.created || []) guid[e.ifc_class + ' ' + e.name] = e.guid;
+        return { meta: await imported(res.bytes, 'Flytta med rum'), guid, facts: await factsOf(res.bytes, ROOM_FACTS) };
+      })();
+    }
+    return roomed;
+  }
+
+  test('ai edit: Python moves a wall with its door away from the box and back: its joins go and return, the rooms are noted and then bounded again, the quantities as before', async (assert) => {
+    if (!wantReal() && !(await catalog.cachedRuntime())) return SKIPPED;
+    const { meta, guid, facts: was } = await buildRooms();
+    assert.deepEqual(Object.keys(was.spaces).sort(), ['Sovrum', 'Vardagsrum'], 'two spaces: ' + JSON.stringify(was.spaces));
+    assert.ok(was.spaces['Sovrum'].bounds.some((b) => b[1] === 'Syd') && was.spaces['Sovrum'].bounds.some((b) => b[1] === 'Dörr') && was.spaces['Vardagsrum'].bounds.some((b) => b[1] === 'Syd'), 'both bounded by Syd, the west one by its door: ' + JSON.stringify(was.spaces));
+    const away = await preview(meta.id, [['transform_elements', { ids: [guid['IfcWall Syd']], dx: 0, dy: -2, dz: 0 }]]);
+    assert.equal(away.report.errors, 0, 'no errors: ' + JSON.stringify(away.report.findings));
+    const f = await factsOf(away.bytes, ROOM_FACTS);
+    assert.deepEqual(f.unused, [], 'nothing left unused (IFC106)');
+    assert.deepEqual(f.walls.Syd.axis, [[0, -2], [12, -2]], 'Syd 2 m south');
+    assert.deepEqual(f.joins, was.joins.filter((j) => j[0] !== 'Syd' && j[2] !== 'Syd'), 'its corners and the T of Mitt went, the other joins stay: ' + JSON.stringify(f.joins));
+    assert.ok(near(f.walls.Syd.length, 12) && near(f.walls['Väst'].length, 7.85) && near(f.walls['Öst'].length, 7.85) && near(f.walls.Mitt.length, 7.85), 'the bodies reach their axes\' ends where the joins went: ' + JSON.stringify(['Syd', 'Väst', 'Öst', 'Mitt'].map((n) => f.walls[n].length)));
+    assert.ok(near(f.walls.Syd.qto.Length, 12) && near(f.walls.Syd.qto.NetSideArea, 12 * 3 - 2.1) && near(f.walls['Väst'].qto.Length, 7.85) && near(f.walls.Mitt.qto.Length, 7.85), 'and their quantities: ' + JSON.stringify([f.walls.Syd.qto, f.walls.Mitt.qto]));
+    const door = f.others['IfcDoor Dörr'];
+    assert.ok(door.in_opening && near(door.at[0], 2) && near(door.at[1], -2) && near(f.others['IfcOpeningElement Dörr'].at[1], -2), 'the door moved with its wall, in its opening: ' + JSON.stringify(door));
+    const notes = away.report.notes || [];
+    for (const name of ['Sovrum', 'Vardagsrum']) {
+      assert.ok(notes.some((n) => n.includes(`'${name}' keeps its outline and quantities`) && n.includes('no longer enclose a room')), name + ' is noted: ' + JSON.stringify(notes));
+      assert.ok(f.spaces[name].guid === was.spaces[name].guid && near(f.spaces[name].area, 48), name + ' keeps its outline: ' + JSON.stringify(f.spaces[name]));
+      sameQto(assert, f.spaces[name].qto, was.spaces[name].qto, name);
+    }
+    assert.deepEqual(f.spaces['Sovrum'].bounds, was.spaces['Sovrum'].bounds.filter((b) => b[1] !== 'Syd' && b[1] !== 'Dörr'), 'the west room loses its boundaries to Syd and its door');
+    assert.deepEqual(f.spaces['Vardagsrum'].bounds, was.spaces['Vardagsrum'].bounds.filter((b) => b[1] !== 'Syd'), 'the east room its boundary to Syd');
+    const changed = new Set((away.report.changed || []).map((e) => e.guid));
+    for (const key of ['IfcWall Syd', 'IfcWall Väst', 'IfcWall Öst', 'IfcWall Mitt', 'IfcSpace Sovrum', 'IfcSpace Vardagsrum']) assert.ok(changed.has(guid[key]), key + ' is changed');
+    // Back where it was: joined, bounding and measured as before.
+    const moved = await imported(away.bytes, 'Flyttad bort');
+    const back = await preview(moved.id, [['transform_elements', { ids: [guid['IfcWall Syd']], dx: 0, dy: 2, dz: 0 }]]);
+    assert.equal(back.report.errors, 0, 'no errors: ' + JSON.stringify(back.report.findings));
+    assert.ok(!(back.report.notes || []).some((n) => n.includes('keeps its outline')), 'no room is noted: ' + JSON.stringify(back.report.notes));
+    const g = await factsOf(back.bytes, ROOM_FACTS);
+    assert.deepEqual(g.unused, [], 'nothing left unused');
+    assert.deepEqual(g.joins, was.joins, 'the joins return as they were');
+    for (const name of Object.keys(was.walls)) {
+      assert.ok(g.walls[name].guid === was.walls[name].guid && near(g.walls[name].length, was.walls[name].length), name + ' as long as before: ' + g.walls[name].length);
+      sameQto(assert, g.walls[name].qto, was.walls[name].qto, name);
+    }
+    assert.ok(g.others['IfcDoor Dörr'].in_opening && near(g.others['IfcDoor Dörr'].at[1], 0), 'the door back in its opening');
+    for (const name of ['Sovrum', 'Vardagsrum']) {
+      assert.deepEqual(g.spaces[name].bounds, was.spaces[name].bounds, name + ' bounded as before');
+      assert.ok(g.spaces[name].guid === was.spaces[name].guid && near(g.spaces[name].area, 48), name + ' with its GlobalId and outline');
+      sameQto(assert, g.spaces[name].qto, was.spaces[name].qto, name);
+    }
+    const topology = back.report.topology && back.report.topology[0];
+    assert.ok(topology && topology.closed && topology.rooms.length === 2, 'the box closed again: ' + JSON.stringify(topology));
+    return 'ok';
+  }, 900000);
+
+  test('ai edit: Python fits the rooms to an inner wall moved by transform_elements or edit_element, keeping their GlobalIds, with their quantities made anew', async (assert) => {
+    if (!wantReal() && !(await catalog.cachedRuntime())) return SKIPPED;
+    const { meta, guid, facts: was } = await buildRooms();
+    const band = 0.15 + 0.095 / 2;  // half of YV1 outside and of IV1 at Mitt
+    const expect = (f, name, width, label) => {
+      const s = f.spaces[name]; const q = s.qto;
+      assert.ok(s.guid === was.spaces[name].guid && near(s.area, width * 8), label + ': ' + name + ' fitted, with its GlobalId: ' + JSON.stringify(s));
+      assert.ok(near(q.GrossFloorArea, width * 8) && near(q.NetFloorArea, (width - band) * 7.7) && near(q.GrossPerimeter, 2 * (width + 8)) && near(q.GrossVolume, width * 8 * 3) && near(q.Height, 3), label + ': ' + name + '\'s quantities: ' + JSON.stringify(q));
+      assert.deepEqual(s.bounds, was.spaces[name].bounds, label + ': ' + name + ' bounded by the same walls, doors and windows');
+    };
+    for (const [label, step, west] of [['transform_elements', ['transform_elements', { ids: [guid['IfcWall Mitt']], dx: -1, dy: 0, dz: 0 }], 5],
+      ['edit_element', ['edit_element', { id: guid['IfcWall Mitt'], start: [8, 0], end: [8, 8] }], 8]]) {
+      const res = await preview(meta.id, [step]);
+      assert.equal(res.report.errors, 0, label + ': no errors: ' + JSON.stringify(res.report.findings));
+      const f = await factsOf(res.bytes, ROOM_FACTS);
+      assert.deepEqual(f.unused, [], label + ': no old profile left unused');
+      expect(f, 'Sovrum', west, label);
+      expect(f, 'Vardagsrum', 12 - west, label);
+      const notes = res.report.notes || [];
+      for (const name of ['Sovrum', 'Vardagsrum']) assert.ok(notes.some((n) => n.includes(`'${name}' was fitted to the room`)), label + ': ' + name + ' noted: ' + JSON.stringify(notes));
+      assert.ok(!notes.some((n) => n.includes('keeps its outline')), label + ': no room left as it was');
+      assert.deepEqual(f.joins.filter((j) => j[0] === 'Mitt'), [['Mitt', 'ATEND', 'Norr', 'ATPATH'], ['Mitt', 'ATSTART', 'Syd', 'ATPATH']], label + ': Mitt joined anew');
+      const changed = new Set((res.report.changed || []).map((e) => e.guid));
+      assert.ok(changed.has(guid['IfcSpace Sovrum']) && changed.has(guid['IfcSpace Vardagsrum']), label + ': the spaces are changed');
+    }
+    return 'ok';
+  }, 900000);
+
+  test('ai edit: Python moves a door along its wall into the next room, which it then bounds, and refuses one that would reach out of the wall', async (assert) => {
+    if (!wantReal() && !(await catalog.cachedRuntime())) return SKIPPED;
+    const { meta, guid, facts: was } = await buildRooms();
+    const res = await preview(meta.id, [['transform_elements', { ids: [guid['IfcDoor Dörr']], dx: 5, dy: 0, dz: 0 }]]);
+    assert.equal(res.report.errors, 0, 'no errors: ' + JSON.stringify(res.report.findings));
+    const f = await factsOf(res.bytes, ROOM_FACTS);
+    assert.ok(f.others['IfcDoor Dörr'].in_opening && near(f.others['IfcDoor Dörr'].at[0], 7), 'the door 5 m east, in its opening: ' + JSON.stringify(f.others['IfcDoor Dörr']));
+    assert.deepEqual(f.spaces['Sovrum'].bounds, was.spaces['Sovrum'].bounds.filter((b) => b[1] !== 'Dörr'), 'the west room no longer bounded by the door');
+    assert.deepEqual(f.spaces['Vardagsrum'].bounds, was.spaces['Vardagsrum'].bounds.concat([['IfcDoor', 'Dörr', 'EXTERNAL']]).sort(), 'the east room is');
+    assert.deepEqual(f.joins, was.joins, 'no join changes');
+    for (const [move, part] of [[{ dx: 10, dy: 0 }, 'would reach past the ends of wall'], [{ dx: 0, dy: 1 }, 'would no longer go through wall']]) {
+      let message = '';
+      try { await preview(meta.id, [['transform_elements', Object.assign({ ids: [guid['IfcDoor Dörr']], dz: 0 }, move)]]); } catch (err) { message = String((err && err.message) || err); }
+      assert.ok(message.includes(part) && message.includes('edit_element'), JSON.stringify(move) + ': ' + message);
+    }
     return 'ok';
   }, 900000);
 
