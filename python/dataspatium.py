@@ -1544,7 +1544,7 @@ class _ChangeSet:
         if not storeys:
             raise DataspatiumError("the model has no storey; create one with create_storeys_and_grid first")
         if name is None or str(name).strip() == "":
-            ordered = sorted(storeys, key=lambda s: _topo_elevation(s, self.scale))  # from the placement when a storey has no Elevation
+            ordered = sorted(storeys, key=lambda s: _topo_elevation(s, self.scale))  # IFC4.3's storeys have their height in the placement
             return ordered[-1] if top else ordered[0]
         for exact in (True, False):
             for s in storeys:
@@ -1834,10 +1834,8 @@ class _ChangeSet:
             elevation = _cs_num(s, "elevation", 0.0)
             storey = self.root("IfcBuildingStorey", s["name"])
             storey.CompositionType = "ELEMENT"
-            # Elevation in every schema, with the placement at the same height: the schema documentation in the pinned wheel does not
-            # mark it deprecated in IFC4.3 and the Swedish guidance Praxi asks for it, although the bSI validation rule IFC102 lists it
-            # as deprecated in IFC4.3. Readers take the height from the placement when a file has no Elevation (_topo_elevation).
-            storey.Elevation = self.u(elevation)
+            if self.m.schema != "IFC4X3":
+                storey.Elevation = self.u(elevation)  # deprecated in IFC4.3 (IFC102): there the placement alone gives the height
             storey.ObjectPlacement = self.placement(building.ObjectPlacement, 0, 0, self.u(elevation))
             ifcopenshell.api.aggregate.assign_object(self.m, products=[storey], relating_object=building)
             self.register(storey, ref=False)
@@ -2111,8 +2109,10 @@ class _ChangeSet:
         if self.m.schema == "IFC2X3":
             if self.check_enum(space, "INTERNAL", "InteriorOrExteriorSpace"):
                 space.InteriorOrExteriorSpace = "INTERNAL"
+        elif self.m.schema == "IFC4X3":
+            self.predefined(space, "SPACE")  # INTERNAL is deprecated in IFC4.3 (IFC102); that the room is inside is IsExternal false
         else:
-            self.predefined(space, "INTERNAL")  # also in IFC4.3, as the wheel's schema documentation has it (see DEPRECATED_VALUES)
+            self.predefined(space, "INTERNAL")
         space.ObjectPlacement = self.placement(storey.ObjectPlacement, 0, 0, 0)
         space.Representation = self.shape(self.m.createIfcExtrudedAreaSolid(profile, self.axis3(0, 0, 0), self.direction(0, 0, 1), self.u(height)))
         return space
@@ -2194,6 +2194,10 @@ class _ChangeSet:
             ifcopenshell.api.aggregate.assign_object(self.m, products=spaces, relating_object=s)
             for space, (room, _, _) in zip(spaces, chosen):
                 self.space_quantities(space, room, h)
+                if self.m.schema == "IFC4X3":
+                    import ifcopenshell.api.pset
+                    pset = ifcopenshell.api.pset.add_pset(self.m, product=space, name="Pset_SpaceCommon")
+                    ifcopenshell.api.pset.edit_pset(self.m, pset=pset, properties={"IsExternal": False})
                 self.register(space, s, ref=listed)
         if not made:
             raise DataspatiumError("every room the walls enclose has a space already")
@@ -3235,12 +3239,10 @@ def _ifc_topology_file(in_file, out_file):
 
 CLASS_ROOTS = ("IfcElement", "IfcSpatialElement", "IfcSpatialStructureElement", "IfcTypeProduct")
 # PredefinedTypes the IFC releases deprecate (bSI rule IFC102), by the file's schema family: never written, flagged in the search.
-# IFC102 also lists IfcSpace and IfcSpaceType INTERNAL and EXTERNAL (and IfcBuildingStorey.Elevation) for IFC4.3, but the schema
-# documentation in the pinned wheel marks none of them deprecated, so they stay allowed and the wheel writes them.
 DEPRECATED_VALUES = {
     "IFC4": {"IfcWall": ("STANDARD", "POLYGONAL", "ELEMENTEDWALL"), "IfcWallType": ("STANDARD", "POLYGONAL", "ELEMENTEDWALL")},
-    "IFC4X3": {"IfcWall": ("STANDARD", "POLYGONAL"), "IfcWallType": ("STANDARD", "POLYGONAL"),
-               "IfcBuildingElementProxy": ("PROVISIONFORSPACE", "PROVISIONFORVOID")},
+    "IFC4X3": {"IfcWall": ("STANDARD", "POLYGONAL"), "IfcWallType": ("STANDARD", "POLYGONAL"), "IfcSpace": ("INTERNAL", "EXTERNAL"),
+               "IfcSpaceType": ("INTERNAL", "EXTERNAL"), "IfcBuildingElementProxy": ("PROVISIONFORSPACE", "PROVISIONFORVOID")},
 }
 CLASS_RULES = {
     "userdefined": "IFC CorrectPredefinedType; ifc-gherkin-rules OJT001 Object Predefined Type",
