@@ -85,7 +85,7 @@ diagram* sparar vyn med färgerna som ett modelldiagram, som dashboards, dokumen
 
 Modellens graf på servern ritas och frågas från *Inhämta*, och knappen *IFC-DB* (tidigare IFC-LPG) tar dig dit, se [grafer.md](grafer.md#ifc-db-på-en-dataregium-server).
 
-Grafens modell, relationerna och frågorna från Dataspatiums sida finns i Dataregiums [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/sv/ifc-lpg.md).
+Grafens modell, relationerna och frågorna från Dataspatiums sida finns i Dataregiums [ifc-db.md](https://github.com/marwiss/Dataregium/blob/main/docs/sv/ifc-db.md).
 
 ### Ärendets fält och modellfilen
 

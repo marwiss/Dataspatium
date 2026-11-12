@@ -85,7 +85,7 @@ som eit modelldiagram, som dashbord, dokument og Publiser viser med teiknforklar
 
 Grafen til modellen på tenaren blir teikna og spurd frå *Hent*, og knappen *IFC-DB* (tidlegare IFC-LPG) tek deg dit, sjå [grafer.md](grafer.md#ifc-db-på-ein-dataregium-tenar).
 
-Modellen til grafen, relasjonane og spørjingane frå Dataspatium si side finst i [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/nn/ifc-lpg.md) hos Dataregium.
+Modellen til grafen, relasjonane og spørjingane frå Dataspatium si side finst i [ifc-db.md](https://github.com/marwiss/Dataregium/blob/main/docs/nn/ifc-db.md) hos Dataregium.
 
 ### Felta i saka og modellfila
 

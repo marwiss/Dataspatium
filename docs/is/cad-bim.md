@@ -84,7 +84,7 @@ litunum sem líkansrit, sem mælaborð, skjöl og Birta sýna með skýringum.
 
 Net líkansins á þjóninum er teiknað og spurt úr *Sækja*, og hnappurinn *IFC-DB* (áður IFC-LPG) fer með þig þangað, sjá [grafer.md](grafer.md#ifc-db-á-dataregium-þjóni).
 
-Líkan grafsins, venslin og fyrirspurnirnar frá hlið Dataspatium eru í [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/is/ifc-lpg.md) hjá Dataregium.
+Líkan grafsins, venslin og fyrirspurnirnar frá hlið Dataspatium eru í [ifc-db.md](https://github.com/marwiss/Dataregium/blob/main/docs/is/ifc-db.md) hjá Dataregium.
 
 ### Svið málsins og líkanskráin
 

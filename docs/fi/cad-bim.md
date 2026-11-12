@@ -89,7 +89,7 @@ asiakirjat ja Julkaise näyttävät selitteen kanssa.
 
 Mallin verkko palvelimella piirretään ja siihen kysytään kohdasta *Nouda*, ja painike *IFC-DB* (aiemmin IFC-LPG) vie sinut sinne, katso [grafer.md](grafer.md#ifc-db-dataregium-palvelimella).
 
-Graafin malli, suhteet ja kyselyt Dataspatiumin puolelta ovat Dataregiumin tiedostossa [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/fi/ifc-lpg.md).
+Graafin malli, suhteet ja kyselyt Dataspatiumin puolelta ovat Dataregiumin tiedostossa [ifc-db.md](https://github.com/marwiss/Dataregium/blob/main/docs/fi/ifc-db.md).
 
 ### Asian kentät ja mallitiedosto
 

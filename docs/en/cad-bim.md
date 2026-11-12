@@ -88,7 +88,7 @@ with its colours as a model chart, which dashboards, documents and Publish show 
 
 The model's graph on the server is drawn and queried from *Import*, and the button *IFC-DB* (formerly IFC-LPG) takes you there, see [grafer.md](grafer.md#ifc-db-on-a-dataregium-server).
 
-The graph's model, relations and the queries from Dataspatium's side are in Dataregium's [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/en/ifc-lpg.md).
+The graph's model, relations and the queries from Dataspatium's side are in Dataregium's [ifc-db.md](https://github.com/marwiss/Dataregium/blob/main/docs/en/ifc-db.md).
 
 ### Issue fields and the model file
 

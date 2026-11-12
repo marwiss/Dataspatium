@@ -86,7 +86,7 @@ som et modeldiagram, som dashboards, dokumenter og Publicér viser med signaturf
 
 Modellens graf på serveren tegnes og forespørges fra *Hent*, og knappen *IFC-DB* (tidligere IFC-LPG) fører dig dertil, se [grafer.md](grafer.md#ifc-db-på-en-dataregium-server).
 
-Grafens model, relationerne og forespørgslerne fra Dataspatiums side findes i Dataregiums [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/da/ifc-lpg.md).
+Grafens model, relationerne og forespørgslerne fra Dataspatiums side findes i Dataregiums [ifc-db.md](https://github.com/marwiss/Dataregium/blob/main/docs/da/ifc-db.md).
 
 ### Sagens felter og modelfilen
 
