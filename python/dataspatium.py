@@ -1278,7 +1278,8 @@ def _ifc_apply(in_file, table_file, key, out_file):
 # The AI's write tools never touch the model themselves: they fill a change set (a JSON list of operations) that the person
 # previews and approves in the app; only then does _ifc_changeset() apply it, as a recipe step with undo. Lengths are metres and
 # are scaled to the file's unit. A created element gets a ref ("new-1", "new-2", ...) in the order of the operations
-# create_wall, create_slab, create_roof and create_opening, so that a later operation can name it before the file has given it an id.
+# create_wall, create_slab, create_roof and create_opening, so that a later operation can name it before the file has given it an id;
+# so does the type of define_type, which create_wall, create_slab and create_roof name as their type.
 
 
 def _cs_num(op, key, default=None, positive=False, unit="metres"):
@@ -1482,10 +1483,59 @@ def _cs_roof_faces(shape, length, width, overhang, ridge):
     return [(fall, [p for i, p in enumerate(c) if i == 0 or abs(p[0] - c[i - 1][0]) + abs(p[1] - c[i - 1][1]) > 1e-6]) for fall, c in faces]
 
 
-class _ChangeSet:
-    """Applies a change set to an IfcOpenShell model and reports what it created, changed and deleted."""
+def _cs_type_values(model, ifc_class, kind):
+    """The PredefinedTypes define_type gives a type class in the file's schema: the class's enumeration without USERDEFINED, which
+    needs an ElementType, and without the values IFC4 and later deprecate (STANDARD and POLYGONAL for walls, rule IFC102); a roof
+    type is ROOF."""
+    if kind == "roof":
+        return ["ROOF"]
+    import ifcopenshell
+    import ifcopenshell.util.attribute
+    schema = ifcopenshell.schema_by_name(getattr(model, "schema_identifier", None) or model.schema)
+    attr = next(a for a in schema.declaration_by_name(ifc_class).all_attributes() if a.name() == "PredefinedType")
+    deprecated = ("STANDARD", "POLYGONAL") if ifc_class == "IfcWallType" and model.schema != "IFC2X3" else ()
+    return [v for v in ifcopenshell.util.attribute.get_enum_items(attr) if v != "USERDEFINED" and v not in deprecated]
 
-    CREATES = ("create_wall", "create_slab", "create_roof", "create_opening", "create_spaces")
+
+_QTO_NAMES = {}
+
+
+def _cs_qto_names(schema, name):
+    """The quantities of IfcOpenShell's template of the quantity set `name` in a schema, by their names in lower case to their
+    spelling there; None when the schema has no template of it (IFC2X3)."""
+    key = (str(schema), str(name))
+    if key not in _QTO_NAMES:
+        try:
+            import ifcopenshell.util.pset
+            template = ifcopenshell.util.pset.get_template(str(schema)).get_by_name(str(name))
+        except Exception:
+            template = None
+        _QTO_NAMES[key] = None if template is None else {str(q.Name).lower(): str(q.Name) for q in (template.HasPropertyTemplates or ())}
+    return _QTO_NAMES[key]
+
+
+class _ChangeSet:
+    """Applies a change set to an IfcOpenShell model and reports what it created, changed and deleted.
+
+    The operations are the form "dataspatium-tools/1", which Dataregium takes in a change proposal as well; new operations and fields
+    are added, never changed. Since recommendations 3, 5 and 6 of the native IFC study (2026-11-12):
+
+        define_type {kind: wall | slab | roof, name, layers: [{material, thickness, category, role}], predefined_type}
+            a type with a ref: IfcWallType, IfcSlabType, or IfcSlabType ROOF for the roof slabs of create_roof, with an
+            IfcMaterialLayerSet of the layers (metres; a wall's from its right side to its left seen from start to end, a slab's and
+            a roof's from the top down); category (IfcMaterial.Category: concrete, steel, aluminium, block, brick, stone, wood,
+            glass, gypsum, plastic, earth) and role (IfcMaterialLayer.Category: load_bearing, insulation, inner_finish,
+            outer_finish) are optional and null when not known; predefined_type null takes NOTDEFINED, FLOOR and ROOF.
+        create_wall, create_slab, create_roof {..., type}
+            type (optional) is the ref of a define_type step or a type's id or GlobalId; the element takes its thickness from the
+            layers (a thickness given must equal them), gets IfcRelDefinesByType and an IfcMaterialLayerSetUsage, and has no
+            PredefinedType of its own (op_define_type and give_type).
+
+    At the end of apply the walls the change set created are joined where their axes meet (join_walls), and what it created or
+    changed gets its base quantities (base_quantities).
+    """
+
+    CREATES = ("create_wall", "create_slab", "create_roof", "create_opening", "create_spaces", "define_type")
     ROOF_TYPES = {"gable": "GABLE_ROOF", "hip": "HIP_ROOF", "shed": "SHED_ROOF", "flat": "FLAT_ROOF"}
 
     def __init__(self, model):
@@ -1816,6 +1866,7 @@ class _ChangeSet:
         self.register(g, storey, ref=False)
 
     def op_create_wall(self, op):
+        op, typ = self.with_type(op, "wall")
         storey = self.storey(op.get("storey"))
         x1, y1 = _cs_xy(op.get("start"), "start")
         x2, y2 = _cs_xy(op.get("end"), "end")
@@ -1833,8 +1884,10 @@ class _ChangeSet:
         self.predefined(wall, "STANDARD")
         self.contain(wall, storey)
         self.register(wall, storey)
+        self.give_type(wall, typ, "AXIS2", "POSITIVE", -thickness / 2.0)  # the layers centred on the axis, the first on the right
 
     def op_create_slab(self, op):
+        op, typ = self.with_type(op, "slab")
         storey = self.storey(op.get("storey"))
         thickness = _cs_num(op, "thickness", 0.25, positive=True)
         outline = op.get("outline") or self.grid_outline()
@@ -1847,6 +1900,7 @@ class _ChangeSet:
         self.predefined(slab, "FLOOR")
         self.contain(slab, storey)
         self.register(slab, storey)
+        self.give_type(slab, typ, "AXIS3", "NEGATIVE", 0.0)  # the top at the storey, the first layer at the top
 
     def op_create_roof(self, op):
         """A roof over a rectangle: an IfcRoof in the storey (the highest when none is named) that aggregates one roof slab (IfcSlab
@@ -1857,6 +1911,7 @@ class _ChangeSet:
         thickness at right angles is the given one, and neighbouring faces meet in the vertical planes through the ridge and the hips
         without a gap or an overlap."""
         import ifcopenshell.api.aggregate
+        op, typ = self.with_type(op, "roof")
         shape = str(op.get("shape") or "").strip().lower()
         if shape not in self.ROOF_TYPES:
             raise DataspatiumError("shape must be gable, hip, shed or flat")
@@ -1917,6 +1972,8 @@ class _ChangeSet:
         ifcopenshell.api.aggregate.assign_object(self.m, products=slabs, relating_object=roof)
         for slab in slabs:
             self.register(slab, storey, ref=False)
+        for slab in slabs:  # the layers rise from the face's underside, the plane of the slab's profile
+            self.give_type(slab, typ, "AXIS3", "POSITIVE", 0.0)
 
     def op_create_opening(self, op):
         import ifcopenshell.api.feature
@@ -2298,6 +2355,534 @@ class _ChangeSet:
                 setattr(conversion, key, value)
             self.touch(conversion)
 
+    # -- types with material layers, wall joins and base quantities (recommendations 3, 5 and 6 of the native IFC study)
+    TYPE_KINDS = {"wall": ("IfcWallType", "NOTDEFINED"), "slab": ("IfcSlabType", "FLOOR"), "roof": ("IfcSlabType", "ROOF")}
+    MAX_LAYERS = 20
+    # IfcMaterial.Category: the categories IfcOpenShell's add_material recommends; IfcMaterialLayer.Category: the keywords of the
+    # schema's documentation of the attribute, (IFC4, IFC4X3). IFC2X3 has neither attribute.
+    MATERIAL_CATEGORIES = ("concrete", "steel", "aluminium", "block", "brick", "stone", "wood", "glass", "gypsum", "plastic", "earth")
+    LAYER_ROLES = {"load_bearing": ("LoadBearing", "LoadBearing"), "insulation": ("Insulation", "Insulation"),
+                   "inner_finish": ("Finish", "Inner finish"), "outer_finish": ("Finish", "Outer finish")}
+
+    def op_define_type(self, op):
+        """A type with its material layers and a ref, for the type of later create steps: kind wall makes an IfcWallType, slab an
+        IfcSlabType and roof an IfcSlabType ROOF for create_roof's roof slabs (the IfcRoof only aggregates them, and IFC2X3 has no
+        IfcRoofType), with an IfcMaterialLayerSet named after it. The layers come in metres from a wall's right side to its left,
+        seen from its start toward its end, and from a slab's or a roof's top down; a roof type keeps them from the bottom up, the
+        order in which its slabs' usage lays them from the underside. A layer's optional category goes to its material
+        (IfcMaterial.Category, one of MATERIAL_CATEGORIES; a material the file has already keeps its own and takes one it lacks) and
+        its optional role to the layer (IfcMaterialLayer.Category, LAYER_ROLES in the file's schema); IFC2X3 has neither, which the
+        notes say. The PredefinedType is predefined_type, by default NOTDEFINED, FLOOR and ROOF, from the class's list in the file's
+        schema (_cs_type_values). A type of the same class and name, in any case, in the file is an error that names its GlobalId, to
+        give as type instead (a server's copy of the file keeps the GlobalIds, not necessarily the STEP ids)."""
+        kind = str(op.get("kind") or "").strip().lower()
+        if kind not in self.TYPE_KINDS:
+            raise DataspatiumError("kind must be wall, slab or roof")
+        ifc_class, default = self.TYPE_KINDS[kind]
+        name = str(op.get("name") or "").strip()[:255]
+        if not name:
+            raise DataspatiumError("the type needs a name")
+        layers = op.get("layers")
+        if not isinstance(layers, (list, tuple)) or not layers or len(layers) > self.MAX_LAYERS:
+            raise DataspatiumError("layers must be a list of 1 to %d {material, thickness}, the thickness in metres" % self.MAX_LAYERS)
+        parsed = []
+        for i, layer in enumerate(layers):
+            material = str(layer.get("material") or "").strip()[:255] if isinstance(layer, dict) else ""
+            if not material:
+                raise DataspatiumError("layer %d needs a material" % (i + 1))
+            category = str(layer.get("category") or "").strip().lower() or None
+            role = str(layer.get("role") or "").strip().lower().replace(" ", "_").replace("-", "_") or None
+            if category is not None and category not in self.MATERIAL_CATEGORIES:
+                raise DataspatiumError("layer %d: category must be one of %s, or null" % (i + 1, ", ".join(self.MATERIAL_CATEGORIES)))
+            if role is not None and role not in self.LAYER_ROLES:
+                raise DataspatiumError("layer %d: role must be one of %s, or null" % (i + 1, ", ".join(self.LAYER_ROLES)))
+            try:
+                parsed.append((material, _cs_num(layer, "thickness", positive=True), category, role))
+            except DataspatiumError as exc:
+                raise DataspatiumError("layer %d: %s" % (i + 1, exc))
+        twin = next((t for t in self.m.by_type(ifc_class) if str(t.Name or "").strip().lower() == name.lower()), None)
+        if twin is not None:
+            raise DataspatiumError("the model has an %s named %r already (GlobalId %s, id %d); give its GlobalId as type, or choose another name"
+                                   % (ifc_class, _ifc_text(twin.Name), twin.GlobalId, twin.id()))
+        value = str(op.get("predefined_type") or "").strip().upper() or default
+        allowed = _cs_type_values(self.m, ifc_class, kind)
+        if value not in allowed:
+            raise DataspatiumError("%s is not a PredefinedType of a %s type in %s; it takes %s" % (value, kind, self.m.schema, ", ".join(allowed)))
+        old = self.m.schema == "IFC2X3"
+        if old and any(c or r for _, _, c, r in parsed):
+            self.notes.append("type %s: IFC2X3 has no material categories or layer roles, so they were left out" % name)
+        made = []
+        for material, thick, category, role in parsed:
+            layer = self.m.create_entity("IfcMaterialLayer", Material=self.named_material(material, None if old else category), LayerThickness=round(self.u(thick), 9))
+            if role is not None and not old:
+                layer.Category = self.LAYER_ROLES[role][0 if self.m.schema == "IFC4" else 1]
+            made.append(layer)
+        t = self.root(ifc_class, name)
+        t.PredefinedType = value
+        self.associate(t, self.m.create_entity("IfcMaterialLayerSet", MaterialLayers=made[::-1] if kind == "roof" else made, LayerSetName=name))
+        self.register(t)
+
+    def named_material(self, name, category=None):
+        """The file's IfcMaterial of that name, made when there is none; a category (IFC4 and later) goes to a material without one,
+        and one the material has already must match it."""
+        import ifcopenshell.api.material
+        found = next((x for x in self.m.by_type("IfcMaterial") if str(x.Name or "") == name), None)
+        if found is None:
+            return ifcopenshell.api.material.add_material(self.m, name=name, category=category)
+        own = str(getattr(found, "Category", None) or "").strip()
+        if category and own and own.lower() != category:
+            raise DataspatiumError("the model's material %r has the category %r, not %r; give that category or null" % (name, own, category))
+        if category and not own:
+            found.Category = category
+        return found
+
+    def associate(self, product, material):
+        """An IfcRelAssociatesMaterial of one product with a material, a layer set or a layer set usage."""
+        import ifcopenshell.guid
+        return self.m.create_entity("IfcRelAssociatesMaterial", GlobalId=ifcopenshell.guid.new(), OwnerHistory=self.owner,
+                                    RelatedObjects=[product], RelatingMaterial=material)
+
+    @staticmethod
+    def type_layers(t):
+        """A type's IfcMaterialLayerSet: its own, else the one its occurrences' layer set usage names; None without one."""
+        for rel in getattr(t, "HasAssociations", None) or ():
+            if rel.is_a("IfcRelAssociatesMaterial") and rel.RelatingMaterial.is_a("IfcMaterialLayerSet"):
+                return rel.RelatingMaterial
+            if rel.is_a("IfcRelAssociatesMaterial") and rel.RelatingMaterial.is_a("IfcMaterialLayerSetUsage"):
+                return rel.RelatingMaterial.ForLayerSet
+        for rel in getattr(t, "Types", None) or getattr(t, "ObjectTypeOf", None) or ():
+            for o in rel.RelatedObjects or ():
+                for a in getattr(o, "HasAssociations", None) or ():
+                    if a.is_a("IfcRelAssociatesMaterial") and a.RelatingMaterial.is_a("IfcMaterialLayerSetUsage"):
+                        return a.RelatingMaterial.ForLayerSet
+        return None
+
+    def with_type(self, op, kind):
+        """(op, type) for a create step: with a type (op["type"], a ref, id or GlobalId) a copy of the op whose thickness is that of
+        the type's layers in metres, and the type, which must be a wall type for a wall, a slab type for a slab and a roof type (an
+        IfcSlabType ROOF) for a roof; (op, None) without one. A thickness the step gives must be the layers'."""
+        ref = op.get("type")
+        if ref is None or str(ref).strip() == "":
+            return op, None
+        t = self.entity(ref)
+        roof = str(getattr(t, "PredefinedType", None) or "") == "ROOF"
+        if not t.is_a("IfcWallType" if kind == "wall" else "IfcSlabType") or (kind == "roof") != roof:
+            what = {"wall": "a wall type (IfcWallType)", "slab": "a slab type (an IfcSlabType other than ROOF)", "roof": "a roof type (IfcSlabType ROOF)"}[kind]
+            raise DataspatiumError("type must name %s, as define_type makes them, not the %s %r" % (what, t.is_a(), _ifc_text(getattr(t, "Name", None))))
+        layers = self.type_layers(t)
+        total = round(sum(float(x.LayerThickness or 0.0) for x in (layers.MaterialLayers if layers is not None else ())) * self.scale, 9)
+        if total <= 0:
+            raise DataspatiumError("type %r has no material layers to take the thickness from" % _ifc_text(t.Name))
+        if op.get("thickness") is not None and abs(_cs_num(op, "thickness", positive=True) - total) > 0.0005:
+            raise DataspatiumError("thickness %g m differs from the %g m of the layers of type %r; leave thickness null" % (_cs_num(op, "thickness"), total, _ifc_text(t.Name)))
+        return dict(op, thickness=total), t
+
+    def give_type(self, e, t, direction, sense, offset):
+        """Type an occurrence: the type's IfcRelDefinesByType (one per type), the type's layers as an IfcMaterialLayerSetUsage of the
+        occurrence's own (LayerSetDirection AXIS2 or AXIS3, DirectionSense POSITIVE or NEGATIVE, OffsetFromReferenceLine from the
+        reference line or plane, in metres), and no PredefinedType or ObjectType of its own: the type carries it (OJT001). Nothing
+        without a type."""
+        if t is None:
+            return
+        import ifcopenshell.guid
+        rel = next(iter(getattr(t, "Types", None) or getattr(t, "ObjectTypeOf", None) or ()), None)
+        if rel is None:
+            self.m.create_entity("IfcRelDefinesByType", GlobalId=ifcopenshell.guid.new(), OwnerHistory=self.owner, RelatedObjects=[e], RelatingType=t)
+        else:
+            rel.RelatedObjects = list(rel.RelatedObjects or ()) + [e]
+        usage = self.m.create_entity("IfcMaterialLayerSetUsage", ForLayerSet=self.type_layers(t), LayerSetDirection=direction,
+                                     DirectionSense=sense, OffsetFromReferenceLine=round(self.u(offset), 9))
+        self.associate(e, usage)
+        if getattr(e, "PredefinedType", None) is not None:
+            e.PredefinedType = None
+        if getattr(e, "ObjectType", None) is not None:
+            e.ObjectType = None
+
+    def finish(self):
+        """After the operations: the joins of the walls the change set created (join_walls), then the base quantities of what it
+        created or changed (base_quantities). A fault in either becomes a note in the report, and the operations stand."""
+        for step, what in ((self.join_walls, "the wall joins"), (self.base_quantities, "the base quantities")):
+            try:
+                step()
+            except Exception as exc:
+                self.notes.append("%s could not be made: %s: %s" % (what, type(exc).__name__, exc))
+
+    JOIN_RIGHT = 0.02  # |cos| of the angle between two walls below which they meet at right angles (about one degree)
+    JOIN_LINE = 0.98  # and above which they run in line or side by side (about eleven degrees)
+
+    @staticmethod
+    def end_type(k):
+        return "ATSTART" if k == 0 else "ATEND"
+
+    def join_walls(self):
+        """IfcRelConnectsPathElements where the axis of a wall the change set created meets another wall's on its storey, within the
+        topology's tolerance (half the storey's thickest wall plus 0.05 m): two ends at one point are an L, ATSTART or ATEND on both
+        with the main wall relating, and an end on another wall's axis between its ends a T, ATSTART or ATEND on the abutting wall,
+        which relates, and ATPATH on the through wall, as IfcOpenShell's connect_wall writes them. Three or more ends at one point
+        join when two of them continue each other in a line, which the others then abut. The bodies are cut square and the axes stay
+        as drawn: at an L the main wall (the thicker, then the longer, then the older) reaches half the other's thickness past the
+        corner and the other stops half the main wall's thickness short of it, so that the corner has neither a gap outside nor an
+        overlap inside, and at a T the abutting wall stops at the through wall's face, so that no volume is counted twice. Only
+        bodies of create_wall's form are cut (wall_box); walls at another angle are joined as drawn, and ends the app cannot sort
+        out are left alone, both with a note. Walls joined before keep their joint."""
+        new = {r["id"] for r in self.created if r.get("ifc_class") == "IfcWall"}
+        storeys = {}
+        for i in sorted(new):
+            try:
+                s = self.container(self.m.by_id(i))
+            except Exception:
+                continue  # deleted later in the change set
+            if s is not None:
+                storeys.setdefault(s.id(), s)
+        if not storeys:
+            return
+        done = {frozenset((r.RelatingElement.id(), r.RelatedElement.id())) for r in self.m.by_type("IfcRelConnectsPathElements")
+                if r.RelatingElement is not None and r.RelatedElement is not None}
+        for s in storeys.values():
+            walls = [self.join_wall(e, e.id() in new) for rel in (getattr(s, "ContainsElements", None) or ()) for e in (rel.RelatedElements or ()) if e.is_a("IfcWall")]
+            walls = sorted((w for w in walls if w is not None), key=lambda w: w["id"])
+            if len(walls) > 1:
+                self.join_storey(walls, max([w["t"] for w in walls if w["t"] <= 1.0] or [0.2]) / 2.0 + 0.05, done)
+
+    def join_wall(self, wall, new):
+        """A wall as join_walls reads it: its axis in the world's plan in metres, the axis's direction and length, its thickness, its
+        placement (a matrix in file units) and its body when create_wall drew it; None without a straight axis of two points."""
+        try:
+            m = _cs_placement(getattr(wall, "ObjectPlacement", None))
+            rep = getattr(wall, "Representation", None)
+            line = next((pts for r in (rep.Representations if rep is not None and m is not None else ()) if (r.RepresentationIdentifier or "") == "Axis"
+                         for pts in (_topo_curve(item) for item in (r.Items or ())) if pts and len(pts) == 2), None)
+            if line is None:
+                return None
+            s = self.scale
+            a, b = [(q[0] * s, q[1] * s) for q in (_cs_at(m, (x, y, 0.0)) for x, y in line)]
+            length = math.dist(a, b)
+            box = self.wall_box(wall)
+            t = float(box.SweptArea.YDim) * s if box is not None else _topo_thickness(wall, s)
+        except Exception:
+            return None
+        if length <= 1e-6 or not t:
+            return None
+        return {"e": wall, "id": wall.id(), "new": new, "a": a, "b": b, "u": ((b[0] - a[0]) / length, (b[1] - a[1]) / length),
+                "len": length, "t": float(t), "m": m, "line": line, "box": box}
+
+    @staticmethod
+    def wall_box(element):
+        """The body of a wall or an opening when it is one IfcExtrudedAreaSolid of an IfcRectangleProfileDef along the element's x,
+        extruded straight up from a position that only lifts it, as create_wall and create_opening draw them; else None."""
+        rep = getattr(element, "Representation", None)
+        bodies = [r for r in (rep.Representations if rep is not None else ()) if (r.RepresentationIdentifier or "") == "Body"]
+        items = list(bodies[0].Items or ()) if len(bodies) == 1 else []
+        if len(items) != 1 or not items[0].is_a("IfcExtrudedAreaSolid") or not items[0].SweptArea.is_a("IfcRectangleProfileDef") or items[0].SweptArea.Position is None:
+            return None
+        item = items[0]
+        m, p = _cs_axes(item.Position), _cs_axes(item.SweptArea.Position)
+        d = _cs_unit([float(c) for c in item.ExtrudedDirection.DirectionRatios])
+        upright = abs(m[0][0] - 1.0) < 1e-9 and abs(m[2][2] - 1.0) < 1e-9 and abs(m[3][0]) < 1e-9 and abs(m[3][1]) < 1e-9
+        return item if upright and d is not None and abs(d[2] - 1.0) < 1e-9 and abs(p[0][0] - 1.0) < 1e-9 else None
+
+    def cut_end(self, w, end, q):
+        """Move the end of a wall's body on the side of its axis's start (end 0) or end (1) to the plan point q (metres, world) along
+        the wall; False, with nothing moved, when the body would be shorter than a centimetre."""
+        item, m, s = w["box"], w["m"], self.scale
+        profile = item.SweptArea
+        x = (q[0] / s - m[3][0]) * m[0][0] + (q[1] / s - m[3][1]) * m[0][1]  # q along the wall's x, in file units
+        cx, cy = [float(c) for c in profile.Position.Location.Coordinates][:2]
+        x0, x1 = cx - float(profile.XDim) / 2.0, cx + float(profile.XDim) / 2.0
+        if (end == 1) == (w["line"][1][0] >= w["line"][0][0]):
+            x1 = x
+        else:
+            x0 = x
+        if x1 - x0 < self.u(0.01):
+            return False
+        profile.XDim = round(x1 - x0, 9)
+        point, centre = profile.Position.Location, round((x0 + x1) / 2.0, 9)
+        if self.m.get_total_inverses(point) > 1:
+            profile.Position.Location = self.point(centre, cy)
+        else:
+            point.Coordinates = (centre, cy)
+        return True
+
+    def join_storey(self, walls, tol, done):
+        """The joins on one storey: wall ends within tol of each other meet at one point (union-find), which is a T for each of them
+        when it lies on another wall's axis between that wall's ends, else an L of two ends or a meeting of three or more."""
+        ends = [(w, k) for w in walls for k in (0, 1)]
+        where = [w["a"] if k == 0 else w["b"] for w, k in ends]
+        parent = list(range(len(ends)))
+
+        def find(i):
+            while parent[i] != i:
+                parent[i] = parent[parent[i]]
+                i = parent[i]
+            return i
+        for _, i, j in _topo_pairs(where, tol):
+            if ends[i][0] is not ends[j][0]:
+                parent[find(i)] = find(j)
+        groups = {}
+        for i in range(len(ends)):
+            groups.setdefault(find(i), []).append(i)
+        for members in sorted(groups.values()):
+            group = [ends[i] for i in members]
+            if len({w["id"] for w, _ in group}) < len(group):
+                continue  # both ends of one short wall
+            p = (sum(where[i][0] for i in members) / len(members), sum(where[i][1] for i in members) / len(members))
+            through = self.through(walls, group, p, tol)
+            if through is not None:
+                for e in group:
+                    self.abut(e, through, "ATPATH", through["t"], done)
+            elif len(group) == 2:
+                self.join_l(group[0], group[1], done)
+            elif len(group) > 2:
+                self.join_node(group, p, done)
+
+    @staticmethod
+    def through(walls, group, p, tol):
+        """The wall, not one of the group's, whose axis passes within tol of the point p between its ends (farther than tol from
+        both), the nearest; None."""
+        own = {w["id"] for w, _ in group}
+        best = None
+        for w in walls:
+            if w["id"] in own:
+                continue
+            dx, dy = p[0] - w["a"][0], p[1] - w["a"][1]
+            along, off = dx * w["u"][0] + dy * w["u"][1], abs(dx * w["u"][1] - dy * w["u"][0])
+            if tol < along < w["len"] - tol and off <= tol and (best is None or off < best[0]):
+                best = (off, w)
+        return best[1] if best else None
+
+    def label(self, w):
+        """A wall of join_walls as the notes name it: its ref in this change set, else its id, and its name."""
+        ref = next((r["ref"] for r in self.created if r["id"] == w["id"] and r.get("ref")), None)
+        return "%s %r" % (ref or "#%d" % w["id"], _ifc_text(getattr(w["e"], "Name", None)) or "")
+
+    def note_join(self, a, b, cos, angled):
+        if angled:
+            self.notes.append("walls %s and %s meet at %.0f degrees and were joined as drawn: the app cuts corners at right angles only"
+                              % (self.label(a), self.label(b), math.degrees(math.acos(min(1.0, cos)))))
+        else:
+            self.notes.append("walls %s and %s were joined as drawn: the app cuts only bodies drawn by create_wall" % (self.label(a), self.label(b)))
+
+    def abut(self, end, a, a_type, thickness, done):
+        """The end `end` (a wall and 0 or 1) against the side of wall a, `thickness` metres thick: the abutting wall relates with
+        ATSTART or ATEND and a with a_type (ATPATH at a T), and the abutting wall's body stops at a's face."""
+        b, k = end
+        pair = frozenset((a["id"], b["id"]))
+        cos = abs(a["u"][0] * b["u"][0] + a["u"][1] * b["u"][1])
+        if pair in done or not (a["new"] or b["new"]) or cos >= self.JOIN_LINE:
+            return  # joined before, both old, or side by side as the layers of a wall
+        p = _topo_cross(b["a"], b["u"], a["a"], a["b"])[1]  # where b's axis meets a's
+        if cos <= self.JOIN_RIGHT and b["box"] is not None:
+            into = b["u"] if k == 0 else (-b["u"][0], -b["u"][1])
+            if self.cut_end(b, k, (p[0] + into[0] * thickness / 2.0, p[1] + into[1] * thickness / 2.0)):
+                self.touch(b["e"])
+        else:
+            self.note_join(a, b, cos, cos > self.JOIN_RIGHT)
+        self.connect(b, self.end_type(k), a, a_type)
+        done.add(pair)
+
+    def join_l(self, e1, e2, done):
+        """Two wall ends at one point: an L at right angles, cut so that the corner has neither a gap nor an overlap (join_walls); in
+        line a straight joint, ATEND to ATSTART, as drawn; at another angle joined as drawn, with a note."""
+        (w1, k1), (w2, k2) = e1, e2
+        pair = frozenset((w1["id"], w2["id"]))
+        if pair in done or not (w1["new"] or w2["new"]):
+            return
+        out1 = w1["u"] if k1 == 1 else (-w1["u"][0], -w1["u"][1])
+        out2 = w2["u"] if k2 == 1 else (-w2["u"][0], -w2["u"][1])
+        dot = out1[0] * out2[0] + out1[1] * out2[1]
+        if abs(dot) >= self.JOIN_LINE:
+            if dot < 0:  # one continues the other; side by side is no joint
+                self.connect(w1, self.end_type(k1), w2, self.end_type(k2))
+                done.add(pair)
+            return
+        (wm, km), (wo, ko) = sorted((e1, e2), key=lambda e: (-round(e[0]["t"], 6), -round(e[0]["len"], 6), e[0]["id"]))
+        if abs(dot) <= self.JOIN_RIGHT and wm["box"] is not None and wo["box"] is not None:
+            p = _topo_cross(wm["a"], wm["u"], wo["a"], wo["b"])[1]  # where the axes cross
+            om = wm["u"] if km == 1 else (-wm["u"][0], -wm["u"][1])  # out of the main wall at the corner
+            oo = wo["u"] if ko == 1 else (-wo["u"][0], -wo["u"][1])
+            if self.cut_end(wm, km, (p[0] + om[0] * wo["t"] / 2.0, p[1] + om[1] * wo["t"] / 2.0)):
+                self.touch(wm["e"])
+                if self.cut_end(wo, ko, (p[0] - oo[0] * wm["t"] / 2.0, p[1] - oo[1] * wm["t"] / 2.0)):
+                    self.touch(wo["e"])
+        else:
+            self.note_join(wm, wo, abs(dot), abs(dot) > self.JOIN_RIGHT)
+        self.connect(wm, self.end_type(km), wo, self.end_type(ko))
+        done.add(pair)
+
+    def join_node(self, group, p, done):
+        """Three or more wall ends at one point: two that continue each other in a line get a straight joint and every other end
+        abuts that line, the thicker of the two relating, then the older (at a cross the line of the thicker, then the longer,
+        walls); without such a line the walls are left as drawn, with a note."""
+        def out(e):
+            return e[0]["u"] if e[1] == 1 else (-e[0]["u"][0], -e[0]["u"][1])
+        lines = [(e1, e2) for i, e1 in enumerate(group) for e2 in group[i + 1:] if out(e1)[0] * out(e2)[0] + out(e1)[1] * out(e2)[1] <= -self.JOIN_LINE]
+        if not lines:
+            self.notes.append("walls %s meet at (%.2f, %.2f) in a way the app does not join, so they were left as drawn" % (", ".join(self.label(w) for w, _ in group), p[0], p[1]))
+            return
+        e1, e2 = min(lines, key=lambda l: (-round(max(l[0][0]["t"], l[1][0]["t"]), 6), -round(l[0][0]["len"] + l[1][0]["len"], 6), min(l[0][0]["id"], l[1][0]["id"])))
+        self.join_l(e1, e2, done)
+        line = min((e1, e2), key=lambda e: (-round(e[0]["t"], 6), e[0]["id"]))
+        for e in group:
+            if e is not e1 and e is not e2:
+                self.abut(e, line[0], self.end_type(line[1]), max(e1[0]["t"], e2[0]["t"]), done)
+
+    def connect(self, relating, relating_type, related, related_type):
+        """An IfcRelConnectsPathElements between two walls of join_walls, without priorities or connection geometry."""
+        import ifcopenshell.guid
+        self.m.create_entity("IfcRelConnectsPathElements", GlobalId=ifcopenshell.guid.new(), OwnerHistory=self.owner,
+                             RelatingElement=relating["e"], RelatedElement=related["e"], RelatingPriorities=[], RelatedPriorities=[],
+                             RelatingConnectionType=relating_type, RelatedConnectionType=related_type)
+
+    QUANTITIES = (("IfcWall", "Qto_WallBaseQuantities", "qto_wall"), ("IfcSlab", "Qto_SlabBaseQuantities", "qto_slab"),
+                  ("IfcRoof", "Qto_RoofBaseQuantities", "qto_roof"), ("IfcDoor", "Qto_DoorBaseQuantities", "qto_filling"),
+                  ("IfcWindow", "Qto_WindowBaseQuantities", "qto_filling"))
+
+    def base_quantities(self):
+        """The base quantities of the walls, slabs, roofs, doors and windows the change set created or changed, from their
+        parameters without a geometry kernel, in the file's units and with MethodOfMeasurement BaseQuantities (add_qto): a set the
+        element has of its own is updated, one it shares is left alone. Each quantity has the name in IfcOpenShell's template for the
+        file's schema (IFC4X3 spells the wall's footprint areas GrossFootPrintArea and NetFootPrintArea), and one the template lacks
+        is left out; IFC2X3 has no templates and gets IFC4's names. An element of another form gets none."""
+        for i in dict.fromkeys([r["id"] for r in self.created] + list(self.changed)):
+            try:
+                e = self.m.by_id(i)
+            except Exception:
+                continue  # deleted later in the change set
+            for ifc_class, name, method in self.QUANTITIES:
+                if e.is_a(ifc_class):
+                    values = getattr(self, method)(e)
+                    if values:
+                        self.write_qto(e, name, values)
+                    break
+
+    def unit_scale(self, kind):
+        """The file's unit of a kind (AREAUNIT, VOLUMEUNIT) in SI units."""
+        import ifcopenshell.util.unit
+        try:
+            return float(ifcopenshell.util.unit.calculate_unit_scale(self.m, kind) or 1.0)
+        except Exception:
+            return 1.0
+
+    def write_qto(self, e, name, values):
+        """values {quantity: (length | area | volume, metres, m² or m³)} as the element's quantity set `name`."""
+        import ifcopenshell.api.pset
+        names = _cs_qto_names(getattr(self.m, "schema_identifier", None) or self.m.schema, name)
+        per = {"length": self.scale, "area": self.unit_scale("AREAUNIT"), "volume": self.unit_scale("VOLUMEUNIT")}
+        props = {}
+        for key, (kind, value) in values.items():
+            spelled = key if names is None else names.get(key.lower())
+            if spelled is not None:
+                props[spelled] = round(float(value) / per[kind], 9)
+        rels = [r for r in (getattr(e, "IsDefinedBy", None) or ()) if r.is_a("IfcRelDefinesByProperties") and hasattr(r.RelatingPropertyDefinition, "is_a")
+                and r.RelatingPropertyDefinition.is_a("IfcElementQuantity") and r.RelatingPropertyDefinition.Name == name]
+        if not props or any(len(r.RelatedObjects or ()) > 1 for r in rels):
+            return
+        qto = rels[0].RelatingPropertyDefinition if rels else ifcopenshell.api.pset.add_qto(self.m, product=e, name=name)
+        ifcopenshell.api.pset.edit_qto(self.m, qto=qto, properties=props)
+
+    def qto_wall(self, wall):
+        """A wall of create_wall's form (wall_box): Length along its body's centreline as joined, Width, Height, the footprint, the
+        side of its middle plane and the volume, gross and, less the openings of create_opening's form within the body, net (the
+        footprint loses only an opening through the whole height); without the net values when an opening has another form."""
+        item = self.wall_box(wall)
+        if item is None:
+            return None
+        s, p = self.scale, item.SweptArea
+        cx = float(p.Position.Location.Coordinates[0])
+        x0, x1 = cx - float(p.XDim) / 2.0, cx + float(p.XDim) / 2.0
+        z0 = _cs_axes(item.Position)[3][2]
+        z1 = z0 + float(item.Depth)
+        length, width, height = (x1 - x0) * s, float(p.YDim) * s, float(item.Depth) * s
+        side, foot = length * height, length * width
+        values = {"Length": ("length", length), "Width": ("length", width), "Height": ("length", height),
+                  "GrossFootprintArea": ("area", foot), "GrossSideArea": ("area", side), "GrossVolume": ("volume", side * width)}
+        cut = through = 0.0
+        for rel in getattr(wall, "HasOpenings", None) or ():
+            box = self.opening_box(rel.RelatedOpeningElement, wall)
+            if box is None:
+                return values
+            w = max(0.0, min(x1, box[1]) - max(x0, box[0])) * s
+            cut += w * max(0.0, min(z1, box[3]) - max(z0, box[2])) * s
+            if box[2] <= z0 + 1e-9 and box[3] >= z1 - 1e-9:
+                through += w * width
+        values.update({"NetFootprintArea": ("area", foot - through), "NetSideArea": ("area", side - cut), "NetVolume": ("volume", (side - cut) * width)})
+        return values
+
+    def opening_box(self, opening, wall):
+        """(x0, x1, z0, z1) of an opening's body in its wall's coordinates, in file units, when it is a box along the wall (wall_box);
+        None for another form."""
+        item = self.wall_box(opening)
+        mw, mo = _cs_placement(getattr(wall, "ObjectPlacement", None)), _cs_placement(getattr(opening, "ObjectPlacement", None))
+        if item is None or mw is None or mo is None:
+            return None
+        rel = _cs_compose(_cs_invert(mw), mo)
+        if abs(rel[0][0] - 1.0) > 1e-6 or abs(rel[2][2] - 1.0) > 1e-6:
+            return None
+        cx, half = rel[3][0] + float(item.SweptArea.Position.Location.Coordinates[0]), float(item.SweptArea.XDim) / 2.0
+        z0 = rel[3][2] + _cs_axes(item.Position)[3][2]
+        return cx - half, cx + half, z0, z0 + float(item.Depth)
+
+    def slab_face(self, slab):
+        """(area m², perimeter m, thickness m, (length, depth) m or None, upness) of a slab whose body is one IfcExtrudedAreaSolid of a
+        profile without voids: the profile's area and perimeter in its own plane, the thickness at right angles to it, its sides when
+        it is a rectangle along its axes, and the z of its plane's normal, which projects it to the ground; None for another form."""
+        rep = getattr(slab, "Representation", None)
+        bodies = [r for r in (rep.Representations if rep is not None else ()) if (r.RepresentationIdentifier or "") == "Body"]
+        items = list(bodies[0].Items or ()) if len(bodies) == 1 else []
+        m = _cs_placement(getattr(slab, "ObjectPlacement", None))
+        if len(items) != 1 or not items[0].is_a("IfcExtrudedAreaSolid") or m is None or getattr(items[0].SweptArea, "InnerCurves", None):
+            return None
+        item = items[0]
+        pts = [tuple(q) for q in _cs_profile_points(item.SweptArea)]
+        if len(pts) > 3 and math.dist(pts[0], pts[-1]) < 1e-9:
+            pts = pts[:-1]
+        d = _cs_unit([float(c) for c in item.ExtrudedDirection.DirectionRatios])
+        if len(pts) < 3 or d is None:
+            return None
+        s = self.scale
+        ring = pts + pts[:1]
+        area = abs(sum(p[0] * q[1] - q[0] * p[1] for p, q in zip(ring, ring[1:]))) / 2.0 * s * s
+        perimeter = sum(math.dist(p, q) for p, q in zip(ring, ring[1:])) * s
+        rect = None
+        if _cs_rectangle(pts):
+            rect = ((max(p[0] for p in pts) - min(p[0] for p in pts)) * s, (max(p[1] for p in pts) - min(p[1] for p in pts)) * s)
+        return area, perimeter, float(item.Depth) * abs(d[2]) * s, rect, abs(_cs_compose(m, _cs_axes(item.Position))[2][2])
+
+    def qto_slab(self, slab):
+        """A slab of one extruded profile (slab_face): Width its thickness, Perimeter, Length and Depth when the profile is a
+        rectangle, the profile's area and the volume; Net as Gross when it has no openings (the write tools cut none in slabs)."""
+        face = self.slab_face(slab)
+        if face is None:
+            return None
+        area, perimeter, width, rect, _ = face
+        values = {"Width": ("length", width), "Perimeter": ("length", perimeter), "GrossArea": ("area", area), "GrossVolume": ("volume", area * width)}
+        if rect is not None:
+            values.update({"Length": ("length", rect[0]), "Depth": ("length", rect[1])})
+        if not (getattr(slab, "HasOpenings", None) or ()):
+            values.update({"NetArea": ("area", area), "NetVolume": ("volume", area * width)})
+        return values
+
+    def qto_roof(self, roof):
+        """A roof by its aggregated slabs (create_roof's form): GrossArea and NetArea the sum of their faces, ProjectedArea that sum
+        projected to the ground; none when a part is of another form, and no NetArea when one has openings."""
+        parts = [o for rel in (getattr(roof, "IsDecomposedBy", None) or ()) for o in (rel.RelatedObjects or ()) if o.is_a("IfcSlab")]
+        faces = [self.slab_face(o) for o in parts]
+        if not faces or any(f is None for f in faces):
+            return None
+        gross = sum(f[0] for f in faces)
+        values = {"GrossArea": ("area", gross), "ProjectedArea": ("area", sum(f[0] * f[4] for f in faces))}
+        if not any(getattr(o, "HasOpenings", None) for o in parts):
+            values["NetArea"] = ("area", gross)
+        return values
+
+    def qto_filling(self, e):
+        """A door or a window by OverallWidth and OverallHeight, which create_opening sets: Width, Height, Perimeter and Area."""
+        w, h = getattr(e, "OverallWidth", None), getattr(e, "OverallHeight", None)
+        if not w or not h:
+            return None
+        w, h = float(w) * self.scale, float(h) * self.scale
+        return {"Width": ("length", w), "Height": ("length", h), "Perimeter": ("length", 2.0 * (w + h)), "Area": ("area", w * h)}
+
     def apply(self, ops):
         if not isinstance(ops, list):
             raise DataspatiumError("the change set must be a list of operations")
@@ -2306,6 +2891,7 @@ class _ChangeSet:
         previous = self.owner_settings()
         try:
             self.apply_all(ops)
+            self.finish()
         finally:
             self.restore_owner_settings(previous)
         if self.owner is not None:
