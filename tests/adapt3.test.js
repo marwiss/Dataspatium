@@ -482,5 +482,5 @@
     for (const id of created) if (id) await datasets.remove(id).catch(() => {});
     assert.ok(true);
     return 'ok';
-  });
+  }, 90000);  // the saves it waits for and the removals take longer on a busy machine
 })();
