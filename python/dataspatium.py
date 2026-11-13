@@ -2335,11 +2335,6 @@ class _ChangeSet:
             rel.OwnerHistory = self.owner
         return rel
 
-    def unbound(self, rel):
-        """Remove a space boundary and its connection geometry."""
-        import ifcopenshell.api.boundary
-        ifcopenshell.api.boundary.remove_boundary(self.m, boundary=rel)
-
     def face_geometry(self, space, face):
         """The IfcConnectionSurfaceGeometry of a face in the space's object coordinates, in file units. face: "o" (the plane's origin),
         "x" (its u direction) and "z" (its normal, away from the space) in the world in metres, and "rings": the outer ring and the
@@ -3405,7 +3400,8 @@ class _ChangeSet:
         return e is not None and (e.is_a("IfcWall") or e.is_a("IfcDoor") or e.is_a("IfcWindow"))
 
     def unbound(self, b):
-        """Remove a space boundary with its connection geometry, when nothing else uses that."""
+        """Remove a space boundary with its connection geometry, when nothing else uses that (the one definition: the boundaries
+        after a move and the faces of the space boundaries both use it)."""
         geometry = getattr(b, "ConnectionGeometry", None)
         self.m.remove(b)
         self.drop(geometry)
@@ -3430,12 +3426,6 @@ class _ChangeSet:
         for e, x in want:
             self.bound(space, e, x)
         return True
-
-    @staticmethod
-    def host_of(e):
-        """The wall (or other element) whose opening a door or window fills; None."""
-        o = next((r.RelatingOpeningElement for r in (getattr(e, "FillsVoids", None) or ())), None)
-        return next((r.RelatingBuildingElement for r in (getattr(o, "VoidsElements", None) or ())), None) if o is not None else None
 
     def loosen(self, space, outline, walls, lines, tol, meets, why):
         """A space the moved walls no longer fit keeps its outline and quantities, with a note: its boundaries to the moved walls whose
