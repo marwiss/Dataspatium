@@ -43,15 +43,27 @@ Picture collections with positions have the button *Show on the map*. Click a pl
 
 - **Background map**: none (default), OpenStreetMap, an [orthophoto](#orthophotos), or your own map server with an address template such as
   `https://…/{z}/{x}/{y}.png` and an attribution, or a **WMS service** (address, layers, image format and transparency; *Read layers* fetches the
-  service's layer list). Background maps are fetched from the net and ask for consent the
+  service's layer list), or **map tiles** from an OGC API – Tiles service (see below). Background maps are fetched from the net and ask for consent the
   first time (the purpose *Background maps* under Manage → Internet access).
 - **Layers**: add more datasets or the bundled boundaries (counties and municipalities of Sweden, Denmark, Norway and
-  Finland), or a **WMS layer** (images from a map service drawn under the features with a chosen opacity; it has no
-  legend entry and is left out of export to SVG, PNG and PDF). Every layer has a name, visibility, order, colour, fill, line width and point size, geometry or coordinate
+  Finland), a **WMS layer** (images from a map service drawn under the features with a chosen opacity; it has no
+  legend entry and is left out of export to SVG, PNG and PDF) or **map tiles** from OGC API – Tiles, drawn the same
+  way. Every layer has a name, visibility, order, colour, fill, line width and point size, geometry or coordinate
   columns, colour by column (categories with the app's palette or classes with a sequential scale, number of classes),
   a label (shown when the pointer rests on a feature) and a maximum number of features.
 - **View**: *Save current view* locks the map's centre and zoom; otherwise the map fits the layers. The legend and the
   height can be changed.
+
+**Map tiles from OGC API – Tiles** (for example GeoServer, ldproxy or pygeoapi): choose *Map tiles (OGC API – Tiles)* as
+background map or under *Add layer*. Give the service's landing page (a collection's address works too) and press *Read
+service*; the app reads the landing page, `/collections` and the service's tile sets after consent to background maps.
+Then choose a collection (or the whole service, when it has tiles of its own) and a tile set. The map is drawn in Web
+Mercator, so the tile set shown is WebMercatorQuad or another one with the same grid (the app reads its definition under
+`/tileMatrixSets`). Tiles are fetched at the zoom levels the service has and enlarged beyond them. Image tiles (PNG, JPEG,
+WebP) are shown; vector tiles (Mapbox Vector Tiles) and tile sets in other coordinate systems, such as SWEREF 99 TM, are
+listed but cannot be shown, and the dialog says why. The service's attribution is filled in and shown in the map's corner
+as plain text. Services that need a login or a key are not supported yet. On a plan shown in its own system the background
+can only come from a WMS service.
 
 The inspector shows the legend and the feature you clicked. A map view exports to SVG, PNG and PDF, runs in batch per
 group, becomes PowerPoint and can be placed in document templates with `{{diagram "Name"}}`. Exports draw the layers
@@ -171,6 +183,7 @@ also be shown in its own system (see [planer.md](planer.md#coordinate-and-height
   consent.
 - Coordinate systems: those listed under [Coordinate systems](#coordinate-systems). Others must be converted before import (in QGIS, for
   example); the app says so and does not draw them.
-- Exports draw the layers, not the background map or WMS layers.
+- Exports draw the layers, not the background map, WMS layers or map tiles.
+- Map tiles from OGC API – Tiles are shown only as images in Web Mercator; vector tiles need a library the app does not have.
 - Buffers and overlays are planar computations on WGS 84 coordinates through Turf; at kilometre scale in the Nordic
   countries the error is small, for very large areas noticeable.

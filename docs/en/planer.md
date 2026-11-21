@@ -47,7 +47,7 @@ RH 2000, and the file names both (`koordinatsystemPlan` and `hojdsystem`). Compr
 The inspector shows the plan's coordinate system and, for a plan with heights, the height system; a GeoPackage file names no
 height system, and the inspector then says so.
 
-The plan map is drawn as a web map (Web Mercator with north up, where OpenStreetMap can be the background) or in the plan's
+The plan map is drawn as a web map (Web Mercator with north up, where OpenStreetMap or map tiles from OGC API – Tiles can be the background) or in the plan's
 own system: choose it in the toolbar, for example *SWEREF 99 16 30*. The grid's north is then up as on the plan map, and
 every object lies at its coordinates. The background can then come from a WMS service that offers the same system: choose
 *WMS service* as background map and give the address and layer (*Read layers* fetches the service's layer list and says

@@ -4,14 +4,14 @@
  * Plan view in Bearbeta for datasets of kind "plan": a detailed development plan drawn as a plan map (uses filled
  * with Boverket's colours, property and administrative provisions as outlines, designations as labels, the plan
  * boundary on top) or a comprehensive plan by theme, with zoom and pan, an optional background map after consent
- * (OpenStreetMap, an orthophoto in the grids its service offers, or a WMS),
+ * (OpenStreetMap, an orthophoto in the grids its service offers, a WMS, or OGC API – Tiles in Web Mercator),
  * the provisions listed in the inspector and the clicked provision explained from the embedded catalogue. The
  * dataset itself is always the table of plan objects; the table is one click away.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/plan-view', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'data/geo', 'viz/leaflet', 'viz/charts', 'viz/data', 'platform/files', 'ui/viz/basemap-choice'], (base, datasets, plan, catalog, geo, leaflet, charts, vizData, files, basemapChoice) => {
+  D.define('ui/bearbeta/plan-view', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'data/geo', 'viz/leaflet', 'viz/charts', 'viz/data', 'platform/files', 'ui/viz/basemap-choice', 'ui/viz/tiles-dialog'], (base, datasets, plan, catalog, geo, leaflet, charts, vizData, files, basemapChoice, tilesDialog) => {
     const { h, t, i18n, replace } = base;
     const MAX_ROWS = 20000;
     const OUTLINE_STYLES = {
@@ -28,7 +28,7 @@
      */
     function create(ctx, options) {
       const { ui, shell, store } = ctx;
-      const s = { id: null, basemap: 'none', wms: null, projection: 'web', labels: true, hidden: new Set(), selected: null, rows: [], info: null, slag: 'detaljplan', updatedAt: null };
+      const s = { id: null, basemap: 'none', wms: null, tiles: null, projection: 'web', labels: true, hidden: new Set(), selected: null, rows: [], info: null, slag: 'detaljplan', updatedAt: null };
       let ds = null; let slots = null; let mapEl = null; let handle = null; let seq = 0; let groups = []; let labelLayer = null; let L = null;
       /** Sweden's orthophoto: read on the next drawing, because the person chose it (for the plan's extent, at most a square kilometre). */
       let orthoLoad = false;
@@ -97,12 +97,13 @@
         projectionSel.value = s.projection;
         projectionSel.addEventListener('change', () => {
           s.projection = projectionSel.value;
-          if (s.projection === 'plan' && s.basemap === 'osm') { s.basemap = 'none'; ui.toast.show(t('map.projection.osm', { crs: geo.crsLabel(grid) }), { kind: 'info', timeout: 9000 }); }
+          if (s.projection === 'plan' && (s.basemap === 'osm' || s.basemap === 'tiles')) { ui.toast.show(t(s.basemap === 'osm' ? 'map.projection.osm' : 'map.projection.tiles', { crs: geo.crsLabel(grid) }), { kind: 'info', timeout: 9000 }); s.basemap = 'none'; }
           render(dataset, target);
         });
-        // OpenStreetMap exists in Web Mercator only; an orthophoto in the grids its service offers; a WMS can be asked for in either system.
+        // OpenStreetMap and OGC API – Tiles exist in Web Mercator only; an orthophoto in the grids its service offers; a WMS can be asked
+        // for in either system.
         const basemapSel = /** @type {any} */ (h('dm-select', { 'aria-label': t('map.basemap'), inline: true, 'data-plan-basemap': '' }));
-        basemapSel.options = [{ value: 'none', label: t('map.basemap.none') }].concat(s.projection === 'web' ? [{ value: 'osm', label: t('map.basemap.osm') }] : [], orthos, [{ value: 'wms', label: t('map.basemap.wms') }]);
+        basemapSel.options = [{ value: 'none', label: t('map.basemap.none') }].concat(s.projection === 'web' ? [{ value: 'osm', label: t('map.basemap.osm') }] : [], orthos, [{ value: 'wms', label: t('map.basemap.wms') }], s.projection === 'web' ? [{ value: 'tiles', label: t('map.basemap.tiles') }] : []);
         basemapSel.value = s.basemap;
         basemapSel.addEventListener('change', async () => {
           if (!(await basemapChoice.ensure(basemapSel.value))) { basemapSel.value = s.basemap; return; }
@@ -111,6 +112,11 @@
             if (!w) { basemapSel.value = s.basemap; return; }
             s.wms = w;
           }
+          if (basemapSel.value === 'tiles' && !(s.tiles && s.tiles.template)) {
+            const picked = await tilesDialog.open(s.tiles);
+            if (!picked) { basemapSel.value = s.basemap; return; }
+            s.tiles = picked;
+          }
           s.basemap = basemapSel.value;
           orthoLoad = basemapChoice.isView(s.basemap);
           render(dataset, target);
@@ -118,6 +124,7 @@
         // Sweden's orthophoto covers the view it was read for; after a move the person reads it for the new view.
         const orthoBtn = basemapChoice.isView(s.basemap) ? ui.button({ label: t('ortho.se.load'), icon: 'image', 'icon-only': true, title: t('ortho.se.load.hint'), 'data-map-ortho-load': '', onClick: () => { if (handle) loadOrtho(handle, true); } }) : null;
         const wmsEdit = s.basemap === 'wms' ? ui.button({ label: t('map.wms.edit'), icon: 'pencil', 'icon-only': true, title: t('map.wms.edit.hint'), 'data-plan-wms-edit': '', onClick: async () => { const w = await wmsDialog(); if (w) { s.wms = w; draw(); } } }) : null;
+        const tilesEdit = s.basemap === 'tiles' ? ui.button({ label: t('map.tiles.edit'), icon: 'pencil', 'icon-only': true, title: t('map.tiles.edit.hint'), 'data-plan-tiles-edit': '', onClick: async () => { const picked = await tilesDialog.open(s.tiles); if (picked) { s.tiles = picked; draw(); } } }) : null;
         const labels = /** @type {any} */ (h('dm-switch', { label: t('plan.labels') }));
         labels.checked = s.labels;
         labels.addEventListener('change', () => { s.labels = labels.checked; updateLabels(); });
@@ -126,7 +133,7 @@
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon('layers', 20), dataset.name, ' ', h('dm-badge', { text: t('plan.slag.' + s.slag) }), info.land && info.land !== 'SE' ? h('dm-badge', { text: t('plan.land.' + info.land) }) : null, info.status ? h('dm-badge', { kind: /laga kraft|antagen|vedtaget|í gildi|voimassa|^13$/i.test(info.status) ? 'ok' : 'accent', text: info.status }) : null),
-            h('div', { class: 'dm-toolbar' }, projectionSel, basemapSel, wmsEdit, orthoBtn, labels,
+            h('div', { class: 'dm-toolbar' }, projectionSel, basemapSel, wmsEdit, tilesEdit, orthoBtn, labels,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: fit }),
               ui.button({ label: t('map.save.chart'), icon: 'save', title: t('plan.save.chart.hint'), onClick: saveChart }),
               s.slag === 'detaljplan' ? ui.button({ label: t('plan.provisions.export'), icon: 'file-text', title: t('plan.provisions.export.hint'), onClick: exportProvisions }) : null,
@@ -145,7 +152,7 @@
         try {
           L = await leaflet.ensure();
           // The shared map setup (consent-gated background map, the grid) with no dataset layers; the plan objects are drawn here.
-          const def = { layers: [], basemap: s.basemap, wms: s.wms || undefined, custom: { url: '', attribution: '' }, legend: false };
+          const def = { layers: [], basemap: s.basemap, wms: s.wms || undefined, tiles: s.tiles || undefined, custom: { url: '', attribution: '' }, legend: false };
           if (s.projection === 'plan') def.crs = planGrid();
           const hd = await leaflet.render(mapEl, { kind: 'map', name: ds.name, map: def }, { tileFactory: options.tileFactory });
           if (my !== seq) { hd.finalize(); return; }
@@ -244,6 +251,7 @@
           const def = D.require('viz/plan-map').defOf(Object.assign({}, ds, { plan: Object.assign({}, ds.plan, { slag: s.slag }) }), cols);
           def.basemap = s.basemap;
           if (s.basemap === 'wms' && s.wms) def.wms = Object.assign({}, s.wms);
+          if (s.basemap === 'tiles' && s.tiles) def.tiles = Object.assign({}, s.tiles);
           record.map = def;
           // The chart is a web map; a view in the plan's grid has other zoom levels, so the chart fits the plan instead.
           if (handle && s.projection !== 'plan') record.map.view = handle.view();

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * Map charts in Visualisera: layers from datasets with geometry or coordinates and from the bundled boundaries,
- * colours by category or class, labels, a background map after consent (OpenStreetMap, an orthophoto, an XYZ template
- * or a WMS), the saved view; the live map on the right
+ * colours by category or class, labels, a background map after consent (OpenStreetMap, an orthophoto, an XYZ template,
+ * a WMS or OGC API – Tiles), WMS and tile layers under the features, the saved view; the live map on the right
  * with a click showing a feature's attributes in the inspector. Export and thumbnails are drawn headless by
  * viz/leaflet (no tiles). Sweden's orthophoto is read for the map's view when the person chooses it or asks for the view,
  * never when a saved map view is opened; the image is not part of the map view.
@@ -11,7 +11,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/viz/map-panel', ['ui/base', 'ui/basic', 'viz/leaflet', 'data/datasets', 'data/boundaries', 'data/kinds', 'ui/viz/basemap-choice'], (base, basic, leaflet, datasets, boundaries, kinds, basemapChoice) => {
+  D.define('ui/viz/map-panel', ['ui/base', 'ui/basic', 'viz/leaflet', 'data/datasets', 'data/boundaries', 'data/kinds', 'ui/viz/basemap-choice', 'ui/viz/tiles-dialog'], (base, basic, leaflet, datasets, boundaries, kinds, basemapChoice, tilesDialog) => {
     const { h, t, i18n, replace } = base;
     const MODES = ['none', 'category', 'graduated'];
 
@@ -97,6 +97,12 @@
           select(t('map.basemap'), leaflet.BASEMAPS.slice(0, 2).map((b) => ({ value: b, label: t('map.basemap.' + b) })).concat(orthos, leaflet.BASEMAPS.slice(2).map((b) => ({ value: b, label: t('map.basemap.' + b) }))), def.basemap || 'none', async (v) => {
             // An orthophoto that needs a key asks for it first; a cancelled key keeps the background map as it was.
             if (!(await basemapChoice.ensure(v))) { renderSide(); return; }
+            // Tiles are picked from their service first; a cancelled dialog keeps the background map as it was.
+            if (v === 'tiles' && !(def.tiles && def.tiles.template)) {
+              const picked = await tilesDialog.open(def.tiles);
+              if (!picked) { renderSide(); return; }
+              def.tiles = picked;
+            }
             def.basemap = v; orthoLoad = basemapChoice.isView(v); renderSide(); changed();
           }, { 'data-map-basemap': '' }),
         ];
@@ -107,6 +113,7 @@
           items.push(input(t('map.custom.attribution'), def.custom.attribution, (v) => { def.custom.attribution = v.trim(); changed(); }));
         }
         if (def.basemap === 'wms') items.push(wmsFields(def.wms, () => changed()));
+        if (def.basemap === 'tiles') items.push(tilesFields(def.tiles, (v) => { def.tiles = v; changed(); renderSide(); }));
         items.push(toggle(t('map.legend'), def.legend !== false, (v) => { def.legend = v; changed(); }));
         items.push(input(t('map.height'), def.height || 480, (v) => { def.height = Math.max(200, Number(v) || 480); changed(); }, { type: 'number', min: '200', max: '2000', step: '20' }));
         items.push(h('div', { class: 'dm-row-wrap' },
@@ -142,6 +149,15 @@
             toggle(t('map.wms.transparent'), !!w.transparent, (v) => { w.transparent = v; onChange(); })),
           input(t('map.custom.attribution'), w.attribution || '', (v) => { w.attribution = v.trim(); onChange(); }));
       }
+      /** The chosen OGC API – Tiles source (service, collection, tile set) and the button that picks it again. */
+      function tilesFields(tiles, onChange) {
+        return h('div', { class: 'dm-row-end dm-map-tiles' },
+          h('p', { class: 'dm-help dm-small dm-truncate', 'data-map-tiles-summary': '', text: tilesDialog.summary(tiles) || t('map.tiles.none') }),
+          basic.button({ label: t('map.tiles.edit'), icon: 'pencil', size: 'sm', variant: 'ghost', title: t('map.tiles.edit.hint'), 'data-map-tiles-edit': '', onClick: async () => {
+            const picked = await tilesDialog.open(tiles);
+            if (picked) onChange(picked);
+          } }));
+      }
       function layersCard() {
         const body = h('div', { class: 'dm-stack-sm' });
         // The topmost layer first in the list (Leaflet draws the array in order, so the last one is on top).
@@ -167,6 +183,12 @@
           fields.appendChild(input(t('map.style.opacity'), st.opacity === undefined ? 0.8 : st.opacity, (v) => { st.opacity = Math.max(0, Math.min(1, Number(v))); changed(); }, { type: 'number', min: '0', max: '1', step: '0.05' }));
           fields.appendChild(wmsFields(layer.wms || (layer.wms = { url: '', layers: '', format: 'image/png', transparent: true, attribution: '' }), () => changed()));
           fields.appendChild(h('p', { class: 'dm-help dm-xs', text: t('map.layer.wms.note') }));
+          return details;
+        }
+        if (layer.kind === 'tiles') {
+          fields.appendChild(input(t('map.style.opacity'), st.opacity === undefined ? 1 : st.opacity, (v) => { st.opacity = Math.max(0, Math.min(1, Number(v))); changed(); }, { type: 'number', min: '0', max: '1', step: '0.05' }));
+          fields.appendChild(tilesFields(layer.tiles, (v) => { layer.tiles = v; changed(); renderSide(); }));
+          fields.appendChild(h('p', { class: 'dm-help dm-xs', text: t('map.layer.tiles.note') }));
           return details;
         }
         const styleRow = h('div', { class: 'dm-row-wrap' },
@@ -219,8 +241,15 @@
           changed(); renderSide();
         };
         wmsInput.addEventListener('keydown', (e) => { if (/** @type {KeyboardEvent} */ (e).key === 'Enter') addWms(); });
+        const addTiles = basic.button({ label: t('map.add.tiles'), icon: 'grid-2x2', size: 'sm', title: t('map.add.tiles.hint'), 'data-map-add-tiles': '', onClick: async () => {
+          const picked = await tilesDialog.open(null);
+          if (!picked) return;
+          def.layers.unshift(leaflet.tilesLayer(picked, picked.title));
+          changed(); renderSide();
+        } });
         return h('div', { class: 'dm-card dm-stack-sm' }, h('strong', { text: t('map.add') }),
           h('div', { class: 'dm-row-end' }, wmsInput, basic.button({ label: t('common.add'), icon: 'plus', size: 'sm', onClick: addWms })),
+          h('div', { class: 'dm-row-wrap' }, addTiles),
           h('div', { class: 'dm-row-end' }, dsSel, basic.button({ label: t('common.add'), icon: 'plus', size: 'sm', onClick: async () => {
             const ds = allDatasets.find((d) => d.id === dsSel.value);
             if (!ds) return;

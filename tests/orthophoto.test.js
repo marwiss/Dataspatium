@@ -264,7 +264,7 @@
       shell.store.set({ openChartId: chartId });
       shell.activate('visualisera');
       const side = await waitFor(() => { const s = root.querySelector('[data-map-basemap]'); return s && values(s).includes('ortho-is') ? s : null; }, 8000, 'the choice in Visualisera');
-      assert.deepEqual(values(side), ['none', 'osm', 'ortho-dk', 'ortho-fi', 'ortho-is', 'ortho-se', 'custom', 'wms'], 'Visualisera: the orthophotos after OpenStreetMap');
+      assert.deepEqual(values(side), ['none', 'osm', 'ortho-dk', 'ortho-fi', 'ortho-is', 'ortho-se', 'custom', 'wms', 'tiles'], 'Visualisera: the orthophotos after OpenStreetMap');
       return 'ok';
     } finally {
       if (chartId) await charts.remove(chartId).catch(() => {});
