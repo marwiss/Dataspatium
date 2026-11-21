@@ -157,6 +157,7 @@
       assert.equal(kinds.ownView({ kind: 'plan' }), 'plan', 'the plan map stays in Dokument');
       assert.equal(kinds.ownTab({ kind: 'model' }), 'stats');
       assert.ok(!tier.shows('map.basemap') && !tier.shows('tab:geo'), 'no service maps, no geo tab');
+      assert.ok(!tier.shows('chart:model') && !tier.shows('chart:profile') && tier.shows('chart:map') && tier.shows('chart:graph'), 'map and graph charts stay, the 3D model and the height profile go');
       // Tier 3: the assistant and the server's graph queries.
       await tier.set('experimental');
       await waitFor(() => !root.querySelector('.dm-sb-assistant').hidden, 3000, 'the assistant shown');

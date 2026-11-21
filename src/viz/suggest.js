@@ -100,7 +100,7 @@
             out.push({ key: 'viz.suggest.layers', params: {}, chart: bars(ds, `${ds.name}: ${t('model.col.lager')}`, columns, col('lager'), null) });
             break;
           }
-          out.push({ key: 'viz.suggest.model', params: {}, chart: await ownChart(ds, 'model') });
+          if (kinds.shown(ds)) out.push({ key: 'viz.suggest.model', params: {}, chart: await ownChart(ds, 'model') });
           out.push({ key: 'viz.suggest.types', params: {}, chart: bars(ds, `${ds.name}: ${t('model.col.typ')}`, columns, col('typ'), null) });
           {
             const amounts = await D.require('viz/data').columnsOf(ds.id, '_quantities');

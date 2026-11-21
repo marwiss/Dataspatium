@@ -54,14 +54,14 @@
 
     /**
      * The entry points that open a feature, by the name the modes ask with: `kind:` a kind of dataset's own views and tools,
-     * `view:` a view in Bearbeta, `tab:` a tab in Analysera, `op:` an action, `tool:` a tool the AI is offered, `status:` an item
+     * `view:` a view in Bearbeta, `tab:` a tab in Analysera, `chart:` a type of chart in Visualisera, `op:` an action, `tool:` a tool the AI is offered, `status:` an item
      * of the status bar, `command:` a command of the palette, `source:` an item of Inhämta's source list,
      * `family:` a family of sources and `preset:` a ready-made source (both in the catalogue and among the added sources).
      */
     const ENTRIES = {
       'kind:model': 'kind.model', 'view:model': 'kind.model', 'tab:model': 'kind.model', 'op:ifc_apply_table': 'kind.model', 'op:ifc_python': 'kind.model',
-      'view:map': 'map.view', 'tab:geo': 'map.view',
-      'op:geo_height': 'geo.heights', 'op:geo_height_along': 'geo.heights',
+      'view:map': 'map.view', 'tab:geo': 'map.view', 'chart:model': 'kind.model',
+      'op:geo_height': 'geo.heights', 'op:geo_height_along': 'geo.heights', 'chart:profile': 'geo.heights',
       'source:newmodel': 'source.newmodel', 'source:geodata': 'source.geodata',
       'tool:server_query': 'ai.server-query', 'status:assistant': 'assistant', 'command:assistant': 'assistant',
       'family:geodata': 'source.geodata', 'family:geoportal': 'source.geodata',

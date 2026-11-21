@@ -119,7 +119,8 @@
           const fits = (k) => k === D.require('data/kinds').of(ds).chart || (k === 'map' && onMap);
           // A height profile along the lines of a geometry column (F37 c) is offered where a geometry is likely.
           const profiles = ds.kind !== 'graph' && ds.kind !== 'model' && await D.require('viz/profile').likely(ds.id).catch(() => false);
-          const order = ['vega', 'map', 'graph', 'model', 'd3', 'r', 'python'].concat(profiles ? ['profile'] : []).sort((a, b) => (Number(stands(a)) - Number(stands(b))) || (Number(fits(b)) - Number(fits(a))));
+          // The chart types the tier in effect shows (platform/tier, the entries `chart:<kind>`).
+          const order = ['vega', 'map', 'graph', 'model', 'd3', 'r', 'python'].concat(profiles ? ['profile'] : []).filter((k) => D.require('platform/tier').shows('chart:' + k)).sort((a, b) => (Number(stands(a)) - Number(stands(b))) || (Number(fits(b)) - Number(fits(a))));
           // What fits this dataset comes first, as real pictures, drawn one at a time while the dialog is open.
           let suggested = null;
           let closeDialog = null;
