@@ -189,6 +189,7 @@ dm-kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 dm-table.dm-table-tall { height: 360px; }
 dm-table.dm-table-preview { min-height: 320px; }
 .dm-list-item[aria-current="true"] { background: var(--dm-accent-soft); color: var(--dm-accent); }
+.dm-list-item:disabled, .dm-list-item:disabled:hover { opacity: 0.55; cursor: default; background: transparent; }
 .dm-list-item .dm-list-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
 .dm-list-item .dm-list-sub { font-size: var(--dm-text-xs); color: var(--dm-text-muted); }
 

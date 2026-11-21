@@ -11,7 +11,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/viz/map-panel', ['ui/base', 'ui/basic', 'viz/leaflet', 'data/datasets', 'data/boundaries', 'data/kinds', 'ui/viz/basemap-choice', 'ui/viz/tiles-dialog'], (base, basic, leaflet, datasets, boundaries, kinds, basemapChoice, tilesDialog) => {
+  D.define('ui/viz/map-panel', ['ui/base', 'ui/basic', 'viz/leaflet', 'data/datasets', 'data/boundaries', 'data/kinds', 'ui/viz/basemap-choice', 'ui/viz/tiles-dialog', 'platform/tier'], (base, basic, leaflet, datasets, boundaries, kinds, basemapChoice, tilesDialog, tier) => {
     const { h, t, i18n, replace } = base;
     const MODES = ['none', 'category', 'graduated'];
 
@@ -93,8 +93,11 @@
       // ---- side: general settings, layers, add ----
       function renderSide() { replace(side, generalCard(), layersCard(), addCard()); }
       function generalCard() {
+        // Background maps and imagery layers from services belong to the tier BIM och GIS (platform/tier); a map of the
+        // workspace's own data stays in Dokument.
+        const services = tier.shows('map.basemap');
         const items = [
-          select(t('map.basemap'), leaflet.BASEMAPS.slice(0, 2).map((b) => ({ value: b, label: t('map.basemap.' + b) })).concat(orthos, leaflet.BASEMAPS.slice(2).map((b) => ({ value: b, label: t('map.basemap.' + b) }))), def.basemap || 'none', async (v) => {
+          !services ? null : select(t('map.basemap'), leaflet.BASEMAPS.slice(0, 2).map((b) => ({ value: b, label: t('map.basemap.' + b) })).concat(orthos, leaflet.BASEMAPS.slice(2).map((b) => ({ value: b, label: t('map.basemap.' + b) }))), def.basemap || 'none', async (v) => {
             // An orthophoto that needs a key asks for it first; a cancelled key keeps the background map as it was.
             if (!(await basemapChoice.ensure(v))) { renderSide(); return; }
             // Tiles are picked from their service first; a cancelled dialog keeps the background map as it was.
@@ -105,15 +108,15 @@
             }
             def.basemap = v; orthoLoad = basemapChoice.isView(v); renderSide(); changed();
           }, { 'data-map-basemap': '' }),
-        ];
+        ].filter(Boolean);
         // Sweden's orthophoto covers the view it was read for; after a move the person reads it for the new view.
-        if (basemapChoice.isView(def.basemap)) items.push(basic.button({ label: t('ortho.se.load'), icon: 'image', size: 'sm', title: t('ortho.se.load.hint'), 'data-map-ortho-load': '', onClick: () => { if (handle) drawOrtho(handle, true); } }));
-        if (def.basemap === 'custom') {
+        if (services && basemapChoice.isView(def.basemap)) items.push(basic.button({ label: t('ortho.se.load'), icon: 'image', size: 'sm', title: t('ortho.se.load.hint'), 'data-map-ortho-load': '', onClick: () => { if (handle) drawOrtho(handle, true); } }));
+        if (services && def.basemap === 'custom') {
           items.push(input(t('map.custom.url'), def.custom.url, (v) => { def.custom.url = v.trim(); changed(); }, { placeholder: 'https://…/{z}/{x}/{y}.png', help: t('map.custom.url.help') }));
           items.push(input(t('map.custom.attribution'), def.custom.attribution, (v) => { def.custom.attribution = v.trim(); changed(); }));
         }
-        if (def.basemap === 'wms') items.push(wmsFields(def.wms, () => changed()));
-        if (def.basemap === 'tiles') items.push(tilesFields(def.tiles, (v) => { def.tiles = v; changed(); renderSide(); }));
+        if (services && def.basemap === 'wms') items.push(wmsFields(def.wms, () => changed()));
+        if (services && def.basemap === 'tiles') items.push(tilesFields(def.tiles, (v) => { def.tiles = v; changed(); renderSide(); }));
         items.push(toggle(t('map.legend'), def.legend !== false, (v) => { def.legend = v; changed(); }));
         items.push(input(t('map.height'), def.height || 480, (v) => { def.height = Math.max(200, Number(v) || 480); changed(); }, { type: 'number', min: '200', max: '2000', step: '20' }));
         items.push(h('div', { class: 'dm-row-wrap' },
@@ -247,9 +250,10 @@
           def.layers.unshift(leaflet.tilesLayer(picked, picked.title));
           changed(); renderSide();
         } });
+        const services = tier.shows('map.basemap');
         return h('div', { class: 'dm-card dm-stack-sm' }, h('strong', { text: t('map.add') }),
-          h('div', { class: 'dm-row-end' }, wmsInput, basic.button({ label: t('common.add'), icon: 'plus', size: 'sm', onClick: addWms })),
-          h('div', { class: 'dm-row-wrap' }, addTiles),
+          services ? h('div', { class: 'dm-row-end' }, wmsInput, basic.button({ label: t('common.add'), icon: 'plus', size: 'sm', onClick: addWms })) : null,
+          services ? h('div', { class: 'dm-row-wrap' }, addTiles) : null,
           h('div', { class: 'dm-row-end' }, dsSel, basic.button({ label: t('common.add'), icon: 'plus', size: 'sm', onClick: async () => {
             const ds = allDatasets.find((d) => d.id === dsSel.value);
             if (!ds) return;

@@ -7,8 +7,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/dialogs', ['ui/base', 'ui/overlays', 'ui/basic', 'ui/op-dialog', 'data/operations', 'data/recipes', 'data/derive', 'data/profile', 'data/datasets', 'platform/files', 'data/rules'],
-    (base, overlays, basic, opDialog, ops, recipes, derive, profileMod, datasets, files, rulesMod) => {
+  D.define('ui/dialogs', ['ui/base', 'ui/overlays', 'ui/basic', 'ui/op-dialog', 'data/operations', 'data/recipes', 'data/derive', 'data/profile', 'data/datasets', 'platform/files', 'data/rules', 'platform/tier', 'data/kinds'],
+    (base, overlays, basic, opDialog, ops, recipes, derive, profileMod, datasets, files, rulesMod, tier, kinds) => {
       const { h, t, i18n, replace } = base;
       const GROUPS = [
         { id: 'column', ops: ['rename_column', 'set_type', 'set_label', 'set_value_labels', 'drop_columns', 'reorder_columns', 'duplicate_column', 'clean_names'] },
@@ -25,6 +25,16 @@
         { id: 'model', ops: ['ifc_apply_table', 'ifc_python'], kinds: ['model'] },
       ];
 
+      /**
+       * The groups of actions for a kind of dataset: those for every kind and those of its own kind, with the actions the tier in
+       * effect shows (platform/tier, the entries `op:<id>`); a kind whose own tools the tier hides gets no group of its own.
+       * @param {string} kind @returns {Array<{id: string, ops: string[], kinds?: string[]}>}
+       */
+      function shownGroups(kind) {
+        return GROUPS.filter((g) => !g.kinds || (g.kinds.includes(kind) && kinds.shown(kind)))
+          .map((g) => Object.assign({}, g, { ops: g.ops.filter((id) => tier.shows('op:' + id)) })).filter((g) => g.ops.length);
+      }
+
       /** Palette of all operations, grouped. Returns the chosen action id or null. */
       async function palette(ctx) {
         let chosen = null;
@@ -32,8 +42,9 @@
         const first = await D.require('data/facets').firstGroups(ctx.datasetId).catch(() => []);
         const meta = ctx.datasetId ? await D.require('data/datasets').get(ctx.datasetId).catch(() => null) : null;
         const kind = (meta && meta.kind) || 'table';
-        const general = GROUPS.filter((g) => !g.kinds);
-        const groups = GROUPS.filter((g) => g.kinds && g.kinds.includes(kind))
+        const shown = shownGroups(kind);
+        const general = shown.filter((g) => !g.kinds);
+        const groups = shown.filter((g) => g.kinds)
           .concat(first.map((id) => general.find((g) => g.id === id)).filter(Boolean), general.filter((g) => !first.includes(g.id)));
         const body = h('div', { class: 'dm-stack' }, groups.map((g) => h('div', { class: 'dm-stack-sm' },
           h('h4', { text: t('op.group.' + g.id) }),
@@ -377,6 +388,6 @@
         } catch (err) { overlays.toast.show(String((err && err.message) || err), { kind: 'error' }); return null; }
       }
 
-      return { palette, run, profileDialog, rulesDialog, versionsDialog, recipeDialog, clustersDialog, aggregateDialog, joinDialog, appendDialog, reorderDialog, GROUPS };
+      return { palette, run, profileDialog, rulesDialog, versionsDialog, recipeDialog, clustersDialog, aggregateDialog, joinDialog, appendDialog, reorderDialog, GROUPS, shownGroups };
     });
 })();

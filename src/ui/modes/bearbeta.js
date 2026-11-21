@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes', 'ui/bearbeta/document-view', 'ui/bearbeta/gallery-view', 'ui/bearbeta/map-view', 'ui/bearbeta/plan-view', 'ui/bearbeta/graph-view', 'ui/bearbeta/model-view', 'viz/leaflet', 'data/kinds'], (base, dialogs, recipes, documentViewModule, galleryViewModule, mapViewModule, planViewModule, graphViewModule, modelViewModule, leaflet, kinds) => {
+  D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes', 'ui/bearbeta/document-view', 'ui/bearbeta/gallery-view', 'ui/bearbeta/map-view', 'ui/bearbeta/plan-view', 'ui/bearbeta/graph-view', 'ui/bearbeta/model-view', 'viz/leaflet', 'data/kinds', 'platform/tier', 'ui/settings/tier'], (base, dialogs, recipes, documentViewModule, galleryViewModule, mapViewModule, planViewModule, graphViewModule, modelViewModule, leaflet, kinds, tier, tierUi) => {
     const { h, t, i18n, replace } = base;
     /**
      * Views of their own: document collections, image collections and (for tables with geometry) the map; the table
@@ -32,10 +32,13 @@
       let undoBtn = null; let selectedColumn = null;
       /** Table or kind view for the current dataset; the kind view is created once per view id. */
       let showTable = true; let kindView = null; let kindViewFor = null; let lastUpdated = null; let viewId = null;
-      /** The view a dataset opens in by default: its kind's view, the map for tables with geometry or longitude/latitude, else null. */
+      /**
+       * The view a dataset opens in by default: its kind's view, the map for tables with geometry or longitude/latitude, else null;
+       * each only where the tier in effect shows it (platform/tier), else the table.
+       */
       async function defaultView(ds) {
-        if (kinds.of(ds).view) return kinds.of(ds).view;
-        { const cols = await services.datasets.columns(ds.id).catch(() => []); if (leaflet.mapDefault(cols) && await leaflet.drawable(ds.id).catch(() => false)) return 'map'; }
+        if (kinds.ownView(ds)) return kinds.ownView(ds);
+        if (tier.shows('view:map')) { const cols = await services.datasets.columns(ds.id).catch(() => []); if (leaflet.mapDefault(cols) && await leaflet.drawable(ds.id).catch(() => false)) return 'map'; }
         return null;
       }
 
@@ -80,7 +83,7 @@
             onChanged: () => updateUndo(),
             // A collection with places can also be seen on a map, and go back to its own view from there.
             onMap: () => { viewId = 'map'; const d = current(); if (d) renderMain(d); },
-            onOwnView: viewId === 'map' && kinds.of(ds).view ? () => { viewId = kinds.of(ds).view; const d = current(); if (d) renderMain(d); } : null,
+            onOwnView: viewId === 'map' && kinds.ownView(ds) ? () => { viewId = kinds.ownView(ds); const d = current(); if (d) renderMain(d); } : null,
           });
           kindViewFor = viewId;
         }
@@ -101,8 +104,7 @@
           const ds = current();
           if (!ds) return [];
           const cmds = [];
-          for (const g of dialogs.GROUPS) {
-            if (g.kinds && !g.kinds.includes(ds.kind || 'table')) continue;
+          for (const g of dialogs.shownGroups(ds.kind || 'table')) {
             for (const id of g.ops) {
               cmds.push({
                 id: 'op:' + id, label: t('op.' + id), hint: t('palette.op.hint', { name: ds.name }), group: t('palette.group.ops'), icon: 'wand-sparkles', keywords: [t('op.group.' + g.id)],
@@ -176,6 +178,8 @@
               ui.button({ label: t('bearbeta.rules'), icon: 'circle-alert', onClick: async () => dialogs.rulesDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               ui.button({ label: t('bearbeta.versions'), icon: 'history', onClick: async () => dialogs.versionsDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               ui.button({ label: t('bearbeta.recipe'), icon: 'list', onClick: async () => dialogs.recipeDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }))),
+          // A kind whose own views the tier hides (a model in Dokument) is a table here, and says where its views went.
+          kinds.shown(ds) ? null : tierUi.notice(ctx, 'kind:' + ds.kind),
           h('p', { class: 'dm-help', text: t('bearbeta.edit.hint') }),
           h('div', { class: 'dm-table-wrap dm-center-fill' }, table));
         table.countBadge = countBadge;
@@ -193,8 +197,8 @@
 
       /** The own view a dataset can switch to from the table (any table with geometry or coordinates gets the map). */
       async function viewFor(ds, cols) {
-        if (kinds.of(ds).view) return kinds.of(ds).view;
-        return leaflet.mappable(cols) && await leaflet.drawable(ds.id).catch(() => false) ? 'map' : null;
+        if (kinds.ownView(ds)) return kinds.ownView(ds);
+        return tier.shows('view:map') && leaflet.mappable(cols) && await leaflet.drawable(ds.id).catch(() => false) ? 'map' : null;
       }
 
       function updateUndo() {

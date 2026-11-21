@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/graph-workbench', ['ui/base', 'ui/basic', 'ui/overlays', 'data/graph', 'data/datasets', 'data/ifc-graph', 'viz/graph-draw', 'api/connectors', 'api/runner', 'api/graph-source', 'api/families/neo4j'], (base, basic, overlays, graph, datasets, ifcGraph, draw, connectors, runner, graphSource, neo4j) => {
+  D.define('ui/api/graph-workbench', ['ui/base', 'ui/basic', 'ui/overlays', 'data/graph', 'data/datasets', 'data/ifc-graph', 'viz/graph-draw', 'api/connectors', 'api/runner', 'api/graph-source', 'api/families/neo4j', 'platform/tier'], (base, basic, overlays, graph, datasets, ifcGraph, draw, connectors, runner, graphSource, neo4j, tier) => {
     const { h, t, i18n, replace } = base;
     const PREVIEW_ROWS = 500;
     /** More nodes than this are not drawn here: the layout would hold the page, and the overview in Bearbeta handles them better. */
@@ -241,7 +241,10 @@
         editor = /** @type {any} */ (h('dm-code', { language: 'sql', placeholder: 'MATCH (n) RETURN n LIMIT 25' }));
         editor.value = s.query;
         editor.addEventListener('input', () => { s.query = editor.value; });
-        replace(el, h('div', { class: 'dm-card dm-stack-sm' }, h('p', { class: 'dm-help dm-small', text: api.hint }), modelsEl, examplesRow(), editor, buttonsEl, keptEl), resultEl);
+        // The IFC graph's models and starter queries belong to the tier Experimentell (platform/tier, DS-07 and DS-59): over Bolt they
+        // show only there, and on Dataregium's own card, which the tier gates already, always.
+        const ifc = api.via === 'admin' || tier.shows('graph.ifc');
+        replace(el, h('div', { class: 'dm-card dm-stack-sm' }, h('p', { class: 'dm-help dm-small', text: api.hint }), ifc ? modelsEl : null, ifc ? examplesRow() : null, editor, buttonsEl, keptEl), resultEl);
         renderModels(); renderButtons(); renderKept();
       }
 

@@ -16,7 +16,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/kontrollera', ['ui/base', 'data/kinds', 'ui/kinds/insight-cards', 'ui/bearbeta/model-compare', 'ui/kinds/federated-card'], (base, kinds, cards, compareModule, federatedModule) => {
+  D.define('ui/modes/kontrollera', ['ui/base', 'data/kinds', 'ui/kinds/insight-cards', 'ui/bearbeta/model-compare', 'ui/kinds/federated-card', 'ui/settings/tier'], (base, kinds, cards, compareModule, federatedModule, tierUi) => {
     const { h, t, i18n, replace } = base;
     /** A table with fewer rows than this is checked as soon as it is chosen; a larger one waits for the button. */
     const AUTO_ROWS = 10000;
@@ -101,6 +101,8 @@
       function renderMain(ds) {
         const profile = kinds.of(ds);
         if (profile === kinds.PROFILES.table) { renderTable(ds); return; }
+        // The model's cards belong to the tier BIM och GIS (platform/tier); below it the page says so and how to raise the tier.
+        if (profile === kinds.PROFILES.model && !kinds.isDxf(ds) && !kinds.shown(ds)) { replace(slots.center, head(ds), tierUi.notice(ctx, 'kind:model')); replace(slots.right); return; }
         if (profile === kinds.PROFILES.model && !kinds.isDxf(ds)) { renderModel(ds); return; }
         replace(slots.center, head(ds), h('dm-empty-state', { icon: ICON, heading: t('kontrollera.none'), text: t('kontrollera.none.hint'), 'data-kontrollera-none': '' }));
         replace(slots.right, h('p', { class: 'dm-help', text: t('kontrollera.none.hint') }));

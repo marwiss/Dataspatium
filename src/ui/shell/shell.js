@@ -11,7 +11,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/shell', ['ui/components', 'ui/base', 'ui/icons', 'ui/basic', 'ui/overlays', 'ui/theme', 'ui/state', 'ui/dataset-list', 'data/datasets', 'data/workspace', 'io/import', 'io/export', 'platform/files', 'platform/storage/idb', 'ui/command-palette', 'ui/course', 'data/r-bridge', 'data/python-bridge', 'data/selection'], (_components, base, icons, basic, overlays, theme, stateMod, datasetList, datasets, workspace, importer, exporter, files, idb, paletteMod, courseMod, rBridge, pyBridge, selectionMod) => {
+  D.define('ui/shell', ['ui/components', 'ui/base', 'ui/icons', 'ui/basic', 'ui/overlays', 'ui/theme', 'ui/state', 'ui/dataset-list', 'data/datasets', 'data/workspace', 'io/import', 'io/export', 'platform/files', 'platform/storage/idb', 'ui/command-palette', 'ui/course', 'data/r-bridge', 'data/python-bridge', 'data/selection', 'platform/tier'], (_components, base, icons, basic, overlays, theme, stateMod, datasetList, datasets, workspace, importer, exporter, files, idb, paletteMod, courseMod, rBridge, pyBridge, selectionMod, tier) => {
       const { h, t, i18n, replace } = base;
       const MODES = ['inhamta', 'hantera', 'soka', 'bearbeta', 'kontrollera', 'analysera', 'visualisera', 'exportera', 'dela'];
       const MODE_ICONS = { inhamta: 'download', hantera: 'database', soka: 'text-search', bearbeta: 'wand-sparkles', kontrollera: 'list-checks', analysera: 'terminal', visualisera: 'chart-column', exportera: 'file-output', dela: 'share-2' };
@@ -87,7 +87,7 @@
             basic.button({ label: t('shell.loading.abort'), icon: 'x', 'icon-only': true, size: 'sm', variant: 'ghost', 'data-loading-abort': '', onClick: () => { if (D.downloads) D.downloads.abortAll(); } }));
           this.flowEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-flow', hidden: true, 'aria-label': t('shell.flow.hint'), title: t('shell.flow.hint'), onclick: () => this.openFlows('flows') }, icons.icon('play', 14), h('span'));
           // AI-assistent (F35 a): the AI that works with the app's commands, in a floating panel in every mode.
-          this.assistantEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-assistant', 'aria-label': t('assistant.open'), title: t('assistant.open.hint'), onclick: () => this.openAssistant() }, icons.icon('sparkles', 14));
+          this.assistantEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-assistant', 'aria-label': t('assistant.open'), title: t('assistant.open.hint'), hidden: !tier.shows('status:assistant'), onclick: () => this.openAssistant() }, icons.icon('sparkles', 14));
           // Styrning utifrån (F30 a): shown while programs on the computer may run commands through the bridge; opens the settings.
           this.remoteEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-remote', hidden: true, 'aria-label': t('remote.sb.hint'), title: t('remote.sb.hint'), onclick: () => { this.activate('hantera'); this.store.set({ selectedId: '__workspace' }); } }, icons.icon('terminal', 14));
           // Stoppa: the flow stops before its next step or round (decision F33 b).
@@ -188,6 +188,15 @@
         openFlows(tab) {
           this.activate('hantera');
           this.store.set({ selectedId: '__flows', flowsTab: tab });
+        }
+        /**
+         * The tier changed (platform/tier): the status bar's items follow it, and the active mode is drawn again, so that its entry
+         * points show what the tier now holds. Nothing is loaded, and no dataset changes.
+         */
+        applyTier() {
+          this.assistantEl.hidden = !tier.shows('status:assistant');
+          const id = this.store.get().mode;
+          if (id && this.modes.has(id)) this.activate(id);
         }
         /** The floating AI assistant (ui/assistant, the group 'assistant'); one per page, kept while the app is open. */
         openAssistant() {
@@ -362,6 +371,12 @@
         async init() {
           // The very first start: let the user pick the language before anything else is shown.
           if (!i18n.hasChoice()) await this.chooseLanguage({ required: true });
+          // The tier the user chose (platform/tier), before the first mode draws its entry points; later changes redraw.
+          await tier.load();
+          tier.subscribe(() => this.applyTier());
+          this.assistantEl.hidden = !tier.shows('status:assistant');
+          // The deployment's Dataregium server (dataspatium.config.js) becomes a source once; it is not contacted.
+          try { await D.require('api/families/opencde').addDeployed(tier.deployment().server); } catch (err) { D.log('shell', 'deployed server', err); }
           // Datasets from versions before short names get one, derived from their name.
           try { await datasets.ensureShortNames(); } catch (err) { D.log('shell', 'short names', err); }
           await this.reloadDatasets();
@@ -389,7 +404,7 @@
             idb.requestPersist().catch(() => {});
             // It works without a network after the first use only with every file in the service worker's cache (sw-coi.js keeps
             // what was fetched), so it loads the groups of scripts too, once the page has settled. The mobile app has its own page.
-            setTimeout(() => { D.ensure(D.groups.list().map((g) => g.name).filter((name) => name !== 'mobile')).catch((err) => D.log('shell', 'groups for use offline', err)); }, 5000);
+            setTimeout(() => { D.ensure(D.groups.list().map((g) => g.name).filter((name) => name !== 'mobile' && tier.groupShown(name))).catch((err) => D.log('shell', 'groups for use offline', err)); }, 5000);
           }
         }
 
@@ -472,8 +487,24 @@
             if (chart) this.store.set({ selectedId: chart.datasetId || state.selectedId, openChartId: chart.id });
             else { const ds = byName(object); if (ds) this.store.set({ selectedId: ds.id }); }
           } else { const ds = byName(object); if (ds) this.store.set({ selectedId: ds.id }); }
+          this.hiddenByRoute(mode, byName(object));
           const wanted = '#/' + mode + '/' + encodeURIComponent(object);
           if (location.hash !== wanted) history.replaceState(null, '', wanted);
+        }
+
+        /**
+         * A deep link to a dataset whose kind's own views the tier hides (platform/tier): Bearbeta, Kontrollera and Hantera say so
+         * on the page; the other modes say so here, with a way to raise the tier unless the deployment caps it. The dataset opens
+         * as a table either way.
+         * @param {string} mode @param {any} ds
+         */
+        hiddenByRoute(mode, ds) {
+          if (!ds || ['bearbeta', 'kontrollera', 'hantera'].includes(mode) || !D.has('data/kinds') || D.require('data/kinds').shown(ds)) return;
+          const w = tier.why('kind:' + ds.kind);
+          const name = (n) => t('tier.' + tier.keyOf(n));
+          const text = t('tier.hidden', { feature: t('tier.feature.' + w.feature), tier: name(w.needs), current: name(w.current) });
+          this.log(text, 'info');
+          this.toast(text, { kind: 'info', timeout: 15000, action: w.canRaise ? { label: t('tier.raise', { tier: name(w.needs) }), onClick: () => { tier.set(w.needs).catch((err) => this.partFailed(err)); } } : undefined });
         }
 
         /**
@@ -662,7 +693,8 @@
               navigator.clipboard.writeText(url).then(() => this.toast(t('shell.link.copied'), { kind: 'ok' })).catch(() => this.toast(url, { kind: 'info', timeout: 15000 }));
             },
           });
-          cmds.push({ id: 'assistant', label: t('assistant.title'), hint: t('assistant.open.hint'), group: t('palette.group.actions'), icon: 'sparkles', keywords: ['AI'], run: () => this.openAssistant() });
+          if (tier.shows('command:assistant')) cmds.push({ id: 'assistant', label: t('assistant.title'), hint: t('assistant.open.hint'), group: t('palette.group.actions'), icon: 'sparkles', keywords: ['AI'], run: () => this.openAssistant() });
+          cmds.push({ id: 'tier', label: t('tier.title'), hint: t('tier.' + tier.keyOf(tier.current())), group: t('palette.group.actions'), icon: 'layers', keywords: [t('tier.documents'), t('tier.bim-gis'), t('tier.experimental')], run: () => { this.activate('hantera'); this.store.set({ selectedId: '__workspace' }); } });
           cmds.push({ id: 'help', label: t('shell.help'), hint: t('app.version', { version: D.version }), group: t('palette.group.actions'), icon: 'circle-help', run: () => this.showHelp() });
           cmds.push({ id: 'lang', label: t('lang.title'), hint: 'Svenska · Dansk · Norsk · Suomi · Íslenska · English', group: t('palette.group.actions'), icon: 'languages', run: () => this.chooseLanguage() });
           cmds.push({ id: 'course', label: t('course.open'), hint: t('course.open.hint'), group: t('palette.group.actions'), icon: 'graduation-cap', keywords: [t('course.title')], run: () => this.course.open() });

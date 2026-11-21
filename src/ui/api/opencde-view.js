@@ -10,7 +10,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/opencde-view', ['ui/base', 'ui/basic', 'ui/overlays', 'api/families/opencde', 'api/families/opencde-admin', 'api/graph-source', 'api/secrets', 'api/runner', 'io/import', 'ui/api/cde-log-card', 'ui/api/admin-panel', 'ui/api/graph-workbench', 'ui/api/manage-panel'], (base, basic, overlays, opencde, admin, graphSource, secrets, runner, importer, cdeLogCard, adminPanel, workbench, managePanel) => {
+  D.define('ui/api/opencde-view', ['ui/base', 'ui/basic', 'ui/overlays', 'api/families/opencde', 'api/families/opencde-admin', 'api/graph-source', 'api/secrets', 'api/runner', 'io/import', 'ui/api/cde-log-card', 'ui/api/admin-panel', 'ui/api/graph-workbench', 'ui/api/manage-panel', 'platform/tier'], (base, basic, overlays, opencde, admin, graphSource, secrets, runner, importer, cdeLogCard, adminPanel, workbench, managePanel, tier) => {
     const { h, t, i18n, replace } = base;
     const PREVIEW_ROWS = 500;
     const KINDS = [
@@ -72,9 +72,11 @@
         const created = await D.require('ui/api/family-dialog').open(api.ctx, { family: 'neo4j', values: { baseUrl: address || '' } });
         if (created && api.onConnector) api.onConnector(created);
       }
+      /** What the tier in effect and this server's own tier show (platform/tier). @param {string} feature */
+      const shows = (feature) => tier.shows(feature, { server: connector.id });
       function renderGraphCard() {
         const caps = s.caps;
-        graphEl.hidden = !caps || !opencde.hasExtension(caps, 'ifcgraph');
+        graphEl.hidden = !caps || !opencde.hasExtension(caps, 'ifcgraph') || !shows('cde.ifc-graph');
         if (graphEl.hidden) { replace(graphEl); return; }
         const viaQuery = opencde.hasExtension(caps, 'graph_query');
         const bolt = caps.extensions.ifcgraph.bolt || '';
@@ -265,7 +267,7 @@
           h('div', { class: 'dm-row' }, h('strong', { text: t('opencde.title') }), h('dm-badge', { kind: signed ? 'ok' : 'warn', text: signed ? t('opencde.status.in', { name: s.user ? (s.user.name || s.user.id) : '' }) : t('opencde.status.out') })),
           h('p', { class: 'dm-help dm-small', text: t('opencde.hint', { host: opencde.hostOf(connector.baseUrl) }) }),
           s.caps && s.caps.present ? h('p', { class: 'dm-help dm-xs', 'data-opencde-capabilities': '', text: capsText(s.caps) }) : null,
-          versionRow(),
+          shows('cde.bcf') ? versionRow() : null,
           h('div', { class: 'dm-row-wrap' },
             signed ? basic.button({ label: t('opencde.signout'), icon: 'lock', size: 'sm', loading: s.busy === 'logout', onClick: signOut }) : basic.button({ label: t('opencde.signin'), icon: 'chevron-right', variant: 'primary', loading: s.busy === 'login', onClick: signIn }),
             !signed && s.busy === 'login' && !s.manual && opencde.redirectUri() ? cancelButton() : null,
@@ -282,14 +284,14 @@
           nodes.push(h('div', { class: 'dm-card dm-stack-sm' },
             s.projects.length ? sel : h('p', { class: 'dm-help', text: t('opencde.projects.none') }),
             h('div', { class: 'dm-row-wrap' },
-              KINDS.map((k) => basic.button({ label: t('opencde.kind.' + k.id), icon: k.id === 'topics' ? 'list' : k.id === 'components' ? 'box' : k.id === 'events' ? 'history' : k.id === 'files' ? 'file' : 'message-square', size: 'sm', loading: s.busy === k.id, variant: k.id === 'topics' ? 'primary' : undefined, onClick: () => fetchKind(k) })),
+              (shows('cde.bcf') ? KINDS : []).map((k) => basic.button({ label: t('opencde.kind.' + k.id), icon: k.id === 'topics' ? 'list' : k.id === 'components' ? 'box' : k.id === 'events' ? 'history' : k.id === 'files' ? 'file' : 'message-square', size: 'sm', loading: s.busy === k.id, variant: k.id === 'topics' ? 'primary' : undefined, onClick: () => fetchKind(k) })),
               opencde.hasDocuments(connector) ? basic.button({ label: t('opencde.documents.fetch'), icon: 'download', size: 'sm', loading: s.busy === 'documents', title: t('opencde.documents.hint'), 'data-opencde-documents': '', onClick: fetchDocuments }) : null,
               s.busy === 'documents' ? cancelButton() : null),
-            h('p', { class: 'dm-help dm-xs', text: t('opencde.components.hint') }),
+            shows('cde.bcf') ? h('p', { class: 'dm-help dm-xs', text: t('opencde.components.hint') }) : null,
             s.rights ? h('p', { class: 'dm-help dm-xs', 'data-opencde-rights': '', text: rightsText(s.rights) }) : null));
           nodes.push(filesCard());
           profileUi.update({ projectId: s.projectId, projectName: (project() || {}).name || '', files: s.files || [] });
-          nodes.push(profileUi.el);
+          if (shows('cde.profile')) nodes.push(profileUi.el);
         } else profileUi.update({ projectId: '', files: [] });
         const resultEl = h('div');
         nodes.push(resultEl, graphEl, manageUi.el, adminUi.el, logCard.el);
@@ -307,7 +309,7 @@
       function filesCard() {
         const rows = (s.files || []).map((f) => h('div', { class: 'dm-row dm-opencde-file', 'data-opencde-file': f.filename },
           h('span', { class: 'dm-grow dm-truncate' }, h('span', { text: f.filename }), h('span', { class: 'dm-help dm-xs', text: ' ' + [f.model ? t('opencde.file.model') : '', f.source, f.versionIndex ? t('opencde.file.version', { n: f.versionIndex }) : '', f.date ? i18n.formatDateTime(f.date) : ''].filter(Boolean).join(' · ') })),
-          f.model && s.canGeometry ? basic.button({ label: t('opencde.file.large'), icon: 'box', size: 'sm', loading: s.fetching === f.reference, title: t('opencde.file.large.hint'), 'data-opencde-large-button': f.filename, onClick: () => fetchLarge(f) }) : null,
+          f.model && s.canGeometry && shows('cde.geometry') ? basic.button({ label: t('opencde.file.large'), icon: 'box', size: 'sm', loading: s.fetching === f.reference, title: t('opencde.file.large.hint'), 'data-opencde-large-button': f.filename, onClick: () => fetchLarge(f) }) : null,
           basic.button({ label: t(isBundle(f) ? 'opencde.file.receive' : 'opencde.file.fetch'), icon: isBundle(f) ? 'package' : 'download', size: 'sm', loading: s.fetching === f.reference, title: t(isBundle(f) ? 'opencde.file.receive.hint' : 'opencde.file.fetch.hint'), onClick: () => fetchFile(f) })));
         return h('div', { class: 'dm-card dm-stack-sm', 'data-opencde-files': '' },
           h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t('opencde.files.title') }), basic.button({ label: s.files ? t('opencde.files.again') : t('opencde.files.show'), icon: 'folder-open', size: 'sm', loading: s.busy === 'files', onClick: loadFiles })),

@@ -14,7 +14,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/leaflet', ['viz/theme', 'viz/export', 'viz/data', 'data/datasets', 'data/geo', 'data/boundaries', 'platform/consent', 'viz/orthophotos'], (theme, vizExport, vizData, datasets, geo, boundaries, consent, orthophotos) => {
+  D.define('viz/leaflet', ['viz/theme', 'viz/export', 'viz/data', 'data/datasets', 'data/geo', 'data/boundaries', 'platform/consent', 'viz/orthophotos', 'platform/tier'], (theme, vizExport, vizData, datasets, geo, boundaries, consent, orthophotos, tier) => {
     const VENDOR = 'vendor/leaflet/';
     const BASEMAPS = ['none', 'osm', 'custom', 'wms', 'tiles'];
     const WMS_DEFAULTS = { url: '', layers: '', format: 'image/png', transparent: false, attribution: '', version: '1.3.0' };
@@ -352,7 +352,8 @@
      * axis order); OpenStreetMap and XYZ templates exist in Web Mercator only (info.basemapProjection is set).
      */
     async function tileLayer(def, options, info, grid) {
-      if (!def || !def.basemap || def.basemap === 'none' || options.noTiles) return null;
+      // Background maps from services belong to the tier BIM och GIS (platform/tier); below it a map draws its own features only.
+      if (!def || !def.basemap || def.basemap === 'none' || options.noTiles || !tier.shows('map.basemap')) return null;
       if (orthophotos.isPreset(def.basemap)) return presetLayer(def.basemap, options, info, grid);
       const src = tileSource(def);
       if (!src) return null;
@@ -401,7 +402,7 @@
      */
     async function overlayLayers(def, options, info, grid) {
       const out = [];
-      if (!def || options.noTiles) return out;
+      if (!def || options.noTiles || !tier.shows('map.basemap')) return out;
       for (const layer of def.layers || []) {
         if (!imagery(layer) || layer.visible === false) continue;
         const src = overlaySource(layer);

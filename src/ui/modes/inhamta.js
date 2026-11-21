@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'api/bridge', 'platform/files', 'data/linked', 'io/importers/qgis', 'data/kinds', 'io/file-sense', 'viz/leaflet', 'ui/kinds/sketches'], (base, csv, encoding, types, connectors, bridge, files, linked, qgis, kinds, fileSense, leaflet, sketches) => {
+  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'api/bridge', 'platform/files', 'data/linked', 'io/importers/qgis', 'data/kinds', 'io/file-sense', 'viz/leaflet', 'ui/kinds/sketches', 'platform/tier'], (base, csv, encoding, types, connectors, bridge, files, linked, qgis, kinds, fileSense, leaflet, sketches, tier) => {
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
@@ -85,11 +85,15 @@
         if (slots) renderLeft();
       }
       const isAddedConnector = (c) => !c.preset || addedPresets.has(c.id);
-      const addedConnectors = () => connectorList.filter(isAddedConnector);
-      const catalogueConnectors = () => connectorList.filter((c) => c.preset && !addedPresets.has(c.id));
+      // The sources of a family or a preset the tier hides (platform/tier) are kept and left out of the lists.
+      const addedConnectors = () => connectorList.filter((c) => isAddedConnector(c) && tier.showsConnector(c));
+      const catalogueConnectors = () => connectorList.filter((c) => c.preset && !addedPresets.has(c.id) && tier.showsConnector(c));
 
       function render() {
         if (!slots) return;
+        // A source the tier now hides (after the tier was lowered) gives way to the files.
+        const hiddenApi = source.startsWith('api:') && connectorList.some((c) => c.id === source.slice(4) && !tier.showsConnector(c));
+        if (hiddenApi || (source === 'newmodel' && !tier.shows('source:newmodel'))) source = 'file';
         renderLeft(); renderCenter(); renderRight();
       }
 
@@ -103,7 +107,7 @@
             sourceItem('file', 'folder-open', t('import.sources.files'), t('import.sources.files.hint')),
             sourceItem('paste', 'clipboard-paste', t('import.sources.paste'), t('import.sources.paste.hint')),
             sourceItem('url', 'link', t('import.sources.url'), t('import.sources.url.hint')),
-            sourceItem('newmodel', 'box', t('import.sources.newmodel'), t('import.sources.newmodel.hint'))]),
+            tier.shows('source:newmodel') ? sourceItem('newmodel', 'box', t('import.sources.newmodel'), t('import.sources.newmodel.hint')) : null]),
           group('import.sources.addgroup', [
             sourceItem('bridge', 'database', t('bridge.title'), t('bridge.hint')),
             sourceItem('catalog', 'globe', t('api.sources'), t('api.catalog.hint')),
@@ -111,7 +115,7 @@
             actionItem('family', 'database', t('families.add.short'), t('families.hint'), () => addFamily()),
             actionItem('opencde', 'building-2', t('families.opencde.add'), t('families.opencde.add.hint'), () => addFamily(null, 'opencde')),
             actionItem('neo4j', 'share-2', t('families.neo4j.add'), t('families.neo4j.add.hint'), () => addFamily(null, 'neo4j')),
-            actionItem('geodata', 'map', t('geodata.add.short'), t('geodata.add.hint'), () => addFamily('geodata'))], { 'data-add-sources': '' }),
+            tier.shows('source:geodata') ? actionItem('geodata', 'map', t('geodata.add.short'), t('geodata.add.hint'), () => addFamily('geodata')) : null], { 'data-add-sources': '' }),
           h('h4', { text: t('import.sources.added') }),
           added.length || bridges.length
             ? h('div', { class: 'dm-list', 'data-added-sources': '' }, bridges, added)
@@ -226,7 +230,7 @@
           all.map((code) => chip(t('country.' + code), !countryFilter || countryFilter.has(code), () => toggleCountry(code))));
       }
       function sourceItem(id, icon, label, sub) {
-        return h('button', { type: 'button', class: 'dm-list-item', 'aria-current': source === id ? 'true' : null, onclick: () => { source = id; if (!id.startsWith('api:') && wiz.step !== 'file') restart(); else render(); } },
+        return h('button', { type: 'button', class: 'dm-list-item', 'data-source': id, 'aria-current': source === id ? 'true' : null, onclick: () => { source = id; if (!id.startsWith('api:') && wiz.step !== 'file') restart(); else render(); } },
           ui.icon(icon, 16), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: label }), sub ? h('span', { class: 'dm-list-sub dm-truncate', text: sub }) : null));
       }
       async function addConnector() {
