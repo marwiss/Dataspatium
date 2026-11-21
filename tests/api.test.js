@@ -420,6 +420,11 @@
     assert.equal(connectors.localize(raw, 'sv').name, 'SSB Statistikkbanken');
     assert.equal(connectors.localize(raw, 'en').name, 'Statistics Norway StatBank');
     assert.equal(connectors.localize(raw, 'xx'), raw, 'unknown language keeps the stored object');
+    const onlyEn = { id: 'prov', name: 'Svenskt namn', description: 'Svensk text', i18n: { en: { name: 'English name', description: 'English text' }, da: { name: 'Dansk navn' } } };
+    const da = connectors.localize(onlyEn, 'da');
+    assert.ok(da.name === 'Dansk navn' && da.description === 'English text', 'a text Danish lacks shows in English (F49 a)');
+    assert.equal(connectors.localize(onlyEn, 'nb').name, 'English name', 'no Norwegian texts: English');
+    assert.equal(connectors.localize(onlyEn, 'sv').name, 'Svenskt namn');
     const brreg = (await connectors.loadPresets()).find((p) => p.id === 'brreg-enhetsregisteret');
     const fi = connectors.localize(brreg, 'fi');
     assert.equal(fi.endpoints[0].params[0].label, 'Nimi (osa)');

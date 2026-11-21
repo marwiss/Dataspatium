@@ -162,7 +162,7 @@
         for (const line of [wall, roof, door, slab]) assert.ok(!/\{\w+\}/.test(line) && !line.includes('ai.change.'), code + ': every placeholder filled: ' + line);
         seen.push(door);
       }
-      assert.equal(new Set(seen).size, 7, 'seven different texts: ' + seen.join(' | '));
+      assert.ok(new Set(seen).size >= 2, 'Swedish and English differ (the other five may show English, F49 a): ' + seen.join(' | '));
     } finally { i18n.setLanguage(before, { persist: false }); }
     return 'ok';
   });
