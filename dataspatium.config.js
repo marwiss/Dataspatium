@@ -13,7 +13,8 @@
  *   and agrees to the network access.
  *
  * Keep a copy of your edited file: a new version of the app ships this file again with nothing set.
- * See docs/sv/faq.md (Svenska) or docs/en/faq.md (English), "Ställa in appen för en organisation".
+ * See "Hur ställer man in appen för en organisation?" in docs/sv/faq.md, or "How do I set up the app for an
+ * organisation?" in docs/en/faq.md.
  */
 /*
 globalThis.DATASPATIUM_CONFIG = {

@@ -98,6 +98,30 @@ Chrome via ikonen *Installera* i adressfältet eller webbläsarens meny. Den få
 filerna sparas i webbläsaren så att den fungerar utan nätverk, och lagringen blir beständig. Nya versioner hämtas
 när appen öppnas igen med nätverk.
 
+## Hur ställer man in appen för en organisation?
+
+Bredvid `index.html` ligger `dataspatium.config.js`, som appen läser före allt annat, både från mappen (file://) och från
+en webbserver. Som den levereras ställer den inte in något. Ta bort kommentarstecknen runt exemplet och behåll de rader
+du behöver:
+
+```js
+globalThis.DATASPATIUM_CONFIG = {
+  tier: 'bim-gis',
+  language: 'sv',
+  server: { baseUrl: 'https://cde.example.org', name: 'Vår Dataregium' },
+};
+```
+
+- `tier`: den högsta nivån användarna kan välja: `documents` (Dokument), `bim-gis` (BIM och GIS) eller `experimental`
+  (Experimentell). Användarna väljer själva sin nivå under Hantera > Arbetsyta, högst denna. Utan `tier` finns inget tak.
+- `language`: språket innan användaren väljer ett: `sv`, `en`, `da`, `nb`, `nn`, `fi` eller `is`. Frågan om språk vid
+  första starten hoppas då över; språkknappen byter det som vanligt.
+- `server`: en Dataregium-server som läggs till som källa i Inhämta vid första starten. Appen kontaktar den inte förrän
+  användaren öppnar källan och ger samtycke till nätåtkomsten. En källa som användaren tar bort läggs inte till igen.
+
+Ett värde som inte går att tolka hoppas över (det står i konsolen), så en felskriven fil låser aldrig appen. En ny version
+av appen levereras med en ny fil utan inställningar: spara en kopia av din egen och lägg tillbaka den efter uppdateringen.
+
 ## Kan jag öppna index.html direkt i ZIP-filen?
 
 Nej. Packa upp ZIP-filen först (högerklicka och välj *Extrahera alla* i Windows) och öppna sedan `index.html` i

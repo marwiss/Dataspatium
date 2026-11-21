@@ -255,6 +255,26 @@ switcher, the object panel, the work area and the inspector. Text and field bord
 light and the dark theme. Charts from the chart builder are described for screen readers by Vega; for R charts and
 D3 templates the figures are in the table in Process.
 
+## Tiers
+
+Dataspatium and its server Dataregium are one program in three tiers, each building on the one below:
+
+1. **Documents**: tables, processing, analysis, charts, documents and sharing, geodata files as tables, plan files and the
+   documents on a Dataregium server.
+2. **BIM and GIS**: also BIM models in 3D with their checks and measures, BCF issues, the map view in Bearbeta with the
+   geo tools, the geodata services, background maps and orthophotos, and AI modelling.
+3. **Experimental**: also the IFC graph, the AI assistant and what is on trial.
+
+With no choice made, tier 2 applies. The tier is chosen under **Hantera > Workspace > Tier** (or with the command *Tier*
+in the palette, Ctrl+K) and applies at once. A lower tier hides functions but keeps every dataset: an IFC model then shows
+as a table, and sources that belong to a higher tier stay but are left out of the list. A higher tier shows everything
+again. Where a hidden function would have been shown, and when a link (`#/<mode>/<dataset>`) points at one, the app says
+which tier it belongs to, with the button *Switch to …*.
+
+Whoever deploys the app can set a highest tier (see [faq.md](faq.md#how-do-i-set-up-the-app-for-an-organisation)); the
+tiers above it cannot then be chosen. A Dataregium server may also offer a lower tier, which then applies to what needs
+the server, such as the BCF issues and the IFC graph.
+
 ## Language
 
 The interface is available in Swedish, Danish, Norwegian (Bokmål and Nynorsk), Finnish, Icelandic and English. The first time

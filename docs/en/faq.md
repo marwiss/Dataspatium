@@ -98,6 +98,31 @@ in Edge and Chrome through the *Install* icon in the address bar or the browser 
 icon, the files are stored in the browser so that it works without a network, and storage becomes persistent. New
 versions are fetched when the app is opened again with a network.
 
+## How do I set up the app for an organisation?
+
+Next to `index.html` lies `dataspatium.config.js`, which the app reads before anything else, from the folder (file://)
+as well as from a web server. As shipped it sets nothing. Remove the comment markers around the example and keep the
+lines you need:
+
+```js
+globalThis.DATASPATIUM_CONFIG = {
+  tier: 'bim-gis',
+  language: 'sv',
+  server: { baseUrl: 'https://cde.example.org', name: 'Our Dataregium' },
+};
+```
+
+- `tier`: the highest tier the users can choose: `documents` (Documents), `bim-gis` (BIM and GIS) or `experimental`
+  (Experimental). The users choose their own tier under Hantera > Workspace, at most this one. Without `tier` there is no
+  ceiling.
+- `language`: the language before the user chooses one: `sv`, `en`, `da`, `nb`, `nn`, `fi` or `is`. The language
+  question at the first start is then skipped; the language button changes it as usual.
+- `server`: a Dataregium server added as a source in Inhämta at the first start. The app does not contact it until the
+  user opens the source and agrees to the network access. A source the user removes is not added again.
+
+A value that cannot be read is skipped (the console says so), so a mistyped file never locks the app. A new version of
+the app ships a new file with nothing set: keep a copy of yours and put it back after updating.
+
 ## Can I open index.html directly inside the ZIP file?
 
 No. Unpack the ZIP file first (right-click and choose *Extract all* in Windows) and then open `index.html` in the
