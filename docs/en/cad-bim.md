@@ -660,11 +660,10 @@ toward that side, a LEFT door with its hinges at the side of the opening nearest
 around: flush with the right face and opening toward it. A lining as deep as the wall is thick fills the whole reveal.
 A change set changes the model in place: every instance that is not deleted keeps its STEP id (the # number) and its class, and
 new instances get ids above the highest the model has had in the dataset, also when an earlier version deleted the last ones, so that
-no id is given twice. ifcmerge, with which Dataregium merges versions, requires it. When the file's own highest id is below the highest
-the model has had, the app writes an id guard into the file, a loose IfcDocumentReference named StepIdGuard whose Identification is
-that id, so that the history goes with the file also outside the dataset. Dataregium writes and reads the same guard and gives the
-highest id of a version (`ifc_max_step_id`), and the guard never shows as an element, a document or a finding. A new model is a new
-file, numbered from #1.
+no id is given twice. ifcmerge, with which Dataregium merges versions, requires it. When the file's own highest id is lower, the app
+writes an id guard, a loose IfcDocumentReference named StepIdGuard whose Identification is the highest id, so that the history goes
+with the file also outside the dataset; Dataregium writes and reads the same guard and gives the highest id of a version
+(`ifc_max_step_id`). The guard never shows as an element, a document or a finding. A new model is a new file, numbered from #1.
 The tool `edit_element` changes an existing element in place, so that it keeps its GlobalId for its whole life: a wall's start, end,
 thickness, height and type, a slab's outline, thickness and type, an opening's position, width, height and sill together with its door
 or window, a roof's pitch, overhang and eaves height, and any element's name. The measures are read from the element's own geometry
