@@ -185,7 +185,7 @@ app folder and are good starting points.
 | `name`, `publisher`, `description`, `docs`, `license`, `notes` | Shown in the app |
 | `level` | 1 = no key, 2 = key required |
 | `country` | Country or area for the country filter: `SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU` or `INT` |
-| `i18n` | Translations per language (Swedish is the file's base language): `{ "en": { "name", "publisher", "description", "notes", "auth": { "help" }, "endpoints": { "<id>": { "name", "description", "params": { "<name>": { "label", "help", "example", "options": { "<value>": "label" } } } } }, "dataset": { "<id>": "name template" } } }`. The app shows the texts of its language; the export contains all of them |
+| `i18n` | Translations per language (Swedish is the file's base language): `{ "en": { "name", "publisher", "description", "notes", "auth": { "help" }, "endpoints": { "<id>": { "name", "description", "params": { "<name>": { "label", "help", "example", "options": { "<value>": "label" } } } } }, "dataset": { "<id>": "name template" } } }`. The app shows the texts of its language, and in Danish, Norwegian, Finnish and Icelandic the English text where a translation is missing; the export contains all of them |
 | `baseUrl` | Address that the endpoints' paths are appended to |
 | `headers` | Default headers for all requests |
 | `auth` | `none`, `apiKey` (`in`: `header`, `query` or `body`, where the placeholder `{name}` in the body is filled with the key only when the request is sent; `name`, optional `prefix`), `basic`, `bearer`, `oauth2_client_credentials` (`tokenUrl`, optional `scope`); `help` and `signupUrl` are shown by the key field |

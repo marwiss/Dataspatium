@@ -284,7 +284,7 @@
     const ngp = ['byggnad', 'strandskydd', 'kulturhistorisklamning', 'gransforfjallnaraskog'].map((d) => byId.get('lantmateriet-ngp-' + d));
     for (const s of [slu].concat(ngp)) {
       assert.ok(s, 'present');
-      assert.ok(langs.every((l) => s.about && s.about[l]), s.id + ': a description in all seven languages');
+      assert.ok(['sv', 'en'].every((l) => s.about && s.about[l]) && langs.every((l) => !s.about[l] || String(s.about[l]).trim()), s.id + ': a description in Swedish and English (the others may lack one and show English, F49 a)');
     }
     for (const s of ngp) {
       assert.equal(s.preset, 'lantmateriet-ngp-detaljplan', s.id + ' uses the platform key');

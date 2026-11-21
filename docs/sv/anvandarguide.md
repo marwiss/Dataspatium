@@ -258,8 +258,12 @@ Gränssnittet finns på svenska, danska, norska (bokmål och nynorsk), finska, i
 sparas i webbläsaren, så varje dator och webbläsarprofil har sitt eget. Tal i gränssnittet följer språkets
 konventioner; själva datan ändras aldrig. R:s meddelanden följer samma val, medan mallarnas platshållare som
 `{{datamangd}}` och tabellnyckelorden `kolumner`, `sortera`, `topp`, `filter` och `rubrik` är en del av
-mallspråket och är desamma på alla språk. Dokumentationen finns på alla sju språken under `docs/` (svenska i
-`docs/`, övriga i `docs/<språk>/`).
+mallspråket och är desamma på alla språk. Dokumentationen finns på alla sju språken under `docs/<språk>/`
+(svenska i `docs/sv/`).
+
+Nya och ändrade texter skrivs tills vidare bara på svenska och engelska. Där en text ännu inte är översatt till
+danska, norska, finska eller isländska visar appen den engelska texten, och handboken visar det engelska dokumentet
+eller avsnittet. Befintliga översättningar finns kvar.
 
 ## När något går fel
 

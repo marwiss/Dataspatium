@@ -273,7 +273,7 @@
         assert.ok(typedOpening.includes(i18n.t('ai.change.typed', { type: 'new-12' })) && typedOpening.endsWith(i18n.t('ai.change.side.right')), code + ': the typed door turned around: ' + typedOpening);
         for (const [i, line] of [stair, typedOpening].entries()) { const key = String(i); seen.set(key, (seen.get(key) || new Set()).add(line)); }
       }
-      for (const [key, lines] of seen) assert.equal(lines.size, 7, 'seven different texts (' + key + '): ' + Array.from(lines).join(' | '));
+      for (const [key, lines] of seen) assert.ok(lines.size >= 2, 'Swedish and English differ (the other five may show English, F49 a): (' + key + ') ' + Array.from(lines).join(' | '));
     } finally { i18n.setLanguage(before, { persist: false }); }
     return 'ok';
   });

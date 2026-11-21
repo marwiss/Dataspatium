@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * Internationalisation: `t('key', {n: 3})` looks up a string in the active language, falls back to
- * Swedish (the source language) and finally to the key itself so that gaps stay visible. Seven languages
- * ship: Swedish, Danish, Norwegian (bokmål and nynorsk), Finnish, Icelandic and English. The choice is
- * remembered in localStorage; before a choice is made the browser's language picks one of the seven (else
- * Swedish). Only the active language's dictionary is loaded at the start (src/boot.js); every dictionary has
- * every key, so Swedish is loaded only when a key is missing. Number and byte formatting follow the
- * language's locale. `Dataspatium.t` is set here so that every layer (data, engines, docgen) can produce
+ * English, then to Swedish (the source language) and finally to the key itself so that gaps stay visible. Seven
+ * languages ship: Swedish, Danish, Norwegian (bokmål and nynorsk), Finnish, Icelandic and English. New texts are
+ * written in Swedish and English only (F49 a), so Danish, Norwegian, Finnish and Icelandic may lack keys and show
+ * the English text there. The choice is remembered in localStorage; before a choice is made the browser's language
+ * picks one of the seven (else Swedish). The start loads the active language's dictionary and, for the five that
+ * may lack keys, English too (src/boot.js); Swedish is loaded only when a key is missing in both. Number and byte
+ * formatting follow the language's locale. `Dataspatium.t` is set here so that every layer (data, engines, docgen) can produce
  * user-facing messages in the active language.
  */
 (function () {
@@ -33,16 +34,48 @@
     for (const l of LANGUAGES) if (D.has('i18n/' + l.code)) languages[l.code] = D.require('i18n/' + l.code);
     /** The first-start chooser's words in every language (src/ui/i18n/languages.js), when the start loaded them. */
     const chooserWords = () => (D.has('i18n/languages') ? D.require('i18n/languages') : {});
-    /** Swedish as the fallback: asked for once, on the first key the active dictionary lacks. */
-    let fallbackAsked = false;
-    function swedish() {
-      if (!languages.sv && !fallbackAsked && D.assets) {
-        fallbackAsked = true;
-        console.info('[i18n] a key is missing in "' + current + '"; loading Swedish as the fallback');
-        loadLanguage('sv').catch((err) => console.warn('[i18n] Swedish fallback could not be loaded', err));
-      }
-      return languages.sv || {};
+    /** The fallbacks after a language's own dictionary: English, then Swedish (F49 a). */
+    const FALLBACKS = ['en', 'sv'];
+    /** Fallback dictionaries already asked for, so that each one is loaded at most once. */
+    const fallbackAsked = new Set();
+    /**
+     * The dictionaries a lookup in `code` goes through, in order: its own, English, Swedish (each once).
+     * @param {string} code
+     * @returns {string[]}
+     */
+    function chain(code) { return [code].concat(FALLBACKS.filter((c) => c !== code)); }
+    /**
+     * Load a fallback that the start did not load (English is loaded at the start for the languages that may lack
+     * keys, src/boot.js); it serves the lookups after it has arrived.
+     * @param {string} code
+     */
+    function requestFallback(code) {
+      if (languages[code] || fallbackAsked.has(code) || !D.assets) return;
+      fallbackAsked.add(code);
+      console.info('[i18n] a key is missing in "' + current + '"; loading "' + code + '" as the fallback');
+      loadLanguage(code).catch((err) => console.warn('[i18n] fallback "' + code + '" could not be loaded', err));
     }
+    /**
+     * The text of a key along a chain of dictionaries, with the singular when n is exactly one. The `.one` form is
+     * taken from the same dictionary as the key itself, so that a translation never mixes its plural with another
+     * language's singular.
+     * @param {string[]} codes
+     * @param {string} key
+     * @param {Record<string, any>|undefined} params
+     * @param {(code: string) => Record<string, string>|undefined} dict
+     * @returns {string|undefined}
+     */
+    function lookup(codes, key, params, dict) {
+      const one = !!params && params.n !== undefined && String(params.n) === '1';
+      for (const code of codes) {
+        const d = dict(code);
+        if (!d || !(key in d)) continue;
+        return one && key + '.one' in d ? d[key + '.one'] : d[key];
+      }
+      return undefined;
+    }
+    /** Fill {name} placeholders; a missing parameter stays visible. */
+    const fill = (text, params) => (params ? text.replace(/\{(\w+)\}/g, (m, name) => (params[name] === undefined ? m : String(params[name]))) : text);
     const KEY = 'dataspatium.lang';
     const DOCS_BASE = 'https://github.com/marwiss/Dataspatium';
     const numberFormats = new Map();
@@ -92,27 +125,30 @@
      * @param {Record<string, any>} [params]
      */
     function t(key, params) {
-      const own = languages[current] || swedish();
       // A key with a `.one` sibling takes the singular when n is exactly one ("1 sida", not "1 sidor").
-      if (params && params.n !== undefined && String(params.n) === '1' && key + '.one' in own) key += '.one';
-      let text = own[key];
-      if (text === undefined) { D.log('i18n', 'missing key', current, key); text = swedish()[key]; }
-      if (text === undefined) text = key;
-      if (params) text = text.replace(/\{(\w+)\}/g, (m, name) => (params[name] === undefined ? m : String(params[name])));
-      return text;
+      const codes = chain(current);
+      const text = lookup(codes, key, params, (code) => languages[code]);
+      if (!languages[current] || !(key in languages[current])) {
+        D.log('i18n', 'missing key', current, key);
+        // Ask for the fallbacks that are not loaded, up to the first one that has the key. Swedish has every key, so
+        // nothing is loaded for a key it lacks (English would not have it either).
+        if (current !== 'sv' || !languages.sv) for (const code of codes.slice(1)) { if (languages[code] && key in languages[code]) break; requestFallback(code); }
+      }
+      return fill(text === undefined ? key : text, params);
     }
 
     /**
      * Look a key up in a specific language (used where several languages show at once, e.g. the first-start chooser):
-     * its dictionary when loaded, else the chooser's words, else Swedish when loaded, else the key.
+     * its dictionary when loaded, else the chooser's words, then English and Swedish the same way, else the key.
+     * Never loads anything.
+     * @param {string} code
+     * @param {string} key
+     * @param {Record<string, any>} [params]
      */
     function tIn(code, key, params) {
-      let text = (languages[code] || {})[key];
-      if (text === undefined) text = (chooserWords()[code] || {})[key];
-      if (text === undefined) text = (languages.sv || {})[key];
-      if (text === undefined) text = key;
-      if (params) text = text.replace(/\{(\w+)\}/g, (m, name) => (params[name] === undefined ? m : String(params[name])));
-      return text;
+      const words = chooserWords();
+      const text = lookup(chain(code), key, params, (c) => (languages[c] && key in languages[c] ? languages[c] : words[c]));
+      return fill(text === undefined ? key : text, params);
     }
 
     function language() { return current; }
@@ -159,11 +195,11 @@
       apply();
       return true;
     }
-    /** True when the active language (or Swedish, when it is loaded) has the key; never loads anything. */
-    function has(key) { return Object.prototype.hasOwnProperty.call(languages[current] || {}, key) || Object.prototype.hasOwnProperty.call(languages.sv || {}, key); }
+    /** True when the active language or a loaded fallback (English, Swedish) has the key; never loads anything. */
+    function has(key) { return chain(current).some((code) => Object.prototype.hasOwnProperty.call(languages[code] || {}, key)); }
     /** Keys of a language's dictionary (for the completeness test). */
     function keys(code) { return Object.keys(languages[code] || {}); }
-    /** The languages whose dictionaries are loaded, in LANGUAGES order (the start loads only the active one). */
+    /** The languages whose dictionaries are loaded, in LANGUAGES order (the start loads the active one, and English for five). */
     function loaded() { return LANGUAGES.map((l) => l.code).filter((code) => !!languages[code]); }
     /** The documentation on GitHub in the active language (Swedish lives in docs/, the others in docs/<code>/). */
     function docsUrl(code) {
@@ -173,7 +209,7 @@
 
     apply();
     D.t = t;
-    return { t, tIn, formatNumber, formatBytes, formatDateTime, setLanguage, loadLanguage, language, locale, has, hasChoice, keys, loaded, detect, browserLanguage, docsUrl, LANGUAGES, KEY };
+    return { t, tIn, chain, formatNumber, formatBytes, formatDateTime, setLanguage, loadLanguage, language, locale, has, hasChoice, keys, loaded, detect, browserLanguage, docsUrl, LANGUAGES, KEY };
   });
   // Instantiate right away so that Dataspatium.t exists before any other module's factory runs.
   D.require('ui/i18n');

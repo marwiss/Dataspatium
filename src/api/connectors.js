@@ -79,9 +79,12 @@
     /**
      * Copy of a connector with the texts of the active language applied (name, publisher, description,
      * notes, endpoint names and descriptions, parameter labels, help, examples and option labels, auth help).
+     * Swedish is the file's base; under Danish, Norwegian, Finnish and Icelandic the English texts come first, so that
+     * a text the translation lacks shows in English, as in the app (F49 a).
      */
     function localize(raw, lang) {
       const code = lang || i18n.language();
+      if (code !== 'sv' && code !== 'en' && i18n.LANGUAGES.some((l) => l.code === code) && raw.i18n && raw.i18n.en) raw = localize(raw, 'en');
       const ov = raw.i18n && raw.i18n[code];
       if (!ov) return raw;
       const out = Object.assign({}, raw);

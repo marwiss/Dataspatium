@@ -26,7 +26,7 @@
       return servicesLoading;
     }
     function setServices(list) { servicesOverride = Array.isArray(list) ? list : null; }
-    const aboutOf = (svc) => { const a = svc.about || {}; return a[i18n.language()] || a.sv || ''; };
+    const aboutOf = (svc) => { const a = svc.about || {}; return a[i18n.language()] || a.en || a.sv || ''; };
 
     /**
      * @param {any} ctx the mode context (shell for the log)

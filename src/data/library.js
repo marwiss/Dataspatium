@@ -21,7 +21,7 @@
     function textOf(value) {
       if (!value || typeof value === 'string') return value || '';
       const language = D.require('ui/i18n').language();
-      return value[language] || value.sv || value.en || Object.values(value)[0] || '';
+      return value[language] || value.en || value.sv || Object.values(value)[0] || '';
     }
     /** A library that goes in only if it is what it says; unknown kinds are left out rather than guessed at. */
     function parse(text, source) {

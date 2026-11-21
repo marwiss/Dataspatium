@@ -103,7 +103,7 @@
         listed.push(text); all.push(each);
       }
       // Bokmål and nynorsk may say the short form alike ("Rom i Plan 3: Kök ved (3, 4)"); the long one differs in every language.
-      assert.ok(new Set(listed).size >= 6 && new Set(all).size === 7, 'translated texts: ' + listed.concat(all).join(' | '));
+      assert.ok(new Set(listed).size >= 2 && new Set(all).size >= 2, 'Swedish and English differ (the other five may show English, F49 a): ' + listed.concat(all).join(' | '));
     } finally { i18n.setLanguage(before, { persist: false }); }
     return 'ok';
   });

@@ -5,6 +5,9 @@
 - the first-start chooser's words in every language (CHOOSER_KEYS), as src/ui/i18n/languages.js. The very first start loads that
   small file and the browser language's dictionary instead of all seven (src/boot.js).
 
+New texts are written in Swedish and English only (F49 a): those two must have every key, and a key another language lacks
+takes the English text there, as the app shows it (ui/i18n).
+
 Run from the repo root; --check fails when a file on disk differs from what the i18n files give (CI, tests and every release)."""
 from __future__ import annotations
 
@@ -21,6 +24,9 @@ LINE = re.compile(r"^\s*'([^']+)':\s*'((?:[^'\\]|\\.)*)',?\s*$", re.M)
 CHOOSER_LANGS = ['sv', 'da', 'nb', 'nn', 'fi', 'is', 'en']
 CHOOSER_KEYS = ['lang.title', 'lang.first.title', 'lang.first.hint', 'lang.first.keep']
 CHOOSER_OUT = 'src/ui/i18n/languages.js'
+# The languages that must have every key; the others fall back to English (FALLBACK).
+COMPLETE = ['sv', 'en']
+FALLBACK = 'en'
 
 
 def raw_lang(lang: str) -> dict[str, str]:
@@ -33,17 +39,22 @@ def load_lang(lang: str) -> dict[str, str]:
     return {k: v.replace("\\'", "'").replace('\\\\', '\\') for k, v in raw_lang(lang).items()}
 
 
+def with_fallback(langs: dict[str, dict[str, str]], wanted: list[str]) -> dict[str, dict[str, str]]:
+    """Every wanted key in every language: Swedish and English must have it, the others take English where they lack it."""
+    missing = [(lang, k) for lang in COMPLETE for k in wanted if k not in langs[lang]]
+    if missing:
+        raise SystemExit('missing in i18n files: ' + ', '.join(f'{l}:{k}' for l, k in missing[:20]))
+    return {lang: {k: d[k] if k in d else langs[FALLBACK][k] for k in wanted} for lang, d in langs.items()}
+
+
 def keys() -> list[str]:
     lines = io.open(KEYS_FILE, encoding='utf-8').read().splitlines()
     return [l.strip() for l in lines if l.strip() and not l.strip().startswith('#')]
 
 
 def build() -> dict:
-    langs = {lang: load_lang(lang) for lang in LANGS}
     wanted = keys()
-    missing = [(lang, k) for lang in LANGS for k in wanted if k not in langs[lang]]
-    if missing:
-        raise SystemExit('missing in i18n files: ' + ', '.join(f'{l}:{k}' for l, k in missing[:20]))
+    langs = with_fallback({lang: load_lang(lang) for lang in LANGS}, wanted)
     return {
         'name': 'Dataspatium and Dataregium shared glossary',
         'version': 1,
@@ -55,10 +66,7 @@ def build() -> dict:
 
 def build_chooser() -> str:
     """src/ui/i18n/languages.js: the module i18n/languages, {code: {key: text}} for the chooser's keys."""
-    raw = {lang: raw_lang(lang) for lang in CHOOSER_LANGS}
-    missing = [(lang, k) for lang in CHOOSER_LANGS for k in CHOOSER_KEYS if k not in raw[lang]]
-    if missing:
-        raise SystemExit('missing in i18n files: ' + ', '.join(f'{l}:{k}' for l, k in missing))
+    raw = with_fallback({lang: raw_lang(lang) for lang in CHOOSER_LANGS}, CHOOSER_KEYS)
     lines = [
         '// @ts-check',
         '// SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0',
