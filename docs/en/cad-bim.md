@@ -658,6 +658,9 @@ IfcWindowLiningProperties). `create_opening` takes the type: the door or window 
 the wall's left face, seen from the wall's start toward its end (the inside of an outer wall drawn counter-clockwise), and a door opens
 toward that side, a LEFT door with its hinges at the side of the opening nearest the wall's start. With `side: right` it is turned
 around: flush with the right face and opening toward it. A lining as deep as the wall is thick fills the whole reveal.
+A change set changes the model in place: every instance that is not deleted keeps its STEP id (the # number) and its class, and
+new instances get ids above the highest the model has had in the dataset, also when an earlier version deleted the last ones, so that
+no id is given twice. ifcmerge, with which Dataregium merges versions, requires it. A new model is a new file, numbered from #1.
 The tool `edit_element` changes an existing element in place, so that it keeps its GlobalId for its whole life: a wall's start, end,
 thickness, height and type, a slab's outline, thickness and type, an opening's position, width, height and sill together with its door
 or window, a roof's pitch, overhang and eaves height, and any element's name. The measures are read from the element's own geometry

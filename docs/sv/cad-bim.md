@@ -638,6 +638,9 @@ eller fönstret får typens storlek och geometri och står i liv med väggens v�
 av en yttervägg som ritas moturs), och en dörr öppnas åt det hållet, en vänsterhängd med gångjärnen på den sida av öppningen som är
 närmast väggens start. Med `side: right` vänds den: i liv med högra sidan och öppnad åt det hållet. En karm lika djup som väggen är
 tjock fyller hela smygen.
+Ett ändringsset ändrar modellen på plats: varje instans som inte raderas behåller sitt STEP-id (#-numret) och sin klass, och
+nya instanser får id över det högsta som modellen har haft i datamängden, också när en tidigare version raderade de sista, så att
+inget id ges två gånger. Det kräver ifcmerge, som Dataregium sammanfogar versioner med. En ny modell är en ny fil, numrerad från #1.
 Verktyget `edit_element` ändrar ett befintligt element på plats, så att det behåller sitt GlobalId hela sin livstid: en väggs start,
 slut, tjocklek, höjd och typ, ett bjälklags kontur, tjocklek och typ, en öppnings läge, bredd, höjd och underkant tillsammans med dess
 dörr eller fönster, ett taks lutning, takfot och takfotens höjd, och vilket elements namn som helst. Måtten läses ur elementets egen
