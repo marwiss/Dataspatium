@@ -650,6 +650,9 @@ storleiken og geometrien til typen og står i liv med venstre side av veggen, se
 yttervegg teikna mot klokka), og ei dør vert opna mot den sida, ei venstrehengsla med hengslene på den sida av opninga som er nærmast
 starten på veggen. Med `side: right` vert ho snudd: i liv med høgre side og opna mot henne. Ein karm like djup som veggen er tjukk,
 fyller heile smyget.
+Eit endringssett endrar modellen på staden: kvar instans som ikkje vert sletta, held på STEP-id-en sin (#-nummeret) og klassen sin,
+og nye instansar får id over den høgaste modellen har hatt i datasettet, også når ein tidlegare versjon sletta dei siste, slik at
+ingen id vert gjeven to gonger. Det krev ifcmerge, som Dataregium slår saman versjonar med. Ein ny modell er ei ny fil, nummerert frå #1.
 Verktøyet `edit_element` endrar eit eksisterande element på staden, slik at det held på GlobalId-en sin heile levetida: start, slutt,
 tjukn, høgd og type for ein vegg, omriss, tjukn og type for eit dekke, plassering, breidd, høgd og underkant for ei opning saman med
 døra eller vindauget i ho, takvinkel, takutstikk og gesimshøgd for eit tak, og namnet på kva element som helst. Måla vert lesne ut frå

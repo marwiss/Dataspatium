@@ -78,12 +78,16 @@
     /**
      * A changed IFC file becomes the dataset's content, inside an operation's savepoint (data/ifc-ops): the element, property,
      * quantity and entity tables are rebuilt from it, the original in `_files` is replaced and the facts in `_meta.model`
-     * renewed. The element ids follow the file, so a selection in memory is dropped by the content change as usual.
+     * renewed. The element ids follow the file, so a selection in memory is dropped by the content change as usual. The facts'
+     * `maxId` stays the highest STEP id any version of the model in the dataset has had, which the wheel gives no new entity
+     * (python/dataspatium.py `_ifc_keep_ids`): an id deleted in one version never comes back in the next (ifcmerge merges on ids).
      * @param {{engine: any, datasetId?: string}} ctx @param {Uint8Array} bytes @param {string} fileName
      * @returns {Promise<any>} the new facts
      */
     async function replaceOriginal(ctx, bytes, fileName) {
       const e = ctx.engine;
+      let before = 0;
+      try { const r = await e.exec("select value from _meta where key = 'model'"); before = Number(JSON.parse(r[0].values[0][0]).maxId) || 0; } catch (_err) { /* no facts yet */ }
       for (const table of ['data', '_properties', '_quantities', '_entities']) await e.run(`delete from ${table}`);
       const names = IFC_COLUMNS.map((c) => c.name);
       const summary = await step.tables(bytes, {
@@ -99,6 +103,7 @@
       await e.run(`delete from ${files.TABLE} where kind = 'original'`);
       await e.insertRows(files.TABLE, ['name', 'kind', 'type', 'size', 'bytes'], [[fileName, 'original', 'application/x-step', bytes.byteLength, bytes]], 1);
       summary.file = fileName;
+      summary.maxId = Math.max(Number(summary.maxId) || 0, before);
       await e.run('insert or replace into _meta (key, value) values (?, ?)', ['model', JSON.stringify(summary)]);
       if (ctx.datasetId) {
         files.clearUrls(ctx.datasetId);

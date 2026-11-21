@@ -837,6 +837,24 @@ def _ifc_open_bytes(path, data):
     return ifcopenshell.open(path)
 
 
+def _ifc_keep_ids(file, model):
+    """Give no new entity a STEP id that an earlier version of the model had (ifcmerge merges three ways on the ids): IfcOpenShell
+    numbers from the file's highest id, which falls when the last entities were deleted, so it is raised to the dataset's own
+    (`_meta.model` maxId, kept by data/model) with a point made at that id and removed again. Returns the model."""
+    try:
+        con = sqlite3.connect(file)
+        try:
+            row = con.execute("select value from _meta where key = 'model'").fetchone()
+        finally:
+            con.close()
+        high = int(json.loads(row[0]).get("maxId") or 0) if row else 0
+    except Exception:
+        high = 0
+    if high > model.get_max_id():
+        model.remove(model.create_entity("IfcCartesianPoint", Coordinates=(0.0, 0.0, 0.0), id=high))
+    return model
+
+
 def dm_ifc(x):
     """Open a building model (dataset kind "model", an IFC file) with IfcOpenShell.
 
@@ -1252,7 +1270,7 @@ def _ifc_step(code, in_file, out_file, name=""):
     import ifcopenshell
     file_name, data = _ifc_original_from(in_file)
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
-    model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "step-in.ifc"), data)
+    model = _ifc_keep_ids(in_file, _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "step-in.ifc"), data))
     ns = _ifc_step_namespace(model)
     exec(compile(str(code), "<steg>", "exec"), ns)
     fn = ns.get("step")
@@ -1272,7 +1290,7 @@ def _ifc_apply(in_file, table_file, key, out_file):
     """The recipe step "Skriv tabell till modellen": a table's values into the model with dm_ifc_set(), written as IFC."""
     file_name, data = _ifc_original_from(in_file)
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
-    model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "apply-in.ifc"), data)
+    model = _ifc_keep_ids(in_file, _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "apply-in.ifc"), data))
     df = _read_file(table_file)
     changed = dm_ifc_set(model, df, key=key or "guid")
     _ifc_header(model, file_name)
@@ -7575,7 +7593,7 @@ def _ifc_changeset(in_file, changeset_json, out_file, options_json=None):
     opts = json.loads(options_json or "{}")
     file_name, data = _ifc_original_from(in_file)
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
-    model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "changeset-in.ifc"), data)
+    model = _ifc_keep_ids(in_file, _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "changeset-in.ifc"), data))
     ops = json.loads(changeset_json or "[]")
     cs = _ChangeSet(model)
     cs.apply(ops)

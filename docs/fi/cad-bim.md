@@ -667,6 +667,10 @@ tyypin: ovi tai ikkuna saa tyypin koon ja geometrian ja on samassa tasossa sein�
 katsottuna (vastapäivään piirretyn ulkoseinän sisäpinta), ja ovi avautuu sille puolelle, vasenkätinen ovi saranat aukon sillä reunalla,
 joka on lähinnä seinän alkua. Arvolla `side: right` se käännetään: samaan tasoon oikean pinnan kanssa ja avautumaan sitä kohti. Seinän
 paksuinen karmi täyttää koko aukon pielen.
+Muutosjoukko muuttaa mallia paikallaan: jokainen instanssi, jota ei poisteta, säilyttää STEP-tunnuksensa (#-numeron) ja luokkansa,
+ja uudet instanssit saavat tunnuksen, joka on suurempi kuin suurin, joka mallilla on ollut aineistossa, myös kun aiempi versio poisti
+viimeiset, joten mitään tunnusta ei anneta kahdesti. Sitä vaatii ifcmerge, jolla Dataregium yhdistää versiot. Uusi malli on uusi
+tiedosto, joka numeroidaan alkaen #1.
 Työkalu `edit_element` muuttaa olemassa olevaa elementtiä paikallaan, niin että se säilyttää GlobalId-tunnuksensa koko elinkaarensa
 ajan: seinän alun, lopun, paksuuden, korkeuden ja tyypin, laatan ääriviivan, paksuuden ja tyypin, aukon paikan, leveyden, korkeuden ja
 alareunan yhdessä sen oven tai ikkunan kanssa, katon kaltevuuden, räystään ulottuman ja räystään korkeuden sekä minkä tahansa elementin

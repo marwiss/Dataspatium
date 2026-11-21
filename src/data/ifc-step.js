@@ -260,7 +260,8 @@
         format: 'ifc', schema: facts.schema, timestamp: facts.timestamp, application: facts.application || facts.preprocessor, project: nameOf(project), site: nameOf(site), building: nameOf(building),
         // For BCF's header: the IfcProject's GlobalId and the name the file gives itself in FILE_NAME.
         projectGuid: project === undefined ? '' : String(argsOf(f, project)[0] || ''), headerName: facts.name,
-        units: units.names, entities: f.count, types: counts.map(function (t) { return { name: t.name, count: t.count }; }).slice(0, 400),
+        // maxId: the file's highest STEP id, which data/model keeps for the dataset so that no id is given twice (ifcmerge).
+        units: units.names, entities: f.count, maxId: f.indexOf.length - 1, types: counts.map(function (t) { return { name: t.name, count: t.count }; }).slice(0, 400),
         elementTypes: elementTypes.map(function (t) { return { name: t.name, count: t.count }; }), storeys: storeys, parties: partiesOf(f),
       };
     }

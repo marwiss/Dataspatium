@@ -647,6 +647,9 @@ typens størrelse og geometri og står i flugt med væggens venstre side, set fr
 ydervæg tegnet mod uret), og en dør åbner til den side, en venstrehængt med hængslerne i den side af åbningen, der er nærmest væggens
 start. Med `side: right` vendes den: i flugt med højre side og åbnende mod den. En karm så dyb, som væggen er tyk, fylder hele
 lysningen.
+Et ændringssæt ændrer modellen på stedet: hver instans, der ikke slettes, beholder sit STEP-id (#-nummeret) og sin klasse, og
+nye instanser får id over det højeste, modellen har haft i datasættet, også når en tidligere version slettede de sidste, så intet
+id gives to gange. Det kræver ifcmerge, som Dataregium fletter versioner med. En ny model er en ny fil, nummereret fra #1.
 Værktøjet `edit_element` ændrer et eksisterende element på stedet, så det beholder sit GlobalId hele sin levetid: en væggs start, slut,
 tykkelse, højde og type, et dæks omrids, tykkelse og type, en åbnings placering, bredde, højde og underkant sammen med dens dør eller
 vindue, et tags hældning, udhæng og tagfodens højde, og ethvert elements navn. Målene læses ud fra elementets egen geometri (væggens

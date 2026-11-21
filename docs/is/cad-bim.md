@@ -640,6 +640,9 @@ stærð og form gerðarinnar og stendur í fleti við vinstri hlið veggjarins, 
 sem er teiknaður rangsælis), og hurð opnast að þeirri hlið, vinstri hurð með lamirnar á þeirri hlið opsins sem er næst upphafi
 veggjarins. Með `side: right` er henni snúið: í fleti við hægri hliðina og opnast að henni. Karmur jafndjúpur og veggurinn er þykkur
 fyllir allt gatið.
+Breytingasett breytir líkaninu á sínum stað: hvert tilvik sem ekki er eytt heldur STEP-auðkenni sínu (#-númerinu) og klasa sínum,
+og ný tilvik fá auðkenni ofan við það hæsta sem líkanið hefur haft í gagnasafninu, líka þegar fyrri útgáfa eyddi þeim síðustu, svo
+að ekkert auðkenni er gefið tvisvar. Þess krefst ifcmerge, sem Dataregium sameinar útgáfur með. Nýtt líkan er ný skrá, númeruð frá #1.
 Tólið `edit_element` breytir einingu sem fyrir er á sínum stað, svo að hún heldur GlobalId sínu alla ævi: upphafi, enda, þykkt, hæð og
 gerð veggjar, útlínu, þykkt og gerð plötu, staðsetningu, breidd, hæð og neðri brún ops ásamt hurð þess eða glugga, þakhalla, þakskeggi
 og hæð þakskeggs þaks, og heiti hvaða einingar sem er. Málin eru lesin úr eigin rúmfræði einingarinnar (upphaf og endir veggjar úr ás
