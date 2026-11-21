@@ -1,6 +1,6 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
-/** Tests for internationalisation: seven complete dictionaries, fallback, persistence and locale formatting. */
+/** Tests for internationalisation: the dictionaries, the fallback to English and Swedish, persistence and locale formatting. */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
@@ -8,10 +8,12 @@
   const i18n = D.require('ui/i18n');
   const vizLocale = D.require('viz/locale');
   const CODES = ['sv', 'da', 'nb', 'nn', 'fi', 'is', 'en'];
+  /** The languages that have every key; the others show English (then Swedish) where they lack one (F49 a). */
+  const COMPLETE = ['sv', 'en'];
   const placeholders = (s) => (String(s).match(/\{[a-zA-Z_]+\}/g) || []).sort().join(' ');
   const spaces = (s) => String(s).replace(/[  ]/g, ' ');
 
-  test('i18n: seven languages with identical key sets, no empty texts and matching placeholders', async (assert) => {
+  test('i18n: Swedish and English with identical key sets, the others without stale keys; no empty texts, matching placeholders', async (assert) => {
     assert.deepEqual(i18n.LANGUAGES.map((l) => l.code), CODES);
     // Only the active language loads at the start (tests/i18n-start.test.js); the others are fetched on demand.
     for (const code of CODES) assert.equal(await i18n.loadLanguage(code), true, 'dictionary loaded: ' + code);
@@ -20,14 +22,52 @@
     const svSet = new Set(svKeys);
     for (const code of CODES) {
       const keys = i18n.keys(code);
-      const missing = svKeys.filter((k) => !keys.includes(k));
-      const extra = keys.filter((k) => !svSet.has(k));
-      assert.deepEqual(missing, [], code + ': missing keys');
-      assert.deepEqual(extra, [], code + ': extra keys');
+      const own = new Set(keys);
+      // New texts are written in Swedish and English only (F49 a): those two have every key, the others may lack keys
+      // (English shows there) but never have a key Swedish lacks.
+      if (COMPLETE.includes(code)) assert.deepEqual(svKeys.filter((k) => !own.has(k)), [], code + ': missing keys');
+      assert.deepEqual(keys.filter((k) => !svSet.has(k)), [], code + ': stale keys (not in Swedish)');
       const empty = keys.filter((k) => !String(i18n.tIn(code, k)).trim());
       assert.deepEqual(empty, [], code + ': empty texts');
-      const bad = svKeys.filter((k) => placeholders(i18n.tIn('sv', k)) !== placeholders(i18n.tIn(code, k)));
+      const bad = keys.filter((k) => placeholders(i18n.tIn('sv', k)) !== placeholders(i18n.tIn(code, k)));
       assert.deepEqual(bad, [], code + ': placeholder mismatch');
+    }
+  });
+
+  test('i18n: a key a translation lacks shows English, then Swedish; the singular comes from the same dictionary', async (assert) => {
+    for (const code of ['sv', 'en', 'da']) assert.equal(await i18n.loadLanguage(code), true, 'dictionary loaded: ' + code);
+    assert.deepEqual(i18n.chain('da'), ['da', 'en', 'sv']);
+    assert.deepEqual(i18n.chain('sv'), ['sv', 'en']);
+    assert.deepEqual(i18n.chain('en'), ['en', 'sv']);
+    // Test keys put into the loaded dictionaries (the registry hands out the same objects) and taken out again.
+    const dicts = { sv: D.require('i18n/sv'), en: D.require('i18n/en'), da: D.require('i18n/da') };
+    const added = {
+      sv: { 'test.fallback.both': 'Svenska {x}', 'test.fallback.sv': 'Bara svenska', 'test.fallback.pages': '{n} sidor', 'test.fallback.pages.one': '{n} sida', 'test.fallback.own': '{n} filer', 'test.fallback.own.one': '{n} fil' },
+      en: { 'test.fallback.both': 'English {x}', 'test.fallback.pages': '{n} pages', 'test.fallback.pages.one': '{n} page', 'test.fallback.own': '{n} files', 'test.fallback.own.one': '{n} file' },
+      da: { 'test.fallback.own': '{n} filer' },
+    };
+    const before = i18n.language();
+    try {
+      for (const [code, entries] of Object.entries(added)) Object.assign(dicts[code], entries);
+      assert.ok(i18n.setLanguage('da', { persist: false }));
+      assert.equal(i18n.t('test.fallback.both', { x: 1 }), 'English 1', 'a key only in Swedish and English shows English in Danish');
+      assert.equal(i18n.t('test.fallback.sv'), 'Bara svenska', 'a key only in Swedish shows Swedish');
+      assert.equal(i18n.t('test.fallback.none'), 'test.fallback.none', 'a key nowhere stays visible');
+      assert.equal(i18n.t('test.fallback.pages', { n: 1 }), '1 page', 'the English singular with the English text');
+      assert.equal(i18n.t('test.fallback.pages', { n: 3 }), '3 pages');
+      assert.equal(i18n.t('test.fallback.own', { n: 1 }), '1 filer', 'Danish without its own singular keeps its own text, not English');
+      assert.equal(i18n.t('common.save'), 'Gem', 'a key Danish has stays Danish');
+      assert.equal(i18n.has('test.fallback.both'), true);
+      assert.equal(i18n.tIn('da', 'test.fallback.both', { x: 2 }), 'English 2', 'tIn falls back the same way');
+      assert.equal(i18n.tIn('da', 'test.fallback.sv'), 'Bara svenska');
+      assert.equal(i18n.tIn('da', 'test.fallback.pages', { n: 1 }), '1 page', 'tIn takes the singular too');
+      assert.ok(i18n.setLanguage('en', { persist: false }));
+      assert.equal(i18n.t('test.fallback.sv'), 'Bara svenska', 'English falls back to Swedish');
+      assert.ok(i18n.setLanguage('sv', { persist: false }));
+      assert.equal(i18n.t('test.fallback.both', { x: 3 }), 'Svenska 3');
+    } finally {
+      for (const [code, entries] of Object.entries(added)) for (const key of Object.keys(entries)) delete dicts[code][key];
+      i18n.setLanguage(before, { persist: false });
     }
   });
 
@@ -43,7 +83,7 @@
       assert.equal(i18n.has('common.save'), true);
       assert.equal(i18n.has('no.such.key'), false);
       assert.equal(i18n.tIn('fi', 'common.save'), 'Tallenna');
-      assert.equal(i18n.tIn('xx', 'common.save'), 'Spara', 'unknown language falls back to Swedish');
+      assert.equal(i18n.tIn('xx', 'common.save'), 'Save', 'an unknown language falls back to English (loaded here)');
       assert.equal(D.t, i18n.t, 'Dataspatium.t is the shared translator');
       assert.equal(document.documentElement.lang, 'en');
       assert.equal(i18n.locale(), 'en-GB');
