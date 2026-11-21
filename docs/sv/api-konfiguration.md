@@ -183,7 +183,7 @@ från fil** och kan exporteras med **Exportera konfiguration** för att delas. F
 | `name`, `publisher`, `description`, `docs`, `license`, `notes` | Visas i appen |
 | `level` | 1 = ingen nyckel, 2 = nyckel krävs |
 | `country` | Land eller område för landsfiltret: `SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU` eller `INT` |
-| `i18n` | Översättningar per språk (`sv` är grundspråket i filen): `{ "en": { "name", "publisher", "description", "notes", "auth": { "help" }, "endpoints": { "<id>": { "name", "description", "params": { "<namn>": { "label", "help", "example", "options": { "<värde>": "etikett" } } } } }, "dataset": { "<id>": "namnmall" } } }`. Appen visar texterna för sitt språk; exporten innehåller alla |
+| `i18n` | Översättningar per språk (`sv` är grundspråket i filen): `{ "en": { "name", "publisher", "description", "notes", "auth": { "help" }, "endpoints": { "<id>": { "name", "description", "params": { "<namn>": { "label", "help", "example", "options": { "<värde>": "etikett" } } } } }, "dataset": { "<id>": "namnmall" } } }`. Appen visar texterna för sitt språk, och på danska, norska, finska och isländska den engelska texten där en översättning saknas; exporten innehåller alla |
 | `baseUrl` | Adress som endpointernas sökvägar läggs till efter |
 | `headers` | Standardheaders för alla anrop |
 | `auth` | `none`, `apiKey` (`in`: `header`, `query` eller `body`, där platshållaren `{name}` i kroppen fylls med nyckeln först när begäran skickas; `name`, valfritt `prefix`), `basic`, `bearer`, `oauth2_client_credentials` (`tokenUrl`, valfritt `scope`); `help` och `signupUrl` visas vid nyckelfältet |

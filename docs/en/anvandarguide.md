@@ -263,7 +263,11 @@ palette) changes it later. The choice is stored in the browser, so each computer
 Numbers in the interface follow the language's conventions; the data itself is never changed. R's messages follow
 the same choice, while template placeholders such as `{{datamangd}}` and the table keywords `kolumner`, `sortera`,
 `topp`, `filter` and `rubrik` are part of the template syntax and stay the same in every language. The
-documentation exists in all seven languages under `docs/` (Swedish in `docs/`, the others in `docs/<language>/`).
+documentation exists in all seven languages under `docs/<language>/` (Swedish in `docs/sv/`).
+
+For now, new and changed texts are written in Swedish and English only. Where a text is not yet translated into
+Danish, Norwegian, Finnish or Icelandic, the app shows the English text, and the handbook shows the English document
+or section. Existing translations remain.
 
 ## When something goes wrong
 

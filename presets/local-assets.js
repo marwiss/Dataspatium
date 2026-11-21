@@ -537,7 +537,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/anvandarguide.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 21238,
+  "size": 21515,
   "library": "dataspatium"
  },
  "docs/sv/lagen.md": {
@@ -585,7 +585,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/api-konfiguration.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 21205,
+  "size": 21302,
   "library": "dataspatium"
  },
  "docs/sv/kallor.md": {
@@ -681,7 +681,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/faq.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 19141,
+  "size": 19318,
   "library": "dataspatium"
  },
  "docs/sv/licenser.md": {
@@ -1545,7 +1545,7 @@ Dataspatium.assets.addEntries({
  "docs/en/anvandarguide.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 21036,
+  "size": 21288,
   "library": "dataspatium"
  },
  "docs/en/lagen.md": {
@@ -1593,7 +1593,7 @@ Dataspatium.assets.addEntries({
  "docs/en/api-konfiguration.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 21852,
+  "size": 21949,
   "library": "dataspatium"
  },
  "docs/en/kallor.md": {
@@ -1689,7 +1689,7 @@ Dataspatium.assets.addEntries({
  "docs/en/faq.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 19293,
+  "size": 19465,
   "library": "dataspatium"
  },
  "docs/en/licenser.md": {
