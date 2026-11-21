@@ -5,7 +5,9 @@
  * tools/wrap_local.py as docs/help/<lang>.js and shown in a dialog with a table of contents, search over
  * sections and links between the documents. No network and no browser tab; the language follows the app.
  * Dialogs opened with `help: 'doc#section'` get a ? button that opens that section. Sections are named by
- * their Swedish heading slug and found by heading position in the other languages.
+ * their Swedish heading slug and found by heading position in the other languages. New documents and sections are
+ * written in Swedish and English only (F49 a): a document missing in the active language is shown in English (then
+ * Swedish), and so is a section asked for in a translation that lacks it (fewer headings than the Swedish document).
  */
 (function () {
   'use strict';
@@ -112,9 +114,21 @@
     }
 
     /**
-     * The handbook in a language (default: the app's), loaded once per language.
+     * The language a document is shown in: the first of the language, English and Swedish (ui/i18n chain) that
+     * tools/wrap_local.py embedded it in.
+     * @param {string} code @param {string} id
+     * @returns {string}
+     */
+    function docLanguage(code, id) {
+      const codes = i18n.chain(code);
+      return codes.find((c) => !!D.assets.info(`docs/${c}/${id}.md`)) || codes[0];
+    }
+
+    /**
+     * The handbook in a language (default: the app's), loaded once per language. Each document carries the language
+     * it is shown in (`lang`), which differs from the handbook's when the translation is missing.
      * @param {string} [lang]
-     * @returns {Promise<{lang: string, docs: Array<{id: string, title: string, blocks: any[], sections: any[]}>, byId: Map<string, any>}>}
+     * @returns {Promise<{lang: string, docs: Array<{id: string, lang: string, title: string, blocks: any[], sections: any[]}>, byId: Map<string, any>}>}
      */
     function load(lang) {
       const code = lang || i18n.language();
@@ -122,8 +136,9 @@
         const p = (async () => {
           const docs = [];
           for (const id of DOCS) {
-            const c = compile(await D.assets.loadText(`docs/${code}/${id}.md`));
-            docs.push({ id, title: c.title || id, blocks: c.blocks, sections: c.sections });
+            const shown = docLanguage(code, id);
+            const c = compile(await D.assets.loadText(`docs/${shown}/${id}.md`));
+            docs.push({ id, lang: shown, title: c.title || id, blocks: c.blocks, sections: c.sections });
           }
           return { lang: code, docs, byId: new Map(docs.map((d) => [d.id, d])) };
         })();
@@ -138,17 +153,37 @@
 
     /**
      * A section given by its Swedish slug, in the handbook's language: the same slug when it exists, otherwise the
-     * heading at the same position as in the Swedish document (the translations share their structure).
+     * heading at the same position as in the Swedish document, when the translation has as many headings (it shares
+     * the structure; one with fewer lacks sections that were added later).
      * @returns {Promise<string|null>}
      */
     async function resolveSection(bundle, docId, section) {
       const doc = bundle.byId.get(docId);
       if (!doc || !section) return null;
       if (doc.sections.some((s) => s.slug === section)) return section;
-      if (bundle.lang === 'sv') return null;
+      if (doc.lang === 'sv') return null;
       const sv = (await load('sv')).byId.get(docId);
       const i = sv ? sv.sections.findIndex((s) => s.slug === section) : -1;
-      return i >= 0 && doc.sections[i] ? doc.sections[i].slug : null;
+      return i >= 0 && sv.sections.length === doc.sections.length ? doc.sections[i].slug : null;
+    }
+
+    /**
+     * The document and heading to show for a section: the handbook's own when it has the section, else the English
+     * document's, else the Swedish one's; without a section (or when none has it) the handbook's own document.
+     * @returns {Promise<{doc: any, slug: string|null}>}
+     */
+    async function locate(bundle, docId, section) {
+      const own = bundle.byId.get(docId);
+      const slug = await resolveSection(bundle, docId, section);
+      if (slug || !section) return { doc: own, slug };
+      for (const code of i18n.chain(bundle.lang).slice(1)) {
+        const other = await load(code);
+        const doc = other.byId.get(docId);
+        if (!doc || doc.lang !== code) continue;
+        const found = await resolveSection(other, docId, section);
+        if (found) return { doc, slug: found };
+      }
+      return { doc: own, slug: null };
     }
 
     /**
@@ -178,7 +213,7 @@
      * @param {any} bundle @param {any} doc @param {(doc: string, section?: string) => void} onLink
      */
     function render(bundle, doc, onLink) {
-      const lang = bundle.lang;
+      const lang = doc.lang || bundle.lang;
       const link = (r) => {
         const target = resolveLink(lang, r.link);
         if (target.url) return h('a', { href: target.url, target: '_blank', rel: 'noopener' }, r.text);
@@ -215,7 +250,7 @@
     async function open(where = {}) {
       if (panel) { await panel.show(where.doc, where.section, where.query); return panel; }
       const bundle = await load(where.lang);
-      const state = { doc: null, section: null, query: '', hits: [] };
+      const state = { doc: null, section: null, lang: bundle.lang, query: '', hits: [] };
       const nav = h('nav', { class: 'dm-help-nav dm-list', 'aria-label': t('help.contents') });
       const content = h('div', { class: 'dm-help-content dm-prose', tabindex: '-1' });
       const searchInput = /** @type {any} */ (h('dm-input', { type: 'search', placeholder: t('help.search.placeholder'), 'aria-label': t('help.search'), inline: true }));
@@ -247,10 +282,10 @@
       async function show(docId, section, query) {
         if (query) { searchInput.value = query; runSearch(query); return; }
         const doc = bundle.byId.get(docId) || (state.doc && bundle.byId.get(state.doc)) || bundle.docs[0];
-        const resolved = await resolveSection(bundle, doc.id, section);
-        state.doc = doc.id; state.section = resolved; state.query = ''; state.hits = [];
+        const { doc: shown, slug: resolved } = await locate(bundle, doc.id, section);
+        state.doc = doc.id; state.section = resolved; state.lang = shown.lang; state.query = ''; state.hits = [];
         searchInput.value = '';
-        replace(content, render(bundle, doc, (d, s) => show(d, s)));
+        replace(content, render(bundle, shown, (d, s) => show(d, s)));
         renderNav();
         const target = resolved ? content.querySelector(`[data-section="${CSS.escape(resolved)}"]`) : null;
         if (target) target.scrollIntoView({ block: 'start' }); else content.scrollTop = 0;
@@ -284,6 +319,6 @@
       return bundle.docs.map((d) => ({ id: 'help:' + d.id, label: t('help.palette', { title: d.title }), group: t('help.title'), icon: 'circle-help', keywords: [t('shell.help')], run: () => open({ doc: d.id }) }));
     }
 
-    return { DOCS, slug, parseRef, compile, load, loaded, resolveSection, search, open, openForMode, commands, current: () => panel };
+    return { DOCS, slug, parseRef, compile, docLanguage, load, loaded, resolveSection, locate, search, open, openForMode, commands, current: () => panel };
   });
 })();

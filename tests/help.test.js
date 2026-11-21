@@ -47,6 +47,41 @@
     return 'ok';
   }, 20000);
 
+  test('help: a document or section missing in a translation is shown in English, then Swedish', async (assert) => {
+    const help = D.require('ui/help');
+    // A document: the first of the language, English and Swedish that tools/wrap_local.py embedded it in.
+    assert.equal(help.docLanguage('da', 'mobil'), 'da', 'Danish has it');
+    const saved = { da: D.assets.info('docs/da/mobil.md'), en: D.assets.info('docs/en/mobil.md') };
+    try {
+      D.assets.addEntries({ 'docs/da/mobil.md': undefined });
+      assert.equal(help.docLanguage('da', 'mobil'), 'en', 'missing in Danish: English');
+      D.assets.addEntries({ 'docs/en/mobil.md': undefined });
+      assert.equal(help.docLanguage('da', 'mobil'), 'sv', 'missing in Danish and English: Swedish');
+      assert.equal(help.docLanguage('en', 'mobil'), 'sv');
+    } finally {
+      D.assets.addEntries({ 'docs/da/mobil.md': saved.da, 'docs/en/mobil.md': saved.en });
+    }
+    assert.equal(help.docLanguage('da', 'mobil'), 'da', 'restored');
+    // A section: a Danish document with fewer headings than the Swedish one lacks sections added later, so a Swedish
+    // slug is looked up in the English document instead of by position.
+    const [sv, en, da] = [await help.load('sv'), await help.load('en'), await help.load('da')];
+    const daDela = da.byId.get('dela');
+    assert.equal(daDela.lang, 'da');
+    assert.equal(daDela.sections.length, sv.byId.get('dela').sections.length, 'the shipped translation shares the structure');
+    const own = await help.locate(da, 'dela', 'enheter');
+    assert.ok(own.doc === daDela && own.slug && own.slug !== 'enheter', 'found in Danish by position: ' + own.slug);
+    const short = Object.assign({}, daDela, { sections: daDela.sections.slice(0, -1) });
+    const lagging = { lang: 'da', docs: da.docs.map((d) => (d.id === 'dela' ? short : d)), byId: new Map(da.byId) };
+    lagging.byId.set('dela', short);
+    assert.equal(await help.resolveSection(lagging, 'dela', 'enheter'), null, 'no position to trust in a lagging translation');
+    const found = await help.locate(lagging, 'dela', 'enheter');
+    assert.ok(found.doc === en.byId.get('dela') && found.doc.lang === 'en', 'shown in English');
+    assert.ok(en.byId.get('dela').sections.some((s) => s.slug === found.slug), 'at the English heading: ' + found.slug);
+    const none = await help.locate(lagging, 'dela', 'finns-inte');
+    assert.ok(none.doc === short && none.slug === null, 'a section nowhere: the document in its own language');
+    return 'ok';
+  }, 30000);
+
   test('help: the panel opens at a section, searches, follows links, and is reachable from dialogs, the palette and F1', async (assert) => {
     const root = document.createElement('div');
     root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
