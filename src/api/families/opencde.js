@@ -14,7 +14,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/families/opencde', ['api/families/databases', 'api/http', 'api/secrets', 'platform/consent', 'api/connectors', 'api/cde-log'], (databases, http, secrets, consent, connectors, cdeLog) => {
+  D.define('api/families/opencde', ['api/families/databases', 'api/http', 'api/secrets', 'platform/consent', 'api/connectors', 'api/cde-log', 'platform/tier', 'platform/storage/idb'], (databases, http, secrets, consent, connectors, cdeLog, tier, idb) => {
     const t = (k, p) => D.t(k, p);
     /** Whether the UI has a text for a key the server's answer names (asking t() for an unknown key would load Swedish). */
     const hasText = (k) => D.require('ui/i18n').has(k);
@@ -319,11 +319,12 @@
     const EMPTY_CAPS = { present: false, server: null, apis: {}, scopes: [], extensions: {}, limits: {}, links: {} };
     /**
      * Dataregium describes its extensions in GET /.well-known/dataregium (no sign-in, outside the specifications): the server's version, the
-     * enabled extensions (dynamic_client_registration, request_log, admin_api, ifcgraph, graph_query), limits and links. A server from
+     * enabled extensions (dynamic_client_registration, request_log, admin_api, ifcgraph, graph_query), limits and links, and its tier
+     * (`tier`, noted in platform/tier; none announced caps nothing). A server from
      * before the name change (Kontroll, up to 3.0.0) only answers on /.well-known/kontroll, which is asked when the first address gives
      * no document. A server without the document has no extensions; unknown keys count as absent. Cached a few minutes per connector.
      * @param {any} connector @param {{force?: boolean}} [options]
-     * @returns {Promise<{present: boolean, server: any, apis: any, scopes: string[], extensions: Record<string, any>, limits: any, links: any}>}
+     * @returns {Promise<{present: boolean, server: any, tier?: string|null, apis: any, scopes: string[], extensions: Record<string, any>, limits: any, links: any}>}
      */
     async function capabilities(connector, options = {}) {
       const key = trimUrl(connector.baseUrl);
@@ -336,11 +337,31 @@
         if (!res.ok) res = await ask('/.well-known/kontroll');
         if (res.ok) {
           const data = JSON.parse(res.text || '{}') || {};
-          caps = { present: true, server: data.server || null, apis: data.apis || {}, bcfVersions: Array.isArray(data.bcf_versions) ? data.bcf_versions : null, scopes: Array.isArray(data.scopes) ? data.scopes : [], extensions: data.extensions && typeof data.extensions === 'object' ? data.extensions : {}, limits: data.limits || {}, links: data.links || {} };
+          caps = { present: true, server: data.server || null, tier: typeof data.tier === 'string' ? data.tier : null, apis: data.apis || {}, bcfVersions: Array.isArray(data.bcf_versions) ? data.bcf_versions : null, scopes: Array.isArray(data.scopes) ? data.scopes : [], extensions: data.extensions && typeof data.extensions === 'object' ? data.extensions : {}, limits: data.limits || {}, links: data.links || {} };
         }
       } catch (err) { D.log('opencde', 'capabilities', err); }
+      // The server's tier (Dataregium announces `tier`: documents, bim-gis or experimental) caps the features that need it.
+      tier.noteServer(connector, caps.tier);
       capsCache.set(key, { at: Date.now(), caps });
       return caps;
+    }
+    /** The setting that remembers the deployment's server once added, so that one the user took away stays away. */
+    const DEPLOYED = 'deploy.server';
+    /**
+     * The Dataregium server a deployment names (dataspatium.config.js, platform/tier.deployment): added as a source once, without
+     * contacting it; the user opens it and signs in, after the consent, like any other. Nothing happens when a source with that
+     * address exists already or the same server was added before.
+     * @param {{baseUrl: string, name?: string}|null} server
+     * @returns {Promise<any>} the new connector, or null
+     */
+    async function addDeployed(server) {
+      if (!server || !server.baseUrl) return null;
+      const address = trimUrl(server.baseUrl).toLowerCase();
+      if ((await idb.getSetting(DEPLOYED, null)) === address) return null;
+      const known = (await connectors.list()).some((c) => isOpenCde(c) && trimUrl(c.baseUrl).toLowerCase() === address);
+      const made = known ? null : (await databases.createConnector('opencde', { baseUrl: server.baseUrl, name: server.name || '' }, { discover: false })).connector;
+      await idb.setSetting(DEPLOYED, address);
+      return made;
     }
     /** Whether an extension is enabled in a capabilities answer. @param {any} caps @param {string} name */
     const hasExtension = (caps, name) => !!(caps && caps.extensions && caps.extensions[name] && caps.extensions[name].enabled);
@@ -1191,7 +1212,7 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
+    return { addDeployed, ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
       topicMay, projectMay, topicFiles, filesBody, setTopicFiles, modelFile, linkTopic, attachDocument, identity };
   });
 })();
