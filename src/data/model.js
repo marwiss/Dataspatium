@@ -79,8 +79,9 @@
      * A changed IFC file becomes the dataset's content, inside an operation's savepoint (data/ifc-ops): the element, property,
      * quantity and entity tables are rebuilt from it, the original in `_files` is replaced and the facts in `_meta.model`
      * renewed. The element ids follow the file, so a selection in memory is dropped by the content change as usual. The facts'
-     * `maxId` stays the highest STEP id any version of the model in the dataset has had, which the wheel gives no new entity
-     * (python/dataspatium.py `_ifc_keep_ids`): an id deleted in one version never comes back in the next (ifcmerge merges on ids).
+     * `maxId` stays the highest STEP id any version of the model in the dataset has had, which the wheel gives no new entity and
+     * writes into the file as a guard when the file's own is lower (python/dataspatium.py `_ifc_hold_ids`): an id deleted in one
+     * version never comes back in the next (ifcmerge merges on ids).
      * @param {{engine: any, datasetId?: string}} ctx @param {Uint8Array} bytes @param {string} fileName
      * @returns {Promise<any>} the new facts
      */
@@ -111,6 +112,22 @@
         try { (await datasets.ensureOpen(ctx.datasetId)).meta.model = summary; } catch (_err) { /* not open */ }
       }
       return summary;
+    }
+
+    /**
+     * Raise the facts' `maxId` of an IFC dataset to an id the model is known to have had elsewhere (a CDE version's
+     * `ifc_max_step_id`, api/families/opencde); never lowers it.
+     * @param {string} id @param {any} maxId @returns {Promise<boolean>} whether it was raised
+     */
+    async function raiseMaxId(id, maxId) {
+      const n = Math.floor(Number(maxId));
+      if (!Number.isFinite(n) || n <= 0) return false;
+      const handle = await datasets.ensureOpen(id);
+      if (!isModel(handle.meta) || isDxf(handle.meta) || !handle.meta.model) return false;
+      if ((Number(handle.meta.model.maxId) || 0) >= n) return false;
+      await saveFacts(handle, Object.assign({}, handle.meta.model, { maxId: n }));
+      await datasets.save(id);
+      return true;
     }
 
     /** The original file of a model. @returns {Promise<{name: string, bytes: Uint8Array}|null>} */
@@ -156,6 +173,6 @@
       return parts.length ? ' where ' + parts.join(' and ') : '';
     }
 
-    return { IFC_COLUMNS, DXF_COLUMNS, PROPERTY_FIELDS, QUANTITY_FIELDS, ENTITY_FIELDS, isModel, isDxf, createIfcDataset, createDxfDataset, replaceOriginal, original, drawing, element, properties, quantities, whereOf, rowsOf };
+    return { IFC_COLUMNS, DXF_COLUMNS, PROPERTY_FIELDS, QUANTITY_FIELDS, ENTITY_FIELDS, isModel, isDxf, createIfcDataset, createDxfDataset, replaceOriginal, raiseMaxId, original, drawing, element, properties, quantities, whereOf, rowsOf };
   });
 })();

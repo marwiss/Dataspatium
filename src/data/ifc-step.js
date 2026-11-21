@@ -247,7 +247,9 @@
       var building = rooted.of('IFCBUILDING')[0];
       var nameOf = function (k) { if (k === undefined) return ''; var a = argsOf(f, k); return a[2] || ''; };
       var facts = headerFacts(f);
-      var counts = f.typeNames.map(function (n, i) { return { name: prettyType(n), count: f.typeCounts[i], raw: n }; }).sort(function (a, b) { return b.count - a.count; });
+      var guards = guardsOf(f);
+      var counts = f.typeNames.map(function (n, i) { return { name: prettyType(n), count: f.typeCounts[i] - (guards.byType[i] || 0), raw: n }; })
+        .filter(function (t) { return t.count > 0; }).sort(function (a, b) { return b.count - a.count; });
       var elementTypes = counts.filter(function (t) { return isProductName(t.raw); });
       var units = projectUnits(f, rooted.of);
       var storeys = rooted.of('IFCBUILDINGSTOREY').map(function (k) {
@@ -260,10 +262,33 @@
         format: 'ifc', schema: facts.schema, timestamp: facts.timestamp, application: facts.application || facts.preprocessor, project: nameOf(project), site: nameOf(site), building: nameOf(building),
         // For BCF's header: the IfcProject's GlobalId and the name the file gives itself in FILE_NAME.
         projectGuid: project === undefined ? '' : String(argsOf(f, project)[0] || ''), headerName: facts.name,
-        // maxId: the file's highest STEP id, which data/model keeps for the dataset so that no id is given twice (ifcmerge).
-        units: units.names, entities: f.count, maxId: f.indexOf.length - 1, types: counts.map(function (t) { return { name: t.name, count: t.count }; }).slice(0, 400),
+        // maxId: the highest STEP id the file has had (its own highest and its guards'), which data/model keeps for the dataset so
+        // that no id is given twice (ifcmerge). The guards are no part of the model and are left out of the counts.
+        units: units.names, entities: f.count - guards.count, maxId: Math.max(f.indexOf.length - 1, guards.high), types: counts.map(function (t) { return { name: t.name, count: t.count }; }).slice(0, 400),
         elementTypes: elementTypes.map(function (t) { return { name: t.name, count: t.count }; }), storeys: storeys, parties: partiesOf(f),
       };
+    }
+
+    /**
+     * The file's STEP id guards (decision F70 d; python/dataspatium.py `_ifc_hold_ids`): IfcDocumentReference named StepIdGuard
+     * whose Identification (ItemReference in IFC2X3, attribute 2 in all three schemas) is the highest id the document has had.
+     * Not rooted and not kept, so the tables never show one. {count, high: the highest protected id, byType: count per type index}.
+     */
+    function guardsOf(f) {
+      var out = { count: 0, high: 0, byType: {} };
+      var types = {}; var any = false;
+      f.typeNames.forEach(function (n, i) { if (n === 'IFCDOCUMENTREFERENCE') { types[i] = true; any = true; } });
+      if (!any) return out;
+      for (var k = 0; k < f.count; k++) {
+        if (!types[f.types[k]]) continue;
+        var a = argsOf(f, k);
+        var n = typeof a[1] === 'string' && /^\s*\d+\s*$/.test(a[1]) ? Number(a[1]) : -1;
+        if (a[2] !== 'StepIdGuard' || n < 0) continue;
+        out.count++;
+        out.byType[f.types[k]] = (out.byType[f.types[k]] || 0) + 1;
+        if (n > out.high) out.high = n;
+      }
+      return out;
     }
 
     /**

@@ -837,21 +837,89 @@ def _ifc_open_bytes(path, data):
     return ifcopenshell.open(path)
 
 
+# The STEP id guard (decision F70 d, the same form as Dataregium's server writes): a loose IfcDocumentReference named StepIdGuard
+# whose Identification (ItemReference in IFC2X3; attribute 2 in all three schemas, the name 3) is the highest id the document has
+# had, at a fresh id one above it. It keeps the id history in the file itself, so that no writer gives a deleted id again (ifcmerge
+# merges three ways on the ids). It is added only when the file's own highest id is below the history's, never edited or moved,
+# and of several the highest is kept.
+STEP_ID_GUARD = "StepIdGuard"
+_ifc_ids = {}  # id(model) -> {"high": the highest id the document has had, "made": the id of the guard made on opening or None}
+
+
+def _ifc_is_guard(e):
+    """Whether an instance is a STEP id guard (its protected id an integer)."""
+    try:
+        return e.is_a() == "IfcDocumentReference" and e[2] == STEP_ID_GUARD and int(str(e[1]).strip()) >= 0
+    except Exception:
+        return False
+
+
+def _ifc_guards(model):
+    """The STEP id guards of a model as [(guard, protected id)], lowest id first."""
+    try:
+        refs = model.by_type("IfcDocumentReference")
+    except Exception:
+        return []
+    return sorted(((e, int(str(e[1]).strip())) for e in refs if _ifc_is_guard(e)), key=lambda g: g[0].id())
+
+
+def _ifc_new_guard(model, high):
+    """A guard of `high` at the fresh id high + 1 (above IfcOpenShell's counter only if that refuses the id)."""
+    try:
+        return model.create_entity("IfcDocumentReference", None, str(int(high)), STEP_ID_GUARD, id=int(high) + 1)
+    except Exception:
+        return model.create_entity("IfcDocumentReference", None, str(int(high)), STEP_ID_GUARD)
+
+
+def _ifc_hold_ids(model, known=0):
+    """Hold the model's id history while it is changed: the highest id it has had is the most of `known` (the dataset's, which
+    data/model keeps), the file's own highest and its guards' ids and protected ids. When the file's own is below that, a guard is
+    made at once, which also makes IfcOpenShell number new instances above it; _ifc_keep_guard decides before writing whether it
+    stays. Returns the model."""
+    top = int(model.get_max_id() or 0)  # freshly opened: the file's highest id
+    high = max(int(known or 0), top)
+    for g, n in _ifc_guards(model):
+        high = max(high, n, g.id())
+    made = _ifc_new_guard(model, high).id() if top < high else None
+    _ifc_ids[id(model)] = {"high": high, "made": made}
+    return model
+
+
 def _ifc_keep_ids(file, model):
-    """Give no new entity a STEP id that an earlier version of the model had (ifcmerge merges three ways on the ids): IfcOpenShell
-    numbers from the file's highest id, which falls when the last entities were deleted, so it is raised to the dataset's own
-    (`_meta.model` maxId, kept by data/model) with a point made at that id and removed again. Returns the model."""
+    """_ifc_hold_ids with the highest id kept for the dataset in its SQLite file (`_meta.model` maxId). Returns the model."""
     try:
         con = sqlite3.connect(file)
         try:
             row = con.execute("select value from _meta where key = 'model'").fetchone()
         finally:
             con.close()
-        high = int(json.loads(row[0]).get("maxId") or 0) if row else 0
+        known = int(json.loads(row[0]).get("maxId") or 0) if row else 0
     except Exception:
-        high = 0
-    if high > model.get_max_id():
-        model.remove(model.create_entity("IfcCartesianPoint", Coordinates=(0.0, 0.0, 0.0), id=high))
+        known = 0
+    return _ifc_hold_ids(model, known)
+
+
+def _ifc_keep_guard(model, source=None):
+    """Before writing a model held by _ifc_hold_ids (`source` when the written model is another one): a guard only when the file's
+    own highest id is below the highest the document has had (the one made on opening stays then and goes otherwise; a new one when
+    the change deleted the highest), and of several guards only the highest. Returns the model."""
+    state = _ifc_ids.pop(id(source if source is not None else model), None) or {}
+    made = state.get("made") if source is None or source is model else None
+    high = int(state.get("high") or 0)
+    for g, n in _ifc_guards(model):
+        if g.id() != made:
+            high = max(high, n, g.id())
+    top = max((e.id() for e in model if e.id() != made), default=0)
+    if made is not None and top >= high:
+        try:
+            model.remove(model.by_id(made))
+        except Exception:
+            pass
+    elif made is None and top < high:
+        _ifc_new_guard(model, high)
+    for g, _ in _ifc_guards(model)[:-1]:
+        if not model.get_inverse(g):
+            model.remove(g)
     return model
 
 
@@ -1281,6 +1349,7 @@ def _ifc_step(code, in_file, out_file, name=""):
         out = model
     if not isinstance(out, ifcopenshell.file):
         raise DataspatiumError(_msg("ifc.step.notmodel"))
+    _ifc_keep_guard(out, model)
     _ifc_header(out, file_name)
     out.write(out_file)
     return json.dumps({"elements": len(out.by_type("IfcElement")), "entities": len(list(out)), "file": file_name, "name": name})
@@ -1293,6 +1362,7 @@ def _ifc_apply(in_file, table_file, key, out_file):
     model = _ifc_keep_ids(in_file, _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "apply-in.ifc"), data))
     df = _read_file(table_file)
     changed = dm_ifc_set(model, df, key=key or "guid")
+    _ifc_keep_guard(model)
     _ifc_header(model, file_name)
     model.write(out_file)
     return json.dumps({"changed": changed, "rows": int(len(df)), "file": file_name})
@@ -6571,9 +6641,11 @@ class _Rules:
         return out
 
     def of(self, e):
-        """The findings of one instance."""
+        """The findings of one instance (none of a STEP id guard, which is no part of the building)."""
         out = []
         cls = e.is_a()
+        if cls == "IfcDocumentReference" and _ifc_is_guard(e):
+            return out
         try:
             out += self.ifc102(e, cls)
             if e.is_a("IfcPolyline") or e.is_a("IfcPolyLoop"):
@@ -7041,7 +7113,7 @@ def _ifc_rules_new(base, model, touched=()):
     above the base's), the ones it touched with their property and quantity sets and their types are tried, a finding on an instance
     the base has counts only when the base's instance lacks it, and the model-level rules count when the base passed them."""
     top = _ifc_max_id(base)
-    scope = set(range(top + 1, _ifc_max_id(model) + 1))
+    scope = {e.id() for e in model if e.id() > top}  # the ids may start far above the base's own (a guard of a long history)
     for i in touched:
         try:
             e = model.by_id(int(i))
@@ -7597,6 +7669,7 @@ def _ifc_changeset(in_file, changeset_json, out_file, options_json=None):
     ops = json.loads(changeset_json or "[]")
     cs = _ChangeSet(model)
     cs.apply(ops)
+    _ifc_keep_guard(model)
     findings, errors = cs.findings()
     note = _ifc_crs_note(model) if cs.created else None
     if note:
@@ -7934,7 +8007,7 @@ def _ifc_scrub(in_file, options_file, out_file):
         opts = json.load(fh) or {}
     salt = str(opts.get("salt") or "")
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
-    model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "scrub-in.ifc"), data)
+    model = _ifc_keep_ids(in_file, _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "scrub-in.ifc"), data))
     choice = lambda k: opts.get(k) if opts.get(k) in ("hash", "remove") else None  # noqa: E731
     made = {"persons": set()}
     done = {}
@@ -7953,6 +8026,7 @@ def _ifc_scrub(in_file, options_file, out_file):
         done["organizations"] = sum(_scrub_address(model, o, choice("organizations"), salt) for o in model.by_type("IfcOrganization") if o.Addresses)
     if choice("text"):
         done["text"] = _scrub_text(model, choice("text"), opts.get("matches") or [], salt)
+    _ifc_keep_guard(model)
     model.write(out_file)
     return json.dumps({"file": file_name, "changed": done, "elements": len(model.by_type("IfcElement")), "entities": len(list(model))}, ensure_ascii=False)
 

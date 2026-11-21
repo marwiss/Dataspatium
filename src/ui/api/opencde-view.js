@@ -249,6 +249,8 @@
             for (const version of selected.documents || []) {
               const file = await opencde.downloadVersion(connector, version);
               const meta = await importer.run(file, {}, null, version.title || undefined);
+              // A model learns the highest STEP id its document has had on the server (ifc_max_step_id), when the server says it.
+              if (meta && meta.kind === 'model' && version.document_id && version.version_index) await opencde.seedStepIds(connector, meta.id, version.document_id, Number(version.version_index));
               n++;
               if (api.onDataset && meta) api.onDataset(meta);
             }
