@@ -3,7 +3,8 @@
 /**
  * Map view with Leaflet 1.9 (vendored, BSD-2-Clause): a chart of kind "map" is a list of layers, each a dataset
  * with a geometry column (GeoJSON or WKT text) or longitude/latitude columns, or one of the bundled boundary sets,
- * drawn with the app's palette (one colour, by category or graduated) over an optional background map. Tiles come
+ * drawn with the app's palette (one colour, by category or graduated) over an optional background map, and pictures from a
+ * WMS or an OGC API – Tiles service as background or as layers under the features. Tiles come
  * from the net only after consent for the purpose "basemaps"; without a background map nothing leaves the browser. The
  * orthophotos (viz/orthophotos) are background maps too, each with its provider's attribution and, where asked, a key; Sweden's,
  * read from files for a view, is drawn by ui/viz/basemap-choice once the map is there (`info.basemapView`).
@@ -15,7 +16,7 @@
   const D = globalThis.Dataspatium;
   D.define('viz/leaflet', ['viz/theme', 'viz/export', 'viz/data', 'data/datasets', 'data/geo', 'data/boundaries', 'platform/consent', 'viz/orthophotos'], (theme, vizExport, vizData, datasets, geo, boundaries, consent, orthophotos) => {
     const VENDOR = 'vendor/leaflet/';
-    const BASEMAPS = ['none', 'osm', 'custom', 'wms'];
+    const BASEMAPS = ['none', 'osm', 'custom', 'wms', 'tiles'];
     const WMS_DEFAULTS = { url: '', layers: '', format: 'image/png', transparent: false, attribution: '', version: '1.3.0' };
     const OSM = { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attributionKey: 'map.attribution.osm', maxZoom: 19 };
     const DEFAULT_VIEW = { center: [62, 15], zoom: 4 };
@@ -184,6 +185,16 @@
       w.url = wmsUrl(w.url);
       return { id: newId(), kind: 'wms', name: name || w.layers || 'WMS', wms: w, style: { opacity: 0.8 }, visible: true };
     }
+    /**
+     * An overlay of raster tiles from an OGC API – Tiles service (api/ogc-tiles resolves the service into the address
+     * template), drawn under the features after consent "basemaps" like a WMS layer, in Web Mercator only.
+     * @param {{template: string, url?: string, collection?: string, title?: string, attribution?: string}} tiles @param {string} [name]
+     */
+    function tilesLayer(tiles, name) {
+      return { id: newId(), kind: 'tiles', name: name || tiles.title || tiles.collection || 'OGC API – Tiles', tiles: Object.assign({}, tiles), style: { opacity: 1 }, visible: true };
+    }
+    /** True for the layers of pictures from a service (WMS, OGC API – Tiles): no features, no legend, no export. */
+    const imagery = (layer) => layer.kind === 'wms' || layer.kind === 'tiles';
     /** Default map definition for a dataset: its one layer, no background map, fit to the layers. */
     function defaultMap(columns, dataset) {
       const layer = dataset ? layerFor(columns, dataset, 0) : null;
@@ -280,7 +291,7 @@
       const def = chart.map || {};
       const out = []; let rows = 0;
       for (const layer of def.layers || []) {
-        if (layer.visible === false || layer.kind === 'wms') continue;
+        if (layer.visible === false || imagery(layer)) continue;
         const data = await featuresOf(layer, options);
         const st = styling(layer, data.features);
         out.push({ layer, features: data.features, styleOf: st.styleOf, legend: st.legend, truncated: data.truncated, total: data.total, crsUnknown: data.crsUnknown || '' });
@@ -290,13 +301,29 @@
     }
 
     // ---- tiles ---------------------------------------------------------------------------------------------
-    /** Tile source of a definition, or null: OSM, the user's own XYZ template or a WMS (consent "basemaps" in every case). */
+    /** Tile source of a definition, or null: OSM, the user's own XYZ template, a WMS or OGC API – Tiles (consent "basemaps" in every case). */
     function tileSource(def) {
       if (!def || def.basemap === 'osm') return { url: OSM.url, attribution: D.t(OSM.attributionKey), maxZoom: OSM.maxZoom };
       if (def.basemap === 'custom' && def.custom && /^https?:\/\/.+\{x\}.*\{y\}|\{y\}.*\{x\}/i.test(def.custom.url || '')) return { url: def.custom.url, attribution: def.custom.attribution || '', maxZoom: 19 };
       if (def.basemap === 'wms') return wmsSource(def.wms);
+      if (def.basemap === 'tiles') return tilesSource(def.tiles);
       return null;
     }
+    const escAttr = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    /**
+     * Tile parameters of an OGC API – Tiles definition {template, attribution, minNativeZoom, maxNativeZoom}, or null when the
+     * template is not an http(s) address with {z}, {x} and {y}. The attribution is the service's text, escaped: Leaflet shows
+     * attributions as HTML.
+     */
+    function tilesSource(tl) {
+      const url = String((tl && tl.template) || '');
+      if (!/^(https?|dataspatium-asset):\/\//i.test(url) || !/\{z\}/.test(url) || !/\{x\}/.test(url) || !/\{y\}/.test(url)) return null;
+      const native = {};
+      for (const k of ['minNativeZoom', 'maxNativeZoom']) if (Number.isInteger(tl[k])) native[k] = tl[k];
+      return { url, attribution: escAttr(tl.attribution), maxZoom: 19, native };
+    }
+    /** The tile source of an overlay layer (WMS or OGC API – Tiles), or null. */
+    const overlaySource = (layer) => (layer.kind === 'tiles' ? tilesSource(layer.tiles) : wmsSource(layer.wms));
     /** A WMS address without request parameters (capabilities links are often pasted whole); other parameters stay. */
     function wmsUrl(input) {
       const s = String(input || '').trim();
@@ -318,7 +345,7 @@
     const hostOf = (url) => { try { return new URL(String(url).replace(/\{[sxyzr-]+\}/g, '0')).host; } catch (_e) { return String(url); } };
     /** Leaflet's tile layer, or its WMS layer when the options carry WMS parameters (the shape the test factories get). */
     const defaultFactory = (url, opts) => (opts.layers ? globalThis.L.tileLayer.wms(url, opts) : globalThis.L.tileLayer(url, opts));
-    const tileOptions = (src, extra) => Object.assign({ attribution: src.attribution, maxZoom: src.maxZoom || 19 }, src.wms || {}, extra || {});
+    const tileOptions = (src, extra) => Object.assign({ attribution: src.attribution, maxZoom: src.maxZoom || 19 }, src.wms || {}, src.native || {}, extra || {});
     /**
      * The tile layer after consent, or null when there is none or consent was refused (info.basemapDenied is set). On a map in a
      * grid of its own only a WMS can be the background, requested in that grid with WMS 1.1.1 (x before y, whatever the system's
@@ -368,14 +395,18 @@
       if (key) opts.dmkey = encodeURIComponent(key);
       return factory(key ? src.url + (src.url.includes('?') ? '&' : '?') + encodeURIComponent(preset.key.param) + '={dmkey}' : src.url, opts);
     }
-    /** The visible WMS overlay layers of a definition as tile layers, after consent for each (refusals set info.basemapDenied). */
+    /**
+     * The visible WMS and OGC API – Tiles overlay layers of a definition as tile layers, after consent for each (refusals set
+     * info.basemapDenied). In a grid of its own only WMS layers are drawn; tiles exist in Web Mercator only (info.basemapProjection).
+     */
     async function overlayLayers(def, options, info, grid) {
       const out = [];
       if (!def || options.noTiles) return out;
       for (const layer of def.layers || []) {
-        if (layer.kind !== 'wms' || layer.visible === false) continue;
-        const src = wmsSource(layer.wms);
+        if (!imagery(layer) || layer.visible === false) continue;
+        const src = overlaySource(layer);
         if (!src) continue;
+        if (grid && !src.wms) { info.basemapProjection = true; continue; }
         try { await consent.require('basemaps', { host: hostOf(src.url), url: src.url }); } catch (err) {
           if (err && err.name === 'ConsentError') { info.basemapDenied = true; continue; }
           throw err;
@@ -443,7 +474,7 @@
       const gridCode = grid ? geo.crsCode(def.crs) || -1 : 0;
       const tiles = await tileLayer(def, options, info, gridCode);
       if (tiles) tiles.addTo(map);
-      // WMS overlays live in the tile pane: under every feature, whatever their place in the layer list.
+      // WMS and tile overlays live in the tile pane: under every feature, whatever their place in the layer list.
       const overlays = await overlayLayers(def, options, info, gridCode);
       for (const o of overlays) o.tiles.addTo(map);
       const groups = [];
@@ -634,7 +665,7 @@
       }));
       const src = def.basemap && def.basemap !== 'none' ? (orthophotos.isPreset(def.basemap) ? await publishedPreset(def.basemap) : tileSource(def)) : null;
       const tileJs = (s, extra) => (s.wms ? `L.tileLayer.wms(${json(s.url)},${json(tileOptions(s, extra))}).addTo(m);` : `L.tileLayer(${json(s.url)},${json(tileOptions(s, extra))}).addTo(m);`);
-      const overlays = (def.layers || []).filter((l) => l.kind === 'wms' && l.visible !== false).map((l) => ({ src: wmsSource(l.wms), opacity: l.style && l.style.opacity !== undefined ? l.style.opacity : 0.8 })).filter((o) => o.src);
+      const overlays = (def.layers || []).filter((l) => imagery(l) && l.visible !== false).map((l) => ({ src: overlaySource(l), opacity: l.style && l.style.opacity !== undefined ? l.style.opacity : 0.8 })).filter((o) => o.src);
       const legend = def.legend === false ? '' : `<div class="dm-map-legend">${prepared.layers.flatMap((l) => (l.legend.length > 1 ? l.legend : l.legend.map((e) => Object.assign({}, e, { label: e.label || l.layer.name })))).slice(0, 24).map((e) => `<div><span style="background:${e.color}"></span>${String(e.label).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>`).join('')}</div>`;
       const view = def.view && def.view.center && def.view.zoom ? `m.setView(${json(def.view.center)}, ${json(def.view.zoom)});` : `if (b) m.fitBounds(b, {padding: [16, 16], maxZoom: 14}); else m.setView(${json(DEFAULT_VIEW.center)}, ${DEFAULT_VIEW.zoom});`;
       return `<div class="dm-map-wrap"><div id="${id}" class="dm-map" style="height:${options.height || def.height || 480}px"></div>${legend}</div>`
@@ -693,6 +724,6 @@
       return nums.some((c) => /^(lon|long|lng|longitude|longitud|lon_wgs84|longitude_wgs84)$/i.test(c.name)) && nums.some((c) => /^(lat|latitude|latitud|lat_wgs84|latitude_wgs84)$/i.test(c.name));
     }
 
-    return { BASEMAPS, OSM, VENDOR, MAX_ROWS, GRID_RESOLUTIONS, available, ensure, ensureProj, gridCrs, source, geometryColumn, coordinateColumns, mappable, mapDefault, drawable, drawableByValues, layerFor, boundaryLayer, wmsLayer, wmsSource, wmsLayers, defaultMap, styling, featuresOf, prepare, tileSource, render, toBlob, thumbnail, drawSvg, tableSvg, htmlFor, htmlCss, project };
+    return { BASEMAPS, OSM, VENDOR, MAX_ROWS, GRID_RESOLUTIONS, available, ensure, ensureProj, gridCrs, source, geometryColumn, coordinateColumns, mappable, mapDefault, drawable, drawableByValues, layerFor, boundaryLayer, wmsLayer, wmsSource, wmsLayers, tilesLayer, tilesSource, defaultMap, styling, featuresOf, prepare, tileSource, render, toBlob, thumbnail, drawSvg, tableSvg, htmlFor, htmlCss, project };
   });
 })();

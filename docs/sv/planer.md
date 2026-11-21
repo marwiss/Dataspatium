@@ -54,7 +54,7 @@ Detaljplaner till NGP görs i SWEREF 99 TM eller i kommunens lokala SWEREF 99-zo
 båda (`koordinatsystemPlan` och `hojdsystem`). Översiktsplaner är oftast i SWEREF 99 TM. Inspektören visar planens
 koordinatsystem och, för en plan med höjder, höjdsystemet; en GeoPackage-fil anger inget höjdsystem, och då står det så.
 
-Plankartan ritas som webbkarta (Web Mercator med norr uppåt, där OpenStreetMap kan vara bakgrund) eller i planens eget
+Plankartan ritas som webbkarta (Web Mercator med norr uppåt, där OpenStreetMap eller kartrutor från OGC API – Tiles kan vara bakgrund) eller i planens eget
 system: välj det i verktygsraden, till exempel *SWEREF 99 16 30*. Då är rutnätets norr uppåt som på plankartan, och
 varje objekt ligger på sina koordinater. Bakgrunden kan då komma från en WMS-tjänst som erbjuder samma system: välj
 *WMS-tjänst* som bakgrundskarta och ange adress och lager (*Läs lager* hämtar tjänstens lagerlista och säger till om

@@ -43,15 +43,27 @@ Bildsamlingar med position har knappen *Visa på kartan*. Klicka på en plats s�
 
 - **Bakgrundskarta**: ingen (standard), OpenStreetMap, ett [ortofoto](#ortofoton), eller en egen kartserver med en adressmall som
   `https://…/{z}/{x}/{y}.png` och källtext, eller en **WMS-tjänst** (adress, lager, bildformat och genomskinlighet; *Läs lager* hämtar tjänstens
-  lagerlista). Bakgrundskartor hämtas från nätet och frågar efter samtycke första
+  lagerlista), eller **kartrutor** från en tjänst med OGC API – Tiles (se nedan). Bakgrundskartor hämtas från nätet och frågar efter samtycke första
   gången (ändamålet *Bakgrundskartor* under Hantera → Internetåtkomst).
 - **Lager**: lägg till fler datamängder eller de medföljande gränserna (län och kommuner i Sverige, Danmark, Norge och
-  Finland) eller ett **WMS-lager** (bilder från en karttjänst som ritas under objekten med valbar genomskinlighet; det har
-  ingen teckenförklaring och följer inte med i export till SVG, PNG och PDF). Varje lager har namn, synlighet, ordning, färg, fyllning, linjebredd och punktstorlek, geometri- eller
+  Finland), ett **WMS-lager** (bilder från en karttjänst som ritas under objekten med valbar genomskinlighet; det har
+  ingen teckenförklaring och följer inte med i export till SVG, PNG och PDF) eller **kartrutor** från OGC API – Tiles,
+  som ritas på samma sätt. Varje lager har namn, synlighet, ordning, färg, fyllning, linjebredd och punktstorlek, geometri- eller
   koordinatkolumner, färg efter kolumn (kategorier med appens palett eller klasser med en sekventiell skala, antal
   klasser), etikett (visas när pekaren vilar på objektet) och högsta antal objekt.
 - **Vy**: *Spara aktuell vy* låser kartans mitt och zoom; annars anpassas kartan till lagren. Teckenförklaring och
   höjd kan ändras.
+
+**Kartrutor från OGC API – Tiles** (till exempel GeoServer, ldproxy eller pygeoapi): välj
+*Kartrutor (OGC API – Tiles)* som bakgrundskarta eller under *Lägg till lager*. Ange tjänstens landningssida (en samlings
+adress fungerar också) och tryck *Läs tjänsten*; appen läser landningssidan, `/collections` och tjänstens rutuppsättningar
+efter samtycke till bakgrundskartor. Välj sedan samling (eller hela tjänsten, när den har egna kartrutor) och
+rutuppsättning. Kartan ritas i Web Mercator, så den rutuppsättning som visas är WebMercatorQuad eller en annan med samma
+rutnät (appen läser definitionen under `/tileMatrixSets`). Rutorna hämtas på de zoomnivåer tjänsten har och förstoras
+därutöver. Bildrutor (PNG, JPEG, WebP) visas; vektorrutor (Mapbox Vector Tiles) och rutuppsättningar i andra
+koordinatsystem, till exempel SWEREF 99 TM, listas men kan inte visas, och dialogen säger varför. Tjänstens källtext fylls
+i och visas i kartans hörn som ren text. Tjänster som kräver inloggning eller nyckel stöds inte än. I en plan som visas i
+sitt eget system kan bakgrunden bara komma från en WMS-tjänst.
 
 Inspektören visar teckenförklaringen och det objekt du klickat på. Kartvyn exporteras till SVG, PNG och PDF, körs i
 batch per grupp, blir PowerPoint och kan läggas in i dokumentmallar med `{{diagram "Namn"}}`. Exporten ritar lagren
@@ -167,6 +179,7 @@ eget system (se [planer.md](planer.md#koordinatsystem-och-höjder)).
 - Bakgrundskartor och publicerad HTML med bakgrundskarta kräver nät; appen själv gör inga anrop utan samtycke.
 - Koordinatsystem: de som står under [Koordinatsystem](#koordinatsystem). Andra måste räknas om före import (till exempel i QGIS);
   appen säger till och ritar dem inte.
-- Exporten ritar lagren, inte bakgrundskartan eller WMS-lager.
+- Exporten ritar lagren, inte bakgrundskartan, WMS-lager eller kartrutor.
+- Kartrutor från OGC API – Tiles visas bara som bilder i Web Mercator; vektorrutor kräver ett bibliotek som appen inte har.
 - Buffertar och överlagringar är planära beräkningar på WGS 84-koordinater via Turf; för kilometerskala i Norden är
   felet litet, för mycket stora ytor märkbart.
