@@ -16,7 +16,6 @@
     const PRESET_PREFIX = 'presets/api/';
     const USER_KEY = 'api:connectors';
     const COUNTRIES = schema.COUNTRIES;
-    let presets = null;
     let users = null;
     /** Stored (untranslated) connectors by id, for export. */
     const rawById = new Map();
@@ -24,21 +23,45 @@
     function notify() { for (const fn of listeners) { try { fn(); } catch (err) { console.error(err); } } }
     function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 
-    /** The presets, read the first time; the start profile times that first load (platform/startup-profile). */
-    function loadPresets() { return presets ? Promise.resolve(presets) : profile.track('presets', readPresets()); }
-    async function readPresets() {
-      const out = [];
-      for (const name of D.assets.names(PRESET_PREFIX).filter((n) => n.endsWith('.api.json'))) {
-        try {
-          const obj = JSON.parse(await D.assets.loadText(name));
-          const errors = schema.validate(obj);
-          if (errors.length) { D.log('api', 'invalid preset', name, errors); continue; }
-          obj.preset = true;
-          out.push(obj);
-        } catch (err) { D.log('api', 'could not read preset', name, err); }
-      }
-      presets = out;
-      return presets;
+    /** Preset files read at once, as many as the boot loader has scripts on their way (LD-61), not one round trip per file in turn. */
+    const PRESETS_AT_ONCE = 8;
+    const ownText = (name) => D.assets.loadText(name);
+    /** Each reader's one read of the presets: the app's own and a test's. @type {WeakMap<Function, Promise<object[]>>} */
+    const presetReads = new WeakMap();
+
+    /**
+     * The presets: the first call reads them, PRESETS_AT_ONCE files at a time, kept in the order of D.assets.names (list() sorts
+     * them anyway), and leaves out a file that cannot be read or is no valid configuration; calls meanwhile and later get the
+     * same list. The start profile times the app's read (platform/startup-profile). `options.loadText` reads the files in place of
+     * D.assets.loadText, with a read of its own (the tests').
+     * @param {{loadText?: (name: string) => Promise<string>}} [options]
+     * @returns {Promise<object[]>}
+     */
+    function loadPresets(options = {}) {
+      const loadText = options.loadText || ownText;
+      let read = presetReads.get(loadText);
+      if (!read) { read = readPresets(loadText); presetReads.set(loadText, read); }
+      return loadText === ownText ? profile.track('presets', read) : read;
+    }
+    /** @param {(name: string) => Promise<string>} loadText */
+    async function readPresets(loadText) {
+      const names = D.assets.names(PRESET_PREFIX).filter((n) => n.endsWith('.api.json'));
+      const read = new Array(names.length).fill(null);
+      let next = 0;
+      const reader = async () => {
+        while (next < names.length) {
+          const i = next++;
+          try {
+            const obj = JSON.parse(await loadText(names[i]));
+            const errors = schema.validate(obj);
+            if (errors.length) { D.log('api', 'invalid preset', names[i], errors); continue; }
+            obj.preset = true;
+            read[i] = obj;
+          } catch (err) { D.log('api', 'could not read preset', names[i], err); }
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(PRESETS_AT_ONCE, names.length) }, reader));
+      return read.filter(Boolean);
     }
     async function loadUsers() {
       if (!users) users = ((await idb.getSetting(USER_KEY, [])) || []).map((c) => Object.assign({}, c, { preset: false }));
