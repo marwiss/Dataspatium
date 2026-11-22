@@ -486,4 +486,34 @@
       return 'ok';
     } finally { if (started) stop(started.root); await restore(); }
   }, 60000);
+
+  test('tier: a plan\'s own map is drawn in Dokument, on the sheet and in a template, and a saved map chart is not', async (assert) => {
+    await reset();
+    const exporter = D.require('io/export');
+    const template = D.require('docgen/template');
+    const charts = D.require('viz/charts');
+    const leaflet = D.require('viz/leaflet');
+    const area = JSON.stringify({ type: 'Polygon', coordinates: [[[15, 60], [15.1, 60], [15.1, 60.1], [15, 60.1], [15, 60]]] });
+    const columns = ['objektid', 'objekttyp', 'beteckning', 'formulering', 'farg', 'geometri'].map((name) => ({ name, type: 'text' }));
+    let plan = null; let chart = null;
+    try {
+      plan = await datasets.create({ name: 'Nivå detaljplan', kind: 'plan', columns, rows: [['o1', 'anvandning', 'B', 'Bostäder', 'brun', area], ['o2', 'egenskap', 'e1', 'Största byggnadsarea är 200 m2', null, area]] });
+      const record = charts.create('map', plan, 'Nivå plankarta');
+      record.map = leaflet.defaultMap(await datasets.columns(plan.id), plan);
+      chart = await charts.save(record);
+      await tier.set('documents');
+      assert.ok(exporter.formatsFor(await datasets.get(plan.id)).some((f) => f.id === 'plan-sheet'), 'Dokument offers the plan map');
+      const sheet = (await exporter.exportDataset(plan.id, 'plan-sheet')).blob;
+      assert.equal(await sheet.slice(0, 4).text(), '%PDF', 'the plan map as PDF in Dokument');
+      const out = await template.renderTemplate('{{plan "Nivå detaljplan"}}\n{{karta "Nivå detaljplan" | bredd: 400}}\n{{diagram "Nivå plankarta"}}', { _filters: [] });
+      assert.ok(out.images[0].png && out.images[0].png.byteLength > 1000, 'the word plan draws the plan: ' + (out.images[0].error || ''));
+      assert.ok(out.images[1].png && out.images[1].png.byteLength > 1000, 'and karta: ' + (out.images[1].error || ''));
+      assert.ok(out.images[2].error && out.images[2].error.includes(t('tier.bim-gis')), 'a saved map chart belongs to the map view: ' + out.images[2].error);
+      return 'ok';
+    } finally {
+      if (chart) await charts.remove(chart.id).catch(() => {});
+      if (plan) await datasets.remove(plan.id);
+      await restore();
+    }
+  }, 30000);
 })();
