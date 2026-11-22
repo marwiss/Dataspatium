@@ -516,4 +516,25 @@
       await restore();
     }
   }, 30000);
+
+  test('tier: raising the tier from Inhämta\'s notice for a BCF file leaves no refusal on the page', async (assert) => {
+    await reset();
+    let started = null;
+    try {
+      await tier.set('documents');
+      started = await startShell();
+      const { root, shell } = started;
+      shell.activate('inhamta');
+      const zone = await waitFor(() => root.querySelector('.dm-center dm-dropzone'), 5000, 'the drop zone');
+      zone.dispatchEvent(new CustomEvent('dm-files', { detail: { files: [new File(['PK'], 'arenden.bcfzip')] } }));
+      await waitFor(() => root.querySelector('.dm-center [data-tier-hidden="cde.bcf"]'), 5000, 'the notice for the BCF file');
+      const error = () => root.querySelector('.dm-center .dm-error');
+      assert.ok(!error(), 'the notice in place of an error');
+      /** @type {HTMLElement} */ (root.querySelector('.dm-center [data-tier-raise="bim-gis"]')).click();
+      await waitFor(() => tier.current() === 2 && !root.querySelector('.dm-center [data-tier-hidden]'), 5000, 'the notice gone in BIM och GIS');
+      assert.ok(!error(), 'and the refusal with it: ' + (error() ? error().textContent : ''));
+      assert.ok(root.querySelector('.dm-center dm-dropzone'), 'the file can be chosen again');
+      return 'ok';
+    } finally { if (started) stop(started.root); await restore(); }
+  }, 60000);
 })();
