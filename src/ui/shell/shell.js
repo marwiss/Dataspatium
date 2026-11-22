@@ -279,7 +279,7 @@
           showUnread().catch((err) => D.log('collab', err));
           // Work at start waits until the page has settled, and never asks for anything.
           setTimeout(() => {
-            flows.runOnStart({ onSkip: (flow, reasons) => this.log(t('flows.start.skipped', { name: flow.name, reason: reasons.join('; ') }), 'info') }).catch((err) => D.log('shell', 'flows at start', err));
+            flows.runOnStart({ onSkip: (flow, reasons) => this.log(t('flows.start.skipped', { name: flow.name, reason: reasons.join('; ') }) + ' ' + t('flows.start.hint'), 'info') }).catch((err) => D.log('shell', 'flows at start', err));
             watches.checkOnStart().catch((err) => D.log('shell', 'watches at start', err));
           }, 1500);
         }

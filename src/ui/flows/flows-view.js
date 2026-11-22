@@ -296,6 +296,9 @@
         if (!flow) return [h('h4', { text: t('flows.tab.flows') }), h('p', { class: 'dm-help', text: t('flows.inspector') })];
         const parts = [h('h4', { text: flow.name })];
         const last = flow.lastRun;
+        // A start that skipped the flow after its last run says why, and what to do about it.
+        const skip = flow.lastSkip && (!last || String(flow.lastSkip.at) > String(last.endedAt)) ? flow.lastSkip : null;
+        if (skip) parts.push(h('p', { class: 'dm-help dm-error', text: t('flows.last.skipped', { when: i18n.formatDateTime(skip.at), reason: (skip.reasons || []).join('; ') }) + ' ' + t('flows.start.hint') }));
         if (!last) { parts.push(h('p', { class: 'dm-help', text: t('flows.last.never') })); return parts; }
         parts.push(h('p', { class: 'dm-help', text: i18n.formatDateTime(last.endedAt) }));
         parts.push(h('ul', { class: 'dm-stack-sm dm-flow-log' }, last.steps.map((x) => h('li', { class: x.ok ? '' : 'dm-error' },

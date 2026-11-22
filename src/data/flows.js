@@ -5,9 +5,11 @@
  * the app (fetching again with the recipe replayed, recipes, R and Python scripts, saved lists, charts, dashboards,
  * documents, export); a flow only binds them together and keeps a log. The files a flow produces stay in memory until
  * the user fetches them: a flow never sends anything out of the app, since everything that leaves goes through the
- * review in Dela. A flow that runs at start skips itself rather than ask for anything: it needs its consents already
- * given (blockers), and its charts, documents and code run with `ask: false`, so whatever else they would need is left
- * out or fails instead of asking. Flows are stored as settings (`flow:<id>`) and travel in backups, not in bundles.
+ * review in Dela. A flow that runs at start never asks for anything: it is skipped when it would need a consent not yet kept or
+ * something not yet fetched (blockers), and every step runs with the marker `ask: false` (askOf), which refreshes, recipes,
+ * code with its engines' own fetches, charts, documents and commands carry down to platform/consent, so whatever else they
+ * would need is left out or fails with a ConsentError that says how to allow it. Flows are stored as settings (`flow:<id>`)
+ * and travel in backups, not in bundles.
  * A step can also be one of the app's commands (data/commands), and plans can choose (decision F31 a, F33 b): a step with an id keeps
  * its answer for later steps; `if` runs `steps` or `otherwise` after a condition (data/conditions, read and never run as code);
  * `each` runs its steps for every value of a list or every row of a dataset (`dataset`, a row as an object by column) and
@@ -40,21 +42,84 @@
       const t = (key, params) => D.t(key, params);
       const need = (value, message) => { if (!value) throw new Error(message); return value; };
       async function datasetOf(id) { return need(id && (await datasets.get(id)), t('flows.err.dataset')); }
-      /** What a run at start passes on to drawing and code: nothing may ask, so only consents already kept count. */
-      const askOf = (ctx) => (ctx && ctx.unattended ? { ask: false } : {});
       /**
-       * Why a saved chart cannot be drawn at start without asking: Python must be fetched already, and the consents its plotly
-       * figure needs (a map, a picture by address) must be kept. What a run needs beyond the saved figure is left out of the
-       * drawing, never asked for (askOf).
+       * What a run at start passes on to everything that could fetch (drawing, code, recipes, refreshes, commands): the marker
+       * `ask: false`, under which platform/consent asks nothing, so only consents already kept count and anything else fails
+       * with a ConsentError whose text says how to allow it. The marker travels with the run, so a person's own action at the
+       * same time still asks.
+       */
+      const askOf = (ctx) => (ctx && ctx.unattended ? { ask: false } : {});
+      const kept = async (purpose) => (await consent.state(purpose)) === 'granted';
+      const noConsent = (purpose) => t('flows.block.consent', { purpose: t('consent.purpose.' + purpose) });
+      /**
+       * Why code cannot run at start without asking. Python: its runtime and the wheels its start loads must be in the cache, and
+       * so must the packages the code imports unless the consent for components is kept. R: packages that are not bundled must be
+       * in the cache unless that consent is kept. The run itself asks for nothing either way (askOf); this only skips the flow
+       * up front instead of failing it halfway.
+       * @param {string} lang @param {string} code @param {string[]} [extra] packages the code needs without naming them
+       * @returns {Promise<string[]>}
+       */
+      async function codeBlockers(lang, code, extra = []) {
+        if (lang === 'python') {
+          const catalog = D.require('engines/python/catalog');
+          if (!(await catalog.cachedPackages([]))) return [t('flows.block.python')];
+          if (await kept('components')) return [];
+          const missing = [];
+          // A name the lock lacks is never fetched, so it cannot ask either.
+          for (const name of new Set(catalog.referenced(String(code || '')).concat(extra))) if (catalog.has(name) && !(await catalog.cachedPackages([name]))) missing.push(name);
+          return missing.length ? [t('flows.block.packages', { names: missing.join(', ') })] : [];
+        }
+        if (lang === 'r') {
+          const remote = D.require('engines/r/remote-packages');
+          const packages = D.require('engines/r/packages');
+          await packages.load();
+          const names = packages.referenced(String(code || ''));
+          const missing = remote.missing(names);
+          if (!missing.length || (await kept('components')) || (await remote.cached(names))) return [];
+          return [t('flows.block.packages', { names: missing.join(', ') })];
+        }
+        return [];
+      }
+      /**
+       * Why a saved chart cannot be drawn at start without asking: an R or Python chart needs what its code needs, and the consents
+       * a plotly figure needs (a map, a picture by address) must be kept, and so must plotly.js be cached unless the consent for
+       * components is kept. What a run needs beyond the saved figure is left out of the drawing, never asked for (askOf).
        * @param {any} chart @returns {Promise<string[]>}
        */
       async function chartBlockers(chart) {
-        if (!chart || chart.kind !== 'python') return [];
+        if (!chart || (chart.kind !== 'python' && chart.kind !== 'r')) return [];
+        const out = await codeBlockers(chart.kind, chart[chart.kind] && chart[chart.kind].code);
+        const fig = chart.kind === 'python' && chart.python && chart.python.plotly;
+        if (!fig) return out;
+        const plotly = D.require('viz/plotly');
+        for (const purpose of new Set(plotly.requests(fig).map((q) => q.purpose))) if (!(await kept(purpose))) out.push(noConsent(purpose));
+        if (!(await kept('components')) && !(await D.require('platform/components').verified(plotly.SPEC))) out.push(t('flows.block.packages', { names: 'plotly.js' }));
+        return out;
+      }
+      const IFC_OPS = { ifc_python: [], ifc_apply_table: [], ifc_changeset: ['pytest'], ifc_party: ['pytest'] };
+      /**
+       * Why replaying recipe steps at start would have to ask: code steps need what code needs, the steps on a model IfcOpenShell,
+       * and the height steps the consent for API fetches. The replay asks for nothing either way (ctx.ask in data/recipes).
+       * @param {any[]} steps recipe steps ({op, params}) @returns {Promise<string[]>}
+       */
+      async function recipeBlockers(steps) {
         const out = [];
-        if (!(await D.require('engines/python/catalog').cachedRuntime())) out.push(t('flows.block.python'));
-        const fig = chart.python && chart.python.plotly;
-        const purposes = new Set(fig ? D.require('viz/plotly').requests(fig).map((q) => q.purpose) : []);
-        for (const purpose of purposes) if ((await consent.state(purpose)) !== 'granted') out.push(t('flows.block.consent', { purpose: t('consent.purpose.' + purpose) }));
+        for (const s of steps || []) {
+          const p = (s && s.params) || {};
+          if (s.op === 'python_step') out.push(...await codeBlockers('python', p.code));
+          else if (s.op === 'r_step') out.push(...await codeBlockers('r', p.code));
+          else if (IFC_OPS[s.op]) out.push(...await codeBlockers('python', s.op === 'ifc_python' ? p.code : '', ['ifcopenshell'].concat(IFC_OPS[s.op])));
+          else if ((s.op === 'geo_height' || s.op === 'geo_height_along') && !(await kept('api'))) out.push(noConsent('api'));
+        }
+        return out;
+      }
+      /** The saved charts a document template draws ({{diagram "…"}}) need what a chart step needs. @param {any} doc */
+      async function documentBlockers(doc) {
+        const names = doc ? Array.from(String(doc.body || '').matchAll(/\{\{diagram\s+"([^"]+)"/g), (m) => m[1]) : [];
+        if (!names.length) return [];
+        const all = await charts.list();
+        const out = [];
+        for (const name of new Set(names)) out.push(...await chartBlockers(all.find((c) => c.name === name)));
         return out;
       }
 
@@ -63,20 +128,30 @@
         refresh: {
           icon: 'refresh-cw',
           fields: [{ name: 'datasetId', type: 'refreshable', optional: true }],
-          /** Which consents the step needs when it runs without anyone at the keyboard. */
+          /**
+           * Which consents the step needs when it runs without anyone at the keyboard, its replayed recipes included. The database
+           * bridge and OpenCDE sources (their sign-in and their own questions) are refreshed only by hand.
+           */
           async blockers(p) {
-            const list = p.datasetId ? [await datasets.get(p.datasetId)] : (await datasets.list()).filter((d) => d.source && (d.source.kind === 'api'));
-            if (list.some((d) => d && d.source && d.source.kind === 'api') && (await consent.state('api')) !== 'granted') return [t('flows.block.consent', { purpose: t('consent.purpose.api') })];
-            if (list.some((d) => d && d.source && d.source.kind === 'bridge')) return [t('flows.block.bridge')];
-            return [];
+            const list = p.datasetId ? [await datasets.get(p.datasetId)] : (await datasets.list()).filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge'));
+            const out = [];
+            const api = list.filter((d) => d && d.source && d.source.kind === 'api');
+            if (api.length && !(await kept('api'))) out.push(noConsent('api'));
+            if (list.some((d) => d && d.source && d.source.kind === 'bridge')) out.push(t('flows.block.bridge'));
+            for (const d of api) {
+              const connector = d.source.connectorId ? await D.require('api/connectors').get(d.source.connectorId).catch(() => null) : null;
+              if (d.source.family === 'opencde' || (connector && connector.auth && connector.auth.type === 'oauth2_pkce')) { out.push(t('flows.block.cde')); break; }
+            }
+            for (const d of list) if (d) out.push(...await recipeBlockers(await recipes.steps(d.id)));
+            return out;
           },
           async run(p, ctx) {
             if (p.datasetId) {
               const ds = await datasetOf(p.datasetId);
-              const res = await runner.refreshDataset(ds.id, { signal: ctx.signal, fetch: ctx.fetch });
+              const res = await runner.refreshDataset(ds.id, Object.assign({ signal: ctx.signal, fetch: ctx.fetch }, askOf(ctx)));
               return { message: t('flows.done.refresh', { name: ds.name, rows: D.require('ui/i18n').formatNumber(res.rows) }) };
             }
-            const results = await runner.refreshAll({ signal: ctx.signal, fetch: ctx.fetch });
+            const results = await runner.refreshAll(Object.assign({ signal: ctx.signal, fetch: ctx.fetch }, askOf(ctx)));
             const failed = results.filter((r) => !r.ok);
             if (failed.length) throw new Error(failed.map((f) => `${f.name}: ${f.error}`).join('; '));
             return { message: t('flows.done.refresh.all', { n: results.length }) };
@@ -85,11 +160,12 @@
         recipe: {
           icon: 'list-checks',
           fields: [{ name: 'from', type: 'dataset' }, { name: 'to', type: 'dataset' }],
-          async run(p) {
+          async blockers(p) { return p.from && (await datasets.get(p.from)) ? recipeBlockers(await recipes.steps(p.from)) : []; },
+          async run(p, ctx) {
             const from = await datasetOf(p.from); const to = await datasetOf(p.to);
             const steps = await recipes.steps(from.id);
             // A step that fails (one the tier hides among them) stops the replay, and the flow says why.
-            const failed = (await recipes.replay(to.id, steps)).find((r) => !r.ok);
+            const failed = (await recipes.replay(to.id, steps, askOf(ctx))).find((r) => !r.ok);
             if (failed) throw new Error(failed.error);
             return { message: t('flows.done.recipe', { n: steps.length, name: to.name }) };
           },
@@ -99,8 +175,7 @@
           fields: [{ name: 'scriptId', type: 'script' }],
           async blockers(p) {
             const script = p.scriptId ? await idb.getScript(p.scriptId) : null;
-            if (script && script.language === 'python' && !(await D.require('engines/python/catalog').cachedRuntime())) return [t('flows.block.python')];
-            return [];
+            return script ? codeBlockers(script.language, script.code) : [];
           },
           async run(p, ctx) {
             const script = need(p.scriptId && (await idb.getScript(p.scriptId)), t('flows.err.script'));
@@ -150,6 +225,14 @@
         dashboard: {
           icon: 'layout-grid',
           fields: [{ name: 'dashboardId', type: 'dashboard' }],
+          /** The page carries a plotly figure's library: plotly.js must be cached unless the consent for components is kept. */
+          async blockers(p) {
+            const dash = p.dashboardId ? await dashboards.get(p.dashboardId) : null;
+            if (!dash || (await kept('components'))) return [];
+            const plotly = D.require('viz/plotly');
+            const figures = (await dashboards.resolveCharts(dash)).some(({ chart }) => chart && chart.kind === 'python' && chart.python && chart.python.plotly);
+            return figures && !(await D.require('platform/components').verified(plotly.SPEC)) ? [t('flows.block.packages', { names: 'plotly.js' })] : [];
+          },
           async run(p, ctx) {
             const dash = need(p.dashboardId && (await dashboards.get(p.dashboardId)), t('flows.err.dashboard'));
             const html = await dashboards.toHtml(dash, askOf(ctx));
@@ -159,16 +242,7 @@
         document: {
           icon: 'file-text',
           fields: [{ name: 'documentId', type: 'document' }, { name: 'datasetId', type: 'dataset' }, { name: 'format', type: 'select', options: ['docx', 'pdf', 'html', 'md', 'tex'] }, { name: 'groupColumn', type: 'text', optional: true }],
-          /** The saved charts the template draws ({{diagram "…"}}) need what a chart step needs. */
-          async blockers(p) {
-            const doc = p.documentId ? await documents.get(p.documentId) : null;
-            const names = doc ? Array.from(String(doc.body || '').matchAll(/\{\{diagram\s+"([^"]+)"/g), (m) => m[1]) : [];
-            if (!names.length) return [];
-            const all = await charts.list();
-            const out = [];
-            for (const name of new Set(names)) out.push(...await chartBlockers(all.find((c) => c.name === name)));
-            return out;
-          },
+          async blockers(p) { return documentBlockers(p.documentId ? await documents.get(p.documentId) : null); },
           async run(p, ctx) {
             const doc = need(p.documentId && (await documents.get(p.documentId)), t('flows.err.document'));
             const ds = await datasetOf(p.datasetId);
@@ -193,16 +267,30 @@
         command: {
           icon: 'terminal',
           fields: [{ name: 'command', type: 'command' }, { name: 'args', type: 'json', optional: true }],
+          /**
+           * What the command needs at start: a command that may have to ask (the CDE's) runs only by hand, and one made from a step
+           * of a flow, code, a document or an operation needs what that needs. Arguments that only earlier steps fill in cannot be
+           * looked at here; the run still asks for nothing (askOf reaches the command as `unattended`).
+           */
           async blockers(p) {
-            if (p.command === 'run_python' && !(await D.require('engines/python/catalog').cachedRuntime())) return [t('flows.block.python')];
-            if (p.command === 'refresh_dataset' && (await consent.state('api')) !== 'granted') return [t('flows.block.consent', { purpose: t('consent.purpose.api') })];
+            const commands = D.require('data/commands');
+            const cmd = commands.get(p.command);
+            if (!cmd) return [];
+            if (cmd.attended) return [t('flows.block.attended', { name: cmd.name })];
+            try {
+              const args = commands.present(conditions.fill(argsOf(p.args), {}));
+              if (cmd.step && STEPS[cmd.step.type].blockers) return await STEPS[cmd.step.type].blockers(await cmd.step.toParams(args));
+              if (cmd.name === 'run_python' || cmd.name === 'run_r') return await codeBlockers(cmd.name === 'run_python' ? 'python' : 'r', args.code);
+              if (cmd.name === 'make_document') return await documentBlockers((await documents.list()).find((d) => d.id === args.document || d.name === args.document) || null);
+              if (cmd.name === 'apply_operation') return await recipeBlockers([{ op: args.operation, params: JSON.parse(args.params || '{}') }]);
+            } catch (_err) { /* an argument that names nothing yet: the run says so, and asks for nothing */ }
             return [];
           },
           /** The person's own flow runs its commands as their own; the answers of earlier steps go into the arguments. */
           async run(p, ctx) {
             const commands = D.require('data/commands');
             const args = conditions.fill(argsOf(p.args), ctx.scope || {});
-            const out = await commands.run(String(p.command || ''), args, { trusted: true, signal: ctx.signal });
+            const out = await commands.run(String(p.command || ''), args, { trusted: true, signal: ctx.signal, unattended: !!(ctx && ctx.unattended) });
             if (!out.ok) throw new Error(out.error);
             const made = ((out.result && out.result.files) || []).map((name) => commands.take(name)).filter(Boolean);
             return { message: t('flows.done.command', { name: String(p.command) }), value: out.result, files: made };
@@ -476,8 +564,9 @@
       }
       let startDone = false;
       /**
-       * Runs the flows marked to run at start, once per page, one at a time. A flow that would have to ask for anything is
-       * skipped and reported instead.
+       * Runs the flows marked to run at start, once per page, one at a time, as runs nobody watches (`unattended`: nothing they
+       * reach asks, see askOf). A flow that would have to ask for anything is skipped instead, and so is one whose check fails;
+       * the reasons are reported and kept with the flow (`lastSkip`) for Flöden.
        * @param {{force?: boolean, fetch?: Function, onSkip?: (flow: any, reasons: string[]) => void}} [options]
        */
       async function runOnStart(options = {}) {
@@ -485,8 +574,14 @@
         startDone = true;
         const results = [];
         for (const flow of (await list()).filter((f) => f.onStart)) {
-          const reasons = await blockers(flow);
-          if (reasons.length) { if (options.onSkip) options.onSkip(flow, reasons); continue; }
+          let reasons;
+          try { reasons = await blockers(flow); } catch (err) { console.error('[flows] the check at start failed', err); reasons = [t('flows.block.error', { message: String((err && err.message) || err) })]; }
+          if (reasons.length) {
+            const stored = await get(flow.id);
+            if (stored) { stored.lastSkip = { at: new Date().toISOString(), reasons }; await idb.setSetting(PREFIX + stored.id, stored); }
+            if (options.onSkip) options.onSkip(flow, reasons);
+            continue;
+          }
           results.push(await run(flow, Object.assign({}, options, { unattended: true })));
         }
         return results;
