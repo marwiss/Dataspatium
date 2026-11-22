@@ -2189,6 +2189,7 @@
     'consent.host': 'Adress: {host}',
     'consent.change.hint': 'Valet går att ändra när som helst under Hantera, Arbetsyta, Internetåtkomst.',
     'consent.denied': 'Internetåtkomst för {purpose} är inte tillåten.',
+    'consent.unattended': 'Vid start frågar appen inget, och internetåtkomst för {purpose} är inte tillåten för gott. Tillåt den under Hantera, Arbetsyta, Internetåtkomst, eller kör flödet för hand en gång.',
     'consent.logged.allow': 'Tillät internetåtkomst: {purpose}.',
     'consent.logged.deny': 'Nekade internetåtkomst: {purpose}.',
     'consent.changed': 'Internetåtkomst för {purpose}: {state}.',

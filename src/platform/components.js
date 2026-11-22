@@ -115,8 +115,7 @@
       if (hit) return hit;
       const first = spec.urls[0];
       const purpose = spec.purpose || 'components';
-      if (options.ask === false) { if ((await consent.state(purpose)) !== 'granted') throw new consent.ConsentError(purpose, 'unattended'); }
-      else await consent.require(purpose, { host: consent.hostOf(first), label: spec.label || spec.id, size: spec.size || null });
+      await consent.require(purpose, { host: consent.hostOf(first), label: spec.label || spec.id, size: spec.size || null, ask: options.ask });
       const doFetch = options.fetch || globalThis.fetch.bind(globalThis);
       let lastErr = null;
       for (const url of spec.urls) {

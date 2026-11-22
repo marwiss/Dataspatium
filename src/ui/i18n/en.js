@@ -2167,6 +2167,7 @@
     'consent.host': 'Address: {host}',
     'consent.change.hint': 'The choice can be changed at any time under Manage, Workspace, Internet access.',
     'consent.denied': 'Internet access for {purpose} is not allowed.',
+    'consent.unattended': 'At start the app asks nothing, and internet access for {purpose} is not allowed for good. Allow it under Manage, Workspace, Internet access, or run the flow by hand once.',
     'consent.logged.allow': 'Allowed internet access: {purpose}.',
     'consent.logged.deny': 'Denied internet access: {purpose}.',
     'consent.changed': 'Internet access for {purpose}: {state}.',
