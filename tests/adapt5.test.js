@@ -67,6 +67,9 @@
     out.graph = track(await graph.createGraphDataset({ name: prefix + ' graf', graph: NET() }));
     out.model = track(await importer.run(fixtures.ifcFile({ walls: 3 }), { format: 'model' }, null, prefix + ' modell'));
     out.drawing = track(await importer.run(fixtures.dxfFile(), { format: 'model' }, null, prefix + ' ritning'));
+    // A GeoTIFF in SWEREF 99 TM (tests/fixtures/geotiff), read as a raster: its table of files.
+    const tiff = D.require('tests/fixtures/geotiff').file({ width: 32, height: 24, geo: { res: 1, east: 674000, north: 6580256, epsg: 3006 } }, 'ruta.tif');
+    out.raster = track(await importer.runFiles([tiff], { format: 'raster' }, prefix + ' raster'));
     return out;
   }
 
@@ -89,6 +92,7 @@
     assert.ok(!(await of(all.table, 'r')).includes('starter.map'), 'a plain table is not');
     assert.ok((await of(all.text, 'sql')).includes('starter.search'), 'running text is searched');
     assert.deepEqual(await of(all.drawing, 'sql'), ['starter.model.layers'], 'a drawing has layers, not properties');
+    assert.deepEqual(await of(all.raster, 'sql'), ['starter.raster.files'], 'a raster lists its files');
     const op = await make('Översiktsplan', [['objektid', 'text'], ['tema', 'text'], ['geometri', 'text']], [['o', 'Bebyggelse', null]], { kind: 'plan' });
     const handle = await datasets.ensureOpen(op.id);
     handle.meta.plan = { slag: 'oversiktsplan' };
