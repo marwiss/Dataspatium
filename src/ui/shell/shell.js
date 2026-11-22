@@ -237,11 +237,12 @@
           const watches = D.require('data/watches');
           // The step ask shows its question here (F34 a); a test may put its own answerer in place.
           flows.setAsker((q) => D.require('ui/ask').ask(q));
-          // Styrning utifrån: the confirmation when it goes on, the approval of a writing command, the log line per command.
+          // Styrning utifrån: the confirmation when it goes on, the approval of a writing command, the log line per command. The
+          // approval is in the start list (ui/approve), so that it needs no group of a higher tier, nor a network for one.
           const remote = D.require('api/remote');
           remote.setAsker({
             confirm: () => overlays.dialog.confirm(t('remote.confirm'), { title: t('remote.switch') }),
-            approve: (cmd, args, options) => D.ensure(['assistant'], () => D.require('ui/assistant').approve(cmd, args, options)),
+            approve: (cmd, args, options) => D.require('ui/approve').approve(cmd, args, options),
             log: (text, kind) => this.log(text, kind),
           });
           remote.subscribe((s) => { this.remoteEl.hidden = !s.on; this.remoteEl.classList.toggle('dm-sb-remote-off', !s.connected); });

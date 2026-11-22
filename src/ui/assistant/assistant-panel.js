@@ -11,29 +11,14 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/assistant', ['ui/base', 'ui/basic', 'ui/overlays', 'ai/providers', 'ai/assistant', 'data/flows', 'data/commands', 'platform/storage/idb'],
-    (base, basic, overlays, providers, assistant, flows, commands, idb) => {
+  D.define('ui/assistant', ['ui/base', 'ui/basic', 'ui/overlays', 'ai/providers', 'ai/assistant', 'data/flows', 'data/commands', 'platform/storage/idb', 'ui/approve'],
+    (base, basic, overlays, providers, assistant, flows, commands, idb, approval) => {
       const { h, t, i18n } = base;
       const LAST_SETTING = 'assistant.lastProvider';
       /** One panel per page, kept while the app is open. */
       let current = null;
-
-      /** The approval of a writing command: the app's own dialog, with the command and its arguments as text; `source` names who asks. */
-      async function approve(cmd, args, options = {}) {
-        let shown = '';
-        try { shown = JSON.stringify(args, null, 2); } catch (_e) { shown = String(args); }
-        const op = cmd.name === 'apply_operation' && args && args.operation ? t('op.' + args.operation) : '';
-        const yes = await overlays.dialog.open({
-          title: t('assistant.approve.title'),
-          body: h('div', { class: 'dm-stack-sm', 'data-assistant-approve': cmd.name },
-            h('p', { text: t(options.source === 'bridge' ? 'remote.approve.text' : 'assistant.approve.text', { name: cmd.name }) }),
-            op && op !== 'op.' + args.operation ? h('p', null, h('strong', { text: op })) : null,
-            h('pre', { class: 'dm-help-code', text: shown.length > 4000 ? shown.slice(0, 4000) + '…' : shown }),
-            h('p', { class: 'dm-help dm-small', text: t('assistant.approve.hint') })),
-          actions: [{ label: t('common.cancel'), value: false }, { label: t('assistant.approve.ok'), variant: 'primary', value: true, primary: true }],
-        });
-        return yes === true;
-      }
+      /** The approval of a writing command (ui/approve, in the start list, which the bridge's approval uses as well). */
+      const approve = approval.approve;
 
       /** @param {any} ctx shell context */
       function open(ctx) {

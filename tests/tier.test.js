@@ -788,4 +788,29 @@
       await restore();
     }
   });
+
+  test('tier: the bridge\'s approval of a writing command needs no group of a higher tier', async (assert) => {
+    await reset();
+    const remote = D.require('api/remote');
+    const realSetAsker = remote.setAsker; const realEnsure = D.ensure;
+    let asker = null; let started = null;
+    remote.setAsker = (fn) => { asker = fn; return realSetAsker(fn); };
+    try {
+      started = await startShell();
+      assert.ok(asker && asker.approve, 'the shell answers for the bridge');
+      assert.ok(D.groups.start().includes('src/ui/approve.js'), 'the approval is in the start list');
+      // As an installed app offline under a lower ceiling, which never loaded the assistant's group nor the AI's.
+      D.ensure = (names, then) => (names.includes('assistant') || names.includes('ai') ? Promise.reject(new Error('the group is not cached')) : realEnsure(names, then));
+      const answer = asker.approve({ name: 'apply_operation' }, { operation: 'trim', columns: ['a'] }, { source: 'bridge' });
+      const shown = await waitFor(() => document.querySelector('dialog[open] [data-assistant-approve="apply_operation"]'), 5000, 'the approval');
+      assert.ok(shown.textContent.includes(t('remote.approve.text', { name: 'apply_operation' })), 'in the bridge\'s words');
+      /** @type {HTMLElement} */ (shown.closest('dialog').querySelectorAll('.dm-dialog-actions dm-button button')[0]).click();
+      assert.equal(await answer, false, 'and Avbryt says no');
+      return 'ok';
+    } finally {
+      D.ensure = realEnsure; remote.setAsker = realSetAsker;
+      if (started) stop(started.root);
+      await restore();
+    }
+  }, 30000);
 })();
