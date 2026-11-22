@@ -3,10 +3,12 @@
 /**
  * The start profile (`?profil=start` in the address): how long the start takes and where the time goes. src/boot.js puts
  * marks in the browser's performance timeline (`dataspatium:boot`, `insert:<path>` and `load:<path>` per script,
- * `dom-content-loaded`, `ready`, `boot-error`), the app and the mobile app call `rendered()` once they have drawn, and this
+ * `dom-content-loaded`, `ready`, `boot-error`, `retry`), the app and the mobile app call `rendered()` once they have drawn,
+ * code that the start waits for besides its scripts notes its promise with `track(name, promise)` (the presets), and this
  * module adds the long tasks over 50 ms (PerformanceObserver 'longtask', Chromium only) and, over http(s), the bytes per
- * file from the resource entries. A second after the first render it prints a console.table and one
- * `DATASPATIUM-LOG: profil ...` line per item, which tools/run-tests.ps1 prints; with `profil-exit=1` as well it ends with
+ * file from the resource entries. A second after the first render, once the noted promises have settled (at most 30 s),
+ * it prints a console.table and one `DATASPATIUM-LOG: profil ...` line per item, which tools/run-tests.ps1 prints; with
+ * `profil-ensure=<group,...>` it then loads those groups of scripts and times them, and with `profil-exit=1` it ends with
  * a `DATASPATIUM-TESTS:` line, so the headless runner stops. Without the parameter nothing is observed or marked.
  *
  * A script's `total` is its load minus its insertion, which includes the wait for the scripts before it (they run in
@@ -38,8 +40,15 @@
     const SETTLE_MS = 1000;
     /** Without a first render (the very first start waits for the language choice) the summary comes this long after ready. */
     const NO_RENDER_MS = 60000;
+    /** The summary waits at most this long for the promises noted with track(). */
+    const TRACK_MS = 30000;
 
     /** @typedef {{name: string, startTime: number}} ProfileMark */
+    /**
+     * A promise noted with track(): its name, when it was noted and when it settled (ms from navigation start; null while it
+     * has not), and whether it failed.
+     * @typedef {{name: string, begun: number, ended: number|null, failed: boolean}} ProfileTracked
+     */
     /** @typedef {{name: string, transferSize?: number, encodedBodySize?: number, decodedBodySize?: number}} ProfileResource */
     /** @typedef {{startTime: number, duration: number}} ProfileTask */
     /**
@@ -52,6 +61,8 @@
      * @property {string} [protocol] location.protocol
      * @property {string} [page] 'full' or 'mobile'
      * @property {string|null} [error] why the start did not finish, if it did not
+     * @property {number|null} [inFlight] the scripts the loader has on their way at once (src/boot.js)
+     * @property {ProfileTracked[]} [tracked] the promises noted with track(), as settle() gives them
      */
     /**
      * @typedef {object} ProfileScript
@@ -164,7 +175,9 @@
         bootError: round(at('boot-error')),
       };
       const paints = (input.paints || []).map((p) => ({ name: p.name, start: round(p.startTime) }));
-      return { page: input.page || 'full', protocol: input.protocol || '', timeline, scripts, slowest, groups, bytes, longTasks, paints, error: input.error || null };
+      const tracked = (input.tracked || []).map((x) => ({ name: x.name, begun: round(x.begun), ended: round(x.ended), failed: !!x.failed }));
+      const inFlight = Number(input.inFlight) > 0 ? Number(input.inFlight) : null;
+      return { page: input.page || 'full', protocol: input.protocol || '', inFlight, retry: at('retry') !== null, timeline, scripts, slowest, groups, bytes, longTasks, paints, tracked, error: input.error || null };
     }
 
     /**
@@ -174,8 +187,13 @@
      */
     function lines(s) {
       const tl = s.timeline;
-      const out = [`profil start: ${s.page} page over ${s.protocol || '?'}, ${count(s.scripts.length, 'script')}; from navigation start: boot ${ms(tl.boot)}, DOMContentLoaded ${ms(tl.domContentLoaded)}, last script ${ms(tl.scriptsDone)}, ready ${ms(tl.ready)}, first render ${ms(tl.firstRender)}`];
+      const out = [`profil start: ${s.page} page over ${s.protocol || '?'}, ${count(s.scripts.length, 'script')}${s.inFlight ? ', ' + s.inFlight + ' at a time' : ''}; from navigation start: boot ${ms(tl.boot)}, DOMContentLoaded ${ms(tl.domContentLoaded)}, last script ${ms(tl.scriptsDone)}, ready ${ms(tl.ready)}, first render ${ms(tl.firstRender)}`];
+      if (s.retry) out.push('profil retry: the second try, after a file of the first one failed to load');
       for (const p of s.paints) out.push(`profil paint: ${p.name} ${ms(p.start)}`);
+      for (const x of s.tracked) {
+        if (x.ended === null) out.push(`profil ${x.name}: not done (begun at ${ms(x.begun)})`);
+        else out.push(`profil ${x.name}: ${x.failed ? 'failed after ' : ''}${ms(x.ended - x.begun)} (${x.failed ? 'at' : 'done at'} ${ms(x.ended)})`);
+      }
       s.slowest.forEach((x, i) => out.push(`profil slowest ${i + 1}: ${x.path} ${ms(x.total)} from insertion to load (own ${ms(x.own)}${x.bytes === null ? '' : ', ' + size(x.bytes)})`));
       for (const g of s.groups) out.push(`profil group: ${g.group} ${count(g.scripts, 'script')}, own ${ms(g.own)}${g.bytes === null ? '' : ', ' + size(g.bytes)}`);
       if (s.bytes.available) {
@@ -199,6 +217,58 @@
     let renderSeen = false;
     let finished = false;
     let noRender = 0;
+    /** The promises noted with track(), each with the promise of its times. @type {Array<ProfileTracked & {settled: Promise<void>}>} */
+    const tracked = [];
+
+    /**
+     * Notes a promise that the start waits for besides its scripts, such as the presets' loading (api/connectors): the summary
+     * waits for it (at most 30 s) and prints `profil <name>: X ms (done at Y ms)`, X counted from this call. Gives the promise
+     * back; without the profile that is all, and a name already noted keeps its first promise. `into` is a list of the
+     * caller's own, noted with or without the profile (the tests').
+     * @template T
+     * @param {string} name
+     * @param {Promise<T>} promise
+     * @param {Array<ProfileTracked & {settled: Promise<void>}>} [into]
+     * @returns {Promise<T>}
+     */
+    function track(name, promise, into) {
+      const list = into || (on ? tracked : null);
+      if (!list || list.some((x) => x.name === name)) return promise;
+      const item = { name, begun: performance.now(), ended: /** @type {number|null} */ (null), failed: false, settled: Promise.resolve() };
+      item.settled = Promise.resolve(promise).then(() => { item.ended = performance.now(); }, () => { item.ended = performance.now(); item.failed = true; });
+      list.push(item);
+      return promise;
+    }
+
+    /**
+     * The noted promises once all have settled, or as they are after `limitMs`: one not done by then has `ended` null.
+     * @param {Array<ProfileTracked & {settled: Promise<void>}>} list
+     * @param {number} limitMs
+     * @returns {Promise<ProfileTracked[]>}
+     */
+    async function settle(list, limitMs) {
+      let timer = 0;
+      await Promise.race([Promise.all(list.map((x) => x.settled)), new Promise((resolve) => { timer = setTimeout(resolve, limitMs); })]);
+      clearTimeout(timer);
+      return list.map((x) => ({ name: x.name, begun: x.begun, ended: x.ended, failed: x.failed }));
+    }
+
+    /**
+     * Loads the groups of scripts that `profil-ensure=` names, after the summary (the parts the start leaves for later, timed
+     * on their own), and gives the line for them: the groups, the scripts that ran meanwhile and the time.
+     * @param {string[]} names
+     * @returns {Promise<{line: string, ok: boolean}>}
+     */
+    async function ensureGroups(names) {
+      const t0 = performance.now();
+      const ran = () => performance.getEntriesByType('mark').filter((m) => m.name.startsWith(PREFIX + 'load:') && m.startTime >= t0).length;
+      try {
+        await D.ensure(names);
+        return { ok: true, line: `profil ensure: ${names.join(',')} ${count(ran(), 'script')} in ${ms(performance.now() - t0)}` };
+      } catch (err) {
+        return { ok: false, line: `profil ensure: ${names.join(',')} failed after ${ms(performance.now() - t0)}: ${(err && err.message) || err}` };
+      }
+    }
 
     /** The page's entries now, for summarize. @param {string|null} error */
     function collect(error) {
@@ -212,19 +282,32 @@
         longTasks: tasks ? tasks.slice() : null,
         protocol: location.protocol,
         page: /** @type {any} */ (globalThis).DATASPATIUM_PROFILE === 'mobile' ? 'mobile' : 'full',
+        inFlight: D.boot ? D.boot.inFlight : null,
         error,
       };
     }
 
-    /** Prints the summary once: a console.table and the lines, and the runner's stop line with profil-exit=1. @param {string|null} error */
-    function finish(error) {
+    /**
+     * Prints the summary once, after the noted promises: a console.table and the lines, then the groups of profil-ensure=,
+     * and the runner's stop line with profil-exit=1 (a failed start or group fails it).
+     * @param {string|null} error
+     */
+    async function finish(error) {
       if (finished) return;
       finished = true;
       clearTimeout(noRender);
-      const summary = summarize(collect(error));
+      const done = await settle(tracked, TRACK_MS);
+      const summary = summarize(Object.assign(collect(error), { tracked: done }));
       try { console.table(summary.scripts); console.table(summary.groups); } catch (_e) { /* no console.table */ }
       for (const line of lines(summary)) console.log('DATASPATIUM-LOG: ' + line);
-      const failed = summary.error ? 1 : 0;
+      let failed = summary.error ? 1 : 0;
+      let groups = [];
+      try { groups = new URLSearchParams(location.search).getAll('profil-ensure').join(',').split(',').map((g) => g.trim()).filter(Boolean); } catch (_e) { groups = []; }
+      if (groups.length) {
+        const ensured = await ensureGroups(groups);
+        console.log('DATASPATIUM-LOG: ' + ensured.line);
+        if (!ensured.ok) failed = 1;
+      }
       if (hasParam(location.search, 'profil-exit', '1')) console.log(`DATASPATIUM-TESTS: pass=${1 - failed} fail=${failed}`);
     }
 
@@ -268,7 +351,7 @@
       setTimeout(go, 1000);
     }
 
-    return { summarize, lines, groupOf, begin, rendered, TOP, LONG_TASK_MS };
+    return { summarize, lines, groupOf, begin, rendered, track, settle, TOP, LONG_TASK_MS };
   });
 
   if (on) D.require('platform/startup-profile').begin();

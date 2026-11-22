@@ -14,8 +14,8 @@
   'use strict';
   /**
    * The start profile (`?profil=start`, read by platform/startup-profile): marks in the browser's performance timeline
-   * for the loader's start, each script's insertion and load (named by its path), DOMContentLoaded, ready and a failed
-   * start. Without the parameter this one check is all it costs.
+   * for the loader's start, each script's insertion and load (named by its path), DOMContentLoaded, ready, a failed
+   * start and the second try after one. Without the parameter this one check is all it costs.
    */
   let PROFILE = false;
   try { PROFILE = new URLSearchParams(location.search).getAll('profil').indexOf('start') >= 0; } catch (_e) { PROFILE = false; }
@@ -77,9 +77,21 @@
     return ['languages'].concat(withEnglish(browserLanguage(prefs)));
   }
   const languageScripts = chosenLanguages().map((code) => 'src/ui/i18n/' + code + '.js');
-  // For ui/i18n (the same detection) and the tests; the registry keeps the object when it loads.
+  /**
+   * Scripts on their way at once: the whole number of `?inflight=` from 1 to 32, a parameter for measuring the start (the
+   * start profile), else 8, enough to hide the round trips and few enough that a web server never sees several hundred (LD-61).
+   * @param {string} search a location.search
+   * @returns {number}
+   */
+  function inFlightOf(search) {
+    let asked = '';
+    try { asked = new URLSearchParams(search || '').get('inflight') || ''; } catch (_e) { asked = ''; }
+    const n = /^\d+$/.test(asked) ? Number(asked) : 0;
+    return n >= 1 && n <= 32 ? n : 8;
+  }
+  // For ui/i18n (the same detection), the start profile and the tests; the registry keeps the object when it loads.
   const D = /** @type {any} */ (globalThis).Dataspatium || (/** @type {any} */ (globalThis).Dataspatium = {});
-  D.boot = { LANGUAGES, FALLBACK_EN, browserLanguage, chosenLanguages, configLanguage };
+  D.boot = { LANGUAGES, FALLBACK_EN, browserLanguage, chosenLanguages, configLanguage, inFlightOf };
   /**
    * Dataspatium Mobil (m/index.html sets DATASPATIUM_PROFILE = 'mobile') loads only what a phone needs: the
    * platform, the SQLite engine for viewing, the components, the transfer module and the mobile app. No R, no
@@ -571,8 +583,9 @@
     else send();
   }
 
-  /** Scripts on their way at once: enough to hide the round trips, few enough that a web server never sees several hundred. */
-  const IN_FLIGHT = 8;
+  /** Scripts on their way at once (inFlightOf). */
+  const IN_FLIGHT = inFlightOf(location.search);
+  D.boot.inFlight = IN_FLIGHT;
   /** Over http(s) a failed start is tried once more by reloading the page, as one file in hundreds may fail on the way. */
   const RETRY = 'dataspatium.boot.retry';
   /** path → the promise that the script has run; one that failed is forgotten, so that the next load tries it again. */
@@ -712,6 +725,8 @@
    */
   function start() {
     const web = /^https?:$/.test(location.protocol);
+    // The second try after a failed start is marked for the start profile, before a start that succeeds clears the flag.
+    if (PROFILE) { try { if (sessionStorage.getItem(RETRY) === '1') mark('retry'); } catch (_e) { /* no session storage */ } }
     load(scripts).then(() => {
       if (everything) for (const g of groups) loaded.add(g.name);
       try { sessionStorage.removeItem(RETRY); } catch (_e) { /* no session storage */ }

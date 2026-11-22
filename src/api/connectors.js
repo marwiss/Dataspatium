@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/connectors', ['api/schema', 'platform/storage/idb', 'ui/i18n'], (schema, idb, i18n) => {
+  D.define('api/connectors', ['api/schema', 'platform/storage/idb', 'ui/i18n', 'platform/startup-profile'], (schema, idb, i18n, profile) => {
     const PRESET_PREFIX = 'presets/api/';
     const USER_KEY = 'api:connectors';
     const COUNTRIES = schema.COUNTRIES;
@@ -24,8 +24,9 @@
     function notify() { for (const fn of listeners) { try { fn(); } catch (err) { console.error(err); } } }
     function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 
-    async function loadPresets() {
-      if (presets) return presets;
+    /** The presets, read the first time; the start profile times that first load (platform/startup-profile). */
+    function loadPresets() { return presets ? Promise.resolve(presets) : profile.track('presets', readPresets()); }
+    async function readPresets() {
       const out = [];
       for (const name of D.assets.names(PRESET_PREFIX).filter((n) => n.endsWith('.api.json'))) {
         try {
