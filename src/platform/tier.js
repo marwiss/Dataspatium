@@ -70,7 +70,7 @@
       'op:ifc_apply_table': 'kind.model', 'op:ifc_python': 'kind.model', 'op:ifc_changeset': 'kind.model', 'op:ifc_party': 'kind.model',
       // The map view with layers (Bearbeta's and Visualisera's, DS-35) and the Geo tab's tools; counting places per area (the
       // tool `points`) is DS-10's and stays in Dokument.
-      'view:map': 'map.view', 'chart:map': 'map.view',
+      'view:map': 'map.view', 'chart:map': 'map.view', 'import:qgis': 'map.view',
       'geo:measure': 'map.view', 'geo:nearest': 'map.view', 'geo:buffer': 'map.view', 'geo:overlay': 'map.view', 'geo:dissolve': 'map.view', 'geo:simplify': 'map.view',
       'op:geo_height': 'geo.heights', 'op:geo_height_along': 'geo.heights', 'chart:profile': 'geo.heights',
       'source:newmodel': 'source.newmodel', 'source:geodata': 'source.geodata',
@@ -78,6 +78,8 @@
       // The maps among the commands (DS-27) and the BCF topics (DS-39); the charts, the documents and the CDE's files stay in Dokument.
       'cmd:create_map': 'map.view', 'cmd:add_map_layer': 'map.view',
       'cmd:cde_topics': 'cde.bcf', 'cmd:cde_create_topic': 'cde.bcf', 'cmd:cde_comment': 'cde.bcf',
+      // BCF files (bcf, bcfzip) are read by the BCF client only (DS-38).
+      'import:bcf': 'cde.bcf',
       'family:geodata': 'source.geodata', 'family:geoportal': 'source.geodata',
       // The geodata services and the planning platforms that are not of the geodata families (DS-34, DS-36).
       'preset:naturvardsregistret': 'source.geodata', 'preset:lantmateriet-stac': 'source.geodata', 'preset:lantmateriet-direkt': 'source.geodata',

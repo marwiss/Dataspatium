@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'api/bridge', 'platform/files', 'data/linked', 'io/importers/qgis', 'data/kinds', 'io/file-sense', 'viz/leaflet', 'ui/kinds/sketches', 'platform/tier'], (base, csv, encoding, types, connectors, bridge, files, linked, qgis, kinds, fileSense, leaflet, sketches, tier) => {
+  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'api/bridge', 'platform/files', 'data/linked', 'io/importers/qgis', 'data/kinds', 'io/file-sense', 'viz/leaflet', 'ui/kinds/sketches', 'platform/tier', 'ui/settings/tier'], (base, csv, encoding, types, connectors, bridge, files, linked, qgis, kinds, fileSense, leaflet, sketches, tier, tierUi) => {
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
@@ -38,7 +38,10 @@
       /** @type {any} */ let fieldUi = null;
       /** @type {any} */ let guidesUi = null;
 
-      function reset() { return { step: 'file', answers: {}, sorted: null, results: null, file: null, files: [], progress: null, project: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '' }; }
+      /** `hidden`: the entry of a file the tier does not read (platform/tier), shown as the tier's notice in place of an error. */
+      function reset() { return { step: 'file', answers: {}, sorted: null, results: null, file: null, files: [], progress: null, project: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '', hidden: '' }; }
+      /** What went wrong with the file chosen: the tier's notice for a file the tier does not read, else the error. */
+      const problem = () => (wiz.hidden ? tierUi.notice(ctx, wiz.hidden) : wiz.error ? h('p', { class: 'dm-error dm-small', text: wiz.error }) : null);
       function restart() { freeThumbs(); Object.assign(wiz, reset()); render(); }
       /** Pictures chosen but not yet read, shown from the files themselves. @type {Map<File, string>} */
       const thumbs = new Map();
@@ -94,6 +97,9 @@
         // A source the tier now hides (after the tier was lowered) gives way to the files.
         const hiddenApi = source.startsWith('api:') && connectorList.some((c) => c.id === source.slice(4) && !tier.showsConnector(c));
         if (hiddenApi || (source === 'newmodel' && !tier.shows('source:newmodel'))) source = 'file';
+        // A file the tier did not read: once the tier is raised the notice goes, and the file can be chosen again.
+        if (wiz.hidden && tier.shows(wiz.hidden)) wiz.hidden = '';
+        if (wiz.project && !tier.shows('import:qgis')) { wiz.project = null; wiz.step = 'file'; wiz.hidden = 'import:qgis'; }
         renderLeft(); renderCenter(); renderRight();
       }
 
@@ -499,7 +505,7 @@
           input.addEventListener('keydown', (e) => { if (/** @type {any} */ (e).key === 'Enter') fetchUrl(input.value.trim()); });
           return h('div', { class: 'dm-stack' }, input,
             h('div', { class: 'dm-row' }, ui.button({ label: t('import.url.fetch'), variant: 'primary', icon: 'download', loading: wiz.busy, onClick: () => fetchUrl(input.value.trim()) })),
-            wiz.error ? h('p', { class: 'dm-error dm-small', text: wiz.error }) : null,
+            problem(),
             h('p', { class: 'dm-help', text: t('import.url.help') }));
         }
         if (source === 'paste') {
@@ -531,7 +537,7 @@
         pick.value = wiz.boundary || boundaries[0].id;
         pick.addEventListener('change', () => { wiz.boundary = pick.value; });
         return h('div', { class: 'dm-stack' }, dz,
-          wiz.error ? h('p', { class: 'dm-error dm-small', text: wiz.error }) : null,
+          problem(),
           h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('import.folder'), icon: 'folder', title: t('import.folder.hint'), onClick: async () => chooseFiles(await services.files.pick({ directory: true })) })),
           linked.supported() ? h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('linked.pick'), icon: 'link', onClick: pickLinked }), h('span', { class: 'dm-help', text: t('linked.pick.hint') })) : null,
           h('div', { class: 'dm-row-wrap' }, tables.map((p, i) => ui.button({ label: i === 0 ? t('presets.try') : (p.nameKey ? t(p.nameKey) : p.name), 'data-course': i === 0 ? 'example' : null, icon: 'sparkles', onClick: () => importPreset(p) }))),
@@ -547,8 +553,10 @@
         if (!list || !list.length) return;
         // A form or rows from the field are not a table to read: they go where bundles go.
         if (list.length === 1 && /\.(insamling|formular)\.zip$/i.test(list[0].name)) { await D.require('ui/share/bundle').receiveFile(ctx, list[0]); return; }
-        // A QGIS project (with or without its data files) becomes a map view, not a dataset.
+        // A QGIS project (with or without its data files) becomes a map view, not a dataset; the map view belongs to BIM och GIS.
+        wiz.hidden = '';
         const projectFile = list.find((f) => qgis.detect(f));
+        if (projectFile && !tier.shows('import:qgis')) { wiz.error = ''; wiz.hidden = 'import:qgis'; render(); return; }
         if (projectFile) { await openProject(projectFile, list.filter((f) => f !== projectFile)); return; }
         const collection = services.importer.collectionFor(list);
         if (list.length > 1 && !collection) { await sortChosen(list); return; }
@@ -730,7 +738,7 @@
       }
 
       async function runPreview() {
-        wiz.busy = true; wiz.error = ''; render();
+        wiz.busy = true; wiz.error = ''; wiz.hidden = ''; render();
         try {
           const opts = cleanOptions();
           wiz.preview = wiz.file ? await services.importer.preview(wiz.file, opts) : await services.importer.previewText(wiz.text, opts);
@@ -744,7 +752,9 @@
           wiz.step = wiz.step === 'file' ? 'options' : wiz.step;
         } catch (err) {
           wiz.error = (err && err.message) || String(err);
-          shell.log(t('import.error', { message: wiz.error }), 'error');
+          // A file the tier does not read (a BCF file below BIM och GIS) shows the tier's notice, with the way to raise it.
+          if (err && err.tierFeature) { wiz.hidden = err.tierFeature; wiz.step = 'file'; }
+          shell.log(t('import.error', { message: wiz.error }), wiz.hidden ? 'info' : 'error');
         }
         wiz.busy = false; render();
       }

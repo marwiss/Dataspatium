@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'io/importers/access', 'io/importers/documents', 'io/importers/images', 'io/importers/detaljplan', 'io/importers/graph', 'io/importers/model', 'data/plan', 'data/types', 'data/datasets'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, access, documents, images, detaljplanImp, graphImp, modelImp, plan, types, datasets) => {
+  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'io/importers/access', 'io/importers/documents', 'io/importers/images', 'io/importers/detaljplan', 'io/importers/graph', 'io/importers/model', 'data/plan', 'data/types', 'data/datasets', 'platform/tier'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, access, documents, images, detaljplanImp, graphImp, modelImp, plan, types, datasets, tier) => {
     // Documents go before the table-in-document importer: a Word or Markdown file is a document unless "tables" is chosen.
     // The plan importer never detects by extension (resolveImporter sniffs JSON heads for it); it is listed for forced formats.
     const importers = [excel, documents, images, tables, geo, json, xml, sqliteImp, access, shapefile, rFormats, fixedWidth, csv, detaljplanImp, graphImp, modelImp];
@@ -59,6 +59,8 @@
      */
     async function preview(file, options = {}) {
       const importer = await resolveImporter(file, options.format);
+      // A file that only a feature of a higher tier reads (platform/tier, `import:<id>`: BCF files) is refused before it is read.
+      tier.guard('import:' + importer.id);
       const p = await importer.preview(file, options);
       // A GeoPackage in Boverket's ÖP model can be imported whole as a comprehensive plan.
       if (importer === sqliteImp && p.gpkg && plan.isOpGeoPackage(p.tables)) { p.oversiktsplan = true; p.planGpkg = 'oversiktsplan'; }
@@ -201,6 +203,7 @@
 
     async function run(file, options, specs, name, progress) {
       const importer = await resolveImporter(file, options.format);
+      tier.guard('import:' + importer.id);
       // A document or image keeps its kind and its files; the column step does not apply to it.
       if (importer.collection) return importer.importFiles([file], options, name, progress);
       // A digital plan becomes a plan dataset (rows per provision, the original kept); so does an ÖP-model GeoPackage when asked.
