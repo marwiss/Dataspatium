@@ -3,14 +3,17 @@
 /**
  * Geo tab in Analysera, shown when the selected dataset has geometry or coordinates: measures, points in polygons,
  * nearest feature, buffers, overlays, dissolve and simplification (analysis/geo.js with Turf). Every result is a
- * table with a geometry column that can be saved as a dataset and opened as a map.
+ * table with a geometry column that can be saved as a dataset and opened as a map. The tools are the tier's (platform/tier,
+ * the entries `geo:<tool>`): counting places per area is Dokument's, the others belong to BIM och GIS.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/analysis/geo-panel', ['ui/base', 'ui/basic', 'analysis/geo', 'data/datasets', 'viz/leaflet', 'data/boundaries'], (base, basic, geoAnalysis, datasets, leaflet, boundaries) => {
+  D.define('ui/analysis/geo-panel', ['ui/base', 'ui/basic', 'analysis/geo', 'data/datasets', 'viz/leaflet', 'data/boundaries', 'platform/tier'], (base, basic, geoAnalysis, datasets, leaflet, boundaries, tier) => {
     const { h, t, i18n, replace } = base;
     const TOOLS = ['measure', 'points', 'nearest', 'buffer', 'overlay', 'dissolve', 'simplify'];
+    /** The tools the tier in effect shows. */
+    const shownTools = () => TOOLS.filter((id) => tier.shows('geo:' + id));
     const PREVIEW_ROWS = 2000;
 
     const select = basic.select;
@@ -51,7 +54,10 @@
       function center() {
         const head = h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('map', 20), t('geo.title')));
         const tabs = /** @type {any} */ (h('dm-tabs'));
-        tabs.tabs = TOOLS.map((id) => ({ id, label: t('geo.tool.' + id) }));
+        const tools = shownTools();
+        // A tool the tier hides (the first open, or after the tier was lowered) gives way to the first it shows.
+        if (!tools.includes(s.tool)) { s.tool = tools[0] || 'points'; last = null; }
+        tabs.tabs = tools.map((id) => ({ id, label: t('geo.tool.' + id) }));
         tabs.active = s.tool;
         tabs.addEventListener('dm-change', (e) => { s.tool = /** @type {any} */ (e).detail.id; last = null; renderFields(); renderResult(); if (options.rerenderRight) options.rerenderRight(); });
         fieldsEl = h('div', { class: 'dm-stack-sm' });
@@ -105,7 +111,7 @@
 
       async function run() {
         const ds = selected();
-        if (!ds || running) return;
+        if (!ds || running || !tier.shows('geo:' + s.tool)) return;
         running = true; renderFields();
         const my = ++seq;
         const progress = /** @type {any} */ (h('dm-progress', { value: '0', label: t('geo.running') }));

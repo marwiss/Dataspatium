@@ -141,7 +141,7 @@
       assert.ok(ops('table').includes('geo_height') && ops('model').includes('ifc_python'), 'the heights and the model actions');
       assert.equal(kinds.ownView({ kind: 'model' }), 'model');
       assert.ok(!tools.offered().some((x) => x.name === 'server_query'), 'server_query is Experimentell');
-      assert.ok(tier.shows('map.basemap') && tier.shows('view:map') && tier.shows('tab:geo'));
+      assert.ok(tier.shows('map.basemap') && tier.shows('view:map') && tier.shows('geo:buffer'));
       // Tier 1: the same entry points are gone, the rest stays.
       await tier.set('documents');
       await waitFor(() => !has('[data-add-source="geodata"]'), 3000, 'Inhämta redrawn');
@@ -156,7 +156,7 @@
       assert.equal(kinds.ownView({ kind: 'model' }), null, 'a model shows as a table');
       assert.equal(kinds.ownView({ kind: 'plan' }), 'plan', 'the plan map stays in Dokument');
       assert.equal(kinds.ownTab({ kind: 'model' }), 'stats');
-      assert.ok(!tier.shows('map.basemap') && !tier.shows('tab:geo'), 'no service maps, no geo tab');
+      assert.ok(!tier.shows('map.basemap') && !tier.shows('geo:buffer') && tier.shows('tab:geo') && tier.shows('geo:points'), 'no service maps and no geo tools, but the geo tab counts places per area (DS-10)');
       assert.ok(!tier.shows('chart:model') && !tier.shows('chart:profile') && !tier.shows('chart:map') && tier.shows('chart:graph') && tier.shows('chart:vega'), 'the graph and the chart builder (its Vega maps too) stay; the map view, the 3D model and the height profile go');
       // Tier 3: the assistant and the server's graph queries.
       await tier.set('experimental');

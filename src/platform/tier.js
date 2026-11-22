@@ -67,7 +67,10 @@
     const ENTRIES = {
       'kind:model': 'kind.model', 'view:model': 'kind.model', 'tab:model': 'kind.model', 'chart:model': 'kind.model',
       'op:ifc_apply_table': 'kind.model', 'op:ifc_python': 'kind.model', 'op:ifc_changeset': 'kind.model', 'op:ifc_party': 'kind.model',
-      'view:map': 'map.view', 'chart:map': 'map.view', 'tab:geo': 'map.view',
+      // The map view with layers (Bearbeta's and Visualisera's, DS-35) and the Geo tab's tools; counting places per area (the
+      // tool `points`) is DS-10's and stays in Dokument.
+      'view:map': 'map.view', 'chart:map': 'map.view',
+      'geo:measure': 'map.view', 'geo:nearest': 'map.view', 'geo:buffer': 'map.view', 'geo:overlay': 'map.view', 'geo:dissolve': 'map.view', 'geo:simplify': 'map.view',
       'op:geo_height': 'geo.heights', 'op:geo_height_along': 'geo.heights', 'chart:profile': 'geo.heights',
       'source:newmodel': 'source.newmodel', 'source:geodata': 'source.geodata',
       'tool:server_query': 'ai.server-query', 'status:assistant': 'assistant', 'command:assistant': 'assistant',
