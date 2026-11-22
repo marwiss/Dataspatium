@@ -411,6 +411,10 @@
       'src/ui/api/bridge-view.js',
       'src/ui/api/family-dialog.js',
     ] },
+    // GeoTIFF files (the kind raster, B-64): the worker that reads them, on the first file.
+    { name: 'raster', needs: [], scripts: [
+      'src/engines/raster.js',
+    ] },
     { name: 'bearbeta', needs: [], scripts: [
       'src/analysis/text.js',
       'src/analysis/images.js',
