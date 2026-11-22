@@ -2718,6 +2718,7 @@
     'plotly.err.load': 'plotly.js could not be loaded.',
     'plotly.consent.map': 'Map in a plotly chart',
     'plotly.consent.url': 'Image or data in a plotly chart: {url}',
+    'plotly.consent.more': 'and {n} more',
     'plotly.denied.basemaps': 'The map in the chart is not shown without consent to background maps.',
     'plotly.denied.url': 'Images and data from web addresses are not shown in the chart without consent to web addresses.',
     'import.format.documents': 'Documents (PDF, Word, OpenDocument, text, Markdown) as paragraphs',

@@ -104,8 +104,10 @@ PNG, with the interactive view kept as long as plotly.js is available.
 
 A plotly map (for example `px.scatter_geo`, `px.choropleth` and `px.scatter_map`) asks for consent to background maps
 before the map loads, and an image, GeoJSON or anything else the figure fetches from a web address asks for consent to
-web addresses for each host. Without consent the chart is drawn without them, with a line below that says so. In
-published HTML they come along only when the consent is kept.
+web addresses; each purpose is asked once, naming the hosts. Without consent the chart is drawn without them, with a
+line below that says so. In published HTML they come along only when the consent is kept. Formatting in the chart's
+text (`<b>`, `<span>` and the others) keeps only a plain colour: styles, links and other attributes are removed.
+plotly's button for sharing the chart through Plotly's cloud is not there.
 
 ## Python charts in Visualise
 

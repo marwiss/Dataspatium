@@ -7,9 +7,10 @@
  * the first time a plotly figure is shown.
  *
  * A figure is data from the Python worker, and plotly.js fetches on the main thread what it names: a geo map's shapes
- * (plotly's topojson), a map's style and tiles, layout images, GeoJSON by address, and what buttons and sliders bring in.
- * Every drawing works on a copy that prepare() cleans: it asks for background maps for a map and for web addresses per
- * host for the rest, leaves out what is refused and says so.
+ * (plotly's topojson), a map's style, tiles and icons, layout images, GeoJSON by address, and what buttons and sliders bring
+ * in; its text is pseudo-HTML whose styles and links reach the page. Every drawing works on a copy built key by key: text
+ * keeps only bare tags, and prepare() asks once per purpose for the hosts the figure names (background maps, web addresses),
+ * leaves out what is refused or cannot be checked, and says so. Plotly's cloud is never offered.
  */
 (function () {
   'use strict';
@@ -20,37 +21,43 @@
     /** @type {Promise<any>|null} */ let loading = null;
     /** @type {string|null} */ let sourceText = null;
 
-    /** Where plotly.js fetches a geo map's shapes (its default topojsonURL). */
+    // The hosts below were read from plotly.js 4.1.1 (config topojsonURL, src/plots/map/constants.js stylesMap, styles/arcgis-sat*.js
+    // and map.js); the pinned 4.2.0 is taken to be the same. Read them again whenever VERSION changes.
+    /** Where plotly.js fetches a geo map's shapes (its default topojsonURL, https://cdn.plot.ly/un/). */
     const TOPOJSON_HOST = 'cdn.plot.ly';
     /** topojsonURL when that host is not allowed: an asset that does not exist, so a fetch plotly still makes fails in the browser. */
     const NO_TOPOJSON = 'dataspatium-asset://plotly-topojson/';
-    const CARTO = ['basemaps.cartocdn.com', 'tiles.basemaps.cartocdn.com'];
+    /** Every map loads the icons its symbols name and its sprite lacks from jsDelivr (@mapbox/maki). */
+    const MAP_ICONS = 'cdn.jsdelivr.net';
+    // CARTO's bold labels are rewritten to fonts.openmaptiles.org (map.js transformRequest).
+    const CARTO = ['basemaps.cartocdn.com', 'tiles.basemaps.cartocdn.com', 'fonts.openmaptiles.org'];
     const OSM = ['tile.openstreetmap.org', 'fonts.openmaptiles.org'];
-    const ESRI = ['services.arcgisonline.com'];
+    const ORTO = ['server.arcgisonline.com', 'tilemaps.icgc.cat', 'geoserveis.icgc.cat'];
     /** The hosts behind plotly's built-in map styles (MapLibre). */
     const MAP_STYLES = {
       basic: CARTO, streets: CARTO, outdoors: CARTO, light: CARTO, dark: CARTO, 'carto-positron': CARTO, 'carto-darkmatter': CARTO, 'carto-voyager': CARTO,
       'carto-positron-nolabels': CARTO, 'carto-darkmatter-nolabels': CARTO, 'carto-voyager-nolabels': CARTO, 'open-street-map': OSM,
-      'white-bg': ['fonts.openmaptiles.org'], satellite: ESRI, 'satellite-streets': ESRI.concat(CARTO),
+      'white-bg': ['fonts.openmaptiles.org'], satellite: ORTO, 'satellite-streets': ORTO,
     };
-    const ANY_STYLE = Array.from(new Set([].concat(CARTO, OSM, ESRI)));
-    /** Mapbox subplots: their own styles come from Mapbox; these come from others. */
-    const MAPBOX = ['api.mapbox.com'];
-    const MAPBOX_STYLES = { 'open-street-map': OSM, 'white-bg': ['fonts.openmaptiles.org'], 'carto-positron': CARTO, 'carto-darkmatter': CARTO, 'stamen-terrain': ['tiles.stadiamaps.com'], 'stamen-toner': ['tiles.stadiamaps.com'], 'stamen-watercolor': ['tiles.stadiamaps.com'] };
+    const ANY_STYLE = Array.from(new Set([].concat(CARTO, OSM, ORTO)));
     const GEO_TYPES = new Set(['scattergeo', 'choropleth']);
     const MAP_TYPES = new Set(['scattermap', 'choroplethmap', 'densitymap']);
-    const MAPBOX_TYPES = new Set(['scattermapbox', 'choroplethmapbox', 'densitymapbox']);
+    /** Mapbox traces, which plotly.js 4 no longer draws: left out of the copy with the layout's mapbox subplots. */
+    const GONE_TYPES = new Set(['scattermapbox', 'choroplethmapbox', 'densitymapbox']);
     /** The geo layers drawn from the topojson (the frame is not). */
     const GEO_LAYERS = ['showcoastlines', 'showland', 'showocean', 'showlakes', 'showrivers', 'showcountries', 'showsubunits'];
     const GEO_KEY = /^geo\d*$/;
-    const MAP_KEY = /^(map|mapbox)\d*$/;
+    const MAP_KEY = /^map\d*$/;
     const MAX_DEPTH = 40;
+    /** Nothing goes to Plotly's cloud: the Share chart button is off, and its click has no address to post to. */
+    const NO_CLOUD = { showSendToCloud: false, plotlyServerURL: '' };
 
     function available() { return !!globalThis.Plotly; }
 
     /**
      * Load the library (from the component cache or jsDelivr after consent) and return the Plotly object; with `ask: false`
-     * only a consent already kept lets it fetch (platform/components).
+     * only a consent already kept lets it fetch (platform/components). A call that may ask and joins a load that failed only
+     * because it could not ask (a flow at start) loads again, asking.
      * @param {{ask?: boolean, onProgress?: Function}} [options]
      */
     function ensure(options = {}) {
@@ -64,7 +71,8 @@
           return globalThis.Plotly;
         })().catch((err) => { loading = null; throw err; });
       }
-      return loading;
+      if (options.ask === false) return loading;
+      return loading.catch((err) => { if (err && err.name === 'ConsentError' && err.reason === 'unattended') return ensure(options); throw err; });
     }
 
     /** The library's text, for standalone HTML (Publicera); `ask: false` as in ensure(). */
@@ -95,7 +103,7 @@
 
     /** The figure's layout with the app's template (replacing plotly's own) and optional fixed size. */
     function layoutFor(fig, options = {}) {
-      const layout = Object.assign({}, (fig && fig.layout) || {});
+      const layout = { ...((fig && fig.layout) || {}) };
       layout.template = template();
       if (options.width) layout.width = options.width;
       if (options.height) layout.height = options.height;
@@ -103,19 +111,89 @@
       return layout;
     }
 
-    // ---- what a figure fetches ---------------------------------------------------------------------------------
+    // ---- the copy that is drawn -----------------------------------------------------------------------------------
     const isPlain = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
     const typeOf = (trace) => String((isPlain(trace) && trace.type) || 'scatter');
-    /** The figure's traces and layout as a copy of their own; plotly's own template is dropped (the app sets its own). */
-    function copyOf(fig) {
-      const clone = (v) => { try { return structuredClone(v); } catch (_err) { return JSON.parse(JSON.stringify(v)); } };
-      const data = fig && Array.isArray(fig.data) ? clone(fig.data) : [];
-      const layout = fig && isPlain(fig.layout) ? clone(fig.layout) : {};
-      delete layout.template;
-      return { data, layout };
-    }
+    /** A subplot id as plotly reads it (its counterRegex); anything else is drawn in the first one. */
+    const canon = (v, family) => (typeof v === 'string' && new RegExp('^' + family + '([2-9]|[1-9][0-9]+)?$').test(v) ? v : family);
     /** Path segments of an attribute name: 'images[0].source' -> ['images', 'source']. */
     const segments = (key) => String(key).replace(/\[\d+\]/g, '').split('.').filter(Boolean);
+    /** plotly's pseudo-HTML (lib/svg_text_utils): the tags it styles, how it splits a string into tags, and a tag's style. */
+    const TAGS = new Set(['sup', 'sub', 's', 'u', 'b', 'i', 'a', 'span', 'em']);
+    const SPLIT_TAGS = /(<[^<>]*>)/;
+    const ONE_TAG = /^<(\/?)([^ >]*)(\s+(.*))?>$/i;
+    const STYLE = /(^|[\s"'])style\s*=\s*("([^"]*);?"|'([^']*);?')/i;
+    /** A plain colour, the one style a tag keeps: no entity, escape, url() or second declaration fits. */
+    const COLOR = /^\s*color\s*:\s*(#[0-9a-f]{3,8}|[a-z]{3,20}|rgba?\(\s*[\d.]{1,5}%?(\s*,\s*[\d.]{1,5}%?){2,3}\s*\))\s*$/i;
+    const angles = (s) => s.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    /**
+     * Text plotly reads as pseudo-HTML, with every tag it knows rebuilt bare: `<b>`, `<span>` and the rest keep at most a plain
+     * colour, `<br>` and `<extra>` stay, and every other `<` and `>` becomes an entity, which plotly shows as the character. So
+     * no style, link or address reaches the page, also not when a template fills in values (they are cleaned the same way).
+     * @param {string} s @returns {string}
+     */
+    function cleanText(s) {
+      if (s.indexOf('<') < 0 && s.indexOf('>') < 0) return s;
+      return s.split(SPLIT_TAGS).map((part, i) => {
+        const m = i % 2 ? ONE_TAG.exec(part) : null;
+        if (!m) return angles(part);
+        const name = m[2].toLowerCase();
+        if (/^br\/?$/.test(name)) return '<br>';
+        if (name === 'extra') return m[1] ? '</extra>' : '<extra>';
+        if (!TAGS.has(name)) return angles(part);
+        if (m[1]) return `</${name}>`;
+        const style = STYLE.exec(m[4] || '');
+        const color = style ? String(style[3] || style[4] || '').split(';').find((d) => COLOR.test(d)) : null;
+        return color ? `<${name} style="${color.trim()}">` : `<${name}>`;
+      }).join('');
+    }
+    /** MapLibre's comparison operators, the only strings with `<` or `>` a map style needs. */
+    const MAP_OPERATORS = new Set(['<', '<=', '>', '>=']);
+    /** A string in a map's style or layers: MapLibre writes attributions into the page as HTML, so markup becomes plain text. */
+    const cleanMapText = (s) => (MAP_OPERATORS.has(s) || (s.indexOf('<') < 0 && s.indexOf('>') < 0) ? s : angles(s.replace(/<[^<>]*>/g, '')));
+    /** Keys never copied: they would become an object's prototype, or are no plotly attribute at all. */
+    const DROP_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+    /** Where a key leads: inside a map subplot (MapLibre), to an image's own address (checked as an address), or plotly text. */
+    function contextOf(ctx, key) {
+      if (ctx === 'map') return 'map';
+      const parts = segments(key);
+      if (parts.some((p) => MAP_KEY.test(p))) return 'map';
+      return parts[parts.length - 1] === 'source' ? 'source' : ctx;
+    }
+    /**
+     * A copy made key by key: own keys only and never those in DROP_KEYS, no deeper than MAX_DEPTH, and every string cleaned
+     * for where it is drawn.
+     */
+    function cleanCopy(v, ctx, depth) {
+      if (typeof v === 'string') return ctx === 'map' ? cleanMapText(v) : ctx === 'source' ? v : cleanText(v);
+      if (!v || typeof v !== 'object') return v;
+      if (depth > MAX_DEPTH) return null;
+      // Only a source that is an address itself is left as it is; what an object or array under `source` holds is text.
+      if (ctx === 'source') ctx = 'text';
+      if (Array.isArray(v)) return v.map((x) => cleanCopy(x, ctx, depth + 1));
+      if (ArrayBuffer.isView(v)) return /** @type {any} */ (v).slice ? /** @type {any} */ (v).slice() : null;
+      const out = {};
+      for (const k of Object.keys(v)) if (!DROP_KEYS.has(k)) out[k] = cleanCopy(v[k], contextOf(ctx, k), depth + 1);
+      return out;
+    }
+    /**
+     * The figure's traces and layout as such a copy, with plotly's own template dropped (the app sets its own), Mapbox left out,
+     * and each geo and map trace's subplot written as plotly reads it, so the subplot analysed is the one drawn.
+     */
+    function copyOf(fig) {
+      const layout = fig && isPlain(fig.layout) ? cleanCopy(fig.layout, 'text', 0) : {};
+      delete layout.template;
+      for (const k of Object.keys(layout)) if (/^mapbox\d*$/.test(k)) delete layout[k];
+      const data = (fig && Array.isArray(fig.data) ? cleanCopy(fig.data, 'text', 0) : []).filter((tr) => !GONE_TYPES.has(typeOf(tr)));
+      for (const tr of data) {
+        if (!isPlain(tr)) continue;
+        if (GEO_TYPES.has(typeOf(tr))) tr.geo = canon(tr.geo, 'geo');
+        if (MAP_TYPES.has(typeOf(tr))) tr.subplot = canon(tr.subplot, 'map');
+      }
+      return { data, layout };
+    }
+
+    // ---- what a figure fetches -----------------------------------------------------------------------------------
     /**
      * Where a string that plotly loads as an address (an image, GeoJSON) comes from: 'local' for data: and blob:, the host for
      * http and https, and null for anything else, which is never loaded (relative, protocol-relative, file: and the rest).
@@ -129,7 +207,8 @@
     }
     /**
      * A string elsewhere in a figure (a map's style, a button's arguments): the host when it is an http(s) address (mapbox://
-     * is Mapbox's API), '' when it is no address, and null when it would resolve to another host than it names (//host, \\host).
+     * is Mapbox's API), '' when it is no address, and null when it cannot be checked: it would resolve to another host than it
+     * names (//host, \\host), or, in a map, it is a data: or blob: address whose content names hosts of its own.
      */
     function looseHost(value, map) {
       const first = value.charCodeAt(0);
@@ -137,44 +216,38 @@
       if (value.indexOf(':') < 0 && first > 0x20 && first !== 0x2f && first !== 0x5c) return '';
       const s = value.replace(/[\t\n\r]/g, '').replace(/^[\x00-\x20]+/, '');
       if (/^[\\/]{2}/.test(s)) return null;
+      if (map && /^(data|blob):/i.test(s)) return null;
       if (!/^(https?|mapbox):/i.test(s)) return '';
-      if (/^mapbox:/i.test(s)) return map ? MAPBOX[0] : '';
+      if (/^mapbox:/i.test(s)) return map ? 'api.mapbox.com' : '';
       try { return new URL(s).host || null; } catch (_err) { return null; }
     }
     /** The hosts a map style needs: a built-in name's provider, an address's host, or (for a style object) none of its own. */
-    function styleHosts(style, mapbox) {
+    function styleHosts(style) {
       const name = style === undefined || style === null || style === '' ? 'basic' : style;
       if (typeof name !== 'string') return [];
       const host = looseHost(name, true);
       if (host) return [host];
-      if (mapbox) return MAPBOX_STYLES[name] || MAPBOX;
       return MAP_STYLES[name] || ANY_STYLE;
     }
-    /** Every address in a value, by host, into `out`; an address that names a host it would not go to blocks. */
+    /** Every address in a value, by host, into `out`; an address that cannot be checked blocks. */
     function addressesIn(value, map, out, depth = 0) {
       if (depth > MAX_DEPTH) { out.blocked = true; return; }
       if (typeof value === 'string') { const host = looseHost(value, map); if (host === null) out.blocked = true; else if (host) out.hosts.add(host); return; }
       if (Array.isArray(value)) { for (const v of value) addressesIn(v, map, out, depth + 1); return; }
       if (isPlain(value)) for (const k of Object.keys(value)) addressesIn(value[k], map, out, depth + 1);
     }
-    /** What a map subplot fetches: its style's hosts and every address in its layers. */
+    /** What a map subplot fetches: its style's hosts, the icons' host and every address in its style and layers. */
     function mapNeeds(layout, id) {
       const sub = isPlain(layout[id]) ? layout[id] : {};
-      const mapbox = id.startsWith('mapbox');
-      const out = { hosts: new Set(styleHosts(sub.style, mapbox)), blocked: false };
+      const out = { hosts: new Set(styleHosts(sub.style).concat(MAP_ICONS)), blocked: false };
       addressesIn(sub, true, out);
       return out;
     }
-    const familyOf = (type) => (GEO_TYPES.has(type) ? 'geo' : MAP_TYPES.has(type) ? 'map' : MAPBOX_TYPES.has(type) ? 'mapbox' : '');
-    /** The subplot a geo or map trace is drawn in ('geo2', 'map'), as plotly reads it. */
-    function subplotOf(trace, family) {
-      const v = trace[family === 'geo' ? 'geo' : 'subplot'];
-      return typeof v === 'string' && new RegExp('^' + family + '\\d*$').test(v) ? v : family;
-    }
+    const familyOf = (type) => (GEO_TYPES.has(type) ? 'geo' : MAP_TYPES.has(type) ? 'map' : '');
 
     /**
      * What a button's or a slider step's arguments would bring in when clicked: the background maps of the geo and map
-     * subplots they touch, the hosts of the addresses they name, and whether they name an address that is never loaded.
+     * subplots they touch, the hosts of the addresses they name, and whether they name an address that cannot be checked.
      */
     function argsNeeds(args, layout) {
       const out = { basemaps: new Set(), url: new Set(), blocked: false };
@@ -186,21 +259,23 @@
         for (const h of m.hosts) out.basemaps.add(h);
         if (m.blocked) out.blocked = true;
       };
+      /** A trace turned into a map trace keeps its own subplot: every map the layout has may be drawn. */
+      const addAllMaps = () => { for (const id of ['map'].concat(Object.keys(layout).filter((k) => canon(k, 'map') === k))) addMap(id); };
       /** What an attribute path says by itself (a geo or map subplot, a source), worked out once per key. */
       const at = (path) => {
         const last = path[path.length - 1] || '';
         const mapAt = path.findIndex((p) => MAP_KEY.test(p));
         if (path.some((p) => GEO_KEY.test(p)) || last === 'locations' || last === 'locationmode') out.basemaps.add(TOPOJSON_HOST);
         if (mapAt >= 0) addMap(path[mapAt]);
-        return { last, map: mapAt >= 0, mapbox: mapAt >= 0 && path[mapAt].startsWith('mapbox'), style: last === 'style' && mapAt >= 0 && mapAt === path.length - 2 };
+        return { last, map: mapAt >= 0, style: last === 'style' && mapAt >= 0 && mapAt === path.length - 2 };
       };
       const leaf = (v, c) => {
         if (c.last === 'type' && GEO_TYPES.has(v)) out.basemaps.add(TOPOJSON_HOST);
-        if (c.last === 'type' && (MAP_TYPES.has(v) || MAPBOX_TYPES.has(v))) addMap(MAP_TYPES.has(v) ? 'map' : 'mapbox');
-        if (c.last === 'subplot' && typeof v === 'string' && MAP_KEY.test(v)) addMap(v);
+        if (c.last === 'type' && MAP_TYPES.has(v)) addAllMaps();
+        if (c.last === 'subplot') addMap(canon(v, 'map'));
         if (typeof v !== 'string') return;
         if (c.map) {
-          if (c.style) for (const h of styleHosts(v, c.mapbox)) out.basemaps.add(h);
+          if (c.style) for (const h of styleHosts(v)) out.basemaps.add(h);
           const host = looseHost(v, true);
           if (host === null) out.blocked = true; else if (host) out.basemaps.add(host);
         } else if (c.last === 'source' || c.last === 'geojson') {
@@ -241,17 +316,17 @@
       const geo = data.map((tr, i) => (familyOf(typeOf(tr)) === 'geo' ? i : -1)).filter((i) => i >= 0);
       if (geo.length) {
         parts.push({ kind: 'basemaps', blocked: false, asks: [{ purpose: 'basemaps', hosts: [TOPOJSON_HOST] }], drop(out) {
-          const ids = new Set(geo.map((i) => subplotOf(data[i], 'geo')).concat(Object.keys(layout).filter((k) => GEO_KEY.test(k))));
+          const ids = new Set(geo.map((i) => data[i].geo).concat(Object.keys(layout).filter((k) => GEO_KEY.test(k))));
           for (const id of ids) { const g = isPlain(layout[id]) ? layout[id] : {}; for (const k of GEO_LAYERS) g[k] = false; layout[id] = g; }
           for (const i of geo) { const tr = data[i]; if (tr.locations !== undefined || tr.locationmode !== undefined || tr.geojson !== undefined) out.traces.add(i); }
         } });
       }
-      // Maps (MapLibre and Mapbox), one subplot at a time: the style, its tiles and glyphs, and the layers' sources.
+      // Maps (MapLibre), one subplot at a time: the style, its tiles, glyphs and icons, and the layers' sources.
       const maps = new Map();
-      data.forEach((tr, i) => { const family = familyOf(typeOf(tr)); if (family !== 'map' && family !== 'mapbox') return; const id = subplotOf(tr, family); if (!maps.has(id)) maps.set(id, []); maps.get(id).push(i); });
+      data.forEach((tr, i) => { if (familyOf(typeOf(tr)) !== 'map') return; const id = tr.subplot; if (!maps.has(id)) maps.set(id, []); maps.get(id).push(i); });
       for (const [id, traces] of maps) {
         const needs = mapNeeds(layout, id);
-        parts.push({ kind: 'basemaps', blocked: needs.blocked, asks: needs.hosts.size ? [{ purpose: 'basemaps', hosts: Array.from(needs.hosts) }] : [], drop(out) { for (const i of traces) out.traces.add(i); delete layout[id]; } });
+        parts.push({ kind: 'basemaps', blocked: needs.blocked, asks: [{ purpose: 'basemaps', hosts: Array.from(needs.hosts) }], drop(out) { for (const i of traces) out.traces.add(i); delete layout[id]; } });
       }
       // Layout images: only data: and blob: are drawn as they are; an http(s) address after consent.
       if (layout.images !== undefined && !Array.isArray(layout.images)) delete layout.images;
@@ -289,17 +364,14 @@
     /** A copy of the figure with its parts. */
     function analyze(fig) { const figure = copyOf(fig); return { figure, parts: partsOf(figure) }; }
 
-    /** The questions for some parts: background maps once per map (its hosts together), then web addresses once per host. */
+    /** The questions for some parts: one per purpose (background maps, then web addresses) with every host it names. */
     function questionsOf(parts) {
-      const out = []; const seen = new Set();
-      const asks = parts.filter((p) => !p.blocked).flatMap((p) => p.asks);
-      for (const purpose of ['basemaps', 'url']) {
-        for (const q of asks.filter((a) => a.purpose === purpose)) {
-          const key = purpose + ' ' + q.hosts.slice().sort().join(' ');
-          if (!seen.has(key)) { seen.add(key); out.push(q); }
-        }
+      const hosts = { basemaps: new Set(), url: new Set() }; const address = {};
+      for (const q of parts.filter((p) => !p.blocked).flatMap((p) => p.asks)) {
+        for (const h of q.hosts) hosts[q.purpose].add(h);
+        if (q.address && !address[q.purpose]) address[q.purpose] = q.address;
       }
-      return out;
+      return ['basemaps', 'url'].filter((p) => hosts[p].size).map((purpose) => ({ purpose, hosts: Array.from(hosts[purpose]), address: address[purpose] }));
     }
 
     /**
@@ -334,8 +406,8 @@
     /**
      * A copy of the figure without what may not be fetched: a refused or missing consent removes the geo map's shapes (and the
      * traces placed by name or code), a map with its traces, an image, a trace with GeoJSON or a picture by address, or a
-     * button or slider step that would bring them in; an address that is never loaded is removed always. Pure: nothing is
-     * asked or drawn.
+     * button or slider step that would bring them in; what cannot be checked is removed always. Its text keeps only bare tags.
+     * Pure: nothing is asked or drawn.
      * @param {any} fig figure JSON ({data, layout})
      * @param {{basemaps?: true|Set<string>, url?: true|Set<string>}} [allowed] the hosts allowed per purpose (true for all)
      * @returns {{figure: {data: any[], layout: any}, removed: {basemaps: boolean, url: boolean}, topojson: boolean}}
@@ -347,10 +419,16 @@
       return [removed.basemaps ? D.t('plotly.denied.basemaps') : '', removed.url ? D.t('plotly.denied.url') : ''].filter(Boolean).join(' ');
     }
 
+    /** The hosts of a question as the dialog shows them: the first three, and how many more. */
+    function hostList(hosts) {
+      return hosts.slice(0, 3).join(', ') + (hosts.length > 3 ? ' ' + D.t('plotly.consent.more', { n: hosts.length - 3 }) : '');
+    }
+
     /**
-     * A copy of the figure that may be drawn now: the consents it needs are asked first (background maps per map, web
-     * addresses per host) and what is refused is left out. With `ask: false` nothing is asked and only a purpose that is
-     * allowed for good counts (published HTML, which is drawn later and elsewhere).
+     * A copy of the figure that may be drawn now: the consents it needs are asked first, at most one question per purpose
+     * (background maps, then web addresses) naming its hosts, and what is refused is left out. Each question carries every
+     * host (`hosts`), so a consent kept per host can answer it host by host. With `ask: false` nothing is asked and only a
+     * purpose that is allowed for good counts (published HTML, which is drawn later and elsewhere; a flow at start).
      * @param {any} fig figure JSON ({data, layout}) @param {{ask?: boolean}} [options]
      * @returns {Promise<{figure: {data: any[], layout: any}, removed: {basemaps: boolean, url: boolean}, topojson: boolean, notice: string}>}
      */
@@ -361,17 +439,12 @@
       if (options.ask === false) {
         for (const purpose of ['basemaps', 'url']) if ((await consent.state(purpose)) === 'granted') allowed[purpose] = true;
       } else {
-        const refused = new Set();
         for (const q of questionsOf(analysed.parts)) {
-          const set = /** @type {Set<string>} */ (allowed[q.purpose]);
-          const hosts = q.hosts.filter((h) => !set.has(h));
-          if (!hosts.length || hosts.some((h) => refused.has(q.purpose + ' ' + h))) continue;
-          const label = q.purpose === 'basemaps' ? D.t('plotly.consent.map') : D.t('plotly.consent.url', { url: String(q.address || hosts[0]).slice(0, 200) });
+          const label = q.purpose === 'basemaps' ? D.t('plotly.consent.map') : D.t('plotly.consent.url', { url: String(q.address || q.hosts[0]).slice(0, 200) });
           try {
-            await consent.require(q.purpose, { host: hosts.join(', '), label });
-            for (const h of hosts) set.add(h);
+            await consent.require(q.purpose, { host: hostList(q.hosts), hosts: q.hosts.slice(), label });
+            for (const h of q.hosts) /** @type {Set<string>} */ (allowed[q.purpose]).add(h);
           } catch (err) {
-            for (const h of hosts) refused.add(q.purpose + ' ' + h);
             if (!err || err.name !== 'ConsentError') console.error('[plotly] consent failed', err);
           }
         }
@@ -380,8 +453,15 @@
       return Object.assign(ready, { notice: noticeFor(ready.removed) });
     }
 
-    /** plotly's config for a prepared figure: a geo map whose shapes are not allowed gets an address that fetches nothing. */
-    function configFor(ready, config) { return ready.topojson ? config : Object.assign(config, { topojsonURL: NO_TOPOJSON }); }
+    /**
+     * plotly's config for a prepared figure: never a way to Plotly's cloud, and a geo map whose shapes are not allowed gets an
+     * address that fetches nothing.
+     */
+    function configFor(ready, config) {
+      Object.assign(config, NO_CLOUD);
+      if (!ready.topojson) config.topojsonURL = NO_TOPOJSON;
+      return config;
+    }
 
     /**
      * Draw a figure into an element. Returns a handle with finalize() that frees the plot; when something was left out
@@ -391,7 +471,7 @@
     async function render(el, fig, options = {}) {
       const Plotly = await ensure();
       const ready = await prepare(fig);
-      await Plotly.newPlot(el, ready.figure.data, layoutFor(ready.figure, options), configFor(ready, { responsive: !options.width, displaylogo: false, modeBarButtonsToRemove: ['sendDataToCloud', 'lasso2d', 'select2d'] }));
+      await Plotly.newPlot(el, ready.figure.data, layoutFor(ready.figure, options), configFor(ready, { responsive: !options.width, displaylogo: false, modeBarButtonsToRemove: ['sendChartToCloud', 'sendDataToCloud', 'lasso2d', 'select2d'] }));
       let note = null;
       if (ready.notice && el.parentNode) {
         note = document.createElement('p');
@@ -451,9 +531,9 @@
     async function htmlFor(id, fig, options = {}) {
       const ready = await prepare(fig, { ask: false });
       const json = (v) => JSON.stringify(v).replace(/</g, '\\u003c');
-      return `<div id="${id}" class="dm-plotly"></div><script>Plotly.newPlot(${json(id)}, ${json(ready.figure.data)}, ${json(layoutFor(ready.figure, options))}, ${json(configFor(ready, { responsive: true, displaylogo: false }))});</script>`;
+      return `<div id="${id}" class="dm-plotly"></div><script>Plotly.newPlot(${json(id)}, ${json(ready.figure.data)}, ${json(layoutFor(ready.figure, options))}, ${json(configFor(ready, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ['sendChartToCloud', 'sendDataToCloud'] }))});</script>`;
     }
 
-    return { VERSION, SPEC, TOPOJSON_HOST, NO_TOPOJSON, available, ensure, source, template, layoutFor, requests, sanitize, prepare, render, toBlob, htmlFor, dataUrlToBlob };
+    return { VERSION, SPEC, TOPOJSON_HOST, NO_TOPOJSON, MAP_ICONS, available, ensure, source, template, layoutFor, requests, sanitize, prepare, render, toBlob, htmlFor, dataUrlToBlob };
   });
 })();

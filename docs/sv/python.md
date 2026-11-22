@@ -103,8 +103,10 @@ interaktiva vyn kvar så länge plotly.js finns.
 
 En plotly-karta (till exempel `px.scatter_geo`, `px.choropleth` och `px.scatter_map`) frågar om samtycke till
 bakgrundskartor innan kartan laddas, och en bild, GeoJSON eller annat som figuren hämtar från en webbadress frågar om
-samtycke till webbadresser för varje värd. Utan samtycke ritas diagrammet utan dem, med en rad under som säger det.
-I publicerad HTML följer de med bara när samtycket är sparat.
+samtycke till webbadresser; varje ändamål frågas en gång, med värdarna i frågan. Utan samtycke ritas diagrammet utan
+dem, med en rad under som säger det. I publicerad HTML följer de med bara när samtycket är sparat. Formatering i
+diagrammets text (`<b>`, `<span>` och de andra) behåller bara en ren färg: stilar, länkar och andra attribut tas bort.
+plotlys knapp för att dela diagrammet via Plotlys moln finns inte.
 
 ## Python-diagram i Visualisera
 
