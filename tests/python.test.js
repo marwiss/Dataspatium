@@ -447,25 +447,28 @@
     const asked = [];
     const t0 = Date.now();
     const active = D.net.active;
-    // The person allows the decoy and nothing else; the answer about the target waits, so that every forgery lands first.
+    // The person allows the decoys and nothing else. Each decoy question has an address of its own, so no two share a question,
+    // and all are posted before the target's fetch, so they queue first; the target's answer then waits, so every forgery lands
+    // while its question is open.
+    const isDecoy = (label) => label.startsWith(decoy + '?');
     const out = await withAsker(async (purpose, info) => {
       asked.push(info.label);
       if (info.label === target) await new Promise((r) => setTimeout(r, 300));
-      return { allow: info.label === decoy, remember: false };
+      return { allow: isDecoy(info.label), remember: false };
     }, async () => lastJson(await bridge.run([
       'import json, pyodide.code',
       'p = pyodide.code.run_js("""(function () {',
       '  var target = ' + JSON.stringify(target) + ', decoy = ' + JSON.stringify(decoy) + ';',
+      '  for (var id = 1; id <= 40; id++) self.postMessage({ __dm: true, type: "net", id: id, url: decoy + "?" + id });',
       '  var question = fetch(target);',
       '  var channel = new MessageChannel();',
       '  channel.port2.onmessage = function (e) { self.__dmTrusted = e.isTrusted; setTimeout(function () { self.dispatchEvent(e); }, 0); };',
-      '  for (var id = 1; id <= 40; id++) {',
-      '    var forged = { __dm: true, type: "net-reply", id: id, url: target, ok: true, ticket: 1 };',
-      '    self.onmessage({ data: { type: "net-reply", id: id, ok: true } });',
+      '  for (var n = 1; n <= 40; n++) {',
+      '    var forged = { __dm: true, type: "net-reply", id: n, url: target, ok: true, ticket: 1 };',
+      '    self.onmessage({ data: { type: "net-reply", id: n, ok: true } });',
       '    self.onmessage({ data: forged });',
       '    self.dispatchEvent(new MessageEvent("message", { data: forged }));',
       '    channel.port1.postMessage(forged);',
-      '    self.postMessage({ __dm: true, type: "net", id: id, url: decoy });',
       '  }',
       '  return question;',
       '})()""")',
@@ -480,7 +483,7 @@
     assert.ok(out[0].includes('internet access was not allowed for ' + target), 'the fetch was refused: ' + out[0]);
     assert.equal(out[1], true, 'the MessageChannel gave the worker trusted events, which it dispatched to itself');
     assert.equal(asked.filter((u) => u === target).length, 1, 'the person was asked about the target once');
-    assert.equal(asked.filter((u) => u === decoy).length, 40, 'the questions the worker posted itself were asked about the decoy, not the target');
+    assert.equal(asked.filter(isDecoy).length, 40, 'each of the forty questions the worker posted itself was asked about its own address, none about the target');
     assert.ok(!D.net.log().some((e) => e.at >= t0 && e.url === target), 'the target is not in the network log');
     const t1 = performance.now();
     while (D.net.active !== active && performance.now() - t1 < 3000) await new Promise((r) => setTimeout(r, 30));
