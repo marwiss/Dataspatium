@@ -37,10 +37,13 @@
         if (model.isDxf(meta)) {
           const blob = await draw.toBlob(chart, 'svg', {});
           if (my !== seq) return;
-          const doc = new DOMParser().parseFromString(await blob.text(), 'image/svg+xml');
-          const svg = document.importNode(doc.documentElement, true);
-          svg.setAttribute('class', 'dm-dxf-svg');
-          replace(preview, svg);
+          // The drawing as a picture, not as SVG in the page: nothing in a picture can run or load.
+          const url = URL.createObjectURL(blob);
+          const img = h('img', { src: url, alt: chart.name || '', class: 'dm-model-picture', 'data-model-drawing': '' });
+          const free = () => URL.revokeObjectURL(url);
+          img.addEventListener('load', free, { once: true });
+          img.addEventListener('error', free, { once: true });
+          replace(preview, img);
           info.textContent = t('model.entities.n', { n: i18n.formatNumber((meta && meta.rowCount) || 0) });
           return;
         }

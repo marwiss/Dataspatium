@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/model', ['data/datasets', 'data/dataset-files', 'data/ifc-step', 'data/dxf'], (datasets, files, step, dxf) => {
+  D.define('data/model', ['data/datasets', 'data/dataset-files', 'data/ifc-step', 'data/dxf', 'platform/text'], (datasets, files, step, dxf, markup) => {
     const IFC_COLUMNS = [{ name: 'id', type: 'integer' }, { name: 'guid', type: 'text' }, { name: 'typ', type: 'text' }, { name: 'kategori', type: 'text' }, { name: 'namn', type: 'text' }, { name: 'beskrivning', type: 'text' }, { name: 'objekttyp', type: 'text' }, { name: 'tagg', type: 'text' }, { name: 'vaning', type: 'text' }, { name: 'typnamn', type: 'text' }, { name: 'material', type: 'text' }, { name: 'klassificering', type: 'text' }, { name: 'egenskaper', type: 'text' }, { name: 'mangder', type: 'text' }];
     const DXF_COLUMNS = [{ name: 'id', type: 'integer' }, { name: 'typ', type: 'text' }, { name: 'lager', type: 'text' }, { name: 'farg', type: 'text' }, { name: 'langd', type: 'number' }, { name: 'area', type: 'number' }, { name: 'text', type: 'text' }, { name: 'x', type: 'number' }, { name: 'y', type: 'number' }];
     const PROPERTY_FIELDS = ['id', 'uppsattning', 'namn', 'varde', 'tal', 'enhet', 'kalla'];
@@ -137,10 +137,62 @@
       const f = await files.read(id, list[0].name, 'original');
       return f ? { name: list[0].name, bytes: f.bytes } : null;
     }
-    /** The SVG drawing of a DXF dataset. */
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const NUM = '[-+]?(?:\\d+\\.?\\d*|\\.\\d+)(?:e[-+]?\\d+)?';
+    const NUMBER = new RegExp(`^${NUM}$`, 'i');
+    const ROTATE = new RegExp(`^rotate\\(\\s*${NUM}(?:[\\s,]+${NUM}[\\s,]+${NUM})?\\s*\\)$`, 'i');
+    const num = (v) => (NUMBER.test(v) ? v : null);
+    const paint = (v) => (/^(?:#[0-9a-f]{6}|none|currentcolor)$/i.test(v) ? v : null);
+    /** What each element of a drawing may hold: its attributes with their checks, and the elements inside it. */
+    const DRAWING = {
+      g: { attrs: { 'data-layer': (v) => v, 'data-id': (v) => (/^\d{1,9}$/.test(v) ? v : null), display: (v) => (v === 'none' ? v : null), stroke: paint, fill: paint, color: paint }, kids: ['g', 'path', 'circle', 'text'] },
+      path: { attrs: { d: (v) => (/^[MLZ0-9eE.,\s+-]+$/i.test(v) ? v : null) }, fixed: ' vector-effect="non-scaling-stroke"', kids: [] },
+      circle: { attrs: { cx: num, cy: num, r: num }, fixed: ' vector-effect="non-scaling-stroke"', kids: [] },
+      text: { attrs: { x: num, y: num, 'font-size': num, transform: (v) => (ROTATE.test(v) ? v : null) }, fixed: ' fill="currentColor" stroke="none"', kids: [], text: true },
+    };
+    /** @type {{raw: string, clean: string|null}|null} */ let lastDrawing = null;
+    /**
+     * A drawing as the app's own DXF reader writes it (data/dxf), rebuilt from that alone: groups by layer and object, paths,
+     * points and texts, with numbers, path data, #rrggbb colours, rotations and the layer's name as attributes, and the text as
+     * text. Everything else in a stored drawing (scripts, pictures, links, styles, other elements and attributes) is left out,
+     * because a dataset from a package, a workspace or GitHub carries the drawing as it was stored. The converter's own style
+     * rule becomes attributes, so that nothing in the drawing can style the page around it. Null when it is not an SVG.
+     * @param {string} raw @returns {string|null}
+     */
+    function cleanDrawing(raw) {
+      if (lastDrawing && lastDrawing.raw === raw) return lastDrawing.clean;
+      const doc = new DOMParser().parseFromString(String(raw || ''), 'image/svg+xml');
+      const root = doc.documentElement;
+      let clean = null;
+      if (root && root.namespaceURI === SVG_NS && root.localName === 'svg' && !doc.getElementsByTagName('parsererror').length) {
+        const box = String(root.getAttribute('viewBox') || '').trim().split(/[\s,]+/);
+        const viewBox = box.length === 4 && box.every((p) => NUMBER.test(p)) ? box.join(' ') : '0 0 1 1';
+        const out = [`<svg xmlns="${SVG_NS}" viewBox="${viewBox}" stroke="currentColor" fill="none" stroke-width="1" font-family="sans-serif">`];
+        const write = (el, depth) => {
+          const rule = DRAWING[el.localName];
+          if (!rule || el.namespaceURI !== SVG_NS || depth > 64) return;
+          let attrs = '';
+          for (const [name, check] of Object.entries(rule.attrs)) {
+            if (!el.hasAttribute(name)) continue;
+            const v = check(String(el.getAttribute(name)).trim());
+            if (v !== null) attrs += ` ${name}="${markup.escapeHtml(v)}"`;
+          }
+          out.push(`<${el.localName}${attrs}${rule.fixed || ''}>`);
+          if (rule.text) out.push(markup.escapeHtml(el.textContent || ''));
+          else for (const kid of Array.from(el.children)) if (rule.kids.includes(kid.localName)) write(kid, depth + 1);
+          out.push(`</${el.localName}>`);
+        };
+        for (const kid of Array.from(root.children)) if (kid.localName === 'g') write(kid, 0);
+        out.push('</svg>');
+        clean = out.join('');
+      }
+      lastDrawing = { raw, clean };
+      return clean;
+    }
+    /** The SVG drawing of a DXF dataset, rebuilt from what the DXF reader writes (cleanDrawing), or null. */
     async function drawing(id) {
       const f = await files.read(id, 'ritning.svg', 'preview');
-      return f ? new TextDecoder().decode(f.bytes) : null;
+      return f ? cleanDrawing(new TextDecoder().decode(f.bytes)) : null;
     }
     async function rowsOf(id, sql) {
       const handle = await datasets.ensureOpen(id);
@@ -173,6 +225,6 @@
       return parts.length ? ' where ' + parts.join(' and ') : '';
     }
 
-    return { IFC_COLUMNS, DXF_COLUMNS, PROPERTY_FIELDS, QUANTITY_FIELDS, ENTITY_FIELDS, isModel, isDxf, createIfcDataset, createDxfDataset, replaceOriginal, raiseMaxId, original, drawing, element, properties, quantities, whereOf, rowsOf };
+    return { IFC_COLUMNS, DXF_COLUMNS, PROPERTY_FIELDS, QUANTITY_FIELDS, ENTITY_FIELDS, isModel, isDxf, createIfcDataset, createDxfDataset, replaceOriginal, raiseMaxId, original, drawing, cleanDrawing, element, properties, quantities, whereOf, rowsOf };
   });
 })();
