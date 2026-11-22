@@ -279,7 +279,8 @@
        */
       async collectPlots() {
         if (!this.engine || (!this.mplReady && !this.plotlyReady)) return [];
-        return (await this.engine.evalJson('_dataspatium._plot_collect()')) || [];
+        // Part of the command that drew them: collecting does not end a refusal of the worker's internet questions.
+        return (await this.engine.evalJson('_dataspatium._plot_collect()', { sameCommand: true })) || [];
       }
 
       /**

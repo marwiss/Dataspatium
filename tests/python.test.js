@@ -135,6 +135,30 @@
     return 'ok';
   }, 30000);
 
+  test('python: once the person refuses one of the worker\'s questions about the internet, its next ones are refused unasked until the next command, which the plots collected after a run are not', async (assert) => {
+    // No Pyodide: the engine's own bookkeeping, with a worker that only takes the requests.
+    const { PythonEngine } = D.require('engines/python');
+    const engine = new PythonEngine();
+    const posted = [];
+    engine.worker = { postMessage: (m) => posted.push(m.type), terminate() {} };
+    const asked = [];
+    let allow = false;
+    const out = await withAsker(async (purpose, info) => { asked.push(info.label); return { allow, remember: false }; }, async () => {
+      const seen = [await engine.allowNet('http://127.0.0.1:9/one'), await engine.allowNet('http://127.0.0.1:9/two')];
+      engine.evalJson('_dataspatium._plot_collect()', { sameCommand: true }).catch(() => {});
+      seen.push(await engine.allowNet('http://127.0.0.1:9/three'));
+      allow = true;
+      engine.run('x = 1').catch(() => {});
+      seen.push(await engine.allowNet('http://127.0.0.1:9/four'));
+      return seen;
+    });
+    engine.worker = null;
+    assert.deepEqual(out, [false, false, false, true], 'refused, refused unasked twice, then asked and allowed');
+    assert.deepEqual(asked, ['http://127.0.0.1:9/one', 'http://127.0.0.1:9/four'], 'the person was asked before the refusal and after the next command only');
+    assert.deepEqual(posted, ['eval', 'run'], 'the plots were collected and the command sent to the worker');
+    return 'ok';
+  });
+
   test('python: Pyodide starts from pinned components, dm_read restores types, figures export and dm_write creates a dataset', async (assert) => {
     if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them from jsDelivr)';
     real = true;
