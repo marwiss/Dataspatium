@@ -434,8 +434,7 @@
      */
     function create(input) {
       const entries = input.items.map((x) => x.meta);
-      const boxes = entries.map(boundsOf).filter(Boolean).map(boxOf);
-      const extent = boxes.length ? [Math.min(...boxes.map((b) => b[0])), Math.min(...boxes.map((b) => b[1])), Math.max(...boxes.map((b) => b[2])), Math.max(...boxes.map((b) => b[3]))] : null;
+      const extent = kinds.rasterExtent(entries);
       /** @type {RasterMeta} */
       const raster = {
         version: 1, count: entries.length, extent, attribution: input.attribution ? String(input.attribution).slice(0, 200) : null, license: input.license || null,
@@ -501,15 +500,17 @@
         .filter(Boolean).join('\r\n') + '\r\n';
     }
     /**
-     * A raster's map image for Exportera: every placed file's preview written as a GeoTIFF in Web Mercator (`<name>.tif`, 8-bit RGBA)
-     * in a ZIP, with `kreditering.txt` beside them when there is an attribution or a licence.
+     * A raster's map image for Exportera: the preview of every placed file that the table still lists, written as a GeoTIFF in Web
+     * Mercator (`<name>.tif`, 8-bit RGBA) in a ZIP, with `kreditering.txt` beside them when there is an attribution or a licence.
      * @param {string} id @param {any} [meta] the dataset's meta (read when left out) @returns {Promise<Blob>}
      */
     async function geoTiffZip(id, meta) {
       const m = meta && meta.raster ? meta : await datasets.get(id);
       const raster = (m && m.raster) || {};
+      const names = await dsFiles.listed(id);
+      const files = (raster.files || []).filter((f) => f && (!names || names.has(String(f.name))));
       const out = {};
-      for (const f of raster.files || []) {
+      for (const f of files) {
         const b = boundsOf(f);
         if (!b || !f.preview.width || !f.preview.height) continue;
         const got = await dsFiles.read(id, f.name, 'preview');
@@ -523,7 +524,7 @@
         out[path] = bytes;
       }
       if (!Object.keys(out).length) throw new Error(t('export.err.nofiles'));
-      const credit = creditText(raster, m && m.source);
+      const credit = creditText(Object.assign({}, raster, { files }), m && m.source);
       if (credit) out['kreditering.txt'] = credit;
       return D.require('platform/storage/zip').createZip(out, { level: 0 });
     }

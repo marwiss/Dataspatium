@@ -266,10 +266,34 @@
       if (tables.includes(FILES) && fileColumn) await engine.run(`delete from ${FILES} where name not in (select ${q(fileColumn)} from data)`);
     }
 
+    /**
+     * A raster's copy holds only the files its table still lists, since the table is the list of files (B-64): a row deleted or left
+     * out of the selection takes its file's original, preview and thumbnail along, and `_meta.raster` (with its count and extent)
+     * and the source name only the files left. Nothing is pruned when `fil` was changed or dropped in the copy, whose names then no
+     * longer say which file a row is.
+     * @param {any} engine the copy's @param {any} [tr]
+     */
+    async function pruneRaster(engine, tr = {}) {
+      const raster = await metaValue(engine, 'raster');
+      if (!raster || !Array.isArray(raster.files)) return;
+      if ((tr.drop || []).concat(tr.hash || [], tr.mask || []).includes('fil')) return;
+      const info = await engine.exec('pragma table_info(data)');
+      if (!(info[0] ? info[0].values : []).some((row) => String(row[1]) === 'fil')) return;
+      const r = await engine.exec('select distinct fil from data where fil is not null');
+      const names = new Set((r[0] ? r[0].values : []).map((row) => String(row[0])));
+      if ((await tablesIn(engine)).includes(FILES)) await engine.run(`delete from ${FILES} where name not in (select fil from data where fil is not null)`);
+      const files = raster.files.filter((f) => f && names.has(String(f.name)));
+      if (files.length === raster.files.length) return;
+      await setMeta(engine, 'raster', Object.assign({}, raster, { files, count: files.length, extent: kinds.rasterExtent(files) }));
+      const source = await metaValue(engine, 'source');
+      if (source && Array.isArray(source.files)) await setMeta(engine, 'source', Object.assign({}, source, { files: source.files.filter((f) => f && names.has(String(f.name))) }));
+    }
+
     /** The choices outside the columns of the main table, on the engine of the copy. */
     async function applyParts(engine, tr) {
       const tables = await tablesIn(engine);
       if (tr.only && tr.only.length) await keepOnly(engine, tables, tr.only);
+      await pruneRaster(engine, tr);
       for (const name of tr.mask || []) await engine.run(`update data set ${q(name)} = dm_mask_personal(${q(name)}) where dm_has_personal(${q(name)}) = 1`);
       for (const [table, choice] of Object.entries(tr.side || {})) {
         if (!tables.includes(table)) continue;
@@ -388,14 +412,15 @@
 
     /**
      * The bytes that leave the app. Without choices this is the dataset as it is, vacuumed, so that rows deleted earlier
-     * do not follow in the free pages of the file.
+     * do not follow in the free pages of the file, nor the files of a raster's deleted rows.
      * @param {string} id @param {any} [tr] from the review @returns {Promise<Uint8Array>}
      */
     async function copy(id, tr = {}) {
       // The model's file is cleaned first, with the salt the hashed columns use, so that a name gives the same code in both.
       const scrub = ifcScrubs(tr.ifc);
       const work = scrub ? Object.assign({}, tr, { salt: tr.salt || randomSalt() }) : tr;
-      return datasets.exportBytesTransformed(id, Object.assign({}, work, { before: scrub ? (engine) => scrubModel(engine, work, scrub) : null, after: changes(work) ? (engine) => applyParts(engine, work) : null }));
+      // Without changes, a raster's copy still leaves out the files its table no longer lists.
+      return datasets.exportBytesTransformed(id, Object.assign({}, work, { before: scrub ? (engine) => scrubModel(engine, work, scrub) : null, after: changes(work) ? (engine) => applyParts(engine, work) : (engine) => pruneRaster(engine) }));
     }
 
     /**

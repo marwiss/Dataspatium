@@ -79,8 +79,10 @@
         .map((f) => (f.places && facts.geometry === false ? Object.assign({}, f, { unavailable: 'export.needs.geometry' }) : f));
     }
     /**
-     * A raster: one original as it is, under its own name (or the name asked for), several in a ZIP, or the map image as GeoTIFF
-     * files in Web Mercator with `kreditering.txt` (data/raster geoTiffZip).
+     * A raster: the originals of the files its table still lists, one as it is under its own name (or the name asked for, as a .tif),
+     * several in a ZIP (the name asked for as a .zip), or the map image as GeoTIFF files in Web Mercator with `kreditering.txt`
+     * (data/raster geoTiffZip). The name asked for follows the formats of the whole dataset, so a selection that holds one original,
+     * or several, still gets the extension of what is written.
      */
     async function toRaster(id, fmt, meta, options) {
       if (fmt.id === 'raster-image') {
@@ -88,18 +90,22 @@
         return { blob: await raster.geoTiffZip(id, meta), filename: options.filename || files.safeName(meta ? meta.name : 'raster', 'zip') };
       }
       const dsFiles = D.require('data/dataset-files');
-      const originals = await dsFiles.list(id, 'original');
+      const names = await dsFiles.listed(id);
+      const originals = (await dsFiles.list(id, 'original')).filter((f) => !names || names.has(f.name));
       if (!originals.length) throw new Error(D.t('export.err.nofiles'));
-      if (originals.length > 1) return { blob: await toFilesZip(id, 'original'), filename: options.filename || files.safeName(meta ? meta.name : 'raster', 'zip') };
+      if (originals.length > 1) {
+        const filename = options.filename ? String(options.filename).replace(/\.tiff?$/i, '.zip') : files.safeName(meta ? meta.name : 'raster', 'zip');
+        return { blob: await toFilesZip(id, 'original', originals), filename };
+      }
       const got = await dsFiles.read(id, originals[0].name, 'original');
       if (!got) throw new Error(D.t('export.err.nofiles'));
-      return { blob: new Blob([got.bytes], { type: 'image/tiff' }), filename: options.filename || originals[0].name };
+      return { blob: new Blob([got.bytes], { type: 'image/tiff' }), filename: options.filename ? String(options.filename).replace(/\.zip$/i, '.tif') : originals[0].name };
     }
-    /** A dataset's files of one sort in a ZIP, as they are stored. */
-    async function toFilesZip(id, sort) {
+    /** A dataset's files of one sort in a ZIP, as they are stored; only those in `list` when it is given. */
+    async function toFilesZip(id, sort, list) {
       const dsFiles = D.require('data/dataset-files');
       const out = {};
-      for (const f of await dsFiles.list(id, sort)) {
+      for (const f of list || await dsFiles.list(id, sort)) {
         const got = await dsFiles.read(id, f.name, sort);
         if (got) out[f.name] = got.bytes;
       }

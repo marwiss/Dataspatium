@@ -457,8 +457,8 @@
     }
     /**
      * The pictures of a definition's visible raster layers as image overlays, not yet on the map: every file of the dataset's
-     * `_meta.raster` with a place, its preview read from the dataset's own file (an object URL; nothing is fetched and no consent
-     * is asked). The `i`-th raster layer of the list lies at z-index 2 + i in the tile pane, above the background maps and the
+     * `_meta.raster` that its table still lists and that has a place, its preview read from the dataset's own file (an object URL;
+     * nothing is fetched and no consent is asked). The `i`-th raster layer of the list lies at z-index 2 + i in the tile pane, above the background maps and the
      * service layers (all at 1). Files without a place are named in `info.rasterUnplaced`; a map in a grid of its own draws none
      * (`info.rasterProjection`), and neither does a tier below BIM och GIS (platform/tier, `kind:raster`).
      * @returns {Promise<Array<{layer: any, images: any[]}>>}
@@ -477,8 +477,11 @@
         if (!raster) continue;
         const attribution = rasterAttribution(raster);
         const opacity = opacityOf(layer.style && layer.style.opacity);
+        // The table is the list of files: a row removed there takes its picture off the map.
+        const names = await dsFiles.listed(meta.id).catch(() => null);
         const images = [];
         for (const file of Array.isArray(raster.files) ? raster.files : []) {
+          if (names && file && !names.has(String(file.name))) continue;
           const bounds = file && file.preview && Array.isArray(file.preview.bounds) && file.preview.bounds.length === 2 ? file.preview.bounds : null;
           if (!bounds) { if (file && file.name) unplaced.add(String(file.name)); continue; }
           const url = await dsFiles.url(meta.id, file.name, 'preview').catch(() => null);

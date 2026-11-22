@@ -412,6 +412,10 @@
     const both = await exporter.exportDataset(two.id, 'raster-original');
     const parts = await zip.readZip(both.blob);
     assert.ok(both.filename.endsWith('.zip') && sameBytes(parts['a.tif'], new Uint8Array(await a.arrayBuffer())) && sameBytes(parts['b.tif'], new Uint8Array(await b.arrayBuffer())), Object.keys(parts).join(', '));
+    // The name asked for comes from the formats of the whole dataset; what is written decides its extension (a selection of one
+    // original of several, or the other way round).
+    assert.equal((await exporter.exportDataset(one.id, 'raster-original', { filename: 'Export ett.zip' })).filename, 'Export ett.tif');
+    assert.equal((await exporter.exportDataset(two.id, 'raster-original', { filename: 'Export två.tif' })).filename, 'Export två.zip');
     // The map image: a GeoTIFF in Web Mercator beside kreditering.txt.
     const image = await exporter.exportDataset(one.id, 'raster-image');
     const inside = await zip.readZip(image.blob);
@@ -434,6 +438,53 @@
     const formats = exporter.formatsFor(await datasets.get(unplaced.id));
     assert.equal(formats.find((x) => x.id === 'raster-image').unavailable, 'export.needs.geometry');
     assert.ok(formats.some((x) => x.id === 'csv' && !x.unavailable), 'the table formats remain');
+    return 'ok';
+  }, 90000);
+
+  test('raster: the table is the list of files: a deleted row leaves the map, the exports and the copies, and the copy of a selection names only its files', async (assert) => {
+    const shareScan = D.require('data/share-scan');
+    const recipes = D.require('data/recipes');
+    const leaflet = D.require('viz/leaflet');
+    const zip = D.require('platform/storage/zip');
+    const tiles = ['a', 'b', 'c'].map((x, k) => sweref(`tabell-${x}.tif`, { width: 16, height: 16, geo: { res: 1, east: E0 + 16 * k, north: N0, epsg: 3006 } }));
+    const meta = track(await importer.runFiles(tiles, { format: 'raster' }, 'Tabellen styr'));
+    await recipes.apply(meta.id, 'delete_rows', { where: "fil = 'tabell-b.tif'" });
+    await datasets.flushSaves();
+    const ds = await datasets.get(meta.id);
+    assert.ok(ds.rowCount === 2 && ds.raster.files.length === 3, 'the facts of the file stay, for an undo');
+    assert.ok(kinds.summary(ds).includes(t('raster.files.n', { n: '2' })) && kinds.facts(ds).some((x) => x.label === t('raster.field.files') && x.value === '2'), 'counted by the rows: ' + kinds.summary(ds));
+    // The map draws the files the table lists.
+    const el = document.createElement('div');
+    el.style.cssText = 'position:absolute; left:-10000px; top:0; width:600px; height:400px;';
+    document.body.appendChild(el);
+    try {
+      const hd = await leaflet.render(el, { kind: 'map', name: 'Tabellen styr', map: leaflet.defaultMap(await datasets.columns(meta.id), ds) }, { tileFactory: () => { throw new Error('no tiles'); } });
+      assert.deepEqual(Array.from(el.querySelectorAll('img.dm-raster-image')).map((img) => img.getAttribute('alt')).sort(), ['tabell-a.tif', 'tabell-c.tif']);
+      assert.equal(hd.info.rasters, 2);
+      hd.finalize();
+    } finally { el.remove(); }
+    // The exports: the originals and the map image of the two.
+    const originals = await zip.readZip((await exporter.exportDataset(meta.id, 'raster-original')).blob);
+    assert.deepEqual(Object.keys(originals).sort(), ['tabell-a.tif', 'tabell-c.tif']);
+    const image = await zip.readZip((await exporter.exportDataset(meta.id, 'raster-image')).blob);
+    assert.deepEqual(Object.keys(image).sort(), ['tabell-a.tif', 'tabell-c.tif']);
+    // A copy as it is, and a copy of a selection: only the files their rows name, with the facts and the extent of those.
+    const files = async (id) => (await dsFiles.list(id)).map((f) => f.kind + '/' + f.name).sort();
+    const plain = track(await datasets.importBytes(await shareScan.copy(meta.id, {}), { name: 'Tabellen styr kopia' }, { quiet: true }));
+    const p = await datasets.get(plain.id);
+    assert.deepEqual(p.raster.files.map((f) => f.name), ['tabell-a.tif', 'tabell-c.tif']);
+    assert.ok(p.raster.count === 2 && (await files(plain.id)).every((x) => !x.endsWith('/tabell-b.tif')), JSON.stringify(await files(plain.id)));
+    assert.deepEqual(p.source.files.map((f) => f.name), ['tabell-a.tif', 'tabell-c.tif'], 'the source names the two');
+    const a = (await (await datasets.ensureOpen(meta.id)).engine.exec("select rowid from data where fil = 'tabell-a.tif'"))[0].values[0][0];
+    const bytes = await shareScan.copy(meta.id, { only: [a] });
+    const only = track(await datasets.importBytes(bytes, { name: 'Tabellen styr urval' }, { quiet: true }));
+    const o = await datasets.get(only.id);
+    assert.deepEqual(o.raster.files.map((f) => f.name), ['tabell-a.tif']);
+    assert.deepEqual(o.raster.extent, kinds.rasterExtent([ds.raster.files[0]]), 'the extent of the file left');
+    assert.deepEqual(await files(only.id), ['original/tabell-a.tif', 'preview/tabell-a.tif', 'thumb/tabell-a.tif']);
+    const text = asText(new Uint8Array(bytes));
+    assert.ok(!text.includes('tabell-b.tif') && !text.includes('tabell-c.tif'), 'the files left out are named nowhere in the copy');
+    assert.deepEqual((await dsFiles.list(meta.id)).length, 9, 'the dataset itself is untouched');
     return 'ok';
   }, 90000);
 

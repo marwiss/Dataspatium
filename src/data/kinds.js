@@ -23,13 +23,23 @@
     const RASTER_KEEP = { file: 32e6, total: 40e6 };
     /** A raster's files as data/raster describes them in `_meta.raster`; none when the facts are missing. */
     const rasterFiles = (ds) => (ds && ds.raster && Array.isArray(ds.raster.files) ? ds.raster.files : []);
+    /**
+     * The union of a raster's placed files, [west, south, east, north] from their previews' corners; null when none has a place.
+     * @param {Array<{preview?: {bounds?: number[][]|null}}>} files `_meta.raster.files` @returns {number[]|null}
+     */
+    function rasterExtent(files) {
+      const boxes = (files || []).map((f) => (f && f.preview && Array.isArray(f.preview.bounds) ? f.preview.bounds : null)).filter(Boolean).map((b) => [b[0][1], b[1][0], b[1][1], b[0][0]]);
+      return boxes.length ? [Math.min(...boxes.map((b) => b[0])), Math.min(...boxes.map((b) => b[1])), Math.max(...boxes.map((b) => b[2])), Math.max(...boxes.map((b) => b[3]))] : null;
+    }
     /** Ground metres per pixel in three significant digits. */
     const metres = (r) => i18n.formatNumber(r, { maximumSignificantDigits: 3 });
+    /** How many files a raster has: the rows of its table, which is the list of its files (a row removed there takes its file away). */
+    const rasterCount = (ds) => (typeof ds.rowCount === 'number' ? ds.rowCount : rasterFiles(ds).length);
     /** A raster's summary in parts: its files and, when the first file has one, its resolution. */
     function rasterParts(ds) {
       const files = rasterFiles(ds);
       const r = files[0] ? Number(files[0].resolution) : 0;
-      return [t('raster.files.n', { n: n(files.length || ds.rowCount) }), r > 0 ? t('raster.resolution', { r: metres(r) }) : ''].filter(Boolean);
+      return [t('raster.files.n', { n: n(rasterCount(ds)) }), r > 0 ? t('raster.resolution', { r: metres(r) }) : ''].filter(Boolean);
     }
 
     /**
@@ -158,6 +168,7 @@
       const r = ds.raster || {};
       const files = rasterFiles(ds);
       const skipped = Array.isArray(r.skipped) ? r.skipped.length : 0;
+      const count = rasterCount(ds);
       const each = (fn) => Array.from(new Set(files.map(fn).filter(Boolean))).join(', ');
       const res = files.map((f) => Number(f.resolution)).filter((x) => x > 0);
       const lo = Math.min(...res); const hi = Math.max(...res);
@@ -168,7 +179,7 @@
       const licence = r.license && r.license.name ? String(r.license.name) : '';
       const credit = r.attribution ? String(r.attribution) + (licence ? ` (${licence})` : '') : licence;
       return [
-        files.length > 1 || skipped ? { label: t('raster.field.files'), value: n(files.length) + (skipped ? ` (${t('images.skipped', { n: n(skipped) })})` : '') } : null,
+        count > 1 || skipped ? { label: t('raster.field.files'), value: n(count) + (skipped ? ` (${t('images.skipped', { n: n(skipped) })})` : '') } : null,
         { label: t('raster.field.crs'), value: each(system) },
         res.length ? { label: t('raster.field.resolution'), value: t('raster.resolution', { r: lo === hi ? metres(lo) : `${metres(lo)}–${metres(hi)}` }) } : null,
         { label: t('raster.field.size'), value: each((f) => (f.width && f.height ? `${n(f.width)} × ${n(f.height)}` : '')) },
@@ -212,6 +223,6 @@
       ].filter(Boolean);
     }
 
-    return { PROFILES, RASTER_KEEP, of, isCollection, summary, guarded, badges, facts, isDxf, shown, ownView, ownTab };
+    return { PROFILES, RASTER_KEEP, of, isCollection, summary, guarded, badges, facts, isDxf, shown, ownView, ownTab, rasterExtent };
   });
 })();
