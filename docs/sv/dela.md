@@ -13,7 +13,7 @@ med en datamängd vald finns också *Paketera bara den*. Mottagaren öppnar pake
 och ändringar innan något tas in. Inspektören visar hur mycket som finns att dela. Se också
 [format.md](format.md) om paketets uppbyggnad.
 
-**Filerna.** En datamängd med filer visar hur stora de är, och du kan låta dem stanna hemma för att göra paketet mindre. Raderna följer med. Utan sina filer visar en bildsamling bara uppgifterna om bilderna, och ett dokument sin text.
+**Filerna.** En datamängd med filer visar hur stora de är, och du kan låta dem stanna hemma för att göra paketet mindre. Raderna följer med. Utan sina filer visar en bildsamling bara uppgifterna om bilderna, och ett dokument sin text. Ett raster lämnar bara originalfilerna hemma och behåller sina förhandsvisningar och miniatyrer, så storleken gäller originalen; ett sparat ortofoto har inga original att lämna.
 
 ## GitHub
 
@@ -62,9 +62,10 @@ telefonnummer, både i hela kolumner och inne i löptext, och listar det som ann
 | Kommentarer och författare i dokumentens metadata | Behåll eller ta bort |
 | Insamlade rader | Vem som samlade in kan pseudonymiseras, och positionen kan tas bort |
 
-Ett rasters originalfiler (GeoTIFF) kan bära taggar som namnger en person, till exempel Artist och HostComputer. Appen läser aldrig ut
-värdena, men granskningen nämner taggarna vid filen och föreslår då att originalen tas bort. Kopian behåller rastrets förhandsvisningar
-och miniatyrer (se [raster.md](raster.md#exportera-och-dela)).
+Ett rasters originalfiler (GeoTIFF) kan bära taggar som namnger en person, till exempel Artist, HostComputer, IPTC och GDAL_METADATA.
+Appen läser aldrig ut värdena, men granskningen nämner taggarna vid filen och föreslår då att originalen tas bort. Kopian behåller
+rastrets förhandsvisningar och miniatyrer (se [raster.md](raster.md#exportera-och-dela)), men inte filerna vars rader du har tagit
+bort. Rastrets kreditering, texten ur filernas Copyright-tagg, följer valet för kolumnen *kalla*.
 
 Bara kopian som delas ändras, och datamängden i appen är kvar som den är. Ändrar du något följer varken ändringsloggen eller receptet med, eftersom de kan innehålla de ursprungliga
 värdena. Paket rensas också från rester av borttagna värden i själva filen.

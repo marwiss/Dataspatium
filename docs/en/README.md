@@ -335,7 +335,8 @@ The file names are the same in every language (they are the Swedish originals), 
 - [Process](bearbeta.md), [Search](soka.md) and [Regular expressions](regex.md): correct, calculate and find.
 - [Statistics](statistik.md), [R in Dataspatium](r-guide.md), [Python in Dataspatium](python.md) and [Notebook](anteckningsbok.md):
   analysis with and without code.
-- [Visualise](visualisera.md), [Maps](kartor.md) and [Documents and templates](dokumentmallar.md): charts, maps, dashboards and reports.
+- [Visualise](visualisera.md), [Maps](kartor.md), [Rasters](raster.md) and [Documents and templates](dokumentmallar.md): charts,
+  maps, orthophotos and other georeferenced images, dashboards and reports.
 - [Plans](planer.md), [Graphs](grafer.md) and [CAD and BIM](cad-bim.md): plans, graphs, building models, checks, AI and versions.
 - [Documents and images](dokument.md): PDF, Word, OpenDocument, Markdown and pictures as datasets.
 - [Flows](floden.md), [Share](dela.md), [Dataspatium Mobile](mobil.md) and [Field collection](insamling.md): automate, share and

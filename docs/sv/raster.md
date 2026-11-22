@@ -15,7 +15,8 @@ Filerna läses i en egen tråd (en worker) när du väljer dem, och inget hämta
   bild av filen i liten skala när den går att läsa snabbt (en liten fil, eller en med översikter). Det finns inget kolumnsteg: ange
   namnet och tryck *Importera*.
 - Flera filer blir ett raster med en rad per fil, högst 16 filer; de andra lämnas utanför och nämns. En fil som inte kan läsas
-  lämnas utanför med sitt skäl, och resten importeras.
+  lämnas utanför med sitt skäl, och resten importeras. Inhämta nämner de filerna före importen och efter den, och loggen gör det
+  också. Två filer med samma namn (samma ruta ur två mappar) hålls isär: den andra får *(2)* efter namnet.
 - Förhandsvisningen räknas om bildpunkt för bildpunkt till Web Mercator, så att den ligger rätt på kartorna. Den längsta sidan är
   högst 2 048 bildpunkter (1 024 när rastret har fler än fyra filer) och aldrig finare än filen. Miniatyren är högst 320 bildpunkter.
 - Originalfilen sparas byte för byte när den är högst 32 MB och rastrets originalfiler tillsammans högst 40 MB. En större fil får
@@ -30,9 +31,9 @@ Filerna läses i en egen tråd (en worker) när du väljer dem, och inget hämta
   eller fler band med 8 bitar utan färgtolkning visas som de tre första. Annars, till exempel för en höjdmodell med decimaltal, visas
   det första bandet i gråskala från 2 till 98 procent av värdena, och filens tomma värde (GDAL_NODATA) blir genomskinligt. Ett extra
   band är genomskinlighet bara när filen säger det, så infrarött i Lantmäteriets fyrbandsfiler blir inte genomskinlighet.
-- Året kommer ur filens datum och källan ur dess Copyright-tagg. Värdena i taggar som kan namnge en person (Artist, HostComputer,
-  ImageDescription, DocumentName, XMP och Exif) läses aldrig ut. Appen noterar bara vilka av dem som finns, för granskningen före
-  delning.
+- Året kommer ur filens datum, och källan och krediteringen ur dess Copyright-tagg, vars text följer med bilden. Värdena i taggar som
+  kan namnge en person (Artist, HostComputer, ImageDescription, DocumentName, XMP, Exif, IPTC, Photoshop och GDAL_METADATA) läses
+  aldrig ut. Appen noterar bara vilka av dem som finns, för granskningen före delning.
 
 Kan en fil inte läsas säger appen varför och vad du kan göra:
 
@@ -47,8 +48,10 @@ Kan en fil inte läsas säger appen varför och vad du kan göra:
 ## Rastret på kartan
 
 - I Bearbeta öppnas rastret som karta: varje fils förhandsvisning på sin plats, med filernas konturer ovanpå och filnamnet som
-  etikett. Inspektören visar rastrets uppgifter, *Genomskinlighet (0–1)*, som gäller direkt, och hur många filer som saknar läge.
+  etikett. Inspektören visar rastrets uppgifter, *Täckning (0–1)*, som gäller direkt, och hur många filer som saknar läge.
   *Visa som tabell* ger tabellen över filerna.
+- Tabellen är listan över filerna. Tar du bort en rad försvinner filens bild från kartorna, ur exporten och ur kopior som delas, och
+  antalet filer räknas efter raderna.
 - Bilderna ligger över bakgrundskartan och tjänsternas lager och under objekten. Krediteringen står i kartans hörn som text, med
   licensen länkad.
 - Bilderna kommer ur datamängdens egen fil. Kartan frågar inte om samtycke och hämtar ingenting, utom bakgrundskartan om du väljer en.
@@ -84,7 +87,7 @@ bredvid valet, så att platsen kan visas utan nät nästa gång.
 ## Kartvyer i Visualisera
 
 - Ett raster läggs till som lager under *Lägg till lager*, i listan över datamängder, och läggs under de lager som redan finns.
-  Lagrets kort har *Genomskinlighet (0–1)*, som gäller direkt, och synlighet, och ordningen ändras som för andra lager.
+  Lagrets kort har *Täckning (0–1)*, som gäller direkt, och synlighet, och ordningen ändras som för andra lager.
 - Förslaget för ett raster i Visualisera är dess egen karta: bilderna och filernas konturer.
 - En sparad kartvy hittar sitt raster på namnet, också i en annan arbetsyta, som en tabells lager gör.
 - Rastret ritas i Web Mercator. I en kartvy i ett eget koordinatsystem (en plan i sitt eget system) ritas det inte.
@@ -98,6 +101,8 @@ bredvid valet, så att platsen kan visas utan nät nästa gång.
 - Granskningen före delning (se [dela.md](dela.md#granskning-före-delning)) gäller rastrets originalfiler. Har en fil taggar som kan
   namnge en person står taggarnas namn vid filen, och då är förvalet att ta bort originalen i kopian. Kopian behåller
   förhandsvisningarna och miniatyrerna, och dess uppgifter säger att originalen lämnades utanför när datamängden delades.
+- Krediteringen är samma text som kolumnen *kalla*. Den maskeras när kolumnen maskeras och tas bort när kolumnen pseudonymiseras
+  eller tas bort, och har bara krediteringen personuppgifter får den ett eget val.
 - Paket, GitHub och enheter tar med datamängden med bilderna. Gränserna för originalen håller ett raster under GitHubs gräns på 100 MB
   per fil.
 - Dataspatium Mobil visar miniatyrerna med kreditering och licens.
@@ -121,6 +126,7 @@ kartvyerna, som hör till BIM och GIS. En högre nivå visar allt igen på en g�
 - Rastret följer inte med i exporterade kartbilder (SVG, PNG, PDF), dokumentmallar eller publicerad HTML.
 - Söka räknar en fil efter mitten av dess utbredning, inte efter överlapp.
 - Rastret visas inte på plankartan eller i en karta i ett eget koordinatsystem.
+- Kartorna slutar vid 85 grader nord och syd, där Web Mercator slutar, så en fil som når polerna visas utan dem.
 - En version av rastret är en hel kopia av filen med bilderna, som för modeller.
 - Drönarbilder kan visa människor, registreringsskyltar och hem. Granskningen före delning ser inte det, så det bedömer du själv.
 - Att sprida flyg- och drönarbilder kan kräva tillstånd, i Sverige enligt lagen om skydd för geografisk information. Det ansvarar du

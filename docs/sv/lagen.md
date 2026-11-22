@@ -195,7 +195,8 @@ Pröva data mot krav. En tabell prövas mot enkla regler: varje kolumns typ och 
 och antalet dubbletter bland raderna. En liten tabell kontrolleras så fort den väljs, en tabell med 10 000 rader eller fler först
 när du trycker på *Kör kontrollen*. Inspektören visar det valda fyndet med dess andel av raderna, och *Öppna i Bearbeta* tar dig
 dit för att rätta det. En IFC-modell visar kortet *Validera modellen* och panelen *Jämför versioner* (se
-[cad-bim.md](cad-bim.md)); andra slag har inga kontroller än. AI-panelens fjärde läge, *Kontrollera*, prövar modellen mot foton av
+[cad-bim.md](cad-bim.md)). Ett rasters tabell över filerna prövas som en tabell (se [raster.md](raster.md)); andra slag har inga
+kontroller än. AI-panelens fjärde läge, *Kontrollera*, prövar modellen mot foton av
 skador och sparar fynden som tabell (se [cad-bim.md](cad-bim.md)). En sådan fyndtabell får kortet *Rapport och underhållsplan*,
 vars knappar *Gör rapport* och *Gör underhållsplan* öppnar besiktningsrapporten och underhållsplanen under Exportera › Dokument
 (se [dokumentmallar.md](dokumentmallar.md)).
@@ -236,7 +237,7 @@ Fliken **Statistik** efter Regex gör vanliga analyser med formulär som skriver
 Modeller och ritningar får fliken **Mängder** efter Regex (antal, längd, area och volym per typ, våning och material, ur filen
 eller mätta på geometrin).
 
-Analysera öppnar i det verktyg som passar datamängden: Text för dokument, Bilder för bildsamlingar, Graf för grafer, Mängder för modeller, Plan för planer, Geo för tabeller med platser och annars Statistik. När du själv väljer en flik stannar du där. R startar först när du öppnar fliken R.
+Analysera öppnar i det verktyg som passar datamängden: Text för dokument, Bilder för bildsamlingar, Graf för grafer, Mängder för modeller, Plan för planer, SQL för raster, Geo för tabeller med platser och annars Statistik. När du själv väljer en flik stannar du där. R startar först när du öppnar fliken R.
 
 **Kod att börja från.** I R, Python och SQL finns en lista med kod skriven för den valda datamängden: en grafs kanter, en modells mängder, bilder per månad, summa per period eller platserna som punkter. Valet klistrar in koden där markören står. En ny anteckningsbok börjar på samma sätt. I SQL visas sidotabellerna med sina kolumner, och ett klick skriver en fråga om tabellen.
 

@@ -184,7 +184,8 @@ Try data against requirements. A table is tried against simple rules: every colu
 only spaces) and the number of duplicate rows. A small table is checked as soon as it is chosen, a table with 10,000 rows or more
 only when you press *Run the check*. The inspector shows the chosen finding with its share of the rows, and *Open in Process*
 takes you there to correct it. An IFC model shows the card *Validate the model* and the panel *Compare versions* (see
-[cad-bim.md](cad-bim.md)); other kinds have no checks yet. The AI panel's fourth mode, *Check*, tries the model against photos of
+[cad-bim.md](cad-bim.md)). A raster's table of files is checked as a table (see [raster.md](raster.md)); other kinds have no
+checks yet. The AI panel's fourth mode, *Check*, tries the model against photos of
 damage and saves the findings as a table (see [cad-bim.md](cad-bim.md)). Such a table of findings gets the card *Report and
 maintenance plan*, whose buttons *Make a report* and *Make a maintenance plan* open the inspection report and the maintenance plan
 under Export › Documents (see [dokumentmallar.md](dokumentmallar.md)).
@@ -225,7 +226,7 @@ The tab **Statistics** after Regex does common analyses with forms that write an
 Models and drawings get the tab **Quantities** after Regex (count, length, area and volume per type, storey and material, from
 the file or measured on the geometry).
 
-Analyse opens in the tool that fits the dataset: Text for documents, Pictures for image collections, Graph for graphs, Quantities for models, Plan for plans, Geo for tables with places and otherwise Statistics. When you choose a tab yourself you stay there. R starts only when you open the tab R.
+Analyse opens in the tool that fits the dataset: Text for documents, Pictures for image collections, Graph for graphs, Quantities for models, Plan for plans, SQL for rasters, Geo for tables with places and otherwise Statistics. When you choose a tab yourself you stay there. R starts only when you open the tab R.
 
 **Code to start from.** In R, Python and SQL there is a list of code written for the chosen dataset: a graph's edges, a model's quantities, pictures per month, the sum per period or the places as points. The choice pastes the code where the cursor is. A new notebook starts the same way. In SQL the side tables are shown with their columns, and a click writes a question about the table.
 

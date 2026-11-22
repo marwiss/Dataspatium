@@ -16,7 +16,8 @@ table is always one button away.
   and a picture of the file at a small size when it can be read quickly (a small file, or one with overviews). There is no column
   step: give the name and press *Import*.
 - Several files become one raster with one row per file, at most 16 files; the others are left out and named. A file that cannot
-  be read is left out with its reason, and the rest are imported.
+  be read is left out with its reason, and the rest are imported. Import names those files before the import and after it, and so
+  does the log. Two files with the same name (the same tile from two folders) are kept apart: the second gets *(2)* after its name.
 - The preview is converted pixel by pixel to Web Mercator, so that it lies right on the maps. Its longest side is at most 2,048
   pixels (1,024 when the raster has more than four files) and never finer than the file. The thumbnail is at most 320 pixels.
 - The original file is kept byte for byte when it is at most 32 MB and the raster's original files together at most 40 MB. A larger
@@ -32,9 +33,9 @@ table is always one button away.
   with decimal numbers, the first band is shown in grey from 2 to 98 per cent of its values, and the file's empty value
   (GDAL_NODATA) becomes transparent. An extra band is transparency only when the file says so, so the infrared of Lantmäteriet's
   four-band files does not become transparency.
-- The year comes from the file's date and the source from its Copyright tag. The values of tags that can name a person (Artist,
-  HostComputer, ImageDescription, DocumentName, XMP and Exif) are never read out. The app notes only which of them are present, for
-  the review before sharing.
+- The year comes from the file's date, and the source and the attribution from its Copyright tag, whose text goes with the image.
+  The values of tags that can name a person (Artist, HostComputer, ImageDescription, DocumentName, XMP, Exif, IPTC, Photoshop and
+  GDAL_METADATA) are never read out. The app notes only which of them are present, for the review before sharing.
 
 When a file cannot be read, the app says why and what you can do:
 
@@ -51,6 +52,8 @@ When a file cannot be read, the app says why and what you can do:
 - In Process the raster opens as a map: each file's preview at its place, with the files' outlines on top and the file name as
   label. The inspector shows the raster's facts, *Opacity (0–1)*, which applies at once, and how many files have no place. *Show as
   table* gives the table of files.
+- The table is the list of files. When you remove a row, the file's image leaves the maps, the export and the copies that are
+  shared, and the files are counted by the rows.
 - The images lie above the background map and the services' layers and under the features. The attribution stands in the corner of
   the map as text, with the licence linked.
 - The images come from the dataset's own file. The map asks for no consent and fetches nothing, except the background map if you
@@ -103,6 +106,8 @@ net next time.
 - The review before sharing (see [dela.md](dela.md#review-before-sharing)) covers the raster's original files. When a file has tags
   that can name a person, the tags' names stand by the file, and removing the originals in the copy is then the default. The copy
   keeps the previews and the thumbnails, and its facts say that the originals were left out when the dataset was shared.
+- The attribution is the same text as the column *kalla*. It is masked when the column is masked and removed when the column is
+  pseudonymised or dropped, and when only the attribution holds personal data it gets a choice of its own.
 - Bundles, GitHub and devices carry the dataset with its images. The limits on the originals keep a raster under GitHub's limit of
   100 MB per file.
 - Dataspatium Mobile shows the thumbnails with the attribution and the licence.
@@ -128,6 +133,7 @@ the map views, which belong to BIM + GIS. A higher tier shows everything again a
 - The raster is left out of exported map images (SVG, PNG, PDF), document templates and published HTML.
 - Search counts a file by the middle of its extent, not by overlap.
 - The raster is not shown on the plan map or in a map in a coordinate system of its own.
+- The maps end at 85 degrees north and south, where Web Mercator ends, so a file that reaches the poles is shown without them.
 - A version of the raster is a whole copy of the file with its images, as for models.
 - Drone pictures can show people, number plates and homes. The review before sharing does not see that, so you judge it yourself.
 - Spreading aerial and drone pictures can need a permit, in Sweden under the Act on the protection of geographical information. That
