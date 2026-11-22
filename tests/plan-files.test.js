@@ -334,6 +334,62 @@
     } finally { for (const id of made) await datasets.remove(id).catch(() => {}); }
   }, 60000);
 
+  test('plan files: an archive package\'s documents open in a tab only as PDF or a picture whose ending and bytes agree, and every other file is downloaded', async (assert) => {
+    const t = D.require('ui/i18n').t;
+    const dsFiles = D.require('data/dataset-files');
+    const platformFiles = D.require('platform/files');
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    async function waitFor(fn, timeoutMs = 5000, label = 'condition') {
+      const t0 = performance.now();
+      for (;;) { const v = fn(); if (v) return v; if (performance.now() - t0 > timeoutMs) throw new Error('timeout waiting for ' + label); await wait(50); }
+    }
+    const PNG = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
+    assert.deepEqual([dsFiles.tabType('a.pdf', new TextEncoder().encode('%PDF-1.7')), dsFiles.tabType('b.PNG', PNG), dsFiles.tabType('c.jpg', Uint8Array.from([0xff, 0xd8, 0xff, 0xe0])), dsFiles.tabType('d.pdf', new TextEncoder().encode('<html>')), dsFiles.tabType('e.svg', new TextEncoder().encode('<svg/>')), dsFiles.tabType('f.xml'), dsFiles.tabType('g.pdf')],
+      ['application/pdf', 'image/png', 'image/jpeg', '', '', '', 'application/pdf'], 'only PDF, PNG and JPEG whose bytes agree');
+    // A package as a picked folder keeps the browser's type for each file; XML from a ZIP gets application/xml.
+    const XHTML = '<html xmlns="http://www.w3.org/1999/xhtml"><body><img src="https://img.example.invalid/x.png"/><script>window.__dmPlanFile=1</script></body></html>';
+    const contents = { 'content/strandkvarteret.json': JSON.stringify(DP41), 'content/plankarta.pdf': '%PDF-1.7 plankarta', 'content/beskrivning.xml': XHTML, 'content/sida.html': XHTML, 'content/bild.svg': '<svg xmlns="http://www.w3.org/2000/svg"><image href="https://img.example.invalid/s.png"/></svg>', 'content/falsk.pdf': XHTML };
+    const TYPES = { 'sida.html': 'text/html', 'bild.svg': 'image/svg+xml', 'falsk.pdf': 'text/html' };
+    const files = (await archivePackage('Arkivpaket_typer', contents)).map((f) => {
+      if (!TYPES[f.name]) return f;
+      const typed = new File([f], f.name, { type: TYPES[f.name] }); /** @type {any} */ (typed).dmPath = /** @type {any} */ (f).dmPath;
+      return typed;
+    });
+    const root = document.createElement('div');
+    root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
+    document.body.appendChild(root);
+    const opened = []; const downloaded = []; const blobs = new Map();
+    const open = window.open; const download = platformFiles.download; const createUrl = URL.createObjectURL;
+    let meta = null;
+    try {
+      meta = await D.require('io/importers/plan-archive').importFiles(files, {});
+      assert.equal((await dsFiles.list(meta.id)).find((f) => f.name === 'content/sida.html').type, 'text/html', 'the stored type is the browser\'s');
+      history.replaceState(null, '', location.pathname + location.search);
+      const shell = await D.require('app').start(root);
+      await waitFor(() => shell.store.get().datasets.find((d) => d.id === meta.id), 5000, 'dataset in store');
+      shell.activate('bearbeta');
+      shell.store.set({ selectedId: meta.id });
+      const buttons = await waitFor(() => { const l = root.querySelectorAll('[data-plan-archive-open]'); return l.length === 5 ? Array.from(l) : null; }, 10000, 'the five documents');
+      const label = (name) => buttons.find((b) => b.getAttribute('data-plan-archive-open') === name).textContent.trim();
+      assert.deepEqual([label('content/plankarta.pdf'), label('content/sida.html'), label('content/bild.svg'), label('content/beskrivning.xml')], [t('plan.archive.open'), t('common.download'), t('common.download'), t('common.download')]);
+      window.open = (u) => { opened.push(u); return null; };
+      platformFiles.download = (blob, name) => { downloaded.push([name, blob.type]); };
+      URL.createObjectURL = (b) => { const u = createUrl.call(URL, b); blobs.set(u, b); return u; };
+      for (const b of buttons) /** @type {HTMLElement} */ (b.querySelector('button')).click();
+      await waitFor(() => opened.length + downloaded.length === 5, 5000, 'every click answered');
+      assert.deepEqual(opened.map((u) => blobs.get(u) && blobs.get(u).type), ['application/pdf'], 'only the real PDF opens, as a PDF');
+      assert.deepEqual(downloaded.sort(), [['beskrivning.xml', 'application/octet-stream'], ['bild.svg', 'application/octet-stream'], ['falsk.pdf', 'application/octet-stream'], ['sida.html', 'application/octet-stream']], 'the others are downloaded, never opened with their stored type');
+      assert.ok(!globalThis.__dmPlanFile, 'nothing from a file ran');
+      return 'ok';
+    } finally {
+      window.open = open; platformFiles.download = download; URL.createObjectURL = createUrl;
+      for (const u of opened) URL.revokeObjectURL(u);
+      for (const el of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (el).close();
+      if (meta) await datasets.remove(meta.id).catch(() => {});
+      root.remove();
+    }
+  }, 60000);
+
   test('plan files: real files from planning tools (Rita Detaljplan 0.1.77, Rita Översiktsplan 0.1.15) read whole, file by file and as archive packages', async (assert) => {
     const fx = D.require('tests/fixtures/plan-files');
     const archive = D.require('io/importers/plan-archive');
