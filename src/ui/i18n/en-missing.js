@@ -15,6 +15,7 @@
     'python.net.blocked': 'Python in Dataspatium does not reach the internet through {api}; fetch with pyodide.http.pyfetch, which asks for consent.',
     'plotly.consent.map': 'Map in a plotly chart',
     'plotly.consent.url': 'Image or data in a plotly chart: {url}',
+    'plotly.consent.more': 'and {n} more',
     'plotly.denied.basemaps': 'The map in the chart is not shown without consent to background maps.',
     'plotly.denied.url': 'Images and data from web addresses are not shown in the chart without consent to web addresses.',
     'datasets.kind.raster': 'Raster',

@@ -2740,6 +2740,7 @@
     'plotly.err.load': 'plotly.js kunde inte laddas.',
     'plotly.consent.map': 'Karta i ett plotly-diagram',
     'plotly.consent.url': 'Bild eller data i ett plotly-diagram: {url}',
+    'plotly.consent.more': 'och {n} till',
     'plotly.denied.basemaps': 'Kartan i diagrammet visas inte utan samtycke till bakgrundskartor.',
     'plotly.denied.url': 'Bilder och data från webbadresser visas inte i diagrammet utan samtycke till webbadresser.',
     'import.format.documents': 'Dokument (PDF, Word, OpenDocument, text, Markdown) som stycken',

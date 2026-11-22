@@ -294,7 +294,7 @@
     const plotly = D.require('viz/plotly');
     const fig = remoteFigure();
     const before = JSON.stringify(fig);
-    assert.deepEqual(plotly.requests(fig).map((q) => q.purpose + ' ' + q.hosts.join(',')), ['basemaps cdn.plot.ly', 'basemaps basemaps.cartocdn.com,tiles.basemaps.cartocdn.com', 'url img.example.invalid', 'url geo.example.invalid'], 'one question per map and per host');
+    assert.deepEqual(plotly.requests(fig).map((q) => q.purpose + ' ' + q.hosts.join(',')), ['basemaps cdn.plot.ly,basemaps.cartocdn.com,tiles.basemaps.cartocdn.com,fonts.openmaptiles.org,cdn.jsdelivr.net', 'url img.example.invalid,geo.example.invalid'], 'one question per purpose, with every host it names');
     const none = plotly.sanitize(fig, {});
     assert.deepEqual(none.figure.data.map((d) => d.type), ['scattergeo', 'bar'], 'the trace by country code, the map and the GeoJSON by address go; points by position stay');
     assert.ok(['showcoastlines', 'showland', 'showocean', 'showlakes', 'showrivers', 'showcountries', 'showsubunits'].every((k) => none.figure.layout.geo[k] === false), 'no layer from the topojson');
@@ -304,7 +304,7 @@
     assert.equal(none.figure.layout.template, undefined, "plotly's own template is not drawn");
     assert.deepEqual(none.removed, { basemaps: true, url: true });
     assert.equal(JSON.stringify(fig), before, 'the figure itself is untouched');
-    const all = plotly.sanitize(fig, { basemaps: new Set(['cdn.plot.ly', 'basemaps.cartocdn.com', 'tiles.basemaps.cartocdn.com']), url: new Set(['geo.example.invalid', 'img.example.invalid']) });
+    const all = plotly.sanitize(fig, { basemaps: new Set(['cdn.plot.ly', 'basemaps.cartocdn.com', 'tiles.basemaps.cartocdn.com', 'fonts.openmaptiles.org', 'cdn.jsdelivr.net']), url: new Set(['geo.example.invalid', 'img.example.invalid']) });
     assert.equal(all.figure.data.length, 5);
     assert.deepEqual(all.figure.layout.images.map((i) => i.source), ['data:image/png;base64,iVBORw0KGgo=', 'https://img.example.invalid/p.png?d=1'], 'a relative address is never loaded');
     assert.equal(all.figure.layout.updatemenus[0].buttons.length, 2);
@@ -316,7 +316,7 @@
     return 'ok';
   });
 
-  test('plotly: a figure asks for background maps per map and for web addresses per host before it is drawn, a refusal draws it without them and says so, and published HTML asks nothing', async (assert) => {
+  test('plotly: a figure asks once for background maps and once for web addresses, naming their hosts, before it is drawn; a refusal draws it without them and says so, and published HTML asks nothing', async (assert) => {
     const plotly = D.require('viz/plotly');
     const consent = D.require('platform/consent');
     // plotly.js is a component the suite may not have: a stand-in records what would be drawn.
@@ -332,11 +332,11 @@
       let allow = (_purpose) => true;
       try {
         for (const p of Object.keys(saved)) await consent.set(p, null);
-        consent.setAsker(async (purpose, info) => { asked.push([purpose, info.host]); return { allow: allow(purpose), remember: false }; });
+        consent.setAsker(async (purpose, info) => { asked.push([purpose, info.hosts.join(',')]); return { allow: allow(purpose), remember: false }; });
         // Maps allowed, web addresses refused.
         allow = (purpose) => purpose === 'basemaps';
         const hd = await plotly.render(el, remoteFigure());
-        assert.deepEqual(asked, [['basemaps', 'cdn.plot.ly'], ['basemaps', 'basemaps.cartocdn.com, tiles.basemaps.cartocdn.com'], ['url', 'img.example.invalid'], ['url', 'geo.example.invalid']], 'asked before drawing: ' + JSON.stringify(asked));
+        assert.deepEqual(asked, [['basemaps', 'cdn.plot.ly,basemaps.cartocdn.com,tiles.basemaps.cartocdn.com,fonts.openmaptiles.org,cdn.jsdelivr.net'], ['url', 'img.example.invalid,geo.example.invalid']], 'asked before drawing: ' + JSON.stringify(asked));
         assert.deepEqual(drawn[0].data.map((d) => d.type), ['scattergeo', 'choropleth', 'scattermap', 'bar'], 'the trace with GeoJSON by address goes');
         assert.deepEqual(drawn[0].layout.images.map((i) => i.source), ['data:image/png;base64,iVBORw0KGgo=']);
         assert.equal(drawn[0].config.topojsonURL, undefined, 'the geo map takes its shapes from plotly');
@@ -350,7 +350,7 @@
         assert.equal(png.type, 'image/png');
         assert.deepEqual(drawn[1].data.map((d) => d.type), ['scattergeo', 'bar']);
         assert.equal(drawn[1].config.topojsonURL, plotly.NO_TOPOJSON, 'a shape plotly still asks for is not fetched');
-        assert.equal(asked.length, 4);
+        assert.equal(asked.length, 2, 'one question per purpose, refused or not');
         // Published HTML is drawn later and elsewhere: nothing is asked, and only a consent kept for good counts.
         asked.length = 0;
         const html = await plotly.htmlFor('p1', remoteFigure());
@@ -363,6 +363,67 @@
         for (const [p, v] of Object.entries(saved)) await consent.set(p, v);
         if (real) globalThis.Plotly = real; else delete globalThis.Plotly;
         holder.remove();
+      }
+    });
+  });
+
+  test('plotly: a map asks for the hosts plotly 4 uses, for the map plotly really draws, and a map whose addresses cannot be checked is left out', (assert) => {
+    const plotly = D.require('viz/plotly');
+    const q = (fig) => plotly.requests(fig).map((x) => x.purpose + ' ' + x.hosts.join(','));
+    // Icons come from jsDelivr on every map, also one whose style names nothing; the satellite styles come from Esri and ICGC.
+    assert.deepEqual(q({ data: [{ type: 'scattermap', marker: { symbol: ['a1b2c3'] } }], layout: { map: { style: { version: 8, sources: {}, layers: [] } } } }), ['basemaps cdn.jsdelivr.net']);
+    assert.deepEqual(q({ data: [{ type: 'scattermap' }], layout: { map: { style: 'satellite' } } }), ['basemaps server.arcgisonline.com,tilemaps.icgc.cat,geoserveis.icgc.cat,cdn.jsdelivr.net']);
+    // A subplot id plotly does not take is drawn in 'map', so that is the map asked about and left out.
+    for (const id of ['map1', 'map01', 'map0']) {
+      const fig = { data: [{ type: 'scattermap', subplot: id }], layout: { map: { style: 'https://style.example.invalid/s.json' }, [id]: { style: {} } } };
+      assert.deepEqual(q(fig), ['basemaps style.example.invalid,cdn.jsdelivr.net'], id);
+      assert.equal(plotly.sanitize(fig, {}).figure.data.length, 0, id + ' is left out without consent');
+    }
+    assert.equal(plotly.sanitize({ data: [{ type: 'scattermap', subplot: 'map1' }], layout: { map: { style: '//style.example.invalid/s.json' } } }, { basemaps: true }).figure.data.length, 0, 'a protocol-relative style behind a wrong id is left out too');
+    // A data: address hides the hosts its content names: the map is left out even with background maps allowed.
+    const tilejson = 'data:application/json;base64,' + btoa(JSON.stringify({ tiles: ['https://hidden.example.invalid/{z}/{x}/{y}.png'] }));
+    for (const map of [{ style: { version: 8, sources: { r: { type: 'raster', url: tilejson } }, layers: [{ id: 'r', type: 'raster', source: 'r' }] } }, { style: 'data:application/json,{}' }, { layers: [{ sourcetype: 'vector', source: tilejson }] }]) {
+      assert.equal(plotly.sanitize({ data: [{ type: 'scattermap' }], layout: { map } }, { basemaps: true }).figure.data.length, 0, JSON.stringify(map).slice(0, 60));
+    }
+    // A button that moves a trace to another map, or makes one a map trace, asks for the maps it may draw.
+    const moved = { data: [{ type: 'bar', y: [1] }], layout: { map3: { style: 'https://other.example.invalid/s.json' }, updatemenus: [{ buttons: [{ method: 'restyle', args: [{ subplot: 'map3' }] }, { method: 'restyle', args: [{ type: 'scattermap' }] }] }] } };
+    assert.deepEqual(q(moved), ['basemaps other.example.invalid,cdn.jsdelivr.net,basemaps.cartocdn.com,tiles.basemaps.cartocdn.com,fonts.openmaptiles.org']);
+    // Mapbox, which plotly 4 does not draw, is left out without a question.
+    const mapbox = plotly.sanitize({ data: [{ type: 'scattermapbox' }, { type: 'bar', y: [1] }], layout: { mapbox: { style: 'streets' } } }, {});
+    assert.deepEqual(mapbox.figure.data.map((d) => d.type), ['bar']);
+    assert.equal(mapbox.figure.layout.mapbox, undefined);
+    assert.deepEqual(q({ data: [{ type: 'scattermapbox' }] }), []);
+    // A slider step and an image trace that load a picture from a host.
+    const more = { data: [{ type: 'image', source: 'https://pic.example.invalid/i.png' }, { type: 'image', source: 'data:image/png;base64,iVBORw0KGgo=' }], layout: { sliders: [{ steps: [{ method: 'relayout', args: [{ images: [{ source: 'https://slide.example.invalid/s.png' }] }] }, { method: 'restyle', args: [{ visible: true }] }] }] } };
+    assert.deepEqual(q(more), ['url pic.example.invalid,slide.example.invalid']);
+    const left = plotly.sanitize(more, {});
+    assert.deepEqual(left.figure.data.map((d) => d.source.slice(0, 5)), ['data:'], 'the image trace by address goes');
+    assert.deepEqual(left.figure.layout.sliders[0].steps.map((x) => x.method), ['restyle'], 'the step that brings a picture in goes');
+    const kept = plotly.sanitize(more, { url: new Set(['pic.example.invalid', 'slide.example.invalid']) });
+    assert.ok(kept.figure.data.length === 2 && kept.figure.layout.sliders[0].steps.length === 2, 'both stay when their hosts are allowed');
+    return 'ok';
+  });
+
+  test('plotly: a figure that names many hosts asks once per purpose with a short list, and a refusal leaves all of them out', async (assert) => {
+    const plotly = D.require('viz/plotly');
+    const consent = D.require('platform/consent');
+    return withoutOverride(async () => {
+      const before = await consent.state('url');
+      const asked = [];
+      try {
+        await consent.set('url', null);
+        consent.setAsker(async (purpose, info) => { asked.push([purpose, info.host, info.hosts.length]); return { allow: false, remember: false }; });
+        const many = { data: [{ type: 'bar', y: [1] }], layout: { images: Array.from({ length: 300 }, (_, i) => ({ source: `https://h${i}.example.invalid/p.png` })) } };
+        const ready = await plotly.prepare(many);
+        assert.equal(asked.length, 1, 'one question');
+        assert.equal(asked[0][1], 'h0.example.invalid, h1.example.invalid, h2.example.invalid ' + t('plotly.consent.more', { n: 297 }), 'the first hosts and how many more');
+        assert.equal(asked[0][2], 300, 'the question carries every host');
+        assert.equal(ready.figure.layout.images.length, 0, 'a refusal leaves every image out');
+        assert.equal(ready.notice, t('plotly.denied.url'));
+        return 'ok';
+      } finally {
+        consent.setAsker(null);
+        await consent.set('url', before);
       }
     });
   });
