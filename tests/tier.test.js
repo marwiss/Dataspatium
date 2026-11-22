@@ -657,4 +657,27 @@
       await restore();
     }
   });
+
+  test('tier: Kontrollera offers the reports of findings from BIM och GIS only', async (assert) => {
+    await reset();
+    let table = null; let started = null;
+    try {
+      table = await datasets.create({ name: 'Nivå fynd', columns: [{ name: 'element', type: 'text' }, { name: 'skick', type: 'text' }, { name: 'prioritet', type: 'text' }], rows: [['Vägg', 'brist', 'hog']] });
+      await tier.set('documents');
+      started = await startShell();
+      const { root, shell } = started;
+      await waitFor(() => shell.store.get().datasets.some((d) => d.id === table.id), 3000, 'the table in the store');
+      shell.store.set({ selectedId: table.id });
+      shell.activate('kontrollera');
+      await waitFor(() => root.querySelector('.dm-center [data-kontrollera-summary]'), 8000, 'the table checked');
+      assert.ok(!root.querySelector('.dm-center [data-kontrollera-report]'), 'no card for the reports in Dokument');
+      await tier.set('bim-gis');
+      await waitFor(() => root.querySelector('.dm-center [data-kontrollera-report]'), 8000, 'the card in BIM och GIS');
+      return 'ok';
+    } finally {
+      if (started) stop(started.root);
+      if (table) await datasets.remove(table.id);
+      await restore();
+    }
+  }, 60000);
 })();
