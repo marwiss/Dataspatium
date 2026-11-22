@@ -190,13 +190,36 @@
           this.store.set({ selectedId: '__flows', flowsTab: tab });
         }
         /**
-         * The tier changed (platform/tier): the status bar's items follow it, and the active mode is drawn again, so that its entry
-         * points show what the tier now holds. Nothing is loaded, and no dataset changes.
+         * The tier changed (platform/tier): the status bar's items follow it, an open assistant closes when the tier no longer holds
+         * it, and the active mode is drawn again, so that its entry points show what the tier now holds; the page keeps its place,
+         * and focus goes back to the card Nivå (or to the page) once it is drawn. A mode still loading draws with the new tier when
+         * it opens. Nothing is loaded, and no dataset changes.
          */
         applyTier() {
           this.assistantEl.hidden = !tier.shows('status:assistant');
+          if (!tier.shows('assistant') && D.has('ui/assistant')) { const open = D.require('ui/assistant').current(); if (open) open.panel.close(); }
+          if (this.pending) return;
           const id = this.store.get().mode;
-          if (id && this.modes.has(id)) this.activate(id);
+          if (!id || !this.modes.has(id)) return;
+          const center = this.slots.center;
+          const top = center.scrollTop;
+          const focused = /** @type {any} */ (document.activeElement);
+          const inCard = !!(focused && focused.closest && focused.closest('[data-settings="tier"]'));
+          const inCenter = !!(focused && center.contains(focused));
+          this.activate(id);
+          if (!top && !inCenter) return;
+          // The modes draw asynchronously (Hantera's workspace awaits its cards): wait a few frames for the page, then put it back.
+          let frames = 0;
+          const settle = () => {
+            if (this.store.get().mode !== id) return;
+            const card = center.querySelector('[data-settings="tier"]');
+            if ((inCard ? !card : !center.childElementCount) && frames++ < 120) { requestAnimationFrame(settle); return; }
+            center.scrollTop = top;
+            const target = inCard && card ? card.querySelector('[aria-checked="true"]') : null;
+            if (target) /** @type {HTMLElement} */ (target).focus({ preventScroll: true });
+            else if (inCenter && (!document.activeElement || document.activeElement === document.body)) center.focus({ preventScroll: true });
+          };
+          requestAnimationFrame(settle);
         }
         /** The floating AI assistant (ui/assistant, the group 'assistant'); one per page, kept while the app is open. */
         openAssistant() {
@@ -403,8 +426,9 @@
           if (!D.capabilities.isFileProtocol && matchMedia('(display-mode: standalone)').matches) {
             idb.requestPersist().catch(() => {});
             // It works without a network after the first use only with every file in the service worker's cache (sw-coi.js keeps
-            // what was fetched), so it loads the groups of scripts too, once the page has settled. The mobile app has its own page.
-            setTimeout(() => { D.ensure(D.groups.list().map((g) => g.name).filter((name) => name !== 'mobile' && tier.groupShown(name))).catch((err) => D.log('shell', 'groups for use offline', err)); }, 5000);
+            // what was fetched), so it loads the groups of scripts too, once the page has settled: every group up to the deployment's
+            // ceiling, those of a tier above the one in effect too, so that raising the tier works offline. The mobile app has its own page.
+            setTimeout(() => { D.ensure(D.groups.list().map((g) => g.name).filter((name) => name !== 'mobile' && tier.groupAllowed(name))).catch((err) => D.log('shell', 'groups for use offline', err)); }, 5000);
           }
         }
 
@@ -494,17 +518,18 @@
 
         /**
          * A deep link to a dataset whose kind's own views the tier hides (platform/tier): Bearbeta, Kontrollera and Hantera say so
-         * on the page; the other modes say so here, with a way to raise the tier unless the deployment caps it. The dataset opens
-         * as a table either way.
+         * on the page, and Visualisera does for a chart of a hidden type; the other modes say so here, with a way to raise the tier,
+         * or what caps it when the deployment does. The dataset opens as a table either way.
          * @param {string} mode @param {any} ds
          */
         hiddenByRoute(mode, ds) {
           if (!ds || ['bearbeta', 'kontrollera', 'hantera'].includes(mode) || !D.has('data/kinds') || D.require('data/kinds').shown(ds)) return;
-          const w = tier.why('kind:' + ds.kind);
-          const name = (n) => t('tier.' + tier.keyOf(n));
-          const text = t('tier.hidden', { feature: t('tier.feature.' + w.feature), tier: name(w.needs), current: name(w.current) });
+          const feature = 'kind:' + ds.kind;
+          const w = tier.why(feature);
+          const text = tier.hiddenText(feature);
           this.log(text, 'info');
-          this.toast(text, { kind: 'info', timeout: 15000, action: w.canRaise ? { label: t('tier.raise', { tier: name(w.needs) }), onClick: () => { tier.set(w.needs).catch((err) => this.partFailed(err)); } } : undefined });
+          const tierUi = D.require('ui/settings/tier');
+          this.toast(text, { kind: 'info', timeout: 15000, action: w.canRaise ? { label: t('tier.raise', { tier: tierUi.nameOf(w.needs) }), onClick: () => { tierUi.choose(this.ctx, w.needs); } } : undefined });
         }
 
         /**
