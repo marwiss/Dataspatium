@@ -597,10 +597,12 @@
       const ctx = { store: { get: () => ({ datasets: [] }), set() {} }, shell: { log: (m, k) => logs.push([k, m]) }, services: { exporter: D.require('io/export') }, ui: Object.assign({ h: D.require('ui/base').h, t, button: D.require('ui/basic').button }, D.require('ui/overlays')) };
       panel = cdeSend.create(ctx, { dataset: () => table });
       document.body.appendChild(panel.el);
-      await panel.start();
+      // This server alone among the sources, whatever other tests have left.
+      const realList = connectors.list;
+      connectors.list = async () => [connector];
+      try { await panel.start(); } finally { connectors.list = realList; }
       const select = (label) => /** @type {any} */ (Array.from(panel.el.querySelectorAll('dm-select')).find((x) => x.getAttribute('label') === t(label)));
-      if (panel.state.connector.id !== connector.id) { select('issues.source').value = connector.id; select('issues.source').dispatchEvent(new Event('change')); }
-      await waitFor(() => panel.state.connector.id === connector.id && panel.state.projects, 3000, 'the source chosen');
+      assert.ok(panel.state.connector.id === connector.id && Array.isArray(panel.state.projects) && !panel.state.projects.length, 'signed in, with no projects to list');
       assert.ok(!select('opencde.project'), 'no project to choose');
       assert.deepEqual(select('cde.send.how').options.map((o) => o.value), ['documents'], 'and no BCF document');
       cdeSend.setPopup(() => Promise.resolve(`${REDIRECT}?upload_documents_url=${encodeURIComponent(session + '/instructions')}`), REDIRECT);
@@ -613,6 +615,7 @@
       opencde.redirectUri = realRedirect; opencde.selectDocuments = realSelect;
       if (panel) { panel.destroy(); panel.el.remove(); }
       if (ui) { ui.destroy(); ui.el.remove(); }
+      await datasets.flushSaves().catch(() => {});
       for (const id of made.concat(table ? [table.id] : [])) await datasets.remove(id).catch(() => {});
       if (connector) { await opencde.logout(connector).catch(() => {}); await connectors.remove(connector.id).catch(() => {}); }
       D.net.unvirtual('tests/tier-docs/');
