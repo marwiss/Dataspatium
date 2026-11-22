@@ -207,6 +207,99 @@
     });
   });
 
+  test('components: a copy over several chunks that fails its digest is removed, so is one that cannot be read, and with ask: false neither asks nor fetches', async (assert) => {
+    const idb = D.require('platform/storage/idb');
+    const id = 'test:chunks';
+    const size = idb.CHUNK + 1024;
+    const good = new Uint8Array(size);
+    for (let i = 0; i < size; i++) good[i] = i % 251;
+    const digest = await components.sha256Hex(good);
+    const spec = { id, urls: ['https://example.invalid/chunks.js'], sha256: digest, label: 'Test' };
+    const write = async (bytes) => {
+      await idb.saveBlob('component:' + id, bytes.slice().buffer);
+      await idb.setSetting('component:' + id, { id, label: 'Test', sha256: digest, size, fetchedAt: new Date().toISOString() });
+    };
+    const evil = good.slice();
+    evil[size - 1] ^= 0xff;
+    return withoutOverride(async () => {
+      const before = await consent.state('components');
+      const asked = [];
+      let fetched = 0;
+      const fetcher = () => { fetched++; return response(good.slice()); };
+      try {
+        await consent.set('components', null);
+        consent.setAsker(async (purpose, info) => { asked.push([purpose, info.host]); return { allow: false, remember: false }; });
+        await write(good);
+        const whole = await components.verified(spec);
+        assert.ok(whole && whole.byteLength === size, 'sound bytes over two chunks are read back whole');
+        // Other bytes in the second chunk under a row that carries the pinned digest.
+        await write(evil);
+        assert.equal(await components.verified(spec), null, 'a changed second chunk fails its digest');
+        assert.ok(!(await components.meta(id)), 'and the copy is removed');
+        // A chunk that is not bytes: a miss as well, never a raw TypeError, and removed so that it can be fetched again.
+        await write(good);
+        const db = await idb.open();
+        await db.blobs.put({ key: 'component:' + id + ':1', parent: 'component:' + id, index: 1, data: null });
+        let thrown = null; let got;
+        try { got = await components.verified(spec); } catch (e) { thrown = e; }
+        assert.ok(!thrown && got === null, 'an unreadable copy is a miss: ' + (thrown && thrown.message));
+        assert.ok(!(await components.meta(id)) && !(await idb.loadBlob('component:' + id)), 'and it is removed');
+        // A flow at start (ask: false) meets a changed copy: refused, unasked and unfetched, in words that say how to allow it.
+        await write(evil);
+        let err = null;
+        try { await components.ensure(spec, { ask: false, fetch: fetcher }); } catch (e) { err = e; }
+        assert.ok(err && err.name === 'ConsentError' && err.reason === 'unattended', 'refused: ' + (err && err.message));
+        assert.equal(err.message, D.t('consent.unattended', { purpose: D.t('consent.purpose.components') }));
+        assert.equal(fetched, 0, 'nothing fetched');
+        assert.deepEqual(asked, [], 'nothing asked');
+        assert.ok(!(await components.meta(id)), 'the changed copy is removed');
+        return 'ok';
+      } finally {
+        consent.setAsker(null);
+        await consent.set('components', before);
+        await components.remove(id).catch(() => {});
+      }
+    });
+  });
+
+  test('components: the Python runtime counts as cached only when its bytes have the pinned digests, and the yes holds until the cache changes', async (assert) => {
+    const idb = D.require('platform/storage/idb');
+    const catalog = D.require('engines/python/catalog');
+    const real = components.verified;
+    const calls = [];
+    let refuse = '';
+    // catalog looks verified() up on the module at every call, so a recorder sees what it checks.
+    components.verified = async (spec) => { calls.push(spec); return spec.id === refuse ? null : new ArrayBuffer(1); };
+    try {
+      catalog.reset();
+      assert.equal(await catalog.cachedRuntime(), true);
+      assert.deepEqual(calls.map((s) => s.id), catalog.RUNTIME.map((f) => 'pyodide:' + f.file), 'every runtime file is checked by its bytes');
+      assert.ok(calls.every((s, i) => s.sha256 === catalog.RUNTIME[i].sha256), 'against the digests pinned in the catalog');
+      assert.equal(await catalog.cachedRuntime(), true);
+      assert.equal(calls.length, catalog.RUNTIME.length, 'the yes is kept');
+      await components.remove('test:none');
+      refuse = 'pyodide:pyodide.asm.wasm';
+      assert.equal(await catalog.cachedRuntime(), false, 'a change to the cache checks again, and a file that fails makes it false');
+      assert.deepEqual(calls.slice(catalog.RUNTIME.length).map((s) => s.id), ['pyodide:pyodide.js', 'pyodide:pyodide.asm.js', 'pyodide:pyodide.asm.wasm'], 'stopping at that file');
+    } finally { components.verified = real; catalog.reset(); }
+    // Rows that carry the pinned digests over other bytes: only when no runtime file is cached, so a real cache is never touched.
+    for (const f of catalog.RUNTIME) if (await components.meta('pyodide:' + f.file)) return 'ok (a runtime file is cached here: the rows are not rewritten)';
+    try {
+      for (const f of catalog.RUNTIME) {
+        await idb.saveBlob('component:pyodide:' + f.file, enc('evil()').buffer);
+        await idb.setSetting('component:pyodide:' + f.file, { id: 'pyodide:' + f.file, label: f.file, sha256: f.sha256, size: 6, fetchedAt: new Date().toISOString() });
+      }
+      catalog.reset();
+      assert.equal(await catalog.cachedRuntime(), false, 'the bytes count, not the rows');
+      assert.equal(await components.meta('pyodide:' + catalog.RUNTIME[0].file), null, 'and the changed copy is removed');
+      assert.equal(await catalog.cachedPackages([]), false, 'so Python counts as not fetched at start');
+      return 'ok';
+    } finally {
+      for (const f of catalog.RUNTIME) await components.remove('pyodide:' + f.file).catch(() => {});
+      catalog.reset();
+    }
+  });
+
   test('remote R packages: the webR index is fetched once, only packages that are not bundled are downloaded, and the worker index is extended', async (assert) => {
     await packages.load();
     const bundled = packages.all()[0];

@@ -461,6 +461,34 @@
     return 'refused, then allowed: ' + out.allowed[1].slice(0, 60);
   }, 300000);
 
+  test('python: a command nobody watches (ask: false, a flow at start) asks nothing: its pyfetch is refused unasked, and the next command someone runs asks again', async (assert) => {
+    if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them from jsDelivr)';
+    await bridge.start();
+    // Port 9 on this computer, which browsers refuse anyway: even a broken gate reaches no server.
+    const code = (url) => [
+      'import json, pyodide.http',
+      'try:',
+      '    await pyodide.http.pyfetch(' + JSON.stringify(url) + ')',
+      '    out = None',
+      'except Exception as e:',
+      '    out = [type(e).__name__, str(e)]',
+      'print(json.dumps(out))',
+    ].join('\n');
+    const asked = [];
+    const out = await withAsker(async (purpose, info) => { asked.push([purpose, info.host, info.label]); return { allow: false, remember: false }; }, async () => {
+      const unattended = lastJson(await bridge.run(code('http://127.0.0.1:9/start'), { ask: false }));
+      const before = asked.length;
+      const marked = bridge.engine.unattended;
+      const mine = lastJson(await bridge.run(code('http://127.0.0.1:9/mine')));
+      return { unattended, before, marked, mine, cleared: bridge.engine.unattended };
+    });
+    assert.ok(out.unattended && out.unattended[0] === 'AbortError' && out.unattended[1].includes('not allowed'), 'refused at the gate: ' + JSON.stringify(out.unattended));
+    assert.equal(out.before, 0, 'nothing asked for the command nobody watches');
+    assert.ok(out.marked === true && out.cleared === false, 'the engine knew whose command it was');
+    assert.deepEqual(asked, [['components', '127.0.0.1:9', 'http://127.0.0.1:9/mine']], 'the next command someone runs asks');
+    return 'ok';
+  }, 300000);
+
   test('python: code in the worker cannot answer its own question about the internet: answers forged through onmessage, dispatchEvent and a MessageChannel, and questions posted for another address, let no fetch through', async (assert) => {
     if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them from jsDelivr)';
     await bridge.start();

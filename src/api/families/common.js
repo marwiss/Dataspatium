@@ -11,11 +11,12 @@
     /**
      * Sends a request with the connector's authentication, rate limit and signal; answers with the parsed JSON or throws an error
      * in the user's words.
-     * @param {any} connector @param {any} req {url, method, headers, body?} @param {{signal?: AbortSignal}} options
+     * @param {any} connector @param {any} req {url, method, headers, body?} @param {{signal?: AbortSignal, ask?: boolean}} options `ask: false`:
+     *   a refresh by a flow at start, which asks for nothing
      */
     async function jsonRequest(connector, req, options) {
-      const prepared = await auth.apply(connector, req);
-      const res = await http.request(Object.assign(prepared, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal }));
+      const prepared = await auth.apply(connector, req, { ask: options.ask });
+      const res = await http.request(Object.assign(prepared, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal, ask: options.ask }));
       if (!res.ok) throw http.httpError(res, connector.name);
       try { return JSON.parse(res.text); } catch (_e) { throw new Error(D.t('api.err.notjson', { name: connector.name })); }
     }

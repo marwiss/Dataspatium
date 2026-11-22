@@ -110,6 +110,8 @@
      * @param {string} id dataset id
      * @param {string} opId
      * @param {Record<string, any>} params
+     * @param {{noUndo?: boolean, noLog?: boolean, logAction?: string, description?: string, ask?: boolean}} [options] `ask: false`
+     *   (a flow at start): the operation gets it as `ctx.ask`, and its engines and fetches then ask for nothing
      */
     async function apply(id, opId, params, options = {}) {
       if (options.logAction !== 'undo') tier.guard('op:' + opId);
@@ -117,6 +119,7 @@
       const handle = await datasets.ensureOpen(id);
       const ctx = ops.makeContext(handle.engine, handle.columns);
       ctx.datasetId = id;
+      ctx.ask = options.ask;
       const guard = D.has('data/protected-columns') ? D.require('data/protected-columns') : null;
       const guarded = guard ? guard.list(handle.meta, handle.columns) : [];
       const columnsBefore = handle.columns.map((c) => ({ name: c.name, type: c.type }));
@@ -192,14 +195,15 @@
       return out;
     }
 
-    async function replay(targetId, recipeSteps) {
+    /** @param {string} targetId @param {any[]} recipeSteps @param {{ask?: boolean}} [options] `ask` as for apply() */
+    async function replay(targetId, recipeSteps, options = {}) {
       const done = [];
       for (const step of recipeSteps) {
         try {
           const op = ops.get(step.op);
           const missing = ((op && op.params) || []).filter((p) => p.secret && step.params && step.params[p.name] === '***');
           if (missing.length) throw new Error(D.t('recipe.err.secret', { op: step.op, params: missing.map((p) => p.name).join(', ') }));
-          await apply(targetId, step.op, step.params); done.push({ step, ok: true });
+          await apply(targetId, step.op, step.params, { ask: options.ask }); done.push({ step, ok: true });
         }
         catch (err) { done.push({ step, ok: false, error: (err && err.message) || String(err) }); break; }
       }

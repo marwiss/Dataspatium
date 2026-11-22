@@ -28,7 +28,8 @@
       /**
        * Fetch all pages of an endpoint into one table.
        * @param {any} connector @param {any} endpoint @param {Record<string, any>} params
-       * @param {{maxPages?: number, firstPageOnly?: boolean, signal?: AbortSignal, onProgress?: (info: {pages: number, rows: number, url: string}) => void}} [options]
+       * @param {{maxPages?: number, firstPageOnly?: boolean, signal?: AbortSignal, onProgress?: (info: {pages: number, rows: number, url: string}) => void, ask?: boolean}} [options]
+       *   `ask: false` (a flow at start): nothing is asked, only a consent already kept lets the requests go out
        */
       async function fetchTable(connector, endpoint, params = {}, options = {}) {
         const spec = endpoint.response || { format: 'json' };
@@ -42,8 +43,8 @@
         const requests = [];
         let pages = 0; let truncated = false; let firstData = null; let lastMeta = null;
         while (req) {
-          const authed = await auth.apply(connector, req, { signal: options.signal });
-          const res = await http.request(Object.assign({}, authed, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal }));
+          const authed = await auth.apply(connector, req, { signal: options.signal, ask: options.ask });
+          const res = await http.request(Object.assign({}, authed, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal, ask: options.ask }));
           pages++;
           if (!res.ok) throw http.httpError(res, connector.name);
           const parsed = await parsers.parse(res.text, spec, { options: runtimeOptions });
@@ -89,7 +90,8 @@
        * its recipe, so that cleaned, renamed and computed columns come back. Name, metadata, rules and log are
        * kept. Nothing changes when the fetch or a recipe step fails.
        * @param {string} id
-       * @param {{fetch?: (source: any) => Promise<any>, signal?: AbortSignal}} [options] fetch is injectable for tests
+       * @param {{fetch?: (source: any) => Promise<any>, signal?: AbortSignal, ask?: boolean}} [options] fetch is injectable for tests;
+       *   `ask: false` (a flow at start): the fetch and the replayed recipe ask for nothing
        * @returns {Promise<{rows: number, steps: number}>}
        */
       async function refreshDataset(id, options = {}) {
@@ -112,7 +114,7 @@
         const before = await datasets.rebuild(id, { columns, rows, source: Object.assign({}, source, { fetchedAt: new Date().toISOString(), rows: rows.length }, table.file ? { size: table.file.size, lastModified: table.file.lastModified ? new Date(table.file.lastModified).toISOString() : null } : {}) });
         let done = 0;
         try {
-          for (const step of steps) { await recipes.apply(id, step.op, step.params, { noUndo: true, noLog: true }); done++; }
+          for (const step of steps) { await recipes.apply(id, step.op, step.params, { noUndo: true, noLog: true, ask: options.ask }); done++; }
         } catch (err) {
           await datasets.replaceBytes(id, before, null);
           throw new Error(D.t('api.refresh.replay.failed', { step: steps[done].description, message: (err && err.message) || String(err) }));
@@ -144,7 +146,7 @@
       /** Re-run the fetch recorded in a dataset's source. Returns a table. */
       /**
        * Fetch every API-sourced dataset again, in turn, replacing its rows (a saved fetch job run by hand).
-       * @param {{fetch?: (source: any) => Promise<any>, mode?: string, signal?: AbortSignal, onProgress?: Function}} [options] fetch is injectable for tests
+       * @param {{fetch?: (source: any) => Promise<any>, mode?: string, signal?: AbortSignal, onProgress?: Function, ask?: boolean}} [options] fetch is injectable for tests
        * @returns {Promise<Array<{id: string, name: string, ok: boolean, rows?: number, error?: string}>>}
        */
       async function refreshAll(options = {}) {

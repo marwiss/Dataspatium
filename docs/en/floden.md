@@ -76,16 +76,24 @@ data is reviewed first.
 
 With *Run when the app starts* the flow runs shortly after the app opens. It only runs if it need not ask anything:
 
-- Steps that fetch from the net need the consent already given.
-- Steps that read through the database bridge do not run at start, since the bridge is connected by hand.
-- Python scripts need Python already fetched.
-- Python charts, also in documents, need Python already fetched and the consent their plotly maps and pictures need
-  already given.
+- Steps that fetch from the net need the consent already given, also height steps in a recipe that is replayed.
+- Steps that read through the database bridge or from an OpenCDE server do not run at start, since they are connected and
+  signed in by hand. The same goes for the OpenCDE commands.
+- Python code needs Python already fetched, with the packages Python loads when it starts. That covers scripts, charts,
+  documents that draw charts, code steps in recipes and steps on models.
+- Packages the code uses, R packages that do not come with the app, IfcOpenShell and plotly.js must already be in the
+  cache, unless you have allowed Components for good.
+- Python charts also need the consent their plotly maps and pictures need already given.
+- Command steps are checked as the step or the code they run.
 - A flow that asks you (*Ask me*) never runs at start.
 
-Otherwise the flow is skipped and the log says why. At start no step asks: whatever a chart or a script needs beyond that
-(packages, plotly.js, a map the chart did not have before) comes only with a consent already kept, and otherwise the chart
-is drawn without it or the step fails. Nothing runs while the app is closed.
+Otherwise the flow is skipped. The log and the flow in Flows say why and what you can do: run the flow by hand once, or
+allow what is missing under Manage, Workspace, Internet access.
+
+At start no step asks. The whole run carries with it that nobody is at the keyboard. Fetches, recipes, commands and the
+code in R and Python, with Python's own fetches (packages, `pyfetch`), get only what is already allowed for good.
+Whatever is still missing is left out of the chart, or the step fails with a text that says how to allow it. What you do
+yourself while the flow runs asks as usual. Nothing runs while the app is closed.
 
 ## Watching a source
 

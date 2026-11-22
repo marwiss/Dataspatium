@@ -19,9 +19,13 @@
     let asker = null;
     const notify = (purpose, value) => { for (const fn of Array.from(listeners)) { try { fn(purpose, value); } catch (err) { console.error('[consent] listener failed', err); } } };
 
+    /**
+     * A refusal. `reason` 'unattended' is a run nobody watches (a flow at start, `ask: false`) that met a consent not kept: its
+     * text says how to allow it, since nobody refused anything.
+     */
     class ConsentError extends Error {
       constructor(purpose, reason) {
-        super(D.t('consent.denied', { purpose: D.t('consent.purpose.' + purpose) }));
+        super(D.t(reason === 'unattended' ? 'consent.unattended' : 'consent.denied', { purpose: D.t('consent.purpose.' + purpose) }));
         this.name = 'ConsentError';
         this.purpose = purpose;
         this.reason = reason || 'denied';
@@ -103,15 +107,18 @@
 
     /**
      * Make sure a purpose is allowed; asks through the registered asker, one question per purpose at a time. Rejects with
-     * ConsentError when the user has said no (now or earlier), or when the question is no longer wanted.
+     * ConsentError when the user has said no (now or earlier), or when the question is no longer wanted. With `ask: false`
+     * (the marker a flow at start carries down to every fetch it makes) nothing is asked: only a consent already kept for good
+     * lets it through, and otherwise it rejects with reason 'unattended'.
      * @param {string} purpose
-     * @param {{host?: string, label?: string, size?: number, wanted?: () => boolean}} [info] shown in the question; `wanted`
-     *   is asked right before the question is shown
+     * @param {{host?: string, label?: string, size?: number, wanted?: () => boolean, ask?: boolean}} [info] shown in the question;
+     *   `wanted` is asked right before the question is shown
      */
     async function require(purpose, info = {}) {
       const v = await state(purpose);
       if (v === 'granted') return true;
       if (v === 'denied') throw new ConsentError(purpose, 'denied');
+      if (info.ask === false) throw new ConsentError(purpose, 'unattended');
       if (!asker) { D.log('consent', 'no asker registered; allowing', purpose, info.host || ''); return true; }
       if (!(await ask(purpose, info))) throw new ConsentError(purpose, 'denied');
       return true;

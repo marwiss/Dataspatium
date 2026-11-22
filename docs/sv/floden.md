@@ -74,16 +74,24 @@ Ett flöde skickar aldrig något ur appen. Det du vill dela med andra går genom
 
 Med *Kör när appen startar* körs flödet strax efter att appen öppnats. Det körs bara om det inte behöver fråga något:
 
-- Steg som hämtar från nätet kräver att samtycket redan är givet.
-- Steg som läser genom databasbryggan körs inte vid start, eftersom bryggan kopplas upp för hand.
-- Python-skript kräver att Python redan är hämtat.
-- Python-diagram, även i dokument, kräver att Python redan är hämtat och att samtycket som deras plotly-kartor och bilder
-  behöver redan är givet.
+- Steg som hämtar från nätet kräver att samtycket redan är givet, även höjdsteg i ett recept som spelas upp.
+- Steg som läser genom databasbryggan eller från en OpenCDE-server körs inte vid start, eftersom de kopplas upp och
+  loggas in för hand. Detsamma gäller kommandona för OpenCDE.
+- Python-kod kräver att Python redan är hämtat, med de paket som Python laddar när det startar. Det gäller skript,
+  diagram, dokument som ritar diagram, kodsteg i recept och steg på modeller.
+- Paket som koden använder, R-paket som inte följer med appen, IfcOpenShell och plotly.js ska redan finnas i cachen,
+  om du inte har tillåtit Komponenter för gott.
+- Python-diagram kräver dessutom att samtycket som deras plotly-kartor och bilder behöver redan är givet.
+- Kommandosteg prövas som steget eller koden de kör.
 - Ett flöde som frågar dig (*Fråga mig*) körs aldrig vid start.
 
-Annars hoppas flödet över och loggen säger varför. Vid start frågar inget steg: det ett diagram eller ett skript behöver
-utöver det (paket, plotly.js, en karta som diagrammet inte hade förut) hämtas bara med ett samtycke som redan är sparat,
-och annars ritas diagrammet utan det eller så misslyckas steget. Inget körs när appen är stängd.
+Annars hoppas flödet över. Loggen och flödet i Flöden säger varför och vad du kan göra: köra flödet för hand en gång,
+eller tillåta det som saknas under Hantera, Arbetsyta, Internetåtkomst.
+
+Vid start frågar inget steg. Hela körningen bär med sig att ingen sitter vid tangentbordet. Hämtningar, recept,
+kommandon och koden i R och Python med Pythons egna hämtningar (paket, `pyfetch`) får bara det som redan är tillåtet för
+gott. Det som saknas ändå lämnas utanför diagrammet, eller så misslyckas steget med en text om hur du tillåter det.
+Det du själv gör medan flödet körs frågar som vanligt. Inget körs när appen är stängd.
 
 ## Bevaka en källa
 

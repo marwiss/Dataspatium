@@ -29,12 +29,13 @@
     }
 
     /**
-     * Run the code on the dataset (or its first rows) and open the result in a temporary engine.
+     * Run the code on the dataset (or its first rows) and open the result in a temporary engine. A replay by a flow at start
+     * (`ctx.ask` false, data/recipes) asks the engine for nothing.
      * @returns {Promise<{tmp: any, columns: any[], rowCount: number, sample: any[][], log: any[]}>}
      */
     async function runCode(lang, ctx, code, options = {}) {
       const bytes = await ctx.engine.export();
-      const res = await bridgeFor(lang).runStep(String(code), bytes, { limit: options.limit, name: options.name });
+      const res = await bridgeFor(lang).runStep(String(code), bytes, { limit: options.limit, name: options.name, ask: ctx.ask });
       const tmp = new sqlite.SqliteEngine();
       await tmp.start();
       await tmp.open(res.bytes);

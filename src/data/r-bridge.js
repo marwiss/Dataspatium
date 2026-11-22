@@ -148,7 +148,8 @@
       /**
        * Packages that are not bundled come from webR's repository after consent and are shipped together with the
        * extended package index. A refusal or a network error only leaves R to report the missing package. With
-       * `ask: false` (a flow at start) only a consent already kept lets them be fetched.
+       * `ask: false` (a flow at start) only a consent already kept lets them be fetched, and a package it may not fetch
+       * fails the command with that ConsentError before any code runs, so the flow's log says why.
        * @param {string[]} names @param {{ask?: boolean}} [options]
        */
       async ensureRemote(names, options = {}) {
@@ -162,6 +163,7 @@
           }
         } catch (err) {
           D.log('r-bridge', err && err.name === 'ConsentError' ? 'remote packages not allowed' : 'remote packages failed', err);
+          if (options.ask === false && err && err.name === 'ConsentError') throw err;
         }
       }
 
@@ -245,8 +247,9 @@
 
       /**
        * A code step in a recipe: run `function(df) {...}` on the dataset bytes (a SQLite file) and return the resulting
-       * file. Used by data/code-steps; an R error is thrown with its message.
-       * @param {string} code @param {ArrayBuffer|Uint8Array} bytes @param {{limit?: number, name?: string}} [options]
+       * file. Used by data/code-steps; an R error is thrown with its message. `ask: false`: a recipe replayed by a flow at start,
+       * which asks for nothing (see ensureRemote()).
+       * @param {string} code @param {ArrayBuffer|Uint8Array} bytes @param {{limit?: number, name?: string, ask?: boolean}} [options]
        * @returns {Promise<{bytes: ArrayBuffer, log: string[]}>}
        */
       async runStep(code, bytes, options = {}) {
@@ -259,7 +262,7 @@
           await this.engine.writeFile('/data/step/in.sqlite', bytes);
           const referenced = packages.referenced(code);
           await this.engine.ensurePackages(referenced);
-          await this.ensureRemote(referenced);
+          await this.ensureRemote(referenced, options);
           const q = (s) => JSON.stringify(String(s));
           const res = await this.engine.capture(`.dm_run_step(${q(code)}, "/data/step/in.sqlite", "/data/step/out.sqlite", ${options.limit ? Number(options.limit) : 'NULL'}, ${q(options.name || '')})`, { captureConditions: false });
           const isError = (o) => o.type === 'stderr' && /^(Error|Fel)\b/.test(String(o.data));

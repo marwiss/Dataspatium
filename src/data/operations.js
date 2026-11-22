@@ -549,11 +549,11 @@
       id: 'geo_height', group: 'geo',
       params: [{ name: 'lonColumn', type: 'column', required: true, kinds: NUMERIC, prefer: PREFER_X }, { name: 'latColumn', type: 'column', required: true, kinds: NUMERIC, prefer: PREFER_Y }, { name: 'name', type: 'text', default: 'hojd' }],
       // Heights from Lantmäteriet's terrain model through the preset lantmateriet-stac (api/heights): the key and the
-      // consent are asked for as for any fetch, and a point outside the model gets no height.
+      // consent are asked for as for any fetch (never in a replay at start, ctx.ask), and a point outside the model gets no height.
       async apply(ctx, p) {
         const res = await ctx.engine.exec(`select rowid, ${q(p.lonColumn)}, ${q(p.latColumn)} from data`);
         const rows = res[0] ? res[0].values : [];
-        const { heights } = await D.require('api/heights').at(rows.map((r) => (r[1] === null || r[2] === null ? null : [Number(r[1]), Number(r[2])])));
+        const { heights } = await D.require('api/heights').at(rows.map((r) => (r[1] === null || r[2] === null ? null : [Number(r[1]), Number(r[2])])), { ask: ctx.ask });
         const name = await addColumnOf(ctx, p.name || 'hojd', 'number');
         await ctx.engine.run('create temp table if not exists _heights (id integer primary key, v real)');
         await ctx.engine.run('delete from _heights');
@@ -578,7 +578,7 @@
       async apply(ctx, p) {
         const res = await ctx.engine.exec(`select rowid, ${q(p.column)} from data`);
         const rows = res[0] ? res[0].values : [];
-        const stats = await D.require('api/heights').along(rows.map((r) => r[1]), { step: p.step });
+        const stats = await D.require('api/heights').along(rows.map((r) => r[1]), { step: p.step, ask: ctx.ask });
         const names = this.names(p);
         for (const n of names) await addColumnOf(ctx, n, 'number');
         await ctx.engine.run('create temp table if not exists _heights3 (id integer primary key, lo real, hi real, av real)');

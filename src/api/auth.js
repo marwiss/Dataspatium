@@ -35,7 +35,7 @@
       const auth = connector.auth;
       const body = 'grant_type=client_credentials' + (auth.scope ? '&scope=' + encodeURIComponent(auth.scope) : '');
       const res = await http.request({
-        url: auth.tokenUrl, method: 'POST', body, signal: options.signal, rateKey: connector.id,
+        url: auth.tokenUrl, method: 'POST', body, signal: options.signal, rateKey: connector.id, ask: options.ask,
         headers: { Authorization: 'Basic ' + btoa(`${values.clientId}:${values.clientSecret}`), 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
       });
       if (!res.ok) throw http.httpError(res, D.t('api.err.token'));
@@ -51,6 +51,7 @@
     /**
      * Return a copy of the request with credentials applied.
      * @param {any} connector @param {{url: string, method?: string, headers?: Record<string, string>, body?: any}} req
+     * @param {{signal?: AbortSignal, ask?: boolean}} [options] `ask: false` (a flow at start): a token is fetched only with a consent already kept
      */
     async function apply(connector, req, options = {}) {
       const auth = connector.auth || { type: 'none' };

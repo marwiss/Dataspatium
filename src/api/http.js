@@ -67,13 +67,14 @@
 
     /**
      * Perform a request.
-     * @param {{url: string, method?: string, headers?: Record<string, string>, body?: any, signal?: AbortSignal, timeoutMs?: number, notModifiedOk?: boolean, rateKey?: string, rateLimit?: {requests: number, perSeconds: number}, retries?: number, responseType?: 'text'|'arraybuffer'}} req
+     * @param {{url: string, method?: string, headers?: Record<string, string>, body?: any, signal?: AbortSignal, timeoutMs?: number, notModifiedOk?: boolean, rateKey?: string, rateLimit?: {requests: number, perSeconds: number}, retries?: number, responseType?: 'text'|'arraybuffer', ask?: boolean}} req
      * @returns {Promise<{ok: boolean, status: number, statusText: string, headers: Headers, url: string, text: string, buffer: ArrayBuffer|null, contentType: string, ms: number}>}
      */
     async function request(req) {
       // Real servers are contacted only with the user's consent for API fetches (asked once); the app's own
       // virtual sources (dataspatium-asset://, used by presets and tests) never leave the page.
-      if (!/^dataspatium-asset:/.test(String(req.url))) await D.require('platform/consent').require('api', { host: hostOf(req.url) });
+      // `ask: false` (a flow at start): only a consent already kept lets the request go out.
+      if (!/^dataspatium-asset:/.test(String(req.url))) await D.require('platform/consent').require('api', { host: hostOf(req.url), ask: req.ask });
       const proxyUrl = await getProxy();
       const url = applyProxy(req.url, proxyUrl);
       const retries = req.retries === undefined ? 2 : req.retries;

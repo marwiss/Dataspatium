@@ -27,10 +27,10 @@
      * @param {any} connector @param {number[]} box [west, south, east, north]
      * @returns {Promise<Array<{url: string, bbox: number[]}>>}
      */
-    async function tiles(connector, box) {
+    async function tiles(connector, box, options = {}) {
       const endpoint = (connector.endpoints || []).find((e) => e.id === 'hojd');
       if (!endpoint) throw new Error(D.t('heights.err.noconnector'));
-      const table = await runner.fetchTable(connector, endpoint, { collections: COLLECTION, bbox: box.map((v) => v.toFixed(6)).join(',') });
+      const table = await runner.fetchTable(connector, endpoint, { collections: COLLECTION, bbox: box.map((v) => v.toFixed(6)).join(',') }, { ask: options.ask });
       const at = (name) => table.columns.indexOf(name);
       const url = at('asset_data'); const proj = at('proj:bbox'); const wgs = at('bbox');
       return table.rows.map((r) => {
@@ -44,7 +44,8 @@
     /**
      * Heights in metres (RH 2000) at points, given in WGS 84 ([lon, lat]) or in SWEREF 99 TM ([east, north]).
      * @param {Array<number[]|null>} points
-     * @param {{connector?: any}} [options]
+     * @param {{connector?: any, ask?: boolean}} [options] `ask: false` (a recipe replayed by a flow at start): nothing is asked,
+     *   only a consent already kept lets the tiles be fetched
      * @returns {Promise<{heights: Array<number|null>, tiles: number}>}
      */
     async function at(points, options = {}) {
@@ -62,7 +63,7 @@
       const ll = known.map((c) => geo.swerefToWgs84(c[0], c[1], 3006));
       const pad = 0.0005;
       const box = [Math.min(...ll.map((c) => c[0])) - pad, Math.min(...ll.map((c) => c[1])) - pad, Math.max(...ll.map((c) => c[0])) + pad, Math.max(...ll.map((c) => c[1])) + pad];
-      const list = await tiles(connector, box);
+      const list = await tiles(connector, box, options);
       // The catalogue's extent picks the tiles to open (with a margin, as an extent from WGS 84 corners is approximate); the
       // tile's own grid then decides which points it has.
       const near = (b, c) => c[0] >= b[0] - 100 && c[0] <= b[2] + 100 && c[1] >= b[1] - 100 && c[1] <= b[3] + 100;
@@ -75,9 +76,9 @@
         if (!indices.length) continue;
         opened++;
         const host = new URL(tile.url).host;
-        if (!/^dataspatium-asset:/.test(tile.url)) await consent.require('api', { host });
+        if (!/^dataspatium-asset:/.test(tile.url)) await consent.require('api', { host, ask: options.ask });
         // The key only for the file host the preset names.
-        const headers = hosts.includes(host) ? (await auth.apply(connector, { url: tile.url, method: 'GET', headers: {} })).headers : {};
+        const headers = hosts.includes(host) ? (await auth.apply(connector, { url: tile.url, method: 'GET', headers: {} }, { ask: options.ask })).headers : {};
         const tiff = await GeoTIFF.fromUrl(tile.url, { headers, allowFullFile: true });
         const image = await tiff.getImage();
         const [ox, oy] = image.getOrigin(); const [rx, ry] = image.getResolution();

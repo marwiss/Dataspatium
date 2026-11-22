@@ -45,14 +45,14 @@
       params: [{ name: 'code', type: 'code', language: 'python', required: true }],
       async prepare(ctx, p) {
         const meta = await modelOf(ctx);
-        const res = await bridge().runIfcStep(String(p.code), await ctx.engine.export(), { name: meta.name });
+        const res = await bridge().runIfcStep(String(p.code), await ctx.engine.export(), { name: meta.name, ask: ctx.ask });
         ctx._ifc = { bytes: res.bytes, info: res.info, fileName: fileNameOf(meta, res.info) };
       },
       apply: (ctx) => take(ctx),
       /** Runs the code on the model and tells what came out, without touching the dataset. */
       async preview(ctx, p) {
         const meta = await modelOf(ctx);
-        const res = await bridge().runIfcStep(String(p.code), await ctx.engine.export(), { name: meta.name });
+        const res = await bridge().runIfcStep(String(p.code), await ctx.engine.export(), { name: meta.name, ask: ctx.ask });
         const info = res.info || {};
         return { rows: Number(info.elements) || 0, log: res.log, note: D.t('op.ifc_python.preview', { elements: Number(info.elements) || 0, entities: Number(info.entities) || 0, kb: Math.round(res.bytes.byteLength / 1024) }) };
       },
@@ -67,14 +67,14 @@
       async prepare(ctx, p) {
         const meta = await modelOf(ctx);
         if (!(await datasets.get(p.table))) throw new Error(D.t('op.err.ifc.notable'));
-        const res = await bridge().runIfcApply(await ctx.engine.export(), await datasets.exportBytes(p.table), String(p.key || 'guid'));
+        const res = await bridge().runIfcApply(await ctx.engine.export(), await datasets.exportBytes(p.table), String(p.key || 'guid'), { ask: ctx.ask });
         ctx._ifc = { bytes: res.bytes, info: res.info, fileName: fileNameOf(meta, res.info) };
       },
       apply: (ctx) => take(ctx),
       async preview(ctx, p) {
         await modelOf(ctx);
         if (!(await datasets.get(p.table))) throw new Error(D.t('op.err.ifc.notable'));
-        const res = await bridge().runIfcApply(await ctx.engine.export(), await datasets.exportBytes(p.table), String(p.key || 'guid'));
+        const res = await bridge().runIfcApply(await ctx.engine.export(), await datasets.exportBytes(p.table), String(p.key || 'guid'), { ask: ctx.ask });
         const info = res.info || {};
         return { rows: Number(info.changed) || 0, log: res.log, note: D.t('op.ifc_apply_table.preview', { changed: Number(info.changed) || 0, rows: Number(info.rows) || 0 }) };
       },
@@ -89,7 +89,7 @@
       params: [{ name: 'changes', type: 'text', required: true }, { name: 'provenance', type: 'text' }],
       async prepare(ctx, p) {
         const meta = await modelOf(ctx);
-        const res = await bridge().runIfcChangeset(parseChanges(p.changes), await ctx.engine.export(), { name: meta.name, express: true });
+        const res = await bridge().runIfcChangeset(parseChanges(p.changes), await ctx.engine.export(), { name: meta.name, express: true, ask: ctx.ask });
         ctx._ifc = { bytes: res.bytes, info: res.info, fileName: fileNameOf(meta, res.info) };
       },
       // The refusal in apply, whose failure rolls the step back and takes it off the undo stack.
@@ -107,7 +107,7 @@
       async prepare(ctx, p) {
         const meta = await modelOf(ctx);
         const op = Object.assign(typeof p.party === 'string' ? JSON.parse(p.party) : p.party, { tool: 'set_responsible_party' });
-        const res = await bridge().runIfcChangeset([op], await ctx.engine.export(), { name: meta.name, express: true });
+        const res = await bridge().runIfcChangeset([op], await ctx.engine.export(), { name: meta.name, express: true, ask: ctx.ask });
         ctx._ifc = { bytes: res.bytes, info: res.info, fileName: fileNameOf(meta, res.info) };
       },
       async apply(ctx) { refuseExpress((ctx._ifc && ctx._ifc.info) || {}); return take(ctx); },

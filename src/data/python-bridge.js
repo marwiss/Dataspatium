@@ -45,9 +45,14 @@
       emit(type, payload) { for (const fn of Array.from(this.listeners)) { try { fn(type, payload); } catch (err) { console.error(err); } } }
       setState(state) { this.state = state; this.emit('state', { state }); }
 
-      /** Start Python (fetching the runtime the first time) and load the Dataspatium helpers (idempotent). */
-      start() {
-        if (this.ready) return this.ready;
+      /**
+       * Start Python (fetching the runtime the first time) and load the Dataspatium helpers (idempotent). `ask: false` (a flow at
+       * start): the runtime and the startup wheels come only from the cache or with a consent already kept. A start that may ask
+       * and finds one made with `ask: false` under way asks for itself when that one could not.
+       * @param {{ask?: boolean}} [options]
+       */
+      start(options = {}) {
+        if (this.ready) return options.ask === false ? this.ready : this.ready.catch((err) => (unattendedRefusal(err) ? this.start(options) : Promise.reject(err)));
         this.setState('starting');
         this.ready = (async () => {
           try {
@@ -57,7 +62,7 @@
             this.engine.on('stderr', (text) => this.onStream('stderr', text));
             this.engine.on('progress', (info) => { this.progress = info; this.emit('progress', info); });
             this.engine.on('closed', (err) => { this.error = D.t('python.err.closed'); this.setState('error'); D.log('python', 'worker closed', err); });
-            await this.engine.start();
+            await this.engine.start({ ask: options.ask });
             this.progress = null;
             const src = await D.assets.loadText('python/dataspatium.py');
             await this.engine.mkdir(DATA_DIR);
@@ -76,8 +81,10 @@
             this.startupMs = performance.now() - t0;
             this.setState('ready');
           } catch (err) {
-            this.error = (err && err.message) || String(err);
-            this.setState('error');
+            // A start at start that found something missing is no fault of Python's: the person's own start then asks.
+            const quiet = unattendedRefusal(err);
+            this.error = quiet ? null : (err && err.message) || String(err);
+            this.setState(quiet ? 'idle' : 'error');
             // A failed start is not replayed forever: the next start() tries again with a fresh engine.
             const failed = this.engine;
             this.engine = null; this.ready = null; this.mirrored.clear(); this.progress = null;
@@ -92,6 +99,13 @@
         this.streams.push({ kind, text });
         this.emit('stream', { kind, text });
       }
+
+      /**
+       * Tells the engine whose command comes now: one nobody watches (`ask: false`, a flow at start) or someone's own. The
+       * engine's own wheel requests and internet questions follow it until the next command (engines/python `unattended`).
+       * @param {{ask?: boolean}} [options]
+       */
+      attend(options = {}) { if (this.engine) this.engine.unattended = options.ask === false; }
 
       /** Write the dataset index and the given datasets into /data. */
       async mirror(ids) {
@@ -159,7 +173,8 @@
       /**
        * Fetch (after consent) and ship the wheels of the packages the code imports. A refusal or a network error
        * only leaves Python to report the missing module. matplotlib gets the Agg backend and the app's theme before
-       * it is first used. With `ask: false` (a flow at start) only a consent already kept lets wheels be fetched.
+       * it is first used. With `ask: false` (a flow at start) only a consent already kept lets wheels be fetched, and a wheel
+       * it may not fetch fails the command with that ConsentError before any code runs, so the flow's log says why.
        * @param {string[]} names package names from catalog.referenced() @param {{ask?: boolean}} [options]
        * @returns {Promise<string[]>} packages newly made available
        */
@@ -172,6 +187,7 @@
           fetched = res.packages;
         } catch (err) {
           D.log('python-bridge', err && err.name === 'ConsentError' ? 'packages not allowed' : 'packages failed', err);
+          if (options.ask === false && err && err.name === 'ConsentError') throw err;
           return fetched;
         }
         const closure = catalog.closure(names);
@@ -204,18 +220,20 @@
 
       /**
        * A code step in a recipe: run `def step(df): ...` on the dataset bytes (a SQLite file) and return the resulting
-       * file. Used by data/code-steps; a Python error is thrown with its traceback.
-       * @param {string} code @param {ArrayBuffer|Uint8Array} bytes @param {{limit?: number, name?: string}} [options]
+       * file. Used by data/code-steps; a Python error is thrown with its traceback. `ask: false`: a recipe replayed by a flow at
+       * start, which asks for nothing (see run()).
+       * @param {string} code @param {ArrayBuffer|Uint8Array} bytes @param {{limit?: number, name?: string, ask?: boolean}} [options]
        * @returns {Promise<{bytes: ArrayBuffer, rows: number, columns: string[], log: Array<{kind: string, text: string}>}>}
        */
       async runStep(code, bytes, options = {}) {
-        await this.start();
+        await this.start(options);
         if (this.state === 'busy') throw new Error(D.t('python.err.busy'));
         this.setState('busy');
+        this.attend(options);
         try {
           await this.engine.mkdir('/data/step');
           await this.engine.writeFile('/data/step/in.sqlite', bytes);
-          await this.ensurePackages((await this.referencedPackages(code)));
+          await this.ensurePackages((await this.referencedPackages(code, options)), options);
           this.streams = [];
           const info = await this.engine.evalJson(`_dataspatium._run_step(${JSON.stringify(String(code))}, "/data/step/in.sqlite", "/data/step/out.sqlite", ${options.limit ? Number(options.limit) : 'None'}, ${JSON.stringify(String(options.name || ''))})`);
           const out = await this.engine.readFile('/data/step/out.sqlite');
@@ -228,15 +246,17 @@
       }
 
       /**
-       * Run user code. Resolves with the console entries to display. `ask: false` (a flow at start): the wheels the code
-       * needs come only with a consent already kept.
+       * Run user code. Resolves with the console entries to display. `ask: false` (a flow at start): nothing is asked. Python's
+       * start, the wheels the code needs and the wheels and addresses the code itself fetches come only from the cache or with a
+       * consent already kept; a wheel it may not fetch ends the run with that refusal as its error.
        * @param {string} code @param {{ask?: boolean}} [options]
        * @returns {Promise<{entries: any[], ms: number}>}
        */
       async run(code, options = {}) {
-        await this.start();
+        await this.start(options);
         if (this.state === 'busy') throw new Error(D.t('python.err.busy'));
         this.setState('busy');
+        this.attend(options);
         const t0 = performance.now();
         const entries = [{ kind: 'input', text: code }];
         let installed = [];
@@ -325,6 +345,7 @@
         const meta = await datasets.get(datasetId);
         if (meta && (meta.byteSize || 0) > MIRROR_LIMIT) throw new Error(D.t('python.err.toobig', { mb: Math.round(MIRROR_LIMIT / 1048576) }));
         this.setState('busy');
+        this.attend();
         try {
           await this.mirror([datasetId]);
           await this.ensurePackages(['ifcopenshell'].concat(tool === 'ids' ? ['ifctester'] : []).concat(params.express ? ['pytest'] : []));
@@ -339,33 +360,34 @@
 
       /**
        * The recipe step "Python på modellen": `def step(model): ...` on the model kept in a dataset file; the changed model
-       * comes back as IFC bytes with counts for the log (data/ifc-ops).
-       * @param {string} code @param {ArrayBuffer|Uint8Array} bytes the dataset's SQLite file @param {{name?: string}} [options]
+       * comes back as IFC bytes with counts for the log (data/ifc-ops). `ask: false`: replayed by a flow at start (see run()).
+       * @param {string} code @param {ArrayBuffer|Uint8Array} bytes the dataset's SQLite file @param {{name?: string, ask?: boolean}} [options]
        * @returns {Promise<{bytes: Uint8Array, info: any, log: Array<{kind: string, text: string}>}>}
        */
       async runIfcStep(code, bytes, options = {}) {
         return this.ifcJob(async () => {
           await this.engine.writeFile('/data/step/model.sqlite', bytes);
-          await this.ensurePackages((await this.referencedPackages(code)).concat(['ifcopenshell']));
+          await this.ensurePackages((await this.referencedPackages(code, options)).concat(['ifcopenshell']), options);
           this.streams = [];
           const info = await this.engine.evalJson(`_dataspatium._ifc_step(${JSON.stringify(String(code))}, "/data/step/model.sqlite", "/data/step/model-out.ifc", ${JSON.stringify(String(options.name || ''))})`);
           return this.takeIfc('/data/step/model-out.ifc', info, ['/data/step/model.sqlite', '/data/step/step-in.ifc']);
-        });
+        }, options);
       }
 
       /**
        * The recipe step "Skriv tabell till modellen": a table dataset's values into the model (dm_ifc_set).
        * @param {ArrayBuffer|Uint8Array} bytes the model dataset's SQLite file @param {ArrayBuffer|Uint8Array} tableBytes @param {string} key
+       * @param {{ask?: boolean}} [options] `ask: false`: replayed by a flow at start (see run())
        */
-      async runIfcApply(bytes, tableBytes, key) {
+      async runIfcApply(bytes, tableBytes, key, options = {}) {
         return this.ifcJob(async () => {
           await this.engine.writeFile('/data/step/model.sqlite', bytes);
           await this.engine.writeFile('/data/step/table.sqlite', tableBytes);
-          await this.ensurePackages(['ifcopenshell']);
+          await this.ensurePackages(['ifcopenshell'], options);
           this.streams = [];
           const info = await this.engine.evalJson(`_dataspatium._ifc_apply("/data/step/model.sqlite", "/data/step/table.sqlite", ${JSON.stringify(String(key || 'guid'))}, "/data/step/model-out.ifc")`);
           return this.takeIfc('/data/step/model-out.ifc', info, ['/data/step/model.sqlite', '/data/step/table.sqlite', '/data/step/apply-in.ifc']);
-        });
+        }, options);
       }
 
       /**
@@ -374,7 +396,8 @@
        * `express` also runs the schema's EXPRESS rules (at approval; pytest is fetched for them as a component) and `ids` tries the
        * candidate against an IDS file given as its name and text (ifctester), both reported by the wheel (`express`, `ids`).
        * @param {any[]} changes @param {ArrayBuffer|Uint8Array} bytes the dataset's SQLite file
-       * @param {{name?: string, express?: boolean, ids?: {name: string, text: string}|null}} [options]
+       * @param {{name?: string, express?: boolean, ids?: {name: string, text: string}|null, ask?: boolean}} [options] `ask: false`:
+       *   replayed by a flow at start (see run())
        * @returns {Promise<{bytes: Uint8Array, info: any, log: Array<{kind: string, text: string}>}>}
        */
       async runIfcChangeset(changes, bytes, options = {}) {
@@ -384,11 +407,11 @@
           const idsPath = options.ids && options.ids.text ? '/data/ids/' + String(options.ids.name || 'krav.ids').replace(/[^\w.-]+/g, '_') : '';
           if (idsPath) { await this.engine.mkdir('/data/ids'); await this.engine.writeFile(idsPath, new TextEncoder().encode(String(options.ids.text))); wheel.ids = idsPath; }
           if (options.express) wheel.express = true;
-          await this.ensurePackages(['ifcopenshell'].concat(options.express ? ['pytest'] : [], idsPath ? ['ifctester'] : []));
+          await this.ensurePackages(['ifcopenshell'].concat(options.express ? ['pytest'] : [], idsPath ? ['ifctester'] : []), options);
           this.streams = [];
           const info = await this.engine.evalJson(`_dataspatium._ifc_changeset("/data/step/model.sqlite", ${JSON.stringify(JSON.stringify(changes))}, "/data/step/model-out.ifc", ${JSON.stringify(JSON.stringify(wheel))})`);
           return this.takeIfc('/data/step/model-out.ifc', Object.assign({ name: options.name || '' }, info || {}), ['/data/step/model.sqlite', '/data/step/changeset-in.ifc'].concat(idsPath ? [idsPath] : []));
-        });
+        }, options);
       }
 
       /**
@@ -525,10 +548,12 @@
         });
       }
 
-      async ifcJob(fn) {
-        await this.start();
+      /** One model job at a time; `options.ask` as for run(). @param {() => Promise<any>} fn @param {{ask?: boolean}} [options] */
+      async ifcJob(fn, options = {}) {
+        await this.start(options);
         if (this.state === 'busy') throw new Error(D.t('python.err.busy'));
         this.setState('busy');
+        this.attend(options);
         try {
           await this.engine.mkdir('/data/step');
           this.streams = [];
@@ -596,6 +621,8 @@
     function cleanError(err) {
       return String((err && err.message) || err).replace(/^Error:\s*/, '');
     }
+    /** A consent that a run nobody watches (`ask: false`) did not find kept: platform/consent's reason 'unattended'. */
+    function unattendedRefusal(err) { return !!(err && err.name === 'ConsentError' && err.reason === 'unattended'); }
 
     const bridge = new PythonBridge();
     return { bridge, PythonBridge };
