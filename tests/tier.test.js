@@ -211,6 +211,37 @@
     } finally { stop(root); await restore(); }
   }, 30000);
 
+  test('tier: a tier change draws the mode again and keeps the address, and a shell no longer on the page does nothing', async (assert) => {
+    await reset();
+    let table = null; let started = null;
+    try {
+      table = await datasets.create({ name: 'Nivå adress', columns: [{ name: 'a', type: 'integer' }], rows: [[1]] });
+      const meta = await datasets.get(table.id);
+      started = await startShell('#/hantera/' + encodeURIComponent(meta.shortName || meta.id));
+      const { root, shell } = started;
+      await waitFor(() => shell.store.get().selectedId === table.id, 5000, 'the route opened');
+      const address = location.hash;
+      assert.ok(address.startsWith('#/hantera/'), 'the address names the dataset: ' + address);
+      let drawn = 0;
+      const real = shell.activate;
+      shell.activate = function (id, options) { drawn++; return real.call(this, id, options); };
+      try {
+        await tier.set('documents');
+        assert.equal(drawn, 1, 'the mode is drawn again');
+        assert.equal(location.hash, address, 'and the address keeps its object');
+        root.remove();
+        await tier.set('bim-gis');
+        assert.equal(drawn, 1, 'a shell whose root left the page is not drawn');
+        document.body.appendChild(root);
+      } finally { shell.activate = real; }
+      return 'ok';
+    } finally {
+      if (started) stop(started.root);
+      if (table) await datasets.remove(table.id);
+      await restore();
+    }
+  }, 30000);
+
   test('tier: a deep link to a hidden function says so and raises the tier, and going down keeps every dataset', async (assert) => {
     await reset();
     const fixtures = D.require('tests/fixtures/ifc');

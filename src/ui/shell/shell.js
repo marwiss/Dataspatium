@@ -193,9 +193,10 @@
          * The tier changed (platform/tier): the status bar's items follow it, an open assistant closes when the tier no longer holds
          * it, and the active mode is drawn again, so that its entry points show what the tier now holds; the page keeps its place,
          * and focus goes back to the card Nivå (or to the page) once it is drawn. A mode still loading draws with the new tier when
-         * it opens. Nothing is loaded, and no dataset changes.
+         * it opens. Nothing is loaded, no dataset changes, and the address stays as it is. A shell no longer on the page does nothing.
          */
         applyTier() {
+          if (!this.root.isConnected) return;
           this.assistantEl.hidden = !tier.shows('status:assistant');
           if (!tier.shows('assistant') && D.has('ui/assistant')) { const open = D.require('ui/assistant').current(); if (open) open.panel.close(); }
           if (this.pending) return;
@@ -206,7 +207,7 @@
           const focused = /** @type {any} */ (document.activeElement);
           const inCard = !!(focused && focused.closest && focused.closest('[data-settings="tier"]'));
           const inCenter = !!(focused && center.contains(focused));
-          this.activate(id);
+          this.activate(id, { redraw: true });
           if (!top && !inCenter) return;
           // The modes draw asynchronously (Hantera's workspace awaits its cards): wait a few frames for the page, then put it back.
           let frames = 0;
@@ -534,18 +535,20 @@
 
         /**
          * Switch mode. A lazy mode whose group has not run yet shows that it is loading and opens once the group has run,
-         * unless another mode was asked for meanwhile; one whose group has run is created and opened at once.
-         * @param {string} id
+         * unless another mode was asked for meanwhile; one whose group has run is created and opened at once. The address
+         * becomes #/<mode>, except when the mode is only drawn again (`redraw`, a tier change): the browsers drop history calls
+         * that come too often, and a redraw keeps a deep link's object in the address.
+         * @param {string} id @param {{redraw?: boolean}} [options]
          * @returns {Promise<void>} resolved when the mode is active, or when the workspace says that it could not be loaded
          */
-        activate(id) {
+        activate(id, options = {}) {
           this.wanted = id;
           const lazy = this.lazyModes.get(id);
           if (lazy && !this.modes.has(id) && !D.groups.loaded(lazy.group)) {
             this.showModeLoading(id);
             if (this.pending && this.pending.id === id) return this.pending.done;
             const done = this.loadMode(id).then(
-              () => { if (this.wanted === id) this.activate(id); },
+              () => { if (this.wanted === id) this.activate(id, options); },
               (err) => { if (this.wanted === id) this.showModeFailed(id, err); },
             ).finally(() => { if (this.pending && this.pending.id === id) this.pending = null; });
             this.pending = { id, done };
@@ -563,7 +566,7 @@
           if (this.leftAside) this.leftAside.setAttribute('aria-label', leftTitle);
           this.store.set({ mode: id });
           for (const btn of this.modeNav.children) btn.setAttribute('aria-current', btn.getAttribute('data-mode') === id ? 'page' : 'false');
-          if (location.hash !== '#/' + id) history.replaceState(null, '', '#/' + id);
+          if (!options.redraw && location.hash !== '#/' + id) history.replaceState(null, '', '#/' + id);
           mode.activate(this.slots);
           return Promise.resolve();
         }
