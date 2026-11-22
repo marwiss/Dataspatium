@@ -134,9 +134,12 @@ språk.
 - Minnet begränsas av webbläsaren och WebAssembly; håll datamängder under några hundra megabyte i Python.
 - Inmatning under körning (`input()`) fungerar inte, inte heller trådar, processer eller filer utanför det
   virtuella filsystemet.
-- Python når internet bara genom `pyodide.http.pyfetch` (som `micropip` använder), och appen frågar om lov för
-  komponenter först. Sockets och XMLHttpRequest är spärrade och ger ett fel som pekar på `pyfetch`: det gäller
-  `socket`, `urllib.request`, `http.client`, `pyodide.http.open_url`, `pyodide.http.pyxhr`, `requests` och
-  `js.XMLHttpRequest`, liksom `js.importScripts` med en adress. `js.WebSocket`, `js.EventSource`, `js.Worker` och
-  `js.caches` finns inte.
+- Python når internet bara genom workerns `fetch`, och appen frågar om lov för komponenter först (ett sparat lov
+  gäller alla adresser). Det gäller `pyodide.http.pyfetch`, `micropip` och `js.fetch`, och `requests` och `urllib3` i
+  webbläsare med JSPI (Edge, Chrome). Anropen syns under *Hantera → Arbetsyta → Internetåtkomst*.
+- Sockets och XMLHttpRequest är spärrade och ger ett fel som pekar på `pyfetch`: det gäller `socket`,
+  `urllib.request` och `http.client` med http://, `pyodide.http.open_url`, `pyodide.http.pyxhr`, `js.XMLHttpRequest`,
+  `js.importScripts` med en adress och `requests` i webbläsare utan JSPI. Med https:// stannar `urllib.request` och
+  `http.client` redan på `unknown url type: https`, eftersom Pyodide saknar ssl. `js.WebSocket`, `js.EventSource`,
+  `js.caches`, `js.indexedDB` och `js.BroadcastChannel` finns inte, och `js.Worker` startar ingen worker.
 - Interaktiva fönster finns inte; matplotlib ritar till SVG och PNG. plotly ritas med plotly.js i appen och seaborn följer med som paket.
