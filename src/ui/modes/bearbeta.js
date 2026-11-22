@@ -58,6 +58,8 @@
         const ds = current();
         if (!ds) {
           currentId = null;
+          // A kind's view still drawing a dataset that went away stops here (it would read the removed dataset when done).
+          if (kindView) { kindView.destroy(); kindView = null; kindViewFor = null; }
           replace(slots.center, h('dm-empty-state', { icon: 'wand-sparkles', heading: t('bearbeta.empty'), text: state.datasets.length ? t('shell.select.dataset') : t('shell.no.datasets.hint') },
             state.datasets.length ? null : ui.button({ label: t('mode.inhamta'), icon: 'download', variant: 'primary', onClick: () => shell.activate('inhamta') })));
           replace(slots.right, h('p', { class: 'dm-help', text: t('bearbeta.empty.hint') }));

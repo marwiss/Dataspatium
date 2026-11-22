@@ -22,6 +22,17 @@
       const s = { id: null, filter: { typ: '', vaning: '', lager: '', search: '' }, selected: null, count: 0, hidden: new Set(), error: '', progress: null, preview: null };
       let ds = null; let slots = null; let handle = null; let host = null; let table = null; let seq = 0; let searchTimer = 0;
       let svgEl = null; let box = null; let removeDrag = null;
+      /**
+       * Work on the dataset that nobody awaits (the inspector, the table, a filter): an error goes to the log, unless the dataset was
+       * removed meanwhile (the mode shows that it is gone); then it is only noted in the console.
+       * @param {Promise<any>} work @param {string|null} [id] @returns {Promise<any>}
+       */
+      function quietly(work, id = ds && ds.id) {
+        return work.catch(async (err) => {
+          if (id && (await datasets.get(id).catch(() => null))) shell.log(String((err && err.message) || err), 'error');
+          else D.log('model', 'the dataset went away while its view drew', err);
+        });
+      }
       /** The button for the orthographic view, whose state follows the view (the key O changes it too). */ let orthoBtn = null;
       /** The button Visa bara markerade. */ let isolateBtn = null;
       /** The button Snitt and the section panel in the inspector, when open. */ let sectionBtn = null; let sectionEl = null;
@@ -296,7 +307,8 @@
       }
 
       // ---- the table ------------------------------------------------------------------------------------------
-      async function fillTable() {
+      function fillTable() { return quietly(loadTable()); }
+      async function loadTable() {
         const my = seq;
         const where = whereSql();
         const engine = (await datasets.ensureOpen(ds.id)).engine;
@@ -314,7 +326,8 @@
         });
       }
       /** Filters narrow the table and the drawing together; a new filter ends an isolation. */
-      async function applyFilter() {
+      function applyFilter() { return quietly(filterNow()); }
+      async function filterNow() {
         setIsolated(null);
         fillTable();
         if (isDxf()) { applyLayers(); return; }
@@ -509,7 +522,8 @@
 
       // ---- the inspector --------------------------------------------------------------------------------------
       function kv(items) { const el = /** @type {any} */ (h('dm-kv')); el.items = items.filter(Boolean); return el; }
-      async function renderInspector() {
+      function renderInspector() { return quietly(drawInspector()); }
+      async function drawInspector() {
         if (!slots) return;
         const my = seq;
         const f = facts();

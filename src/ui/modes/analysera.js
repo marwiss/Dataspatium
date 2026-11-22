@@ -542,7 +542,9 @@
       async function sideTables(ds) {
         const names = D.require('data/kinds').of(ds).sideTables || [];
         if (!names.length) return null;
-        const engine = (await services.datasets.ensureOpen(ds.id)).engine;
+        // The dataset may be removed while the panel draws, as for its columns: no side tables then.
+        const engine = await services.datasets.ensureOpen(ds.id).then((x) => x.engine, () => null);
+        if (!engine) return null;
         const rows = [];
         for (const name of names) {
           const known = await engine.exec("select count(*) from sqlite_master where type = 'table' and name = ?", [name]);
