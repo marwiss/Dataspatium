@@ -505,10 +505,13 @@
       assert.ok(exporter.formatsFor(await datasets.get(plan.id)).some((f) => f.id === 'plan-sheet'), 'Dokument offers the plan map');
       const sheet = (await exporter.exportDataset(plan.id, 'plan-sheet')).blob;
       assert.equal(await sheet.slice(0, 4).text(), '%PDF', 'the plan map as PDF in Dokument');
-      const out = await template.renderTemplate('{{plan "Nivå detaljplan"}}\n{{karta "Nivå detaljplan" | bredd: 400}}\n{{diagram "Nivå plankarta"}}', { _filters: [] });
-      assert.ok(out.images[0].png && out.images[0].png.byteLength > 1000, 'the word plan draws the plan: ' + (out.images[0].error || ''));
-      assert.ok(out.images[1].png && out.images[1].png.byteLength > 1000, 'and karta: ' + (out.images[1].error || ''));
-      assert.ok(out.images[2].error && out.images[2].error.includes(t('tier.bim-gis')), 'a saved map chart belongs to the map view: ' + out.images[2].error);
+      const picture = async (body) => (await template.renderTemplate(body, { _filters: [] })).images[0];
+      const own = await picture('{{plan "Nivå detaljplan"}}');
+      assert.ok(own.png && own.png.byteLength > 1000, 'the word plan draws the plan: ' + (own.error || ''));
+      const map = await picture('{{karta "Nivå detaljplan" | bredd: 400}}');
+      assert.ok(map.png && map.png.byteLength > 1000, 'and karta: ' + (map.error || ''));
+      const saved = await picture('{{diagram "Nivå plankarta"}}');
+      assert.ok(saved.error && saved.error.includes(t('tier.bim-gis')), 'a saved map chart belongs to the map view: ' + saved.error);
       return 'ok';
     } finally {
       if (chart) await charts.remove(chart.id).catch(() => {});
