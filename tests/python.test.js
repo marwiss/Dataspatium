@@ -244,13 +244,55 @@
     const lines = stdoutOf(res).trim().split('\n');
     const out = JSON.parse(lines[lines.length - 1] || 'null');
     assert.ok(out, JSON.stringify(res.entries.map((e) => (e.text || '').slice(0, 300))));
+    const said = D.t('python.net.blocked', { api: 'sockets' });
     for (const key of ['create_connection', 'getaddrinfo', 'connect', 'urlopen']) {
-      assert.ok(out[key] && /Network sockets are blocked in Dataspatium's Python; fetch with pyodide\.http\.pyfetch, which asks for consent/.test(out[key][2]), key + ': ' + JSON.stringify(out[key]));
+      assert.ok(out[key] && out[key][2].includes(said), key + ' says why in the app\'s language: ' + JSON.stringify(out[key]));
     }
     for (const key of ['raw', 'udp']) assert.ok(out[key] && out[key][1] === out.unreachable, key + ' past the patches fails in the emulation, which has no WebSocket: ' + JSON.stringify(out[key]));
     assert.deepEqual(out.js, [], 'no WebSocket, WebTransport or Worker for Python code');
     assert.deepEqual(out.pyfetch, [200, true], 'pyfetch reads through the app\'s gate');
     return 'blocked: ' + out.create_connection[0] + ', ' + out.urlopen[0] + ', _socket errno ' + out.raw[1];
+  }, 300000);
+
+  test('python: Python reaches the internet through pyfetch only: open_url, pyxhr, XMLHttpRequest and importScripts are refused with the message, EventSource and caches are gone, and pyfetch still reads an asset', async (assert) => {
+    if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them from jsDelivr)';
+    await bridge.start();
+    // Port 9 on this computer, which browsers refuse anyway: even a broken block reaches no server.
+    const res = await bridge.run([
+      'import json, js, pyodide.http',
+      'from pyodide.http import pyxhr',
+      'def refused(call):',
+      '    try:',
+      '        call()',
+      '    except Exception as e:',
+      '        return [type(e).__name__, str(e), str(e.__cause__) if e.__cause__ else ""]',
+      '    return None',
+      'def xhr(asynchronous):',
+      '    x = js.XMLHttpRequest.new()',
+      '    x.open("GET", "http://127.0.0.1:9/", asynchronous)',
+      '    x.send()',
+      'out = {',
+      '    "open_url": refused(lambda: pyodide.http.open_url("http://127.0.0.1:9/")),',
+      '    "pyxhr": refused(lambda: pyxhr.get("http://127.0.0.1:9/")),',
+      '    "sync": refused(lambda: xhr(False)),',
+      '    "async": refused(lambda: xhr(True)),',
+      '    "importScripts": refused(lambda: js.importScripts("http://127.0.0.1:9/x.js")),',
+      '    "gone": [n for n in ("WebSocket", "WebSocketStream", "WebTransport", "EventSource", "Worker", "SharedWorker", "caches") if getattr(js, n, None) is not None],',
+      '}',
+      'r = await pyodide.http.pyfetch("dataspatium-asset://pyodide/pyodide-lock.json")',
+      'out["pyfetch"] = [r.status, len(await r.bytes()) > 1000]',
+      'print(json.dumps(out))',
+    ].join('\n'));
+    const lines = stdoutOf(res).trim().split('\n');
+    const out = JSON.parse(lines[lines.length - 1] || 'null');
+    assert.ok(out, JSON.stringify(res.entries.map((e) => (e.text || '').slice(0, 300))));
+    const xhrText = D.t('python.net.blocked', { api: 'XMLHttpRequest' });
+    for (const key of ['open_url', 'sync', 'async']) assert.ok(out[key] && out[key][1].includes(xhrText), key + ': ' + JSON.stringify(out[key]));
+    assert.ok(out.pyxhr && out.pyxhr[0] === 'XHRNetworkError' && out.pyxhr[2].includes(xhrText), 'pyxhr turns the refusal into its network error: ' + JSON.stringify(out.pyxhr));
+    assert.ok(out.importScripts && out.importScripts[1].includes(D.t('python.net.blocked', { api: 'importScripts' })), JSON.stringify(out.importScripts));
+    assert.deepEqual(out.gone, [], 'no sockets, streams, other workers or caches for Python code');
+    assert.deepEqual(out.pyfetch, [200, true], 'pyfetch of an asset still works');
+    return 'refused: ' + ['open_url', 'pyxhr', 'sync', 'async', 'importScripts'].map((k) => out[k][0]).join(', ');
   }, 300000);
 
   test('python: running code stops with interrupt() when the page is cross-origin isolated (from a web server)', async (assert) => {

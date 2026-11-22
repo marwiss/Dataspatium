@@ -11,10 +11,11 @@
  * ok, value|error}, {type: 'stream', kind, text} for stdout/stderr lines and {type: 'net', id, url} when Python code
  * (micropip) wants to reach the internet, which the main thread allows only with the user's consent.
  *
- * Python opens no sockets: Emscripten's socket emulation turns a connect() into a browser WebSocket to ws://host:port/,
- * which no consent covers (xmlschema tried www.w3.org that way while reading ifctester's ids.xsd). The worker removes
- * WebSocket, WebTransport and Worker (a nested worker would bring them back) before Pyodide loads, and Python's socket
- * functions raise an OSError that names pyfetch.
+ * Python reaches the internet through fetch only (pyodide.http.pyfetch, micropip), past that consent. The worker shim runs with
+ * net 'fetch' (platform/worker-shim): XMLHttpRequest (pyodide.http.open_url and pyxhr, requests) and importScripts refuse the
+ * internet, and WebSocket, Worker and the other constructors that could open a connection read as undefined. Emscripten's socket
+ * emulation would turn a connect() into a browser WebSocket to ws://host:port/ (xmlschema tried www.w3.org that way while reading
+ * ifctester's ids.xsd); without WebSocket it fails at once, and Python's socket functions raise an OSError with the same message.
  */
 (function () {
   'use strict';
@@ -30,26 +31,23 @@
     var netPending = new Map();
     function post(msg, transfer) { self.postMessage(msg, transfer || []); }
 
-    // No sockets (see above): without these constructors the socket emulation fails at once with EHOSTUNREACH, and Python
-    // code finds none of them in `js`. They are redefined as undefined rather than deleted, so that a global which resolves
-    // its constructors lazily cannot bring one back; one that cannot be redefined throws and stops the worker.
-    ['WebSocket', 'WebTransport', 'Worker'].forEach(function (name) {
-      Object.defineProperty(self, name, { value: undefined, writable: false, enumerable: false, configurable: false });
-    });
-    // Python's socket functions say why and name the way that asks for consent; this runs before any package or the app's own
-    // code. _socket and C extensions bypass it, and the missing WebSocket stops them.
+    // Python's socket functions say why and name the way that asks for consent, with the shim's message (config.netText, in the
+    // user's language). This runs in a namespace of its own before any package or the app's own code; _socket and C extensions
+    // bypass it, and the missing WebSocket stops them.
     var NO_SOCKETS = [
-      'def __dm_no_sockets():',
-      '    import socket',
-      '    def blocked(*args, **kwargs):',
-      '        raise OSError("Network sockets are blocked in Dataspatium\'s Python; fetch with pyodide.http.pyfetch, which asks for consent")',
-      '    for name in ("connect", "connect_ex", "sendto", "sendmsg"):',
-      '        setattr(socket.socket, name, blocked)',
-      '    socket.create_connection = blocked',
-      '    socket.getaddrinfo = blocked',
-      '__dm_no_sockets()',
-      'del __dm_no_sockets',
+      'import socket',
+      'def blocked(*args, **kwargs):',
+      '    raise OSError(text)',
+      'for name in ("connect", "connect_ex", "sendto", "sendmsg"):',
+      '    setattr(socket.socket, name, blocked)',
+      'socket.create_connection = blocked',
+      'socket.getaddrinfo = blocked',
     ].join('\n');
+    function blockSockets() {
+      var config = (self.__dataspatium && self.__dataspatium.config) || {};
+      var ns = pyodide.toPy({ text: String(config.netText || 'Python has no network sockets ({api})').replace('{api}', 'sockets') });
+      try { pyodide.runPython(NO_SOCKETS, { globals: ns }); } finally { ns.destroy(); }
+    }
 
     // Network gate: anything that is not an asset, a blob or a data URL (micropip against PyPI) asks the main thread
     // first, which applies the user's consent for components.
@@ -128,7 +126,7 @@
           });
         }).then(function (py) {
           pyodide = py;
-          pyodide.runPython(NO_SOCKETS);
+          blockSockets();
           if (msg.interrupt) pyodide.setInterruptBuffer(msg.interrupt);
           // The startup wheels (shipped as assets) are installed now; dataspatium.py imports pandas.
           return pyodide.loadPackage(msg.packages || [], { messageCallback: quiet, errorCallback: quiet });
@@ -237,7 +235,8 @@
           // A wheel the worker asks for later (an import the scanner did not see) is fetched the same way.
           request: (name) => catalog.provideFile(name),
         });
-        this.worker = D.workers.create({ namespace: 'pyodide', source: D.workers.functionSource(dataspatiumPythonWorker), name: 'python' });
+        // net 'fetch': the internet through the consent gate in the worker's fetch only (see the top of this file).
+        this.worker = D.workers.create({ namespace: 'pyodide', source: D.workers.functionSource(dataspatiumPythonWorker), name: 'python', net: 'fetch', netText: D.t('python.net.blocked') });
         this.worker.onmessage = (ev) => this.onMessage(ev.data);
         this.worker.onerror = (ev) => this.fail(new Error('Python worker: ' + ((ev && ev.message) || 'error')));
         this.interruptible = !!(D.capabilities && D.capabilities.sharedArrayBuffer);
