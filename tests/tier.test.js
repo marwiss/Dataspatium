@@ -795,6 +795,27 @@
     }
   });
 
+  test('tier: a report of findings is refused below BIM och GIS wherever it is generated from, and made from it', async (assert) => {
+    await reset();
+    const generate = D.require('docgen/generate');
+    let table = null;
+    try {
+      table = await datasets.create({ name: 'Nivå fynd', columns: [{ name: 'skick', type: 'text' }, { name: 'prioritet', type: 'integer' }], rows: [['dåligt', 1]] });
+      const doc = { name: 'Fynd', body: '# Fynd', findings: true };
+      await tier.set('documents');
+      let refused = null;
+      try { await generate.generate(doc, table.id, 'md'); } catch (err) { refused = err; }
+      assert.ok(refused && refused.name === 'TierError' && refused.tierFeature === 'kind:model', 'refused in Dokument: ' + (refused && refused.message));
+      assert.ok((await generate.generate({ name: 'Vanlig', body: '# Vanlig' }, table.id, 'md')).blob, 'an ordinary template still works');
+      await tier.set('bim-gis');
+      assert.ok((await generate.generate(doc, table.id, 'md')).blob, 'and the report is made in BIM och GIS');
+      return 'ok';
+    } finally {
+      if (table) await datasets.remove(table.id);
+      await restore();
+    }
+  }, 30000);
+
   test('tier: the bridge\'s approval of a writing command needs no group of a higher tier', async (assert) => {
     await reset();
     const remote = D.require('api/remote');
