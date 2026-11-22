@@ -10,6 +10,10 @@
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('i18n/en-missing', [], () => ({
+    'plotly.consent.map': 'Map in a plotly chart',
+    'plotly.consent.url': 'Image or data in a plotly chart: {url}',
+    'plotly.denied.basemaps': 'The map in the chart is not shown without consent to background maps.',
+    'plotly.denied.url': 'Images and data from web addresses are not shown in the chart without consent to web addresses.',
     'map.basemap.tiles': 'Map tiles (OGC API – Tiles)',
     'map.projection.tiles': 'Map tiles from OGC API – Tiles are shown in the web map only. In {crs} the background can come from a WMS service.',
     'map.tiles.title': 'Map tiles from OGC API – Tiles',

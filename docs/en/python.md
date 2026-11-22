@@ -102,6 +102,11 @@ seaborn draws through matplotlib and is shown like other figures. plotly figures
 time, 4.8 MB) and the app's theme, and exports it to SVG, PNG and PDF. In the notebook, plotly figures are saved as
 PNG, with the interactive view kept as long as plotly.js is available.
 
+A plotly map (for example `px.scatter_geo`, `px.choropleth` and `px.scatter_map`) asks for consent to background maps
+before the map loads, and an image, GeoJSON or anything else the figure fetches from a web address asks for consent to
+web addresses for each host. Without consent the chart is drawn without them, with a line below that says so. In
+published HTML they come along only when the consent is kept.
+
 ## Python charts in Visualise
 
 In Visualise a chart can be a **Python script**: the dataset is `df`, and the latest chart (matplotlib or plotly) is

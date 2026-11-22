@@ -119,7 +119,7 @@
         if (!tier.shows('chart:' + chart.kind)) continue;
         let body = '';
         // Python charts with a plotly figure stay interactive (plotly.js inlined once); other code charts are their saved image.
-        if (chart.kind === 'python' && chart.python && chart.python.plotly) { plotlyUsed = true; body = D.require('viz/plotly').htmlFor('plotly-' + sections.length, chart.python.plotly, { width: options.width || 900 }); }
+        if (chart.kind === 'python' && chart.python && chart.python.plotly) { plotlyUsed = true; body = await D.require('viz/plotly').htmlFor('plotly-' + sections.length, chart.python.plotly, { width: options.width || 900 }); }
         // Maps stay interactive too: Leaflet inlined once, the features as GeoJSON with their styles.
         else if (chart.kind === 'map') { mapUsed = true; body = await D.require('viz/leaflet').htmlFor('map-' + sections.length, chart, { extraFilters: options.extraFilters }); }
         // Graph charts are drawn as inline SVG from the saved positions (no libraries in the page).
