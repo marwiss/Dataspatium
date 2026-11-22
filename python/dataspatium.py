@@ -7165,7 +7165,7 @@ def _ifc_express_new(base, model, limit=20):
     """The EXPRESS rules at approval: {"ran", "errors", "findings"} with only what the base did not break already (the base is checked
     only when the candidate has findings), or {"ran": false, "note"} for a model above EXPRESS_MAX_ENTITIES or without the rules."""
     try:
-        size = _ifc_max_id(model)
+        size = sum(1 for _ in model)  # the instances, not the highest id, which a guard of a long history raises
         if size > EXPRESS_MAX_ENTITIES:
             return {"ran": False, "errors": 0, "findings": [], "note": "the schema's rules were left out on a model of %d instances" % size}
         found = _ifc_express(model)
