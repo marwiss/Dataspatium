@@ -15,7 +15,11 @@
   'use strict';
   const D = globalThis.Dataspatium;
   const RealWorker = globalThis.Worker;
-  /** @type {Map<string, {initial?: () => Promise<any[]>, request?: (name: string) => Promise<boolean>}>} */
+  /**
+   * Per namespace: the assets sent on hello, how misses are handled, and `screen`, which sees every message the worker sends to the
+   * hosted code on this thread and drops it by returning false (it may also change it).
+   * @type {Map<string, {initial?: () => Promise<any[]>, request?: (name: string) => Promise<boolean>, screen?: (data: any) => boolean}>}
+   */
   const providers = new Map();
   const live = new Set();
   const CHUNK = 16;
@@ -58,6 +62,8 @@
 
   async function handleControl(worker, msg) {
     if (msg.type === 'hello') {
+      // The first hello names the worker; code running in it cannot rename it later to get past its namespace's screen.
+      if (worker.dmNamespace !== null) return;
       worker.dmNamespace = msg.namespace;
       const provider = providers.get(msg.namespace);
       let items = [];
@@ -99,6 +105,8 @@
     dmRoute(ev) {
       const d = ev.data;
       if (d && d.__dm === true) { handleControl(this, d); return; }
+      const provider = this.dmNamespace === null ? null : providers.get(this.dmNamespace);
+      if (provider && provider.screen && provider.screen(d) === false) return;
       if (this.dmHandler) this.dmHandler.call(this, ev);
       for (const fn of this.dmListeners) fn.call(this, ev);
     }
@@ -118,11 +126,12 @@
   globalThis.Worker = /** @type {any} */ (DataspatiumWorker);
 
   /**
-   * Create one of Dataspatium's own shimmed workers.
-   * @param {{namespace: string, source: string, name?: string}} options
+   * Create one of Dataspatium's own shimmed workers; `net` and `netText` go to the shim (see platform/worker-shim).
+   * @param {{namespace: string, source: string, name?: string, net?: 'none'|'fetch', netText?: string}} options
    */
   function create(options) {
-    const text = D.workerShim.buildWorkerSource({ namespace: options.namespace, name: options.name || options.namespace }, options.source);
+    const config = { namespace: options.namespace, name: options.name || options.namespace, net: options.net, netText: options.netText };
+    const text = D.workerShim.buildWorkerSource(config, options.source);
     const url = URL.createObjectURL(new Blob([text], { type: 'text/javascript' }));
     const worker = /** @type {any} */ (new DataspatiumWorker(url, { name: options.name || options.namespace }));
     worker.dmBlobUrl = url;
@@ -136,7 +145,7 @@
   }
 
   D.workers = {
-    /** Register which assets a namespace receives on hello, and how misses are handled. */
+    /** Register which assets a namespace receives on hello, how misses are handled, and what its messages may do here. */
     provider(namespace, provider) { providers.set(namespace, provider); },
     create,
     functionSource,

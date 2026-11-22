@@ -22,13 +22,17 @@
 /**
  * Build an XMLHttpRequest replacement that serves `dataspatium-asset://` URLs from the asset map and
  * delegates everything else to the real XMLHttpRequest. Standalone: safe to stringify.
+ * With `net` (a worker without internet access) every other URL is refused at send() with a NetworkError and no real
+ * XMLHttpRequest is ever made: a real one, even for a blob: URL, would hand its native class to the code through `constructor`
+ * and event targets. Refusing at send() rather than open() keeps callers that open outside a try (webR) running.
  * @param {any} RealXHR
  * @param {(name: string) => any} lookupSync returns {kind, data} or null
  * @param {(name: string) => Promise<any>} lookupAsync rejects when the asset is missing
  * @param {(url: string) => string|null} assetName
  * @param {(name: string) => string} mimeFor
+ * @param {{refuse: (url: string) => string}|null} [net] gives the message for a refused URL
  */
-function dataspatiumMakeXHR(RealXHR, lookupSync, lookupAsync, assetName, mimeFor) {
+function dataspatiumMakeXHR(RealXHR, lookupSync, lookupAsync, assetName, mimeFor, net) {
   'use strict';
   var FORWARDED = ['onreadystatechange', 'onload', 'onerror', 'onabort', 'onloadend', 'onloadstart', 'onprogress', 'ontimeout', 'responseType', 'timeout', 'withCredentials'];
   function toBytes(entry) { return entry.kind === 'text' ? new TextEncoder().encode(entry.data) : new Uint8Array(entry.data); }
@@ -95,7 +99,8 @@ function dataspatiumMakeXHR(RealXHR, lookupSync, lookupAsync, assetName, mimeFor
         st.url = String(url);
         st.async = async !== false;
         st.name = assetName(st.url);
-        if (st.name === null) {
+        st.refused = st.name === null && !!net;
+        if (st.name === null && !st.refused) {
           real = new RealXHR();
           for (var i = 0; i < FORWARDED.length; i++) {
             var key = FORWARDED[i];
@@ -113,6 +118,10 @@ function dataspatiumMakeXHR(RealXHR, lookupSync, lookupAsync, assetName, mimeFor
       },
       setRequestHeader: function (key, value) { st.reqHeaders[String(key).toLowerCase()] = String(value); },
       send: function () {
+        if (st.refused) {
+          st.readyState = 4; st.status = 0;
+          throw new DOMException(net.refuse(st.url), 'NetworkError');
+        }
         if (st.async) {
           lookupAsync(st.name).then(function (entry) { complete(entry); }, function () { complete(null); });
         } else {
@@ -151,7 +160,12 @@ function dataspatiumMakeXHR(RealXHR, lookupSync, lookupAsync, assetName, mimeFor
 
 /**
  * Install the asset shim inside a worker. Standalone: safe to stringify.
- * @param {{namespace: string, name?: string}} config
+ * `config.net` takes the internet away from the hosted code: with 'none' (R) fetch, XMLHttpRequest and importScripts refuse
+ * every URL that is not an asset, a blob or a data URL (XMLHttpRequest serves assets only), and WebSocket, WebSocketStream,
+ * WebTransport, EventSource, Worker, SharedWorker and caches read as undefined, ignoring assignments; 'fetch' (Python) is the
+ * same except that fetch passes through, since the hosted code gates it with the user's consent. `config.netText` is the
+ * message, in the user's language, with {api} for the refused interface. Without `net` nothing changes.
+ * @param {{namespace: string, name?: string, net?: 'none'|'fetch', netText?: string}} config
  * @param {typeof dataspatiumMakeXHR} makeXHR
  */
 function dataspatiumWorkerShim(config, makeXHR) {
@@ -261,12 +275,32 @@ function dataspatiumWorkerShim(config, makeXHR) {
   };
   realAdd('message', route);
 
+  // --- the internet (config.net): refusals say why in the console too, where webR points R's own messages
+  var policy = config.net === 'none' || config.net === 'fetch' ? config.net : null;
+  var refused = [];
+  function isLocal(url) { return /^(dataspatium-asset:|blob:|data:)/i.test(String(url)); }
+  function refuse(api, url) {
+    var text = String(config.netText || 'This worker has no internet access ({api}).').replace('{api}', api);
+    refused.push({ api: api, url: String(url) });
+    if (refused.length > 20) refused.shift();
+    try { console.warn('Dataspatium: ' + text + ' ' + url); } catch (e) { /* no console */ }
+    return text;
+  }
+  if (policy) {
+    // Accessors rather than deletions: a global that resolves its constructors lazily cannot bring one back, and hosted code
+    // that installs its own (webR's proxies, whose sockets and workers its main thread would open) neither fails nor succeeds.
+    ['WebSocket', 'WebSocketStream', 'WebTransport', 'EventSource', 'Worker', 'SharedWorker', 'caches'].forEach(function (key) {
+      Object.defineProperty(self, key, { get: function () { return undefined; }, set: function () {}, enumerable: false, configurable: false });
+    });
+  }
+
   // --- importScripts: evaluate asset text in the global scope
   var realImportScripts = self.importScripts;
   self.importScripts = function () {
     for (var i = 0; i < arguments.length; i++) {
       var url = String(arguments[i]);
       var name = assetName(url);
+      if (name === null && policy && !isLocal(url)) throw new DOMException(refuse('importScripts', url), 'NetworkError');
       if (name === null) { realImportScripts.call(self, url); continue; }
       var entry = lookupSync(name);
       if (!entry) throw new Error('Dataspatium: asset not loaded for importScripts: ' + name);
@@ -279,6 +313,7 @@ function dataspatiumWorkerShim(config, makeXHR) {
   self.fetch = function (input, init) {
     var url = typeof input === 'string' ? input : (input && typeof input.url === 'string' ? input.url : String(input));
     var name = assetName(url);
+    if (name === null && policy === 'none' && !isLocal(url)) return Promise.reject(new TypeError(refuse('fetch', url)));
     if (name === null) return realFetch(input, init);
     return lookupAsync(name).then(function (entry) {
       var buf = toBuffer(entry);
@@ -302,7 +337,8 @@ function dataspatiumWorkerShim(config, makeXHR) {
   }
 
   // --- XMLHttpRequest (sync and async, HEAD and Range supported)
-  self.XMLHttpRequest = makeXHR(self.XMLHttpRequest, lookupSync, lookupAsync, assetName, mimeFor);
+  self.XMLHttpRequest = makeXHR(self.XMLHttpRequest, lookupSync, lookupAsync, assetName, mimeFor,
+    policy ? { refuse: function (url) { return refuse('XMLHttpRequest', url); } } : null);
 
   // --- helpers for Dataspatium's own workers
   self.__dataspatium = {
@@ -314,6 +350,8 @@ function dataspatiumWorkerShim(config, makeXHR) {
     text: function (name) { var e = lookupSync(name); return e ? toText(e) : null; },
     assetName: assetName,
     send: send,
+    /** The last requests refused under config.net, oldest first: [{api, url}]. */
+    refused: function () { return refused.slice(); },
   };
   send({ type: 'hello', namespace: config.namespace });
 }
@@ -323,7 +361,7 @@ function dataspatiumWorkerShim(config, makeXHR) {
   const D = globalThis.Dataspatium;
   /**
    * Compose the full source text of a shimmed worker.
-   * @param {{namespace: string, name?: string}} config
+   * @param {{namespace: string, name?: string, net?: 'none'|'fetch', netText?: string}} config see dataspatiumWorkerShim
    * @param {string} hostedSource classic-script source of the code to run inside the worker
    */
   function buildWorkerSource(config, hostedSource) {
