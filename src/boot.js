@@ -215,6 +215,7 @@
     'src/io/importers/access.js',
     'src/io/importers/documents.js',
     'src/io/importers/images.js',
+    'src/io/importers/raster.js',
     'src/io/importers/detaljplan.js',
     'src/io/importers/plan-archive.js',
     'src/io/importers/graph.js',
@@ -410,6 +411,11 @@
       'src/ui/api/api-view.js',
       'src/ui/api/bridge-view.js',
       'src/ui/api/family-dialog.js',
+    ] },
+    // GeoTIFF files (the kind raster, B-64): the worker that reads them and what makes a raster of them, on the first file.
+    { name: 'raster', needs: [], scripts: [
+      'src/engines/raster.js',
+      'src/data/raster.js',
     ] },
     { name: 'bearbeta', needs: [], scripts: [
       'src/analysis/text.js',

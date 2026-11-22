@@ -108,8 +108,13 @@
       } else if (tables.includes(FILES) && !ifc) {
         const r = await engine.exec(`select distinct name from ${FILES} where kind = 'original'`);
         const names = r[0] ? r[0].values.map((row) => String(row[0])) : [];
+        // A raster's TIFF files can carry tags that name a person (data/raster keeps only which tags they are): those files are
+        // named first, with their tags.
+        const tagged = new Map(((handle.meta.raster && Array.isArray(handle.meta.raster.files)) ? handle.meta.raster.files : [])
+          .filter((f) => f && f.kept === 'original' && f.tags && Array.isArray(f.tags.personal) && f.tags.personal.length).map((f) => [String(f.name), f.tags.personal.map(String)]));
+        const shown = names.filter((n) => tagged.has(n)).concat(names.filter((n) => !tagged.has(n))).slice(0, 5).map((n) => (tagged.has(n) ? `${n} (${tagged.get(n).join(', ')})` : n));
         // A cleaned table beside the untouched original would be no protection at all.
-        if (names.length) parts.push({ id: 'originals', kind: 'originals', count: names.length, names: names.slice(0, 5), choices: ['keep', 'remove'], start: columns.length || parts.length ? 'remove' : 'keep' });
+        if (names.length) parts.push({ id: 'originals', kind: 'originals', count: names.length, names: shown, choices: ['keep', 'remove'], start: columns.length || parts.length || names.some((n) => tagged.has(n)) ? 'remove' : 'keep' });
       }
       if (tables.includes('_comments')) {
         const r = await engine.exec('select count(*), group_concat(distinct author), sum(dm_has_personal(text)) from _comments');
@@ -233,6 +238,11 @@
     async function setMeta(engine, key, value) {
       await engine.run('insert or replace into _meta (key, value) values (?, ?)', [key, JSON.stringify(value)]);
     }
+    /** A value of `_meta` as it is stored, for the keys kept as plain text (the kind). */
+    async function rawMeta(engine, key) {
+      const r = await engine.exec('select value from _meta where key = ?', [key]);
+      return r[0] && r[0].values.length ? String(r[0].values[0][0]) : null;
+    }
 
     /** Metadata removed from the pictures that keep their bytes (scaled copies were drawn anew and hold none). */
     async function stripPictures(engine) {
@@ -266,7 +276,16 @@
         if (choice === 'remove') { await engine.run(`delete from ${q(table)}`); continue; }
         for (const c of await textColumnsOf(engine, table)) await engine.run(`update ${q(table)} set ${q(c)} = dm_mask_personal(${q(c)}) where dm_has_personal(${q(c)}) = 1`);
       }
-      if (tables.includes(FILES) && (tr.originals || tr.pictures)) await engine.run(`delete from ${FILES}`);
+      if (tables.includes(FILES) && (tr.originals || tr.pictures)) {
+        // The pictures the app made itself from the originals (a raster's previews, data/kinds `derived`) stay when only the
+        // originals are left behind, and the copy's facts say why there is none.
+        const derived = tr.originals && !tr.pictures ? kinds.of(await rawMeta(engine, 'kind')).derived : null;
+        if (derived) {
+          await engine.run(`delete from ${FILES} where kind = 'original'`);
+          const raster = await metaValue(engine, 'raster');
+          if (raster && Array.isArray(raster.files)) await setMeta(engine, 'raster', Object.assign({}, raster, { files: raster.files.map((f) => (f && f.kept === 'original' ? Object.assign({}, f, { kept: 'none', skipped: 'shared' }) : f)) }));
+        } else await engine.run(`delete from ${FILES}`);
+      }
       if (tr.positions) {
         const r = await engine.exec('pragma table_info(data)');
         const present = (r[0] ? r[0].values : []).map((row) => String(row[1]));

@@ -7,12 +7,13 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'io/importers/access', 'io/importers/documents', 'io/importers/images', 'io/importers/detaljplan', 'io/importers/graph', 'io/importers/model', 'data/plan', 'data/types', 'data/datasets', 'platform/tier'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, access, documents, images, detaljplanImp, graphImp, modelImp, plan, types, datasets, tier) => {
+  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'io/importers/access', 'io/importers/documents', 'io/importers/images', 'io/importers/raster', 'io/importers/detaljplan', 'io/importers/graph', 'io/importers/model', 'data/plan', 'data/types', 'data/datasets', 'platform/tier'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, access, documents, images, raster, detaljplanImp, graphImp, modelImp, plan, types, datasets, tier) => {
     // Documents go before the table-in-document importer: a Word or Markdown file is a document unless "tables" is chosen.
+    // A TIFF is a raster before it is a picture (the browsers cannot draw TIFF files).
     // The plan importer never detects by extension (resolveImporter sniffs JSON heads for it); it is listed for forced formats.
-    const importers = [excel, documents, images, tables, geo, json, xml, sqliteImp, access, shapefile, rFormats, fixedWidth, csv, detaljplanImp, graphImp, modelImp];
-    /** Importers that turn one or several files into one dataset of their own kind (documents, images). */
-    const collections = [documents, images];
+    const importers = [excel, documents, raster, images, tables, geo, json, xml, sqliteImp, access, shapefile, rFormats, fixedWidth, csv, detaljplanImp, graphImp, modelImp];
+    /** Importers that turn one or several files into one dataset of their own kind (documents, rasters, images). */
+    const collections = [documents, raster, images];
 
     /** @param {File} file @param {string} [forced] importer id */
     function importerFor(file, forced) {
