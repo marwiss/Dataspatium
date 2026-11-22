@@ -265,13 +265,22 @@
       return true;
     }
 
-    /** Whether the runtime is already in the component cache (no download needed to start). */
+    /** A yes from cachedRuntime() holds until the component cache changes; every use still checks its bytes (components.ensure). */
+    let runtimeVerified = false;
+    components.subscribe(() => { runtimeVerified = false; });
+    /**
+     * Whether the runtime is already in the component cache (no download needed to start). The cached bytes are checked
+     * against the pinned digests, not the stored rows, so that a changed copy never lets a flow start Python at start and
+     * then ask for the download.
+     */
     async function cachedRuntime() {
-      for (const f of RUNTIME) { const m = await components.meta('pyodide:' + f.file); if (!m || m.sha256 !== f.sha256) return false; }
+      if (runtimeVerified) return true;
+      for (const f of RUNTIME) { if (!(await components.verified(runtimeSpec(f)))) return false; }
+      runtimeVerified = true;
       return true;
     }
 
-    function reset() { index = null; importMap = new Map(); provided.clear(); }
+    function reset() { index = null; importMap = new Map(); provided.clear(); runtimeVerified = false; }
 
     return { VERSION, BASE, PREFIX, INDEX_URL, RUNTIME, RUNTIME_SIZE, STARTUP, EXTRA, VENDORED, IFC_VERSION, IFC_WHEELS, IFC_SIZE, parse, load, has, info, all, referenced, closure, ensureRuntime, ensurePackages, provideFile, cachedRuntime, provided: () => Array.from(provided), reset };
   });
