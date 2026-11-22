@@ -3,7 +3,8 @@
 /**
  * Tests that the IFC modelling keeps the STEP ids (PLAN 0a): Dataregium merges IFC versions with ifcmerge, which merges three ways on
  * the #ids, so every program that writes a model must keep the ids of what it does not delete, change it in place and never give an
- * id twice. Without Python: the model's facts keep the highest id any version had (`maxId`), also when a version's own is lower; a
+ * id twice. Without Python: the model's facts keep the highest id any version had (`maxId`), also when a version's own is lower and
+ * when an undo brings back an earlier file; a
  * STEP id guard in the file (decision F70 d: a loose IfcDocumentReference named StepIdGuard whose Identification is the protected id)
  * counts in the facts and shows in no table, no review before sharing and no comparison of versions; and a CDE version's metadata
  * `ifc_max_step_id` (a mocked server, no network) raises the facts.
@@ -182,6 +183,26 @@
     } finally { bridge.runIfcChangeset = real; }
     assert.equal(maxOf(stepOf((await model.original(meta.id)).bytes)), maxOf(stepOf(lower)), 'the new version is the model');
     assert.equal((await factsOf(meta.id)).maxId, maxOf(base), 'and the highest id stays the one the version before had, which the wheel gives no new entity');
+    return 'ok';
+  }, 30000);
+
+  test('ai stepids: an undo that brings back an earlier file keeps the highest STEP id the undone version had', async (assert) => {
+    const meta = await importer.run(fixtures.ifcFile({ walls: 2 }), { format: 'model' }, null, 'STEP-id ångra');
+    created.push(meta.id);
+    const before = (await factsOf(meta.id)).maxId;
+    const higher = new Uint8Array(await fixtures.ifcFile({ walls: 4 }).arrayBuffer());
+    const top = maxOf(stepOf(higher));
+    assert.ok(top > before, `a later version with more instances (#${top} over #${before})`);
+    const real = bridge.runIfcChangeset;
+    try {
+      bridge.runIfcChangeset = async (changes) => ({ bytes: higher.slice(), info: { elements: 9, entities: 1, file: 'testhus.ifc', operations: changes.length, created: [], changed: [], deleted: [], findings: [], errors: 0 }, log: [] });
+      await recipes.apply(meta.id, 'ifc_changeset', { changes: '[]' });
+    } finally { bridge.runIfcChangeset = real; }
+    assert.equal((await factsOf(meta.id)).maxId, top, 'the later version raised the highest id');
+    await recipes.undo(meta.id);
+    assert.equal(maxOf(stepOf((await model.original(meta.id)).bytes)), before, 'the undo brought back the earlier file');
+    assert.equal((await factsOf(meta.id)).maxId, top, 'and the highest id stays the undone version\'s in the dataset\'s file');
+    assert.equal((await datasets.get(meta.id)).model.maxId, top, 'and in its record');
     return 'ok';
   }, 30000);
 
