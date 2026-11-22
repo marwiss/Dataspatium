@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/soka', ['ui/base', 'analysis/search', 'data/lists', 'ui/soka/query', 'data/kinds'], (base, search, lists, queryTabMod, kinds) => {
+  D.define('ui/modes/soka', ['ui/base', 'analysis/search', 'data/lists', 'ui/soka/query', 'data/kinds', 'platform/tier'], (base, search, lists, queryTabMod, kinds, tier) => {
     const { h, t, i18n, replace } = base;
     const TABS = ['sok', 'fraga', 'listor'];
     const TAB_ICONS = { sok: 'text-search', fraga: 'filter', listor: 'list-checks' };
@@ -254,7 +254,10 @@
           h('div', { class: 'dm-row-wrap' }, ui.button({ label: t(hitTarget(ds, hit).label), icon: hitTarget(ds, hit).icon, size: 'sm', onClick: () => openHit(ds, hit) })));
       }
 
-      /** Where a hit lives: a page, a picture, a node, a building element, a place on a map, or a row in the table. */
+      /**
+       * Where a hit lives: a page, a picture, a node, a building element, a place on a map, or a row in the table. The map view
+       * belongs to BIM och GIS (platform/tier); below it a place is its row.
+       */
       function hitTarget(ds, found) {
         const value = (name) => { const i = found.columns.findIndex((c) => c.name === name); return i < 0 ? undefined : found.row[i + 1]; };
         const id = found.datasetId;
@@ -262,7 +265,7 @@
         const own = kinds.shown(ds) ? kinds.of(ds).hit : null;
         if (own) return own(value, id);
         const leaflet = D.require('viz/leaflet');
-        if (leaflet.mapDefault(found.columns)) return { label: 'soka.open.map', icon: 'map', store: { openMapRow: { datasetId: id, rowid } } };
+        if (tier.shows('view:map') && leaflet.mapDefault(found.columns)) return { label: 'soka.open.map', icon: 'map', store: { openMapRow: { datasetId: id, rowid } } };
         return { label: 'soka.open.row', icon: 'table', store: { openRow: { datasetId: id, rowid } } };
       }
       function openHit(ds, found) {

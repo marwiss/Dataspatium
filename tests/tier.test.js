@@ -709,4 +709,52 @@
       await restore();
     }
   }, 60000);
+
+  test('tier: in Dokument a Söka hit and a comment on a place open its row, not the hidden map view', async (assert) => {
+    await reset();
+    const block = D.require('ui/kinds/comment-block');
+    const press = (scope, label) => {
+      const b = Array.from(scope.querySelectorAll('dm-button')).find((x) => x.getAttribute('label') === label || x.textContent.trim() === label);
+      if (!b) throw new Error('no button: ' + label);
+      /** @type {HTMLElement} */ (b.querySelector('button')).click();
+    };
+    let place = null; let started = null;
+    try {
+      place = await datasets.create({ name: 'Nivå platser i Dokument', columns: [{ name: 'namn', type: 'text' }, { name: 'lon', type: 'number' }, { name: 'lat', type: 'number' }], rows: [['Blåsippa', 18.06, 59.33], ['Kabbleka', 17.64, 59.86]] });
+      await tier.set('documents');
+      // A comment on a place goes back to its row while the map view is hidden, and to the map once it is shown.
+      let set = null; let mode = '';
+      const ctx = { store: { set: (v) => { set = v; } }, shell: { activate: (m) => { mode = m; } } };
+      block.openTarget(ctx, place, block.placeTarget(place, 2, 'Kabbleka'));
+      assert.deepEqual(set, { selectedId: place.id, openRow: { datasetId: place.id, rowid: 2 } }, 'the row in Dokument');
+      assert.equal(mode, 'bearbeta');
+      await tier.set('bim-gis');
+      block.openTarget(ctx, place, block.placeTarget(place, 2, 'Kabbleka'));
+      assert.deepEqual(set, { selectedId: place.id, openMapRow: { datasetId: place.id, rowid: 2 } }, 'the place on the map in BIM och GIS');
+      await tier.set('documents');
+      // Söka: the hit's button opens the row in the table, and nothing is left waiting for the map view.
+      started = await startShell();
+      const { root, shell } = started;
+      await waitFor(() => shell.store.get().datasets.some((d) => d.id === place.id), 3000, 'the table in the store');
+      shell.store.set({ selectedId: place.id, selectedIds: [] });
+      shell.activate('soka');
+      const input = /** @type {any} */ (await waitFor(() => root.querySelector('dm-input[data-course="search"]'), 5000, 'the search field'));
+      input.value = 'Kabbleka';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      press(root, t('soka.run'));
+      const row = await waitFor(() => root.querySelector(`.dm-search-result[data-dataset="${place.id}"] dm-table .dm-tr`), 8000, 'the hit');
+      /** @type {HTMLElement} */ (row).click();
+      const labels = () => Array.from(root.querySelectorAll('.dm-right dm-button')).map((x) => x.getAttribute('label') || x.textContent.trim());
+      await waitFor(() => labels().includes(t('soka.open.row')), 3000, 'the button Visa raden');
+      assert.ok(!labels().includes(t('soka.open.map')), 'no button to the map view: ' + labels().join(' | '));
+      press(root.querySelector('.dm-right'), t('soka.open.row'));
+      await waitFor(() => shell.store.get().mode === 'bearbeta' && !shell.store.get().openRow, 8000, 'the row in Bearbeta');
+      assert.ok(!shell.store.get().openMapRow, 'and nothing left for the map view');
+      return 'ok';
+    } finally {
+      if (started) stop(started.root);
+      if (place) await datasets.remove(place.id);
+      await restore();
+    }
+  }, 60000);
 })();
