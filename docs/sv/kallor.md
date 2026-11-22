@@ -179,6 +179,10 @@ lämnar bort *Hämta dokument*. Under *Fler alternativ* i dialogen kan du välja
 I 2.1 listar *Filer i projektet* bara BCF-dokumenten, ärenden saknar serverns löpnummer och en viewpoint går inte att ta bort. I gengäld kan en
 kommentar vara ett svar på en annan: knappen *Svara* i panelen *Ärenden*.
 
+En server med bara Documents API, som en Dataregium på nivån Dokument, har inga BCF-projekt att välja. Källans vy visar då *Hämta dokument*
+utan projektlista, och fliken *Till CDE* i Dela skickar genom Documents API, där serverns egen sida frågar efter projektet. Under nivån
+BIM och GIS hoppar *Hämta dokument* över en BCF-fil bland de valda, säger varför i loggen och hämtar resten.
+
 Kortet *Projektets medlemmar* visas när servern har projektadministration (Dataregiums tillägg). Den som är projektansvarig
 (manager) i ett projekt, utan att vara serveradministratör, loggar in med *Logga in som projektansvarig* och ser sina projekt och
 deras medlemmar med roll: läsare, bidragsgivare, redaktör eller projektansvarig. Du lägger till en person med det exakta

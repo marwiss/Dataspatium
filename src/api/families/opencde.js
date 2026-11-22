@@ -59,6 +59,11 @@
     /** Whether the server has the Documents API. A connector that has not been told otherwise is assumed to. @param {any} connector */
     const hasDocuments = (connector) => !(connector && connector.family && connector.family.documents === false);
     /**
+     * Whether the server has the BCF API: false when discovery found none of its versions (a server with the Documents API alone,
+     * such as a Dataregium at the tier Dokument). A connector that has not been told otherwise is assumed to. @param {any} connector
+     */
+    const hasBcf = (connector) => !(connector && connector.family && Array.isArray(connector.family.bcfVersions) && !connector.family.bcfVersions.length);
+    /**
      * The versions of the BCF API to choose between on a connector: what discovery found, or what the capabilities say for a source saved
      * before there was a choice. @param {any} connector @param {any} [caps]
      */
@@ -1242,7 +1247,7 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { addDeployed, ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, seedStepIds, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
+    return { addDeployed, ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, hasBcf, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, seedStepIds, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
       topicMay, projectMay, topicFiles, filesBody, setTopicFiles, modelFile, linkTopic, attachDocument, identity };
   });
 })();

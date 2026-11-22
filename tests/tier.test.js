@@ -537,4 +537,86 @@
       return 'ok';
     } finally { if (started) stop(started.root); await restore(); }
   }, 60000);
+
+  test('tier: a server with the Documents API alone gives and takes documents in Dokument without the BCF API, past a BCF file', async (assert) => {
+    await reset();
+    const opencde = D.require('api/families/opencde');
+    const connectors = D.require('api/connectors');
+    const cdeSend = D.require('ui/share/cde-send');
+    const BASE = 'dataspatium-asset://tests/tier-docs';
+    const REDIRECT = 'http://127.0.0.1:8080/oauth-callback.html';
+    const paths = [];
+    const json = (data) => Promise.resolve({ kind: 'text', data: JSON.stringify(data) });
+    const version = (id, title, name) => ({ links: { document_version_download: { url: `${BASE}/documents/1.0/documents/${id}/versions/1/download` } }, version_number: '1', version_index: 1, title, file_description: { name, size_in_bytes: 12 }, document_id: id });
+    const files = { d1: 'kod,antal\nA,1\n', d2: 'PK', d3: 'kod,antal\nB,2\n' };
+    const session = BASE + '/documents/1.0/upload-sessions/s2';
+    // As a Dataregium with the Documents API alone answers: no BCF version in the Foundation API, and no /bcf/ path at all.
+    D.net.virtual('tests/tier-docs/', (url) => {
+      const path = url.slice(BASE.length).split('?')[0];
+      paths.push(path);
+      const download = /^\/documents\/1\.0\/documents\/(d\d)\/versions\/1\/download$/.exec(path);
+      if (download) return Promise.resolve({ kind: 'text', data: files[download[1]] });
+      switch (path) {
+        case '/foundation/versions': return json({ versions: [{ api_id: 'foundation', version_id: '1.0' }, { api_id: 'documents', version_id: '1.0' }] });
+        case '/foundation/1.0/auth': return json({ oauth2_auth_url: BASE + '/foundation/oauth2/auth', oauth2_token_url: BASE + '/foundation/oauth2/token', oauth2_pkce_required: true });
+        case '/foundation/oauth2/token': return json({ access_token: 'tier-docs-token', expires_in: 3600 });
+        case '/foundation/1.0/current-user': return json({ id: 'reader', name: 'Läsaren' });
+        case '/documents/1.0/select-documents': return json({ select_documents_url: BASE + '/documents/1.0/select-ui/t1', expires_in: 600 });
+        case '/documents/1.0/selection-sessions/s1/documents': return json({ documents: [version('d1', 'Nivå dokument A', 'a.csv'), version('d2', 'Nivå ärenden', 'arenden.bcfzip'), version('d3', 'Nivå dokument B', 'b.csv')] });
+        case '/documents/1.0/upload-documents': return json({ upload_ui_url: BASE + '/documents/1.0/upload-ui/t2', max_size_in_bytes: 1000000 });
+        case '/documents/1.0/upload-sessions/s2/instructions': return json({ documents_to_upload: [{ session_file_id: 'f1', upload_file_parts: [{ url: session + '/part', http_method: 'PUT', content_range_start: 0, content_range_end: 999999 }], upload_completion: { url: session + '/complete' } }] });
+        case '/documents/1.0/upload-sessions/s2/part': return Promise.resolve({ kind: 'text', data: '' });
+        case '/documents/1.0/upload-sessions/s2/complete': return json({ title: 'Nivå skickad', version_number: '1', version_index: 1, document_id: 'd9' });
+        default: return Promise.resolve({ kind: 'text', data: '{"message":"Not Found"}', status: 404 });
+      }
+    });
+    const realRedirect = opencde.redirectUri; const realSelect = opencde.selectDocuments;
+    const made = []; const logs = [];
+    let connector = null; let ui = null; let panel = null; let table = null;
+    try {
+      await tier.set('documents');
+      connector = (await D.require('api/families/databases').createConnector('opencde', { baseUrl: BASE, clientId: 'tier-docs', clientSecret: '' })).connector;
+      assert.ok(!opencde.hasBcf(connector) && opencde.hasDocuments(connector), 'discovery finds the Documents API alone');
+      await opencde.login(connector, { popup: (url) => Promise.resolve(`${REDIRECT}?code=c1&state=${new URL(url).searchParams.get('state')}`), redirectUri: REDIRECT });
+      // Inhämta: Hämta dokument without a project of the BCF API.
+      ui = D.require('ui/api/opencde-view').create({ connector, ctx: {}, log: (m, k) => logs.push([k, m]), onDataset: (m) => made.push(m.id) });
+      document.body.appendChild(ui.el);
+      ui.start();
+      await waitFor(() => ui.state.projects && !ui.state.busy && ui.el.querySelector('[data-opencde-documents]'), 5000, 'the button Hämta dokument');
+      assert.deepEqual(ui.state.projects, [], 'no projects to list');
+      assert.ok(!ui.el.querySelector('[data-opencde-files]') && !ui.el.querySelector('[data-opencde-bcf]'), 'no files card and no BCF version');
+      // The chosen documents come; the BCF file among them is skipped in the tier's words, and the one after it still comes.
+      opencde.redirectUri = () => REDIRECT;
+      opencde.selectDocuments = (c, options) => realSelect(c, Object.assign({ redirectUri: REDIRECT, popup: () => Promise.resolve(`${REDIRECT}?selected_documents_url=${encodeURIComponent(BASE + '/documents/1.0/selection-sessions/s1/documents')}`) }, options || {}));
+      await ui.fetchDocuments();
+      assert.equal(made.length, 2, 'two of the three documents are read: ' + JSON.stringify(logs.slice(-3)));
+      assert.ok(logs.some(([k, m]) => k === 'warn' && m.startsWith('Nivå ärenden: ') && m.includes(t('tier.bim-gis'))), 'the BCF file is skipped in the tier\'s words');
+      assert.ok(logs.some(([, m]) => m === t('opencde.documents.imported', { n: '2' })), 'and the rest are counted');
+      // Dela: the file goes up through the Documents API, whose page asks for the project.
+      table = await datasets.create({ name: 'Nivå att skicka', columns: [{ name: 'kod', type: 'text' }, { name: 'antal', type: 'integer' }], rows: [['A', 1]] });
+      const ctx = { store: { get: () => ({ datasets: [] }), set() {} }, shell: { log: (m, k) => logs.push([k, m]) }, services: { exporter: D.require('io/export') }, ui: Object.assign({ h: D.require('ui/base').h, t, button: D.require('ui/basic').button }, D.require('ui/overlays')) };
+      panel = cdeSend.create(ctx, { dataset: () => table });
+      document.body.appendChild(panel.el);
+      await panel.start();
+      const select = (label) => /** @type {any} */ (Array.from(panel.el.querySelectorAll('dm-select')).find((x) => x.getAttribute('label') === t(label)));
+      if (panel.state.connector.id !== connector.id) { select('issues.source').value = connector.id; select('issues.source').dispatchEvent(new Event('change')); }
+      await waitFor(() => panel.state.connector.id === connector.id && panel.state.projects, 3000, 'the source chosen');
+      assert.ok(!select('opencde.project'), 'no project to choose');
+      assert.deepEqual(select('cde.send.how').options.map((o) => o.value), ['documents'], 'and no BCF document');
+      cdeSend.setPopup(() => Promise.resolve(`${REDIRECT}?upload_documents_url=${encodeURIComponent(session + '/instructions')}`), REDIRECT);
+      await panel.send();
+      assert.equal(panel.state.done, t('cde.send.done.document', { name: 'Nivå skickad', version: '1' }), 'sent without a project: ' + panel.state.error);
+      assert.deepEqual(paths.filter((p) => p.startsWith('/bcf/')), [], 'the BCF API is never asked');
+      return 'ok';
+    } finally {
+      cdeSend.setPopup(null);
+      opencde.redirectUri = realRedirect; opencde.selectDocuments = realSelect;
+      if (panel) { panel.destroy(); panel.el.remove(); }
+      if (ui) { ui.destroy(); ui.el.remove(); }
+      for (const id of made.concat(table ? [table.id] : [])) await datasets.remove(id).catch(() => {});
+      if (connector) { await opencde.logout(connector).catch(() => {}); await connectors.remove(connector.id).catch(() => {}); }
+      D.net.unvirtual('tests/tier-docs/');
+      await restore();
+    }
+  }, 60000);
 })();

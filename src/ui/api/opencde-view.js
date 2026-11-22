@@ -125,6 +125,9 @@
         await loadProjects();
       }
       async function loadProjects() {
+        // The projects are the BCF API's. A server with the Documents API alone has none to list: its documents come through its
+        // own page, which asks for the project itself.
+        if (!opencde.hasBcf(connector)) { s.projects = []; s.projectId = ''; s.rights = null; s.files = null; return; }
         s.projects = await opencde.projects(connector);
         if (!s.projectId || !project()) s.projectId = s.projects[0] ? s.projects[0].project_id : '';
         await loadRights();
@@ -272,11 +275,12 @@
 
       function render() {
         const signed = opencde.signedIn(connector);
+        const bcfApi = opencde.hasBcf(connector);
         const head = h('div', { class: 'dm-card dm-stack-sm' },
           h('div', { class: 'dm-row' }, h('strong', { text: t('opencde.title') }), h('dm-badge', { kind: signed ? 'ok' : 'warn', text: signed ? t('opencde.status.in', { name: s.user ? (s.user.name || s.user.id) : '' }) : t('opencde.status.out') })),
           h('p', { class: 'dm-help dm-small', text: t('opencde.hint', { host: opencde.hostOf(connector.baseUrl) }) }),
           s.caps && s.caps.present ? h('p', { class: 'dm-help dm-xs', 'data-opencde-capabilities': '', text: capsText(s.caps) }) : null,
-          shows('cde.bcf') ? versionRow() : null,
+          shows('cde.bcf') && bcfApi ? versionRow() : null,
           h('div', { class: 'dm-row-wrap' },
             signed ? basic.button({ label: t('opencde.signout'), icon: 'lock', size: 'sm', loading: s.busy === 'logout', onClick: signOut }) : basic.button({ label: t('opencde.signin'), icon: 'chevron-right', variant: 'primary', loading: s.busy === 'login', onClick: signIn }),
             !signed && s.busy === 'login' && !s.manual && opencde.redirectUri() ? cancelButton() : null,
@@ -285,7 +289,11 @@
           s.error ? h('p', { class: 'dm-error', text: s.error }) : null,
           s.note ? h('p', { class: 'dm-help', text: s.note }) : null);
         const nodes = [head];
-        if (signed && s.projects) {
+        /** Hämta dokument: the server's own page (Documents API), which needs no project of the BCF API. */
+        const documents = () => (opencde.hasDocuments(connector) ? [
+          basic.button({ label: t('opencde.documents.fetch'), icon: 'download', size: 'sm', loading: s.busy === 'documents', title: t('opencde.documents.hint'), 'data-opencde-documents': '', onClick: fetchDocuments }),
+          s.busy === 'documents' ? cancelButton() : null] : []);
+        if (signed && s.projects && bcfApi) {
           const sel = /** @type {any} */ (h('dm-select', { label: t('opencde.project') }));
           sel.options = s.projects.map((p) => ({ value: p.project_id, label: p.name }));
           sel.value = s.projectId;
@@ -294,14 +302,18 @@
             s.projects.length ? sel : h('p', { class: 'dm-help', text: t('opencde.projects.none') }),
             h('div', { class: 'dm-row-wrap' },
               (shows('cde.bcf') ? KINDS : []).map((k) => basic.button({ label: t('opencde.kind.' + k.id), icon: k.id === 'topics' ? 'list' : k.id === 'components' ? 'box' : k.id === 'events' ? 'history' : k.id === 'files' ? 'file' : 'message-square', size: 'sm', loading: s.busy === k.id, variant: k.id === 'topics' ? 'primary' : undefined, onClick: () => fetchKind(k) })),
-              opencde.hasDocuments(connector) ? basic.button({ label: t('opencde.documents.fetch'), icon: 'download', size: 'sm', loading: s.busy === 'documents', title: t('opencde.documents.hint'), 'data-opencde-documents': '', onClick: fetchDocuments }) : null,
-              s.busy === 'documents' ? cancelButton() : null),
+              documents()),
             shows('cde.bcf') ? h('p', { class: 'dm-help dm-xs', text: t('opencde.components.hint') }) : null,
             s.rights ? h('p', { class: 'dm-help dm-xs', 'data-opencde-rights': '', text: rightsText(s.rights) }) : null));
           nodes.push(filesCard());
           profileUi.update({ projectId: s.projectId, projectName: (project() || {}).name || '', files: s.files || [] });
           if (shows('cde.profile')) nodes.push(profileUi.el);
-        } else profileUi.update({ projectId: '', files: [] });
+        } else {
+          // A server with the Documents API alone has no projects to choose, and one whose projects could not be read still gives
+          // its documents.
+          if (signed && opencde.hasDocuments(connector) && s.busy !== 'projects') nodes.push(h('div', { class: 'dm-card dm-stack-sm', 'data-opencde-documents-card': '' }, h('div', { class: 'dm-row-wrap' }, documents())));
+          profileUi.update({ projectId: '', files: [] });
+        }
         const resultEl = h('div');
         nodes.push(resultEl, graphEl, manageUi.el, adminUi.el, logCard.el);
         renderGraphCard();
