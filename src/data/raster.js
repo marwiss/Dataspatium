@@ -54,8 +54,11 @@
      * `thumb`; at most `maxPixels` pixels in the level read; and `quick`, the long side of a level small enough for Inhämta's picture.
      */
     const limits = { keepBytes: kinds.RASTER_KEEP.file, totalKeep: kinds.RASTER_KEEP.total, maxFiles: 16, preview: 2048, previewMany: 1024, thumb: 320, maxPixels: 300e6, quick: 2048 };
-    /** The TIFF tags that can name a person; data/raster keeps only which of them a file has. */
-    const PERSONAL = ['Artist', 'HostComputer', 'ImageDescription', 'DocumentName', 'XMP', 'Exif IFD'];
+    /**
+     * The TIFF tags that can name a person (IPTC's By-line, a GDAL item such as AUTHOR, Photoshop's own block among them); data/raster
+     * keeps only which of them a file has.
+     */
+    const PERSONAL = ['Artist', 'HostComputer', 'ImageDescription', 'DocumentName', 'XMP', 'Exif IFD', 'IPTC', 'Photoshop', 'GDAL_METADATA'];
     /** The compressions geotiff.js decodes without loading anything: none, LZW, JPEG, Deflate, PackBits, LERC and WebP. */
     const COMPRESSIONS = [1, 5, 7, 8, 32946, 32773, 34887, 50001];
     const FORMAT = { 1: 'uint', 2: 'int', 3: 'float' };

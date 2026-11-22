@@ -42,8 +42,8 @@
     'use strict';
     const jobs = new Map();
     const post = (msg, transfer) => self.postMessage(msg, transfer || []);
-    /** Tags that can name a person: only their names leave the worker. */
-    const PERSONAL = ['Artist', 'HostComputer', 'ImageDescription', 'DocumentName', 'XMP', 'Exif IFD'];
+    /** Tags that can name a person (IPTC's By-line, a GDAL item such as AUTHOR, Photoshop's own block): only their names leave the worker. */
+    const PERSONAL = ['Artist', 'HostComputer', 'ImageDescription', 'DocumentName', 'XMP', 'Exif IFD', 'IPTC', 'Photoshop', 'GDAL_METADATA'];
     /** The GeoKeys that say which system a file is in. */
     const KEYS = ['GTModelTypeGeoKey', 'GTRasterTypeGeoKey', 'GTCitationGeoKey', 'GeographicTypeGeoKey', 'GeogCitationGeoKey', 'ProjectedCSTypeGeoKey', 'PCSCitationGeoKey'];
     /** The side of a chunk read at a time, in level pixels. */

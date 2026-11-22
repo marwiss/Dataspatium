@@ -448,6 +448,12 @@
     // A file without such tags starts as kept.
     const plain = track(await importer.runFiles([sweref('vanlig.tif')], { format: 'raster' }, 'Vanlig'));
     assert.equal((await shareScan.inspect(plain.id)).parts.find((p) => p.id === 'originals').start, 'keep');
+    // GDAL's metadata (an AUTHOR item, written with gdal_translate -mo) can name a person too, and is kept only by its name.
+    const gdal = track(await importer.runFiles([sweref('gdal.tif', { tags: [[42112, 2, '<GDALMetadata><Item name="AUTHOR">Provperson Exempel</Item></GDALMetadata>']] })], { format: 'raster' }, 'GDAL-metadata'));
+    const g = await datasets.get(gdal.id);
+    assert.deepEqual(g.raster.files[0].tags.personal, ['GDAL_METADATA']);
+    assert.ok(!JSON.stringify(g.raster).includes('Provperson'), 'the value is never copied out of the file');
+    assert.equal((await shareScan.inspect(gdal.id)).parts.find((p) => p.id === 'originals').start, 'remove');
     return 'ok';
   }, 60000);
 
