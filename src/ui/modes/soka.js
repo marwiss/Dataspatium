@@ -262,7 +262,8 @@
         const own = kinds.shown(ds) ? kinds.of(ds).hit : null;
         if (own) return own(value, id);
         const leaflet = D.require('viz/leaflet');
-        if (leaflet.mapDefault(found.columns)) return { label: 'soka.open.map', icon: 'map', store: { openMapRow: { datasetId: id, rowid } } };
+        // The map only where the tier shows Bearbeta's map; below it the hit opens its row in the table.
+        if (D.require('platform/tier').shows('view:map') && leaflet.mapDefault(found.columns)) return { label: 'soka.open.map', icon: 'map', store: { openMapRow: { datasetId: id, rowid } } };
         return { label: 'soka.open.row', icon: 'table', store: { openRow: { datasetId: id, rowid } } };
       }
       function openHit(ds, found) {
