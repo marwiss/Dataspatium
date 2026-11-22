@@ -208,6 +208,51 @@
     return `${bridge.version}; startup ${Math.round(bridge.startupMs)} ms${memory}`;
   }, 900000);
 
+  test('python: Python opens no sockets: its socket functions name pyfetch, a socket past them finds no WebSocket in the emulation, and pyfetch still reads', async (assert) => {
+    if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them from jsDelivr)';
+    await bridge.start();
+    // Emscripten's socket emulation would make each connection a WebSocket to ws://host:port/. The addresses are the discard port
+    // on this computer and a name that never resolves, so even a broken block reaches no server.
+    const res = await bridge.run([
+      'import errno, json, socket, _socket, urllib.request, js, pyodide.http',
+      'def tried(call):',
+      '    try:',
+      '        call()',
+      '    except OSError as e:',
+      '        return [type(e).__name__, e.errno, str(e)]',
+      '    return None',
+      'def raw(kind, call):',
+      '    s = _socket.socket(_socket.AF_INET, kind)',
+      '    try:',
+      '        return tried(lambda: call(s))',
+      '    finally:',
+      '        s.close()',
+      'out = {',
+      '    "create_connection": tried(lambda: socket.create_connection(("127.0.0.1", 9), timeout=1)),',
+      '    "getaddrinfo": tried(lambda: socket.getaddrinfo("dataspatium.invalid", 443)),',
+      '    "connect": tried(lambda: socket.socket().connect(("127.0.0.1", 9))),',
+      '    "urlopen": tried(lambda: urllib.request.urlopen("http://127.0.0.1:9/", timeout=1)),',
+      '    "raw": raw(_socket.SOCK_STREAM, lambda s: s.connect(("127.0.0.1", 9))),',
+      '    "udp": raw(_socket.SOCK_DGRAM, lambda s: s.sendto(b"x", ("127.0.0.1", 9))),',
+      '    "unreachable": errno.EHOSTUNREACH,',
+      '    "js": [n for n in ("WebSocket", "WebTransport", "Worker") if getattr(js, n, None) is not None],',
+      '}',
+      'r = await pyodide.http.pyfetch("dataspatium-asset://pyodide/pyodide-lock.json")',
+      'out["pyfetch"] = [r.status, len(await r.bytes()) > 1000]',
+      'print(json.dumps(out))',
+    ].join('\n'));
+    const lines = stdoutOf(res).trim().split('\n');
+    const out = JSON.parse(lines[lines.length - 1] || 'null');
+    assert.ok(out, JSON.stringify(res.entries.map((e) => (e.text || '').slice(0, 300))));
+    for (const key of ['create_connection', 'getaddrinfo', 'connect', 'urlopen']) {
+      assert.ok(out[key] && /Network sockets are blocked in Dataspatium's Python; fetch with pyodide\.http\.pyfetch, which asks for consent/.test(out[key][2]), key + ': ' + JSON.stringify(out[key]));
+    }
+    for (const key of ['raw', 'udp']) assert.ok(out[key] && out[key][1] === out.unreachable, key + ' past the patches fails in the emulation, which has no WebSocket: ' + JSON.stringify(out[key]));
+    assert.deepEqual(out.js, [], 'no WebSocket, WebTransport or Worker for Python code');
+    assert.deepEqual(out.pyfetch, [200, true], 'pyfetch reads through the app\'s gate');
+    return 'blocked: ' + out.create_connection[0] + ', ' + out.urlopen[0] + ', _socket errno ' + out.raw[1];
+  }, 300000);
+
   test('python: running code stops with interrupt() when the page is cross-origin isolated (from a web server)', async (assert) => {
     if (!real) return 'skipped: Pyodide not started in this run';
     if (!bridge.canInterrupt) {
