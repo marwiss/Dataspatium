@@ -3273,7 +3273,7 @@
     'map.wms.pick': 'Välj lager',
     'map.wms.format': 'Bildformat',
     'map.wms.transparent': 'Genomskinlig bakgrund',
-    'map.style.opacity': 'Genomskinlighet (0–1)',
+    'map.style.opacity': 'Täckning (0–1)',
     'map.layer.wms.note': 'Bilder från en WMS-tjänst ritas under objekten, visas inte i teckenförklaringen och följer inte med i export till SVG, PNG och PDF.',
     'map.add.wms': 'WMS-lager',
     'map.add.wms.help': 'Adress till en WMS-tjänst, gärna med layers=; hämtas efter samtycke till bakgrundskartor.',
