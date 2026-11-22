@@ -28,7 +28,7 @@
       const facets = D.require('data/facets');
       const out = [];
       const spatial = await Promise.all(chosen.map((d) => facets.has(d.id, 'spatial').catch(() => false)));
-      if (spatial.every(Boolean)) out.push({ id: 'map', label: 'datasets.batch.map', hint: 'datasets.batch.map.hint', icon: 'map' });
+      if (spatial.every(Boolean) && D.require('platform/tier').shows('chart:map')) out.push({ id: 'map', label: 'datasets.batch.map', hint: 'datasets.batch.map.hint', icon: 'map' });
       if (chosen.every((d) => !kinds.isCollection(d))) {
         const shapes = await Promise.all(chosen.map(async (d) => (await datasets.columns(d.id)).map((c) => c.name).join('\u0000')));
         if (shapes.every((x) => x === shapes[0])) out.push({ id: 'append', label: 'datasets.batch.append', hint: 'datasets.batch.append.hint', icon: 'rows-3' });

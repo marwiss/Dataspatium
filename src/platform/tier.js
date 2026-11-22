@@ -67,7 +67,7 @@
     const ENTRIES = {
       'kind:model': 'kind.model', 'view:model': 'kind.model', 'tab:model': 'kind.model', 'chart:model': 'kind.model',
       'op:ifc_apply_table': 'kind.model', 'op:ifc_python': 'kind.model', 'op:ifc_changeset': 'kind.model', 'op:ifc_party': 'kind.model',
-      'view:map': 'map.view', 'tab:geo': 'map.view',
+      'view:map': 'map.view', 'chart:map': 'map.view', 'tab:geo': 'map.view',
       'op:geo_height': 'geo.heights', 'op:geo_height_along': 'geo.heights', 'chart:profile': 'geo.heights',
       'source:newmodel': 'source.newmodel', 'source:geodata': 'source.geodata',
       'tool:server_query': 'ai.server-query', 'status:assistant': 'assistant', 'command:assistant': 'assistant',

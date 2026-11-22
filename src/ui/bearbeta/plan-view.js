@@ -136,7 +136,7 @@
             // The background maps from services belong to the tier BIM och GIS (platform/tier); the plan itself stays in Dokument.
             h('div', { class: 'dm-toolbar' }, projectionSel, ...(tier.shows('map.basemap') ? [basemapSel, wmsEdit, tilesEdit, orthoBtn] : []), labels,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: fit }),
-              ui.button({ label: t('map.save.chart'), icon: 'save', title: t('plan.save.chart.hint'), onClick: saveChart }),
+              tier.shows('chart:map') ? ui.button({ label: t('map.save.chart'), icon: 'save', title: t('plan.save.chart.hint'), onClick: saveChart }) : null,
               s.slag === 'detaljplan' ? ui.button({ label: t('plan.provisions.export'), icon: 'file-text', title: t('plan.provisions.export.hint'), onClick: exportProvisions }) : null,
               ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('bearbeta.view.table.hint'), onClick: options.onTable }))),
           mapEl);

@@ -664,9 +664,11 @@
         type: 'FeatureCollection',
         features: item.features.map((f) => { const s = item.styleOf(f.properties || {}); const label = item.layer.label ? (f.properties || {})[item.layer.label] : null; return { type: 'Feature', geometry: f.geometry, properties: { __style: { color: s.color, fillColor: s.fillColor, weight: s.weight, opacity: s.opacity, fillOpacity: s.fillOpacity, radius: s.radius }, __label: label === null || label === undefined ? '' : String(label) } }; }),
       }));
-      const src = def.basemap && def.basemap !== 'none' ? (orthophotos.isPreset(def.basemap) ? await publishedPreset(def.basemap) : tileSource(def)) : null;
+      // Background maps and imagery from services belong to the tier BIM och GIS (platform/tier), as on screen (tileLayer, overlayLayers).
+      const services = tier.shows('map.basemap');
+      const src = services && def.basemap && def.basemap !== 'none' ? (orthophotos.isPreset(def.basemap) ? await publishedPreset(def.basemap) : tileSource(def)) : null;
       const tileJs = (s, extra) => (s.wms ? `L.tileLayer.wms(${json(s.url)},${json(tileOptions(s, extra))}).addTo(m);` : `L.tileLayer(${json(s.url)},${json(tileOptions(s, extra))}).addTo(m);`);
-      const overlays = (def.layers || []).filter((l) => imagery(l) && l.visible !== false).map((l) => ({ src: overlaySource(l), opacity: l.style && l.style.opacity !== undefined ? l.style.opacity : 0.8 })).filter((o) => o.src);
+      const overlays = services ? (def.layers || []).filter((l) => imagery(l) && l.visible !== false).map((l) => ({ src: overlaySource(l), opacity: l.style && l.style.opacity !== undefined ? l.style.opacity : 0.8 })).filter((o) => o.src) : [];
       const legend = def.legend === false ? '' : `<div class="dm-map-legend">${prepared.layers.flatMap((l) => (l.legend.length > 1 ? l.legend : l.legend.map((e) => Object.assign({}, e, { label: e.label || l.layer.name })))).slice(0, 24).map((e) => `<div><span style="background:${e.color}"></span>${String(e.label).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>`).join('')}</div>`;
       const view = def.view && def.view.center && def.view.zoom ? `m.setView(${json(def.view.center)}, ${json(def.view.zoom)});` : `if (b) m.fitBounds(b, {padding: [16, 16], maxZoom: 14}); else m.setView(${json(DEFAULT_VIEW.center)}, ${DEFAULT_VIEW.zoom});`;
       return `<div class="dm-map-wrap"><div id="${id}" class="dm-map" style="height:${options.height || def.height || 480}px"></div>${legend}</div>`

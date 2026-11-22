@@ -192,6 +192,9 @@
             return;
           }
           if (!chart) return;
+          // A type of chart the tier hides (platform/tier: the map view, the 3D model, the height profile) is kept and opens as the
+          // tier's notice, from the list, the gallery, the palette, a dashboard or a link alike.
+          const hiddenKind = !D.require('platform/tier').shows('chart:' + chart.kind);
           const missing = !columns.length;
           nameInput = /** @type {any} */ (h('dm-input', { 'aria-label': t('viz.name'), placeholder: t('viz.name'), inline: true }));
           nameInput.value = chart.name || '';
@@ -208,12 +211,13 @@
           const head = h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon(kindIcon(chart.kind), 20), nameInput, h('dm-badge', { text: t('viz.kind.badge.' + chart.kind) })),
             h('div', { class: 'dm-row-wrap' },
-              tableSel,
-              saveBtn,
-              ui.button({ label: t('viz.export'), icon: 'download', onClick: () => exportDialog.exportChart(chart, { rExport: rpanel ? rpanel.exportBlob : undefined }) }),
-              ui.button({ label: t('viz.batch'), icon: 'layers', onClick: () => exportDialog.batchChart(chart, { rExport: rpanel ? rpanel.exportBlob : undefined }) }),
+              hiddenKind ? null : tableSel,
+              hiddenKind ? null : saveBtn,
+              hiddenKind ? null : ui.button({ label: t('viz.export'), icon: 'download', onClick: () => exportDialog.exportChart(chart, { rExport: rpanel ? rpanel.exportBlob : undefined }) }),
+              hiddenKind ? null : ui.button({ label: t('viz.batch'), icon: 'layers', onClick: () => exportDialog.batchChart(chart, { rExport: rpanel ? rpanel.exportBlob : undefined }) }),
               ui.button({ label: t('api.export'), icon: 'file-output', variant: 'ghost', onClick: () => files.download(new Blob([charts.exportJson(chart)], { type: 'application/json' }), files.safeName(chart.name || 'diagram', 'viz.json')) }),
               chart.id ? ui.button({ label: t('common.delete'), icon: 'trash-2', variant: 'ghost', 'icon-only': true, onClick: () => removeChart(chart) }) : null));
+          if (hiddenKind) { previewEl = null; infoEl = null; replace(slots.center, head, D.require('ui/settings/tier').notice(ctx, 'chart:' + chart.kind)); return; }
           if (missing) { replace(slots.center, head, h('div', { class: 'dm-card' }, h('p', { class: 'dm-error', text: t('viz.dataset.missing') }))); return; }
           previewEl = h('div', { class: 'dm-chart-preview' }, h('p', { class: 'dm-help', text: t('viz.preview.empty') }));
           infoEl = h('p', { class: 'dm-help' });
@@ -308,7 +312,8 @@
             const cmds = [];
             if (ds) cmds.push({ id: 'viz:new', label: t('viz.new'), hint: ds.name, group: t('palette.group.charts'), icon: 'plus', run: async () => { shell.activate('visualisera'); await newChart(); } });
             cmds.push({ id: 'viz:gallery', label: t('viz.gallery'), group: t('palette.group.charts'), icon: 'layout-grid', run: async () => { shell.activate('visualisera'); await openGallery(); } });
-            for (const c of await charts.list()) cmds.push({ id: 'chart:' + c.id, label: t('palette.chart.open', { name: c.name }), hint: c.datasetName || '', group: t('palette.group.charts'), icon: kindIcon(c.kind), run: async () => { shell.activate('visualisera'); await openChart(c); } });
+            // The charts of a type the tier hides are kept, and left out of the palette.
+            for (const c of (await charts.list()).filter((x) => D.require('platform/tier').shows('chart:' + x.kind))) cmds.push({ id: 'chart:' + c.id, label: t('palette.chart.open', { name: c.name }), hint: c.datasetName || '', group: t('palette.group.charts'), icon: kindIcon(c.kind), run: async () => { shell.activate('visualisera'); await openChart(c); } });
             cmds.push({ id: 'dash:new', label: t('dash.new'), group: t('palette.group.dashboards'), icon: 'plus', run: async () => { shell.activate('visualisera'); await newDashboard(); } });
             for (const d of await dashboards.list()) cmds.push({ id: 'dash:' + d.id, label: t('palette.dash.open', { name: d.name }), hint: t('viz.count', { n: (d.items || []).length }), group: t('palette.group.dashboards'), icon: 'layout-grid', run: async () => { shell.activate('visualisera'); await openDashboard(d); } });
             for (const d of await dashboards.list()) cmds.push({ id: 'present:' + d.id, label: t('present.palette', { name: d.name }), group: t('palette.group.dashboards'), icon: 'monitor', run: async () => { const fresh = await dashboards.get(d.id); if (fresh) await D.require('ui/viz/present').open(fresh, { log: (m, k) => shell.log(m, k) }); } });

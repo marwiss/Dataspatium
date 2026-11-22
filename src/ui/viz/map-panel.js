@@ -182,6 +182,8 @@
           basic.button({ label: t('map.layer.remove'), icon: 'trash-2', size: 'sm', variant: 'ghost', 'icon-only': true, onClick: () => { def.layers.splice(index, 1); changed(); renderSide(); } })));
         fields.appendChild(input(t('common.name'), layer.name, (v) => { layer.name = v.trim() || layer.datasetName || ''; changed(); renderSide(); }));
         const st = layer.style || (layer.style = {});
+        // A layer from a service (WMS, tiles) keeps its name and visibility below BIM och GIS; reading the service needs the tier.
+        if ((layer.kind === 'wms' || layer.kind === 'tiles') && !tier.shows('map.basemap')) return details;
         if (layer.kind === 'wms') {
           fields.appendChild(input(t('map.style.opacity'), st.opacity === undefined ? 0.8 : st.opacity, (v) => { st.opacity = Math.max(0, Math.min(1, Number(v))); changed(); }, { type: 'number', min: '0', max: '1', step: '0.05' }));
           fields.appendChild(wmsFields(layer.wms || (layer.wms = { url: '', layers: '', format: 'image/png', transparent: true, attribution: '' }), () => changed()));

@@ -24,7 +24,8 @@
         if (live && !D.require('viz/code-charts').isCode(chart.kind)) {
           const holder = h('div', { class: 'dm-chart-preview' });
           body.appendChild(holder);
-          render.renderInto(chart, holder, { width: undefined }).then((hd) => handles.push(hd)).catch((err) => replace(holder, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) })));
+          // A type the tier hides says so in plain words (viz/render), not as an error.
+          render.renderInto(chart, holder, { width: undefined }).then((hd) => handles.push(hd)).catch((err) => replace(holder, h('p', { class: err && err.name === 'TierError' ? 'dm-help dm-small' : 'dm-error dm-small', text: String((err && err.message) || err) })));
         } else if (chart.thumbnail) {
           body.appendChild(h('img', { class: 'dm-gallery-thumb', src: chart.thumbnail, alt: chart.name }));
         } else {

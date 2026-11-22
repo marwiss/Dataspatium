@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/dashboards', ['platform/storage/idb', 'viz/charts', 'data/datasets', 'viz/render', 'viz/pptx', 'viz/theme', 'platform/sync', 'platform/text'], (idb, charts, datasets, render, pptx, theme, sync, text) => {
+  D.define('viz/dashboards', ['platform/storage/idb', 'viz/charts', 'data/datasets', 'viz/render', 'viz/pptx', 'viz/theme', 'platform/sync', 'platform/text', 'platform/tier'], (idb, charts, datasets, render, pptx, theme, sync, text, tier) => {
     const FORMAT = 'dataspatium-dash/1';
     const FILTERABLE = ['text', 'integer', 'date', 'boolean'];
     const listeners = new Set();
@@ -104,7 +104,8 @@
     function filtersText(extraFilters) { return (extraFilters || []).map((f) => `${f.field} = ${f.value}`).join(', '); }
 
     /**
-     * Standalone HTML with every Vega and D3 chart as inline SVG (R charts as their saved thumbnail).
+     * Standalone HTML with every Vega and D3 chart as inline SVG (R charts as their saved thumbnail); a type of chart the tier in
+     * effect hides (platform/tier) is left out of the page.
      * @param {any} dash
      * @param {{extraFilters?: any[], width?: number, generatedText?: string, filtersLabel?: string, resolved?: any[], after?: string}} [options] texts come from the caller (i18n lives in the UI); `resolved` draws these charts instead of the dashboard's, `after` is finished HTML
      */
@@ -115,6 +116,7 @@
       const codeCharts = D.require('viz/code-charts');
       let plotlyUsed = false; let mapUsed = false;
       for (const { chart } of resolved) {
+        if (!tier.shows('chart:' + chart.kind)) continue;
         let body = '';
         // Python charts with a plotly figure stay interactive (plotly.js inlined once); other code charts are their saved image.
         if (chart.kind === 'python' && chart.python && chart.python.plotly) { plotlyUsed = true; body = D.require('viz/plotly').htmlFor('plotly-' + sections.length, chart.python.plotly, { width: options.width || 900 }); }
