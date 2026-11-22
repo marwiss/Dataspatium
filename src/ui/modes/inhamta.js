@@ -11,17 +11,17 @@
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
-    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'planarchive', 'graph', 'model', 'bcf', 'datapackage', 'r', 'documents', 'images'];
+    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'raster', 'detaljplan', 'planarchive', 'graph', 'model', 'bcf', 'datapackage', 'r', 'documents', 'images'];
     /** Formats without a header-row switch (structure carries the names). */
-    const NO_HEADER = ['json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'planarchive', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
+    const NO_HEADER = ['json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'raster', 'detaljplan', 'planarchive', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
     /** Formats whose values are already typed (no decimal-separator choice). */
-    const TYPED = ['sqlite', 'access', 'shapefile', 'detaljplan', 'planarchive', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
-    /** Formats with fixed columns where one or many files become one dataset (no column step). */
-    const COLLECTIONS = ['documents', 'images'];
+    const TYPED = ['sqlite', 'access', 'shapefile', 'raster', 'detaljplan', 'planarchive', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
+    /** Formats with fixed columns where one or many files become one dataset (no column step): documents, rasters and pictures. */
+    const COLLECTIONS = ['documents', 'raster', 'images'];
     const ACCEPT = '.bcf,.bcfzip,.csv,.tsv,.txt,.tab,.dat,.fwf,.prn,.xlsx,.xlsm,.xls,.xlsb,.ods,.fods,.dbf,.slk,.sylk,.dif,.wk1,.wk3,.wk4,.wks,.wq1,.wq2,.wb1,.wb2,.wb3,.qpw,'
       + '.html,.htm,.xhtml,.md,.markdown,.docx,.tex,.json,.ndjson,.jsonl,.geojson,.topojson,.kml,.kmz,.gpx,.xml,.sqlite,.sqlite3,.db,.gpkg,.sql,'
       + '.shp,.zip,.sav,.zsav,.por,.dta,.sas7bdat,.xpt,.px,.rds,.rda,.RData,.parquet,.mdb,.accdb,'
-      + '.pdf,.odt,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif,.qgs,.qgz';
+      + '.pdf,.odt,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif,.tif,.tiff,.gtiff,.qgs,.qgz';
 
     function createMode(ctx) {
       const { ui, services, store, shell } = ctx;
@@ -579,7 +579,7 @@
         wiz.sorted = sorted; wiz.results = null; wiz.step = 'sort';
         render();
       }
-      const KIND_OF_IMPORTER = { images: 'images', documents: 'document', detaljplan: 'plan', graph: 'graph', model: 'model' };
+      const KIND_OF_IMPORTER = { images: 'images', documents: 'document', raster: 'raster', detaljplan: 'plan', graph: 'graph', model: 'model' };
       function stepSort() {
         const { groups, skipped } = wiz.sorted;
         const row = (g) => {
@@ -704,7 +704,7 @@
         const total = wiz.files.reduce((n, f) => n + f.size, 0);
         return h('div', { class: 'dm-stack-sm' },
           h('p', { class: 'dm-help', text: t('import.files.summary', { n: wiz.files.length, size: i18n.formatBytes(total) }) }),
-          h('ul', { class: 'dm-list dm-import-files' }, shown.map((f) => h('li', { class: 'dm-list-item dm-list-item-static' }, ui.icon(wiz.options.format === 'images' ? 'image' : 'file-text', 14), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: f.name }), h('span', { class: 'dm-list-sub', text: i18n.formatBytes(f.size) }))))),
+          h('ul', { class: 'dm-list dm-import-files' }, shown.map((f) => h('li', { class: 'dm-list-item dm-list-item-static' }, ui.icon(wiz.options.format === 'images' || wiz.options.format === 'raster' ? 'image' : 'file-text', 14), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: f.name }), h('span', { class: 'dm-list-sub', text: i18n.formatBytes(f.size) }))))),
           wiz.files.length > shown.length ? h('p', { class: 'dm-help dm-xs', text: t('import.files.more', { n: wiz.files.length - shown.length }) }) : null);
       }
       /** Progress of a collection import: file by file, and page by page inside a PDF. */
@@ -885,6 +885,13 @@
           left.appendChild(h('div', { class: 'dm-card' }, kv));
           left.appendChild(h('p', { class: 'dm-help dm-small', text: t('model.import.hint') }));
         }
+        // A GeoTIFF: the raster's facts as Hantera will show them (system, resolution, pixels, bands and data type, what becomes
+        // of the original, the attribution); several files make one raster, and the first one speaks for them here.
+        if (p && p.kind === 'raster' && wiz.options.format === 'raster') {
+          const kv = /** @type {any} */ (h('dm-kv'));
+          kv.items = kinds.facts({ kind: 'raster', raster: p.raster, rowCount: p.totalRows });
+          left.appendChild(h('div', { class: 'dm-card', 'data-import-raster': '' }, kv));
+        }
         if (wiz.options.format === 'access' && p && p.tables && p.tables.length) {
           left.appendChild(select(t('import.table'), p.tables.map((s) => ({ value: s, label: s })), wiz.options.table || p.table, (v) => { wiz.options.table = v; schedulePreview(); }));
         }
@@ -968,6 +975,13 @@
         if (p.importer === 'images') {
           const list = wiz.files.length ? wiz.files : (wiz.file ? [wiz.file] : []);
           return h('div', { class: 'dm-photos dm-import-photos' }, list.slice(0, 12).map((f) => h('img', { src: thumbOf(f), alt: f.name, class: 'dm-import-photo' })));
+        }
+        // A GeoTIFF the browser cannot draw: the picture data/raster made of it in its own grid, when it is small enough to read
+        // quickly (a large file without overviews has none before the import).
+        if (p.importer === 'raster') {
+          const shots = Array.isArray(p.pictures) ? p.pictures.filter((src) => /^data:image\//.test(String(src))) : [];
+          const files = (p.raster && Array.isArray(p.raster.files)) ? p.raster.files : [];
+          return shots.length ? h('div', { class: 'dm-photos dm-import-photos' }, shots.map((src, i) => h('img', { src, alt: (files[i] && files[i].name) || t('datasets.picture.raster'), class: 'dm-import-photo', 'data-import-raster-picture': '' }))) : null;
         }
         if (p.sample) return h('div', { class: 'dm-ds-picture' }, sketches.network(sketches.networkOf(p.sample.nodes, p.sample.edges), t('datasets.picture.graph')));
         if (p.drawing) return h('div', { class: 'dm-ds-picture' }, sketches.imageOfSvg(p.drawing, t('datasets.picture.drawing')));
