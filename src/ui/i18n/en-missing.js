@@ -10,6 +10,9 @@
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('i18n/en-missing', [], () => ({
+    'r.net.blocked': 'R in Dataspatium has no internet access; bring data in under Import.',
+    'r.js.blocked': 'R in Dataspatium does not run JavaScript in the page (webr::eval_js with await = TRUE).',
+    'python.net.blocked': 'Python in Dataspatium does not reach the internet through {api}; fetch with pyodide.http.pyfetch, which asks for consent.',
     'map.basemap.tiles': 'Map tiles (OGC API – Tiles)',
     'map.projection.tiles': 'Map tiles from OGC API – Tiles are shown in the web map only. In {crs} the background can come from a WMS service.',
     'map.tiles.title': 'Map tiles from OGC API – Tiles',
