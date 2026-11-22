@@ -12,7 +12,7 @@
  * - no caller's code is ever evaluated: SQL that reads runs with the database locked against writes, R and Python run in their
  *   engines' workers;
  * - a command of a tier above the one in effect (platform/tier, the entries `cmd:<name>`: the maps, the BCF topics) is left out of
- *   the lists and refused, in words that name its tier.
+ *   the lists and refused, in words that name its tier; so is an operation the tier hides.
  * The schemas follow the providers' strict modes: every field is listed, the ones that may be left out take null, and nested
  * objects name all their fields. Free-form parameters (an operation's) travel as JSON text.
  */
@@ -281,7 +281,7 @@
         description: 'The operations of Bearbeta that apply_operation can run: id, group, what kind of dataset they are for, and their title. group null lists all.',
         parameters: S.obj({ group: S.strOrNull('only this group (column, values, rows, structure, calc, timeseries, regex, geo, graph, model, code)') }),
         async run(a) {
-          return { operations: ops.list().filter((op) => !a.group || op.group === a.group).map((op) => ({ id: op.id, group: op.group || null, for: forKind(op), title: title(op.id) })) };
+          return { operations: ops.list().filter((op) => (!a.group || op.group === a.group) && tier.shows('op:' + op.id)).map((op) => ({ id: op.id, group: op.group || null, for: forKind(op), title: title(op.id) })) };
         },
       });
       define({
@@ -310,7 +310,13 @@
       });
 
       // ---------------------------------------------------------------------------- operations
-      function operation(id) { try { return ops.get(id); } catch (_e) { throw new Error(t('commands.err.operation', { name: String(id) })); } }
+      /** An operation by id; one the tier hides is refused in words that name its tier. */
+      function operation(id) {
+        let op;
+        try { op = ops.get(id); } catch (_e) { throw new Error(t('commands.err.operation', { name: String(id) })); }
+        tier.guard('op:' + op.id);
+        return op;
+      }
       function title(id) { const s = t('op.' + id); return s === 'op.' + id ? id : s; }
       const forKind = (op) => (op.group === 'graph' ? 'graph' : op.group === 'model' ? 'model' : 'table');
       const PARAM_TYPES = { column: { type: 'string', description: 'column name' }, columns: { type: 'array', items: { type: 'string' }, description: 'column names' }, number: { type: 'number' }, switch: { type: 'boolean' } };

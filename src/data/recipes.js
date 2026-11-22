@@ -8,7 +8,7 @@
   'use strict';
   const D = globalThis.Dataspatium;
   // data/operations-extra registers more operations in data/operations; it is required here so that they exist.
-  D.define('data/recipes', ['data/datasets', 'data/operations', 'data/operations-extra', 'data/operations-regex', 'data/code-steps', 'data/operations-timeseries', 'data/operations-kinds', 'data/ifc-ops', 'data/models'], (datasets, ops) => {
+  D.define('data/recipes', ['data/datasets', 'data/operations', 'data/operations-extra', 'data/operations-regex', 'data/code-steps', 'data/operations-timeseries', 'data/operations-kinds', 'data/ifc-ops', 'data/models', 'platform/tier'], (datasets, ops, _extra, _regex, _code, _timeseries, _kinds, _ifc, _models, tier) => {
     const UNDO_LIMIT = 10;
     const UNDO_MAX_BYTES = 80 * 1024 * 1024;
     /**
@@ -105,12 +105,14 @@
     }
 
     /**
-     * Apply an operation to a dataset.
+     * Apply an operation to a dataset. An operation the tier in effect hides (platform/tier, the entries `op:<id>`: the heights,
+     * the model's steps) is refused in the notice's words, so a recipe, a flow or a command never runs it; undoing always works.
      * @param {string} id dataset id
      * @param {string} opId
      * @param {Record<string, any>} params
      */
     async function apply(id, opId, params, options = {}) {
+      if (options.logAction !== 'undo') tier.guard('op:' + opId);
       const op = ops.get(opId);
       const handle = await datasets.ensureOpen(id);
       const ctx = ops.makeContext(handle.engine, handle.columns);

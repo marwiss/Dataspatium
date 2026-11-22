@@ -236,7 +236,8 @@
       const targets = chosen.filter((d) => d.id !== sel.value);
       let good = 0;
       for (const d of targets) {
-        try { await recipes.replay(d.id, steps); good++; shell.log(t('datasets.batch.recipe.one', { name: d.name }), 'ok'); }
+        // A step that fails (one the tier hides among them) stops the replay on that dataset, and the log says why.
+        try { const failed = (await recipes.replay(d.id, steps)).find((r) => !r.ok); if (failed) throw new Error(failed.error); good++; shell.log(t('datasets.batch.recipe.one', { name: d.name }), 'ok'); }
         catch (err) { shell.log(`${d.name}: ${(err && err.message) || err}`, 'error'); }
       }
       done(ctx, t('datasets.batch.recipe.done', { ok: good, n: targets.length }));

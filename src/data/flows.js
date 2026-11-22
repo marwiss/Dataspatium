@@ -70,7 +70,9 @@
           async run(p) {
             const from = await datasetOf(p.from); const to = await datasetOf(p.to);
             const steps = await recipes.steps(from.id);
-            await recipes.replay(to.id, steps);
+            // A step that fails (one the tier hides among them) stops the replay, and the flow says why.
+            const failed = (await recipes.replay(to.id, steps)).find((r) => !r.ok);
+            if (failed) throw new Error(failed.error);
             return { message: t('flows.done.recipe', { n: steps.length, name: to.name }) };
           },
         },
