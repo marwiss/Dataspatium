@@ -42,7 +42,9 @@
         sw.addEventListener('change', () => { if (sw.checked) withoutFiles.delete(d.id); else withoutFiles.add(d.id); });
         const size = h('span', { class: 'dm-help dm-small' });
         const line = h('div', { class: 'dm-bundle-files' }, sw, size);
-        D.require('data/dataset-files').list(d.id).then((files) => {
+        // What the switch leaves behind: for a kind whose pictures the app made itself (a raster's previews) only the originals,
+        // so a raster without originals (a saved orthophoto) has no switch.
+        D.require('data/dataset-files').list(d.id, kinds.of(d).derived ? 'original' : undefined).then((files) => {
           if (!files.length) { line.remove(); return; }
           size.textContent = i18n.formatBytes(files.reduce((n, f) => n + f.size, 0));
         }).catch((err) => D.log('bundle', err));
