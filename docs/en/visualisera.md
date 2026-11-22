@@ -42,7 +42,10 @@ stacking (stacked, percent, overlapping), value labels on bars and points on lin
 conditions on columns. Under **More options** there are the row limit, colour scale (sequential or diverging) and
 **Custom Vega-Lite specification**: the JSON specification can be edited directly for anything the builder does not
 cover; data is inserted from the dataset when the chart is rendered. Data and pictures with an address of their own in
-the specification are read only from `data:` addresses (pictures from `data:image/`); a web address is never fetched.
+the specification are read only from `data:` addresses (pictures from `data:image/`); a web address is never fetched. The tooltip
+shows keys and values as text and a picture only from a `data:image/` address. A link in the chart (`href`) opens in a new tab, without a
+way back to the app, and only to an http(s) or mailto address. Embedding settings in the specification (`usermeta.embedOptions`) are not
+used: the app decides the menus, the tooltip, the number format and the loading itself.
 
 The chart is saved as the builder's state (or the custom specification) together with the dataset's name and short
 name, so it can be recreated on new data with the same columns.

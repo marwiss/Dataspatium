@@ -80,7 +80,8 @@ Planer som ritas i ett planeringsverktyg läses som alla planer av samma slag, v
 Släpp filen i Inhämta, eller hämta den med *Från webbadress* när den finns på webben (till exempel en plan som kommunen publicerar); en fil utan filändelse känns igen på sin innehållstyp. Ett arkivpaket släpps som mapp eller som ZIP-fil: appen läser planen ur mappen `content`
 (GeoPackage-filen i första hand, annars leveransfilen), sparar paketets filer med planen och jämför varje fil med
 kontrollsumman (SHA-256) i `PREMIS.xml`. Inspektören visar under *Arkivpaket* om filerna stämmer, vilka som har ändrats
-eller saknas, och öppnar handlingarna (plankarta och planbeskrivning) i en ny flik. En plats som pekar utanför paketet
+eller saknas, och öppnar handlingarna (plankarta och planbeskrivning) i en ny flik. Bara PDF-filer och bilder (PNG, JPEG) vars filändelse
+och innehåll stämmer öppnas i en flik; andra filer i paketet, till exempel XML, HTML och SVG, laddas ned i stället. En plats som pekar utanför paketet
 kontrolleras inte och läses aldrig. Planens egna handlingar i en vanlig mapp öppnas för sig, som dokument.
 
 ## Fliken Plan i Analysera

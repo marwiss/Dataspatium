@@ -395,6 +395,10 @@ och en klickning markerar objektet och dess rad. Fliken Mängder ger antal, län
 Linjer, polylinjer med bågar, cirklar, bågar, ellipser, splines, punkter, texter, solider, 3D-ytor, block och
 måttsättningars block ritas. Skraffering (HATCH) ritas inte.
 
+Ritningen byggs om ur det som appens DXF-läsare skriver (lager, objekt, linjer, punkter och texter med tal och färger) varje gång
+den visas, så att en ritning i en mottagen datamängd inte kan bära skript, bilder, länkar eller stilar. I Visualisera och i publicerad
+HTML visas ritningen som en bild.
+
 ## Export
 
 Exportera ger originalfilen, egenskaperna och mängderna som CSV (en rad per värde) och ritningen som SVG, utöver de
