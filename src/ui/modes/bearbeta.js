@@ -70,8 +70,9 @@
         else if (ds.updatedAt !== lastUpdated) { lastUpdated = ds.updatedAt; renderMain(ds); }
       }
 
-      /** The table, or the document, gallery or map view. */
+      /** The table, or the document, gallery or map view; a map view the tier now hides gives way to the kind's own view or the table. */
       function renderMain(ds) {
+        if (viewId === 'map' && !tier.shows('view:map')) { viewId = kinds.ownView(ds); showTable = !viewId; }
         const mod = viewId ? KIND_VIEWS[viewId] : null;
         if (showTable || !mod) { drawTable(ds); renderInspector(ds); return; }
         table = null;
@@ -81,8 +82,8 @@
             onTable: () => { showTable = true; const d = current(); if (d) renderMain(d); },
             onActions: async () => { const d = current(); if (d) await dialogs.palette(dialogCtx(d, await services.datasets.columns(d.id))); },
             onChanged: () => updateUndo(),
-            // A collection with places can also be seen on a map, and go back to its own view from there.
-            onMap: () => { viewId = 'map'; const d = current(); if (d) renderMain(d); },
+            // A collection with places can also be seen on a map, and go back to its own view from there, where the tier holds the map.
+            onMap: tier.shows('view:map') ? () => { viewId = 'map'; const d = current(); if (d) renderMain(d); } : null,
             onOwnView: viewId === 'map' && kinds.ownView(ds) ? () => { viewId = kinds.ownView(ds); const d = current(); if (d) renderMain(d); } : null,
           });
           kindViewFor = viewId;
