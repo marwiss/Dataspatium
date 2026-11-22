@@ -45,6 +45,7 @@
       'map.basemap': { tier: 2, rows: ['DS-16', 'DS-37'] },
       'ai.panel': { tier: 2, rows: ['DS-45', 'DS-46', 'DS-48', 'DS-49', 'DS-51', 'DS-53', 'DS-54', 'DS-57'], group: 'ai' },
       'cde.bcf': { tier: 2, rows: ['DS-38', 'DS-39'], server: true },
+      'cde.teams': { tier: 2, rows: ['DS-49'], server: true },
       'cde.geometry': { tier: 2, rows: ['DS-58'], server: true },
       'cde.profile': { tier: 2, rows: ['DS-56'], server: true },
       // Tier 3, Experimentell

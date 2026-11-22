@@ -7168,6 +7168,7 @@
     'tier.feature.map.basemap': 'Bakgrundskartor från tjänster',
     'tier.feature.ai.panel': 'AI-panelen',
     'tier.feature.cde.bcf': 'BCF-ärendena',
+    'tier.feature.cde.teams': 'Dataregiums team',
     'tier.feature.cde.geometry': 'Geometrin från servern',
     'tier.feature.cde.profile': 'Projektprofilen',
     'tier.feature.cde.ifc-graph': 'IFC-grafen',

@@ -7146,6 +7146,7 @@
     'tier.feature.map.basemap': 'Background maps from services',
     'tier.feature.ai.panel': 'The AI panel',
     'tier.feature.cde.bcf': 'The BCF issues',
+    'tier.feature.cde.teams': 'Dataregium\'s teams',
     'tier.feature.cde.geometry': 'The geometry from the server',
     'tier.feature.cde.profile': 'The project profile',
     'tier.feature.cde.ifc-graph': 'The IFC graph',

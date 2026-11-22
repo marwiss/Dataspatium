@@ -10,7 +10,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/manage-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'api/families/opencde', 'api/families/opencde-manage'], (base, basic, overlays, opencde, manage) => {
+  D.define('ui/api/manage-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'api/families/opencde', 'api/families/opencde-manage', 'platform/tier'], (base, basic, overlays, opencde, manage, tier) => {
     const { h, t, replace } = base;
 
     /** @param {{connector: any, log?: Function}} api */
@@ -18,6 +18,8 @@
       const { connector } = api;
       const s = { on: null, ext: null, projects: [], projectId: '', members: [], busy: '', error: '', username: '', role: 'contributor', teams: [], idsDocs: [], team: { name: '', responsible: '', members: '', ids: '' } };
       const el = h('div', { class: 'dm-card dm-stack-sm', 'data-manage-panel': '' });
+      /** Dataregium's teams (DS-49) belong to BIM och GIS, of the app and of the server (platform/tier); members and roles stay in Dokument. */
+      const teamsShown = () => !!(s.ext && s.ext.teamsUrl) && tier.shows('cde.teams', { server: connector.id });
       el.hidden = true;
       const log = (msg, kind) => { if (api.log) api.log(msg, kind || 'ok'); };
       const roleName = (role) => (base.i18n.has('manage.role.' + role) ? t('manage.role.' + role) : role);
@@ -58,7 +60,7 @@
         if (!s.projectId) return;
         s.busy = 'members'; s.error = ''; render();
         try { s.members = (await manage.members(connector, s.ext, s.projectId)).items; } catch (err) { s.members = []; fail(err); }
-        if (s.ext && s.ext.teamsUrl) await loadTeams();
+        if (teamsShown()) await loadTeams();
         s.busy = ''; render();
       }
       async function select(projectId) { s.projectId = projectId; s.members = []; await loadMembers(); }
@@ -159,7 +161,7 @@
           who.addEventListener('input', () => { s.username = who.value; });
           nodes.push(h('div', { class: 'dm-row-wrap' }, who, roleSelect(s.role, { 'data-manage-new-role': '' }, (role) => { s.role = role; }),
             basic.button({ label: t('manage.add'), icon: 'plus', size: 'sm', disabled: !!s.busy, title: t('manage.add.hint'), 'data-manage-add': '', onClick: () => add(s.username, s.role) })));
-          if (s.ext.teamsUrl) nodes.push(...teamNodes());
+          if (teamsShown()) nodes.push(...teamNodes());
         }
         if (s.error) nodes.push(h('p', { class: 'dm-error', 'data-manage-error': '', text: s.error }));
         replace(el, nodes);
