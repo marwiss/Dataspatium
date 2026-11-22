@@ -231,6 +231,53 @@
     return 'ok';
   }, 30000);
 
+  test('dxf: a stored drawing is rebuilt from what the DXF reader writes, so a received one runs and loads nothing in the app, the chart or published HTML', async (assert) => {
+    const meta = await imports.run(fixtures.dxfFile(), { format: 'model' }, null, 'Mottagen ritning');
+    created.push(meta.id);
+    const own = await model.drawing(meta.id);
+    const ownDoc = new DOMParser().parseFromString(own, 'image/svg+xml');
+    assert.deepEqual([ownDoc.querySelectorAll('[data-layer]').length, ownDoc.querySelectorAll('[data-id]').length, ownDoc.querySelector('text').textContent], [5, 7, 'Kök & <hall>'], 'the reader\'s own drawing keeps its layers, objects and text');
+    // A dataset from a workspace, a package or GitHub carries its drawing as it was stored: here with everything that can run,
+    // load or style the page around it.
+    const hostile = own
+      .replace('<g data-layer=', '<g onload="window.__dmDxf=1" style="fill:url(https://img.example.invalid/g.png)" data-layer=')
+      .replace('</svg>', '<script>window.__dmDxf=2</script><image href="https://img.example.invalid/d.png" width="9" height="9"/><style>*{background:url(https://img.example.invalid/s.png)}</style>'
+        + '<foreignObject width="9" height="9"><div xmlns="http://www.w3.org/1999/xhtml"><img src="https://img.example.invalid/f.png"/></div></foreignObject><a href="https://link.example.invalid/"><text x="0" y="0">länk</text></a>'
+        + '<g data-layer="x"><use href="https://img.example.invalid/u.svg#a"/><path d="M0 0L1 1" fill="url(https://img.example.invalid/p.png)" stroke="#123456" filter="url(#f)"/><text x="1" y="1" transform="translate(1) url(x)">t</text></g></svg>');
+    const handle = await datasets.ensureOpen(meta.id);
+    await handle.engine.run("update _files set bytes = ?, size = ? where name = 'ritning.svg' and kind = 'preview'", [encode(hostile), encode(hostile).length]);
+    const BAD = /example\.invalid|__dmDxf|<(?:script|image|style|foreignObject|use|a|img)\b|\son\w+=|style=|filter=|url\(/;
+    const clean = await model.drawing(meta.id);
+    assert.ok(!BAD.test(clean), 'nothing that runs, loads or styles is left: ' + (clean.match(BAD) || [''])[0]);
+    const cleanDoc = new DOMParser().parseFromString(clean, 'image/svg+xml');
+    assert.equal(cleanDoc.querySelector('parsererror'), null, 'well formed');
+    assert.deepEqual([cleanDoc.querySelectorAll('[data-layer]').length, cleanDoc.querySelectorAll('[data-id]').length, cleanDoc.querySelector('text').textContent], [6, 7, 'Kök & <hall>'], 'the drawing itself is kept');
+    const kept = cleanDoc.querySelector('[data-layer="x"] path');
+    assert.deepEqual([kept.getAttribute('d'), kept.getAttribute('fill')], ['M0 0L1 1', null], 'a path keeps its shape and loses what it may not hold');
+    assert.equal(model.cleanDrawing('<html xmlns="http://www.w3.org/1999/xhtml"><body/></html>'), null, 'a document that is not an SVG gives no drawing');
+    // Every use reads the rebuilt drawing: the export, the chart in Visualisera and published HTML, where it is a picture.
+    const chart = charts.create('model', meta, 'Mottagen ritning');
+    chart.model = { datasetId: meta.id, visible: null, filter: { typ: '', vaning: '', lager: '', search: '' }, view: null };
+    assert.ok(!BAD.test(await (await draw.toBlob(chart, 'svg', { width: 400, height: 300 })).text()), 'the exported SVG');
+    const decoded = (html) => html + Array.from(html.matchAll(/data:image\/svg\+xml;base64,([A-Za-z0-9+/=]+)/g)).map((m) => new TextDecoder().decode(Uint8Array.from(atob(m[1]), (c) => c.charCodeAt(0)))).join('');
+    const part = await draw.htmlFor('m', chart, { width: 400, height: 300 });
+    assert.ok(/^<img src="data:image\/svg\+xml;base64,/.test(part), 'published as a picture: ' + part.slice(0, 60));
+    assert.ok(!BAD.test(decoded(part).replace(/^<img [^>]*>/, '')), 'the picture holds nothing that runs or loads');
+    const page = await (await D.require('viz/dashboards').toHtml({ name: 'Ritningar' }, { resolved: [{ chart }] })).text();
+    assert.ok(!/<svg|<script/.test(page) && !BAD.test(decoded(page).replace(/<img [^>]*>|<style>[\s\S]*?<\/style>/g, '')), 'the published dashboard has no SVG or script in the page');
+    const holder = document.createElement('div');
+    document.body.appendChild(holder);
+    const panel = D.require('ui/viz/model-chart-panel').create({ chart, onChange() {}, log() {} });
+    holder.appendChild(panel.el);
+    try {
+      const img = await waitFor(() => panel.el.querySelector('[data-model-drawing]'), 8000, 'the drawing in the chart panel');
+      assert.ok(img.tagName === 'IMG' && img.getAttribute('src').startsWith('blob:'), 'the chart panel shows the drawing as a picture');
+      assert.equal(panel.el.querySelector('.dm-model-preview svg'), null, 'no SVG in the page');
+    } finally { panel.destroy(); holder.remove(); }
+    assert.ok(!globalThis.__dmDxf, 'nothing from the drawing ran');
+    return 'ok';
+  }, 30000);
+
   test('model: export gives the original file and the long tables, and the chart kind draws and exports', async (assert) => {
     const meta = await imports.run(fixtures.ifcFile(), { format: 'model' }, null, 'Exporthus');
     created.push(meta.id);

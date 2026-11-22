@@ -734,14 +734,28 @@
     function svgAround(url, width, height) {
       return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><image width="${width}" height="${height}" xlink:href="${url}"/></svg>`;
     }
-    /** The picture as an inline image for dashboards and published pages (no WebGL or data in the page). */
+    /** A text's UTF-8 bytes as base64, for a data: address. */
+    function base64Of(textValue) {
+      const bytes = new TextEncoder().encode(textValue);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+      return btoa(binary);
+    }
+    /**
+     * The picture as an inline image for dashboards and published pages (no WebGL or data in the page). A DXF drawing is an
+     * image too, from a data:image/svg+xml address, never SVG in the page: a page that others open has no content policy, and
+     * nothing in an image can run or load. A legend's colours are kept only when they are colours.
+     */
     async function htmlFor(_id, chart, opts = {}) {
-      const width = opts.width || 1000; const height = opts.height || 625;
+      const width = Number(opts.width) || 1000; const height = Number(opts.height) || 625;
       const def = chart.model || {};
-      if (model.isDxf(await datasets.get(def.datasetId || chart.datasetId))) return drawingSvg(def.datasetId || chart.datasetId, def, width, height);
+      if (model.isDxf(await datasets.get(def.datasetId || chart.datasetId))) {
+        const svg = await drawingSvg(def.datasetId || chart.datasetId, def, width, height);
+        return `<img src="data:image/svg+xml;base64,${base64Of(svg)}" alt="${escapeHtml(chart.name || '')}" width="${width}" height="${height}" style="max-width:100%;height:auto">`;
+      }
       const url = await pictureOf(chart, width, height, opts);
       const legend = Array.isArray(def.legend) && def.legend.length
-        ? `<p style="font-size:0.85em;margin:0.4em 0 0">${def.legend.map((l) => `<span style="display:inline-block;width:0.8em;height:0.8em;border-radius:2px;background:${escapeHtml(l.color)};vertical-align:middle;margin-right:0.3em"></span>${escapeHtml(l.status || '')} (${Number(l.n) || 0})`).join(' &nbsp; ')}</p>`
+        ? `<p style="font-size:0.85em;margin:0.4em 0 0">${def.legend.map((l) => `<span style="display:inline-block;width:0.8em;height:0.8em;border-radius:2px;background:${escapeHtml(theme.cssColor(l && l.color) || 'transparent')};vertical-align:middle;margin-right:0.3em"></span>${escapeHtml(l.status || '')} (${Number(l.n) || 0})`).join(' &nbsp; ')}</p>`
         : '';
       return `<img src="${url}" alt="" width="${width}" height="${height}" style="max-width:100%;height:auto">${legend}`;
     }

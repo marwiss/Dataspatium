@@ -528,13 +528,19 @@
       holder.appendChild(panel.bodyEl);
       assert.deepEqual(Array.from(holder.querySelectorAll('img')).map((i) => i.getAttribute('src')), [GIF], 'only the data:image/ output is drawn');
       // Saved charts: the gallery card and the published dashboard.
-      const charts = [{ id: 'c-bad', kind: 'r', name: 'Fjärrbild', datasetName: '', thumbnail: REMOTE + '" onerror="alert(1)' }, { id: 'c-good', kind: 'r', name: 'Egen bild', datasetName: '', thumbnail: GIF }];
+      // A data:image/ address with a quote passes imageSource, so only the escaping keeps it inside the src attribute.
+      const QUOTED = GIF + '" onerror="alert(1)';
+      const charts = [{ id: 'c-bad', kind: 'r', name: 'Fjärrbild', datasetName: '', thumbnail: REMOTE + '" onerror="alert(1)' }, { id: 'c-good', kind: 'r', name: 'Egen bild', datasetName: '', thumbnail: GIF }, { id: 'c-quote', kind: 'r', name: 'Citat', datasetName: '', thumbnail: QUOTED }];
       const gallery = D.require('ui/viz/gallery').create({ charts, onOpen() {}, onExport() {}, onDelete() {} });
       holder.appendChild(gallery.el);
-      assert.deepEqual(Array.from(gallery.el.querySelectorAll('img')).map((i) => i.getAttribute('src')), [GIF], 'the gallery draws the data:image/ thumbnail only');
+      assert.deepEqual(Array.from(gallery.el.querySelectorAll('img')).map((i) => i.getAttribute('src')), [GIF, QUOTED], 'the gallery draws the data:image/ thumbnails only, each as one attribute');
       const html = await (await D.require('viz/dashboards').toHtml({ name: 'Bilder' }, { resolved: charts.map((chart) => ({ chart })) })).text();
-      assert.ok(!/example\.invalid|onerror/.test(html), 'no remote address and no attribute from the thumbnail in the page');
+      assert.ok(!/example\.invalid/.test(html), 'no remote address in the page');
       assert.ok(html.includes(`<img src="${GIF}"`), 'the data:image/ thumbnail is published');
+      const page = new DOMParser().parseFromString(html, 'text/html');
+      const published = Array.from(page.querySelectorAll('img'));
+      assert.ok(published.every((i) => i.getAttributeNames().every((n) => n === 'src' || n === 'alt')), 'no attribute from a thumbnail: ' + published.map((i) => i.getAttributeNames().join(',')).join(' | '));
+      assert.deepEqual(published.map((i) => i.getAttribute('src')), [GIF, QUOTED], 'the quoted thumbnail reads back whole from its src');
       return 'ok';
     } finally {
       console.warn = warn;
@@ -564,6 +570,80 @@
       assert.ok(warned.some((w) => w.includes('data.example.invalid/rows.csv')), 'the data was refused: ' + warned.join(' | '));
       return 'ok';
     } finally { console.warn = warn; }
+  });
+
+  test('vega: a chart drawn on screen keeps the app\'s loader, tooltip, options and locales, whatever its spec says', async (assert) => {
+    const locale = D.require('viz/locale');
+    const GIF = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    const SCHEMA = 'https://vega.github.io/schema/vega-lite/v6.json';
+    const warned = [];
+    const warn = console.warn;
+    console.warn = (...args) => { warned.push(args.join(' ')); };
+    const hadTooltip = !!document.getElementById('vg-tooltip-element');
+    const numberBefore = JSON.stringify(locale.numberLocale); const timeBefore = JSON.stringify(locale.timeLocale);
+    const holders = []; const shown = [];
+    const holder = () => { const el = document.createElement('div'); el.style.cssText = 'position:absolute; left:-10000px; top:0; width:400px; height:300px;'; document.body.appendChild(el); holders.push(el); return el; };
+    /** Vega's tooltip handler as a pointer over a mark calls it; returns the tooltip element. */
+    const hover = (view, value) => { view.tooltip()(view._handler, { clientX: 10, clientY: 10 }, { tooltip: value }, value); return document.getElementById('vg-tooltip-element'); };
+    const foreignPictures = (el) => Array.from(el.querySelectorAll('img')).filter((i) => !/^data:image\//i.test(i.getAttribute('src') || ''));
+    try {
+      // As an imported viz file can carry it: embed options that would bring the actions menu back, post the rows to an editor,
+      // change the tooltip, the loader and the locale, and marks with pictures, data and links on web addresses.
+      const spec = {
+        $schema: SCHEMA, width: 120, height: 60,
+        usermeta: { note: 'kept', embedOptions: { actions: true, editorUrl: 'https://editor.example.invalid/', sourceFooter: '<img src="https://img.example.invalid/footer.png">', tooltip: true, defaultStyle: false, loader: { options: { target: '_self' } }, formatLocale: { decimal: '#', thousands: '#', grouping: [3], currency: ['', ''] } } },
+        layer: [
+          { data: { values: [{ x: 1, u: 'https://img.example.invalid/mark.png', link: 'https://link.example.invalid/?d=1' }, { x: 2, u: GIF, link: 'https://link.example.invalid/?d=2' }] }, mark: { type: 'image', width: 10, height: 10 }, encoding: { x: { field: 'x', type: 'quantitative' }, url: { field: 'u', type: 'nominal' }, href: { field: 'link', type: 'nominal' }, tooltip: [{ field: 'u', title: 'image' }, { field: 'x' }] } },
+          { data: { url: 'https://data.example.invalid/rows.csv' }, mark: 'point', encoding: { x: { field: 'x', type: 'quantitative' } } },
+        ],
+      };
+      const box = holder();
+      const emb = await vegaRender.embed(box, spec, { renderer: 'svg', tooltip: true });
+      shown.push(emb);
+      // The loader: the same one the headless export uses, so the screen fetches nothing either.
+      const probe = await vegaRender.headless({ $schema: SCHEMA, width: 10, height: 10, data: { values: [{ x: 1 }] }, mark: 'point', encoding: { x: { field: 'x', type: 'quantitative' } } });
+      assert.ok(emb.view.loader() === probe.loader(), 'the chart on screen has the app\'s loader');
+      probe.finalize();
+      // The view's own picture of itself goes through its loader too (and waits for its pictures).
+      assert.ok(!/(?:href|src)="[^"]*(?:img|data)\.example\.invalid/.test(await emb.view.toSVG()), 'no remote picture in the view\'s SVG');
+      await waitFor(() => warned.some((w) => w.includes('img.example.invalid/mark.png')) && warned.some((w) => w.includes('data.example.invalid/rows.csv')), 5000, 'the refused picture and data');
+      assert.ok(!Array.from(box.querySelectorAll('*')).some((n) => /(?:img|data|editor)\.example\.invalid/.test((n.getAttribute('href') || '') + (n.getAttribute('xlink:href') || '') + (n.getAttribute('src') || ''))), 'no remote picture or data in the chart');
+      // The embed options of the spec are gone; the rest of its usermeta stays.
+      assert.equal(box.querySelector('.vega-actions, details'), null, 'no actions menu');
+      assert.equal(emb.spec.usermeta.note, 'kept');
+      assert.equal(JSON.stringify(locale.numberLocale), numberBefore, 'the app\'s number locale unchanged');
+      assert.equal(JSON.stringify(locale.timeLocale), timeBefore, 'the app\'s time locale unchanged');
+      assert.ok(!emb.view.loader().options.target && Object.isFrozen(emb.view.loader()), 'the loader unchanged and frozen');
+      // The tooltip: text, and a picture only from a data:image/ address.
+      let tip = hover(emb.view, { image: 'https://img.example.invalid/tip.png', title: '<b>Rubrik</b>', namn: '<i>x</i>' });
+      assert.ok(tip && foreignPictures(tip).length === 0, 'no picture from a web address: ' + (tip && tip.innerHTML));
+      assert.ok(tip.textContent.includes('https://img.example.invalid/tip.png') && tip.textContent.includes('<b>Rubrik</b>') && tip.textContent.includes('<i>x</i>') && !tip.querySelector('b, i'), 'the address, the title and the values as text');
+      tip = hover(emb.view, { image: GIF, namn: 'a' });
+      assert.equal(tip.querySelector('img') && tip.querySelector('img').getAttribute('src'), GIF, 'a data:image/ picture is shown');
+      tip = hover(emb.view, { image: GIF + '" onerror="window.__dmVegaTip=1', namn: 'a' });
+      assert.ok(Array.from(tip.querySelectorAll('img')).every((i) => i.getAttributeNames().every((n) => n === 'src')), 'a quote cannot add an attribute: ' + tip.innerHTML);
+      hover(emb.view, null);
+      // A link opens in a tab of its own without the app as its opener, and only to a web or mail address.
+      const link = await emb.view.loader().sanitize('https://link.example.invalid/?d=1', { context: 'href' });
+      assert.deepEqual([link.href, link.target, link.rel], ['https://link.example.invalid/?d=1', '_blank', 'noopener noreferrer']);
+      await assert.throws(() => emb.view.loader().sanitize('javascript:alert(1)', { context: 'href' }));
+      await assert.throws(() => emb.view.loader().sanitize('file:///C:/x.html', { context: 'href' }));
+      // A chart after it keeps the same rules.
+      const box2 = holder();
+      const later = await vegaRender.embed(box2, { $schema: SCHEMA, width: 60, height: 40, data: { values: [{ x: 1 }] }, mark: 'point', encoding: { x: { field: 'x', type: 'quantitative' } } }, { renderer: 'svg', tooltip: true });
+      shown.push(later);
+      assert.equal(box2.querySelector('.vega-actions, details'), null, 'no actions menu on the next chart');
+      tip = hover(later.view, { image: 'https://img.example.invalid/later.png' });
+      assert.equal(foreignPictures(tip).length, 0, 'the next chart\'s tooltip has no picture from a web address');
+      hover(later.view, null);
+      assert.equal((await later.view.loader().sanitize('https://link.example.invalid/', { context: 'href' })).target, '_blank');
+      return 'ok';
+    } finally {
+      console.warn = warn;
+      for (const s of shown) s.finalize();
+      for (const el of holders) el.remove();
+      if (!hadTooltip) { const el = document.getElementById('vg-tooltip-element'); if (el) el.remove(); }
+    }
   });
 
   test('viz: cleanup', async () => {

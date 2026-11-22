@@ -44,13 +44,15 @@ Bildsamlingar med position har knappen *Visa på kartan*. Klicka på en plats s�
 - **Bakgrundskarta**: ingen (standard), OpenStreetMap, ett [ortofoto](#ortofoton), eller en egen kartserver med en adressmall som
   `https://…/{z}/{x}/{y}.png` och källtext, eller en **WMS-tjänst** (adress, lager, bildformat och genomskinlighet; *Läs lager* hämtar tjänstens
   lagerlista), eller **kartrutor** från en tjänst med OGC API – Tiles (se nedan). Bakgrundskartor hämtas från nätet och frågar efter samtycke första
-  gången (ändamålet *Bakgrundskartor* under Hantera → Internetåtkomst).
+  gången (ändamålet *Bakgrundskartor* under Hantera → Internetåtkomst). Adressmallen måste vara en http(s)-adress, och källtexten för
+  en egen kartserver eller en WMS-tjänst visas i kartans hörn som ren text.
 - **Lager**: lägg till fler datamängder eller de medföljande gränserna (län och kommuner i Sverige, Danmark, Norge och
   Finland), ett **WMS-lager** (bilder från en karttjänst som ritas under objekten med valbar genomskinlighet; det har
   ingen teckenförklaring och följer inte med i export till SVG, PNG och PDF) eller **kartrutor** från OGC API – Tiles,
   som ritas på samma sätt. Varje lager har namn, synlighet, ordning, färg, fyllning, linjebredd och punktstorlek, geometri- eller
   koordinatkolumner, färg efter kolumn (kategorier med appens palett eller klasser med en sekventiell skala, antal
-  klasser), etikett (visas när pekaren vilar på objektet) och högsta antal objekt.
+  klasser), etikett (visas som ren text när pekaren vilar på objektet) och högsta antal objekt. En kartvy som kommer utifrån (en
+  importerad diagramfil, ett paket, en dashboard) behåller bara färger som är färger och tal som är tal; annat ritas med appens färger.
 - **Vy**: *Spara aktuell vy* låser kartans mitt och zoom; annars anpassas kartan till lagren. Teckenförklaring och
   höjd kan ändras.
 

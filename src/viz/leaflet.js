@@ -230,20 +230,35 @@
       return '#' + [ch(0), ch(1), ch(2)].map((v) => v.toString(16).padStart(2, '0')).join('');
     };
     const fmt = (v) => (typeof v === 'number' ? D.require('ui/i18n').formatNumber(v, { maximumFractionDigits: 2 }) : String(v));
+    /** A number from a definition, held within lo and hi, or the fallback when it is not a number. */
+    const numberIn = (v, lo, hi, fallback) => {
+      const n = typeof v === 'number' ? v : (typeof v === 'string' && v.trim() !== '' ? Number(v) : NaN);
+      return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : fallback;
+    };
+    /** A map's height in pixels from a definition or an option: a number, never text that reaches a style attribute. */
+    const heightOf = (v) => Math.round(numberIn(v, 50, 4000, 480));
+    /** The colour of a layer's swatch in the layer list: its fill, else its line, when that is a colour; '' otherwise. */
+    const swatchColor = (layer) => { const st = (layer && layer.style) || {}; return theme.cssColor(st.fillColor) || theme.cssColor(st.color) || ''; };
     /**
-     * Style function and legend for a layer over its features.
+     * Style function and legend for a layer over its features. Colours from the definition are kept only when they are colours
+     * (theme.cssColor), and weights, opacities and radii only as numbers: an imported chart could otherwise put a url() into the
+     * page's CSS, an element into the exported SVG or markup into published HTML.
      * @returns {{styleOf: (props: any) => any, legend: Array<{color: string, label: string}>}}
      */
     function styling(layer, features) {
       const tk = theme.tokens();
-      const st = Object.assign({ color: tk.palette[0], weight: 1.5, fillOpacity: 0.45, opacity: 0.9, radius: 6 }, layer.style || {});
+      const raw = layer.style && typeof layer.style === 'object' ? layer.style : {};
+      const st = {
+        color: theme.cssColor(raw.color) || tk.palette[0], fillColor: theme.cssColor(raw.fillColor),
+        weight: numberIn(raw.weight, 0, 50, 1.5), opacity: numberIn(raw.opacity, 0, 1, 0.9), fillOpacity: numberIn(raw.fillOpacity, 0, 1, 0.45), radius: numberIn(raw.radius, 0, 100, 6),
+      };
       const base = (fill) => ({ color: st.color, fillColor: fill || st.fillColor || st.color, weight: st.weight, opacity: st.opacity, fillOpacity: st.fillOpacity, radius: st.radius });
       const by = layer.colorBy || {};
       if (!by.column || by.mode === 'none' || !by.mode) return { styleOf: () => base(null), legend: [{ color: st.fillColor || st.color, label: layer.name || '' }] };
       const values = features.map((f) => (f.properties || {})[by.column]);
       if (by.mode === 'graduated') {
         const nums = values.filter((v) => typeof v === 'number' && Number.isFinite(v)).sort((a, b) => a - b);
-        let ranges = Array.isArray(by.ranges) && by.ranges.length ? by.ranges.map((r) => Object.assign({}, r)) : null;
+        let ranges = Array.isArray(by.ranges) && by.ranges.length ? by.ranges.map((r) => Object.assign({}, r, { color: theme.cssColor(r && r.color) })) : null;
         if (!ranges) {
           const classes = Math.max(2, Math.min(9, Number(by.classes) || 5));
           ranges = [];
@@ -323,10 +338,14 @@
     }
 
     // ---- tiles ---------------------------------------------------------------------------------------------
-    /** Tile source of a definition, or null: OSM, the user's own XYZ template, a WMS or OGC API – Tiles (consent "basemaps" in every case). */
+    /**
+     * Tile source of a definition, or null: OSM, the user's own XYZ template, a WMS or OGC API – Tiles (consent "basemaps" in every
+     * case). A template must be an http(s) address with {x} and {y}; its attribution, like every attribution from a definition,
+     * is escaped, because Leaflet shows attributions as HTML.
+     */
     function tileSource(def) {
       if (!def || def.basemap === 'osm') return { url: OSM.url, attribution: D.t(OSM.attributionKey), maxZoom: OSM.maxZoom };
-      if (def.basemap === 'custom' && def.custom && /^https?:\/\/.+\{x\}.*\{y\}|\{y\}.*\{x\}/i.test(def.custom.url || '')) return { url: def.custom.url, attribution: def.custom.attribution || '', maxZoom: 19 };
+      if (def.basemap === 'custom' && def.custom && /^https?:\/\/[^/?#\s]+\S*(?:\{x\}\S*\{y\}|\{y\}\S*\{x\})/i.test(def.custom.url || '')) return { url: def.custom.url, attribution: escAttr(def.custom.attribution), maxZoom: 19 };
       if (def.basemap === 'wms') return wmsSource(def.wms);
       if (def.basemap === 'tiles') return tilesSource(def.tiles);
       return null;
@@ -358,11 +377,12 @@
     }
     /**
      * Tile parameters of a WMS definition {url, layers, format, transparent, version, attribution}, or null when the
-     * address or the layer list is missing. The result's `wms` holds the GetMap parameters for L.tileLayer.wms.
+     * address or the layer list is missing. The result's `wms` holds the GetMap parameters for L.tileLayer.wms; the attribution
+     * is escaped (Leaflet shows it as HTML).
      */
     function wmsSource(w) {
       if (!w || !/^(https?|dataspatium-asset):\/\//i.test(String(w.url || '')) || !String(w.layers || '').trim()) return null;
-      return { url: wmsUrl(w.url), attribution: w.attribution || '', maxZoom: 19, wms: { layers: String(w.layers).trim(), format: w.format || 'image/png', transparent: !!w.transparent, version: w.version || '1.3.0' } };
+      return { url: wmsUrl(w.url), attribution: escAttr(w.attribution), maxZoom: 19, wms: { layers: String(w.layers).trim(), format: w.format || 'image/png', transparent: !!w.transparent, version: w.version || '1.3.0' } };
     }
     const hostOf = (url) => { try { return new URL(String(url).replace(/\{[sxyzr-]+\}/g, '0')).host; } catch (_e) { return String(url); } };
     /** Leaflet's tile layer, or its WMS layer when the options carry WMS parameters (the shape the test factories get). */
@@ -538,8 +558,8 @@
       const grid = def.crs ? gridCrs(def.crs) : null;
       const prepared = await prepare(chart, options);
       el.classList.add('dm-map');
-      if (options.height) el.style.height = options.height + 'px';
-      else if (def.height && !el.style.height) el.style.height = def.height + 'px';
+      if (options.height) el.style.height = heightOf(options.height) + 'px';
+      else if (def.height && !el.style.height) el.style.height = heightOf(def.height) + 'px';
       const interactive = options.interactive !== false;
       const map = L.map(el, Object.assign({ preferCanvas: true, zoomControl: interactive, dragging: interactive, scrollWheelZoom: interactive, doubleClickZoom: interactive, boxZoom: interactive, keyboard: interactive, touchZoom: interactive, attributionControl: true },
         grid ? { crs: grid, minZoom: 0, maxZoom: GRID_RESOLUTIONS.length - 1 } : {}));
@@ -566,7 +586,9 @@
           pointToLayer: (f, latlng) => { const s = item.styleOf(f.properties || {}); return L.circleMarker(latlng, { radius: s.radius, color: s.color, fillColor: s.fillColor, weight: s.weight, opacity: s.opacity, fillOpacity: Math.max(0.6, s.fillOpacity) }); },
           onEachFeature: (f, lyr) => {
             const label = item.layer.label ? (f.properties || {})[item.layer.label] : null;
-            if (label !== null && label !== undefined && label !== '') lyr.bindTooltip(String(label), { sticky: true, direction: 'top' });
+            // Leaflet writes a string tooltip as HTML; the label is the dataset's value, so it goes in as a text node, made when
+            // the tooltip opens.
+            if (label !== null && label !== undefined && label !== '') lyr.bindTooltip(() => document.createTextNode(String(label)), { sticky: true, direction: 'top' });
             if (options.onSelect) lyr.on('click', () => options.onSelect({ layer: item.layer, properties: f.properties || {}, geometry: f.geometry }));
           },
         });
@@ -672,7 +694,7 @@
       const x = width - boxW - 12; const y = 12;
       const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
       return `<g font-family="${esc(tk.font)}" font-size="12" fill="${tk.text}"><rect x="${x}" y="${y}" width="${boxW}" height="${boxH}" rx="4" fill="${tk.background}" fill-opacity="0.92" stroke="${tk.border}"/>`
-        + entries.map((e, i) => `<rect x="${x + 8}" y="${y + 8 + i * lineH}" width="12" height="12" rx="2" fill="${e.color}" stroke="${tk.border}"/><text x="${x + 26}" y="${y + 18 + i * lineH}">${esc(e.label.length > 34 ? e.label.slice(0, 33) + '…' : e.label)}</text>`).join('')
+        + entries.map((e, i) => `<rect x="${x + 8}" y="${y + 8 + i * lineH}" width="12" height="12" rx="2" fill="${escAttr(e.color)}" stroke="${tk.border}"/><text x="${x + 26}" y="${y + 18 + i * lineH}">${esc(e.label.length > 34 ? e.label.slice(0, 33) + '…' : e.label)}</text>`).join('')
         + '</g>';
     }
     /** The layers as an SVG document (no tiles). */
@@ -685,9 +707,12 @@
         for (const f of item.features) {
           const s = item.styleOf(f.properties || {});
           const sh = shapes(f.geometry, tr);
-          for (const poly of sh.rings) parts.push(`<path d="${poly.map((ring) => 'M' + ring.map((p) => num(p[0]) + ' ' + num(p[1])).join('L') + 'Z').join('')}" fill="${s.fillColor}" fill-opacity="${s.fillOpacity}" stroke="${s.color}" stroke-opacity="${s.opacity}" stroke-width="${s.weight}" fill-rule="evenodd"/>`);
-          for (const line of sh.lines) parts.push(`<path d="M${line.map((p) => num(p[0]) + ' ' + num(p[1])).join('L')}" fill="none" stroke="${s.color}" stroke-opacity="${s.opacity}" stroke-width="${s.weight}"/>`);
-          for (const p of sh.points) parts.push(`<circle cx="${num(p[0])}" cy="${num(p[1])}" r="${s.radius}" fill="${s.fillColor}" fill-opacity="${Math.max(0.6, s.fillOpacity)}" stroke="${s.color}" stroke-width="${s.weight}"/>`);
+          // styling() gives colours and numbers only; the attributes are escaped as well, so that nothing else can enter.
+          const fill = escAttr(s.fillColor); const stroke = escAttr(s.color);
+          const a = { fo: Number(s.fillOpacity), o: Number(s.opacity), w: Number(s.weight), r: Number(s.radius) };
+          for (const poly of sh.rings) parts.push(`<path d="${poly.map((ring) => 'M' + ring.map((p) => num(p[0]) + ' ' + num(p[1])).join('L') + 'Z').join('')}" fill="${fill}" fill-opacity="${a.fo}" stroke="${stroke}" stroke-opacity="${a.o}" stroke-width="${a.w}" fill-rule="evenodd"/>`);
+          for (const line of sh.lines) parts.push(`<path d="M${line.map((p) => num(p[0]) + ' ' + num(p[1])).join('L')}" fill="none" stroke="${stroke}" stroke-opacity="${a.o}" stroke-width="${a.w}"/>`);
+          for (const p of sh.points) parts.push(`<circle cx="${num(p[0])}" cy="${num(p[1])}" r="${a.r}" fill="${fill}" fill-opacity="${Math.max(0.6, a.fo)}" stroke="${stroke}" stroke-width="${a.w}"/>`);
         }
       }
       parts.push(legendSvg(prepared, def, width, tk), '</svg>');
@@ -771,11 +796,12 @@
       const src = services && def.basemap && def.basemap !== 'none' ? (orthophotos.isPreset(def.basemap) ? await publishedPreset(def.basemap) : tileSource(def)) : null;
       const tileJs = (s, extra) => (s.wms ? `L.tileLayer.wms(${json(s.url)},${json(tileOptions(s, extra))}).addTo(m);` : `L.tileLayer(${json(s.url)},${json(tileOptions(s, extra))}).addTo(m);`);
       const overlays = services ? (def.layers || []).filter((l) => imagery(l) && l.visible !== false).map((l) => ({ src: overlaySource(l), opacity: l.style && l.style.opacity !== undefined ? l.style.opacity : 0.8 })).filter((o) => o.src) : [];
-      const legend = def.legend === false ? '' : `<div class="dm-map-legend">${prepared.layers.flatMap((l) => (l.legend.length > 1 ? l.legend : l.legend.map((e) => Object.assign({}, e, { label: e.label || l.layer.name })))).slice(0, 24).map((e) => `<div><span style="background:${e.color}"></span>${String(e.label).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>`).join('')}</div>`;
+      const legend = def.legend === false ? '' : `<div class="dm-map-legend">${prepared.layers.flatMap((l) => (l.legend.length > 1 ? l.legend : l.legend.map((e) => Object.assign({}, e, { label: e.label || l.layer.name })))).slice(0, 24).map((e) => `<div><span style="background:${escAttr(e.color)}"></span>${String(e.label).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>`).join('')}</div>`;
       const view = def.view && def.view.center && def.view.zoom ? `m.setView(${json(def.view.center)}, ${json(def.view.zoom)});` : `if (b) m.fitBounds(b, {padding: [16, 16], maxZoom: 14}); else m.setView(${json(DEFAULT_VIEW.center)}, ${DEFAULT_VIEW.zoom});`;
-      return `<div class="dm-map-wrap"><div id="${id}" class="dm-map" style="height:${options.height || def.height || 480}px"></div>${legend}</div>`
+      // The label is a dataset's value: the page gives it to Leaflet as a text node, never as a string Leaflet writes as HTML.
+      return `<div class="dm-map-wrap"><div id="${escAttr(id)}" class="dm-map" style="height:${heightOf(options.height || def.height)}px"></div>${legend}</div>`
         + `<script>(function(){var m=L.map(${json(id)},{preferCanvas:true});${src ? tileJs(src) : ''}${overlays.map((o) => tileJs(o.src, { opacity: o.opacity })).join('')}`
-        + `var data=${json(data)};var b=null;data.forEach(function(fc){var g=L.geoJSON(fc,{style:function(f){return f.properties.__style},pointToLayer:function(f,ll){return L.circleMarker(ll,f.properties.__style)},onEachFeature:function(f,l){if(f.properties.__label)l.bindTooltip(f.properties.__label,{sticky:true})}}).addTo(m);var bb=g.getBounds();if(bb.isValid())b=b?b.extend(bb):bb});${view}})();</script>`;
+        + `var data=${json(data)};var b=null;data.forEach(function(fc){var g=L.geoJSON(fc,{style:function(f){return f.properties.__style},pointToLayer:function(f,ll){return L.circleMarker(ll,f.properties.__style)},onEachFeature:function(f,l){if(f.properties.__label)l.bindTooltip(function(){return document.createTextNode(f.properties.__label)},{sticky:true})}}).addTo(m);var bb=g.getBounds();if(bb.isValid())b=b?b.extend(bb):bb});${view}})();</script>`;
     }
     /**
      * The tile source of an orthophoto in published HTML (Web Mercator), or null for one that needs a key: a key is the
@@ -829,6 +855,6 @@
       return nums.some((c) => /^(lon|long|lng|longitude|longitud|lon_wgs84|longitude_wgs84)$/i.test(c.name)) && nums.some((c) => /^(lat|latitude|latitud|lat_wgs84|latitude_wgs84)$/i.test(c.name));
     }
 
-    return { BASEMAPS, OSM, VENDOR, MAX_ROWS, GRID_RESOLUTIONS, available, ensure, ensureProj, gridCrs, source, geometryColumn, coordinateColumns, mappable, mapDefault, drawable, drawableByValues, layerFor, boundaryLayer, wmsLayer, wmsSource, wmsLayers, tilesLayer, tilesSource, rasterLayer, rasterAttribution, defaultMap, styling, featuresOf, prepare, tileSource, render, toBlob, thumbnail, drawSvg, tableSvg, htmlFor, htmlCss, project };
+    return { BASEMAPS, OSM, VENDOR, MAX_ROWS, GRID_RESOLUTIONS, available, ensure, ensureProj, gridCrs, source, geometryColumn, coordinateColumns, mappable, mapDefault, drawable, drawableByValues, layerFor, boundaryLayer, wmsLayer, wmsSource, wmsLayers, tilesLayer, tilesSource, rasterLayer, rasterAttribution, defaultMap, styling, swatchColor, featuresOf, prepare, tileSource, render, toBlob, thumbnail, drawSvg, tableSvg, htmlFor, htmlCss, project };
   });
 })();

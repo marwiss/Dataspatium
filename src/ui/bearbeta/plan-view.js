@@ -408,13 +408,22 @@
         const bad = (a.andrade || []).length + (a.saknas || []).length;
         const line = (key, list) => (list && list.length ? h('p', { class: 'dm-small', text: t(key, { files: list.join(', ') }) }) : null);
         const docs = h('ul', { class: 'dm-plan-provisions', 'data-plan-archive-docs': '' });
-        D.require('data/dataset-files').list(ds.id, 'original').then((files) => {
-          for (const f of files) {
+        const dsFiles = D.require('data/dataset-files');
+        dsFiles.list(ds.id, 'original').then((list) => {
+          for (const f of list) {
             if (!/^content\//i.test(f.name) || f.name === a.planfil || /\.(gpkg|json|geojson)$/i.test(f.name)) continue;
-            docs.appendChild(h('li', null, h('span', { class: 'dm-truncate', text: f.name.replace(/^content\//i, '') + ' ' }),
-              ui.button({ label: t('plan.archive.open'), icon: 'external-link', size: 'sm', title: t('plan.archive.open.hint'), 'data-plan-archive-open': f.name, onClick: async () => {
-                const u = await D.require('data/dataset-files').url(ds.id, f.name);
-                if (u) window.open(u, '_blank', 'noopener');
+            const shown = f.name.replace(/^content\//i, '');
+            // Only a PDF or a picture opens in a tab (with a type chosen here, never the stored one); every other file is downloaded.
+            const opens = !!dsFiles.tabType(f.name);
+            docs.appendChild(h('li', null, h('span', { class: 'dm-truncate', text: shown + ' ' }),
+              ui.button({ label: t(opens ? 'plan.archive.open' : 'common.download'), icon: opens ? 'external-link' : 'download', size: 'sm', title: t(opens ? 'plan.archive.open.hint' : 'plan.archive.download.hint'), 'data-plan-archive-open': f.name, onClick: async () => {
+                const file = await dsFiles.read(ds.id, f.name);
+                if (!file) return;
+                const type = dsFiles.tabType(f.name, file.bytes);
+                if (!type) { files.download(new Blob([file.bytes], { type: 'application/octet-stream' }), shown.split('/').pop() || shown); return; }
+                const u = URL.createObjectURL(new Blob([file.bytes], { type }));
+                window.open(u, '_blank', 'noopener');
+                setTimeout(() => URL.revokeObjectURL(u), 60000);
               } })));
           }
         }).catch(() => {});

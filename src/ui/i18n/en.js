@@ -5075,6 +5075,7 @@
     'plan.archive.checked': 'Checked {date} from {name}',
     'plan.archive.open': 'Open',
     'plan.archive.open.hint': 'Opens the document in a new tab',
+    'plan.archive.download.hint': 'Downloads the file; only PDF files and pictures open in a new tab',
     'plan.archive.err.premis': 'PREMIS.xml in the archive package is missing or cannot be read.',
     'plan.archive.err.noplan': 'The archive package has no plan in the folder content: neither a GeoPackage nor a delivery file.',
     'plan.format.detaljplan-gpkg': 'Detailed development plan in GeoPackage',

@@ -5097,6 +5097,7 @@
     'plan.archive.checked': 'Kontrollerat {date} ur {name}',
     'plan.archive.open': 'Öppna',
     'plan.archive.open.hint': 'Öppnar handlingen i en ny flik',
+    'plan.archive.download.hint': 'Laddar ned filen; bara PDF-filer och bilder öppnas i en ny flik',
     'plan.archive.err.premis': 'PREMIS.xml i arkivpaketet saknas eller går inte att läsa.',
     'plan.archive.err.noplan': 'Arkivpaketet har ingen plan i mappen content: varken en GeoPackage-fil eller en leveransfil.',
     'plan.format.detaljplan-gpkg': 'Detaljplan i GeoPackage',

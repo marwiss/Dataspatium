@@ -44,13 +44,16 @@ Picture collections with positions have the button *Show on the map*. Click a pl
 - **Background map**: none (default), OpenStreetMap, an [orthophoto](#orthophotos), or your own map server with an address template such as
   `https://…/{z}/{x}/{y}.png` and an attribution, or a **WMS service** (address, layers, image format and transparency; *Read layers* fetches the
   service's layer list), or **map tiles** from an OGC API – Tiles service (see below). Background maps are fetched from the net and ask for consent the
-  first time (the purpose *Background maps* under Manage → Internet access).
+  first time (the purpose *Background maps* under Manage → Internet access). The address template must be an http(s) address, and the
+  attribution of your own map server or a WMS service is shown in the map's corner as plain text.
 - **Layers**: add more datasets or the bundled boundaries (counties and municipalities of Sweden, Denmark, Norway and
   Finland), a **WMS layer** (images from a map service drawn under the features with a chosen opacity; it has no
   legend entry and is left out of export to SVG, PNG and PDF) or **map tiles** from OGC API – Tiles, drawn the same
   way. Every layer has a name, visibility, order, colour, fill, line width and point size, geometry or coordinate
   columns, colour by column (categories with the app's palette or classes with a sequential scale, number of classes),
-  a label (shown when the pointer rests on a feature) and a maximum number of features.
+  a label (shown as plain text when the pointer rests on a feature) and a maximum number of features. A map view that comes from
+  elsewhere (an imported chart file, a package, a dashboard) keeps only colours that are colours and numbers that are numbers; anything
+  else is drawn in the app's colours.
 - **View**: *Save current view* locks the map's centre and zoom; otherwise the map fits the layers. The legend and the
   height can be changed.
 

@@ -103,6 +103,7 @@
     'map.add.tiles.hint': 'Adds map tiles from an OGC API – Tiles service as a layer under the features',
     'map.layer.tiles.note': 'Map tiles are drawn under the features in the web map, are not shown in the legend and are left out of exports to SVG, PNG and PDF.',
     'review.part.attribution': 'The raster\'s attribution holds personal data: {names}',
+    'plan.archive.download.hint': 'Downloads the file; only PDF files and pictures open in a new tab',
     'tier.title': 'Tier',
     'tier.hint': 'The tier decides which functions the app shows, and each tier builds on the one below. A lower tier hides functions but keeps every dataset; a higher one shows them again.',
     'tier.number': 'Tier {n}',

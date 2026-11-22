@@ -30,6 +30,23 @@
     }
     /** Interpolator over a three-stop diverging palette. */
     function diverging(neg, mid, pos) { return (t) => (t < 0.5 ? interpolateHex(neg, mid, t * 2) : interpolateHex(mid, pos, (t - 0.5) * 2)); }
+    const COLOUR_NUMBER = '[-+]?(?:\\d+\\.?\\d*|\\.\\d+)(?:e[-+]?\\d+)?';
+    const COLOUR_FUNCTION = new RegExp(`^(?:rgba?|hsla?)\\(\\s*${COLOUR_NUMBER}(?:%|deg|rad|grad|turn)?(?:\\s*[,/]?\\s*${COLOUR_NUMBER}%?){2,3}\\s*\\)$`, 'i');
+    /**
+     * A colour that a chart definition names (a map layer's style, a class, a legend), kept only when it is a colour and
+     * nothing else: #rgb, #rgba, #rrggbb or #rrggbbaa, rgb(), rgba(), hsl() or hsla() of numbers, or a colour's name. Where the
+     * page has CSS.supports it must also accept the value as a colour. Anything else (a url(), more declarations, markup) gives
+     * null, so the caller draws its own colour: the value goes into CSS, SVG attributes and published HTML.
+     * @param {any} value @returns {string|null}
+     */
+    function cssColor(value) {
+      if (typeof value !== 'string') return null;
+      const v = value.trim().toLowerCase();
+      if (!v || v.length > 64) return null;
+      if (!/^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/.test(v) && !COLOUR_FUNCTION.test(v) && !/^[a-z]{3,24}$/.test(v)) return null;
+      const css = /** @type {any} */ (globalThis).CSS;
+      return !css || typeof css.supports !== 'function' || css.supports('color', v) ? v : null;
+    }
 
     /** Current token values relevant to charts. */
     function tokens() {
@@ -99,6 +116,6 @@
       return Object.assign({}, tk, { label: 11, small: 10, title: 16, subtitle: 12, strokeWidth: 2, interpolateSeq: (t) => interpolateHex(tk.sequential[0], tk.sequential[1], t), interpolateDiv: diverging(tk.diverging[0], tk.diverging[1], tk.diverging[2]) });
     }
 
-    return { tokens, vegaConfig, d3Style, interpolateHex, diverging, FALLBACK_PALETTE, locale };
+    return { tokens, vegaConfig, d3Style, interpolateHex, diverging, cssColor, FALLBACK_PALETTE, locale };
   });
 })();

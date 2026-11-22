@@ -409,6 +409,10 @@ in the inspector, and a click selects the object and its row. The Quantities tab
 Lines, polylines with arcs, circles, arcs, ellipses, splines, points, texts, solids, 3D faces, blocks and the blocks of
 dimensions are drawn. Hatching (HATCH) is not drawn.
 
+The drawing is rebuilt from what the app's DXF reader writes (layers, objects, lines, points and texts with numbers and colours) each
+time it is shown, so that a drawing in a received dataset cannot carry scripts, pictures, links or styles. In Visualise and in published
+HTML the drawing is shown as a picture.
+
 ## Export
 
 Export gives the original file, the properties and quantities as CSV (one row per value) and the drawing as SVG, in

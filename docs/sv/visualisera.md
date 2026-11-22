@@ -42,7 +42,10 @@ och axelrubrik. Övriga inställningar: rubrik och underrubrik, talformat, höjd
 med villkor på kolumner. Under **Fler alternativ** finns radgräns, färgskala (sekventiell eller divergerande)
 och **Egen Vega-Lite-specifikation**: JSON-specifikationen kan redigeras direkt för allt som byggaren inte
 täcker; data läggs in från datamängden när diagrammet renderas. Data och bilder med en egen adress i specifikationen
-läses bara från `data:`-adresser (bilder från `data:image/`); en webbadress hämtas aldrig.
+läses bara från `data:`-adresser (bilder från `data:image/`); en webbadress hämtas aldrig. Det som visas när du pekar på en
+markering är text, och en bild där visas bara från en `data:image/`-adress. En länk i diagrammet (`href`) öppnas i en ny flik, utan koppling tillbaka till appen,
+och bara till en http(s)- eller mailto-adress. Inställningar för inbäddningen i specifikationen (`usermeta.embedOptions`) används inte:
+appen bestämmer själv över menyer, det som visas när du pekar, talformat och laddning.
 
 Diagrammet sparas som byggarens tillstånd (eller den egna specifikationen) tillsammans med datamängdens namn, så
 det kan återskapas på nya data med samma kolumner.

@@ -82,6 +82,26 @@
       return u;
     }
 
+    /** The files that may open in a tab of their own: the name's ending, the type the tab gets and the file's first bytes. */
+    const TAB_TYPES = [
+      { ending: /\.pdf$/i, type: 'application/pdf', magic: [0x25, 0x50, 0x44, 0x46, 0x2d] },
+      { ending: /\.png$/i, type: 'image/png', magic: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] },
+      { ending: /\.jpe?g$/i, type: 'image/jpeg', magic: [0xff, 0xd8, 0xff] },
+    ];
+    /**
+     * The type with which a dataset's file may open in a tab of its own, or '' when it is to be downloaded instead: only a PDF,
+     * PNG or JPEG file, and only when the name's ending and the first bytes agree. The stored type is never used for it: a
+     * package, a picked folder or a received dataset can name any type, and the tab (a blob: address) has the app's origin, where
+     * an HTML, SVG or XML page could run script. Without bytes the name alone gives the type a button can promise.
+     * @param {string} name @param {Uint8Array} [bytes] @returns {string}
+     */
+    function tabType(name, bytes) {
+      const kind = TAB_TYPES.find((k) => k.ending.test(String(name || '')));
+      if (!kind) return '';
+      if (bytes === undefined) return kind.type;
+      return ArrayBuffer.isView(bytes) && kind.magic.every((b, i) => /** @type {any} */ (bytes)[i] === b) ? kind.type : '';
+    }
+
     function clearUrls(id) {
       const map = urls.get(id);
       if (!map) return;
@@ -113,6 +133,6 @@
       }
     }
 
-    return { TABLE, ensureTable, put, list, read, listed, url, clearUrls, hasTable, createDataset };
+    return { TABLE, ensureTable, put, list, read, listed, url, tabType, clearUrls, hasTable, createDataset };
   });
 })();
