@@ -4,7 +4,8 @@
  * Tests of the tiers (platform/tier, ui/settings/tier; F48 b c, F52 a): the tier in effect is the smallest of the choice (tier 2
  * when none is made), the deployment's ceiling and, for what needs a server, the server's announced tier; the config file as
  * shipped sets nothing; entry points of each tier come and go with it; a deep link to a hidden function says so and raises the
- * tier; going down keeps every dataset. No test reaches the network.
+ * tier; going down keeps every dataset; a GeoTIFF is read in every tier, and below BIM och GIS its raster is its table of files.
+ * No test reaches the network.
  */
 (function () {
   'use strict';
@@ -455,6 +456,102 @@
       return 'ok';
     } finally { await restore(); }
   });
+
+  test('tier: below BIM och GIS a GeoTIFF is still read, its raster is a table without a map, and its original still exports', async (assert) => {
+    await reset();
+    const importer = D.require('io/import');
+    const exporter = D.require('io/export');
+    const kinds = D.require('data/kinds');
+    const dsFiles = D.require('data/dataset-files');
+    const shareScan = D.require('data/share-scan');
+    const geo = D.require('data/geo');
+    // A GeoTIFF in SWEREF 99 TM near Stockholm, as the person would choose it (tests/fixtures/geotiff).
+    const file = D.require('tests/fixtures/geotiff').file({ width: 48, height: 32, geo: { res: 1, east: 674000, north: 6580256, epsg: 3006 }, copyright: 'Prov AB' }, 'niva-raster.tif');
+    const sameBytes = (a, b) => a.byteLength === b.byteLength && a.every((v, i) => v === b[i]);
+    const kindFormats = (ds) => exporter.formatsFor(ds).filter((f) => f.kind).map((f) => f.id);
+    let meta = null; let copy = null;
+    try {
+      await tier.set('documents');
+      // Read in Dokument, as an IFC file is: no entry point hides the raster importer, which previews the file and imports it whole.
+      assert.ok(tier.shows('import:raster'), 'a GeoTIFF file needs no tier of its own');
+      const p = await importer.preview(file);
+      assert.ok(p.importer === 'raster' && p.kind === 'raster' && p.dataRows.length === 1, 'the raster importer: ' + p.importer);
+      meta = await importer.run(file, { format: 'raster' }, null, 'Nivå raster');
+      const ds = await datasets.get(meta.id);
+      assert.ok(ds.kind === 'raster' && ds.raster && ds.raster.files.length === 1 && ds.raster.files[0].placed, 'a raster with its facts: ' + ds.kind);
+      assert.deepEqual((await dsFiles.list(meta.id)).map((f) => f.kind).sort(), ['original', 'preview', 'thumb'], 'and its files');
+      // Its table without a map: no view of its own, Analysera's statistics, and the facts Hantera shows.
+      assert.ok(!kinds.shown(ds), 'the kind\'s own views are hidden');
+      assert.equal(kinds.ownView(ds), null, 'Bearbeta shows the table of files');
+      assert.equal(kinds.ownTab(ds), 'stats', 'Analysera opens in Statistik');
+      assert.ok(kinds.facts(ds).some((x) => x.label === t('raster.field.crs') && x.value === geo.crsText('EPSG:3006')), 'the facts stay');
+      // Exportera: the original file beside the table's formats, not the image on the map.
+      const formats = exporter.formatsFor(ds);
+      assert.deepEqual(kindFormats(ds), ['raster-original'], 'the original only');
+      assert.ok(formats.some((f) => f.id === 'csv' && !f.unavailable), 'beside the table\'s formats');
+      const original = await exporter.exportDataset(meta.id, 'raster-original');
+      assert.ok(original.filename === 'niva-raster.tif' && sameBytes(new Uint8Array(await original.blob.arrayBuffer()), new Uint8Array(await file.arrayBuffer())), 'the original byte for byte: ' + original.filename);
+      // Dela carries it unchanged: a copy is a raster with its facts and files.
+      copy = await datasets.importBytes(await shareScan.copy(meta.id, {}), { name: 'Nivå raster kopia' }, { quiet: true });
+      const c = await datasets.get(copy.id);
+      assert.ok(c.kind === 'raster' && c.raster && c.raster.files[0].kept === 'original', 'the copy is the raster: ' + c.kind);
+      assert.deepEqual((await dsFiles.list(copy.id)).map((f) => f.kind).sort(), ['original', 'preview', 'thumb'], 'with its files');
+      // BIM och GIS shows its map and the image on it at once.
+      await tier.set('bim-gis');
+      assert.ok(kinds.shown(ds), 'the kind\'s own views are back');
+      assert.equal(kinds.ownView(ds), 'map', 'its own map');
+      assert.equal(kinds.ownTab(ds), 'sql', 'and Analysera\'s SQL');
+      assert.deepEqual(kindFormats(ds), ['raster-original', 'raster-image'], 'the image on the map is offered');
+      return 'ok';
+    } finally {
+      for (const m of [meta, copy]) if (m) await datasets.remove(m.id).catch(() => {});
+      await restore();
+    }
+  }, 60000);
+
+  test('tier: below BIM och GIS Bearbeta shows a raster as its table with the notice and Kontrollera checks it, raising the tier opens its map at once, and going down keeps it', async (assert) => {
+    await reset();
+    const fx = D.require('tests/fixtures/geotiff');
+    let meta = null; let started = null;
+    try {
+      // A raster placed near Stockholm, made without the importer; the map has no background map, so nothing is fetched.
+      meta = await fx.rasterDataset({ name: 'Nivå rasterkarta', files: [{ name: 'niva-karta.tif', bounds: [[59.335, 18.05], [59.325, 18.07]] }], attribution: 'Prov' });
+      const short = (await datasets.get(meta.id)).shortName || meta.id;
+      await tier.set('documents');
+      started = await startShell('#/bearbeta/' + encodeURIComponent(short));
+      const { root, shell } = started;
+      // Bearbeta: the table of files with the notice, and no map nor a way to one.
+      await waitFor(() => root.querySelector('.dm-center [data-tier-hidden="kind.raster"]') && root.querySelector('.dm-center dm-table'), 8000, 'the table with the notice');
+      const notice = root.querySelector('.dm-center [data-tier-hidden="kind.raster"]');
+      assert.ok(notice.textContent.includes(t('tier.bim-gis')) && notice.textContent.includes(t('tier.documents')), 'it names the tier it needs and the one in effect');
+      assert.ok(!root.querySelector('.dm-center .dm-map-view'), 'no map in Dokument');
+      const labels = Array.from(root.querySelectorAll('.dm-center .dm-page-head dm-button')).map((b) => b.textContent.trim());
+      assert.ok(!labels.includes(t('bearbeta.view.map')), 'and no button to it: ' + labels.join(' | '));
+      // Kontrollera checks its table of files, a function of Dokument, with no notice.
+      shell.activate('kontrollera');
+      const summary = await waitFor(() => root.querySelector('.dm-center [data-kontrollera-summary]'), 8000, 'the check of the table');
+      assert.equal(summary.getAttribute('data-kontrollera-rows'), '1', 'one file');
+      assert.ok(!root.querySelector('.dm-center [data-tier-hidden]'), 'nothing hidden there');
+      // Raising from Bearbeta's notice shows the raster's own map, with its picture and its facts, at once.
+      shell.activate('bearbeta');
+      const raise = await waitFor(() => root.querySelector('.dm-center [data-tier-raise="bim-gis"]'), 8000, 'the raise button');
+      /** @type {HTMLElement} */ (raise.querySelector('button') || raise).click();
+      await waitFor(() => tier.current() === 2, 3000, 'raised');
+      await waitFor(() => root.querySelector('.dm-center .dm-map-view.leaflet-container img.dm-raster-image'), 8000, 'the raster\'s map');
+      await waitFor(() => root.querySelector('.dm-right [data-raster-facts]'), 5000, 'its facts beside the map');
+      assert.ok(!root.querySelector('.dm-center [data-tier-hidden]'), 'the notice is gone');
+      // Going down again gives the table back, and keeps the raster as it was.
+      await tier.set('documents');
+      await waitFor(() => root.querySelector('.dm-center [data-tier-hidden="kind.raster"]') && root.querySelector('.dm-center dm-table') && !root.querySelector('.dm-center .dm-map-view'), 8000, 'the table again');
+      const kept = await datasets.get(meta.id);
+      assert.ok(kept && kept.kind === 'raster' && kept.raster && kept.raster.files[0].name === 'niva-karta.tif', 'the raster is kept with its facts');
+      return 'ok';
+    } finally {
+      if (started) stop(started.root);
+      if (meta) await datasets.remove(meta.id).catch(() => {});
+      await restore();
+    }
+  }, 60000);
 
   test('tier: a saved chart of a hidden type opens as the notice, and nothing draws or publishes it', async (assert) => {
     await reset();
