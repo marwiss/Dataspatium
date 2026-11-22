@@ -11,6 +11,8 @@
   const D = globalThis.Dataspatium;
   D.define('io/importers/images', ['data/dataset-files', 'data/exif'], (dsFiles, exif) => {
     const EXT = /\.(jpe?g|png|webp|gif|bmp|avif)$/i;
+    /** TIFF files go to the raster importer (io/importers/raster): the browsers cannot draw them. */
+    const TIFF = /\.(tiff?|gtiff)$/i;
     const PREVIEW = 1600;
     const THUMB = 320;
     const COLUMNS = [
@@ -20,7 +22,7 @@
     /** @type {WeakMap<File, any>} */
     const cache = new WeakMap();
 
-    function detect(file) { return EXT.test(file.name) || /^image\//.test(file.type || ''); }
+    function detect(file) { return EXT.test(file.name) || (/^image\//.test(file.type || '') && !/^image\/tiff\b/i.test(file.type || '') && !TIFF.test(file.name || '')); }
 
     function canvasFor(w, h) {
       if (typeof OffscreenCanvas === 'function') return new OffscreenCanvas(w, h);

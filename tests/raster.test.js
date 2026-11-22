@@ -13,4 +13,331 @@
   'use strict';
   const D = globalThis.Dataspatium;
   const { test } = D.require('tests/harness');
+  const t = D.require('ui/i18n').t;
+  const geo = D.require('data/geo');
+  const datasets = D.require('data/datasets');
+  const dsFiles = D.require('data/dataset-files');
+  const importer = D.require('io/import');
+  const exporter = D.require('io/export');
+  const kinds = D.require('data/kinds');
+  const fx = D.require('tests/fixtures/geotiff');
+  const engines = D.require('engines/raster');
+  const raster = D.require('data/raster');
+  const created = [];
+  const track = (meta) => { if (meta && meta.id) created.push(meta.id); return meta; };
+  /** SWEREF 99 TM near Stockholm: the upper left corner of the test files. */
+  const E0 = 674000; const N0 = 6580256;
+  const R = 6378137;
+  const merc = (lon, lat) => [(R * lon * Math.PI) / 180, R * Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360))];
+  const unmerc = (x, y) => [((x / R) * 180) / Math.PI, ((2 * Math.atan(Math.exp(y / R)) - Math.PI / 2) * 180) / Math.PI];
+  /** The text of a binary file, so that a value left anywhere in it can be found. */
+  const asText = (bytes) => new TextDecoder('latin1').decode(bytes);
+  const sameBytes = (a, b) => a.byteLength === b.byteLength && a.every((v, i) => v === b[i]);
+  const rowsOf = async (id) => { const cols = await datasets.columns(id); return (await datasets.allRows(id)).map((r) => Object.fromEntries(cols.map((c, i) => [c.name, r[i]]))); };
+  /** The error a promise rejects with, or null. */
+  const failure = async (p) => { try { await p; return null; } catch (err) { return err; } };
+  /** A JPEG picture of one colour, as the person would choose it. */
+  async function jpegFile(name, width = 40, height = 30) {
+    const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+    const g = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d')); g.fillStyle = '#4a7f5b'; g.fillRect(0, 0, width, height);
+    const blob = /** @type {Blob} */ (await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9)));
+    return new File([blob], name, { type: 'image/jpeg' });
+  }
+  /** The longest pause between the page's turns while `fn` runs, from a timer that asks for a turn as often as it can. */
+  async function longestPause(fn) {
+    let last = performance.now(); let longest = 0; let on = true;
+    const tick = () => { const now = performance.now(); longest = Math.max(longest, now - last); last = now; if (on) setTimeout(tick, 0); };
+    setTimeout(tick, 0);
+    try { return { value: await fn(), get longest() { return longest; } }; } finally { on = false; }
+  }
+  /** Run with some of data/raster's limits changed, and put them back. */
+  async function withLimits(changes, fn) {
+    const before = Object.assign({}, raster.limits);
+    Object.assign(raster.limits, changes);
+    try { return await fn(); } finally { Object.assign(raster.limits, before); }
+  }
+  /** A GeoTIFF in SWEREF 99 TM at the test corner. */
+  const sweref = (name, spec = {}) => fx.file(Object.assign({ width: 64, height: 48, geo: { res: 1, east: E0, north: N0, epsg: 3006 } }, spec), name);
+  /** geotiff.js on the page, for reading back what the worker wrote (loaded only after the page is shown to decode nothing). */
+  async function pageGeoTiff() {
+    if (!(/** @type {any} */ (globalThis).GeoTIFF)) await D.assets.loadVendorScript('vendor/geotiff/geotiff.js');
+    return /** @type {any} */ (globalThis).GeoTIFF;
+  }
+
+  test('raster: the worker reads a GeoTIFF\'s size, bands, place and system, draws a level into a picture, and writes a GeoTIFF that reads back with its place; nothing is decoded on the page', async (assert) => {
+    // Whatever geotiff.js the page may hold already is watched: none of it may run.
+    const G0 = /** @type {any} */ (globalThis).GeoTIFF;
+    const real = {}; let onPage = 0;
+    if (G0) for (const k of ['fromBlob', 'fromArrayBuffer', 'fromCustomClient', 'fromUrl', 'fromFile']) { real[k] = G0[k]; G0[k] = (...args) => { onPage++; return real[k].apply(G0, args); }; }
+    let written;
+    try {
+      const file = sweref('sweref.tif', { dateTime: '2023:06:15 12:00:00', copyright: 'Prov AB', geo: { res: 2, east: E0, north: N0, epsg: 3006 } });
+      const info = await engines.open(file);
+      assert.ok(info.width === 64 && info.height === 48 && info.bands === 3 && info.bits === 8 && info.sampleFormat === 1 && info.photometric === 2 && info.compression === 1, JSON.stringify(info));
+      assert.ok(info.tiled && info.georef === 'tiepoint' && !info.rotated && !info.pixelIsPoint, 'tiles and a tiepoint');
+      assert.deepEqual(info.levels, [{ width: 64, height: 48 }]);
+      assert.deepEqual([info.origin, info.res], [[E0, N0], [2, 2]]);
+      assert.ok(info.geoKeys.ProjectedCSTypeGeoKey === 3006 && info.geoKeys.GTModelTypeGeoKey === 1, JSON.stringify(info.geoKeys));
+      assert.ok(info.nodata === null && info.alpha === false && info.dateTime === '2023:06:15 12:00:00' && info.copyright === 'Prov AB' && info.personal.length === 0, 'the tags read');
+      assert.deepEqual(raster.extentOf(info), [E0, N0 - 96, E0 + 128, N0]);
+      // The systems: an EPSG code, a name in the citation, a code the app cannot convert, a citation it does not know, and none.
+      const crsFor = async (spec, name) => { const i = await engines.open(fx.file(Object.assign({ width: 16, height: 16 }, spec), name)); return raster.crsOf(i, raster.extentOf(i)); };
+      const epsg = raster.crsOf(info, raster.extentOf(info));
+      assert.ok(epsg.source === 'epsg' && epsg.code === 3006 && epsg.crs === 'EPSG:3006' && epsg.text === 'SWEREF 99 TM (EPSG:3006)' && epsg.placed, JSON.stringify(epsg));
+      const named = await crsFor({ geo: { res: 10, east: 500000, north: 6600000, citation: 'ETRS89 / UTM zone 33N' } }, 'utm.tif');
+      assert.ok(named.source === 'name' && named.code === 25833 && named.placed, JSON.stringify(named));
+      const gk = await crsFor({ geo: { res: 10, east: 3500000, north: 5800000, epsg: 31467 } }, 'gk3.tif');
+      assert.ok(gk.source === 'epsg' && gk.code === 31467 && !gk.placed && geo.crsUnknown(gk.crs), 'a code the app cannot convert: ' + JSON.stringify(gk));
+      const unknown = await crsFor({ geo: { res: 10, east: 3500000, north: 5800000, citation: 'DHDN / 3-degree Gauss-Kruger zone 3' } }, 'dhdn.tif');
+      assert.ok(unknown.source === 'unknown' && unknown.crs === 'DHDN / 3-degree Gauss-Kruger zone 3' && !unknown.placed && geo.crsUnknown(unknown.crs), JSON.stringify(unknown));
+      const bare = await crsFor({ geo: { res: 1, east: E0, north: N0 } }, 'bare.tif');
+      assert.ok(bare.source === 'assumed' && bare.code === 3006 && bare.placed, 'no keys in metres: SWEREF 99 TM, ' + JSON.stringify(bare));
+      const degrees = await crsFor({ geo: { res: 0.001, east: 18.06, north: 59.33 } }, 'grader.tif');
+      assert.ok(degrees.source === 'assumed' && degrees.code === 4326, 'no keys in degrees: WGS 84, ' + JSON.stringify(degrees));
+      const geographic = await crsFor({ geo: { res: 0.001, east: 18.06, north: 59.33, geographic: 4326 } }, 'wgs84.tif');
+      assert.ok(geographic.source === 'epsg' && geographic.code === 4326 && geographic.placed, JSON.stringify(geographic));
+      // A level drawn into a picture in the file's own grid: red is the column and green the row, with progress after each chunk.
+      const progress = [];
+      const out = await engines.render(file, { r: 2, Wm: 64, Hm: 48, display: raster.displayOf(info), warp: null, keepPixels: true }, { onProgress: (p) => progress.push(p) });
+      assert.ok(out.width === 64 && out.height === 48 && out.empty === 0 && out.level === 0 && out.blob.type === 'image/jpeg', `${out.width} × ${out.height}, ${out.empty} empty, ${out.blob.type}`);
+      let off = 0;
+      for (let y = 0; y < 48; y += 5) for (let x = 0; x < 64; x += 5) { const k = (y * 64 + x) * 4; if (Math.abs(out.pixels[k] - x) > 2 || Math.abs(out.pixels[k + 1] - y) > 2 || out.pixels[k + 3] !== 255) off++; }
+      assert.equal(off, 0, 'each pixel in its place');
+      assert.ok(progress.length >= 1 && progress[progress.length - 1].done === progress[progress.length - 1].total, JSON.stringify(progress));
+      // A file with an empty part keeps it transparent: WebP, or PNG where the browser cannot encode WebP.
+      const holes = sweref('hal.tif', { width: 32, height: 32, nodata: 0, pixel: (x, y) => (x < 8 ? [0, 0, 0] : [x * 4, y * 4, 128]) });
+      const hi = await engines.open(holes);
+      const ho = await engines.render(holes, { r: 1, Wm: 32, Hm: 32, display: raster.displayOf(hi), warp: null, keepPixels: true });
+      assert.ok(hi.nodata === 0 && ho.empty === 8 * 32 && ho.pixels[3] === 0 && ho.pixels[(4 * 32 + 20) * 4 + 3] === 255, `${ho.empty} empty`);
+      assert.ok(ho.blob.type === 'image/webp' || ho.blob.type === 'image/png', ho.blob.type);
+      // The picture written as a GeoTIFF in Web Mercator.
+      written = await engines.write(out.blob, { epsg: 3857, origin: [2000000, 8400000], res: [5, 5] });
+      // geotiff.js writes big-endian ("MM"); either byte order is a TIFF.
+      assert.ok(written instanceof Uint8Array && written[0] === written[1] && (written[0] === 0x49 || written[0] === 0x4d), 'a TIFF');
+    } finally { if (G0) Object.assign(G0, real); }
+    assert.ok(onPage === 0 && (G0 || !(/** @type {any} */ (globalThis).GeoTIFF)), 'nothing is decoded on the page');
+    assert.ok(D.workers.list().some((w) => /** @type {any} */ (w).dmNamespace === 'raster'), 'the raster worker');
+    // Read back with the page's own build: the place, the pixel size, the system and four samples.
+    const G = await pageGeoTiff();
+    const image = await (await G.fromArrayBuffer(written.slice().buffer)).getImage();
+    assert.ok(image.getWidth() === 64 && image.getHeight() === 48 && image.getSamplesPerPixel() === 4, 'the size and four samples');
+    assert.deepEqual(Array.from(image.getOrigin()).slice(0, 2), [2000000, 8400000]);
+    assert.deepEqual(Array.from(image.getResolution()).slice(0, 2), [5, -5]);
+    assert.equal(image.getGeoKeys().ProjectedCSTypeGeoKey, 3857);
+    const rgba = await image.readRasters({ interleave: true });
+    // The picture went through JPEG on its way, so the values are near, not exact.
+    const at = (10 * 64 + 20) * 4;
+    assert.ok(Math.abs(rgba[at] - 20) <= 8 && Math.abs(rgba[at + 1] - 10) <= 8 && rgba[at + 3] === 255, `the pixels: ${Array.from(rgba.slice(at, at + 4))}`);
+    return 'ok';
+  }, 60000);
+
+  test('raster: a GeoTIFF in SWEREF 99 TM becomes one row with its extent in WGS 84, the original byte for byte, and a preview in Web Mercator with each pixel in its place', async (assert) => {
+    const W = 256; const H = 192;
+    const file = sweref('ortofoto-sweref.tif', { width: W, height: H, dateTime: '2023:06:15 12:00:00', copyright: 'Prov AB' });
+    assert.equal(importer.importerFor(file).id, 'raster', 'a TIFF goes to the raster importer');
+    const meta = track(await importer.runFiles([file], { format: 'raster' }, 'Raster SWEREF'));
+    assert.equal(meta.kind, 'raster');
+    const ds = await datasets.get(meta.id);
+    const [row] = await rowsOf(meta.id);
+    assert.deepEqual([row.fil, row.bredd, row.hojd, row.band, row.datatyp, row.upplosning, row.koordinatsystem, row.ar, row.kalla, row.licens, row.storlek],
+      ['ortofoto-sweref.tif', W, H, 3, 'uint8', 1, 'SWEREF 99 TM (EPSG:3006)', 2023, 'Prov AB', null, file.size]);
+    // The extent: the corners of the file in WGS 84.
+    const ring = JSON.parse(row.geometri).coordinates[0];
+    assert.equal(ring.length, 33, 'eight segments a side');
+    const corners = [[0, E0, N0 - H], [8, E0 + W, N0 - H], [16, E0 + W, N0], [24, E0, N0]];
+    for (const [i, e, n] of corners) {
+      const ll = geo.swerefToWgs84(e, n, 3006);
+      assert.ok(Math.abs(ring[i][0] - ll[0]) < 1e-7 && Math.abs(ring[i][1] - ll[1]) < 1e-7, `corner ${i}: ${ring[i]} against ${ll}`);
+    }
+    // The files: the original byte for byte, the preview and the thumbnail.
+    const list = await dsFiles.list(meta.id);
+    assert.deepEqual(list.map((f) => f.kind).sort(), ['original', 'preview', 'thumb']);
+    const original = await dsFiles.read(meta.id, 'ortofoto-sweref.tif', 'original');
+    assert.ok(sameBytes(original.bytes, new Uint8Array(await file.arrayBuffer())) && original.type === 'image/tiff', 'the original byte for byte');
+    const f = ds.raster.files[0];
+    assert.ok(f.placed && f.kept === 'original' && f.skipped === '' && f.crsSource === 'epsg' && f.display === 'rgb' && f.resolution === 1, JSON.stringify(f));
+    assert.ok(ds.raster.count === 1 && ds.raster.attribution === 'Prov AB' && ds.raster.extent && ds.raster.extent[0] < ds.raster.extent[2], JSON.stringify(ds.raster.extent));
+    // The preview: at most 2 048 pixels, no finer than the file, in Web Mercator over the footprint.
+    const [[n, w], [s, e]] = f.preview.bounds;
+    const [X0, Y0] = merc(w, s); const [X1, Y1] = merc(e, n);
+    const cos = Math.cos(((n + s) / 2) * (Math.PI / 180));
+    assert.ok(f.preview.width <= 2048 && f.preview.height <= 2048 && ((X1 - X0) / f.preview.width) * cos >= 0.99, `${f.preview.width} × ${f.preview.height}`);
+    assert.ok(/^image\/(webp|png|jpeg)$/.test(f.preview.type) && list.find((x) => x.kind === 'thumb').type === (f.preview.type === 'image/jpeg' ? 'image/jpeg' : 'image/png'), f.preview.type);
+    // Each pixel of the preview from where it lies: through Web Mercator, WGS 84 and SWEREF 99 TM back to the file's pixel.
+    const read = await raster.readFile(file, { keepPixels: true });
+    assert.deepEqual(read.meta.preview.bounds, f.preview.bounds, 'the same preview');
+    const Wp = read.meta.preview.width; const Hp = read.meta.preview.height;
+    let inside = 0; let off = 0; let outside = 0;
+    for (let j = 1; j < Hp; j += 5) for (let i = 1; i < Wp; i += 5) {
+      const k = (j * Wp + i) * 4;
+      const ll = unmerc(X0 + ((i + 0.5) * (X1 - X0)) / Wp, Y1 - ((j + 0.5) * (Y1 - Y0)) / Hp);
+      const en = geo.wgs84ToSweref(ll[0], ll[1]);
+      const x = Math.floor(en[0] - E0); const y = Math.floor(N0 - en[1]);
+      if (x < -2 || y < -2 || x >= W + 2 || y >= H + 2) { if (read.pixels[k + 3] === 0) outside++; continue; }
+      if (x < 2 || y < 2 || x >= W - 2 || y >= H - 2) continue;
+      inside++;
+      if (Math.abs(read.pixels[k] - x) > 2 || Math.abs(read.pixels[k + 1] - y) > 2 || read.pixels[k + 2] !== 128 || read.pixels[k + 3] !== 255) off++;
+    }
+    assert.ok(inside > 500 && off === 0, `the warp to Web Mercator: ${off} of ${inside} pixels misplaced`);
+    assert.ok(outside > 0, 'outside the file the preview is empty');
+    // The import kept no system of its own: the extent is in degrees.
+    assert.deepEqual(ds.importOptions, { format: 'raster' });
+    assert.ok(ds.source.kind === 'files' && ds.source.format === 'raster' && ds.source.files[0].name === 'ortofoto-sweref.tif', JSON.stringify(ds.source));
+    return 'ok';
+  }, 60000);
+
+  test('raster: the overview that fits is read, a file over the limit keeps no original, and one band of floats is stretched from 2 to 98 per cent with its empty value transparent', async (assert) => {
+    // Overviews at 1, 2 and 4 m beside the full image at 0.5 m; blue says which level a pixel came from.
+    const cog = sweref('cog.tif', { width: 1024, height: 1024, tile: 64, overviews: [2, 4, 8], geo: { res: 0.5, east: E0, north: N0, epsg: 3006 }, pixel: (x, y, level, f) => [(x * f) & 255, (y * f) & 255, 10 + level, 255] });
+    const info = await engines.open(cog);
+    assert.deepEqual(info.levels.map((l) => l.width), [1024, 512, 256, 128], 'the full image and its overviews, finest first');
+    const small = await raster.readFile(cog, { side: 256, keepPixels: true });
+    assert.equal(small.level, 2, 'the overview at 2 m for a preview of 256 pixels');
+    let blue = 0; let covered = 0;
+    for (let k = 0; k < small.pixels.length; k += 4 * 7) if (small.pixels[k + 3] === 255) { covered++; if (small.pixels[k + 2] === 12) blue++; }
+    assert.ok(covered > 100 && blue === covered, `the overview's pixels: ${blue} of ${covered}`);
+    const full = await raster.readFile(cog, { side: 2048 });
+    assert.equal(full.level, 0, 'the full image for a large preview');
+    // Over the limit: the original stays behind, and the facts say why.
+    await withLimits({ keepBytes: 1000 }, async () => {
+      const meta = track(await importer.runFiles([sweref('stor-original.tif')], { format: 'raster' }, 'Utan original'));
+      const ds = await datasets.get(meta.id);
+      assert.ok(ds.raster.files[0].kept === 'none' && ds.raster.files[0].skipped === 'size', JSON.stringify(ds.raster.files[0]));
+      assert.deepEqual((await dsFiles.list(meta.id)).map((f) => f.kind).sort(), ['preview', 'thumb']);
+      const fact = kinds.facts(ds).find((x) => x.label === t('raster.field.original'));
+      assert.equal(fact.value, t('raster.kept.size', { max: D.require('ui/i18n').formatBytes(kinds.RASTER_KEEP.file) }));
+    });
+    // The dataset's originals together: the second that would pass the total stays behind.
+    const one = sweref('a-total.tif'); const two = sweref('b-total.tif');
+    await withLimits({ totalKeep: one.size + 10 }, async () => {
+      const meta = track(await importer.runFiles([one, two], { format: 'raster' }, 'Totalgräns'));
+      const ds = await datasets.get(meta.id);
+      assert.deepEqual(ds.raster.files.map((f) => [f.kept, f.skipped]), [['original', ''], ['none', 'total']]);
+    });
+    assert.equal(raster.limits.keepBytes, 32e6, 'the limits are back');
+    // One band of floats with an empty value: stretched from its 2nd to its 98th percentile, the empty value transparent.
+    const values = (x) => (x % 17 === 0 ? -9999 : x);
+    const floats = sweref('hojd.tif', { width: 100, height: 20, bands: 1, bits: 32, format: 'float', nodata: -9999, pixel: (x) => [values(x)] });
+    const fi = await engines.open(floats);
+    const display = raster.displayOf(fi);
+    assert.ok(display.mode === 'gray' && display.nodata === -9999 && !display.invert, JSON.stringify(display));
+    const sorted = []; for (let y = 0; y < 20; y++) for (let x = 0; x < 100; x++) if (values(x) !== -9999) sorted.push(x);
+    sorted.sort((a, b) => a - b);
+    const at = (p) => sorted[Math.round(p * (sorted.length - 1))];
+    const out = await engines.render(floats, { r: 1, Wm: 100, Hm: 20, display, warp: null, keepPixels: true });
+    assert.deepEqual(out.stretch, { min: at(0.02), max: at(0.98) }, 'from 2 to 98 per cent');
+    const grey = (x) => out.pixels[(5 * 100 + x) * 4];
+    const alpha = (x) => out.pixels[(5 * 100 + x) * 4 + 3];
+    assert.ok(alpha(17) === 0 && alpha(34) === 0 && alpha(18) === 255 && out.empty === 20 * 6, 'the empty value is transparent: ' + out.empty);
+    let rising = true;
+    for (let x = 1; x < 99; x++) if (values(x) !== -9999 && values(x + 1) !== -9999 && grey(x + 1) < grey(x)) rising = false;
+    assert.ok(rising && grey(1) === 0 && grey(99) === 255 && Math.abs(grey(50) - ((50 - at(0.02)) * 255) / (at(0.98) - at(0.02))) <= 1, `grey rises with x: ${grey(1)}, ${grey(50)}, ${grey(99)}`);
+    const meta = track(await importer.runFiles([floats], { format: 'raster' }, 'Flyttal'));
+    const ds = await datasets.get(meta.id);
+    assert.ok(ds.raster.files[0].display === 'gray' && ds.raster.files[0].stretch && ds.raster.files[0].stretch.max === at(0.98) && ds.raster.files[0].nodata === -9999, JSON.stringify(ds.raster.files[0].stretch));
+    assert.equal((await rowsOf(meta.id))[0].datatyp, 'float32');
+    assert.ok(kinds.facts(ds).some((x) => x.label === t('raster.field.bands') && x.value === '1 · float32'), 'the facts name the band');
+    return 'ok';
+  }, 90000);
+
+  test('raster: several files become one raster, a mixed drop is sorted, and a system the app cannot convert is said before the import and kept without a place', async (assert) => {
+    const tiles = [0, 1, 2].map((k) => sweref(`ruta-${k}.tif`, { width: 64, height: 64, geo: { res: 1, east: E0 + 64 * k, north: N0, epsg: 3006 } }));
+    assert.equal(importer.collectionFor(tiles).id, 'raster', 'the tiles are one raster');
+    const meta = track(await importer.runFiles(tiles, { format: 'raster' }, 'Tre rutor'));
+    const ds = await datasets.get(meta.id);
+    assert.equal(ds.rowCount, 3);
+    assert.deepEqual((await rowsOf(meta.id)).map((r) => r.fil), ['ruta-0.tif', 'ruta-1.tif', 'ruta-2.tif']);
+    const west = geo.swerefToWgs84(E0, N0 - 32, 3006)[0]; const east = geo.swerefToWgs84(E0 + 192, N0 - 32, 3006)[0];
+    assert.ok(ds.raster.count === 3 && ds.raster.extent[0] <= west + 1e-6 && ds.raster.extent[2] >= east - 1e-6, 'the extent covers the three: ' + JSON.stringify(ds.raster.extent));
+    assert.ok(kinds.summary(ds).includes(t('raster.files.n', { n: '3' })), kinds.summary(ds));
+    // A drop of two TIFF files and a JPEG picture: a raster and an image collection.
+    const jpg = await jpegFile('c.jpg');
+    assert.equal(importer.importerFor(jpg).id, 'images');
+    assert.equal(importer.collectionFor([tiles[0], jpg]), null, 'no collection takes both');
+    const sorted = await importer.sortFiles([tiles[0], tiles[1], jpg]);
+    assert.deepEqual(sorted.groups.map((g) => [g.importer, g.files.length]), [['raster', 2], ['images', 1]]);
+    assert.equal(sorted.groups[0].name, t('import.collection.raster', { n: 2 }));
+    // A system the app cannot convert: said before the import, kept without a place, and the health check says so.
+    const gk = sweref('gauss-kruger.tif', { width: 32, height: 32, geo: { res: 10, east: 3500000, north: 5800000, epsg: 31467 } });
+    const p = await importer.preview(gk);
+    assert.ok(p.importer === 'raster' && p.kind === 'raster' && p.crsUnknown === 'EPSG:31467', JSON.stringify({ importer: p.importer, crsUnknown: p.crsUnknown }));
+    assert.ok(p.dataRows.length === 1 && p.dataRows[0][11] === null && p.raster.files[0].preview.bounds === null && !p.raster.files[0].placed, 'no place in the preview');
+    const sense = D.require('io/file-sense').describe(p, { files: [gk] });
+    assert.ok(sense.key === 'import.sense.raster' && sense.params.crs === 'EPSG:31467', JSON.stringify(sense));
+    assert.ok(p.pictures.length === 1 && /^data:image\//.test(p.pictures[0]), 'a picture of it all the same');
+    const unplaced = track(await importer.runFiles([gk], { format: 'raster' }, 'Okänt system'));
+    const u = await datasets.get(unplaced.id);
+    assert.ok((await rowsOf(unplaced.id))[0].geometri === null && u.raster.files[0].preview.bounds === null && u.raster.extent === null, 'kept without a place');
+    assert.ok(u.raster.files[0].preview.width === 32 && (await dsFiles.read(unplaced.id, 'gauss-kruger.tif', 'preview')), 'a preview in its own grid');
+    const health = await D.require('data/kind-health').check(unplaced.id);
+    assert.deepEqual(health.map((x) => [x.level, x.key, x.n]), [['warn', 'health.raster.unplaced', 1]]);
+    assert.deepEqual(await D.require('data/kind-health').check(meta.id), [], 'the tiles are in good shape');
+    return 'ok';
+  }, 90000);
+
+  test('raster: a TIFF without a place, a rotated file, an unknown compression, too many pixels without overviews and a file that is no TIFF are refused with words the person can act on', async (assert) => {
+    const cases = [
+      [fx.file({ width: 16, height: 16 }, 'utan-lage.tif'), 'raster.err.nogeo'],
+      [fx.file({ width: 16, height: 16, geo: { transformation: [1, 0.5, 0, E0, 0.5, -1, 0, N0, 0, 0, 0, 0, 0, 0, 0, 1] } }, 'vriden.tif'), 'raster.err.rotated'],
+      [sweref('zstd.tif', { width: 16, height: 16, compression: 50000 }), 'raster.err.compression'],
+      [new File(['inte en tiff alls'], 'fel.tif', { type: 'image/tiff' }), 'raster.err.nottiff'],
+    ];
+    const count = async () => (await datasets.list()).length;
+    const before = await count();
+    for (const [file, key] of cases) {
+      const words = t(key, { name: file.name });
+      const p = await failure(importer.preview(file));
+      assert.ok(p && p.message === words, `${file.name} before the import: ${p && p.message}`);
+      const r = await failure(importer.runFiles([file], { format: 'raster' }));
+      assert.ok(r && r.message === words, `${file.name} imported: ${r && r.message}`);
+    }
+    // Too many pixels to read without overviews (the limit lowered for the test).
+    await withLimits({ maxPixels: 1000 }, async () => {
+      const big = sweref('utan-oversikter.tif', { width: 64, height: 64 });
+      const words = t('raster.err.overviews', { name: big.name, n: D.require('ui/i18n').formatNumber(0) });
+      const p = await failure(importer.preview(big));
+      assert.ok(p && p.message === words && p.code === 'overviews', String(p && p.message));
+      const r = await failure(importer.runFiles([big], { format: 'raster' }));
+      assert.ok(r && r.message === words, String(r && r.message));
+    });
+    assert.equal(await count(), before, 'no dataset was made');
+    // In a mixed choice the others are imported, and the ones left out are named with their words.
+    const good = sweref('bra.tif', { width: 16, height: 16 });
+    const meta = track(await importer.runFiles([good, cases[0][0], cases[2][0]], { format: 'raster' }, 'Blandat urval'));
+    const ds = await datasets.get(meta.id);
+    assert.equal(ds.rowCount, 1);
+    assert.deepEqual(ds.raster.skipped, [{ name: 'utan-lage.tif', error: t('raster.err.nogeo', { name: 'utan-lage.tif' }) }, { name: 'zstd.tif', error: t('raster.err.compression', { name: 'zstd.tif' }) }]);
+    assert.ok(kinds.facts(ds).some((x) => x.label === t('raster.field.files') && x.value.includes(t('images.skipped', { n: '2' }))), 'the facts say two were left out');
+    const sorted = await importer.sortFiles([cases[0][0], await jpegFile('bild.jpg')]);
+    const results = await importer.runSorted(sorted.groups);
+    results.forEach((x) => track(x.meta));
+    assert.deepEqual(results.map((x) => [x.group.importer, x.error, !!x.meta]), [['raster', t('raster.err.nogeo', { name: 'utan-lage.tif' }), false], ['images', null, true]]);
+    // More files than a raster holds: the rest are left out and said.
+    await withLimits({ maxFiles: 2 }, async () => {
+      const three = [0, 1, 2].map((k) => sweref(`max-${k}.tif`, { width: 16, height: 16 }));
+      const m = track(await importer.runFiles(three, { format: 'raster' }, 'För många'));
+      const d = await datasets.get(m.id);
+      assert.ok(d.rowCount === 2 && d.raster.skipped.length === 1 && d.raster.skipped[0].error === t('raster.err.many', { max: 2, n: 1 }), JSON.stringify(d.raster.skipped));
+    });
+    return 'ok';
+  }, 90000);
+
+  test('raster: importing never keeps the page waiting more than 50 ms', async (assert) => {
+    const file = sweref('stor-cog.tif', { width: 2048, height: 1024, tile: 256, overviews: [2, 4], geo: { res: 0.5, east: E0, north: N0, epsg: 3006 } });
+    // The worker is started by the tests before; the measure is the import itself.
+    await engines.open(file);
+    const run = await longestPause(() => importer.runFiles([file], { format: 'raster' }, 'Stor COG'));
+    const meta = track(run.value);
+    const ds = await datasets.get(meta.id);
+    assert.ok(ds.raster.files[0].kept === 'original' && ds.raster.files[0].preview.width > 1000, JSON.stringify(ds.raster.files[0].preview));
+    assert.ok(run.longest < 50, `the page never waits more than 50 ms: ${run.longest.toFixed(1)} ms`);
+    return `${run.longest.toFixed(1)} ms`;
+  }, 90000);
+
+  test('raster: cleanup', async (assert) => {
+    await datasets.flushSaves();
+    for (const id of created) await datasets.remove(id).catch(() => {});
+    assert.ok(true);
+    return 'ok';
+  }, 90000);
 })();

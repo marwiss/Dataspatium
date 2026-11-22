@@ -30,7 +30,7 @@
     const within = (r, low, high) => r.min >= low && r.max <= high;
     const range = (list) => list.reduce((r, v) => ({ min: Math.min(r.min, v), max: Math.max(r.max, v) }), { min: Infinity, max: -Infinity });
     /** A preview that goes through the column step. A plain table's preview has a kind of its own, such as text. */
-    const isTable = (p) => !['graph', 'model', 'plan', 'package'].includes(p.kind) && !p.reader && !p.dataspatium && !p.planGpkg && p.importer !== 'images' && p.importer !== 'documents';
+    const isTable = (p) => !['graph', 'model', 'plan', 'package', 'raster'].includes(p.kind) && !p.reader && !p.dataspatium && !p.planGpkg && p.importer !== 'images' && p.importer !== 'documents';
 
     /** The numbers of a preview column, null where a row has none. */
     function numbers(p, name) {
@@ -85,6 +85,12 @@
       const files = context.files || [];
       const count = files.length || 1;
       if (p.importer === 'images') return { icon: kinds.PROFILES.images.icon, key: 'import.sense.images', params: { n: count } };
+      if (p.kind === 'raster') {
+        // The system of the first file, as its facts say it (an unnamed one with the system it is read as).
+        const f = (p.raster && Array.isArray(p.raster.files) && p.raster.files[0]) || {};
+        const crs = f.crsSource === 'assumed' ? D.t('raster.crs.assumed', { crs: f.crsText || f.crs }) : f.crsText || f.crs || D.t('raster.crs.none');
+        return { icon: kinds.PROFILES.raster.icon, key: count > 1 ? 'import.sense.rasters' : 'import.sense.raster', params: { n: count, crs } };
+      }
       if (p.importer === 'documents') {
         const icon = kinds.PROFILES.document.icon;
         if (files.length > 1) return { icon, key: 'import.sense.documents', params: { n: count } };
