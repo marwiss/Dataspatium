@@ -561,7 +561,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/visualisera.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 16571,
+  "size": 16611,
   "library": "dataspatium"
  },
  "docs/sv/anteckningsbok.md": {
@@ -699,7 +699,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/sakerhet.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 37038,
+  "size": 37079,
   "library": "dataspatium"
  },
  "docs/da/kom-igang.md": {
