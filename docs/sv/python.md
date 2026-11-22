@@ -139,7 +139,9 @@ språk.
   och `urllib3` i kod som körs i konsolen, en anteckningsbok, ett Python-diagram, ett statistikverktyg eller ett
   flöde, i webbläsare med JSPI (Edge, Chrome). Ett tillåtet anrop kan följa serverns omdirigeringar. Anropen syns under
   *Hantera → Arbetsyta → Internetåtkomst*: appen antecknar adressen när anropet tillåts, men slutet och statusen
-  rapporterar workern själv, så listan är en överblick och ingen revisionslogg.
+  rapporterar workern själv, så listan är en överblick och ingen revisionslogg. Säger du nej till en fråga nekas också
+  frågorna som väntar, och kodens följande frågor nekas utan att du tillfrågas tills du kör nästa kommando eller
+  startar om Python.
 - Sockets och XMLHttpRequest är spärrade och ger ett fel som pekar på `pyfetch`: det gäller `socket`,
   `urllib.request` och `http.client` med http://, `pyodide.http.open_url`, `pyodide.http.pyxhr`, `js.XMLHttpRequest`,
   `js.importScripts` med en adress, och `requests` i webbläsare utan JSPI och i *Python-steg* och *Python på

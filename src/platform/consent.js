@@ -58,23 +58,36 @@
     const queues = new Map();
     /** The open question for a purpose and its detail (host and label): the same question asked again shares its answer. */
     const openQuestions = new Map();
+    /** Per purpose, how many questions were queued, and through which of them a refusal reaches. */
+    const queuedCount = new Map();
+    const refusedThrough = new Map();
 
     /**
      * Ask about a purpose once its earlier questions are answered. The state is read again first, so a remembered answer settles
-     * the questions that waited for it; a one-time answer covers only its own question, so another host is asked again.
+     * the questions that waited for it. A one-time yes covers only its own question, so another host is asked again; a refusal of
+     * any kind (Deny, Escape, closing the dialog) also refuses, unasked, the questions already waiting, since refusing fails closed
+     * and one no then ends a burst. A question whose `wanted()` says no (its worker has ended) is refused without asking.
      * @returns {Promise<boolean>} whether the question was allowed
      */
     function ask(purpose, info) {
       const key = purpose + '\n' + (info.host || '') + '\n' + (info.label || '');
       const same = openQuestions.get(key);
       if (same) return same;
+      const seq = (queuedCount.get(purpose) || 0) + 1;
+      queuedCount.set(purpose, seq);
       const answer = (queues.get(purpose) || Promise.resolve()).then(async () => {
+        if (seq <= (refusedThrough.get(purpose) || 0)) return false;
         const v = await state(purpose);
         if (v === 'granted') return true;
         if (v === 'denied') return false;
         if (!asker) { D.log('consent', 'no asker registered; allowing', purpose, info.host || ''); return true; }
+        if (typeof info.wanted === 'function' && !info.wanted()) return false;
         const a = await asker(purpose, info);
-        if (!a || !a.allow) { if (a && a.remember) await set(purpose, 'denied'); return false; }
+        if (!a || !a.allow) {
+          refusedThrough.set(purpose, queuedCount.get(purpose));
+          if (a && a.remember) await set(purpose, 'denied');
+          return false;
+        }
         if (a.remember !== false) await set(purpose, 'granted');
         return true;
       });
@@ -90,9 +103,10 @@
 
     /**
      * Make sure a purpose is allowed; asks through the registered asker, one question per purpose at a time. Rejects with
-     * ConsentError when the user has said no (now or earlier).
+     * ConsentError when the user has said no (now or earlier), or when the question is no longer wanted.
      * @param {string} purpose
-     * @param {{host?: string, label?: string, size?: number}} [info] shown in the question
+     * @param {{host?: string, label?: string, size?: number, wanted?: () => boolean}} [info] shown in the question; `wanted`
+     *   is asked right before the question is shown
      */
     async function require(purpose, info = {}) {
       const v = await state(purpose);

@@ -139,7 +139,9 @@ of language.
   `micropip` and `js.fetch`, and `requests` and `urllib3` in code run in the console, a notebook, a Python chart, a
   statistics tool or a flow, in browsers with JSPI (Edge, Chrome). An allowed call may follow the server's redirects.
   The calls are listed under *Manage → Workspace → Internet access*: the app notes the address when a call is allowed,
-  but the worker itself reports its end and status, so the list is an overview, not an audit trail.
+  but the worker itself reports its end and status, so the list is an overview, not an audit trail. If you say no to
+  a question, the ones already waiting are refused too, and the code's further questions are refused without asking
+  until you run your next command or restart Python.
 - Sockets and XMLHttpRequest are blocked and raise an error that points to `pyfetch`: this covers `socket`,
   `urllib.request` and `http.client` over http://, `pyodide.http.open_url`, `pyodide.http.pyxhr`, `js.XMLHttpRequest`,
   `js.importScripts` with an address, and `requests` in browsers without JSPI and in a *Python step* or *Python on the

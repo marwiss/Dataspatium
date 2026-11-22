@@ -193,6 +193,11 @@
         this.seq = 0;
         /** @type {Map<number, {resolve: Function, reject: Function}>} */ this.pending = new Map();
         /** @type {Set<string>} asset names already in the worker */ this.shipped = new Set();
+        /**
+         * Set when the person refuses one of the worker's questions about the internet: its further questions are refused unasked
+         * until the next command (run or eval) or a restart, so a flood ends with one answer. A no for the session only.
+         */
+        this.netRefused = false;
         this.handlers = {
           stdout: (/** @type {string} */ _text) => {},
           stderr: (/** @type {string} */ _text) => {},
@@ -229,8 +234,9 @@
           // A wheel the worker asks for later (an import the scanner did not see) is fetched the same way.
           request: (name) => catalog.provideFile(name),
           // net 'fetch': the worker's fetch asks here before it reaches an address (see the top of this file).
-          net: (url) => this.allowNet(url),
+          net: (url, options) => this.allowNet(url, options),
         });
+        this.netRefused = false;
         this.worker = D.workers.create({ namespace: 'pyodide', source: D.workers.functionSource(dataspatiumPythonWorker), name: 'python', net: 'fetch', netText: D.t('python.net.blocked') });
         this.worker.onmessage = (ev) => this.onMessage(ev.data);
         this.worker.onerror = (ev) => this.fail(new Error('Python worker: ' + ((ev && ev.message) || 'error')));
@@ -261,18 +267,29 @@
       /**
        * Python code wants to fetch `url` (pyfetch, micropip, js.fetch, requests through fetch): allowed with the user's consent.
        * The worker then sends the very Request it asked about (the browser follows the server's redirects); the call shows in the
-       * network log (platform/workers), with the end and status the worker reports.
-       * @param {string} url @returns {Promise<boolean>}
+       * network log (platform/workers), with the end and status the worker reports. After a refusal the worker's further questions
+       * are refused unasked until the next command (see netRefused); `wanted()` drops a question whose worker has ended.
+       * @param {string} url @param {{wanted?: () => boolean}} [options] @returns {Promise<boolean>}
        */
-      async allowNet(url) {
+      async allowNet(url, options = {}) {
+        if (this.netRefused) { D.log('python', 'internet access refused, as earlier in this command', url); return false; }
         // The one place that says which consent covers Python's internet.
         const purpose = 'components';
-        try { await consent.require(purpose, { host: consent.hostOf(url), label: String(url) }); return true; }
-        catch (err) { D.log('python', 'internet access refused', url, (err && err.message) || err); return false; }
+        try { await consent.require(purpose, { host: consent.hostOf(url), label: String(url), wanted: options.wanted }); return true; }
+        catch (err) {
+          if (err && err.name === 'ConsentError') this.netRefused = true;
+          D.log('python', 'internet access refused', url, (err && err.message) || err);
+          return false;
+        }
       }
 
-      request(msg, transfer) {
+      /**
+       * Send a request to the worker. A run or eval is the person's next command and ends a refusal of the worker's questions about
+       * the internet, unless it is the tail of the previous one (`sameCommand`, as the plots collected after a run).
+       */
+      request(msg, transfer, options = {}) {
         if (!this.worker) return Promise.reject(new Error(D.t('python.err.closed')));
+        if ((msg.type === 'run' || msg.type === 'eval') && !options.sameCommand) this.netRefused = false;
         const id = ++this.seq;
         return new Promise((resolve, reject) => {
           this.pending.set(id, { resolve, reject });
@@ -295,9 +312,12 @@
         }
       }
 
-      /** Evaluate an expression synchronously in the worker and parse its text as JSON (null for None). */
-      async evalJson(code) {
-        const r = await this.request({ type: 'eval', code: String(code) });
+      /**
+       * Evaluate an expression synchronously in the worker and parse its text as JSON (null for None).
+       * @param {string} code @param {{sameCommand?: boolean}} [options] sameCommand: part of the command before (see request)
+       */
+      async evalJson(code, options = {}) {
+        const r = await this.request({ type: 'eval', code: String(code) }, undefined, options);
         return r.value === null || r.value === undefined ? null : JSON.parse(String(r.value));
       }
 

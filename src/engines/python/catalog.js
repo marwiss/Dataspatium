@@ -205,7 +205,9 @@
     async function provideVendored(entry, assetName) {
       if (D.assets.peek(assetName)) { provided.add(assetName); return assetName; }
       const bytes = await D.assets.load(entry.asset);
-      D.assets.provide(assetName, 'binary', bytes);
+      // A copy: the provided asset is transferred to the worker, which detaches its buffer, while the wheel's own asset stays
+      // cached for the next session (one shared buffer made a restart fail with DataCloneError).
+      D.assets.provide(assetName, 'binary', /** @type {ArrayBuffer} */ (bytes).slice(0));
       provided.add(assetName);
       return assetName;
     }

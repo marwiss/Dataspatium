@@ -71,6 +71,28 @@
     assert.deepEqual(catalog.STARTUP, ['numpy', 'pandas', 'micropip', 'sqlite3']);
   }
 
+  test('python: a wheel shipped in the ZIP is given to each session as its own copy, so a restart can send it again', async (assert) => {
+    const entry = catalog.VENDORED[0];
+    const name = catalog.PREFIX + entry.file;
+    // No lock needed: the wheels in the ZIP join the index from the catalog itself.
+    catalog.reset();
+    catalog.parse({ packages: {} });
+    let whole = 0;
+    try {
+      for (const session of [1, 2]) {
+        assert.equal(await catalog.provideFile(name), true, 'session ' + session + ': provided');
+        // What sending it to the worker does: the asset leaves the cache and its buffer is transferred, which detaches it.
+        const e = D.assets.take(name);
+        if (session === 1) whole = e.data.byteLength;
+        assert.ok(whole > 0 && e.data.byteLength === whole, 'session ' + session + ': the whole wheel, ' + e.data.byteLength + ' bytes');
+        structuredClone(e.data, { transfer: [e.data] });
+        assert.equal(e.data.byteLength, 0, 'session ' + session + ': its copy went to the worker');
+      }
+      assert.equal(/** @type {ArrayBuffer} */ (await D.assets.load(entry.asset)).byteLength, whole, 'the wheel\'s own asset is still whole');
+    } finally { D.assets.take(name); catalog.reset(); }
+    return entry.file + ', ' + whole + ' bytes';
+  });
+
   test('python: the bridge mirrors datasets, turns output into console entries and imports dm_write() files', async (assert) => {
     const file = new File(['kommun;befolkning\nStockholm;984748\nGöteborg;596841\n'], 'pytest.csv', { type: 'text/csv' });
     const meta = await importer.run(file, {}, null, 'Pythontest');
@@ -134,6 +156,30 @@
     assert.equal(notebooks.cell('python', 'x = 1').type, 'python');
     return 'ok';
   }, 30000);
+
+  test('python: once the person refuses one of the worker\'s questions about the internet, its next ones are refused unasked until the next command, which the plots collected after a run are not', async (assert) => {
+    // No Pyodide: the engine's own bookkeeping, with a worker that only takes the requests.
+    const { PythonEngine } = D.require('engines/python');
+    const engine = new PythonEngine();
+    const posted = [];
+    engine.worker = { postMessage: (m) => posted.push(m.type), terminate() {} };
+    const asked = [];
+    let allow = false;
+    const out = await withAsker(async (purpose, info) => { asked.push(info.label); return { allow, remember: false }; }, async () => {
+      const seen = [await engine.allowNet('http://127.0.0.1:9/one'), await engine.allowNet('http://127.0.0.1:9/two')];
+      engine.evalJson('_dataspatium._plot_collect()', { sameCommand: true }).catch(() => {});
+      seen.push(await engine.allowNet('http://127.0.0.1:9/three'));
+      allow = true;
+      engine.run('x = 1').catch(() => {});
+      seen.push(await engine.allowNet('http://127.0.0.1:9/four'));
+      return seen;
+    });
+    engine.worker = null;
+    assert.deepEqual(out, [false, false, false, true], 'refused, refused unasked twice, then asked and allowed');
+    assert.deepEqual(asked, ['http://127.0.0.1:9/one', 'http://127.0.0.1:9/four'], 'the person was asked before the refusal and after the next command only');
+    assert.deepEqual(posted, ['eval', 'run'], 'the plots were collected and the command sent to the worker');
+    return 'ok';
+  });
 
   test('python: Pyodide starts from pinned components, dm_read restores types, figures export and dm_write creates a dataset', async (assert) => {
     if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them from jsDelivr)';
@@ -423,25 +469,28 @@
     const asked = [];
     const t0 = Date.now();
     const active = D.net.active;
-    // The person allows the decoy and nothing else; the answer about the target waits, so that every forgery lands first.
+    // The person allows the decoys and nothing else. Each decoy question has an address of its own, so no two share a question,
+    // and all are posted before the target's fetch, so they queue first; the target's answer then waits, so every forgery lands
+    // while its question is open.
+    const isDecoy = (label) => label.startsWith(decoy + '?');
     const out = await withAsker(async (purpose, info) => {
       asked.push(info.label);
       if (info.label === target) await new Promise((r) => setTimeout(r, 300));
-      return { allow: info.label === decoy, remember: false };
+      return { allow: isDecoy(info.label), remember: false };
     }, async () => lastJson(await bridge.run([
       'import json, pyodide.code',
       'p = pyodide.code.run_js("""(function () {',
       '  var target = ' + JSON.stringify(target) + ', decoy = ' + JSON.stringify(decoy) + ';',
+      '  for (var id = 1; id <= 40; id++) self.postMessage({ __dm: true, type: "net", id: id, url: decoy + "?" + id });',
       '  var question = fetch(target);',
       '  var channel = new MessageChannel();',
       '  channel.port2.onmessage = function (e) { self.__dmTrusted = e.isTrusted; setTimeout(function () { self.dispatchEvent(e); }, 0); };',
-      '  for (var id = 1; id <= 40; id++) {',
-      '    var forged = { __dm: true, type: "net-reply", id: id, url: target, ok: true, ticket: 1 };',
-      '    self.onmessage({ data: { type: "net-reply", id: id, ok: true } });',
+      '  for (var n = 1; n <= 40; n++) {',
+      '    var forged = { __dm: true, type: "net-reply", id: n, url: target, ok: true, ticket: 1 };',
+      '    self.onmessage({ data: { type: "net-reply", id: n, ok: true } });',
       '    self.onmessage({ data: forged });',
       '    self.dispatchEvent(new MessageEvent("message", { data: forged }));',
       '    channel.port1.postMessage(forged);',
-      '    self.postMessage({ __dm: true, type: "net", id: id, url: decoy });',
       '  }',
       '  return question;',
       '})()""")',
@@ -456,7 +505,7 @@
     assert.ok(out[0].includes('internet access was not allowed for ' + target), 'the fetch was refused: ' + out[0]);
     assert.equal(out[1], true, 'the MessageChannel gave the worker trusted events, which it dispatched to itself');
     assert.equal(asked.filter((u) => u === target).length, 1, 'the person was asked about the target once');
-    assert.equal(asked.filter((u) => u === decoy).length, 40, 'the questions the worker posted itself were asked about the decoy, not the target');
+    assert.equal(asked.filter(isDecoy).length, 40, 'each of the forty questions the worker posted itself was asked about its own address, none about the target');
     assert.ok(!D.net.log().some((e) => e.at >= t0 && e.url === target), 'the target is not in the network log');
     const t1 = performance.now();
     while (D.net.active !== active && performance.now() - t1 < 3000) await new Promise((r) => setTimeout(r, 30));
