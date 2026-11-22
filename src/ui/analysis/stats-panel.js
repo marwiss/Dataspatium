@@ -15,6 +15,19 @@
     const TOOLS = stats.TOOLS.concat(['models']);
     const PREVIEW_ROWS = 2000;
 
+    /**
+     * A plot from a run: R's canvas as it is, Python's SVG (or PNG) as an image from a data: address, as the console shows
+     * it. The SVG is never imported into the page, so nothing in it (images, styles, links) loads or runs.
+     * @param {{canvas?: HTMLCanvasElement, svg?: string, png?: string, width?: number, height?: number}} e a plot entry
+     */
+    function plotNode(e) {
+      if (e.canvas) { e.canvas.classList.add('dm-console-plot'); return e.canvas; }
+      if (!e.svg && !e.png) return h('p', { class: 'dm-help', text: t('stats.plot.none') });
+      const img = h('img', { class: 'dm-console-plot', alt: '', width: String(e.width || 672), height: String(e.height || 480) });
+      img.src = e.svg ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(e.svg) : 'data:image/png;base64,' + e.png;
+      return img;
+    }
+
     /** @param {any} ctx shell context @param {{rerenderRight?: () => void}} [options] */
     function create(ctx, options = {}) {
       const { ui, store, shell } = ctx;
@@ -222,11 +235,6 @@
           table.setData({ columns: r.table.columns.map((c) => ({ key: c.name, label: i18n.has('stats.col.' + c.name) ? t('stats.col.' + c.name) : c.name, type: c.type })), rowCount: Math.min(r.table.rows.length, PREVIEW_ROWS), rowProvider: async (start, count) => r.table.rows.slice(start, start + count).map((row) => row.map(round)) });
         });
       }
-      function plotNode(e) {
-        if (e.canvas) { e.canvas.classList.add('dm-console-plot'); return e.canvas; }
-        if (e.svg) { const doc = new DOMParser().parseFromString(e.svg, 'image/svg+xml'); const node = document.importNode(doc.documentElement, true); node.classList.add('dm-console-plot'); return node; }
-        return h('p', { class: 'dm-help', text: t('stats.plot.none') });
-      }
       async function createDataset(r) {
         const name = await ui.dialog.prompt(t('text.dataset.name'), { title: t('text.create.dataset'), value: `${r.datasetName}: ${t('stats.tool.' + r.tool)}` });
         if (!name) return;
@@ -268,6 +276,6 @@
       function destroy() { seq++; fieldsEl = null; codeEl = null; resultEl = null; }
       return { center, inspector, datasetChanged, destroy, state: s, run };
     }
-    return { create };
+    return { create, plotNode };
   });
 })();
