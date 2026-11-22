@@ -334,6 +334,144 @@
     return `${run.longest.toFixed(1)} ms`;
   }, 90000);
 
+  test('raster: Exportera gives the original byte for byte and the map image as a GeoTIFF in Web Mercator with its attribution beside it', async (assert) => {
+    const zip = D.require('platform/storage/zip');
+    const file = sweref('en.tif', { copyright: 'Prov AB' });
+    const one = track(await importer.runFiles([file], { format: 'raster' }, 'Export ett'));
+    const ds = await datasets.get(one.id);
+    const own = exporter.formatsFor(ds).filter((f) => f.kind === 'raster');
+    assert.deepEqual(own.map((f) => [f.id, f.ext, f.unavailable || '']), [['raster-original', 'tif', ''], ['raster-image', 'zip', '']]);
+    const orig = await exporter.exportDataset(one.id, 'raster-original');
+    assert.ok(orig.filename === 'en.tif' && orig.blob.type === 'image/tiff' && sameBytes(new Uint8Array(await orig.blob.arrayBuffer()), new Uint8Array(await file.arrayBuffer())), orig.filename);
+    // Two originals go in a ZIP.
+    const a = sweref('a.tif'); const b = sweref('b.tif', { geo: { res: 1, east: E0 + 64, north: N0, epsg: 3006 } });
+    const two = track(await importer.runFiles([a, b], { format: 'raster' }, 'Export två'));
+    assert.equal(exporter.formatsFor(await datasets.get(two.id)).find((f) => f.id === 'raster-original').ext, 'zip');
+    const both = await exporter.exportDataset(two.id, 'raster-original');
+    const parts = await zip.readZip(both.blob);
+    assert.ok(both.filename.endsWith('.zip') && sameBytes(parts['a.tif'], new Uint8Array(await a.arrayBuffer())) && sameBytes(parts['b.tif'], new Uint8Array(await b.arrayBuffer())), Object.keys(parts).join(', '));
+    // The map image: a GeoTIFF in Web Mercator beside kreditering.txt.
+    const image = await exporter.exportDataset(one.id, 'raster-image');
+    const inside = await zip.readZip(image.blob);
+    assert.deepEqual(Object.keys(inside).sort(), ['en.tif', 'kreditering.txt']);
+    assert.ok(zip.text(inside['kreditering.txt']).includes(`${t('raster.field.attribution')}: Prov AB`) && zip.text(inside['kreditering.txt']).includes(`${t('common.source')}: en.tif`), zip.text(inside['kreditering.txt']));
+    const G = await pageGeoTiff();
+    const tif = await (await G.fromArrayBuffer(inside['en.tif'].slice().buffer)).getImage();
+    const f = ds.raster.files[0];
+    const [[n, w], [s, e]] = f.preview.bounds;
+    const [X0, Y0] = merc(w, s); const [X1, Y1] = merc(e, n);
+    const origin = tif.getOrigin(); const res = tif.getResolution();
+    assert.ok(tif.getGeoKeys().ProjectedCSTypeGeoKey === 3857 && tif.getSamplesPerPixel() === 4 && tif.getWidth() === f.preview.width, 'Web Mercator, RGBA, the preview\'s size');
+    assert.ok(Math.abs(origin[0] - X0) < 1e-3 && Math.abs(origin[1] - Y1) < 1e-3 && Math.abs(res[0] - (X1 - X0) / f.preview.width) < 1e-6 && Math.abs(-res[1] - (Y1 - Y0) / f.preview.height) < 1e-6, `${origin} ${res}`);
+    // Without an original, or without a place, the format says what it needs.
+    await withLimits({ keepBytes: 1000 }, async () => {
+      const none = track(await importer.runFiles([sweref('inget-original.tif')], { format: 'raster' }, 'Inget original'));
+      assert.equal(exporter.formatsFor(await datasets.get(none.id)).find((x) => x.id === 'raster-original').unavailable, 'export.needs.original');
+    });
+    const unplaced = track(await fx.rasterDataset({ name: 'Utan läge', files: [{ name: 'okand.tif' }] }));
+    const formats = exporter.formatsFor(await datasets.get(unplaced.id));
+    assert.equal(formats.find((x) => x.id === 'raster-image').unavailable, 'export.needs.geometry');
+    assert.ok(formats.some((x) => x.id === 'csv' && !x.unavailable), 'the table formats remain');
+    return 'ok';
+  }, 90000);
+
+  test('raster: the review before sharing starts the originals as removed when TIFF tags may name a person, and the copy keeps the pictures without the names', async (assert) => {
+    const shareScan = D.require('data/share-scan');
+    const file = sweref('dronare.tif', { artist: 'Anna Andersson', hostComputer: 'annas-dator' });
+    const meta = track(await importer.runFiles([file], { format: 'raster' }, 'Drönarbild'));
+    const handle = await datasets.ensureOpen(meta.id);
+    const stored = (await handle.engine.exec("select value from _meta where key = 'raster'"))[0].values[0][0];
+    assert.ok(!stored.includes('Anna Andersson') && !stored.includes('annas-dator'), 'the values are never copied out of the file');
+    assert.deepEqual(JSON.parse(stored).files[0].tags.personal, ['Artist', 'HostComputer']);
+    const found = await shareScan.inspect(meta.id);
+    const part = found.parts.find((p) => p.id === 'originals');
+    assert.ok(part && part.start === 'remove' && part.names[0] === 'dronare.tif (Artist, HostComputer)', JSON.stringify(part));
+    const bytes = await shareScan.copy(meta.id, { originals: true });
+    const text = asText(new Uint8Array(bytes));
+    assert.ok(!text.includes('Anna Andersson') && !text.includes('annas-dator'), 'neither name is in the copy');
+    const copy = track(await datasets.importBytes(bytes, { name: 'Drönarbild kopia' }, { quiet: true }));
+    assert.deepEqual((await dsFiles.list(copy.id)).map((f) => f.kind).sort(), ['preview', 'thumb'], 'the pictures stay');
+    const c = await datasets.get(copy.id);
+    assert.ok(c.kind === 'raster' && c.raster.files[0].kept === 'none' && c.raster.files[0].skipped === 'shared', JSON.stringify(c.raster.files[0]));
+    assert.deepEqual((await D.require('data/kind-health').check(copy.id)).map((x) => x.key), ['health.raster.original']);
+    assert.ok((await dsFiles.read(meta.id, 'dronare.tif', 'original')), 'the dataset itself is untouched');
+    // A file without such tags starts as kept.
+    const plain = track(await importer.runFiles([sweref('vanlig.tif')], { format: 'raster' }, 'Vanlig'));
+    assert.equal((await shareScan.inspect(plain.id)).parts.find((p) => p.id === 'originals').start, 'keep');
+    return 'ok';
+  }, 60000);
+
+  test('raster: undo, a version and a package bring the raster back with its facts and files', async (assert) => {
+    const recipes = D.require('data/recipes');
+    const meta = track(await importer.runFiles([sweref('angra.tif', { copyright: 'Prov AB' })], { format: 'raster' }, 'Ångra raster'));
+    const before = JSON.parse(JSON.stringify((await datasets.get(meta.id)).raster));
+    const files = (await dsFiles.list(meta.id)).map((f) => f.kind + '/' + f.name);
+    const rowid = (await (await datasets.ensureOpen(meta.id)).engine.exec('select rowid from data'))[0].values[0][0];
+    await recipes.apply(meta.id, 'edit_cell', { rowid, column: 'kalla', value: 'Någon annan' });
+    assert.equal((await rowsOf(meta.id))[0].kalla, 'Någon annan');
+    await recipes.undo(meta.id);
+    assert.equal((await rowsOf(meta.id))[0].kalla, 'Prov AB', 'undone');
+    assert.deepEqual((await datasets.ensureOpen(meta.id)).meta.raster, before, 'the facts after undo');
+    const version = await datasets.snapshot(meta.id, 'Före');
+    assert.deepEqual(version.facts.raster, before, 'the version says what it holds');
+    await recipes.apply(meta.id, 'edit_cell', { rowid, column: 'kalla', value: 'Ännu en' });
+    await datasets.restoreVersion(meta.id, version.n);
+    assert.equal((await rowsOf(meta.id))[0].kalla, 'Prov AB', 'restored');
+    assert.deepEqual((await datasets.get(meta.id)).raster, before, 'the facts after the version');
+    assert.deepEqual((await dsFiles.list(meta.id)).map((f) => f.kind + '/' + f.name), files);
+    const copy = track(await datasets.importBytes(await datasets.exportBytes(meta.id), { name: 'Raster i paket' }, { quiet: true }));
+    const c = await datasets.get(copy.id);
+    assert.ok(c.kind === 'raster' && c.raster && typeof c.raster === 'object' && !Array.isArray(c.raster), 'the kind and its facts as data');
+    assert.deepEqual(c.raster, before);
+    assert.deepEqual((await dsFiles.list(copy.id)).map((f) => f.kind + '/' + f.name), files, 'the files go along');
+    return 'ok';
+  }, 60000);
+
+  test('raster: the orthophoto shown becomes a raster in Web Mercator with Lantmäteriet\'s attribution and licence, and no key, token or file address', async (assert) => {
+    const orthophotos = D.require('viz/orthophotos');
+    const tier = D.require('platform/tier');
+    const preset = await orthophotos.get('ortho-se');
+    const canvas = document.createElement('canvas'); canvas.width = 300; canvas.height = 200;
+    const g = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d')); g.fillStyle = '#6b8f5a'; g.fillRect(0, 0, 300, 200);
+    const blob = /** @type {Blob} */ (await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9)));
+    const bounds = [[59.3305, 18.0600], [59.3290, 18.0640]];
+    const ADDRESS = 'https://dl1.lantmateriet.se/ortofoto/hemlig-fil.tif';
+    const result = {
+      url: URL.createObjectURL(blob), blob, type: blob.type, bounds, width: 300, height: 200, grid: 3857, resolution: 0.25,
+      items: [{ id: 'orto-1', collection: 'orto-x-2025', year: 2025, kind: 'rgbi', res: 0.16, level: 0.32, href: ADDRESS, headers: { Authorization: 'Bearer ortofoto-token' } }],
+      years: [2025], attribution: 'Ortofoto © Lantmäteriet (2025)',
+    };
+    try {
+      const meta = track(await raster.fromView(result, { name: 'Sparat ortofoto', preset }));
+      const ds = await datasets.get(meta.id);
+      const f = ds.raster.files[0];
+      assert.ok(ds.kind === 'raster' && f.crs === 'EPSG:3857' && f.placed && f.kept === 'none' && f.skipped === 'view', JSON.stringify(f));
+      assert.deepEqual(f.preview.bounds, bounds, 'the image lies where it was shown');
+      assert.ok(f.preview.width === 300 && f.preview.height === 200 && f.resolution === 0.25 && f.year === 2025 && f.name === 'ortofoto-2025.jpg', JSON.stringify(f.preview));
+      assert.ok(ds.raster.attribution.includes('Ortofoto © Lantmäteriet (2025)') && ds.raster.attribution.includes(t('ortho.se.processed')), ds.raster.attribution);
+      assert.ok(ds.raster.license.name === 'CC BY 4.0' && /^https:\/\//.test(ds.raster.license.url) && ds.raster.processed === true, JSON.stringify(ds.raster.license));
+      const [row] = await rowsOf(meta.id);
+      assert.ok(row.kalla === 'Lantmäteriet' && row.licens === 'CC BY 4.0' && row.ar === 2025 && row.koordinatsystem === geo.crsText('EPSG:3857') && JSON.parse(row.geometri).type === 'Polygon', JSON.stringify(row));
+      assert.deepEqual(ds.source.items, [{ id: 'orto-1', collection: 'orto-x-2025', year: 2025 }]);
+      assert.ok(ds.source.kind === 'orthophoto' && ds.source.publisher === 'Lantmäteriet' && ds.source.license === 'CC BY 4.0' && ds.source.preset === 'ortho-se' && ds.source.box.length === 4 && ds.source.fetchedAt, JSON.stringify(ds.source));
+      const preview = await dsFiles.read(meta.id, f.name, 'preview');
+      assert.ok(sameBytes(preview.bytes, new Uint8Array(await blob.arrayBuffer())), 'the image shown, not read again');
+      assert.deepEqual((await dsFiles.list(meta.id)).map((x) => x.kind).sort(), ['preview', 'thumb']);
+      const text = asText(new Uint8Array(await datasets.exportBytes(meta.id)));
+      assert.ok(!['dl1.lantmateriet.se', 'hemlig-fil', 'ortofoto-token', 'Bearer', 'blob:'].some((x) => text.includes(x)), 'no key, token or file address in the file');
+      assert.ok(kinds.facts(ds).some((x) => x.label === t('raster.field.attribution') && x.value.includes('(CC BY 4.0)')), 'Hantera names the licence');
+      // The kind's map belongs to BIM och GIS.
+      await tier.set(1);
+      try {
+        const err = await failure(raster.fromView(result, { preset }));
+        assert.ok(err && err.name === 'TierError', String(err && err.message));
+      } finally { await tier.set(3); }
+      const nothing = await failure(raster.fromView({ grid: 3006, bounds, blob }, { preset }));
+      assert.equal(nothing && nothing.message, t('raster.ortho.none'), 'only an image in Web Mercator');
+    } finally { URL.revokeObjectURL(result.url); }
+    return 'ok';
+  }, 60000);
+
   test('raster: cleanup', async (assert) => {
     await datasets.flushSaves();
     for (const id of created) await datasets.remove(id).catch(() => {});

@@ -9,6 +9,9 @@
  * its footprint, the level to read and the control points of the warp with data/geo (proj4 for the grids data/geo only converts
  * one way), and makes the thumbnail and the dataset. The values of tags that may name a person are never read out of the file:
  * only which of them are there, for the review before sharing.
+ * The orthophoto shown on a map is saved the same way (`fromView`), from the image already read, in Web Mercator, with its
+ * attribution and licence and without its key; and a raster's map image is written as a GeoTIFF in Web Mercator for Exportera
+ * (`geoTiffZip`), with its attribution beside it.
  */
 (function () {
   'use strict';
@@ -417,9 +420,90 @@
       });
     }
 
+    /**
+     * The orthophoto shown on a map, saved as a raster (decision B-64): the image already read (api/orthophoto-cog, in Web Mercator)
+     * is the preview, with a thumbnail; there is no original. The attribution says it was processed for the map, the licence is the
+     * preset's, and the source names the provider, the images and the box, but never a key, a token, a login or a file address.
+     * Nothing is read again.
+     * @param {any} result api/orthophoto-cog load's result in grid 3857 @param {{name?: string, preset?: any}} [options]
+     */
+    async function fromView(result, options = {}) {
+      tier.guard('kind:raster');
+      if (!result || !(result.blob instanceof Blob) || Number(result.grid || 3857) !== 3857 || !Array.isArray(result.bounds)) throw new Error(t('raster.ortho.none'));
+      const preset = options.preset || (await orthophotos.get('ortho-se'));
+      const [[n, w], [s, e]] = result.bounds;
+      const years = Array.from(new Set((result.years || []).map(Number).filter(Boolean))).sort((a, b) => b - a);
+      const type = result.blob.type || 'image/jpeg';
+      const name = `ortofoto-${years.length ? years.join('-') : 'vy'}.${/png/.test(type) ? 'png' : /webp/.test(type) ? 'webp' : 'jpg'}`;
+      const [X0, Y0] = merc(w, s); const [X1, Y1] = merc(e, n);
+      const width = Number(result.width); const height = Number(result.height);
+      const bbox = [X0, Y0, X1, Y1];
+      const fp = footprint(bbox, 'EPSG:3857');
+      const bitmap = await createImageBitmap(result.blob);
+      let thumb;
+      try { thumb = await images.scaled(bitmap, limits.thumb, type === 'image/jpeg' ? 'image/jpeg' : 'image/png', 0.85); } finally { bitmap.close(); }
+      const license = preset && preset.license ? { name: String(preset.license.name), url: String(preset.license.url || '') } : null;
+      const publisher = preset ? String(preset.publisher) : null;
+      const resolution = Math.round(Number(result.resolution) * 1e4) / 1e4 || null;
+      /** @type {RasterFile} */
+      const entry = {
+        name, size: result.blob.size, type, width, height, bands: 3, bits: 8, format: 'uint', photometric: 2, compression: null, levels: [{ width, height }],
+        crs: 'EPSG:3857', crsText: geo.crsText('EPSG:3857'), crsSource: 'epsg', placed: true, bbox, res: [(X1 - X0) / width, (Y1 - Y0) / height], resolution,
+        display: 'rgb', stretch: null, nodata: null, alpha: false, kept: 'none', skipped: 'view',
+        preview: { type, width, height, bounds: [[n, w], [s, e]] }, year: years[0] || null, tags: { personal: [] },
+      };
+      const row = [name, width, height, 3, 'uint8', resolution, entry.crsText, years[0] || null, publisher, license ? license.name : null, result.blob.size, JSON.stringify(fp.geometry)];
+      const item = { row, meta: entry, files: [{ name, kind: 'preview', type, bytes: new Uint8Array(await result.blob.arrayBuffer()) }, { name, kind: 'thumb', type: thumb.type, bytes: thumb.bytes }] };
+      const source = {
+        kind: 'orthophoto', publisher, table: 'Ortofoto' + (years.length ? ' ' + years.join(', ') : ''), license: license ? license.name : null, preset: preset ? preset.id : null,
+        items: (result.items || []).map((x) => ({ id: String(x.id || ''), collection: String(x.collection || ''), year: Number(x.year) || null })),
+        box: [w, s, e, n], fetchedAt: new Date().toISOString(),
+      };
+      return create({
+        name: options.name || t('raster.ortho.name', { years: years.join(', ') }), items: [item], source, license, processed: true, skipped: [],
+        attribution: `${result.attribution || (preset ? preset.attribution : '')}, ${t('ortho.se.processed')}`,
+      });
+    }
+
+    /** The attribution, the licence with its address and the source, one line each, for `kreditering.txt`; '' when there is neither. */
+    function creditText(raster, source) {
+      const license = raster.license && raster.license.name ? raster.license.name + (raster.license.url ? ` (${raster.license.url})` : '') : '';
+      if (!raster.attribution && !license) return '';
+      const from = source && source.publisher ? String(source.publisher) : (raster.files || []).map((f) => f.name).join(', ');
+      return [raster.attribution ? `${t('raster.field.attribution')}: ${raster.attribution}` : '', license ? `${t('raster.field.license')}: ${license}` : '', from ? `${t('common.source')}: ${from}` : '']
+        .filter(Boolean).join('\r\n') + '\r\n';
+    }
+    /**
+     * A raster's map image for Exportera: every placed file's preview written as a GeoTIFF in Web Mercator (`<name>.tif`, 8-bit RGBA)
+     * in a ZIP, with `kreditering.txt` beside them when there is an attribution or a licence.
+     * @param {string} id @param {any} [meta] the dataset's meta (read when left out) @returns {Promise<Blob>}
+     */
+    async function geoTiffZip(id, meta) {
+      const m = meta && meta.raster ? meta : await datasets.get(id);
+      const raster = (m && m.raster) || {};
+      const out = {};
+      for (const f of raster.files || []) {
+        const b = boundsOf(f);
+        if (!b || !f.preview.width || !f.preview.height) continue;
+        const got = await dsFiles.read(id, f.name, 'preview');
+        if (!got) continue;
+        const [[n, w], [s, e]] = b;
+        const [X0, Y0] = merc(w, s); const [X1, Y1] = merc(e, n);
+        const bytes = await engines.write(new Blob([got.bytes], { type: got.type }), { epsg: 3857, origin: [X0, Y1], res: [(X1 - X0) / f.preview.width, (Y1 - Y0) / f.preview.height] });
+        const base = String(f.name).replace(/\.[^.]+$/, '') || 'raster';
+        let path = base + '.tif';
+        for (let k = 2; out[path]; k++) path = `${base}-${k}.tif`;
+        out[path] = bytes;
+      }
+      if (!Object.keys(out).length) throw new Error(t('export.err.nofiles'));
+      const credit = creditText(raster, m && m.source);
+      if (credit) out['kreditering.txt'] = credit;
+      return D.require('platform/storage/zip').createZip(out, { level: 0 });
+    }
+
     return {
       COLUMNS, limits, PERSONAL, COMPRESSIONS, sniff, crsOf, extentOf, footprint, groundResolution, forward, webGrid, controlPoints, displayOf, mosaicOf,
-      boundsOf, preview, readFile, importFiles, create,
+      boundsOf, preview, readFile, importFiles, create, fromView, geoTiffZip, creditText,
     };
   });
 })();

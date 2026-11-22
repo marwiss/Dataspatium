@@ -66,6 +66,11 @@
           piece('starter.model.properties', 'select namn, varde, count(*) as element from _properties group by namn, varde order by element desc limit 50'),
         ]),
       },
+      raster: {
+        r: (s) => [piece('starter.raster.files', `raster <- dm_read(${s})\nraster[order(raster$upplosning), c("fil", "bredd", "hojd", "upplosning", "koordinatsystem")]`)],
+        python: (s) => [piece('starter.raster.files', `raster = dm_read(${s})\nraster.sort_values("upplosning")[["fil", "bredd", "hojd", "upplosning", "koordinatsystem"]]`)],
+        sql: () => [piece('starter.raster.files', 'select fil, bredd, hojd, upplosning, koordinatsystem, ar from data order by upplosning')],
+      },
     };
     /** A comprehensive plan is grouped by its theme, a detailed plan by the type of object. */
     function planColumn(ds) { return ds.plan && ds.plan.slag === 'oversiktsplan' ? 'tema' : 'objekttyp'; }
