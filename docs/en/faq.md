@@ -46,6 +46,11 @@ server (`python -m http.server 8092 --bind 127.0.0.1` in the folder) the address
 `http://127.0.0.1:8092/index.html?lang=sv&profil=start&profil-exit=1`. `lang=sv` (or `lang=en`) picks the language in advance, since
 the very first start waits for the language choice.
 
+The profile takes a few additions to the address. `&inflight=16` loads 16 scripts at a time instead of 8 (1–32; the first line gives
+the number). `&profil-ensure=sources` loads that group of scripts after the summary (several separated by commas; the groups are listed
+in `src/boot.js`) and writes how many scripts it was and how long it took. The line `profil presets:` shows how long the presets of
+the open APIs took to read, and the line `profil retry` that the page was reloaded once because a file could not be fetched.
+
 ## Can I interrupt R code that is stuck?
 
 Yes, when the app runs from a web server (for example `python -m http.server 8080` on your own computer, or https on
@@ -143,9 +148,9 @@ Yes. The first time the app is opened you choose a language; afterwards the lang
 icon with letters) or the command *Language* in the palette opens the same chooser. Swedish, Danish, Norwegian
 (Bokmål and Nynorsk), Finnish, Icelandic and English are available. The app reloads in the chosen language after unsaved
 changes have been saved. The choice is stored in the browser, so each computer and profile has its own.
-The chosen language is loaded when the app starts, for Danish, Norwegian, Finnish and Icelandic together with English,
-which shows where a text is not yet translated (for now, new texts are written in Swedish and English only). The first
-time, the browser's language is loaded together with the few words the chooser shows in each language.
+The chosen language is loaded when the app starts, for Danish, Norwegian, Finnish and Icelandic together with the English
+texts the language lacks, which show where a text is not yet translated (for now, new texts are written in Swedish and English
+only). The first time, the browser's language is loaded together with the few words the chooser shows in each language.
 
 ## Are there sources from the other Nordic countries?
 

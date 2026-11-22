@@ -107,6 +107,36 @@
     assert.deepEqual(rows, [['A', 1.5], ['B', 2]]);
   });
 
+  test('import: every extension an importer reads by the file\'s name is in the file picker of Inhämta', async (assert) => {
+    // The extensions the importers read (detect in src/io/importers/), written out, so that one they stop reading shows here.
+    const EXTENSIONS = ['csv', 'tsv', 'txt', 'tab', 'dat', 'fwf', 'prn', 'xlsx', 'xlsm', 'xls', 'xlsb', 'ods', 'fods', 'dbf', 'slk', 'sylk', 'dif', 'wk1', 'wk3', 'wk4',
+      'wks', 'wq1', 'wq2', 'wb1', 'wb2', 'wb3', 'qpw', 'html', 'htm', 'xhtml', 'md', 'markdown', 'docx', 'tex', 'json', 'ndjson', 'jsonl', 'geojson', 'topojson', 'kml',
+      'kmz', 'gpx', 'xml', 'sqlite', 'sqlite3', 'db', 's3db', 'gpkg', 'sql', 'shp', 'zip', 'sav', 'zsav', 'por', 'dta', 'sas7bdat', 'xpt', 'px', 'rds', 'rda', 'RData',
+      'parquet', 'mdb', 'accdb', 'pdf', 'odt', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'avif', 'qgs', 'qgz', 'bcf', 'bcfzip', 'graphml', 'gexf', 'cypher', 'cql',
+      'cyp', 'ifc', 'ifczip', 'dxf'];
+    const importers = D.moduleNames().filter((n) => n.startsWith('io/importers/')).map((n) => D.require(n)).filter((m) => typeof m.detect === 'function');
+    const read = EXTENSIONS.filter((ext) => importers.some((m) => m.detect(new File([''], 'x.' + ext))));
+    assert.deepEqual(EXTENSIONS.filter((ext) => !read.includes(ext)), [], 'every extension of the list is read by an importer');
+    // The drop zone of Inhämta, as the app draws it.
+    const root = document.createElement('div');
+    root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
+    document.body.appendChild(root);
+    let accept = '';
+    try {
+      history.replaceState(null, '', location.pathname + location.search);
+      const shell = await D.require('app').start(root);
+      shell.activate('inhamta');
+      const t0 = performance.now();
+      while (!root.querySelector('.dm-center dm-dropzone') && performance.now() - t0 < 5000) await new Promise((r) => setTimeout(r, 30));
+      const zone = root.querySelector('.dm-center dm-dropzone');
+      assert.ok(zone, 'the drop zone of Inhämta');
+      accept = (zone && zone.getAttribute('accept')) || '';
+    } finally { root.remove(); }
+    const offered = new Set(accept.toLowerCase().split(',').map((x) => x.trim()));
+    assert.deepEqual(read.filter((ext) => !offered.has('.' + ext.toLowerCase())), [], 'read by an importer but not offered by the file picker');
+    return read.length + ' extensions';
+  });
+
   test('presets: the bundled example dataset imports with the right types', async (assert) => {
     const preset = D.require('presets').examples[0];
     const meta = await importer.runPreset(preset);

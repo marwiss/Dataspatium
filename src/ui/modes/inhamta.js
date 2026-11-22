@@ -18,10 +18,11 @@
     const TYPED = ['sqlite', 'access', 'shapefile', 'detaljplan', 'planarchive', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
     /** Formats with fixed columns where one or many files become one dataset (no column step). */
     const COLLECTIONS = ['documents', 'images'];
+    /** What the file picker offers: every extension an importer reads by the file's name (tests/io.test.js keeps them together). */
     const ACCEPT = '.bcf,.bcfzip,.csv,.tsv,.txt,.tab,.dat,.fwf,.prn,.xlsx,.xlsm,.xls,.xlsb,.ods,.fods,.dbf,.slk,.sylk,.dif,.wk1,.wk3,.wk4,.wks,.wq1,.wq2,.wb1,.wb2,.wb3,.qpw,'
-      + '.html,.htm,.xhtml,.md,.markdown,.docx,.tex,.json,.ndjson,.jsonl,.geojson,.topojson,.kml,.kmz,.gpx,.xml,.sqlite,.sqlite3,.db,.gpkg,.sql,'
+      + '.html,.htm,.xhtml,.md,.markdown,.docx,.tex,.json,.ndjson,.jsonl,.geojson,.topojson,.kml,.kmz,.gpx,.xml,.sqlite,.sqlite3,.db,.s3db,.gpkg,.sql,'
       + '.shp,.zip,.sav,.zsav,.por,.dta,.sas7bdat,.xpt,.px,.rds,.rda,.RData,.parquet,.mdb,.accdb,'
-      + '.pdf,.odt,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif,.qgs,.qgz';
+      + '.pdf,.odt,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif,.qgs,.qgz,.graphml,.gexf,.cypher,.cql,.cyp,.ifc,.ifczip,.dxf';
 
     function createMode(ctx) {
       const { ui, services, store, shell } = ctx;

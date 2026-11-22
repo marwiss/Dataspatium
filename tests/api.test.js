@@ -58,6 +58,37 @@
     return presets.length + ' presets';
   });
 
+  test('api: the presets are read eight files at a time, once for calls at the same time, in the order one at a time gave', async (assert) => {
+    const names = D.assets.names(connectors.PRESET_PREFIX).filter((n) => n.endsWith('.api.json'));
+    // One at a time in the order of the names, as the presets were read before.
+    const before = [];
+    for (const name of names) { try { const obj = JSON.parse(await D.assets.loadText(name)); if (!schema.validate(obj).length) before.push(obj.id); } catch (_e) { /* left out */ } }
+    assert.equal(before.length, names.length, 'every preset file is a valid configuration');
+    assert.deepEqual((await connectors.loadPresets()).map((p) => p.id), before, 'the same ids in the same order');
+    assert.ok((await connectors.loadPresets()) === (await connectors.loadPresets()), 'the app reads them once');
+    // A reader of the test's own counts the reads and how many are on their way at once.
+    /** @type {Map<string, number>} */ const reads = new Map();
+    let now = 0;
+    let most = 0;
+    const loadText = async (name) => {
+      reads.set(name, (reads.get(name) || 0) + 1);
+      now += 1; most = Math.max(most, now);
+      try { await wait(2); return await D.assets.loadText(name); } finally { now -= 1; }
+    };
+    const [a, b] = await Promise.all([connectors.loadPresets({ loadText }), connectors.loadPresets({ loadText })]);
+    assert.ok(a === b, 'two calls at the same time get one list');
+    assert.deepEqual(a.map((p) => p.id), before);
+    assert.ok(a.every((p) => p.preset === true), 'each marked as a preset');
+    assert.equal(reads.size, names.length, 'every file read');
+    assert.deepEqual(Array.from(reads.values()).filter((n) => n !== 1), [], 'each file once');
+    assert.equal(most, Math.min(8, names.length), 'never more than eight on their way at once');
+    assert.ok((await connectors.loadPresets({ loadText })) === a && reads.size === names.length, 'a later call reads nothing again');
+    // A file that cannot be read, and one that is no valid configuration, are left out as before, and the order stays.
+    const broken = (name) => (name === names[0] ? Promise.reject(new Error('gone')) : name === names[1] ? Promise.resolve('{"id": "Bad Id"}') : D.assets.loadText(name));
+    assert.deepEqual((await connectors.loadPresets({ loadText: broken })).map((p) => p.id), before.slice(2));
+    return names.length + ' presets, ' + most + ' at a time';
+  });
+
   test('api: request builder handles path, query, repeat, querylines, templates and JSON bodies', (assert) => {
     const ep = {
       id: 'x', name: 'X', method: 'GET', path: '/data/{kpi}/year/{year}',

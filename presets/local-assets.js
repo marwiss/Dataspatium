@@ -681,7 +681,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/faq.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 21120,
+  "size": 21698,
   "library": "dataspatium"
  },
  "docs/sv/licenser.md": {
@@ -1689,7 +1689,7 @@ Dataspatium.assets.addEntries({
  "docs/en/faq.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 21189,
+  "size": 21746,
   "library": "dataspatium"
  },
  "docs/en/licenser.md": {
