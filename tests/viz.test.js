@@ -367,6 +367,67 @@
     });
   });
 
+  test('images: a picture from a file, a worker or storage is drawn only from a data:image/ address, and a web address is left out with a line in the console', async (assert) => {
+    const text = D.require('platform/text');
+    const GIF = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    const REMOTE = 'https://img.example.invalid/tracker.png?d=1';
+    const warned = [];
+    const warn = console.warn;
+    console.warn = (...args) => { warned.push(args.join(' ')); };
+    const holder = document.createElement('div');
+    document.body.appendChild(holder);
+    try {
+      assert.equal(text.imageSource(GIF), GIF);
+      for (const bad of [REMOTE, 'x.png', '//img.example.invalid/x.png', 'blob:https://img.example.invalid/1', 'javascript:alert(1)', 'data:text/html,<b>x</b>', 42]) assert.equal(text.imageSource(bad), '', String(bad));
+      assert.ok(warned.some((w) => w.includes('img.example.invalid/tracker.png')), 'logged: ' + warned.join(' | '));
+      assert.equal(text.imageSource(null), '');
+      // A notebook from a file: its outputs name the pictures.
+      const panel = D.require('ui/analysis/notebook-panel').create({ store: { set() {} }, shell: { activate() {} } }, {
+        notebook: { name: 'Bilder', cells: [{ id: 'c1', type: 'r', source: '', outputs: [{ kind: 'image', dataUrl: REMOTE }, { kind: 'image', dataUrl: GIF }] }] },
+        onDeleted() {}, log() {},
+      });
+      panel.start();
+      holder.appendChild(panel.bodyEl);
+      assert.deepEqual(Array.from(holder.querySelectorAll('img')).map((i) => i.getAttribute('src')), [GIF], 'only the data:image/ output is drawn');
+      // Saved charts: the gallery card and the published dashboard.
+      const charts = [{ id: 'c-bad', kind: 'r', name: 'Fjärrbild', datasetName: '', thumbnail: REMOTE + '" onerror="alert(1)' }, { id: 'c-good', kind: 'r', name: 'Egen bild', datasetName: '', thumbnail: GIF }];
+      const gallery = D.require('ui/viz/gallery').create({ charts, onOpen() {}, onExport() {}, onDelete() {} });
+      holder.appendChild(gallery.el);
+      assert.deepEqual(Array.from(gallery.el.querySelectorAll('img')).map((i) => i.getAttribute('src')), [GIF], 'the gallery draws the data:image/ thumbnail only');
+      const html = await (await D.require('viz/dashboards').toHtml({ name: 'Bilder' }, { resolved: charts.map((chart) => ({ chart })) })).text();
+      assert.ok(!/example\.invalid|onerror/.test(html), 'no remote address and no attribute from the thumbnail in the page');
+      assert.ok(html.includes(`<img src="${GIF}"`), 'the data:image/ thumbnail is published');
+      return 'ok';
+    } finally {
+      console.warn = warn;
+      holder.remove();
+    }
+  });
+
+  test('vega: a custom spec reads its data and pictures only from data: addresses, so Vega fetches nothing for it', async (assert) => {
+    const GIF = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    const warned = [];
+    const warn = console.warn;
+    console.warn = (...args) => { warned.push(args.join(' ')); };
+    try {
+      const view = await vegaRender.headless({
+        $schema: 'https://vega.github.io/schema/vega-lite/v6.json', width: 120, height: 60,
+        layer: [
+          { data: { values: [{ x: 1, u: 'https://img.example.invalid/mark.png' }, { x: 2, u: GIF }] }, mark: { type: 'image', width: 10, height: 10 }, encoding: { x: { field: 'x', type: 'quantitative' }, url: { field: 'u', type: 'nominal' } } },
+          { data: { url: 'https://data.example.invalid/rows.csv' }, mark: 'point', encoding: { x: { field: 'x', type: 'quantitative' } } },
+        ],
+      });
+      const svg = await vegaRender.toSvg(view);
+      view.finalize();
+      // The address stays only as text in the marks' aria-label; no picture or link loads it.
+      assert.ok(!/(?:href|src)="[^"]*example\.invalid/.test(svg), 'no remote address as a picture or a link');
+      assert.ok(svg.includes(`href="${GIF}"`), 'the data:image/ picture is drawn');
+      assert.ok(warned.some((w) => w.includes('img.example.invalid/mark.png')), 'the picture was refused: ' + warned.join(' | '));
+      assert.ok(warned.some((w) => w.includes('data.example.invalid/rows.csv')), 'the data was refused: ' + warned.join(' | '));
+      return 'ok';
+    } finally { console.warn = warn; }
+  });
+
   test('viz: cleanup', async () => {
     for (const cid of chartIds) { try { await charts.remove(cid); } catch (_e) { /* ignore */ } }
     for (const did of created) { try { await datasets.remove(did); } catch (_e) { /* ignore */ } }

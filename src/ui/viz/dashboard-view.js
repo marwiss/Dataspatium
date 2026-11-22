@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/viz/dashboard-view', ['ui/base', 'ui/basic', 'ui/icons', 'ui/overlays', 'viz/render', 'viz/dashboards', 'viz/charts', 'viz/data', 'platform/files', 'ui/viz/present'], (base, basic, icons, overlays, render, dashboards, charts, vizData, files, present) => {
+  D.define('ui/viz/dashboard-view', ['ui/base', 'ui/basic', 'ui/icons', 'ui/overlays', 'viz/render', 'viz/dashboards', 'viz/charts', 'viz/data', 'platform/files', 'ui/viz/present', 'platform/text'], (base, basic, icons, overlays, render, dashboards, charts, vizData, files, present, text) => {
     const { h, t, i18n, replace } = base;
 
     /**
@@ -131,7 +131,7 @@
           // Code charts show their saved image; a Python chart with a plotly figure is drawn live by plotly.js.
           if (chart.kind === 'map') holder.style.height = '360px';
           if (chart.kind === 'python' && chart.python && chart.python.plotly) { holder.style.height = '360px'; D.require('viz/plotly').render(holder, chart.python.plotly).then((hd) => { if (seq === renderSeq) handles.push(hd); else hd.finalize(); }).catch((err) => replace(holder, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) }))); }
-          else if (D.require('viz/code-charts').isCode(chart.kind)) replace(holder, chart.thumbnail ? h('img', { class: 'dm-gallery-thumb', src: chart.thumbnail, alt: chart.name }) : h('p', { class: 'dm-help', text: t('dash.code.note') }));
+          else if (D.require('viz/code-charts').isCode(chart.kind)) { const thumb = text.imageSource(chart.thumbnail); replace(holder, thumb ? h('img', { class: 'dm-gallery-thumb', src: thumb, alt: chart.name }) : h('p', { class: 'dm-help', text: t('dash.code.note') })); }
           else render.renderInto(chart, holder, { extraFilters: filtersFor(chart), onPick: pickedColumn(chart) ? (datum) => pick(chart, datum) : undefined }).then((hd) => { if (seq === renderSeq) handles.push(hd); else hd.finalize(); }).catch((err) => replace(holder, h('p', { class: err && err.name === 'TierError' ? 'dm-help dm-small' : 'dm-error dm-small', text: String((err && err.message) || err) })));
           return card;
         }));

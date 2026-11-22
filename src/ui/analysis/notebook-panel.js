@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/analysis/notebook-panel', ['ui/base', 'ui/basic', 'ui/icons', 'ui/overlays', 'analysis/notebooks', 'platform/files'], (base, basic, icons, overlays, notebooks, files) => {
+  D.define('ui/analysis/notebook-panel', ['ui/base', 'ui/basic', 'ui/icons', 'ui/overlays', 'analysis/notebooks', 'platform/files', 'platform/text'], (base, basic, icons, overlays, notebooks, files, text) => {
     const { h, t, i18n, replace } = base;
     const PREVIEW_ROWS = 50;
 
@@ -100,11 +100,12 @@
           if (o.kind === 'text') nodes.push(h('pre', { class: 'dm-console-stdout', text: o.text }));
           else if (o.kind === 'error') nodes.push(h('pre', { class: 'dm-console-error', text: o.text }));
           else if (o.kind === 'image' && o.plotly) {
-            // Interactive when plotly.js is available; the stored PNG otherwise.
+            // Interactive when plotly.js is available; the stored PNG otherwise. A notebook from a file can name any address as
+            // its picture: only a data:image/ one is drawn.
             const holder = h('div', { class: 'dm-nb-plot dm-plotly', style: { height: '420px' } });
             nodes.push(holder);
-            Promise.resolve().then(() => D.require('viz/plotly').render(holder, o.plotly)).catch(() => replace(holder, h('img', { class: 'dm-nb-plot', src: o.dataUrl, alt: '' })));
-          } else if (o.kind === 'image') nodes.push(h('img', { class: 'dm-nb-plot', src: o.dataUrl, alt: '' }));
+            Promise.resolve().then(() => D.require('viz/plotly').render(holder, o.plotly)).catch(() => { const src = text.imageSource(o.dataUrl); replace(holder, src ? h('img', { class: 'dm-nb-plot', src, alt: '' }) : null); });
+          } else if (o.kind === 'image') { const src = text.imageSource(o.dataUrl); if (src) nodes.push(h('img', { class: 'dm-nb-plot', src, alt: '' })); }
           else if (o.kind === 'dataset') nodes.push(h('div', { class: 'dm-console-dataset' }, icons.icon('table', 14), h('span', { text: t('nb.output.dataset', { name: o.name, rows: i18n.formatNumber(o.rows || 0) }) }), basic.button({ label: t('analysera.open.bearbeta'), size: 'sm', onClick: () => { store.set({ selectedId: o.id }); shell.activate('bearbeta'); } })));
           else if (o.kind === 'table') {
             const rows = (o.rows || []).slice(0, PREVIEW_ROWS);

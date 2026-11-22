@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/viz/present', ['ui/base', 'ui/basic', 'viz/render', 'viz/dashboards', 'viz/data'], (base, basic, render, dashboards, vizData) => {
+  D.define('ui/viz/present', ['ui/base', 'ui/basic', 'viz/render', 'viz/dashboards', 'viz/data', 'platform/text'], (base, basic, render, dashboards, vizData, text) => {
     const { h, t, replace } = base;
     /** The open presentation, if any (one at a time). */
     let current = null;
@@ -87,7 +87,7 @@
           const holder = h('div', { class: 'dm-chart-preview dm-present-chart' });
           const card = h('article', { class: 'dm-present-card', style: { gridColumn: `span ${span(item)}` } }, h('h2', { class: 'dm-truncate', text: chart.name }), holder);
           if (chart.kind === 'python' && chart.python && chart.python.plotly) { D.require('viz/plotly').render(holder, chart.python.plotly, { width, height }).then((hd) => { if (seq === renderSeq) handles.push(hd); else hd.finalize(); }).catch((err) => replace(holder, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) }))); }
-          else if (D.require('viz/code-charts').isCode(chart.kind)) replace(holder, chart.thumbnail ? h('img', { class: 'dm-gallery-thumb', src: chart.thumbnail, alt: chart.name }) : h('p', { class: 'dm-help', text: t('dash.code.note') }));
+          else if (D.require('viz/code-charts').isCode(chart.kind)) { const thumb = text.imageSource(chart.thumbnail); replace(holder, thumb ? h('img', { class: 'dm-gallery-thumb', src: thumb, alt: chart.name }) : h('p', { class: 'dm-help', text: t('dash.code.note') })); }
           else render.renderInto(chart, holder, { extraFilters, width, height }).then((hd) => { if (seq === renderSeq) handles.push(hd); else hd.finalize(); }).catch((err) => replace(holder, h('p', { class: err && err.name === 'TierError' ? 'dm-help dm-small' : 'dm-error dm-small', text: String((err && err.message) || err) })));
           return card;
         }));

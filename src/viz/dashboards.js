@@ -125,7 +125,7 @@
         // Graph charts are drawn as inline SVG from the saved positions (no libraries in the page).
         else if (chart.kind === 'model') body = await D.require('viz/model-draw').htmlFor('model-' + sections.length, chart, { width: options.width || 900 });
         else if (chart.kind === 'graph') body = await D.require('viz/graph-draw').htmlFor('graph-' + sections.length, chart, { width: options.width || 900 });
-        else if (codeCharts.isCode(chart.kind)) body = chart.thumbnail ? `<img src="${chart.thumbnail}" alt="${esc(chart.name)}">` : '';
+        else if (codeCharts.isCode(chart.kind)) { const thumb = text.imageSource(chart.thumbnail); body = thumb ? `<img src="${esc(thumb)}" alt="${esc(chart.name)}">` : ''; }
         else body = (await (await render.toBlob(chart, 'svg', { width: options.width || 900, extraFilters: options.extraFilters })).text()).replace(/^<\?xml[^>]*>\s*/, '');
         sections.push(`<section><h2>${esc(chart.name)}</h2>${body}<p class="src">${esc(chart.datasetName || '')}</p></section>`);
       }

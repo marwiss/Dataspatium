@@ -3,12 +3,32 @@
 /**
  * Loads Vega, Vega-Lite and vega-embed from the vendored builds, registers the app's colour schemes
  * and Swedish locale, and renders specs into the DOM or headless (for export and batch runs).
+ *
+ * A custom spec (a viz file can carry one) may name addresses for its data and its image marks; Vega's own loader would
+ * fetch them on the page without consent. The loader here reads data from data: addresses and pictures from data:image/
+ * only, and refuses the rest with a line in the console; links still open on a click.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/vega-render', ['viz/theme', 'viz/locale'], (theme, locale) => {
+  D.define('viz/vega-render', ['viz/theme', 'viz/locale', 'platform/text'], (theme, locale, text) => {
     let loading = null;
+    /** @type {any} */ let loader = null;
+    /** Vega's loader without the network: every data load and image goes through sanitize(), which refuses other addresses. */
+    function loaderFor(vega) {
+      if (loader) return loader;
+      loader = vega.loader();
+      const sanitize = loader.sanitize;
+      loader.sanitize = async function (uri, options) {
+        const out = await sanitize.call(this, uri, options);
+        const context = options && options.context;
+        const href = String(out.href || '');
+        if (context === 'href' || (context === 'image' ? text.imageSource(href) : /^data:/i.test(href))) return out;
+        if (context !== 'image') console.warn('[vega] left out data whose address is not data: ' + href.slice(0, 80));
+        throw new Error('address refused: ' + href.slice(0, 80));
+      };
+      return loader;
+    }
     async function ensureLibs() {
       if (!loading) {
         loading = (async () => {
@@ -38,9 +58,9 @@
      * @returns {Promise<{view: any, spec: any, finalize: Function}>}
      */
     async function embed(el, spec, options = {}) {
-      const { vegaEmbed } = await ensureLibs();
+      const { vega, vegaEmbed } = await ensureLibs();
       const result = await vegaEmbed(el, spec, {
-        actions: false, renderer: options.renderer || 'canvas', mode: 'vega-lite',
+        actions: false, renderer: options.renderer || 'canvas', mode: 'vega-lite', loader: loaderFor(vega),
         config: theme.vegaConfig(options), formatLocale: locale.numberLocale, timeFormatLocale: locale.timeLocale,
         tooltip: options.tooltip !== false ? { theme: theme.tokens().dark ? 'dark' : 'light' } : false,
       });
@@ -52,7 +72,7 @@
       const { vega, vegaLite } = await ensureLibs();
       const resolved = Object.assign({}, spec, spec.width === 'container' ? { width: options.width || 640 } : {});
       const vgSpec = vegaLite.compile(resolved, { config: theme.vegaConfig(options) }).spec;
-      const view = new vega.View(vega.parse(vgSpec), { renderer: 'none' });
+      const view = new vega.View(vega.parse(vgSpec), { renderer: 'none', loader: loaderFor(vega) });
       await view.runAsync();
       return view;
     }

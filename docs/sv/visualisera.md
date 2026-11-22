@@ -41,7 +41,8 @@ och axelrubrik. Övriga inställningar: rubrik och underrubrik, talformat, höjd
 (staplade, procent, överlappande), värdeetiketter på staplar och punkter på linjer. **Filter** begränsar raderna
 med villkor på kolumner. Under **Fler alternativ** finns radgräns, färgskala (sekventiell eller divergerande)
 och **Egen Vega-Lite-specifikation**: JSON-specifikationen kan redigeras direkt för allt som byggaren inte
-täcker; data läggs in från datamängden när diagrammet renderas.
+täcker; data läggs in från datamängden när diagrammet renderas. Data och bilder med en egen adress i specifikationen
+läses bara från `data:`-adresser (bilder från `data:image/`); en webbadress hämtas aldrig.
 
 Diagrammet sparas som byggarens tillstånd (eller den egna specifikationen) tillsammans med datamängdens namn, så
 det kan återskapas på nya data med samma kolumner.
