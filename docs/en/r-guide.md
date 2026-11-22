@@ -96,5 +96,8 @@ Finnish, Icelandic or English); the column names in `dm_list()`, however, are al
   server (localhost or https), the button *Stop* stops the code and keeps the session (see [faq.md](faq.md)).
 - Memory is limited by the browser and WebAssembly; keep datasets in R below a few hundred megabytes.
 - Input during a run (`readline()`, `menu()`) does not work.
-- Graphics windows, system commands, network calls and files outside the virtual file system are not available.
+- Graphics windows, system commands and files outside the virtual file system are not available.
+- R has no internet access: `download.file()`, `url()`, `socketConnection()` and `webr::mount()` with an address raise an
+  error, as do `fetch` and XMLHttpRequest in `webr::eval_js()`, and `webr::eval_js(..., await = TRUE)` runs no JavaScript in
+  the page. Bring data in under *Import* and read it with `dm_read()`; the packages come from the app (see Packages).
 - Help pages are included: `?dplyr::mutate` prints the help text in the console.

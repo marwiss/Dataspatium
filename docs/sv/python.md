@@ -133,7 +133,10 @@ språk.
   (localhost eller https) finns knappen *Avbryt*, som stoppar koden och behåller sessionen (se [faq.md](faq.md)).
 - Minnet begränsas av webbläsaren och WebAssembly; håll datamängder under några hundra megabyte i Python.
 - Inmatning under körning (`input()`) fungerar inte, inte heller trådar, processer eller filer utanför det
-  virtuella filsystemet. Nätverksanrop från Python (till exempel `micropip` och `pyodide.http.pyfetch`) kräver att du
-  gett lov till komponenter. Sockets är spärrade: det som går genom dem, som `urllib.request` och `http.client`, ger
-  ett fel som pekar på `pyfetch`.
+  virtuella filsystemet.
+- Python når internet bara genom `pyodide.http.pyfetch` (som `micropip` använder), och appen frågar om lov för
+  komponenter först. Sockets och XMLHttpRequest är spärrade och ger ett fel som pekar på `pyfetch`: det gäller
+  `socket`, `urllib.request`, `http.client`, `pyodide.http.open_url`, `pyodide.http.pyxhr`, `requests` och
+  `js.XMLHttpRequest`, liksom `js.importScripts` med en adress. `js.WebSocket`, `js.EventSource`, `js.Worker` och
+  `js.caches` finns inte.
 - Interaktiva fönster finns inte; matplotlib ritar till SVG och PNG. plotly ritas med plotly.js i appen och seaborn följer med som paket.

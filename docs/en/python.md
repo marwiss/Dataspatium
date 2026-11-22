@@ -134,7 +134,9 @@ of language.
   server (localhost or https) there is a *Stop* button that stops the code and keeps the session (see [faq.md](faq.md)).
 - Memory is limited by the browser and WebAssembly; keep datasets below a few hundred megabytes in Python.
 - Input while running (`input()`) does not work, nor do threads, processes or files outside the virtual file system.
-  Network calls from Python (for example `micropip` and `pyodide.http.pyfetch`) require that you have allowed components.
-  Sockets are blocked: what goes through them, such as `urllib.request` and `http.client`, raises an error that points to
-  `pyfetch`.
+- Python reaches the internet through `pyodide.http.pyfetch` only (which `micropip` uses), and the app first asks for
+  permission for components. Sockets and XMLHttpRequest are blocked and raise an error that points to `pyfetch`: this
+  covers `socket`, `urllib.request`, `http.client`, `pyodide.http.open_url`, `pyodide.http.pyxhr`, `requests` and
+  `js.XMLHttpRequest`, as well as `js.importScripts` with an address. `js.WebSocket`, `js.EventSource`, `js.Worker` and
+  `js.caches` do not exist.
 - There are no interactive windows; matplotlib draws to SVG and PNG. plotly is drawn with plotly.js in the app and seaborn comes along as a package.
