@@ -484,6 +484,7 @@
       assert.ok(!kinds.shown(ds), 'the kind\'s own views are hidden');
       assert.equal(kinds.ownView(ds), null, 'Bearbeta shows the table of files');
       assert.equal(kinds.ownTab(ds), 'stats', 'Analysera opens in Statistik');
+      assert.equal(await D.require('data/facets').startTab(meta.id), 'stats', 'and stays there, though SQL is a tab of Dokument');
       assert.ok(kinds.facts(ds).some((x) => x.label === t('raster.field.crs') && x.value === geo.crsText('EPSG:3006')), 'the facts stay');
       // Exportera: the original file beside the table's formats, not the image on the map.
       const formats = exporter.formatsFor(ds);
@@ -501,6 +502,7 @@
       assert.ok(kinds.shown(ds), 'the kind\'s own views are back');
       assert.equal(kinds.ownView(ds), 'map', 'its own map');
       assert.equal(kinds.ownTab(ds), 'sql', 'and Analysera\'s SQL');
+      assert.equal(await D.require('data/facets').startTab(meta.id), 'sql', 'which the mode opens');
       assert.deepEqual(kindFormats(ds), ['raster-original', 'raster-image'], 'the image on the map is offered');
       return 'ok';
     } finally {

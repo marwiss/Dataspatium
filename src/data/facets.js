@@ -135,10 +135,13 @@
       await datasets.save(id);
       datasets.notify('changed', { id });
     }
-    /** The tab in Analysera where this dataset is best started: the kind's own, or what the data says. */
+    /**
+     * The tab in Analysera where this dataset is best started: the kind's own (the statistics where the tier hides the kind, as for
+     * a raster in Dokument), or what the data says.
+     */
     async function startTab(id) {
       const handle = await datasets.ensureOpen(id);
-      if (kinds.isCollection(handle.meta)) return kinds.of(handle.meta).tab;
+      if (kinds.isCollection(handle.meta)) return kinds.ownTab(handle.meta);
       if (await has(id, 'spatial')) return 'geo';
       if (await has(id, 'text')) return 'text';
       return 'stats';
