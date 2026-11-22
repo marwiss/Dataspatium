@@ -51,6 +51,11 @@ cdelog.request
 cdelog.api.short.foundation
 cdelog.api.short.bcf
 cdelog.api.short.documents
+# The tiers (SA-120)
+tier.title
+tier.documents
+tier.bim-gis
+tier.experimental
 # Common words
 common.cancel
 common.save

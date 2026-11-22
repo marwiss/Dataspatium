@@ -435,6 +435,42 @@
    "fi": "Documents",
    "is": "Documents"
   },
+  "tier.title": {
+   "sv": "Nivå",
+   "en": "Tier",
+   "da": "Tier",
+   "nb": "Tier",
+   "nn": "Tier",
+   "fi": "Tier",
+   "is": "Tier"
+  },
+  "tier.documents": {
+   "sv": "Dokument",
+   "en": "Documents",
+   "da": "Documents",
+   "nb": "Documents",
+   "nn": "Documents",
+   "fi": "Documents",
+   "is": "Documents"
+  },
+  "tier.bim-gis": {
+   "sv": "BIM och GIS",
+   "en": "BIM + GIS",
+   "da": "BIM + GIS",
+   "nb": "BIM + GIS",
+   "nn": "BIM + GIS",
+   "fi": "BIM + GIS",
+   "is": "BIM + GIS"
+  },
+  "tier.experimental": {
+   "sv": "Experimentell",
+   "en": "Experimental",
+   "da": "Experimental",
+   "nb": "Experimental",
+   "nn": "Experimental",
+   "fi": "Experimental",
+   "is": "Experimental"
+  },
   "common.cancel": {
    "sv": "Avbryt",
    "en": "Cancel",
