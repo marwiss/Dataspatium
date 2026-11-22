@@ -148,7 +148,7 @@
       /**
        * Packages that are not bundled come from webR's repository after consent and are shipped together with the
        * extended package index. A refusal or a network error only leaves R to report the missing package. With
-       * `ask: false` (a flow at start) only a consent already kept lets them be fetched, and a package that would need a question
+       * `ask: false` (a flow at start) only a consent already kept lets them be fetched, and a package it may not fetch
        * fails the command with that ConsentError before any code runs, so the flow's log says why.
        * @param {string[]} names @param {{ask?: boolean}} [options]
        */
@@ -163,7 +163,7 @@
           }
         } catch (err) {
           D.log('r-bridge', err && err.name === 'ConsentError' ? 'remote packages not allowed' : 'remote packages failed', err);
-          if (options.ask === false && err && err.name === 'ConsentError' && err.reason === 'unattended') throw err;
+          if (options.ask === false && err && err.name === 'ConsentError') throw err;
         }
       }
 

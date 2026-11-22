@@ -174,7 +174,7 @@
        * Fetch (after consent) and ship the wheels of the packages the code imports. A refusal or a network error
        * only leaves Python to report the missing module. matplotlib gets the Agg backend and the app's theme before
        * it is first used. With `ask: false` (a flow at start) only a consent already kept lets wheels be fetched, and a wheel
-       * that would need a question fails the command with that ConsentError before any code runs, so the flow's log says why.
+       * it may not fetch fails the command with that ConsentError before any code runs, so the flow's log says why.
        * @param {string[]} names package names from catalog.referenced() @param {{ask?: boolean}} [options]
        * @returns {Promise<string[]>} packages newly made available
        */
@@ -187,7 +187,7 @@
           fetched = res.packages;
         } catch (err) {
           D.log('python-bridge', err && err.name === 'ConsentError' ? 'packages not allowed' : 'packages failed', err);
-          if (unattendedRefusal(err) && options.ask === false) throw err;
+          if (options.ask === false && err && err.name === 'ConsentError') throw err;
           return fetched;
         }
         const closure = catalog.closure(names);
@@ -248,7 +248,7 @@
       /**
        * Run user code. Resolves with the console entries to display. `ask: false` (a flow at start): nothing is asked. Python's
        * start, the wheels the code needs and the wheels and addresses the code itself fetches come only from the cache or with a
-       * consent already kept; a wheel that would need a question ends the run with that refusal as its error.
+       * consent already kept; a wheel it may not fetch ends the run with that refusal as its error.
        * @param {string} code @param {{ask?: boolean}} [options]
        * @returns {Promise<{entries: any[], ms: number}>}
        */
