@@ -166,10 +166,11 @@ function dataspatiumMakeXHR(RealXHR, lookupSync, lookupAsync, assetName, mimeFor
 /**
  * Install the asset shim inside a worker. Standalone: safe to stringify.
  * `config.net` takes the internet away from the hosted code. With 'none' (R) fetch, XMLHttpRequest and importScripts refuse
- * every URL that is not an asset, a blob or a data URL (XMLHttpRequest serves assets only), and WebSocket, WebSocketStream,
- * WebTransport, EventSource, Worker, SharedWorker, BroadcastChannel, caches, indexedDB and navigator.storage read as undefined,
- * ignoring assignments. 'fetch' (Python) is the same, except that fetch asks the main thread first, which asks for the user's
- * consent (platform/workers, the namespace's `net`), and that Worker and SharedWorker are stand-ins that start nothing.
+ * every URL that is not an asset, a blob or a data URL (XMLHttpRequest serves assets only), and Cache.add refuses every URL;
+ * WebSocket, WebSocketStream, WebTransport, EventSource, Worker, SharedWorker, BroadcastChannel, Notification, caches, indexedDB
+ * and the legacy file system read as undefined, ignoring assignments, and navigator is a frozen copy of what the engines read.
+ * 'fetch' (Python) is the same, except that fetch asks the main thread first, which asks for the user's consent
+ * (platform/workers, the namespace's `net`), and that Worker and SharedWorker are stand-ins that start nothing.
  * `config.netText` is the message, in the user's language, with {api} for the refused interface. Without `net` nothing changes.
  * The checks call only built-ins taken before the hosted code runs, and fetch and importScripts replace the native ones on the
  * prototype too, so that code in the worker can neither bend a check nor reach around it.
@@ -349,15 +350,48 @@ function dataspatiumWorkerShim(config, makeXHR) {
       return w;
     };
   }
+  /**
+   * The navigator a restricted worker sees: a frozen copy of what the engines read (Pyodide: userAgent, platform, maxTouchPoints;
+   * Emscripten: languages), taken now. The real one carries storage, storageBuckets (whose caches fetch inside the browser), locks
+   * (the page's dataset-save locks), serviceWorker and whatever a browser adds next; the copy leads to none of it.
+   */
+  function navigatorCopy(nav) {
+    var copy = {};
+    ['userAgent', 'platform', 'language', 'hardwareConcurrency', 'onLine', 'maxTouchPoints'].forEach(function (key) {
+      try { if (nav && nav[key] !== undefined) copy[key] = nav[key]; } catch (e) { /* not in this browser */ }
+    });
+    try { copy.languages = Object.freeze(Array.prototype.slice.call((nav && nav.languages) || [])); } catch (e) { copy.languages = Object.freeze([]); }
+    return Object.freeze(copy);
+  }
+  /** The address a fetch input names, for a refusal: a Request by its own URL, anything else as text. */
+  function describe(input) { try { return requestUrl(input); } catch (e) { return toStr(input); } }
+  /** Cache.add and addAll fetch inside the browser, past fetch; under net they refuse, whatever led to the Cache. */
+  function refusingCache(api) {
+    return function (request) {
+      var url = '';
+      try { url = describe(api === 'Cache.addAll' ? request && request[0] : request); } catch (e) { /* unreadable */ }
+      return rejected(new TypeError(refuse(api, url)));
+    };
+  }
   if (policy) {
     // Accessors rather than deletions: a global that resolves its constructors lazily cannot bring one back, and hosted code
     // that installs its own (webR's proxies, whose sockets and workers its main thread would open) neither fails nor succeeds.
-    // indexedDB, BroadcastChannel and navigator.storage would reach the app's own storage and tabs (consents, connectors, cached
-    // components); neither engine needs them, and Emscripten's IndexedDB code (webR's Fetch.init) takes an undefined one as missing.
-    ['WebSocket', 'WebSocketStream', 'WebTransport', 'EventSource', 'Worker', 'SharedWorker', 'BroadcastChannel', 'caches', 'indexedDB'].forEach(function (key) {
+    // indexedDB, BroadcastChannel and the legacy file system would reach the app's own storage and tabs (consents, connectors,
+    // cached components), and a Notification fetches its icon; neither engine needs them, and Emscripten's IndexedDB code (webR's
+    // Fetch.init) takes an undefined one as missing.
+    ['WebSocket', 'WebSocketStream', 'WebTransport', 'EventSource', 'Worker', 'SharedWorker', 'BroadcastChannel', 'Notification', 'caches', 'indexedDB',
+      'webkitRequestFileSystem', 'webkitRequestFileSystemSync', 'webkitResolveLocalFileSystemURL', 'webkitResolveLocalFileSystemSyncURL'].forEach(function (key) {
       pin(self, key, policy === 'fetch' && (key === 'Worker' || key === 'SharedWorker') ? standIn(key) : undefined);
     });
-    if (self.navigator) pin(self.navigator, 'storage', undefined);
+    // navigator is denied by default (navigatorCopy); the pins on WorkerNavigator.prototype are a second fence, should a real
+    // navigator be reachable some other way.
+    var nav = self.navigator;
+    if (nav) ['storage', 'storageBuckets', 'locks', 'serviceWorker'].forEach(function (key) { pin(nav, key, undefined); });
+    pin(self, 'navigator', navigatorCopy(nav));
+    var cacheProto = typeof self.Cache === 'function' ? self.Cache.prototype : null;
+    if (cacheProto) ['add', 'addAll'].forEach(function (key) {
+      Object.defineProperty(cacheProto, key, { value: refusingCache('Cache.' + key), writable: false, enumerable: true, configurable: false });
+    });
   }
   /**
    * Put `fn` in place of the native function: on self, and with config.net also on the prototype that holds the native one

@@ -277,7 +277,7 @@
     return 'blocked: ' + out.create_connection[0] + ', ' + out.urlopen[0] + ', _socket errno ' + out.raw[1];
   }, 300000);
 
-  test('python: Python reaches the internet through fetch only: open_url, pyxhr, XMLHttpRequest and importScripts are refused with the message, EventSource, caches, IndexedDB and BroadcastChannel are gone, Worker starts nothing, and pyfetch still reads an asset', async (assert) => {
+  test('python: Python reaches the internet through fetch only: open_url, pyxhr, XMLHttpRequest, importScripts and Cache.add are refused with the message, EventSource, caches, IndexedDB, BroadcastChannel and the navigator\'s storage, storageBuckets, locks and serviceWorker are gone, Worker starts nothing, and pyfetch still reads an asset', async (assert) => {
     if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them from jsDelivr)';
     await bridge.start();
     // Port 9 on this computer, which browsers refuse anyway: even a broken block reaches no server.
@@ -300,9 +300,11 @@
       '    "sync": refused(lambda: xhr(False)),',
       '    "async": refused(lambda: xhr(True)),',
       '    "importScripts": refused(lambda: js.importScripts("http://127.0.0.1:9/x.js")),',
-      '    "gone": [n for n in ("WebSocket", "WebSocketStream", "WebTransport", "EventSource", "BroadcastChannel", "caches", "indexedDB") if getattr(js, n, None) is not None],',
+      '    "gone": [n for n in ("WebSocket", "WebSocketStream", "WebTransport", "EventSource", "BroadcastChannel", "Notification", "caches", "indexedDB") if getattr(js, n, None) is not None],',
       '    "storage": getattr(js.navigator, "storage", None) is None,',
       '}',
+      'out["nav"] = pyodide.code.run_js("[typeof navigator.userAgent, typeof navigator.storage, typeof navigator.storageBuckets, typeof navigator.locks, typeof navigator.serviceWorker, Object.isFrozen(navigator)].join(\' \')")',
+      'out["cache"] = await pyodide.code.run_js("Promise.resolve(typeof Cache !== \'function\' ? \'no Cache\' : Cache.prototype.add.call(Object.create(Cache.prototype), \'http://127.0.0.1:9/cache\').then(function () { return \'added\'; }, function (e) { return e.message; }))")',
       'w = js.Worker.new("http://127.0.0.1:9/w.js")',
       'w.postMessage("hi")',
       'out["worker"] = pyodide.code.run_js("[typeof Worker, typeof SharedWorker, /native code/.test(String(Worker)), __dataspatium.refused().some(function (r) { return r.api === \'Worker\' && r.url === \'http://127.0.0.1:9/w.js\'; })].join(\' \')")',
@@ -315,8 +317,10 @@
     for (const key of ['open_url', 'sync', 'async']) assert.ok(out[key] && out[key][1].includes(xhrText), key + ': ' + JSON.stringify(out[key]));
     assert.ok(out.pyxhr && out.pyxhr[0] === 'XHRNetworkError' && out.pyxhr[2].includes(xhrText), 'pyxhr turns the refusal into its network error: ' + JSON.stringify(out.pyxhr));
     assert.ok(out.importScripts && out.importScripts[1].includes(D.t('python.net.blocked', { api: 'importScripts' })), JSON.stringify(out.importScripts));
-    assert.deepEqual(out.gone, [], 'no sockets, streams, caches, IndexedDB or BroadcastChannel for Python code');
+    assert.deepEqual(out.gone, [], 'no sockets, streams, notifications, caches, IndexedDB or BroadcastChannel for Python code');
     assert.equal(out.storage, true, 'no navigator.storage');
+    assert.equal(out.nav, 'string undefined undefined undefined undefined true', 'the navigator is a frozen copy that keeps its userAgent and has no storage, storageBuckets, locks or serviceWorker');
+    assert.ok(out.cache === 'no Cache' || out.cache === D.t('python.net.blocked', { api: 'Cache.add' }), 'Cache.add is refused with the message: ' + out.cache);
     assert.equal(out.worker, 'function function false true', 'Worker and SharedWorker are stand-ins: the worker was refused with its address and started nothing');
     assert.deepEqual(out.pyfetch, [200, true], 'pyfetch of an asset still works');
     return 'refused: ' + ['open_url', 'pyxhr', 'sync', 'async', 'importScripts'].map((k) => out[k][0]).join(', ');
