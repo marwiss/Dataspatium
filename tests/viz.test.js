@@ -390,13 +390,19 @@
       holder.appendChild(panel.bodyEl);
       assert.deepEqual(Array.from(holder.querySelectorAll('img')).map((i) => i.getAttribute('src')), [GIF], 'only the data:image/ output is drawn');
       // Saved charts: the gallery card and the published dashboard.
-      const charts = [{ id: 'c-bad', kind: 'r', name: 'Fjärrbild', datasetName: '', thumbnail: REMOTE + '" onerror="alert(1)' }, { id: 'c-good', kind: 'r', name: 'Egen bild', datasetName: '', thumbnail: GIF }];
+      // A data:image/ address with a quote passes imageSource, so only the escaping keeps it inside the src attribute.
+      const QUOTED = GIF + '" onerror="alert(1)';
+      const charts = [{ id: 'c-bad', kind: 'r', name: 'Fjärrbild', datasetName: '', thumbnail: REMOTE + '" onerror="alert(1)' }, { id: 'c-good', kind: 'r', name: 'Egen bild', datasetName: '', thumbnail: GIF }, { id: 'c-quote', kind: 'r', name: 'Citat', datasetName: '', thumbnail: QUOTED }];
       const gallery = D.require('ui/viz/gallery').create({ charts, onOpen() {}, onExport() {}, onDelete() {} });
       holder.appendChild(gallery.el);
-      assert.deepEqual(Array.from(gallery.el.querySelectorAll('img')).map((i) => i.getAttribute('src')), [GIF], 'the gallery draws the data:image/ thumbnail only');
+      assert.deepEqual(Array.from(gallery.el.querySelectorAll('img')).map((i) => i.getAttribute('src')), [GIF, QUOTED], 'the gallery draws the data:image/ thumbnails only, each as one attribute');
       const html = await (await D.require('viz/dashboards').toHtml({ name: 'Bilder' }, { resolved: charts.map((chart) => ({ chart })) })).text();
-      assert.ok(!/example\.invalid|onerror/.test(html), 'no remote address and no attribute from the thumbnail in the page');
+      assert.ok(!/example\.invalid/.test(html), 'no remote address in the page');
       assert.ok(html.includes(`<img src="${GIF}"`), 'the data:image/ thumbnail is published');
+      const page = new DOMParser().parseFromString(html, 'text/html');
+      const published = Array.from(page.querySelectorAll('img'));
+      assert.ok(published.every((i) => i.getAttributeNames().every((n) => n === 'src' || n === 'alt')), 'no attribute from a thumbnail: ' + published.map((i) => i.getAttributeNames().join(',')).join(' | '));
+      assert.deepEqual(published.map((i) => i.getAttribute('src')), [GIF, QUOTED], 'the quoted thumbnail reads back whole from its src');
       return 'ok';
     } finally {
       console.warn = warn;
