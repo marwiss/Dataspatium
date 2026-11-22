@@ -95,7 +95,7 @@
     return 'ok';
   });
 
-  test('tier: the deployment\'s server becomes a source once, without contacting it', async (assert) => {
+  test('tier: the deployment\'s server becomes a source once, without contacting it or replacing a source on the same host', async (assert) => {
     const opencde = D.require('api/families/opencde');
     const connectors = D.require('api/connectors');
     const idb = D.require('platform/storage/idb');
@@ -103,7 +103,7 @@
     const asked = [];
     consent.setAsker(async (purpose) => { asked.push(purpose); return { allow: false }; });
     const netBefore = D.net.log().length;
-    let made = null;
+    let made = null; let own = null;
     try {
       await idb.deleteSetting('deploy.server');
       made = await opencde.addDeployed({ baseUrl: 'https://dataregium.tier.test', name: 'Vår Dataregium' });
@@ -113,12 +113,18 @@
       assert.equal(await opencde.addDeployed({ baseUrl: 'https://dataregium.tier.test/' }), null, 'not added twice');
       await connectors.remove(made.id);
       assert.equal(await opencde.addDeployed({ baseUrl: 'https://dataregium.tier.test' }), null, 'one the user removed stays removed');
+      // The user's own source on the same host, under another address, is kept as it is.
+      own = (await D.require('api/families/databases').createConnector('opencde', { baseUrl: 'https://same.tier.test', name: 'Min egen' }, { discover: false })).connector;
+      await idb.deleteSetting('deploy.server');
+      assert.equal(await opencde.addDeployed({ baseUrl: 'http://same.tier.test/dataregium', name: 'Deras' }), null, 'not added over it');
+      assert.equal((await connectors.get(own.id)).name, 'Min egen', 'and the user\'s source is not replaced');
       assert.equal(D.net.log().length, netBefore, 'no request');
       assert.deepEqual(asked, [], 'no consent asked');
       return 'ok';
     } finally {
       consent.setAsker(null);
       if (made) await connectors.remove(made.id).catch(() => {});
+      if (own) await connectors.remove(own.id).catch(() => {});
       await idb.deleteSetting('deploy.server');
     }
   });
@@ -182,9 +188,12 @@
       assert.ok(card.querySelector('[data-tier="bim-gis"]').textContent.includes(t('tier.default')), 'the default is marked');
       assert.ok(items.every((b) => b.getAttribute('title')), 'each choice has a tip');
       assert.ok(card.textContent.includes(t('tier.documents.desc')), 'each tier is explained');
-      /** @type {HTMLElement} */ (card.querySelector('[data-tier="documents"]')).click();
+      const documentsButton = /** @type {HTMLElement} */ (card.querySelector('[data-tier="documents"]'));
+      documentsButton.focus();
+      documentsButton.click();
       await waitFor(() => tier.current() === 1, 3000, 'the tier chosen');
       const again = await waitFor(() => root.querySelector('[data-settings="tier"][data-tier-current="documents"]'), 5000, 'the card redrawn');
+      await waitFor(() => document.activeElement && document.activeElement.getAttribute('data-tier') === 'documents' && again.contains(document.activeElement), 5000, 'the focus back on the chosen tier');
       assert.ok(!again.querySelector('[data-tier="bim-gis"]').textContent.includes(t('tier.default')), 'a choice is made now');
       // A ceiling: the tiers above it cannot be chosen, and the card says why.
       tier.useConfig({ tier: 'bim-gis' });
@@ -192,6 +201,12 @@
       const capped = await waitFor(() => { const c = root.querySelector('[data-settings="tier"]'); return c && c.querySelector('[data-tier-capped="deployment"]') ? c : null; }, 5000, 'the capped card');
       assert.ok(/** @type {HTMLButtonElement} */ (capped.querySelector('[data-tier="experimental"]')).disabled, 'Experimentell cannot be chosen');
       assert.ok(!(/** @type {HTMLButtonElement} */ (capped.querySelector('[data-tier="bim-gis"]')).disabled));
+      // With no choice and a ceiling of Dokument, the default is the tier that then holds.
+      await tier.set(null);
+      tier.useConfig({ tier: 'documents' });
+      shell.applyTier();
+      const low = await waitFor(() => root.querySelector('[data-settings="tier"][data-tier-current="documents"]'), 5000, 'the card under the ceiling');
+      assert.ok(low.querySelector('[data-tier="documents"]').textContent.includes(t('tier.default')) && !low.querySelector('[data-tier="bim-gis"]').textContent.includes(t('tier.default')), 'the default marked where it holds');
       return 'ok';
     } finally { stop(root); await restore(); }
   }, 30000);
@@ -210,6 +225,8 @@
       const { root, shell } = started;
       const notice = await waitFor(() => root.querySelector('.dm-center [data-tier-hidden="kind.model"]'), 8000, 'the notice');
       assert.ok(notice.textContent.includes(t('tier.bim-gis')) && notice.textContent.includes(t('tier.documents')), 'it names the tier it needs and the one in effect');
+      assert.equal(notice.tagName, 'DM-EMPTY-STATE', 'Kontrollera\'s empty state');
+      assert.ok(root.textContent.includes(t('tier.hint')), 'and the inspector says what the tier does');
       assert.ok(!root.querySelector('.dm-center [data-kontrollera-model]'), 'the model\'s cards are hidden');
       const ids = (await datasets.list()).map((d) => d.id);
       assert.ok(ids.includes(model.id) && ids.includes(table.id), 'both datasets are kept in Dokument');
@@ -235,5 +252,238 @@
       for (const m of [model, table]) if (m) await datasets.remove(m.id);
       await restore();
     }
+  }, 60000);
+
+  test('tier: unreadable config values warn in the console, and a write that fails changes nothing', async (assert) => {
+    const warned = [];
+    const realWarn = console.warn;
+    console.warn = (...args) => { warned.push(args.map(String).join(' ')); };
+    try { tier.readConfig({ tier: 'dokument', language: 'xx', server: { baseUrl: 'ftp://x' } }); } finally { console.warn = realWarn; }
+    assert.equal(warned.length, 3, 'the tier, the language and the server: ' + warned.join(' | '));
+    assert.ok(warned[0].includes('dokument') && warned[1].includes('xx'), 'each names what it skipped');
+    assert.equal(tier.readConfig({ tier: 'dokument' }).ceiling, null, 'a mistyped tier is no ceiling');
+    await reset();
+    const idb = D.require('platform/storage/idb');
+    const realSet = idb.setSetting;
+    idb.setSetting = () => Promise.reject(new Error('the storage is full'));
+    let failed = false;
+    try { await tier.set('documents'); } catch (_e) { failed = true; } finally { idb.setSetting = realSet; }
+    try {
+      assert.ok(failed, 'the choice is refused');
+      assert.equal(tier.current(), 2, 'and the tier is as before');
+      assert.equal(tier.choice(), null);
+      return 'ok';
+    } finally { await restore(); }
+  });
+
+  test('tier: a server\'s capabilities need the OpenCDE consent, and its tier is remembered', async (assert) => {
+    const opencde = D.require('api/families/opencde');
+    const consent = D.require('platform/consent');
+    const idb = D.require('platform/storage/idb');
+    const http = D.require('api/http');
+    const BASE = 'dataspatium-asset://tests/tier-cde';
+    let hits = 0;
+    D.net.virtual('tests/tier-cde/', (url) => {
+      hits++;
+      return Promise.resolve(new URL(url).pathname.endsWith('/.well-known/dataregium') ? { kind: 'text', data: JSON.stringify({ server: { name: 'Nivåservern' }, tier: 'documents', extensions: {} }) } : { kind: 'text', data: '{}', status: 404 });
+    });
+    const a = { id: 'tier-cde-a', name: 'Nivå A', baseUrl: BASE, family: { type: 'opencde' }, auth: { type: 'none' }, endpoints: [], requestId: false };
+    const b = Object.assign({}, a, { id: 'tier-cde-b', name: 'Nivå B' });
+    const key = 'dataspatium.consent';
+    const override = localStorage.getItem(key);
+    const prior = { opencde: await consent.state('opencde'), api: await consent.state('api') };
+    const remembered = async (id) => { for (let i = 0; i < 50; i++) { const saved = await idb.getSetting('tier.servers', null); if (saved && saved[id] === 1) return true; await wait(20); } return false; };
+    const realRequest = http.request;
+    try {
+      // With OpenCDE denied, even with open APIs allowed, the server is not asked.
+      localStorage.removeItem(key);
+      await consent.set('opencde', 'denied'); await consent.set('api', 'granted');
+      let refused = null;
+      try { await opencde.capabilities(a, { force: true }); } catch (err) { refused = err; }
+      assert.ok(refused && refused.name === 'ConsentError' && refused.purpose === 'opencde', 'refused by the OpenCDE consent: ' + (refused && refused.message));
+      assert.equal(hits, 0, 'no request');
+      if (override !== null) localStorage.setItem(key, override);
+      // The server answers: its tier caps what needs it, by the source's id and its address, and is kept in IndexedDB.
+      await opencde.capabilities(a, { force: true });
+      assert.ok(hits > 0, 'asked once allowed');
+      assert.equal(tier.serverTier('tier-cde-a'), 1);
+      assert.equal(tier.serverTier(BASE), 1);
+      assert.ok(await remembered('tier-cde-a'), 'remembered');
+      // Another source on the same server is noted from the cache, without another request.
+      const asked = hits;
+      await opencde.capabilities(b);
+      assert.equal(hits, asked, 'from the cache');
+      assert.equal(tier.serverTier('tier-cde-b'), 1, 'the second source by its own id');
+      // A server that cannot be reached leaves what it announced before.
+      http.request = () => Promise.reject(Object.assign(new Error('unreachable'), { kind: 'network' }));
+      await opencde.capabilities(a, { force: true });
+      http.request = realRequest;
+      assert.equal(tier.serverTier('tier-cde-a'), 1, 'kept after a failed request');
+      // After a reload, what was remembered caps again.
+      const saved = await idb.getSetting('tier.servers', {});
+      await idb.setSetting('tier.servers', Object.assign({}, saved, { 'tier-cde-reload': 1 }));
+      await tier.load();
+      assert.equal(tier.serverTier('tier-cde-reload'), 1, 'read back at start');
+      assert.ok(!tier.shows('cde.teams', { server: 'tier-cde-reload' }) && !tier.shows('cde.bcf', { server: 'tier-cde-reload' }) && tier.shows('kind:model', { server: 'tier-cde-reload' }), 'the server caps its own features only');
+      // An unknown value caps nothing and is said in the console.
+      const warned = [];
+      const realWarn = console.warn;
+      console.warn = (...args) => { warned.push(args.map(String).join(' ')); };
+      try { tier.noteServer({ id: 'tier-cde-odd' }, 'gold'); } finally { console.warn = realWarn; }
+      assert.ok(warned.some((w) => w.includes('gold')) && tier.serverTier('tier-cde-odd') === null, 'an unknown tier is no cap');
+      return 'ok';
+    } finally {
+      http.request = realRequest;
+      if (override !== null) localStorage.setItem(key, override);
+      await consent.set('opencde', prior.opencde); await consent.set('api', prior.api);
+      for (const c of [a, b, { id: 'tier-cde-reload' }]) tier.noteServer(c, undefined);
+      D.net.unvirtual('tests/tier-cde/');
+    }
+  });
+
+  test('tier: commands, operations, recipes and fetching again refuse what the tier hides, in words that name it', async (assert) => {
+    await reset();
+    const commands = D.require('data/commands');
+    const recipes = D.require('data/recipes');
+    const runner = D.require('api/runner');
+    const connectors = D.require('api/connectors');
+    let table = null;
+    try {
+      table = await datasets.create({ name: 'Nivå kommandon', columns: [{ name: 'namn', type: 'text' }, { name: 'lon', type: 'number' }, { name: 'lat', type: 'number' }], rows: [[' a ', 18.06, 59.33]] });
+      await tier.set('documents');
+      const names = commands.list().map((c) => c.name);
+      assert.ok(!names.includes('create_map') && !names.includes('add_map_layer') && !names.includes('cde_topics') && !names.includes('cde_create_topic'), 'the maps and the BCF topics go: ' + names.join(', '));
+      assert.ok(names.includes('create_chart') && names.includes('make_document') && names.includes('cde_files') && names.includes('cde_fetch_file'), 'the charts, documents and the CDE\'s files stay');
+      assert.ok(commands.list({ all: true }).some((c) => c.name === 'create_map'), 'every command on request');
+      assert.ok(!commands.tools().some((x) => x.name === 'cde_create_topic'), 'and the assistant is not offered them');
+      const map = await commands.run('create_map', { dataset: table.id, name: 'Karta', basemap: null }, { trusted: true });
+      assert.ok(!map.ok && map.tier === 'bim-gis' && map.error.includes(t('tier.bim-gis')) && map.error.includes(t('tier.documents')), 'refused in words that name the tiers: ' + map.error);
+      let approvals = 0;
+      const topic = await commands.run('cde_create_topic', { source: 'x', project: 'y', title: 'z', description: null, status: null, priority: null, type: null }, { approve: async () => { approvals++; return true; } });
+      assert.ok(!topic.ok && !topic.refused && approvals === 0, 'refused before anyone is asked to approve it');
+      const listed = await commands.run('list_operations', { group: null });
+      const ops = listed.result.operations.map((o) => o.id);
+      assert.ok(!ops.includes('geo_height') && !ops.includes('ifc_python') && !ops.includes('ifc_changeset') && !ops.includes('ifc_party') && ops.includes('trim'), 'list_operations holds what the tier shows');
+      const described = await commands.run('describe_operation', { operation: 'geo_height' });
+      assert.ok(!described.ok && described.error.includes(t('tier.bim-gis')), described.error);
+      let refused = null;
+      try { await recipes.apply(table.id, 'geo_height', {}); } catch (err) { refused = err; }
+      assert.ok(refused && refused.name === 'TierError' && refused.tierFeature === 'op:geo_height', 'recipes refuse the heights: ' + (refused && refused.message));
+      await recipes.apply(table.id, 'trim', { columns: ['namn'] });
+      assert.ok(recipes.canUndo(table.id), 'what Dokument holds runs');
+      await recipes.undo(table.id);
+      // Fetching again: a geodata service is never contacted, a CDE's topics need BCF and its administration's lists stay.
+      assert.ok(await connectors.get('naturvardsregistret'), 'the preset is in the catalogue');
+      const before = D.net.log().length;
+      let refetch = null;
+      try { await runner.refetch({ kind: 'api', connectorId: 'naturvardsregistret', endpointId: 'x', params: {} }); } catch (err) { refetch = err; }
+      assert.ok(refetch && refetch.name === 'TierError', 'refused: ' + (refetch && refetch.message));
+      assert.equal(D.net.log().length, before, 'no request');
+      assert.deepEqual(runner.hiddenBy({ kind: 'api', family: 'opencde', connectorId: 'cde-x', opencde: { kind: 'topics', projectId: 'p' } }), { entry: 'cde.bcf', options: { server: 'cde-x' } });
+      assert.equal(runner.hiddenBy({ kind: 'api', family: 'opencde', connectorId: 'cde-x', opencde: { kind: 'admin', admin: 'users' } }), null, 'the administration\'s lists stay in Dokument');
+      await tier.set('bim-gis');
+      assert.ok(commands.list().some((c) => c.name === 'create_map') && commands.list().some((c) => c.name === 'cde_topics'), 'BIM och GIS lists them again');
+      assert.equal(runner.hiddenBy({ kind: 'api', connectorId: 'naturvardsregistret' }), null);
+      assert.ok(runner.hiddenBy({ kind: 'api', family: 'opencde', connectorId: 'cde-x', opencde: { kind: 'admin', admin: 'graph' } }), 'the administration\'s graph query is Experimentell');
+      return 'ok';
+    } finally {
+      if (table) await datasets.remove(table.id);
+      await restore();
+    }
+  }, 30000);
+
+  test('tier: exports, templates, the IFC graph and the groups loaded ahead follow the tier', async (assert) => {
+    await reset();
+    const exporter = D.require('io/export');
+    const documents = D.require('docgen/documents');
+    const graphSource = D.require('api/graph-source');
+    const importer = D.require('io/import');
+    try {
+      const ifc = { kind: 'model', model: { format: 'ifc' } };
+      const kindFormats = () => exporter.formatsFor(ifc).filter((f) => f.kind).map((f) => f.id);
+      assert.ok(kindFormats().includes('model-glb') && kindFormats().includes('model-properties'), 'BIM och GIS exports the model\'s own formats');
+      assert.ok((await documents.list()).some((d) => d.id === 'builtin-besiktning'), 'and lists the reports of findings');
+      // The IFC graph is Experimentell: a model's way to it is refused in the notice's words.
+      let graph = null;
+      try { await graphSource.open({}, { source: { cde: { connectorId: 'cde-x', host: 'cde.tier.test' } } }); } catch (err) { graph = err; }
+      assert.ok(graph && graph.name === 'TierError' && graph.message.includes(t('tier.experimental')), 'the IFC graph needs Experimentell: ' + (graph && graph.message));
+      // The installed app loads every group up to the ceiling ahead, so that raising the tier works offline.
+      assert.ok(tier.groupAllowed('assistant') && !tier.groupShown('assistant'), 'the assistant\'s group is loaded ahead in BIM och GIS');
+      tier.useConfig({ tier: 'bim-gis' });
+      assert.ok(!tier.groupAllowed('assistant') && tier.groupAllowed('ai'), 'but not above the ceiling');
+      tier.useConfig(undefined);
+      await tier.set('documents');
+      assert.deepEqual(kindFormats(), ['model-original'], 'Dokument exports a model\'s original file and its table');
+      assert.ok(!(await documents.list()).some((d) => d.findings), 'no reports of findings in Dokument');
+      assert.ok(await documents.get('builtin-besiktning'), 'one a flow names is still found');
+      assert.ok(!tier.shows('cde.teams') && !tier.shows('geo:buffer') && tier.shows('geo:points'), 'no teams, and of the geo tools only places per area');
+      // A BCF file is read by the BCF client only: refused before it is read.
+      let bcf = null;
+      try { await importer.preview(new File(['PK'], 'arenden.bcfzip'), {}); } catch (err) { bcf = err; }
+      assert.ok(bcf && bcf.name === 'TierError' && bcf.tierFeature === 'import:bcf', 'a BCF file needs BIM och GIS: ' + (bcf && bcf.message));
+      return 'ok';
+    } finally { await restore(); }
+  });
+
+  test('tier: a saved chart of a hidden type opens as the notice, and nothing draws or publishes it', async (assert) => {
+    await reset();
+    const charts = D.require('viz/charts');
+    const leaflet = D.require('viz/leaflet');
+    const render = D.require('viz/render');
+    const dashboards = D.require('viz/dashboards');
+    let table = null; let chart = null; let started = null;
+    try {
+      table = await datasets.create({ name: 'Nivå platser', columns: [{ name: 'namn', type: 'text' }, { name: 'lon', type: 'number' }, { name: 'lat', type: 'number' }], rows: [['a', 18.06, 59.33]] });
+      const record = charts.create('map', table, 'Nivå karta');
+      record.map = leaflet.defaultMap(await datasets.columns(table.id), table);
+      chart = await charts.save(record);
+      await tier.set('documents');
+      let drawn = null;
+      try { await render.toBlob(chart, 'png'); } catch (err) { drawn = err; }
+      assert.ok(drawn && drawn.name === 'TierError', 'the map view is not drawn in Dokument: ' + (drawn && drawn.message));
+      const html = await (await dashboards.toHtml({ name: 'Nivå tavla', description: '' }, { resolved: [{ chart }] })).text();
+      assert.ok(html.includes('Nivå tavla') && !html.includes('Nivå karta'), 'and left out of published HTML');
+      started = await startShell('#/visualisera/' + encodeURIComponent(chart.id));
+      const { root } = started;
+      const notice = await waitFor(() => root.querySelector('.dm-center [data-tier-hidden="map.view"]'), 8000, 'the notice');
+      assert.ok(notice.textContent.includes(t('tier.bim-gis')), 'it names the tier');
+      assert.ok(!root.querySelector('.dm-center [data-map-basemap]'), 'the map panel is not built');
+      /** @type {HTMLElement} */ (root.querySelector('.dm-center [data-tier-raise="bim-gis"]')).click();
+      await waitFor(() => tier.current() === 2 && !root.querySelector('.dm-center [data-tier-hidden]'), 8000, 'the chart opened');
+      return 'ok';
+    } finally {
+      if (started) stop(started.root);
+      if (chart) await charts.remove(chart.id).catch(() => {});
+      if (table) await datasets.remove(table.id);
+      await restore();
+    }
+  }, 60000);
+
+  test('tier: Inhämta says why it reads no BCF file or QGIS project below BIM och GIS, the geo tab counts places, and the assistant closes', async (assert) => {
+    await tier.set('experimental');
+    let started = null;
+    try {
+      started = await startShell();
+      const { root, shell } = started;
+      await shell.openAssistant();
+      assert.ok(D.require('ui/assistant').current(), 'the assistant is open in Experimentell');
+      await tier.set('documents');
+      assert.equal(D.require('ui/assistant').current(), null, 'and closes in Dokument');
+      // The Geo tab offers counting places per area only.
+      const geo = D.require('ui/analysis/geo-panel').create(shell.ctx);
+      assert.deepEqual(geo.center().body[0].tabs.map((x) => x.id), ['points'], 'Punkter i områden');
+      geo.destroy();
+      shell.activate('inhamta');
+      const drop = (file) => /** @type {HTMLElement} */ (root.querySelector('.dm-center dm-dropzone')).dispatchEvent(new CustomEvent('dm-files', { detail: { files: [file] } }));
+      await waitFor(() => root.querySelector('.dm-center dm-dropzone'), 5000, 'the drop zone');
+      drop(new File(['<qgis projectname="Nivå"></qgis>'], 'projekt.qgs'));
+      const qgis = await waitFor(() => root.querySelector('.dm-center [data-tier-hidden="map.view"]'), 5000, 'the notice for the QGIS project');
+      assert.ok(qgis.querySelector('[data-tier-raise="bim-gis"]'), 'with the way to raise the tier');
+      drop(new File(['PK'], 'arenden.bcfzip'));
+      await waitFor(() => root.querySelector('.dm-center [data-tier-hidden="cde.bcf"]'), 5000, 'the notice for the BCF file');
+      /** @type {HTMLElement} */ (root.querySelector('.dm-center [data-tier-raise="bim-gis"]')).click();
+      await waitFor(() => tier.current() === 2 && !root.querySelector('.dm-center [data-tier-hidden]'), 5000, 'the notice gone in BIM och GIS');
+      return 'ok';
+    } finally { if (started) stop(started.root); await restore(); }
   }, 60000);
 })();
