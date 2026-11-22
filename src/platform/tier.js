@@ -41,7 +41,7 @@
       'source.newmodel': { tier: 2, rows: ['DS-48', 'DS-51'] },
       'source.geodata': { tier: 2, rows: ['DS-34', 'DS-36'] },
       'geo.heights': { tier: 2, rows: ['DS-34'] },
-      'map.view': { tier: 2, rows: ['DS-35'] },
+      'map.view': { tier: 2, rows: ['DS-35', 'DS-27'] },
       'map.basemap': { tier: 2, rows: ['DS-16', 'DS-37'] },
       'ai.panel': { tier: 2, rows: ['DS-45', 'DS-46', 'DS-48', 'DS-49', 'DS-51', 'DS-53', 'DS-54', 'DS-57'], group: 'ai' },
       'cde.bcf': { tier: 2, rows: ['DS-38', 'DS-39'], server: true },
@@ -58,9 +58,11 @@
 
     /**
      * The entry points that open a feature, by the name the modes ask with: `kind:` a kind of dataset's own views and tools,
-     * `view:` a view in Bearbeta, `tab:` a tab in Analysera, `chart:` a type of chart in Visualisera, `op:` an action, `tool:` a tool the AI is offered, `status:` an item
-     * of the status bar, `command:` a command of the palette, `source:` an item of Inhämta's source list,
-     * `family:` a family of sources and `preset:` a ready-made source (both in the catalogue and among the added sources).
+     * `view:` a view in Bearbeta, `tab:` a tab in Analysera, `geo:` a tool of its Geo tab, `chart:` a type of chart in Visualisera,
+     * `op:` an action, `tool:` a tool the AI is offered, `status:` an item of the status bar, `command:` a command of the palette,
+     * `cmd:` a command of data/commands (flows, the bridge, the assistant), `import:` a kind of file that only a feature reads,
+     * `source:` an item of Inhämta's source list, `family:` a family of sources and `preset:` a ready-made source (both in the
+     * catalogue and among the added sources).
      */
     const ENTRIES = {
       'kind:model': 'kind.model', 'view:model': 'kind.model', 'tab:model': 'kind.model', 'op:ifc_apply_table': 'kind.model', 'op:ifc_python': 'kind.model',
@@ -68,6 +70,9 @@
       'op:geo_height': 'geo.heights', 'op:geo_height_along': 'geo.heights', 'chart:profile': 'geo.heights',
       'source:newmodel': 'source.newmodel', 'source:geodata': 'source.geodata',
       'tool:server_query': 'ai.server-query', 'status:assistant': 'assistant', 'command:assistant': 'assistant',
+      // The maps among the commands (DS-27) and the BCF topics (DS-39); the charts, the documents and the CDE's files stay in Dokument.
+      'cmd:create_map': 'map.view', 'cmd:add_map_layer': 'map.view',
+      'cmd:cde_topics': 'cde.bcf', 'cmd:cde_create_topic': 'cde.bcf', 'cmd:cde_comment': 'cde.bcf',
       'family:geodata': 'source.geodata', 'family:geoportal': 'source.geodata',
       // The geodata services and the planning platforms that are not of the geodata families (DS-34, DS-36).
       'preset:naturvardsregistret': 'source.geodata', 'preset:lantmateriet-stac': 'source.geodata', 'preset:lantmateriet-direkt': 'source.geodata',

@@ -10,15 +10,17 @@
  * - the network goes through consent inside the steps, and the files a command makes stay in memory until the person fetches
  *   them: nothing leaves the app here;
  * - no caller's code is ever evaluated: SQL that reads runs with the database locked against writes, R and Python run in their
- *   engines' workers.
+ *   engines' workers;
+ * - a command of a tier above the one in effect (platform/tier, the entries `cmd:<name>`: the maps, the BCF topics) is left out of
+ *   the lists and refused, in words that name its tier.
  * The schemas follow the providers' strict modes: every field is listed, the ones that may be left out take null, and nested
  * objects name all their fields. Free-form parameters (an operation's) travel as JSON text.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/commands', ['data/datasets', 'data/operations', 'data/recipes', 'data/flows', 'data/kinds', 'data/query', 'platform/storage/idb', 'viz/charts', 'viz/dashboards', 'docgen/documents', 'data/lists'],
-    (datasets, ops, recipes, flows, kinds, query, idb, charts, dashboards, documents, lists) => {
+  D.define('data/commands', ['data/datasets', 'data/operations', 'data/recipes', 'data/flows', 'data/kinds', 'data/query', 'platform/storage/idb', 'viz/charts', 'viz/dashboards', 'docgen/documents', 'data/lists', 'platform/tier'],
+    (datasets, ops, recipes, flows, kinds, query, idb, charts, dashboards, documents, lists, tier) => {
       const t = (k, p) => D.t(k, p);
       const MAX_ROWS = 200;
       const MAX_TEXT = 8000;
@@ -137,9 +139,11 @@
       }
       /** @param {string} name */
       function get(name) { return registry.get(String(name)) || null; }
-      /** The commands, as data. @param {{writes?: boolean}} [filter] */
+      /** Whether the tier in effect shows a command (platform/tier, `cmd:<name>`). @param {string} name */
+      const shown = (name) => tier.shows('cmd:' + name);
+      /** The commands the tier in effect shows, as data; `all` lists the others too. @param {{writes?: boolean, all?: boolean}} [filter] */
       function list(filter = {}) {
-        return Array.from(registry.values()).filter((c) => filter.writes === undefined || c.writes === filter.writes)
+        return Array.from(registry.values()).filter((c) => (filter.writes === undefined || c.writes === filter.writes) && (filter.all || shown(c.name)))
           .map((c) => ({ name: c.name, writes: c.writes, description: c.description, parameters: c.parameters }));
       }
       /** The commands as an AI provider's tools. @param {{writes?: boolean}} [filter] */
@@ -162,6 +166,8 @@
       async function run(name, args, options = {}) {
         const cmd = get(name);
         if (!cmd) return { ok: false, error: t('commands.err.unknown', { name: String(name) }) };
+        // The one place every caller (flows, the bridge, the assistant) runs commands: what the tier hides is refused here.
+        if (!shown(cmd.name)) return { ok: false, error: tier.hiddenText('cmd:' + cmd.name), tier: tier.keyOf(tier.tierOf('cmd:' + cmd.name)) };
         const given = args === undefined ? {} : args;
         const wrong = check(cmd.parameters, given);
         if (wrong.length) return { ok: false, error: t('commands.err.args', { name: cmd.name, detail: wrong.slice(0, 8).join('; ') }) };
@@ -499,11 +505,17 @@
       // ---------------------------------------------------------------------------- the CDE (decision F42 b): OpenCDE sources signed in under Inhämta
       const hostOf = (url) => { try { return new URL(String(url)).host; } catch (_e) { return String(url || ''); } };
       const cdeSources = async () => { const opencde = D.require('api/families/opencde'); return (await D.require('api/connectors').list()).filter((c) => opencde.isOpenCde(c)); };
-      /** A signed-in OpenCDE source by id or name; signing in happens under Inhämta, never through a command. */
-      async function cde(ref) {
+      /**
+       * A signed-in OpenCDE source by id or name; signing in happens under Inhämta, never through a command. A command that needs a
+       * feature of the server (the BCF topics) is refused when the server's own tier does not offer it (what its capabilities
+       * announced, which the source's view in Inhämta read before the sign-in).
+       * @param {string} ref @param {string} [entry] the command's entry in platform/tier
+       */
+      async function cde(ref, entry) {
         const opencde = D.require('api/families/opencde');
         const connector = pick(await cdeSources(), ref, 'connector');
         if (!opencde.signedIn(connector)) throw new Error(t('commands.err.cde.signin', { name: connector.name }));
+        if (entry) tier.guard(entry, { server: connector.id });
         return { opencde, connector };
       }
       const one = (list, ref, idOf, nameOf, what) => {
@@ -533,7 +545,7 @@
         description: `The BCF topics (issues) of a project as a table: number, guid, title, type, status, priority, assigned to and dates; at most ${MAX_ROWS} rows.`,
         parameters: S.obj({ source: SOURCE, project: PROJECT }),
         async run(a) {
-          const { opencde, connector } = await cde(a.source);
+          const { opencde, connector } = await cde(a.source, 'cmd:cde_topics');
           const p = await cdeProject(opencde, connector, a.project);
           const tbl = await opencde.fetchTopics(connector, p.project_id);
           return { columns: tbl.columns, rows: tbl.rows.slice(0, MAX_ROWS), total: tbl.rows.length, truncated: tbl.rows.length > MAX_ROWS };
@@ -544,7 +556,7 @@
         description: 'Creates a BCF topic (issue) in a project: a title, and optionally a description, a status, a priority and a type among the values the server allows. Answers the topic\'s guid and number.',
         parameters: S.obj({ source: SOURCE, project: PROJECT, title: S.str('the title'), description: S.strOrNull('the description'), status: S.strOrNull('topic_status'), priority: S.strOrNull('priority'), type: S.strOrNull('topic_type') }),
         async run(a) {
-          const { opencde, connector } = await cde(a.source);
+          const { opencde, connector } = await cde(a.source, 'cmd:cde_create_topic');
           const p = await cdeProject(opencde, connector, a.project);
           const body = { title: String(a.title || '') };
           if (a.description) body.description = String(a.description);
@@ -560,7 +572,7 @@
         description: 'Adds a comment to a BCF topic (by guid or exact title) in a project. Answers the comment\'s guid.',
         parameters: S.obj({ source: SOURCE, project: PROJECT, topic: S.str('the topic\'s guid or exact title'), comment: S.str('the comment') }),
         async run(a) {
-          const { opencde, connector } = await cde(a.source);
+          const { opencde, connector } = await cde(a.source, 'cmd:cde_comment');
           const p = await cdeProject(opencde, connector, a.project);
           const tp = one(await opencde.allTopics(connector, p.project_id), a.topic, (x) => x.guid, (x) => x.title, 'topic');
           const c = await opencde.createComment(connector, p.project_id, tp.guid, { comment: String(a.comment || '') });
