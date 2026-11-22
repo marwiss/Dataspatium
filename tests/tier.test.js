@@ -680,4 +680,33 @@
       await restore();
     }
   }, 60000);
+
+  test('tier: the AI panel sends a model\'s material to its server only where the server offers BCF', async (assert) => {
+    await reset();
+    const secrets = D.require('api/secrets');
+    const connectors = D.require('api/connectors');
+    let model = null; let connector = null; const panels = [];
+    try {
+      connector = (await D.require('api/families/databases').createConnector('opencde', { baseUrl: 'https://ai.tier.test', name: 'Nivå AI-server' }, { discover: false })).connector;
+      secrets.set(connector.id, { token: 'tier-ai-token', expiresAt: String(Date.now() + 3600000) });
+      model = await D.require('io/import').run(D.require('tests/fixtures/ifc').ifcFile({ walls: 2 }), { format: 'model' }, null, 'Nivå AI-modell');
+      const source = Object.assign({}, (await datasets.get(model.id)).source, { cde: { connectorId: connector.id, host: 'ai.tier.test', projectId: 'p1', projectName: 'Nivåprojektet', documentId: 'd1', versionIndex: 1 } });
+      await datasets.updateMeta(model.id, { source });
+      const material = async () => {
+        const panel = D.require('ui/bearbeta/ai-panel').create({ shell: { log() {} } }, { datasetId: model.id, mode: 'build' });
+        panels.push(panel);
+        await panel.load();
+        return panel.state.material;
+      };
+      assert.ok(await material(), 'the material may go to a server that announces no tier');
+      tier.noteServer(connector, 'documents');
+      assert.equal(await material(), null, 'and not to one that announces Dokument, which has no BCF');
+      return 'ok';
+    } finally {
+      for (const panel of panels) panel.destroy();
+      if (connector) { tier.noteServer(connector, undefined); secrets.set(connector.id, {}); await connectors.remove(connector.id).catch(() => {}); }
+      if (model) await datasets.remove(model.id);
+      await restore();
+    }
+  }, 60000);
 })();

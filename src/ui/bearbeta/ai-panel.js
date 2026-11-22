@@ -71,12 +71,13 @@
           // Lantmäteriet's terrain model can give the ground heights at a footprint's corners when its source is added (no call here).
           s.heightsSource = !!(await connectors.get('lantmateriet-stac').catch(() => null));
           // The brief and the pictures can go to the model's server as its material (F43 b, step 5) when the model came from one the person is signed in to.
+          // They go as BCF documents under a topic, which a server announcing Dokument does not offer (platform/tier).
           s.material = null;
           const meta = all.find((d) => d.id === options.datasetId) || (await datasets.get(options.datasetId));
           const cde = meta && meta.source && meta.source.cde;
           if (cde && cde.connectorId && cde.projectId && cde.documentId) {
             const c = await connectors.get(cde.connectorId).catch(() => null);
-            if (c && opencde.isOpenCde(c) && opencde.signedIn(c)) s.material = { cde, connector: c, name: meta.name };
+            if (c && opencde.isOpenCde(c) && opencde.signedIn(c) && D.require('platform/tier').shows('cde.bcf', { server: c.id })) s.material = { cde, connector: c, name: meta.name };
           }
           await check.load(meta);
           s.idsTitles = Object.fromEntries((await idsPresets.list().catch(() => [])).map((x) => [x.file, x.title]));
@@ -648,6 +649,8 @@
           const report = s.preview && s.preview.report;
           const errors = report ? Number(report.errors) || 0 : 0;
           const proposal = s.cde && !s.cde.documentId ? null : proposalOf(report);
+          // A change proposal is a BCF topic: it needs the BCF API, BIM och GIS, of the app and of the server (platform/tier).
+          const proposing = !!(s.cde && proposal && D.require('platform/tier').shows('cde.bcf', { server: s.cde.connectorId }));
           // A rule's finding carries its code, and a warning is shown apart from the errors.
           const finding = (f) => h('li', { class: f.kind === 'rule' && f.level !== 'error' ? 'dm-xs dm-help' : 'dm-xs', 'data-ai-rule': f.rule || null, text: `${f.rule ? f.rule + ' · ' : ''}${f.ifc_class || ''}${f.id ? ' #' + f.id : ''}${f.attribute ? ' ' + f.attribute : ''}: ${f.message || ''}` });
           const ruleWarnings = report && report.rules ? Number(report.rules.warnings) || 0 : 0;
@@ -679,8 +682,8 @@
             h('div', { class: 'dm-row-wrap' },
               basic.button({ label: t('ai.change.preview'), icon: 'eye', size: 'sm', loading: s.previewing, disabled: !cs.ops.length || s.busy, title: t('ai.change.preview.hint'), 'data-ai-preview': '', onClick: previewNow }),
               basic.button({ label: t('ai.change.approve'), icon: 'check', size: 'sm', loading: s.approving, disabled: !report || errors > 0 || s.busy, title: t('ai.change.approve.hint'), 'data-ai-approve': '', onClick: approveNow }),
-              s.cde && proposal && s.canPropose === false ? h('p', { class: 'dm-help dm-xs', 'data-ai-propose-role': '', text: t('ai.change.propose.role.none') }) : null,
-              s.cde && proposal && s.canPropose !== false ? basic.button({ label: t('ai.change.propose'), icon: 'share-2', size: 'sm', loading: s.proposing, disabled: !(proposal.changes.length || (s.opsForm && cs.ops.length)) || s.busy || !!s.proposed, title: t('ai.change.propose.hint'), 'data-ai-propose': '', onClick: () => proposeNow() }) : null,
+              proposing && s.canPropose === false ? h('p', { class: 'dm-help dm-xs', 'data-ai-propose-role': '', text: t('ai.change.propose.role.none') }) : null,
+              proposing && s.canPropose !== false ? basic.button({ label: t('ai.change.propose'), icon: 'share-2', size: 'sm', loading: s.proposing, disabled: !(proposal.changes.length || (s.opsForm && cs.ops.length)) || s.busy || !!s.proposed, title: t('ai.change.propose.hint'), 'data-ai-propose': '', onClick: () => proposeNow() }) : null,
               basic.button({ label: t('ai.change.reject'), icon: 'x', size: 'sm', variant: 'ghost', disabled: !cs.ops.length || s.busy, title: t('ai.change.reject.hint'), 'data-ai-reject': '', onClick: rejectNow })),
             h('p', { class: 'dm-help dm-xs', text: t('ai.change.python') }));
         }
