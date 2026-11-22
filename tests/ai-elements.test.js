@@ -8,9 +8,10 @@
  * the class search point to create_element. With the real Pyodide (`?python=1` or cached components) the wheel makes the elements in
  * an IFC4 model in millimetres, with the stair's flight and landing and its railing as parts, and places typed doors and windows in an
  * IFC4.3 model by the known convention: flush with the wall's left face, a door opening toward it with a LEFT door's hinges toward
- * the wall's start, and turned around with side right; a second change set takes the type by its GlobalId. The columns, beams and
- * members get their base quantities from their profiles in the model's units (PLAN.md item 7), keep them through a move and a new
- * name, and pass the app's own IDS Avfallshantering in an IFC4.3 model.
+ * the wall's start, and turned around with side right; a second change set takes the type by its GlobalId. The columns, beams,
+ * members, footings and a stair's flight get their base quantities from their bodies in the model's units (PLAN.md item 7), keep them
+ * through a move and a new name, and pass the app's own IDS Avfallshantering in an IFC4.3 model once the stair's parts, which have
+ * no refs, get their material by GlobalId.
  */
 (function () {
   'use strict';
@@ -145,6 +146,15 @@
   /** The base quantities of a profile of `area` and `perimeter` extruded `length` (in the file's units: `k` file units per metre). */
   const profileQto = (length, area, perimeter, k = 1) => ({ Length: length * k, CrossSectionArea: area, OuterSurfaceArea: perimeter * length, GrossSurfaceArea: perimeter * length + 2 * area,
     NetSurfaceArea: perimeter * length + 2 * area, GrossVolume: area * length, NetVolume: area * length, method: 'BaseQuantities' });
+  /** The base quantities of a standing footing, its longer and shorter side and its height (in the file's units as profileQto). */
+  const footingQto = (length, width, height, k = 1) => ({ Length: length * k, Width: width * k, Height: height * k, GrossVolume: length * width * height, NetVolume: length * width * height, method: 'BaseQuantities' });
+  /** The volume of create_stair's flight t thick: the band between the nosings' line and the underside, less its part below the
+   * floor and the triangles between that line and the steps, across the width. */
+  const flightVolume = ({ risers: n, riser_height: h, tread_length: g, width }, t) => {
+    const drop = t * Math.hypot(g, h) / g; const x0 = (drop - h) * g / h;
+    return (drop * (n - 1) * g - x0 * (drop - h) / 2 - (n - 1) * g * h / 2) * width;
+  };
+  const flightQto = (volume) => ({ GrossVolume: volume, NetVolume: volume, method: 'BaseQuantities' });
   /** That a quantity set has exactly the quantities wanted, each within 1e-6. */
   const sameQto = (assert, got, want, label) => {
     assert.ok(got && Object.keys(got).sort().join() === Object.keys(want).sort().join(), label + ': ' + JSON.stringify(got));
@@ -330,6 +340,8 @@
     sameQto(assert, f.Balk.qto.Qto_BeamBaseQuantities, profileQto(6, 0.08, 1.2, 1000), 'the beam\'s Qto_BeamBaseQuantities, 6000 mm');
     assert.ok(Object.keys(col.qto).join() === 'Qto_ColumnBaseQuantities' && Object.keys(f.Balk.qto).join() === 'Qto_BeamBaseQuantities', 'one set each: ' + JSON.stringify([col.qto, f.Balk.qto]));
     assert.ok(f.Sula.pt === 'STRIP_FOOTING' && nearAll(f.Sula.box, [-0.3, -0.3, 5.4, 12.3, 0.3, 5.8]), 'the strip footing under the wall: ' + JSON.stringify(f.Sula));
+    assert.ok(Object.keys(f.Sula.qto).join() === 'Qto_FootingBaseQuantities', 'one set: ' + JSON.stringify(f.Sula.qto));
+    sameQto(assert, f.Sula.qto.Qto_FootingBaseQuantities, footingQto(12.6, 0.6, 0.4, 1000), 'the footing\'s Qto_FootingBaseQuantities, its outline a rectangle 12600 × 600 mm, 400 mm high');
     assert.ok(f.Golv.type === 'Golv1' && f.Golv.type_pt === 'FLOORING' && f.Golv.pt === null && near(f.Golv.box[5] - f.Golv.box[2], 0.017), 'the floor covering 17 mm, its layers\'s sum: ' + JSON.stringify(f.Golv));
     assert.ok(f.Panel.pt === 'CLADDING' && f.Panel.covers.join() === 'Syd', 'the cladding covers the wall: ' + JSON.stringify(f.Panel));
     const stair = f.Trappa;
@@ -338,6 +350,8 @@
     assert.ok(flight && flight.class === 'IfcStairFlight' && flight.pt === 'STRAIGHT' && flight.part_of === 'Trappa' && flight.storey === null, 'the flight aggregated in the stair, not contained: ' + JSON.stringify(flight));
     assert.deepEqual(flight.pset, { NumberOfRiser: 15, NumberOfTreads: 14, RiserHeight: 180, TreadLength: 250 }, 'Pset_StairFlightCommon in millimetres');
     assert.deepEqual(flight.counts, [15, 14, 0.18, 0.25], 'and the flight\'s attributes');
+    assert.ok(Object.keys(flight.qto).join() === 'Qto_StairFlightBaseQuantities', 'one set: ' + JSON.stringify(flight.qto));
+    sameQto(assert, flight.qto.Qto_StairFlightBaseQuantities, flightQto(flightVolume(STAIR, 0.2)), 'the flight\'s Qto_StairFlightBaseQuantities, its steps\' outline across the width');
     assert.ok(nearAll(flight.box, [7.5, 2, 6, 8.5, 5.5, 8.52]), 'the flight 1 m wide, rising along +y from (8, 2) over 14 treads to the 14th riser\'s top: ' + JSON.stringify(flight.box));
     const landing = f['Trappa 2'];
     assert.ok(landing && landing.class === 'IfcSlab' && landing.pt === 'LANDING' && landing.part_of === 'Trappa' && nearAll(landing.box, [7.5, 5.5, 8.5, 8.5, 6.7, 8.7]), 'the landing at the top, its edge the last riser: ' + JSON.stringify(landing));
@@ -396,7 +410,7 @@
     return 'ok';
   }, 900000);
 
-  test('ai elements: Python gives columns, beams and members their base quantities from their profiles, keeps them through a move and a new name, and the app\'s IDS Avfallshantering passes them', async (assert) => {
+  test('ai elements: Python gives columns, beams, members, footings and a stair\'s flight their base quantities from their profiles, keeps them through a move and a new name, and the app\'s IDS Avfallshantering passes them', async (assert) => {
     if (!wantReal() && !(await catalog.cachedRuntime())) return SKIPPED;
     await bridge.start();
     await waitFor(() => bridge.state !== 'busy', 60000, 'Python free');
@@ -412,7 +426,10 @@
       ['create_element', element({ name: 'Pelare C', at: null, shape: polygon(L, 3) })],
       ['create_element', element({ ifc_class: 'IfcBeam', name: 'Balk', type: 'new-2', at: [3, 4], z: 2.8, rotation: 0, shape: rect(0.2, 0.4, 6, 'x') })],
       ['create_element', element({ ifc_class: 'IfcMember', predefined_type: 'BRACE', name: 'Stag', at: [0, 0], z: 0.5, rotation: 45, shape: rect(0.045, 0.095, 2.4, 'x') })],
-      ['assign', { ids: ['new-4', 'new-5'], storey: null, material: 'Betong', category: 'concrete' }],
+      ['create_element', element({ ifc_class: 'IfcFooting', predefined_type: 'PAD_FOOTING', name: 'Plint', at: [3, 4], z: -0.5, shape: rect(0.8, 1.2, 0.5) })],
+      ['create_element', element({ ifc_class: 'IfcFooting', predefined_type: 'STRIP_FOOTING', name: 'Sula', at: null, z: -0.6, shape: polygon([[-0.3, -0.3], [12.3, -0.3], [12.3, 0.3], [-0.3, 0.3]], 0.4) })],
+      ['create_element', element({ ifc_class: 'IfcStair', name: 'Trappa', at: [8, 2], rotation: 90, shape: null, stair: STAIR })],
+      ['assign', { ids: ['new-4', 'new-5', 'new-8', 'new-9'], storey: null, material: 'Betong', category: 'concrete' }],
       ['assign', { ids: ['new-7'], storey: null, material: 'Furu', category: 'wood' }],
     ];
     const cs = writeTools.create(dataset.id);
@@ -421,11 +438,18 @@
     assert.equal(res.report.errors, 0, 'no errors: ' + JSON.stringify(res.report.findings).slice(0, 2000));
     assert.ok(res.report.rules && res.report.rules.errors === 0 && res.report.rules.warnings === 0, 'no rule failures (QTY001 …): ' + JSON.stringify(res.report.rules));
     assert.deepEqual(ownNotes(res.report.notes), [], 'nothing left out');
+    // The stair's flight and landing get no refs, so their material comes in the next change set; every volume is there (AH-02).
     const ids = res.report.ids;
-    assert.ok(ids && !ids.error && ids.specifications >= 4 && Array.isArray(ids.failed) && ids.failed.length === 0, 'the AI\'s preview: the app\'s IDS Avfallshantering passes: ' + JSON.stringify(ids));
+    const failed = ids && Array.isArray(ids.failed) ? ids.failed : [];
+    assert.ok(ids && !ids.error && ids.specifications >= 4 && failed.length === 1 && failed[0].name === 'Material med kategori' && failed[0].failed === 2
+      && failed[0].examples.map((e) => e.name).sort().join() === 'Trappa 1,Trappa 2', 'the AI\'s preview: only the stair\'s parts lack their material: ' + JSON.stringify(ids));
     const want = {
       'Pelare A': ['Qto_ColumnBaseQuantities', profileQto(3, 0.09, 1.2)], 'Pelare B': ['Qto_ColumnBaseQuantities', profileQto(3, Math.PI * 0.0225, Math.PI * 0.3)],
       'Pelare C': ['Qto_ColumnBaseQuantities', profileQto(3, 0.07, 1.6)], Balk: ['Qto_BeamBaseQuantities', profileQto(6, 0.08, 1.2)], Stag: ['Qto_MemberBaseQuantities', profileQto(2.4, 0.045 * 0.095, 0.28)],
+      // A footing's Length and Width are its longer and shorter side, whichever way it is drawn; its Height the extrusion's.
+      Plint: ['Qto_FootingBaseQuantities', footingQto(1.2, 0.8, 0.5)], Sula: ['Qto_FootingBaseQuantities', footingQto(12.6, 0.6, 0.4)],
+      'Trappa 1': ['Qto_StairFlightBaseQuantities', flightQto(flightVolume(STAIR, 0.2))],
+      'Trappa 2': ['Qto_SlabBaseQuantities', { Width: 0.2, Perimeter: 4.4, Length: 1.2, Depth: 1, GrossArea: 1.2, NetArea: 1.2, GrossVolume: 0.24, NetVolume: 0.24, method: 'BaseQuantities' }],
     };
     const check = (f, label, names) => {
       for (const [name, [set, q]] of Object.entries(want)) {
@@ -436,22 +460,27 @@
     };
     const { elements: f } = await factsOf(res.bytes, ELEMENTS);
     check(f, '', {});
-    assert.ok(f['Pelare A'].material === 'Stål' && f.Balk.material === 'Limträ' && f['Pelare B'].material === 'Betong' && f.Stag.material === 'Furu', 'the materials the IDS asks for');
+    assert.ok(f['Pelare A'].material === 'Stål' && f.Balk.material === 'Limträ' && f['Pelare B'].material === 'Betong' && f.Stag.material === 'Furu' && f.Plint.material === 'Betong' && f.Sula.material === 'Betong', 'the materials the IDS asks for');
     // The model as a model of its own: a move and a new name keep the quantities, written anew in the element's own sets.
     const guid = (name) => (res.report.created || []).find((e) => e.name === name).guid;
     const again = await importer.run(new File([res.bytes], 'stomprov-2.ifc', { type: 'application/octet-stream' }), { format: 'model' }, null, 'Stomprov 2');
     created.push(again.id);
-    // IDS-kontroll element by element: a material with a category (AH-01) and the volume (AH-02) on every column, beam and member.
+    // IDS-kontroll element by element: the volume (AH-02) on every column, beam, member, footing and stair part, and a material with a
+    // category (AH-01) on all but the stair's parts.
     await bridge.writeFile('/data/ids/' + waste.name, waste.bytes.slice());
     const checked = await bridge.ifcTool(again.id, 'ids', { ids: '/data/ids/' + waste.name });
-    const passed = (spec) => checked.rows.filter((r) => r[0] === spec && r[2] === 'godkänd').map((r) => r[5]).sort();
-    assert.ok(!checked.rows.some((r) => r[2] === 'underkänd'), 'nothing fails: ' + JSON.stringify(checked.rows.filter((r) => r[2] === 'underkänd')));
-    for (const spec of ['Material med kategori', 'Basmängd: volym']) assert.deepEqual(passed(spec), ['Balk', 'Pelare A', 'Pelare B', 'Pelare C', 'Stag'], spec + ': ' + JSON.stringify(checked.summary));
+    const named = (spec, state) => checked.rows.filter((r) => r[0] === spec && r[2] === state).map((r) => r[5]).sort();
+    const all = ['Balk', 'Pelare A', 'Pelare B', 'Pelare C', 'Plint', 'Stag', 'Sula', 'Trappa 1', 'Trappa 2'];
+    assert.deepEqual(named('Basmängd: volym', 'godkänd'), all, 'Basmängd: volym: ' + JSON.stringify(checked.summary));
+    assert.deepEqual(named('Material med kategori', 'godkänd'), all.slice(0, 7), 'Material med kategori: ' + JSON.stringify(checked.summary));
+    assert.deepEqual(checked.rows.filter((r) => r[2] === 'underkänd').map((r) => r[0] + ': ' + r[5]).sort(), ['Material med kategori: Trappa 1', 'Material med kategori: Trappa 2'], 'only the stair\'s parts fail, for their material');
     const cs2 = writeTools.create(again.id);
-    assert.ok(writeTools.call(cs2, 'transform_elements', { ids: [guid('Pelare A'), guid('Stag')], dx: 1, dy: 0, dz: 0 }).ok && writeTools.call(cs2, 'edit_element', { id: guid('Balk'), name: 'Balk 2' }).ok);
-    const second = await ifcOps.previewChangeset(again.id, writeTools.toWheel(cs2));
+    assert.ok(writeTools.call(cs2, 'transform_elements', { ids: [guid('Pelare A'), guid('Stag')], dx: 1, dy: 0, dz: 0 }).ok && writeTools.call(cs2, 'edit_element', { id: guid('Balk'), name: 'Balk 2' }).ok
+      && writeTools.call(cs2, 'assign', { ids: [guid('Trappa 1'), guid('Trappa 2')], storey: null, material: 'Betong', category: 'concrete' }).ok);
+    const second = await ifcOps.previewChangeset(again.id, writeTools.toWheel(cs2), { ids: { name: waste.name, text: waste.text } });
     assert.ok(second.report.errors === 0 && second.report.rules.errors === 0 && second.report.rules.warnings === 0, 'moved and renamed without errors: ' + JSON.stringify([second.report.findings, second.report.rules]).slice(0, 2000));
-    assert.deepEqual((second.report.changed || []).map((e) => e.name).sort(), ['Balk 2', 'Pelare A', 'Stag'], 'the three changed');
+    assert.ok(second.report.ids && !second.report.ids.error && Array.isArray(second.report.ids.failed) && second.report.ids.failed.length === 0, 'with the stair\'s parts given their material by GlobalId the app\'s IDS passes the model: ' + JSON.stringify(second.report.ids));
+    assert.deepEqual((second.report.changed || []).map((e) => e.name).sort(), ['Balk 2', 'Pelare A', 'Stag', 'Trappa 1', 'Trappa 2'], 'the five changed');
     const { elements: g } = await factsOf(second.bytes, ELEMENTS);
     check(g, 'after the move and the new name: ', { Balk: 'Balk 2' });
     assert.ok(near(g['Pelare A'].box[0] - f['Pelare A'].box[0], 1) && near(g.Stag.box[0] - f.Stag.box[0], 1), 'the column and the brace moved 1 m: ' + JSON.stringify([f['Pelare A'].box, g['Pelare A'].box]));

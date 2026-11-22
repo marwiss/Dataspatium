@@ -595,10 +595,11 @@ definierar typerna först. När ändringssetet körs knyts de väggar det skapar
 ett hörn går den tjockare väggen (vid samma tjocklek den längre) förbi hörnet och den andra slutar mot den, och en vägg som slutar mot
 en annans linje slutar mot dess sida, så att hörnen varken får glipor eller överlapp och ingen volym räknas två gånger. Väggarnas
 mittlinjer ändras inte, och hörn i andra vinklar än räta knyts ihop som de är ritade. Till sist får de väggar, bjälklag, tak, dörrar,
-fönster, pelare, balkar, stänger och skivor som ändringssetet skapat eller ändrat basmängder (Qto_WallBaseQuantities,
-Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities, Qto_WindowBaseQuantities, Qto_ColumnBaseQuantities,
-Qto_BeamBaseQuantities, Qto_MemberBaseQuantities och Qto_PlateBaseQuantities) räknade ur måtten i modellens enheter, med öppningarna
-avdragna och med namnen ur schemats mallar; IFC2X3, som saknar mallar, får IFC4:s namn.
+fönster, pelare, balkar, stänger, skivor, fundament och trapplopp som ändringssetet skapat eller ändrat basmängder
+(Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities, Qto_WindowBaseQuantities,
+Qto_ColumnBaseQuantities, Qto_BeamBaseQuantities, Qto_MemberBaseQuantities, Qto_PlateBaseQuantities, Qto_FootingBaseQuantities och
+Qto_StairFlightBaseQuantities) räknade ur måtten i modellens enheter, med öppningarna avdragna och med namnen ur schemats mallar;
+IFC2X3, som saknar mallar, får IFC4:s namn.
 
 Verktyget `create_element` gör de byggdelar som inte har ett eget verktyg, av den mest specifika IFC-klassen och aldrig som
 IfcBuildingElementProxy: pelare (IfcColumn), balkar (IfcBeam), stänger som reglar och takstolar (IfcMember), grundsulor och plintar
@@ -608,13 +609,14 @@ IfcFurnishingElement), raka trappor (IfcStair) och glasfasader (IfcCurtainWall).
 modellens schema som i de andra
 verktygen. Kroppen är en extruderad profil: en rektangel, en cirkel eller en kontur i våningens plan, stående uppåt från en höjd över
 våningen (pelare, grundläggning, beklädnader, möbler) eller liggande i en riktning (balkar, stänger och räcken). Pelare, balkar och
-stänger får sina basmängder ur profilen och längden: längd, tvärsnittsarea, mantelyta, hela ytan och volym. Elementet ligger i
+stänger får sina basmängder ur profilen och längden: längd, tvärsnittsarea, mantelyta, hela ytan och volym; fundament får sin
+volym, sin höjd och, när profilen är en rektangel, sin längd och bredd (den längre och den kortare sidan). Elementet ligger i
 våningen eller är en del av en helhet (`part_of`), till exempel ett räcke i en trappa, och ligger då i helheten och på dess våning men
 inte direkt i våningen. En beklädnad kan ange vad den täcker (`host`): en byggdel eller ett rum. I IFC4 och senare blir den en del av
 byggdelen (IfcRelAggregates) eller ligger i rummet; bara i IFC2X3 får den IfcRelCoversBldgElements eller IfcRelCoversSpaces. En rak
 trappa (STRAIGHT_RUN_STAIR) består av ett lutande trapplopp (IfcStairFlight, STRAIGHT) med antal steg, steghöjd, stegdjup och bredd
 som attribut och i Pset_StairFlightCommon, och på begäran ett vilplan (IfcSlab, LANDING) överst; den sista steghöjden är vilplanets
-eller bjälklagets framkant.
+eller bjälklagets framkant. Trapploppet får sin volym i Qto_StairFlightBaseQuantities och vilplanet sina basmängder som ett bjälklag.
 
 En glasfasad (IfcCurtainWall) går längs sin axel som en vägg, från en start till ett slut i våningens plan, med sin höjd från en
 underkant över våningen. Axeln är dess representation, men den har ingen egen kropp: den består av sina delar, som ligger i den

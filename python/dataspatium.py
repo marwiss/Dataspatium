@@ -1813,10 +1813,11 @@ class _ChangeSet:
     Since PLAN.md items 6 and 7 (2026-11-22):
 
         create_element, and a curtain wall's parts
-            the columns, beams and members get Qto_ColumnBaseQuantities, Qto_BeamBaseQuantities and Qto_MemberBaseQuantities and the
-            panels Qto_PlateBaseQuantities from their bodies (qto_profile, qto_plate), so that the app's own IDS Avfallshantering
-            (AH-02) finds their volumes; a member with an IfcMaterialProfileSetUsage (a typed mullion or transom, IFC4 and later)
-            also gets an 'Axis' along its body, as IFC4.3 says (member_axis).
+            the columns, beams and members get Qto_ColumnBaseQuantities, Qto_BeamBaseQuantities and Qto_MemberBaseQuantities, the
+            panels Qto_PlateBaseQuantities, the footings Qto_FootingBaseQuantities and a stair's flight Qto_StairFlightBaseQuantities
+            from their bodies (qto_profile, qto_plate, qto_footing, qto_flight), so that the app's own IDS Avfallshantering (AH-02)
+            finds their volumes; a member with an IfcMaterialProfileSetUsage (a typed mullion or transom, IFC4 and later) also gets
+            an 'Axis' along its body, as IFC4.3 says (member_axis).
     """
 
     CREATES = ("create_wall", "create_slab", "create_roof", "create_opening", "create_spaces", "define_type", "create_element")
@@ -4966,7 +4967,8 @@ class _ChangeSet:
         `at` and z, rising in the direction of rotation, that aggregates one sloped IfcStairFlight STRAIGHT (flight_solid) with its
         number of risers and treads, riser height and tread length as attributes and in Pset_StairFlightCommon, and with a landing
         an IfcSlab LANDING at the top: the flight's width, `landing` metres long, its top at the stair's height and as thick as the
-        flight. The parts get no refs; a railing is create_element's part_of the stair."""
+        flight. The parts get no refs, and their base quantities follow (qto_flight, qto_slab); a railing is create_element's part_of
+        the stair."""
         import ifcopenshell.api.aggregate
         import ifcopenshell.api.pset
         if op.get("shape") is not None:
@@ -5589,15 +5591,16 @@ class _ChangeSet:
                   ("IfcRoof", "Qto_RoofBaseQuantities", "qto_roof"), ("IfcDoor", "Qto_DoorBaseQuantities", "qto_filling"),
                   ("IfcWindow", "Qto_WindowBaseQuantities", "qto_filling"), ("IfcCurtainWall", "Qto_CurtainWallQuantities", "qto_curtain_wall"),
                   ("IfcColumn", "Qto_ColumnBaseQuantities", "qto_profile"), ("IfcBeam", "Qto_BeamBaseQuantities", "qto_profile"),
-                  ("IfcMember", "Qto_MemberBaseQuantities", "qto_profile"), ("IfcPlate", "Qto_PlateBaseQuantities", "qto_plate"))
+                  ("IfcMember", "Qto_MemberBaseQuantities", "qto_profile"), ("IfcPlate", "Qto_PlateBaseQuantities", "qto_plate"),
+                  ("IfcFooting", "Qto_FootingBaseQuantities", "qto_footing"), ("IfcStairFlight", "Qto_StairFlightBaseQuantities", "qto_flight"))
 
     def base_quantities(self):
-        """The base quantities of the walls, slabs, roofs, doors, windows, curtain walls, columns, beams, members and plates the change
-        set created or changed, from their parameters without a geometry kernel, in the file's units and with MethodOfMeasurement
-        BaseQuantities (add_qto): a set the element has of its own is updated, one it shares is left alone. Each quantity has the name
-        in IfcOpenShell's template for the file's schema (IFC4X3 spells the wall's footprint areas GrossFootPrintArea and
-        NetFootPrintArea), and one the template lacks is left out; IFC2X3 has no templates and gets IFC4's names. An element of another
-        form gets none."""
+        """The base quantities of the walls, slabs, roofs, doors, windows, curtain walls, columns, beams, members, plates, footings and
+        stair flights the change set created or changed, from their parameters without a geometry kernel, in the file's units and with
+        MethodOfMeasurement BaseQuantities (add_qto): a set the element has of its own is updated, one it shares is left alone. Each
+        quantity has the name in IfcOpenShell's template for the file's schema (IFC4X3 spells the wall's footprint areas
+        GrossFootPrintArea and NetFootPrintArea), and one the template lacks is left out; IFC2X3 has no templates and gets IFC4's
+        names. An element of another form gets none."""
         for i in dict.fromkeys([r["id"] for r in self.created] + list(self.changed)):
             try:
                 e = self.m.by_id(i)
@@ -5735,12 +5738,18 @@ class _ChangeSet:
         values = self.qto_slab(plate)
         return {k: v for k, v in values.items() if k not in ("Length", "Depth")} if values else None
 
-    def qto_profile(self, e):
-        """A column, beam or member of one profile extruded at right angles to it (slab_face), as create_element and the curtain walls
-        draw them: Length the extrusion's, CrossSectionArea the profile's, OuterSurfaceArea its sides (perimeter × length),
-        GrossSurfaceArea with its two ends and GrossVolume; Net as Gross when it has no openings. None for another form."""
+    def right_prism(self, e):
+        """slab_face of an element whose one profile is extruded at right angles to it, as create_element, create_stair and the
+        curtain walls draw their bodies; None for another form."""
         face = self.slab_face(e)
-        if face is None or abs(face[2] - face[5]) > 1e-9 * max(1.0, face[5]):
+        return face if face is not None and abs(face[2] - face[5]) <= 1e-9 * max(1.0, face[5]) else None
+
+    def qto_profile(self, e):
+        """A column, beam or member of one profile extruded at right angles to it (right_prism), as create_element and the curtain
+        walls draw them: Length the extrusion's, CrossSectionArea the profile's, OuterSurfaceArea its sides (perimeter × length),
+        GrossSurfaceArea with its two ends and GrossVolume; Net as Gross when it has no openings. None for another form."""
+        face = self.right_prism(e)
+        if face is None:
             return None
         area, perimeter, length = face[0], face[1], face[5]
         side = perimeter * length
@@ -5748,6 +5757,31 @@ class _ChangeSet:
                   "GrossSurfaceArea": ("area", side + 2.0 * area), "GrossVolume": ("volume", area * length)}
         if not (getattr(e, "HasOpenings", None) or ()):
             values.update({"NetSurfaceArea": ("area", side + 2.0 * area), "NetVolume": ("volume", area * length)})
+        return values
+
+    def qto_flight(self, e, face=None):
+        """A stair flight of one profile extruded at right angles to it (right_prism), as create_stair draws it (flight_solid: the
+        steps' outline extruded across the width): GrossVolume the profile's area times the extrusion, and NetVolume as Gross when it
+        has no openings. None for another form. qto_footing passes the face it has read."""
+        face = face or self.right_prism(e)
+        if face is None:
+            return None
+        values = {"GrossVolume": ("volume", face[0] * face[5])}
+        if not (getattr(e, "HasOpenings", None) or ()):
+            values["NetVolume"] = ("volume", face[0] * face[5])
+        return values
+
+    def qto_footing(self, footing):
+        """A footing of one profile extruded at right angles to it (right_prism): its volumes as a flight's (qto_flight) and, when it
+        stands as create_element draws footings (its profile in the plan, extruded up), Height the extrusion's and for a rectangle
+        Length and Width its longer and shorter side; qto_profile's Length would be a standing footing's height. None for another
+        form."""
+        face = self.right_prism(footing)
+        values = self.qto_flight(footing, face) if face is not None else None
+        if values and face[4] > 1.0 - 1e-6:
+            values["Height"] = ("length", face[5])
+            if face[3] is not None:
+                values.update({"Length": ("length", max(face[3])), "Width": ("length", min(face[3]))})
         return values
 
     def qto_roof(self, roof):

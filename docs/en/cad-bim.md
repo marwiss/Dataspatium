@@ -614,11 +614,11 @@ properties belong to the type, and the AI defines the types first. When the chan
 walls they meet (IfcRelConnectsPathElements): at a corner the thicker wall (for equal thickness the longer) reaches past the corner and
 the other stops against it, and a wall that ends on another's line stops at its side, so that corners have neither gaps nor overlaps
 and no volume is counted twice. The walls' centrelines stay as drawn, and corners at other than right angles are joined as drawn.
-Finally the walls, slabs, roofs, doors, windows, columns, beams, members and plates the change set created or changed get base
-quantities (Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities, Qto_WindowBaseQuantities,
-Qto_ColumnBaseQuantities, Qto_BeamBaseQuantities, Qto_MemberBaseQuantities and Qto_PlateBaseQuantities) computed from their dimensions
-in the model's units, with the openings deducted and with the names of the schema's templates; IFC2X3, which has no templates, gets
-IFC4's names.
+Finally the walls, slabs, roofs, doors, windows, columns, beams, members, plates, footings and stair flights the change set created
+or changed get base quantities (Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities,
+Qto_WindowBaseQuantities, Qto_ColumnBaseQuantities, Qto_BeamBaseQuantities, Qto_MemberBaseQuantities, Qto_PlateBaseQuantities,
+Qto_FootingBaseQuantities and Qto_StairFlightBaseQuantities) computed from their dimensions in the model's units, with the openings
+deducted and with the names of the schema's templates; IFC2X3, which has no templates, gets IFC4's names.
 
 The tool `create_element` makes the building elements that have no tool of their own, of the most specific IFC class and never as
 IfcBuildingElementProxy: columns (IfcColumn), beams (IfcBeam), members such as studs and rafters (IfcMember), footings (IfcFooting),
@@ -629,13 +629,15 @@ checked against the model's schema
 as in the other tools. The body is an extruded profile: a rectangle, a circle or an outline in the storey's plane, standing up from a
 height above the storey (columns, footings, coverings, furniture) or lying in a direction (beams, members and railings). Columns, beams
 and members get their base quantities from the profile and the length: length, cross-section area, outer surface area, total surface
-area and volume. The element
+area and volume; footings get their volume, their height and, when the profile is a rectangle, their length and width (the longer
+and the shorter side). The element
 lies in the storey, or is a part of a whole (`part_of`), such as a railing of a stair, and then lies in the whole and on its storey but
 not directly in the storey. A covering can name what it covers (`host`): a building element or a space. In IFC4 and later it becomes
 a part of the element (IfcRelAggregates) or lies in the space; only in IFC2X3 does it get IfcRelCoversBldgElements or
 IfcRelCoversSpaces. A straight stair (STRAIGHT_RUN_STAIR) is a sloped flight (IfcStairFlight, STRAIGHT) with the number of risers,
 the riser height, the tread length and the width as attributes and in Pset_StairFlightCommon, and on request a landing (IfcSlab,
-LANDING) at the top; the last riser is the front edge of the landing or of the floor above.
+LANDING) at the top; the last riser is the front edge of the landing or of the floor above. The flight gets its volume in
+Qto_StairFlightBaseQuantities and the landing its base quantities as a slab.
 
 A curtain wall (IfcCurtainWall), a glass façade, runs along its axis as a wall does, from a start to an end in the storey's plane, with
 its height from a base above the storey. The axis is its representation, but it has no body of its own: it is made of its parts, which
