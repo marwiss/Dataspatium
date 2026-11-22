@@ -80,9 +80,10 @@
       if (obj.kind === 'graph') { chart.graph = obj.graph || null; if (chart.graph) { chart.graph.datasetId = chart.datasetId; chart.graph.datasetName = chart.datasetName; } }
       if (obj.kind === 'map') {
         chart.map = obj.map || null;
-        // Layers point at datasets by id; after a transfer they are matched by name or short name like the chart itself.
+        // Layers point at datasets by id (a table's features, a raster's pictures); after a transfer they are matched by name or
+        // short name like the chart itself.
         for (const layer of (chart.map && chart.map.layers) || []) {
-          if (layer.kind !== 'dataset') continue;
+          if (layer.kind !== 'dataset' && layer.kind !== 'raster') continue;
           const m = all.find((d) => d.name === layer.datasetName) || (layer.datasetShort ? all.find((d) => d.shortName === layer.datasetShort) : null) || (layer.datasetId === obj.datasetId ? match : null);
           layer.datasetId = m ? m.id : null;
         }

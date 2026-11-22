@@ -112,7 +112,7 @@
     const EXTENSIONS = ['csv', 'tsv', 'txt', 'tab', 'dat', 'fwf', 'prn', 'xlsx', 'xlsm', 'xls', 'xlsb', 'ods', 'fods', 'dbf', 'slk', 'sylk', 'dif', 'wk1', 'wk3', 'wk4',
       'wks', 'wq1', 'wq2', 'wb1', 'wb2', 'wb3', 'qpw', 'html', 'htm', 'xhtml', 'md', 'markdown', 'docx', 'tex', 'json', 'ndjson', 'jsonl', 'geojson', 'topojson', 'kml',
       'kmz', 'gpx', 'xml', 'sqlite', 'sqlite3', 'db', 's3db', 'gpkg', 'sql', 'shp', 'zip', 'sav', 'zsav', 'por', 'dta', 'sas7bdat', 'xpt', 'px', 'rds', 'rda', 'RData',
-      'parquet', 'mdb', 'accdb', 'pdf', 'odt', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'avif', 'qgs', 'qgz', 'bcf', 'bcfzip', 'graphml', 'gexf', 'cypher', 'cql',
+      'parquet', 'mdb', 'accdb', 'pdf', 'odt', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'avif', 'tif', 'tiff', 'gtiff', 'qgs', 'qgz', 'bcf', 'bcfzip', 'graphml', 'gexf', 'cypher', 'cql',
       'cyp', 'ifc', 'ifczip', 'dxf'];
     const importers = D.moduleNames().filter((n) => n.startsWith('io/importers/')).map((n) => D.require(n)).filter((m) => typeof m.detect === 'function');
     const read = EXTENSIONS.filter((ext) => importers.some((m) => m.detect(new File([''], 'x.' + ext))));

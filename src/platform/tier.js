@@ -43,6 +43,7 @@
       'geo.heights': { tier: 2, rows: ['DS-34'] },
       'map.view': { tier: 2, rows: ['DS-35', 'DS-27'] },
       'map.basemap': { tier: 2, rows: ['DS-16', 'DS-37'] },
+      'kind.raster': { tier: 2, rows: ['DS-37'] },
       'ai.panel': { tier: 2, rows: ['DS-45', 'DS-46', 'DS-48', 'DS-49', 'DS-51', 'DS-53', 'DS-54', 'DS-57'], group: 'ai' },
       'cde.bcf': { tier: 2, rows: ['DS-38', 'DS-39'], server: true },
       'cde.teams': { tier: 2, rows: ['DS-49'], server: true },
@@ -68,6 +69,8 @@
     const ENTRIES = {
       'kind:model': 'kind.model', 'view:model': 'kind.model', 'tab:model': 'kind.model', 'chart:model': 'kind.model',
       'op:ifc_apply_table': 'kind.model', 'op:ifc_python': 'kind.model', 'op:ifc_changeset': 'kind.model', 'op:ifc_party': 'kind.model',
+      // GeoTIFF files are read in every tier, as IFC files are; below BIM och GIS a raster is its table of files.
+      'kind:raster': 'kind.raster',
       // The map view with layers (Bearbeta's and Visualisera's, DS-35) and the Geo tab's tools; counting places per area (the
       // tool `points`) is DS-10's and stays in Dokument.
       'view:map': 'map.view', 'chart:map': 'map.view', 'import:qgis': 'map.view',

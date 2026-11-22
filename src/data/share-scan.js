@@ -20,6 +20,8 @@
     /** Tables with their own part, or without free text. */
     const NOT_SCANNED = new Set(['data', '_columns', '_meta', '_log', FILES, '_layout', '_comments']);
     const POSITION_COLUMNS = ['lon', 'lat', 'altitud'];
+    /** The column of a raster's table that holds its files' Copyright text, which is also the raster's attribution (data/raster). */
+    const CREDIT_COLUMN = 'kalla';
     /** What the review finds inside an IFC model, in the order the dialog shows it (ifcParts). */
     const IFC_PARTS = ['persons', 'organizations', 'owner', 'header', 'actors', 'text'];
     /** The tables of an IFC model that are built from its file. */
@@ -88,6 +90,12 @@
         const n = number(await engine.exec(`select count(*) from data where dm_has_personal(${q(c.name)}) = 1`));
         if (n) parts.push({ id: 'text:' + c.name, kind: 'text', column: c.name, count: n, choices: ['keep', 'mask', 'drop'], start: 'mask' });
       }
+      // A raster's attribution is its files' Copyright text, as their column `kalla` is (data/raster), and follows the choice for that
+      // column. When only the attribution holds personal data (the column was edited since), it gets a choice of its own.
+      const credit = handle.meta.raster && typeof handle.meta.raster.attribution === 'string' ? handle.meta.raster.attribution : '';
+      if (credit && !flagged.has(CREDIT_COLUMN) && !parts.some((p) => p.column === CREDIT_COLUMN) && number(await engine.exec('select dm_has_personal(?)', [credit]))) {
+        parts.push({ id: 'attribution', kind: 'attribution', count: 1, names: [credit], choices: ['mask', 'keep'], start: 'mask' });
+      }
       const tables = await tablesIn(engine);
       for (const table of tables) {
         if (NOT_SCANNED.has(table) || (ifc && IFC_TABLES.has(table))) continue;
@@ -108,8 +116,13 @@
       } else if (tables.includes(FILES) && !ifc) {
         const r = await engine.exec(`select distinct name from ${FILES} where kind = 'original'`);
         const names = r[0] ? r[0].values.map((row) => String(row[0])) : [];
+        // A raster's TIFF files can carry tags that name a person (data/raster keeps only which tags they are): those files are
+        // named first, with their tags.
+        const tagged = new Map(((handle.meta.raster && Array.isArray(handle.meta.raster.files)) ? handle.meta.raster.files : [])
+          .filter((f) => f && f.kept === 'original' && f.tags && Array.isArray(f.tags.personal) && f.tags.personal.length).map((f) => [String(f.name), f.tags.personal.map(String)]));
+        const shown = names.filter((n) => tagged.has(n)).concat(names.filter((n) => !tagged.has(n))).slice(0, 5).map((n) => (tagged.has(n) ? `${n} (${tagged.get(n).join(', ')})` : n));
         // A cleaned table beside the untouched original would be no protection at all.
-        if (names.length) parts.push({ id: 'originals', kind: 'originals', count: names.length, names: names.slice(0, 5), choices: ['keep', 'remove'], start: columns.length || parts.length ? 'remove' : 'keep' });
+        if (names.length) parts.push({ id: 'originals', kind: 'originals', count: names.length, names: shown, choices: ['keep', 'remove'], start: columns.length || parts.length || names.some((n) => tagged.has(n)) ? 'remove' : 'keep' });
       }
       if (tables.includes('_comments')) {
         const r = await engine.exec('select count(*), group_concat(distinct author), sum(dm_has_personal(text)) from _comments');
@@ -222,7 +235,7 @@
     /** Whether a set of choices changes anything in the copy. */
     function changes(tr) {
       if (!tr) return false;
-      return !!(ifcScrubs(tr.ifc) || tr.filename || (tr.only || []).length || (tr.drop || []).length || (tr.hash || []).length || (tr.mask || []).length || Object.keys(tr.side || {}).length || tr.originals || tr.pictures || tr.positions || tr.comments || tr.authors);
+      return !!(ifcScrubs(tr.ifc) || tr.filename || (tr.only || []).length || (tr.drop || []).length || (tr.hash || []).length || (tr.mask || []).length || Object.keys(tr.side || {}).length || tr.originals || tr.pictures || tr.positions || tr.comments || tr.authors || tr.attribution);
     }
 
     async function metaValue(engine, key) {
@@ -232,6 +245,11 @@
     }
     async function setMeta(engine, key, value) {
       await engine.run('insert or replace into _meta (key, value) values (?, ?)', [key, JSON.stringify(value)]);
+    }
+    /** A value of `_meta` as it is stored, for the keys kept as plain text (the kind). */
+    async function rawMeta(engine, key) {
+      const r = await engine.exec('select value from _meta where key = ?', [key]);
+      return r[0] && r[0].values.length ? String(r[0].values[0][0]) : null;
     }
 
     /** Metadata removed from the pictures that keep their bytes (scaled copies were drawn anew and hold none). */
@@ -256,17 +274,50 @@
       if (tables.includes(FILES) && fileColumn) await engine.run(`delete from ${FILES} where name not in (select ${q(fileColumn)} from data)`);
     }
 
+    /**
+     * A raster's copy holds only the files its table still lists, since the table is the list of files (B-64): a row deleted or left
+     * out of the selection takes its file's original, preview and thumbnail along, and `_meta.raster` (with its count and extent)
+     * and the source name only the files left. Nothing is pruned when `fil` was changed or dropped in the copy, whose names then no
+     * longer say which file a row is.
+     * @param {any} engine the copy's @param {any} [tr]
+     */
+    async function pruneRaster(engine, tr = {}) {
+      const raster = await metaValue(engine, 'raster');
+      if (!raster || !Array.isArray(raster.files)) return;
+      if ((tr.drop || []).concat(tr.hash || [], tr.mask || []).includes('fil')) return;
+      const info = await engine.exec('pragma table_info(data)');
+      if (!(info[0] ? info[0].values : []).some((row) => String(row[1]) === 'fil')) return;
+      const r = await engine.exec('select distinct fil from data where fil is not null');
+      const names = new Set((r[0] ? r[0].values : []).map((row) => String(row[0])));
+      if ((await tablesIn(engine)).includes(FILES)) await engine.run(`delete from ${FILES} where name not in (select fil from data where fil is not null)`);
+      const files = raster.files.filter((f) => f && names.has(String(f.name)));
+      if (files.length === raster.files.length) return;
+      await setMeta(engine, 'raster', Object.assign({}, raster, { files, count: files.length, extent: kinds.rasterExtent(files) }));
+      const source = await metaValue(engine, 'source');
+      if (source && Array.isArray(source.files)) await setMeta(engine, 'source', Object.assign({}, source, { files: source.files.filter((f) => f && names.has(String(f.name))) }));
+    }
+
     /** The choices outside the columns of the main table, on the engine of the copy. */
     async function applyParts(engine, tr) {
       const tables = await tablesIn(engine);
       if (tr.only && tr.only.length) await keepOnly(engine, tables, tr.only);
+      await pruneRaster(engine, tr);
       for (const name of tr.mask || []) await engine.run(`update data set ${q(name)} = dm_mask_personal(${q(name)}) where dm_has_personal(${q(name)}) = 1`);
       for (const [table, choice] of Object.entries(tr.side || {})) {
         if (!tables.includes(table)) continue;
         if (choice === 'remove') { await engine.run(`delete from ${q(table)}`); continue; }
         for (const c of await textColumnsOf(engine, table)) await engine.run(`update ${q(table)} set ${q(c)} = dm_mask_personal(${q(c)}) where dm_has_personal(${q(c)}) = 1`);
       }
-      if (tables.includes(FILES) && (tr.originals || tr.pictures)) await engine.run(`delete from ${FILES}`);
+      if (tables.includes(FILES) && (tr.originals || tr.pictures)) {
+        // The pictures the app made itself from the originals (a raster's previews, data/kinds `derived`) stay when only the
+        // originals are left behind, and the copy's facts say why there is none.
+        const derived = tr.originals && !tr.pictures ? kinds.of(await rawMeta(engine, 'kind')).derived : null;
+        if (derived) {
+          await engine.run(`delete from ${FILES} where kind = 'original'`);
+          const raster = await metaValue(engine, 'raster');
+          if (raster && Array.isArray(raster.files)) await setMeta(engine, 'raster', Object.assign({}, raster, { files: raster.files.map((f) => (f && f.kept === 'original' ? Object.assign({}, f, { kept: 'none', skipped: 'shared' }) : f)) }));
+        } else await engine.run(`delete from ${FILES}`);
+      }
       if (tr.positions) {
         const r = await engine.exec('pragma table_info(data)');
         const present = (r[0] ? r[0].values : []).map((row) => String(row[1]));
@@ -286,6 +337,15 @@
       if (tr.authors) {
         const documents = await metaValue(engine, 'documents');
         if (Array.isArray(documents)) await setMeta(engine, 'documents', documents.map((d) => Object.assign({}, d, { author: null })));
+      }
+      // A raster's attribution is the same text as its column `kalla`: masked with it, gone when the column is pseudonymised or
+      // dropped (a name in it is not recognised, so masking would leave it), and masked on its own choice. Read after the originals,
+      // whose change to `_meta.raster` it keeps.
+      const credit = await metaValue(engine, 'raster');
+      if (credit && credit.attribution) {
+        const gone = (tr.drop || []).includes(CREDIT_COLUMN) || (tr.hash || []).includes(CREDIT_COLUMN);
+        const masked = (tr.mask || []).includes(CREDIT_COLUMN) || !!tr.attribution;
+        if (gone || masked) await setMeta(engine, 'raster', Object.assign({}, credit, { attribution: gone ? null : await maskText(credit.attribution, engine) }));
       }
       // The log and the rules can hold the values that were just removed; who delivered what is not for others either.
       const changed = (tr.drop || []).concat(tr.hash || [], tr.mask || []);
@@ -369,14 +429,15 @@
 
     /**
      * The bytes that leave the app. Without choices this is the dataset as it is, vacuumed, so that rows deleted earlier
-     * do not follow in the free pages of the file.
+     * do not follow in the free pages of the file, nor the files of a raster's deleted rows.
      * @param {string} id @param {any} [tr] from the review @returns {Promise<Uint8Array>}
      */
     async function copy(id, tr = {}) {
       // The model's file is cleaned first, with the salt the hashed columns use, so that a name gives the same code in both.
       const scrub = ifcScrubs(tr.ifc);
       const work = scrub ? Object.assign({}, tr, { salt: tr.salt || randomSalt() }) : tr;
-      return datasets.exportBytesTransformed(id, Object.assign({}, work, { before: scrub ? (engine) => scrubModel(engine, work, scrub) : null, after: changes(work) ? (engine) => applyParts(engine, work) : null }));
+      // Without changes, a raster's copy still leaves out the files its table no longer lists.
+      return datasets.exportBytesTransformed(id, Object.assign({}, work, { before: scrub ? (engine) => scrubModel(engine, work, scrub) : null, after: changes(work) ? (engine) => applyParts(engine, work) : (engine) => pruneRaster(engine) }));
     }
 
     /**

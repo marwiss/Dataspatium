@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * A dataset on the phone in its own form, above the rows: pictures to look through, a document to read, places on a small
- * plan, a network's nodes with their edges, what a model is made of. It reads only the file it is given, and nothing here
- * goes over the network.
+ * plan, a network's nodes with their edges, what a model is made of, a raster's pictures with their attribution. It reads only
+ * the file it is given, and nothing here goes over the network.
  */
 (function () {
   'use strict';
@@ -27,6 +27,20 @@
       const urls = rows.map((r) => URL.createObjectURL(new Blob([r[2]], { type: String(r[1]) })));
       view.onClose(() => urls.forEach((u) => URL.revokeObjectURL(u)));
       return h('div', { class: 'dm-m-pictures' }, rows.map((r, i) => h('figure', { class: 'dm-m-picture' }, h('img', { src: urls[i], alt: String(r[0]) }), h('figcaption', { class: 'dm-small dm-truncate', text: String(r[0]) }))));
+    }
+    /**
+     * A raster: the thumbnails of its files and, under them, the attribution and the licence that `_meta.raster` names (the
+     * terms of an orthophoto travel with its pictures).
+     */
+    async function rasters(view) {
+      const shown = await pictures(view);
+      const raw = values(await view.engine.exec("select value from _meta where key = 'raster'"));
+      let meta = null;
+      try { meta = raw.length ? JSON.parse(String(raw[0][0])) : null; } catch (_err) { meta = null; }
+      const licence = meta && meta.license && meta.license.name ? String(meta.license.name) : '';
+      const credit = meta && meta.attribution ? String(meta.attribution) + (licence ? ` (${licence})` : '') : licence;
+      if (!shown && !credit) return null;
+      return h('div', null, shown, credit ? h('p', { class: 'dm-help dm-small', 'data-m-raster-credit': '', text: credit }) : null);
     }
     /** The paragraphs on this page of rows, set as text. */
     function reading(view) {
@@ -101,6 +115,7 @@
     async function render(view) {
       switch (view.kind) {
         case 'images': return pictures(view);
+        case 'raster': return rasters(view);
         case 'document': return reading(view);
         case 'graph': return nodes(view);
         case 'model': return parts(view);

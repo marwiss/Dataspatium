@@ -91,6 +91,10 @@
         case kinds.PROFILES.plan:
           if (maps()) out.push({ key: 'viz.suggest.map', params: {}, chart: await ownChart(ds, 'map') });
           break;
+        // A raster's own map: its pictures with the outlines of its files (viz/leaflet.defaultMap).
+        case kinds.PROFILES.raster:
+          if (maps()) out.push({ key: 'viz.suggest.map', params: {}, chart: await ownChart(ds, 'map') });
+          break;
         case kinds.PROFILES.graph: {
           out.push({ key: 'viz.suggest.graph', params: {}, chart: await ownChart(ds, 'graph') });
           const edges = await D.require('viz/data').columnsOf(ds.id, '_edges');

@@ -40,32 +40,72 @@
       { id: 'plan-sheet', key: 'export.format.plan-sheet', ext: 'pdf', kind: 'plan' },
       { id: 'plan-provisions', key: 'export.format.plan-provisions', ext: 'docx', kind: 'plan' },
       { id: 'plan-original', key: 'export.format.plan-original', ext: 'zip', kind: 'plan' },
-      // Model datasets: the original file, the long tables of an IFC model, the drawing of a DXF file.
-      { id: 'model-original', key: 'export.format.model-original', ext: 'ifc', kind: 'model' },
+      // Model datasets: the original file, the long tables of an IFC model, the drawing of a DXF file. `original` marks the format
+      // that carries the file as it came, which is offered also where the tier shows the kind as a table.
+      { id: 'model-original', key: 'export.format.model-original', ext: 'ifc', kind: 'model', original: true },
       { id: 'model-properties', key: 'export.format.model-properties', ext: 'csv', kind: 'model', modelFormat: 'ifc' },
       { id: 'model-quantities', key: 'export.format.model-quantities', ext: 'csv', kind: 'model', modelFormat: 'ifc' },
       { id: 'model-svg', key: 'export.format.model-svg', ext: 'svg', kind: 'model', modelFormat: 'dxf' },
       { id: 'model-pdf', key: 'export.format.model-pdf', ext: 'pdf', kind: 'model', modelFormat: 'dxf' },
       { id: 'model-quantities-xlsx', key: 'export.format.model-quantities-xlsx', ext: 'xlsx', kind: 'model', modelFormat: 'ifc' },
       { id: 'model-glb', key: 'export.format.model-glb', ext: 'glb', kind: 'model', modelFormat: 'ifc' },
+      // Rasters: the original GeoTIFF files, and the image on the map as a GeoTIFF in Web Mercator with its attribution beside it.
+      { id: 'raster-original', key: 'export.format.raster-original', ext: 'tif', kind: 'raster', original: true },
+      { id: 'raster-image', key: 'export.format.raster-image', ext: 'zip', kind: 'raster' },
     ];
+    /** A raster's formats as its files allow: the originals in a ZIP when there are several, and what each needs when it cannot work. */
+    function rasterFormat(f, meta) {
+      if (f.kind !== 'raster') return f;
+      const list = meta && meta.raster && Array.isArray(meta.raster.files) ? meta.raster.files : [];
+      if (f.id === 'raster-original') {
+        const kept = list.filter((x) => x && x.kept === 'original').length;
+        if (!kept) return Object.assign({}, f, { unavailable: 'export.needs.original' });
+        return kept > 1 ? Object.assign({}, f, { ext: 'zip' }) : f;
+      }
+      return list.some((x) => x && x.preview && Array.isArray(x.preview.bounds)) ? f : Object.assign({}, f, { unavailable: 'export.needs.geometry' });
+    }
     /**
-     * The formats offered for a dataset: graph and model formats only for those kinds; tables for every dataset. A kind whose own
-     * views the tier hides (platform/tier: a model in Dokument) keeps only its original file beside the table's formats.
+     * The formats offered for a dataset: graph, model and raster formats only for those kinds; tables for every dataset. A kind
+     * whose own views the tier hides (platform/tier: a model or a raster in Dokument) keeps only its original file beside the table's
+     * formats.
      */
     function formatsFor(meta, facts = {}) {
       const dxf = !!(meta && meta.model && meta.model.format === 'dxf');
       const own = kinds.shown(meta);
-      return FORMATS.filter((f) => !f.kind || (meta && meta.kind === f.kind && (!f.modelFormat || f.modelFormat === (dxf ? 'dxf' : 'ifc')) && (own || f.id === 'model-original')))
+      return FORMATS.filter((f) => !f.kind || (meta && meta.kind === f.kind && (!f.modelFormat || f.modelFormat === (dxf ? 'dxf' : 'ifc')) && (own || f.original)))
         .map((f) => (f.id === 'model-original' && dxf ? Object.assign({}, f, { ext: 'dxf' }) : f))
+        .map((f) => rasterFormat(f, meta))
         // A format that cannot work stays visible and says what it needs.
         .map((f) => (f.places && facts.geometry === false ? Object.assign({}, f, { unavailable: 'export.needs.geometry' }) : f));
     }
-    /** A dataset's files of one sort in a ZIP, as they are stored. */
-    async function toFilesZip(id, sort) {
+    /**
+     * A raster: the originals of the files its table still lists, one as it is under its own name (or the name asked for, as a .tif),
+     * several in a ZIP (the name asked for as a .zip), or the map image as GeoTIFF files in Web Mercator with `kreditering.txt`
+     * (data/raster geoTiffZip). The name asked for follows the formats of the whole dataset, so a selection that holds one original,
+     * or several, still gets the extension of what is written.
+     */
+    async function toRaster(id, fmt, meta, options) {
+      if (fmt.id === 'raster-image') {
+        const raster = await D.ensure(['raster'], () => D.require('data/raster'));
+        return { blob: await raster.geoTiffZip(id, meta), filename: options.filename || files.safeName(meta ? meta.name : 'raster', 'zip') };
+      }
+      const dsFiles = D.require('data/dataset-files');
+      const names = await dsFiles.listed(id);
+      const originals = (await dsFiles.list(id, 'original')).filter((f) => !names || names.has(f.name));
+      if (!originals.length) throw new Error(D.t('export.err.nofiles'));
+      if (originals.length > 1) {
+        const filename = options.filename ? String(options.filename).replace(/\.tiff?$/i, '.zip') : files.safeName(meta ? meta.name : 'raster', 'zip');
+        return { blob: await toFilesZip(id, 'original', originals), filename };
+      }
+      const got = await dsFiles.read(id, originals[0].name, 'original');
+      if (!got) throw new Error(D.t('export.err.nofiles'));
+      return { blob: new Blob([got.bytes], { type: 'image/tiff' }), filename: options.filename ? String(options.filename).replace(/\.zip$/i, '.tif') : originals[0].name };
+    }
+    /** A dataset's files of one sort in a ZIP, as they are stored; only those in `list` when it is given. */
+    async function toFilesZip(id, sort, list) {
       const dsFiles = D.require('data/dataset-files');
       const out = {};
-      for (const f of await dsFiles.list(id, sort)) {
+      for (const f of list || await dsFiles.list(id, sort)) {
         const got = await dsFiles.read(id, f.name, sort);
         if (got) out[f.name] = got.bytes;
       }
@@ -274,6 +314,7 @@
         const out = await toModel(id, fmt.id, options);
         return { blob: out.blob, filename: options.filename || out.filename || filename };
       }
+      if (fmt.kind === 'raster') return toRaster(id, fmt, meta, options);
       if (fmt.id === 'graph-csv') blob = await toGraphCsv(id, options);
       else if (fmt.id === 'document-originals' || fmt.id === 'plan-original') blob = await toFilesZip(id, 'original');
       else if (fmt.id === 'images-zip') blob = await toFilesZip(id, 'preview');

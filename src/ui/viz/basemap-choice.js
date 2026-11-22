@@ -10,11 +10,14 @@
  * lantmateriet-stac, and lays it under the features; a map drawn again over the same view takes the image read before. When
  * Lantmäteriet's file host refuses the key's token, the credentials panel asks for the Geotorget login (once a session; after a
  * cancel the message has a button for it).
+ * The image a map shows in Web Mercator can be kept as a dataset of the kind raster (`saveView`, the button *Spara ortofotot*,
+ * data/raster fromView): from the image already read, with its attribution and licence, and without the key. Rasters in the
+ * workspace are offered as an offline background (`rasterChoices`), drawn from their own pictures.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/viz/basemap-choice', ['ui/base', 'ui/overlays', 'ui/api/auth-panel', 'viz/orthophotos', 'api/connectors', 'api/auth', 'api/orthophoto-cog'], (base, overlays, authPanel, orthophotos, connectors, auth, cog) => {
+  D.define('ui/viz/basemap-choice', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/api/auth-panel', 'viz/orthophotos', 'api/connectors', 'api/auth', 'api/orthophoto-cog', 'data/datasets', 'data/kinds'], (base, basic, overlays, authPanel, orthophotos, connectors, auth, cog, datasets, kinds) => {
     const { h, t } = base;
 
     /**
@@ -200,10 +203,82 @@
       const layer = L.imageOverlay(result.url, L.latLngBounds(result.bounds[0], result.bounds[1]), { pane: 'tilePane', interactive: false, alt: t('map.basemap.' + id), attribution, className: 'dm-ortho-image' });
       layer.addTo(map);
       layers.set(map, layer);
+      shown.set(map, { result, preset });
       handle.info.basemapImage = { years: result.years, resolution: result.resolution, items: result.items.length };
       return status;
     }
 
-    return { options, ensure, askLogin, keyNotice, notifyKey, isView, drawView, viewBox };
+    // ---- the image shown, kept as a raster (B-64) ---------------------------------------------------------------
+    /** What each map shows of Sweden's orthophoto: the image read (api/orthophoto-cog) and its preset, set when it is laid. */
+    const shown = new WeakMap();
+    /** The prefix of a background that is a raster of the workspace (`raster:<id>`). */
+    const RASTER = 'raster:';
+    /**
+     * Whether a map shows an orthophoto that can be kept as a raster: the image read for it in Web Mercator (on a map in SWEREF 99
+     * TM the image lies in the files' own grid, which a raster's preview is not).
+     * @param {any} handle viz/leaflet's handle @returns {boolean}
+     */
+    function savable(handle) {
+      const x = handle && handle.map ? shown.get(handle.map) : null;
+      return !!(x && x.result && x.result.blob instanceof Blob && Number(x.result.grid) === 3857);
+    }
+    /**
+     * The orthophoto a map shows, kept as a dataset of the kind raster (data/raster fromView): the image already read, with its
+     * attribution and licence and without the key, the token or the files' addresses; nothing is read again. Throws
+     * `raster.ortho.none` when the map shows none that can be kept.
+     * @param {any} handle viz/leaflet's handle @param {{name?: string}} [opts] @returns {Promise<any>} the new dataset's meta
+     */
+    async function saveView(handle, opts = {}) {
+      if (!savable(handle)) throw new Error(t('raster.ortho.none'));
+      const x = shown.get(handle.map);
+      const raster = await D.ensure(['raster'], () => D.require('data/raster'));
+      return raster.fromView(x.result, { name: opts.name, preset: x.preset });
+    }
+    /**
+     * The button *Spara ortofotot*, shown beside *Hämta ortofoto för vyn*: it asks the dataset's name, keeps the image the map
+     * shows as a raster and says so, with a button that opens it when `onOpen` is given; when the map shows no image to keep, it
+     * says what to do first.
+     * @param {() => any} getHandle the map's handle now
+     * @param {{defaultName?: string, onOpen?: (meta: any) => void, size?: string}} [opts]
+     * @returns {HTMLElement}
+     */
+    function saveButton(getHandle, opts = {}) {
+      let busy = false;
+      return basic.button({ label: t('raster.ortho.save'), icon: 'save', size: opts.size, title: t('raster.ortho.save.hint'), 'data-ortho-save': '', onClick: async () => {
+        if (busy) return;
+        const handle = getHandle();
+        if (!savable(handle)) { overlays.toast.show(t('raster.ortho.none'), { kind: 'info', timeout: 9000 }); return; }
+        const years = (shown.get(handle.map).result.years || []).join(', ');
+        const name = await overlays.dialog.prompt(t('import.name'), { title: t('raster.ortho.save'), value: opts.defaultName || t('raster.ortho.name', { years }) });
+        if (!name || !name.trim()) return;
+        busy = true;
+        try {
+          const meta = await saveView(handle, { name: name.trim() });
+          const open = opts.onOpen ? { action: { label: t('import.open.bearbeta'), onClick: () => opts.onOpen(meta) } } : {};
+          overlays.toast.show(t('raster.ortho.saved', { name: meta.name }), Object.assign({ kind: 'ok', timeout: 9000 }, open));
+        } catch (err) {
+          D.log('basemaps', err);
+          overlays.toast.show(String((err && err.message) || err), { kind: 'error' });
+        } finally { busy = false; }
+      } });
+    }
+    /**
+     * The rasters of the workspace a map can lie on without the net: those the tier shows (platform/tier `kind:raster`) whose
+     * extent meets the box {minX, minY, maxX, maxY} in degrees (all of them without a box), as the choices `raster:<id>` of a group
+     * of their own, by name.
+     * @param {{minX: number, minY: number, maxX: number, maxY: number}|null} [box]
+     * @returns {Promise<Array<{value: string, label: string, group: string}>>}
+     */
+    async function rasterChoices(box) {
+      let list = [];
+      try { list = await datasets.list(); } catch (err) { D.log('basemaps', err); return []; }
+      const meets = (e) => !box || (e[0] <= box.maxX && e[2] >= box.minX && e[1] <= box.maxY && e[3] >= box.minY);
+      const group = t('map.basemap.group.rasters');
+      return list.filter((d) => kinds.of(d).mapLayer === 'raster' && kinds.shown(d) && d.raster && Array.isArray(d.raster.extent) && d.raster.extent.length === 4 && d.raster.extent.every(Number.isFinite) && meets(d.raster.extent))
+        .map((d) => ({ value: RASTER + d.id, label: String(d.name), group }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+    }
+
+    return { RASTER, options, ensure, askLogin, keyNotice, notifyKey, isView, drawView, viewBox, savable, saveView, saveButton, rasterChoices };
   });
 })();

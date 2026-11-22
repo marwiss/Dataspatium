@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * A picture of a dataset for its page in Hantera: the first page of a document, a small map of its places, a network, a line
- * over time, what a model is made of. A plain table has none, and a picture collection shows its pictures anyway. It is drawn
- * after the page, and a failure only means that there is no picture.
+ * over time, what a model is made of, a raster at a small size. A plain table has none, and a picture collection shows its
+ * pictures anyway. It is drawn after the page, and a failure only means that there is no picture.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/kinds/dataset-picture', ['ui/base', 'data/datasets', 'data/kinds', 'data/facets', 'viz/leaflet', 'ui/kinds/sketches'], (base, datasets, kinds, facets, leaflet, sketches) => {
+  D.define('ui/kinds/dataset-picture', ['ui/base', 'data/datasets', 'data/kinds', 'data/facets', 'viz/leaflet', 'ui/kinds/sketches', 'data/dataset-files'], (base, datasets, kinds, facets, leaflet, sketches, dsFiles) => {
     const { h, t, replace } = base;
     const q = (s) => '"' + String(s).replace(/"/g, '""') + '"';
     const MAP_ROWS = 1500;
@@ -71,6 +71,12 @@
       const rows = valuesOf(await handle.engine.exec('select typ, count(*) as n from data where typ is not null group by typ order by n desc limit 8'));
       return rows.length ? sketches.bars(rows.map((r) => ({ name: String(r[0]), count: Number(r[1]) }))) : null;
     }
+    /** A raster at a small size: the thumbnail of its first file, read from the dataset's own file. */
+    async function raster(ds, handle) {
+      const first = valuesOf(await handle.engine.exec('select fil from data where fil is not null order by rowid limit 1'));
+      const url = first.length ? await dsFiles.url(ds.id, String(first[0][0]), 'thumb') : null;
+      return url ? h('img', { src: url, alt: t('datasets.picture.raster'), class: 'dm-sketch' }) : null;
+    }
     async function timeline(handle, facet) {
       const period = facet.columns[0];
       const value = handle.columns.find((c) => (c.type === 'number' || c.type === 'integer') && c.name !== period);
@@ -89,6 +95,7 @@
       if (own === 'map') return map(handle);
       if (own === 'network') return network(handle);
       if (own === 'model') return model(ds, handle);
+      if (own === 'raster') return raster(ds, handle);
       const found = await facets.detect(ds.id);
       if (found.some((f) => f.id === 'spatial' && f.on)) return map(handle);
       const series = found.find((f) => f.id === 'timeseries' && f.on);

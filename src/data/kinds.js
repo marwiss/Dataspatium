@@ -16,8 +16,39 @@
     const planKind = (ds) => (ds.plan && ds.plan.slag === 'oversiktsplan' ? 'oversiktsplan' : 'detaljplan');
     const pagesOf = (ds) => (Array.isArray(ds.documents) ? ds.documents : []).reduce((s, d) => s + (Number(d.pages) || 0), 0);
     const picturesOf = (ds) => (ds.images && ds.images.count ? ds.images.count : ds.rowCount || 0);
+    /**
+     * The sizes up to which a raster keeps its original files, one file and a dataset's together (B-64). data/raster's limits
+     * start from them, and the facts name them.
+     */
+    const RASTER_KEEP = { file: 32e6, total: 40e6 };
+    /** A raster's files as data/raster describes them in `_meta.raster`; none when the facts are missing. */
+    const rasterFiles = (ds) => (ds && ds.raster && Array.isArray(ds.raster.files) ? ds.raster.files : []);
+    /**
+     * The union of a raster's placed files, [west, south, east, north] from their previews' corners; null when none has a place.
+     * @param {Array<{preview?: {bounds?: number[][]|null}}>} files `_meta.raster.files` @returns {number[]|null}
+     */
+    function rasterExtent(files) {
+      const boxes = (files || []).map((f) => (f && f.preview && Array.isArray(f.preview.bounds) ? f.preview.bounds : null)).filter(Boolean).map((b) => [b[0][1], b[1][0], b[1][1], b[0][0]]);
+      return boxes.length ? [Math.min(...boxes.map((b) => b[0])), Math.min(...boxes.map((b) => b[1])), Math.max(...boxes.map((b) => b[2])), Math.max(...boxes.map((b) => b[3]))] : null;
+    }
+    /** Ground metres per pixel in three significant digits. */
+    const metres = (r) => i18n.formatNumber(r, { maximumSignificantDigits: 3 });
+    /** How many files a raster has: the rows of its table, which is the list of its files (a row removed there takes its file away). */
+    const rasterCount = (ds) => (typeof ds.rowCount === 'number' ? ds.rowCount : rasterFiles(ds).length);
+    /** A raster's summary in parts: its files and, when the first file has one, its resolution. */
+    function rasterParts(ds) {
+      const files = rasterFiles(ds);
+      const r = files[0] ? Number(files[0].resolution) : 0;
+      return [t('raster.files.n', { n: n(rasterCount(ds)) }), r > 0 ? t('raster.resolution', { r: metres(r) }) : ''].filter(Boolean);
+    }
 
-    /** How a hit in a kind's table is found again in its own view. `value` reads a column of the hit. */
+    /**
+     * What each kind is: its mark, its own view in Bearbeta, the tab Analysera opens in, its chart in Visualisera, its side tables,
+     * what its `_files` hold, its picture in Hantera, the export that carries it whole, what a table export of it loses, the columns
+     * its view cannot do without (`protect`) and how a hit in its table is found again in its own view (`hit`; `value` reads a
+     * column of the hit). `derived` names the sorts of `_files` the app made itself, which a copy without the originals keeps;
+     * `mapLayer` says how viz/leaflet draws the kind on maps; `checks: 'table'` has Kontrollera check it as a table.
+     */
     const PROFILES = {
       table: {
         icon: 'table', view: null, tab: 'stats', chart: null, sideTables: [],
@@ -75,6 +106,21 @@
         summary: (ds) => (isDxf(ds) ? t('model.entities.n', { n: n(ds.rowCount) }) : t('model.elements.n', { n: n(ds.model && ds.model.elements ? ds.model.elements : ds.rowCount) })),
         hit: (value, id) => ({ label: 'soka.open.element', icon: 'box', store: { openElement: { datasetId: id, id: value('id') } } }),
       },
+      raster: {
+        icon: 'image', view: 'map', tab: 'sql', chart: 'map', sideTables: [], files: 'originals',
+        // The sorts of _files the app made itself from the originals: a copy that leaves the originals out keeps them (data/share-scan).
+        derived: ['preview', 'thumb'],
+        // How viz/leaflet draws the kind on maps: its pictures, not features.
+        mapLayer: 'raster',
+        // Kontrollera checks its table of files as it checks a table.
+        checks: 'table',
+        loses: 'export.loses.raster', picture: 'raster', wholeFormat: 'raster-original',
+        versionDiff: [{ label: 'versions.own.rasters', table: 'data', column: 'fil' }],
+        open: { label: 'hantera.view.raster', hint: 'hantera.view.raster.hint', icon: 'map' },
+        protect: () => ['fil', 'geometri'],
+        summary: (ds) => rasterParts(ds).join(' · '),
+        hit: (value, id) => ({ label: 'soka.open.raster', icon: 'map', store: { openRaster: { datasetId: id, name: value('fil') } } }),
+      },
     };
 
     /** @param {{kind?: string}|string|null|undefined} ds a dataset or the name of a kind @returns {any} its profile */
@@ -107,8 +153,43 @@
         case PROFILES.plan: return [t('plan.slag.' + planKind(ds)), t('plan.objects.n', { n: n(ds.rowCount) })];
         case PROFILES.graph: return [t('graph.nodes.n', { n: n(ds.rowCount) }), t('graph.edges.n', { n: n(ds.graph && ds.graph.edges) })];
         case PROFILES.model: return [summary(ds)];
+        case PROFILES.raster: return rasterParts(ds);
         default: return [t('common.rows', { n: n(ds.rowCount) }), t('common.columns', { n: ds.columnCount || 0 })];
       }
+    }
+
+    /**
+     * A raster's facts from `_meta.raster`: its files (when more than one, or when some were left out: those that could not be read
+     * apart from those over the number a raster holds), system, resolution, pixels, bands and data type, what became of the
+     * originals and the attribution with the licence. Values the files share are said once; differing ones are listed.
+     * @param {any} ds @returns {Array<{label: string, value: string}>}
+     */
+    function rasterFacts(ds) {
+      const r = ds.raster || {};
+      const files = rasterFiles(ds);
+      const left = Array.isArray(r.skipped) ? r.skipped.filter(Boolean) : [];
+      const many = left.filter((s) => s.code === 'many');
+      const skipped = [left.length > many.length ? t('images.skipped', { n: n(left.length - many.length) }) : '',
+        many.length ? t('raster.skipped.many', { n: n(many.length), max: n(Number(many[0].max) || 0) }) : ''].filter(Boolean).join('; ');
+      const count = rasterCount(ds);
+      const each = (fn) => Array.from(new Set(files.map(fn).filter(Boolean))).join(', ');
+      const res = files.map((f) => Number(f.resolution)).filter((x) => x > 0);
+      const lo = Math.min(...res); const hi = Math.max(...res);
+      const system = (f) => (f.crsSource === 'assumed' ? t('raster.crs.assumed', { crs: f.crsText || f.crs }) : f.crsText || f.crs || t('raster.crs.none'));
+      const kept = (f) => t('raster.kept.' + (f.kept === 'original' ? 'original' : f.skipped || 'view'), { max: i18n.formatBytes(f.skipped === 'total' ? RASTER_KEEP.total : RASTER_KEEP.file) });
+      const counts = new Map();
+      for (const f of files) { const text = kept(f); counts.set(text, (counts.get(text) || 0) + 1); }
+      const licence = r.license && r.license.name ? String(r.license.name) : '';
+      const credit = r.attribution ? String(r.attribution) + (licence ? ` (${licence})` : '') : licence;
+      return [
+        count > 1 || skipped ? { label: t('raster.field.files'), value: n(count) + (skipped ? ` (${skipped})` : '') } : null,
+        { label: t('raster.field.crs'), value: each(system) },
+        res.length ? { label: t('raster.field.resolution'), value: t('raster.resolution', { r: lo === hi ? metres(lo) : `${metres(lo)}–${metres(hi)}` }) } : null,
+        { label: t('raster.field.size'), value: each((f) => (f.width && f.height ? `${n(f.width)} × ${n(f.height)}` : '')) },
+        { label: t('raster.field.bands'), value: each((f) => (f.bands ? `${n(f.bands)} · ${f.format || 'uint'}${f.bits || 8}` : '')) },
+        { label: t('raster.field.original'), value: Array.from(counts, ([text, c]) => (files.length > 1 ? `${text} (${n(c)})` : text)).join('; ') },
+        { label: t('raster.field.attribution'), value: credit },
+      ].filter((x) => x && x.value);
     }
 
     /**
@@ -141,9 +222,10 @@
         ds.kind === 'document' && Array.isArray(ds.documents) ? { label: t('document.files'), value: `${i18n.formatNumber(ds.documents.length)} · ${t('document.pages.n', { n: i18n.formatNumber(ds.documents.reduce((n, d) => n + (d.pages || 0), 0)) })}` } : null,
         ds.kind === 'document' ? { label: t('document.paragraphs'), value: i18n.formatNumber(ds.rowCount || 0) } : null,
         ds.kind === 'images' && ds.images ? { label: t('images.count'), value: i18n.formatNumber(ds.images.count || 0) + (ds.images.skipped && ds.images.skipped.length ? ` (${t('images.skipped', { n: ds.images.skipped.length })})` : '') } : null,
+        ...(ds.kind === 'raster' ? rasterFacts(ds) : []),
       ].filter(Boolean);
     }
 
-    return { PROFILES, of, isCollection, summary, guarded, badges, facts, isDxf, shown, ownView, ownTab };
+    return { PROFILES, RASTER_KEEP, of, isCollection, summary, guarded, badges, facts, isDxf, shown, ownView, ownTab, rasterExtent };
   });
 })();

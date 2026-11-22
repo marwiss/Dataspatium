@@ -13,7 +13,7 @@ also *Bundle only this one*. The recipient opens the bundle under *Receive* and 
 before anything is taken in. The inspector shows how much there is to share. See also [format.md](format.md) on how
 the bundle is built.
 
-**The files.** A dataset with files shows how large they are, and you can leave them behind to make the bundle smaller. The rows follow. Without its files a picture collection shows only the facts about the pictures, and a document its text.
+**The files.** A dataset with files shows how large they are, and you can leave them behind to make the bundle smaller. The rows follow. Without its files a picture collection shows only the facts about the pictures, and a document its text. A raster leaves only its original files behind and keeps its previews and thumbnails, so the size is that of the originals; a saved orthophoto has no originals to leave.
 
 ## GitHub
 
@@ -61,6 +61,11 @@ phone numbers, both in whole columns and inside running text, and lists what oth
 | Pictures | Keep or remove. The position is removed separately, both from the table and from the picture file |
 | Comments and authors in the documents' metadata | Keep or remove |
 | Collected rows | Who collected can be pseudonymised, and the position can be removed |
+
+A raster's original files (GeoTIFF) can carry tags that name a person, such as Artist, HostComputer, IPTC and GDAL_METADATA. The app
+never reads out the values, but the review names the tags by the file and then suggests removing the originals. The copy keeps the
+raster's previews and thumbnails (see [raster.md](raster.md#export-and-share)), but not the files whose rows you have removed. The
+raster's attribution, the text from the files' Copyright tag, follows the choice for the column *kalla*.
 
 Only the copy that is shared changes, and the dataset in the app stays as it is. If you change anything, neither the change log nor the recipe comes along, since they can hold the original values.
 Bundles are also cleaned of traces of removed values in the file itself.

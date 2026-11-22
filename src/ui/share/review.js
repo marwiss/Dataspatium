@@ -199,7 +199,7 @@
       let hash = 0; let drop = 0; let other = 0;
       for (const tr of Object.values(transform || {})) {
         hash += (tr.hash || []).length; drop += (tr.drop || []).length;
-        other += (tr.mask || []).length + Object.keys(tr.side || {}).length + ['originals', 'pictures', 'positions', 'comments', 'authors'].filter((k) => tr[k]).length;
+        other += (tr.mask || []).length + Object.keys(tr.side || {}).length + ['originals', 'pictures', 'positions', 'comments', 'authors', 'attribution'].filter((k) => tr[k]).length;
         other += shareScan.IFC_PARTS.filter((k) => tr.ifc && (tr.ifc[k] === 'hash' || tr.ifc[k] === 'remove')).length;
       }
       if (!hash && !drop && !other) return '';

@@ -182,9 +182,13 @@
           if (!d) nodes.push(h('p', { class: 'dm-help', text: t('dela.inspector.hint') }));
           else {
             const profile = kinds.of(d);
+            // The original file only where the export that carries it can work: a raster that kept none (a saved orthophoto, a file
+            // over the limits, a copy shared without them) has nothing to send.
+            const whole = profile.files ? services.exporter.formatsFor(d).find((f) => f.id === profile.wholeFormat) : null;
+            const original = !!profile.files && !(whole && whole.unavailable);
             const what = /** @type {any} */ (h('dm-select', { label: t('dela.share.what') }));
-            what.options = [{ value: 'dataset', label: t('cde.send.what.export', { name: d.name }) }].concat(profile.files ? [{ value: 'original', label: t('cde.send.what.original') }] : []).concat([{ value: 'bundle', label: t('cde.send.what.bundle') }]);
-            if (s.what === 'original' && !profile.files) s.what = 'dataset';
+            what.options = [{ value: 'dataset', label: t('cde.send.what.export', { name: d.name }) }].concat(original ? [{ value: 'original', label: t('cde.send.what.original') }] : []).concat([{ value: 'bundle', label: t('cde.send.what.bundle') }]);
+            if (s.what === 'original' && !original) s.what = 'dataset';
             what.value = s.what;
             what.addEventListener('change', () => { s.what = what.value; render(); });
             const formats = services.exporter.formatsFor(d).filter((f) => !f.places && !f.kind);

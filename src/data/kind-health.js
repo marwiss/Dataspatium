@@ -70,6 +70,16 @@
       const missing = await count(handle.engine, "select count(*) from data where geometri is null or geometri = ''");
       return missing ? [issue('warn', 'health.plan.geometry', missing)] : [];
     }
+    /** A raster: files that have no place on the map, and files whose original was not kept (too large, or left out when shared). */
+    async function raster(handle) {
+      const out = [];
+      const unplaced = await count(handle.engine, "select count(*) from data where geometri is null or geometri = ''");
+      if (unplaced) out.push(issue('warn', 'health.raster.unplaced', unplaced));
+      const files = handle.meta.raster && Array.isArray(handle.meta.raster.files) ? handle.meta.raster.files : [];
+      const missing = files.filter((f) => f && ['size', 'total', 'shared'].includes(f.skipped)).length;
+      if (missing) out.push(issue('info', 'health.raster.original', missing));
+      return out;
+    }
     /** Places in a table: rows without one, and values that cannot be drawn. */
     async function places(handle) {
       const engine = handle.engine;
@@ -102,6 +112,7 @@
         case 'graph': return graph(handle);
         case 'model': return model(handle);
         case 'plan': return plan(handle);
+        case 'raster': return raster(handle);
         default: break;
       }
       return (await D.require('data/facets').has(id, 'spatial')) ? places(handle) : [];

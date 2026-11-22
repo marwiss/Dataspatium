@@ -35,7 +35,7 @@ rader) syns på kartan.
 Stora datamängder ritas med canvas; 10 000 polygoner panoreras utan hack. Fler än 50 000 objekt per lager ritas
 inte (gränsen kan höjas per lager i kartvyn).
 
-Bildsamlingar med position har knappen *Visa på kartan*. Klicka på en plats så visar inspektören bilden. En tabell vars rader namnger bilder visar dem på samma sätt. *Använd det som syns* gör det kartan visar just nu till ett urval som följer med till de andra lägena. I en kartvy i Visualisera kan bildsamlingar och planer vara lager.
+Bildsamlingar med position har knappen *Visa på kartan*. Klicka på en plats så visar inspektören bilden. En tabell vars rader namnger bilder visar dem på samma sätt. *Använd det som syns* gör det kartan visar just nu till ett urval som följer med till de andra lägena. I en kartvy i Visualisera kan bildsamlingar, planer och raster (georefererade bilder, se [raster.md](raster.md)) vara lager.
 
 ## Kartvyer i Visualisera
 
@@ -121,6 +121,9 @@ Bearbeta, i kartvyerna i Visualisera, på plankartan och under platsen för en n
   värdarna. En sparad kartvy hämtar inget när den öppnas; den visar knappen.
 - Källangivelsen i kartans hörn följer Lantmäteriets villkor: "Ortofoto © Lantmäteriet (år), bearbetad för kartan (CC BY 4.0)". Bilden
   följer inte med i export (SVG, PNG, PDF), sparade kartvyer eller publicerad HTML.
+- *Spara ortofotot* bredvid knappen sparar bilden som visas som en datamängd av slaget raster, med källangivelsen och licensen men
+  utan nyckel. Inget hämtas igen, och rastret visas sedan utan nät, till exempel under platsen för en ny byggnad. Se
+  [raster.md](raster.md#spara-ortofotot).
 - Rutorna avkodas, läggs samman och räknas om i en egen tråd (en worker), så att sidan inte låser sig. Sidan hämtar bara de byte som
   tråden ber om, med samma nyckel och samtycke, och tar emot den färdiga bilden; nyckeln och inloggningen stannar på sidan. En vy på
   1 km² tar några sekunder.

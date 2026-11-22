@@ -11,18 +11,18 @@
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
-    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'planarchive', 'graph', 'model', 'bcf', 'datapackage', 'r', 'documents', 'images'];
+    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'raster', 'detaljplan', 'planarchive', 'graph', 'model', 'bcf', 'datapackage', 'r', 'documents', 'images'];
     /** Formats without a header-row switch (structure carries the names). */
-    const NO_HEADER = ['json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'planarchive', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
+    const NO_HEADER = ['json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'raster', 'detaljplan', 'planarchive', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
     /** Formats whose values are already typed (no decimal-separator choice). */
-    const TYPED = ['sqlite', 'access', 'shapefile', 'detaljplan', 'planarchive', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
-    /** Formats with fixed columns where one or many files become one dataset (no column step). */
-    const COLLECTIONS = ['documents', 'images'];
+    const TYPED = ['sqlite', 'access', 'shapefile', 'raster', 'detaljplan', 'planarchive', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
+    /** Formats with fixed columns where one or many files become one dataset (no column step): documents, rasters and pictures. */
+    const COLLECTIONS = ['documents', 'raster', 'images'];
     /** What the file picker offers: every extension an importer reads by the file's name (tests/io.test.js keeps them together). */
     const ACCEPT = '.bcf,.bcfzip,.csv,.tsv,.txt,.tab,.dat,.fwf,.prn,.xlsx,.xlsm,.xls,.xlsb,.ods,.fods,.dbf,.slk,.sylk,.dif,.wk1,.wk3,.wk4,.wks,.wq1,.wq2,.wb1,.wb2,.wb3,.qpw,'
       + '.html,.htm,.xhtml,.md,.markdown,.docx,.tex,.json,.ndjson,.jsonl,.geojson,.topojson,.kml,.kmz,.gpx,.xml,.sqlite,.sqlite3,.db,.s3db,.gpkg,.sql,'
       + '.shp,.zip,.sav,.zsav,.por,.dta,.sas7bdat,.xpt,.px,.rds,.rda,.RData,.parquet,.mdb,.accdb,'
-      + '.pdf,.odt,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif,.qgs,.qgz,.graphml,.gexf,.cypher,.cql,.cyp,.ifc,.ifczip,.dxf';
+      + '.pdf,.odt,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif,.tif,.tiff,.gtiff,.qgs,.qgz,.graphml,.gexf,.cypher,.cql,.cyp,.ifc,.ifczip,.dxf';
 
     function createMode(ctx) {
       const { ui, services, store, shell } = ctx;
@@ -39,8 +39,11 @@
       /** @type {any} */ let fieldUi = null;
       /** @type {any} */ let guidesUi = null;
 
-      /** `hidden`: the entry of a file the tier does not read (platform/tier), shown as the tier's notice in place of an error. */
-      function reset() { return { step: 'file', answers: {}, sorted: null, results: null, file: null, files: [], progress: null, project: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '', hidden: '' }; }
+      /**
+       * `hidden`: the entry of a file the tier does not read (platform/tier), shown as the tier's notice in place of an error;
+       * `refused`: the files of a raster that its preview passed over, with their words ({file, message}); the import leaves them out.
+       */
+      function reset() { return { step: 'file', answers: {}, sorted: null, results: null, file: null, files: [], progress: null, project: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '', hidden: '', refused: [] }; }
       /** What went wrong with the file chosen: the tier's notice for a file the tier does not read, else the error. */
       const problem = () => (wiz.hidden ? tierUi.notice(ctx, wiz.hidden) : wiz.error ? h('p', { class: 'dm-error dm-small', text: wiz.error }) : null);
       function restart() { freeThumbs(); Object.assign(wiz, reset()); render(); }
@@ -581,7 +584,7 @@
         wiz.sorted = sorted; wiz.results = null; wiz.step = 'sort';
         render();
       }
-      const KIND_OF_IMPORTER = { images: 'images', documents: 'document', detaljplan: 'plan', graph: 'graph', model: 'model' };
+      const KIND_OF_IMPORTER = { images: 'images', documents: 'document', raster: 'raster', detaljplan: 'plan', graph: 'graph', model: 'model' };
       function stepSort() {
         const { groups, skipped } = wiz.sorted;
         const row = (g) => {
@@ -610,7 +613,7 @@
         wiz.busy = true; wiz.progress = null; render();
         const results = await services.importer.runSorted(wiz.sorted.groups.filter((g) => g.include), (p) => { wiz.progress = p; render(); });
         for (const r of results) {
-          if (r.meta) shell.log(doneText(r.meta), 'ok');
+          if (r.meta) { shell.log(doneText(r.meta), 'ok'); for (const line of leftOut(r.meta)) shell.log(line, 'warn'); }
           else shell.log(t('import.error', { message: `${r.group.files[0].name}: ${r.error}` }), 'error');
         }
         wiz.results = results; wiz.step = 'done'; wiz.busy = false; render();
@@ -706,7 +709,7 @@
         const total = wiz.files.reduce((n, f) => n + f.size, 0);
         return h('div', { class: 'dm-stack-sm' },
           h('p', { class: 'dm-help', text: t('import.files.summary', { n: wiz.files.length, size: i18n.formatBytes(total) }) }),
-          h('ul', { class: 'dm-list dm-import-files' }, shown.map((f) => h('li', { class: 'dm-list-item dm-list-item-static' }, ui.icon(wiz.options.format === 'images' ? 'image' : 'file-text', 14), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: f.name }), h('span', { class: 'dm-list-sub', text: i18n.formatBytes(f.size) }))))),
+          h('ul', { class: 'dm-list dm-import-files' }, shown.map((f) => h('li', { class: 'dm-list-item dm-list-item-static' }, ui.icon(wiz.options.format === 'images' || wiz.options.format === 'raster' ? 'image' : 'file-text', 14), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: f.name }), h('span', { class: 'dm-list-sub', text: i18n.formatBytes(f.size) }))))),
           wiz.files.length > shown.length ? h('p', { class: 'dm-help dm-xs', text: t('import.files.more', { n: wiz.files.length - shown.length }) }) : null);
       }
       /** Progress of a collection import: file by file, and page by page inside a PDF. */
@@ -739,11 +742,34 @@
         wiz.busy = false; render();
       }
 
+      /**
+       * The preview of the chosen file. In a raster of several files a file refused in the person's words (one without a place, a
+       * rotated one) gives way to the next, and its words are kept in `wiz.refused`: the import leaves such files out and imports
+       * the others (data/raster importFiles). The first refusal stands only when every file is refused.
+       */
+      async function previewFile(opts) {
+        wiz.refused = [];
+        const list = wiz.options.format === 'raster' && wiz.files.length > 1 ? wiz.files : [wiz.file];
+        let first = null;
+        for (const file of list) {
+          try {
+            const p = await services.importer.preview(file, opts);
+            wiz.file = file;
+            return p;
+          } catch (err) {
+            if (list.length < 2 || !err || typeof err.code !== 'string' || err.tierFeature) { wiz.refused = []; throw err; }
+            first = first || err;
+            wiz.refused.push({ file, message: String(err.message || err) });
+          }
+        }
+        wiz.refused = []; wiz.file = list[0];
+        throw first;
+      }
       async function runPreview() {
-        wiz.busy = true; wiz.error = ''; wiz.hidden = ''; render();
+        wiz.busy = true; wiz.error = ''; wiz.hidden = ''; wiz.refused = []; render();
         try {
           const opts = cleanOptions();
-          wiz.preview = wiz.file ? await services.importer.preview(wiz.file, opts) : await services.importer.previewText(wiz.text, opts);
+          wiz.preview = wiz.file ? await previewFile(opts) : await services.importer.previewText(wiz.text, opts);
           wiz.options.format = wiz.preview.importer;
           if (wiz.preview.encoding && !wiz.options.encoding) wiz.options.encoding = wiz.preview.encoding;
           if (wiz.preview.sheet !== undefined) wiz.options.sheet = wiz.preview.sheet;
@@ -791,6 +817,8 @@
         // Several files are always one collection, so the format is fixed then.
         if (wiz.file && wiz.files.length < 2) left.appendChild(format);
         if (wiz.files.length > 1) left.appendChild(fileList());
+        // The files of a raster that are refused: named with what to do, before the others are imported.
+        if (wiz.refused.length) left.appendChild(h('div', { class: 'dm-stack-xs', 'data-import-refused': '' }, h('p', { class: 'dm-help dm-small', text: t('raster.refused') }), wiz.refused.map((r) => h('p', { class: 'dm-warn dm-small', text: r.message }))));
         if (wiz.options.format === 'csv' || wiz.options.format === 'fixed') {
           const encOptions = encoding.ENCODINGS.map((e) => ({ value: e.value, label: e.label + (p && p.encodingDetected && p.encodingDetected.encoding === e.value ? t('import.encoding.detected') : '') }));
           if (wiz.file) left.appendChild(select(t('import.encoding'), encOptions, wiz.options.encoding || 'utf-8', (v) => { wiz.options.encoding = v; schedulePreview(); }));
@@ -887,6 +915,13 @@
           left.appendChild(h('div', { class: 'dm-card' }, kv));
           left.appendChild(h('p', { class: 'dm-help dm-small', text: t('model.import.hint') }));
         }
+        // A GeoTIFF: the raster's facts as Hantera will show them (system, resolution, pixels, bands and data type, what becomes
+        // of the original, the attribution); several files make one raster, and the first one speaks for them here.
+        if (p && p.kind === 'raster' && wiz.options.format === 'raster') {
+          const kv = /** @type {any} */ (h('dm-kv'));
+          kv.items = kinds.facts({ kind: 'raster', raster: p.raster, rowCount: p.totalRows });
+          left.appendChild(h('div', { class: 'dm-card', 'data-import-raster': '' }, kv));
+        }
         if (wiz.options.format === 'access' && p && p.tables && p.tables.length) {
           left.appendChild(select(t('import.table'), p.tables.map((s) => ({ value: s, label: s })), wiz.options.table || p.table, (v) => { wiz.options.table = v; schedulePreview(); }));
         }
@@ -940,7 +975,7 @@
 
       /** What the file is, and what is worth asking about it. */
       function senseCard(p) {
-        const sense = fileSense.describe(p, { files: wiz.files });
+        const sense = fileSense.describe(p, { files: wiz.files.filter((f) => !wiz.refused.some((r) => r.file === f)) });
         if (!sense) return null;
         const answers = wiz.answers;
         const coords = fileSense.coordinates(p);
@@ -970,6 +1005,13 @@
         if (p.importer === 'images') {
           const list = wiz.files.length ? wiz.files : (wiz.file ? [wiz.file] : []);
           return h('div', { class: 'dm-photos dm-import-photos' }, list.slice(0, 12).map((f) => h('img', { src: thumbOf(f), alt: f.name, class: 'dm-import-photo' })));
+        }
+        // A GeoTIFF the browser cannot draw: the picture data/raster made of it in its own grid, when it is small enough to read
+        // quickly (a large file without overviews has none before the import).
+        if (p.importer === 'raster') {
+          const shots = Array.isArray(p.pictures) ? p.pictures.filter((src) => /^data:image\//.test(String(src))) : [];
+          const files = (p.raster && Array.isArray(p.raster.files)) ? p.raster.files : [];
+          return shots.length ? h('div', { class: 'dm-photos dm-import-photos' }, shots.map((src, i) => h('img', { src, alt: (files[i] && files[i].name) || t('datasets.picture.raster'), class: 'dm-import-photo', 'data-import-raster-picture': '' }))) : null;
         }
         if (p.sample) return h('div', { class: 'dm-ds-picture' }, sketches.network(sketches.networkOf(p.sample.nodes, p.sample.edges), t('datasets.picture.graph')));
         if (p.drawing) return h('div', { class: 'dm-ds-picture' }, sketches.imageOfSvg(p.drawing, t('datasets.picture.drawing')));
@@ -1049,6 +1091,23 @@
         if (!kinds.isCollection(m)) return t('import.done', { name: m.name, rows: i18n.formatNumber(m.rowCount), cols: m.columnCount });
         return t('import.done.kind', { name: m.name, summary: kinds.summary(m) });
       }
+      /**
+       * What a raster's import left out, one line each with its words (data/raster importFiles): a refused file says what to do, and
+       * the files over the number a raster holds are named together.
+       * @returns {string[]}
+       */
+      function leftOut(m) {
+        const list = m && m.raster && Array.isArray(m.raster.skipped) ? m.raster.skipped.filter(Boolean) : [];
+        const many = list.filter((s) => s.code === 'many');
+        const lines = list.filter((s) => s.code !== 'many').map((s) => (String(s.error).includes(String(s.name)) ? String(s.error) : `${s.name}: ${s.error}`));
+        if (many.length) lines.push(`${many[0].error} ${many.slice(0, 8).map((s) => s.name).join(', ')}${many.length > 8 ? ' …' : ''}`);
+        return lines;
+      }
+      /** The lines of `leftOut` under a result, or nothing. */
+      function leftOutNode(m) {
+        const lines = leftOut(m);
+        return lines.length ? h('div', { class: 'dm-stack-xs', 'data-import-skipped': '' }, h('p', { class: 'dm-help dm-small', text: t('raster.skipped.done') }), lines.map((line) => h('p', { class: 'dm-warn dm-small', text: line }))) : null;
+      }
       /** The way on from an import: read, look at, or work in the table (a kind whose own views the tier hides opens as a table). */
       function openAfter(m) {
         const own = kinds.shown(m) ? kinds.of(m).open : null;
@@ -1073,6 +1132,7 @@
           const result = network ? await fileSense.toGraph(meta, network.params) : meta;
           wiz.result = result; wiz.step = 'done';
           shell.log(doneText(result) + ` (${Math.round(performance.now() - t0)} ms)`, 'ok');
+          for (const line of leftOut(result)) shell.log(line, 'warn');
           ui.toast.show(doneText(result), { kind: 'ok' });
         } catch (err) {
           wiz.error = (err && err.message) || String(err);
@@ -1087,13 +1147,14 @@
           return h('div', { class: 'dm-success dm-stack' },
             h('h2', null, ui.icon('circle-check', 20), ' ', t('import.sort.done', { n: i18n.formatNumber(wiz.results.filter((r) => r.meta).length) })),
             wiz.results.map((r) => (r.meta
-              ? h('div', { class: 'dm-row' }, h('span', { class: 'dm-list-main dm-truncate', text: doneText(r.meta) }), ui.button(Object.assign(openAfter(r.meta), { size: 'sm', onClick: () => open(r.meta) })))
+              ? h('div', { class: 'dm-stack-xs' }, h('div', { class: 'dm-row' }, h('span', { class: 'dm-list-main dm-truncate', text: doneText(r.meta) }), ui.button(Object.assign(openAfter(r.meta), { size: 'sm', onClick: () => open(r.meta) }))), leftOutNode(r.meta))
               : h('p', { class: 'dm-error dm-small', text: `${r.group.files[0].name}: ${r.error}` }))),
             h('div', { class: 'dm-row' }, ui.button({ label: t('import.another'), icon: 'plus', onClick: restart })));
         }
         const m = wiz.result;
         return h('div', { class: 'dm-success' },
           h('h2', null, ui.icon('circle-check', 20), ' ', doneText(m)),
+          leftOutNode(m),
           h('div', { class: 'dm-row' },
             ui.button(Object.assign(openAfter(m), { variant: 'primary', onClick: () => { store.set({ selectedId: m.id }); shell.activate('bearbeta'); } })),
             ui.button({ label: t('import.another'), icon: 'plus', onClick: restart })));

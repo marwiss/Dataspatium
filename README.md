@@ -324,8 +324,9 @@ nästa huvudnummer, och datamängder, listor, diagram, mallar och skript följer
 - [Bearbeta](docs/sv/bearbeta.md), [Söka](docs/sv/soka.md) och [Reguljära uttryck](docs/sv/regex.md): rätta, räkna och hitta.
 - [Statistik](docs/sv/statistik.md), [R i Dataspatium](docs/sv/r-guide.md), [Python i Dataspatium](docs/sv/python.md) och
   [Anteckningsbok](docs/sv/anteckningsbok.md): analys med och utan kod.
-- [Visualisera](docs/sv/visualisera.md), [Kartor](docs/sv/kartor.md) och [Dokument och mallar](docs/sv/dokumentmallar.md): diagram,
-  kartor, dashboards och rapporter.
+- [Visualisera](docs/sv/visualisera.md), [Kartor](docs/sv/kartor.md), [Raster](docs/sv/raster.md) och
+  [Dokument och mallar](docs/sv/dokumentmallar.md): diagram, kartor, ortofoton och andra georefererade bilder, dashboards och
+  rapporter.
 - [Planer](docs/sv/planer.md), [Grafer](docs/sv/grafer.md) och [CAD och BIM](docs/sv/cad-bim.md): planer, grafer, byggnadsmodeller,
   kontroller, AI och versioner.
 - [Dokument och bilder](docs/sv/dokument.md): PDF, Word, OpenDocument, Markdown och bilder som datamängder.

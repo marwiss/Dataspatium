@@ -259,13 +259,14 @@ Dataspatium och servern Dataregium är ett program i tre nivåer som bygger på 
 1. **Dokument**: tabeller, bearbetning, analys, diagram (också diagrambyggarens kartor), dokument och delning,
    geodatafiler som tabeller och platser per område (fliken *Geo*), planfiler och dokumenten i en Dataregium-server.
 2. **BIM och GIS**: dessutom BIM-modeller i 3D med sina kontroller och mått, BCF-ärenden och BCF-filer, kartvyerna i
-   Bearbeta och Visualisera med de andra geoverktygen och QGIS-projekten, geodatatjänsterna, bakgrundskartor och
-   ortofoton, Dataregiums team och AI-modellering.
+   Bearbeta och Visualisera med de andra geoverktygen och QGIS-projekten, rastrens kartor och kartlager (se
+   [raster.md](raster.md)), geodatatjänsterna, bakgrundskartor och ortofoton, Dataregiums team och AI-modellering.
 3. **Experimentell**: dessutom IFC-grafen, AI-assistenten och det som är på prov.
 
 Utan eget val gäller nivå 2. Nivån väljs under **Hantera > Arbetsyta > Nivå** (eller med kommandot *Nivå* i paletten,
 Ctrl+K) och gäller på en gång. En lägre nivå döljer funktioner men behåller alla datamängder: en IFC-modell visas då som
-tabell, och källor som hör till en högre nivå ligger kvar men syns inte i listan. En högre nivå visar allt igen. En
+tabell, ett raster som sin tabell över filerna (GeoTIFF-filer läses ändå, som IFC-filer), och källor som hör till en
+högre nivå ligger kvar men syns inte i listan. En högre nivå visar allt igen. En
 modell vars egna vyer nivån döljer säger i Hantera, Bearbeta och Kontrollera vilken nivå vyerna hör till, med knappen
 *Byt till …*; det gör också ett sparat diagram av en dold typ, en fil som bara en dold funktion läser (BCF-filer och
 QGIS-projekt) och en länk (`#/<läge>/<datamängd>`) till en sådan modell. Andra funktioner i en högre nivå syns inte.

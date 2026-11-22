@@ -56,6 +56,19 @@
       return { bytes, type: String(row[1] || 'application/octet-stream') };
     }
 
+    /**
+     * The names of the files that a dataset's table still lists in a column (a raster's `fil`): the table is the list of the files,
+     * so a row removed there takes its file off the map and out of the exports. Null when the table has no such column.
+     * @param {string} id @param {string} [column] @returns {Promise<Set<string>|null>}
+     */
+    async function listed(id, column = 'fil') {
+      const handle = await datasets.ensureOpen(id);
+      if (!handle.columns.some((c) => c.name === column)) return null;
+      const c = datasets.quoteIdent(column);
+      const r = await handle.engine.exec(`select distinct ${c} from data where ${c} is not null`);
+      return new Set((r[0] ? r[0].values : []).map((row) => String(row[0])));
+    }
+
     /** An object URL for a file, cached until the dataset changes; null when the file is missing. */
     async function url(id, name, kind = 'original') {
       const key = kind + '/' + name;
@@ -100,6 +113,6 @@
       }
     }
 
-    return { TABLE, ensureTable, put, list, read, url, clearUrls, hasTable, createDataset };
+    return { TABLE, ensureTable, put, list, read, listed, url, clearUrls, hasTable, createDataset };
   });
 })();

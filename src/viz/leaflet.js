@@ -7,14 +7,16 @@
  * WMS or an OGC API – Tiles service as background or as layers under the features. Tiles come
  * from the net only after consent for the purpose "basemaps"; without a background map nothing leaves the browser. The
  * orthophotos (viz/orthophotos) are background maps too, each with its provider's attribution and, where asked, a key; Sweden's,
- * read from files for a view, is drawn by ui/viz/basemap-choice once the map is there (`info.basemapView`).
- * Export (SVG, PNG, PDF) is drawn headless in Web Mercator by this module, without tiles; published HTML gets the
+ * read from files for a view, is drawn by ui/viz/basemap-choice once the map is there (`info.basemapView`). A raster (the kind
+ * raster, B-64) is a layer of its own: each file's preview from the dataset's `_files`, at its place in the tile pane above the
+ * background maps and the service layers and under the features, with its attribution; nothing is fetched for it.
+ * Export (SVG, PNG, PDF) is drawn headless in Web Mercator by this module, without tiles or rasters; published HTML gets the
  * library inlined and the features as GeoJSON with their styles.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/leaflet', ['viz/theme', 'viz/export', 'viz/data', 'data/datasets', 'data/geo', 'data/boundaries', 'platform/consent', 'viz/orthophotos', 'platform/tier'], (theme, vizExport, vizData, datasets, geo, boundaries, consent, orthophotos, tier) => {
+  D.define('viz/leaflet', ['viz/theme', 'viz/export', 'viz/data', 'data/datasets', 'data/geo', 'data/boundaries', 'platform/consent', 'viz/orthophotos', 'platform/tier', 'data/dataset-files'], (theme, vizExport, vizData, datasets, geo, boundaries, consent, orthophotos, tier, dsFiles) => {
     const VENDOR = 'vendor/leaflet/';
     const BASEMAPS = ['none', 'osm', 'custom', 'wms', 'tiles'];
     const WMS_DEFAULTS = { url: '', layers: '', format: 'image/png', transparent: false, attribution: '', version: '1.3.0' };
@@ -195,10 +197,29 @@
     }
     /** True for the layers of pictures from a service (WMS, OGC API – Tiles): no features, no legend, no export. */
     const imagery = (layer) => layer.kind === 'wms' || layer.kind === 'tiles';
-    /** Default map definition for a dataset: its one layer, no background map, fit to the layers. */
+    /**
+     * A layer with a raster's pictures (the kind raster, data/raster): each file's preview in Web Mercator at its place, in the
+     * tile pane above the background maps and the service layers and under the features. Like a WMS layer it has no features:
+     * nothing to click, no legend, and it is left out of SVG/PNG/PDF export, thumbnails and published HTML. Nothing is fetched.
+     * @param {{id: string, name: string, shortName?: string}} dataset
+     */
+    function rasterLayer(dataset) {
+      return { id: newId(), kind: 'raster', datasetId: dataset.id, datasetName: dataset.name, datasetShort: dataset.shortName || '', name: dataset.name, style: { opacity: 1 }, visible: true };
+    }
+    /**
+     * Default map definition for a dataset: its one layer, no background map, fit to the layers. A raster gets its pictures and,
+     * above them, the outlines of its files (unfilled, named by file).
+     */
     function defaultMap(columns, dataset) {
+      const rest = { basemap: 'none', custom: { url: '', attribution: '' }, wms: Object.assign({}, WMS_DEFAULTS), view: null, legend: true, height: 480 };
+      // data/kinds comes later in the start list than this module, so it is asked for when a map is made.
+      if (dataset && D.require('data/kinds').of(dataset).mapLayer === 'raster') {
+        const outline = Array.isArray(columns) && columns.some((c) => c.name === 'geometri') ? layerFor(columns, dataset, 0) : null;
+        if (outline) { Object.assign(outline, { geometry: 'geometri', lon: null, lat: null, label: 'fil' }); Object.assign(outline.style, { fillOpacity: 0, weight: 1 }); }
+        return Object.assign({ layers: [rasterLayer(dataset)].concat(outline ? [outline] : []) }, rest);
+      }
       const layer = dataset ? layerFor(columns, dataset, 0) : null;
-      return { layers: layer ? [layer] : [], basemap: 'none', custom: { url: '', attribution: '' }, wms: Object.assign({}, WMS_DEFAULTS), view: null, legend: true, height: 480 };
+      return Object.assign({ layers: layer ? [layer] : [] }, rest);
     }
 
     // ---- colours -------------------------------------------------------------------------------------------
@@ -291,7 +312,8 @@
       const def = chart.map || {};
       const out = []; let rows = 0;
       for (const layer of def.layers || []) {
-        if (layer.visible === false || imagery(layer)) continue;
+        // Pictures from services and rasters have no features: they are drawn on the live map only.
+        if (layer.visible === false || imagery(layer) || layer.kind === 'raster') continue;
         const data = await featuresOf(layer, options);
         const st = styling(layer, data.features);
         out.push({ layer, features: data.features, styleOf: st.styleOf, legend: st.legend, truncated: data.truncated, total: data.total, crsUnknown: data.crsUnknown || '' });
@@ -417,6 +439,60 @@
       }
       return out;
     }
+
+    // ---- rasters ----------------------------------------------------------------------------------------------
+    /** An opacity between 0 and 1, or the fallback for anything that is not a number. */
+    const opacityOf = (v, fallback = 1) => { const n = Number(v); return v === null || v === undefined || v === '' || !Number.isFinite(n) ? fallback : Math.max(0, Math.min(1, n)); };
+    /**
+     * A raster's attribution as HTML for Leaflet's attribution control (which shows it as HTML): the text from the file or the
+     * provider, escaped, and the licence's name, linked when its address is https.
+     * @param {{attribution?: string|null, license?: {name?: string, url?: string}|null}} raster `_meta.raster`
+     */
+    function rasterAttribution(raster) {
+      const lic = raster.license && raster.license.name ? escAttr(raster.license.name) : '';
+      const url = raster.license && /^https:\/\//i.test(String(raster.license.url || '')) ? String(raster.license.url) : '';
+      const licence = lic && url ? `<a href="${escAttr(url)}" target="_blank" rel="noopener noreferrer">${lic}</a>` : lic;
+      const text = raster.attribution ? escAttr(raster.attribution) : '';
+      return text && licence ? `${text} (${licence})` : text || licence;
+    }
+    /**
+     * The pictures of a definition's visible raster layers as image overlays, not yet on the map: every file of the dataset's
+     * `_meta.raster` that its table still lists and that has a place, its preview read from the dataset's own file (an object URL;
+     * nothing is fetched and no consent is asked). The `i`-th raster layer of the list lies at z-index 2 + i in the tile pane, above the background maps and the
+     * service layers (all at 1). Files without a place are named in `info.rasterUnplaced`; a map in a grid of its own draws none
+     * (`info.rasterProjection`), and neither does a tier below BIM och GIS (platform/tier, `kind:raster`).
+     * @returns {Promise<Array<{layer: any, images: any[]}>>}
+     */
+    async function rasterImages(L, def, info, grid) {
+      const out = [];
+      const layers = (def.layers || []).filter((l) => l.kind === 'raster');
+      if (!layers.some((l) => l.visible !== false)) return out;
+      if (grid) { info.rasterProjection = true; return out; }
+      if (!tier.shows('kind:raster')) return out;
+      const unplaced = new Set();
+      for (const [i, layer] of layers.entries()) {
+        if (layer.visible === false) continue;
+        const meta = layer.datasetId ? await datasets.get(layer.datasetId).catch(() => null) : null;
+        const raster = meta && meta.raster && typeof meta.raster === 'object' ? meta.raster : null;
+        if (!raster) continue;
+        const attribution = rasterAttribution(raster);
+        const opacity = opacityOf(layer.style && layer.style.opacity);
+        // The table is the list of files: a row removed there takes its picture off the map.
+        const names = await dsFiles.listed(meta.id).catch(() => null);
+        const images = [];
+        for (const file of Array.isArray(raster.files) ? raster.files : []) {
+          if (names && file && !names.has(String(file.name))) continue;
+          const bounds = file && file.preview && Array.isArray(file.preview.bounds) && file.preview.bounds.length === 2 ? file.preview.bounds : null;
+          if (!bounds) { if (file && file.name) unplaced.add(String(file.name)); continue; }
+          const url = await dsFiles.url(meta.id, file.name, 'preview').catch(() => null);
+          if (!url) continue;
+          images.push(L.imageOverlay(url, L.latLngBounds(bounds[0], bounds[1]), { pane: 'tilePane', zIndex: 2 + i, opacity, interactive: false, alt: String(file.name), className: 'dm-raster-image', attribution }));
+        }
+        out.push({ layer, images });
+      }
+      info.rasterUnplaced = Array.from(unplaced);
+      return out;
+    }
     /**
      * The named layers of a WMS service from its capabilities, after consent "basemaps": [{id, name, abstract}].
      * @param {string} url the service address (a GetCapabilities link works too)
@@ -452,8 +528,9 @@
      * Draw a map chart into an element. Options: interactive (default true), height, extraFilters, onSelect(feature),
      * tileFactory (tests), noTiles, fitMaxZoom (the closest zoom when the map fits its features; 14 by default). `def.crs` (an
      * EPSG code or name of a projected system the app reads) draws the map in that grid instead of Web Mercator, with a WMS or
-     * orthophoto background in the same grid. Returns a handle with the Leaflet map,
-     * legend, info, the map's EPSG code, export functions and finalize().
+     * orthophoto background in the same grid (and without rasters, which are in Web Mercator). Returns a handle with the Leaflet
+     * map, legend, info (`rasters` is the number of raster pictures drawn), the rasters' pictures per layer with
+     * setRasterOpacity(), the map's EPSG code, export functions and finalize().
      */
     async function render(el, chart, options = {}) {
       const def = chart.map || {};
@@ -470,7 +547,7 @@
       /** @type {any} */ (el)._dmMap = map;
       // A scale bar in metres on every interactive map: plans and maps are read to scale.
       if (interactive) L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(map);
-      const info = { rows: prepared.rows, layers: prepared.layers.length, total: prepared.layers.reduce((n, l) => n + l.total, 0), truncated: prepared.layers.some((l) => l.truncated), basemapDenied: false, basemapProjection: false, basemapKey: '', basemapView: '', crsUnknown: Array.from(new Set(prepared.layers.map((l) => l.crsUnknown).filter(Boolean))) };
+      const info = { rows: prepared.rows, layers: prepared.layers.length, total: prepared.layers.reduce((n, l) => n + l.total, 0), truncated: prepared.layers.some((l) => l.truncated), basemapDenied: false, basemapProjection: false, basemapKey: '', basemapView: '', crsUnknown: Array.from(new Set(prepared.layers.map((l) => l.crsUnknown).filter(Boolean))), rasters: 0, rasterUnplaced: [], rasterProjection: false };
       // The grid's EPSG code (0 for Web Mercator): a background map is asked for in that grid, or left out when its service has none.
       const gridCode = grid ? geo.crsCode(def.crs) || -1 : 0;
       const tiles = await tileLayer(def, options, info, gridCode);
@@ -478,6 +555,10 @@
       // WMS and tile overlays live in the tile pane: under every feature, whatever their place in the layer list.
       const overlays = await overlayLayers(def, options, info, gridCode);
       for (const o of overlays) o.tiles.addTo(map);
+      // A raster's pictures as well, above those (z-index 2 and up) and under the features.
+      const rasters = await rasterImages(L, def, info, !!grid);
+      for (const r of rasters) for (const image of r.images) image.addTo(map);
+      info.rasters = rasters.reduce((n, r) => n + r.images.length, 0);
       const groups = [];
       for (const item of prepared.layers) {
         const group = L.geoJSON({ type: 'FeatureCollection', features: item.features }, {
@@ -492,18 +573,39 @@
         group.addTo(map);
         groups.push({ layer: item.layer, group, legend: item.legend });
       }
+      /** The union of the rasters' places, or null. */
+      const rasterBounds = () => {
+        let box = null;
+        for (const r of rasters) for (const image of r.images) { const b = image.getBounds(); box = box ? box.extend(b) : L.latLngBounds(b.getSouthWest(), b.getNorthEast()); }
+        return box;
+      };
       const fit = () => {
         // A saved view is in Web Mercator's zoom levels; a map in a grid of its own fits its features instead.
         if (!grid && def.view && def.view.center && def.view.zoom) { map.setView(def.view.center, def.view.zoom); return; }
         const b = prepared.bounds;
-        if (b) map.fitBounds([[b.minY, b.minX], [b.maxY, b.maxX]], { padding: [16, 16], maxZoom: options.fitMaxZoom || (grid ? 12 : 14) });
+        const maxZoom = options.fitMaxZoom || (grid ? 12 : 14);
+        // The features decide; the rasters' places only when there are none.
+        const rb = b ? null : rasterBounds();
+        if (b) map.fitBounds([[b.minY, b.minX], [b.maxY, b.maxX]], { padding: [16, 16], maxZoom });
+        else if (rb) map.fitBounds(rb, { padding: [16, 16], maxZoom });
         else map.setView(DEFAULT_VIEW.center, grid ? 2 : DEFAULT_VIEW.zoom);
       };
       fit();
       const legend = prepared.layers.filter((l) => l.layer.visible !== false).map((l) => ({ name: l.layer.name, entries: l.legend }));
       return {
-        kind: 'map', map, groups, legend, info, overlays, crs: grid ? geo.crsCode(def.crs) : 3857,
+        kind: 'map', map, groups, legend, info, overlays, rasters, crs: grid ? geo.crsCode(def.crs) : 3857,
         fit, refresh: () => map.invalidateSize(),
+        /**
+         * The opacity of a raster layer's pictures, at once and without drawing the map again; the caller keeps it in the
+         * definition. @param {string} layerId @param {number} value 0 to 1 @returns {number} the pictures changed
+         */
+        setRasterOpacity: (layerId, value) => {
+          const v = opacityOf(value, NaN);
+          if (Number.isNaN(v)) return 0;
+          let n = 0;
+          for (const r of rasters) if (r.layer.id === layerId) for (const image of r.images) { image.setOpacity(v); n++; }
+          return n;
+        },
         view: () => ({ center: [round(map.getCenter().lat), round(map.getCenter().lng)], zoom: map.getZoom() }),
         svg: async () => drawSvg(prepared, def, { width: el.clientWidth || 800, height: el.clientHeight || 480 }),
         png: async (scale = 2) => drawPng(prepared, def, { width: el.clientWidth || 800, height: el.clientHeight || 480, scale }),
@@ -727,6 +829,6 @@
       return nums.some((c) => /^(lon|long|lng|longitude|longitud|lon_wgs84|longitude_wgs84)$/i.test(c.name)) && nums.some((c) => /^(lat|latitude|latitud|lat_wgs84|latitude_wgs84)$/i.test(c.name));
     }
 
-    return { BASEMAPS, OSM, VENDOR, MAX_ROWS, GRID_RESOLUTIONS, available, ensure, ensureProj, gridCrs, source, geometryColumn, coordinateColumns, mappable, mapDefault, drawable, drawableByValues, layerFor, boundaryLayer, wmsLayer, wmsSource, wmsLayers, tilesLayer, tilesSource, defaultMap, styling, featuresOf, prepare, tileSource, render, toBlob, thumbnail, drawSvg, tableSvg, htmlFor, htmlCss, project };
+    return { BASEMAPS, OSM, VENDOR, MAX_ROWS, GRID_RESOLUTIONS, available, ensure, ensureProj, gridCrs, source, geometryColumn, coordinateColumns, mappable, mapDefault, drawable, drawableByValues, layerFor, boundaryLayer, wmsLayer, wmsSource, wmsLayers, tilesLayer, tilesSource, rasterLayer, rasterAttribution, defaultMap, styling, featuresOf, prepare, tileSource, render, toBlob, thumbnail, drawSvg, tableSvg, htmlFor, htmlCss, project };
   });
 })();

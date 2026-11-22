@@ -3,10 +3,10 @@
 /**
  * Map charts in Visualisera: layers from datasets with geometry or coordinates and from the bundled boundaries,
  * colours by category or class, labels, a background map after consent (OpenStreetMap, an orthophoto, an XYZ template,
- * a WMS or OGC API – Tiles), WMS and tile layers under the features, the saved view; the live map on the right
+ * a WMS or OGC API – Tiles), WMS and tile layers and rasters' pictures under the features, the saved view; the live map on the right
  * with a click showing a feature's attributes in the inspector. Export and thumbnails are drawn headless by
  * viz/leaflet (no tiles). Sweden's orthophoto is read for the map's view when the person chooses it or asks for the view,
- * never when a saved map view is opened; the image is not part of the map view.
+ * never when a saved map view is opened; the image is not part of the map view, but it can be kept as a raster.
  */
 (function () {
   'use strict';
@@ -31,7 +31,8 @@
     const numeric = (c) => c.type === 'integer' || c.type === 'number';
 
     /**
-     * @param {{chart: any, columns: any[], onChange: (def: any) => void, log: Function, onInspect?: () => void}} options
+     * @param {{chart: any, columns: any[], onChange: (def: any) => void, log: Function, onInspect?: () => void, onOpenDataset?: (meta: any) => void}} options
+     *   onOpenDataset: opens a dataset made here (an orthophoto kept as a raster)
      */
     function create(options) {
       const { chart } = options;
@@ -80,6 +81,7 @@
           if (hd.info.basemapDenied) parts.push(t('map.basemap.denied'));
           if (hd.info.basemapKey) { parts.push(basemapChoice.keyNotice(hd.info)); basemapChoice.notifyKey(hd.info, () => { orthoLoad = true; draw(); }); }
           if (hd.info.crsUnknown && hd.info.crsUnknown.length) parts.push(t('map.crs.unknown', { crs: hd.info.crsUnknown.join(', ') }));
+          if (hd.info.rasterUnplaced && hd.info.rasterUnplaced.length) parts.push(t('raster.unplaced', { n: i18n.formatNumber(hd.info.rasterUnplaced.length) }));
           info.textContent = parts.join(' · ');
           if (hd.info.basemapView) { const load = orthoLoad; orthoLoad = false; await drawOrtho(hd, load); }
           if (options.onInspect) options.onInspect();
@@ -109,8 +111,13 @@
             def.basemap = v; orthoLoad = basemapChoice.isView(v); renderSide(); changed();
           }, { 'data-map-basemap': '' }),
         ].filter(Boolean);
-        // Sweden's orthophoto covers the view it was read for; after a move the person reads it for the new view.
-        if (services && basemapChoice.isView(def.basemap)) items.push(basic.button({ label: t('ortho.se.load'), icon: 'image', size: 'sm', title: t('ortho.se.load.hint'), 'data-map-ortho-load': '', onClick: () => { if (handle) drawOrtho(handle, true); } }));
+        // Sweden's orthophoto covers the view it was read for; after a move the person reads it for the new view. The image shown
+        // can be kept as a raster.
+        if (services && basemapChoice.isView(def.basemap)) {
+          items.push(h('div', { class: 'dm-row-wrap' },
+            basic.button({ label: t('ortho.se.load'), icon: 'image', size: 'sm', title: t('ortho.se.load.hint'), 'data-map-ortho-load': '', onClick: () => { if (handle) drawOrtho(handle, true); } }),
+            basemapChoice.saveButton(() => handle, { size: 'sm', onOpen: options.onOpenDataset })));
+        }
         if (services && def.basemap === 'custom') {
           items.push(input(t('map.custom.url'), def.custom.url, (v) => { def.custom.url = v.trim(); changed(); }, { placeholder: 'https://…/{z}/{x}/{y}.png', help: t('map.custom.url.help') }));
           items.push(input(t('map.custom.attribution'), def.custom.attribution, (v) => { def.custom.attribution = v.trim(); changed(); }));
@@ -182,6 +189,18 @@
           basic.button({ label: t('map.layer.remove'), icon: 'trash-2', size: 'sm', variant: 'ghost', 'icon-only': true, onClick: () => { def.layers.splice(index, 1); changed(); renderSide(); } })));
         fields.appendChild(input(t('common.name'), layer.name, (v) => { layer.name = v.trim() || layer.datasetName || ''; changed(); renderSide(); }));
         const st = layer.style || (layer.style = {});
+        // A raster's pictures: their opacity, set on the live map at once (no redraw), and where they lie.
+        if (layer.kind === 'raster') {
+          details.setAttribute('data-map-layer-raster', '');
+          fields.appendChild(input(t('map.style.opacity'), st.opacity === undefined ? 1 : st.opacity, (v) => {
+            const n = Number(v);
+            st.opacity = v === '' || !Number.isFinite(n) ? 1 : Math.max(0, Math.min(1, n));
+            if (handle) handle.setRasterOpacity(layer.id, st.opacity);
+            changed(false);
+          }, { type: 'number', min: '0', max: '1', step: '0.05' }));
+          fields.appendChild(h('p', { class: 'dm-help dm-xs', text: t('map.layer.raster.note') }));
+          return details;
+        }
         // A layer from a service (WMS, tiles) keeps its name and visibility below BIM och GIS; reading the service needs the tier.
         if ((layer.kind === 'wms' || layer.kind === 'tiles') && !tier.shows('map.basemap')) return details;
         if (layer.kind === 'wms') {
@@ -231,7 +250,8 @@
       }
       function addCard() {
         const dsSel = /** @type {any} */ (h('dm-select', { label: t('map.add.dataset') }));
-        dsSel.options = allDatasets.filter((d) => { const profile = kinds.of(d); return !kinds.isCollection(d) || profile.files === 'pictures' || d.kind === 'plan'; }).map((d) => ({ value: d.id, label: d.name }));
+        // Tables, picture collections and plans give features; a raster gives its pictures.
+        dsSel.options = allDatasets.filter((d) => { const profile = kinds.of(d); return !kinds.isCollection(d) || profile.files === 'pictures' || d.kind === 'plan' || profile.mapLayer === 'raster'; }).map((d) => ({ value: d.id, label: d.name }));
         dsSel.value = chart.datasetId && dsSel.options.some((o) => o.value === chart.datasetId) ? chart.datasetId : (dsSel.options[0] ? dsSel.options[0].value : '');
         const bSel = /** @type {any} */ (h('dm-select', { label: t('map.add.boundary') }));
         bSel.options = boundaries.BASEMAPS.map((b) => ({ value: b.id, label: t(b.key) }));
@@ -256,9 +276,11 @@
         return h('div', { class: 'dm-card dm-stack-sm' }, h('strong', { text: t('map.add') }),
           services ? h('div', { class: 'dm-row-end' }, wmsInput, basic.button({ label: t('common.add'), icon: 'plus', size: 'sm', onClick: addWms })) : null,
           services ? h('div', { class: 'dm-row-wrap' }, addTiles) : null,
-          h('div', { class: 'dm-row-end' }, dsSel, basic.button({ label: t('common.add'), icon: 'plus', size: 'sm', onClick: async () => {
+          h('div', { class: 'dm-row-end' }, dsSel, basic.button({ label: t('common.add'), icon: 'plus', size: 'sm', 'data-map-add-dataset': '', onClick: async () => {
             const ds = allDatasets.find((d) => d.id === dsSel.value);
             if (!ds) return;
+            // A raster's pictures go under the features already there, as the service layers do (the list draws the last on top).
+            if (kinds.of(ds).mapLayer === 'raster') { def.layers.unshift(leaflet.rasterLayer(ds)); changed(); renderSide(); return; }
             const cols = await columnsOf(ds.id);
             const layer = leaflet.layerFor(cols, ds, def.layers.length);
             if (!layer) { options.log(t('map.err.nogeometry', { name: ds.name }), 'warn'); return; }
