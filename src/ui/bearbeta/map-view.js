@@ -3,7 +3,8 @@
 /**
  * Map view in Bearbeta for tables with a geometry column or coordinate columns: the dataset drawn with Leaflet
  * (zoom and pan, click on a feature shows its attributes in the inspector), an optional background map after
- * consent (OpenStreetMap or an orthophoto, ui/viz/basemap-choice), and buttons to save the map as a chart for Visualisera and to switch to the table. The dataset itself
+ * consent (OpenStreetMap or an orthophoto, ui/viz/basemap-choice; Sweden's orthophoto shown can be kept as a raster), and buttons
+ * to save the map as a chart for Visualisera and to switch to the table. The dataset itself
  * is always the table; what is done there (filter, correct, remove rows) shows here too.
  * It is also a raster's own view (the kind raster): the previews of its files under their outlines, with the raster's facts,
  * the opacity of its pictures and the files that have no place in the inspector; a hit in Söka (`openRaster`) goes to its file.
@@ -24,8 +25,13 @@
       const { ui, shell, store } = ctx;
       const s = { id: null, basemap: 'none', selected: null, chart: null };
       let ds = null; let columns = []; let slots = null; let mapEl = null; let handle = null; let seq = 0;
-      /** Sweden's orthophoto: read on the next drawing (the person chose it), and the button that reads it for the view. */
-      let orthoLoad = false; let orthoBtn = null;
+      /**
+       * Sweden's orthophoto: read on the next drawing (the person chose it), the button that reads it for the view and the one
+       * beside it that keeps the image shown as a raster (*Spara ortofotot*).
+       */
+      let orthoLoad = false; let orthoBtn = null; let orthoSave = null;
+      /** A raster saved from the map opens in Bearbeta. */
+      const openSaved = (meta) => { store.set({ selectedId: meta.id }); shell.activate('bearbeta'); };
       /** Sweden's orthophoto for the map's view; read only with `load`, otherwise one read before for the same view. */
       async function loadOrtho(hd, load) {
         const status = await basemapChoice.drawView(hd, { load, redraw: () => { orthoLoad = true; draw(); } });
@@ -70,13 +76,15 @@
         });
         // Sweden's orthophoto covers the view it was read for; after a move the person reads it for the new view.
         orthoBtn = ui.button({ label: t('ortho.se.load'), icon: 'image', title: t('ortho.se.load.hint'), 'data-map-ortho-load': '', onClick: () => { if (handle) loadOrtho(handle, true); } });
+        orthoSave = basemapChoice.saveButton(() => handle, { onOpen: openSaved });
         orthoBtn.hidden = !basemapChoice.isView(s.basemap);
+        orthoSave.hidden = orthoBtn.hidden;
         mapEl = h('div', { class: 'dm-map-view dm-center-fill', 'aria-label': t('map.view') });
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
             // A collection counts itself in its own units (files and resolution for a raster), a table in rows.
             h('h1', null, ui.icon('map', 20), dataset.name, ' ', h('dm-badge', { text: kinds.isCollection(dataset) ? kinds.summary(dataset) : t('common.rows', { n: i18n.formatNumber(dataset.rowCount || 0) }) })),
-            h('div', { class: 'dm-toolbar' }, basemapSel, orthoBtn,
+            h('div', { class: 'dm-toolbar' }, basemapSel, orthoBtn, orthoSave,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: () => { if (handle) handle.fit(); } }),
               tier.shows('chart:map') ? ui.button({ label: t('map.save.chart'), icon: 'save', title: t('map.save.chart.hint'), onClick: saveChart }) : null,
               ui.button({ label: t('selection.use.map'), icon: 'list-checks', title: t('selection.use.map.hint'), onClick: () => useWhatShows().catch((err) => shell.log(String((err && err.message) || err), 'error')) }),
@@ -97,6 +105,7 @@
           if (my !== seq) { hd.finalize(); return; }
           handle = hd;
           if (orthoBtn) orthoBtn.hidden = !hd.info.basemapView;
+          if (orthoSave) orthoSave.hidden = !hd.info.basemapView;
           if (hd.info.basemapDenied) ui.toast.show(t('map.basemap.denied'), { kind: 'warn' });
           basemapChoice.notifyKey(hd.info, () => { orthoLoad = true; draw(); });
           if (hd.info.basemapView) { const load = orthoLoad; orthoLoad = false; await loadOrtho(hd, load); if (my !== seq) return; }

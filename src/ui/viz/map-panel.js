@@ -6,7 +6,7 @@
  * a WMS or OGC API – Tiles), WMS and tile layers and rasters' pictures under the features, the saved view; the live map on the right
  * with a click showing a feature's attributes in the inspector. Export and thumbnails are drawn headless by
  * viz/leaflet (no tiles). Sweden's orthophoto is read for the map's view when the person chooses it or asks for the view,
- * never when a saved map view is opened; the image is not part of the map view.
+ * never when a saved map view is opened; the image is not part of the map view, but it can be kept as a raster.
  */
 (function () {
   'use strict';
@@ -31,7 +31,8 @@
     const numeric = (c) => c.type === 'integer' || c.type === 'number';
 
     /**
-     * @param {{chart: any, columns: any[], onChange: (def: any) => void, log: Function, onInspect?: () => void}} options
+     * @param {{chart: any, columns: any[], onChange: (def: any) => void, log: Function, onInspect?: () => void, onOpenDataset?: (meta: any) => void}} options
+     *   onOpenDataset: opens a dataset made here (an orthophoto kept as a raster)
      */
     function create(options) {
       const { chart } = options;
@@ -110,8 +111,13 @@
             def.basemap = v; orthoLoad = basemapChoice.isView(v); renderSide(); changed();
           }, { 'data-map-basemap': '' }),
         ].filter(Boolean);
-        // Sweden's orthophoto covers the view it was read for; after a move the person reads it for the new view.
-        if (services && basemapChoice.isView(def.basemap)) items.push(basic.button({ label: t('ortho.se.load'), icon: 'image', size: 'sm', title: t('ortho.se.load.hint'), 'data-map-ortho-load': '', onClick: () => { if (handle) drawOrtho(handle, true); } }));
+        // Sweden's orthophoto covers the view it was read for; after a move the person reads it for the new view. The image shown
+        // can be kept as a raster.
+        if (services && basemapChoice.isView(def.basemap)) {
+          items.push(h('div', { class: 'dm-row-wrap' },
+            basic.button({ label: t('ortho.se.load'), icon: 'image', size: 'sm', title: t('ortho.se.load.hint'), 'data-map-ortho-load': '', onClick: () => { if (handle) drawOrtho(handle, true); } }),
+            basemapChoice.saveButton(() => handle, { size: 'sm', onOpen: options.onOpenDataset })));
+        }
         if (services && def.basemap === 'custom') {
           items.push(input(t('map.custom.url'), def.custom.url, (v) => { def.custom.url = v.trim(); changed(); }, { placeholder: 'https://…/{z}/{x}/{y}.png', help: t('map.custom.url.help') }));
           items.push(input(t('map.custom.attribution'), def.custom.attribution, (v) => { def.custom.attribution = v.trim(); changed(); }));

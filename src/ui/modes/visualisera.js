@@ -233,7 +233,7 @@
             rpanel = pyPanel.create({ chart, columns, onChange: (code, plotly) => { chart.python.code = code; chart.python.plotly = plotly; dirty = true; }, log: (m, k) => shell.log(m, k) });
             controlsEl = null;
           } else if (chart.kind === 'map') {
-            rpanel = mapPanel.create({ chart, columns, onChange: (def) => { chart.map = def; dirty = true; }, log: (m, k) => shell.log(m, k), onInspect: () => renderRight() });
+            rpanel = mapPanel.create({ chart, columns, onChange: (def) => { chart.map = def; dirty = true; }, log: (m, k) => shell.log(m, k), onInspect: () => renderRight(), onOpenDataset: (meta) => { store.set({ selectedId: meta.id }); shell.activate('bearbeta'); } });
             controlsEl = null;
           } else if (chart.kind === 'model') {
             rpanel = modelChartPanel.create({ chart, onChange: (def) => { chart.model = def; dirty = true; }, log: (m, k) => shell.log(m, k), onInspect: () => renderRight() });
