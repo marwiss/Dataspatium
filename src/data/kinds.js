@@ -159,15 +159,18 @@
     }
 
     /**
-     * A raster's facts from `_meta.raster`: its files (when more than one, or when some were left out), system, resolution,
-     * pixels, bands and data type, what became of the originals and the attribution with the licence. Values the files share are
-     * said once; differing ones are listed.
+     * A raster's facts from `_meta.raster`: its files (when more than one, or when some were left out: those that could not be read
+     * apart from those over the number a raster holds), system, resolution, pixels, bands and data type, what became of the
+     * originals and the attribution with the licence. Values the files share are said once; differing ones are listed.
      * @param {any} ds @returns {Array<{label: string, value: string}>}
      */
     function rasterFacts(ds) {
       const r = ds.raster || {};
       const files = rasterFiles(ds);
-      const skipped = Array.isArray(r.skipped) ? r.skipped.length : 0;
+      const left = Array.isArray(r.skipped) ? r.skipped.filter(Boolean) : [];
+      const many = left.filter((s) => s.code === 'many');
+      const skipped = [left.length > many.length ? t('images.skipped', { n: n(left.length - many.length) }) : '',
+        many.length ? t('raster.skipped.many', { n: n(many.length), max: n(Number(many[0].max) || 0) }) : ''].filter(Boolean).join('; ');
       const count = rasterCount(ds);
       const each = (fn) => Array.from(new Set(files.map(fn).filter(Boolean))).join(', ');
       const res = files.map((f) => Number(f.resolution)).filter((x) => x > 0);
@@ -179,7 +182,7 @@
       const licence = r.license && r.license.name ? String(r.license.name) : '';
       const credit = r.attribution ? String(r.attribution) + (licence ? ` (${licence})` : '') : licence;
       return [
-        count > 1 || skipped ? { label: t('raster.field.files'), value: n(count) + (skipped ? ` (${t('images.skipped', { n: n(skipped) })})` : '') } : null,
+        count > 1 || skipped ? { label: t('raster.field.files'), value: n(count) + (skipped ? ` (${skipped})` : '') } : null,
         { label: t('raster.field.crs'), value: each(system) },
         res.length ? { label: t('raster.field.resolution'), value: t('raster.resolution', { r: lo === hi ? metres(lo) : `${metres(lo)}–${metres(hi)}` }) } : null,
         { label: t('raster.field.size'), value: each((f) => (f.width && f.height ? `${n(f.width)} × ${n(f.height)}` : '')) },

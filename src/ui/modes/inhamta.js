@@ -38,8 +38,11 @@
       /** @type {any} */ let fieldUi = null;
       /** @type {any} */ let guidesUi = null;
 
-      /** `hidden`: the entry of a file the tier does not read (platform/tier), shown as the tier's notice in place of an error. */
-      function reset() { return { step: 'file', answers: {}, sorted: null, results: null, file: null, files: [], progress: null, project: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '', hidden: '' }; }
+      /**
+       * `hidden`: the entry of a file the tier does not read (platform/tier), shown as the tier's notice in place of an error;
+       * `refused`: the files of a raster that its preview passed over, with their words ({file, message}); the import leaves them out.
+       */
+      function reset() { return { step: 'file', answers: {}, sorted: null, results: null, file: null, files: [], progress: null, project: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '', hidden: '', refused: [] }; }
       /** What went wrong with the file chosen: the tier's notice for a file the tier does not read, else the error. */
       const problem = () => (wiz.hidden ? tierUi.notice(ctx, wiz.hidden) : wiz.error ? h('p', { class: 'dm-error dm-small', text: wiz.error }) : null);
       function restart() { freeThumbs(); Object.assign(wiz, reset()); render(); }
@@ -608,7 +611,7 @@
         wiz.busy = true; wiz.progress = null; render();
         const results = await services.importer.runSorted(wiz.sorted.groups.filter((g) => g.include), (p) => { wiz.progress = p; render(); });
         for (const r of results) {
-          if (r.meta) shell.log(doneText(r.meta), 'ok');
+          if (r.meta) { shell.log(doneText(r.meta), 'ok'); for (const line of leftOut(r.meta)) shell.log(line, 'warn'); }
           else shell.log(t('import.error', { message: `${r.group.files[0].name}: ${r.error}` }), 'error');
         }
         wiz.results = results; wiz.step = 'done'; wiz.busy = false; render();
@@ -737,11 +740,34 @@
         wiz.busy = false; render();
       }
 
+      /**
+       * The preview of the chosen file. In a raster of several files a file refused in the person's words (one without a place, a
+       * rotated one) gives way to the next, and its words are kept in `wiz.refused`: the import leaves such files out and imports
+       * the others (data/raster importFiles). The first refusal stands only when every file is refused.
+       */
+      async function previewFile(opts) {
+        wiz.refused = [];
+        const list = wiz.options.format === 'raster' && wiz.files.length > 1 ? wiz.files : [wiz.file];
+        let first = null;
+        for (const file of list) {
+          try {
+            const p = await services.importer.preview(file, opts);
+            wiz.file = file;
+            return p;
+          } catch (err) {
+            if (list.length < 2 || !err || typeof err.code !== 'string' || err.tierFeature) { wiz.refused = []; throw err; }
+            first = first || err;
+            wiz.refused.push({ file, message: String(err.message || err) });
+          }
+        }
+        wiz.refused = []; wiz.file = list[0];
+        throw first;
+      }
       async function runPreview() {
-        wiz.busy = true; wiz.error = ''; wiz.hidden = ''; render();
+        wiz.busy = true; wiz.error = ''; wiz.hidden = ''; wiz.refused = []; render();
         try {
           const opts = cleanOptions();
-          wiz.preview = wiz.file ? await services.importer.preview(wiz.file, opts) : await services.importer.previewText(wiz.text, opts);
+          wiz.preview = wiz.file ? await previewFile(opts) : await services.importer.previewText(wiz.text, opts);
           wiz.options.format = wiz.preview.importer;
           if (wiz.preview.encoding && !wiz.options.encoding) wiz.options.encoding = wiz.preview.encoding;
           if (wiz.preview.sheet !== undefined) wiz.options.sheet = wiz.preview.sheet;
@@ -789,6 +815,8 @@
         // Several files are always one collection, so the format is fixed then.
         if (wiz.file && wiz.files.length < 2) left.appendChild(format);
         if (wiz.files.length > 1) left.appendChild(fileList());
+        // The files of a raster that are refused: named with what to do, before the others are imported.
+        if (wiz.refused.length) left.appendChild(h('div', { class: 'dm-stack-xs', 'data-import-refused': '' }, h('p', { class: 'dm-help dm-small', text: t('raster.refused') }), wiz.refused.map((r) => h('p', { class: 'dm-warn dm-small', text: r.message }))));
         if (wiz.options.format === 'csv' || wiz.options.format === 'fixed') {
           const encOptions = encoding.ENCODINGS.map((e) => ({ value: e.value, label: e.label + (p && p.encodingDetected && p.encodingDetected.encoding === e.value ? t('import.encoding.detected') : '') }));
           if (wiz.file) left.appendChild(select(t('import.encoding'), encOptions, wiz.options.encoding || 'utf-8', (v) => { wiz.options.encoding = v; schedulePreview(); }));
@@ -945,7 +973,7 @@
 
       /** What the file is, and what is worth asking about it. */
       function senseCard(p) {
-        const sense = fileSense.describe(p, { files: wiz.files });
+        const sense = fileSense.describe(p, { files: wiz.files.filter((f) => !wiz.refused.some((r) => r.file === f)) });
         if (!sense) return null;
         const answers = wiz.answers;
         const coords = fileSense.coordinates(p);
@@ -1061,6 +1089,23 @@
         if (!kinds.isCollection(m)) return t('import.done', { name: m.name, rows: i18n.formatNumber(m.rowCount), cols: m.columnCount });
         return t('import.done.kind', { name: m.name, summary: kinds.summary(m) });
       }
+      /**
+       * What a raster's import left out, one line each with its words (data/raster importFiles): a refused file says what to do, and
+       * the files over the number a raster holds are named together.
+       * @returns {string[]}
+       */
+      function leftOut(m) {
+        const list = m && m.raster && Array.isArray(m.raster.skipped) ? m.raster.skipped.filter(Boolean) : [];
+        const many = list.filter((s) => s.code === 'many');
+        const lines = list.filter((s) => s.code !== 'many').map((s) => (String(s.error).includes(String(s.name)) ? String(s.error) : `${s.name}: ${s.error}`));
+        if (many.length) lines.push(`${many[0].error} ${many.slice(0, 8).map((s) => s.name).join(', ')}${many.length > 8 ? ' …' : ''}`);
+        return lines;
+      }
+      /** The lines of `leftOut` under a result, or nothing. */
+      function leftOutNode(m) {
+        const lines = leftOut(m);
+        return lines.length ? h('div', { class: 'dm-stack-xs', 'data-import-skipped': '' }, h('p', { class: 'dm-help dm-small', text: t('raster.skipped.done') }), lines.map((line) => h('p', { class: 'dm-warn dm-small', text: line }))) : null;
+      }
       /** The way on from an import: read, look at, or work in the table (a kind whose own views the tier hides opens as a table). */
       function openAfter(m) {
         const own = kinds.shown(m) ? kinds.of(m).open : null;
@@ -1085,6 +1130,7 @@
           const result = network ? await fileSense.toGraph(meta, network.params) : meta;
           wiz.result = result; wiz.step = 'done';
           shell.log(doneText(result) + ` (${Math.round(performance.now() - t0)} ms)`, 'ok');
+          for (const line of leftOut(result)) shell.log(line, 'warn');
           ui.toast.show(doneText(result), { kind: 'ok' });
         } catch (err) {
           wiz.error = (err && err.message) || String(err);
@@ -1099,13 +1145,14 @@
           return h('div', { class: 'dm-success dm-stack' },
             h('h2', null, ui.icon('circle-check', 20), ' ', t('import.sort.done', { n: i18n.formatNumber(wiz.results.filter((r) => r.meta).length) })),
             wiz.results.map((r) => (r.meta
-              ? h('div', { class: 'dm-row' }, h('span', { class: 'dm-list-main dm-truncate', text: doneText(r.meta) }), ui.button(Object.assign(openAfter(r.meta), { size: 'sm', onClick: () => open(r.meta) })))
+              ? h('div', { class: 'dm-stack-xs' }, h('div', { class: 'dm-row' }, h('span', { class: 'dm-list-main dm-truncate', text: doneText(r.meta) }), ui.button(Object.assign(openAfter(r.meta), { size: 'sm', onClick: () => open(r.meta) }))), leftOutNode(r.meta))
               : h('p', { class: 'dm-error dm-small', text: `${r.group.files[0].name}: ${r.error}` }))),
             h('div', { class: 'dm-row' }, ui.button({ label: t('import.another'), icon: 'plus', onClick: restart })));
         }
         const m = wiz.result;
         return h('div', { class: 'dm-success' },
           h('h2', null, ui.icon('circle-check', 20), ' ', doneText(m)),
+          leftOutNode(m),
           h('div', { class: 'dm-row' },
             ui.button(Object.assign(openAfter(m), { variant: 'primary', onClick: () => { store.set({ selectedId: m.id }); shell.activate('bearbeta'); } })),
             ui.button({ label: t('import.another'), icon: 'plus', onClick: restart })));

@@ -344,7 +344,7 @@
     const meta = track(await importer.runFiles([good, cases[0][0], cases[2][0]], { format: 'raster' }, 'Blandat urval'));
     const ds = await datasets.get(meta.id);
     assert.equal(ds.rowCount, 1);
-    assert.deepEqual(ds.raster.skipped, [{ name: 'utan-lage.tif', error: t('raster.err.nogeo', { name: 'utan-lage.tif' }) }, { name: 'zstd.tif', error: t('raster.err.compression', { name: 'zstd.tif' }) }]);
+    assert.deepEqual(ds.raster.skipped, [{ name: 'utan-lage.tif', code: 'nogeo', error: t('raster.err.nogeo', { name: 'utan-lage.tif' }) }, { name: 'zstd.tif', code: 'compression', error: t('raster.err.compression', { name: 'zstd.tif' }) }]);
     assert.ok(kinds.facts(ds).some((x) => x.label === t('raster.field.files') && x.value.includes(t('images.skipped', { n: '2' }))), 'the facts say two were left out');
     const sorted = await importer.sortFiles([cases[0][0], await jpegFile('bild.jpg')]);
     const results = await importer.runSorted(sorted.groups);
@@ -355,7 +355,10 @@
       const three = [0, 1, 2].map((k) => sweref(`max-${k}.tif`, { width: 16, height: 16 }));
       const m = track(await importer.runFiles(three, { format: 'raster' }, 'För många'));
       const d = await datasets.get(m.id);
-      assert.ok(d.rowCount === 2 && d.raster.skipped.length === 1 && d.raster.skipped[0].error === t('raster.err.many', { max: 2, n: 1 }), JSON.stringify(d.raster.skipped));
+      assert.ok(d.rowCount === 2 && d.raster.skipped.length === 1 && d.raster.skipped[0].code === 'many' && d.raster.skipped[0].max === 2 && d.raster.skipped[0].error === t('raster.err.many', { max: 2, n: 1 }), JSON.stringify(d.raster.skipped));
+      // The facts tell the files left out by the limit from those that could not be read.
+      const fact = kinds.facts(d).find((x) => x.label === t('raster.field.files'));
+      assert.ok(fact && fact.value.includes(t('raster.skipped.many', { n: '1', max: '2' })) && !fact.value.includes(t('images.skipped', { n: '1' })), fact && fact.value);
     });
     return 'ok';
   }, 90000);

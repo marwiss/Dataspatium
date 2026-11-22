@@ -37,9 +37,10 @@
      *   resolution in ground metres per pixel at the centre (null without a place), what became of the original, and the preview's
      *   type, size and corners ([[north, west], [south, east]] in degrees; null when not placed)
      * @typedef {{version: number, count: number, extent: number[]|null, attribution: string|null, license: {name: string, url?: string}|null,
-     *   processed: boolean, skipped: Array<{name: string, error: string}>, files: RasterFile[]}} RasterMeta
+     *   processed: boolean, skipped: Array<{name: string, code?: string, max?: number, error: string}>, files: RasterFile[]}} RasterMeta
      *   `_meta.raster`: the files, the union of the placed ones [west, south, east, north], the attribution (at most 200 characters)
-     *   and licence, whether the pictures were processed from what the provider gave, and the files that could not be read
+     *   and licence, whether the pictures were processed from what the provider gave, and the files left out with their words: code
+     *   'many' (with the limit `max`) for those over the number a raster holds, else the refusal's code (nogeo, rotated, read, …)
      */
     /** The columns of a raster's table: one row per file. */
     const COLUMNS = [
@@ -398,14 +399,14 @@
     }
     /**
      * One dataset of the kind raster from the files, read one at a time (`progress({file, index, total})` before each): at most
-     * `limits.maxFiles`, the rest left out with `raster.err.many`; a file that cannot be read is left out with its words, and when
-     * none can, the first one's error is thrown.
+     * `limits.maxFiles`, the rest left out with `raster.err.many` (code 'many', with the limit); a file that cannot be read is left
+     * out with its words and their code, and when none can, the first one's error is thrown.
      * @param {File[]} list @param {any} [_options] @param {string} [name] @param {Function} [progress]
      */
     async function importFiles(list, _options = {}, name, progress) {
       const all = uniqueNames(Array.from(list || []));
       const taken = all.slice(0, limits.maxFiles); const rest = all.slice(limits.maxFiles);
-      const skipped = rest.map((f) => ({ name: f.name, error: t('raster.err.many', { max: limits.maxFiles, n: rest.length }) }));
+      const skipped = rest.map((f) => ({ name: f.name, code: 'many', max: limits.maxFiles, error: t('raster.err.many', { max: limits.maxFiles, n: rest.length }) }));
       const side = taken.length > 4 ? limits.previewMany : limits.preview;
       const items = []; const errors = []; let kept = 0;
       for (let i = 0; i < taken.length; i++) {
@@ -417,7 +418,7 @@
         } catch (err) {
           if (isAbort(err)) throw err;
           errors.push(err);
-          skipped.push({ name: taken[i].name, error: String((err && err.message) || err) });
+          skipped.push({ name: taken[i].name, code: err && typeof err.code === 'string' && err.code ? err.code : 'read', error: String((err && err.message) || err) });
         }
       }
       if (!items.length) throw errors[0] || new Error(t('import.err.empty'));

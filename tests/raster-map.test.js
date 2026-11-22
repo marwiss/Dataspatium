@@ -372,6 +372,36 @@
     });
   }, 60000);
 
+  test('raster map: Inhämta passes over a refused first GeoTIFF of a drop, names it before and after the import, and imports the others', async (assert) => {
+    // The first file has no place; the second is a tile in SWEREF 99 TM.
+    const refused = fixture.file({ width: 16, height: 16 }, 'forst-utan-lage.tif');
+    const good = fixture.file({ width: 32, height: 32, geo: { res: 1, east: 674000, north: 6580256, epsg: 3006 } }, 'sedan-bra.tif');
+    const words = t('raster.err.nogeo', { name: refused.name });
+    const name = 'avvisad forst ' + Date.now().toString(36);
+    return withApp(async (shell, root) => {
+      shell.activate('inhamta');
+      const zone = await waitFor(() => root.querySelector('.dm-center dm-dropzone'), 5000, 'the drop zone');
+      zone.dispatchEvent(new CustomEvent('dm-files', { detail: { files: [refused, good] }, bubbles: true }));
+      const center = /** @type {HTMLElement} */ (root.querySelector('.dm-center'));
+      const note = /** @type {HTMLElement} */ (await waitFor(() => center.querySelector('[data-import-refused]'), 15000, 'the refused file named'));
+      assert.ok(note.textContent.includes(t('raster.refused')) && note.textContent.includes(words), 'named with what to do: ' + note.textContent);
+      assert.ok(center.querySelector('[data-import-raster]') && center.querySelector('[data-import-raster-picture]'), 'the facts and the picture of the file that can be read');
+      const sense = center.querySelector('.dm-sense');
+      assert.ok(sense && sense.textContent.includes(t('import.sense.raster', { crs: 'SWEREF 99 TM (EPSG:3006)' })), 'what will come in: ' + (sense && sense.textContent));
+      const nameIn = /** @type {any} */ (Array.from(center.querySelectorAll('dm-input')).find((i) => i.getAttribute('label') === t('import.name')));
+      nameIn.value = name; nameIn.dispatchEvent(new Event('input'));
+      press(await waitFor(() => buttonIn(center, t('common.import')), 3000, 'the import button'));
+      const done = /** @type {HTMLElement} */ (await waitFor(() => center.querySelector('.dm-success'), 15000, 'the result'));
+      const skipped = done.querySelector('[data-import-skipped]');
+      assert.ok(skipped && skipped.textContent.includes(t('raster.skipped.done')) && skipped.textContent.includes(words), 'named after the import: ' + (skipped && skipped.textContent));
+      const made = await waitFor(() => shell.store.get().datasets.find((d) => d.kind === 'raster' && d.name === name), 5000, 'the raster in the workspace');
+      created.push(made.id);
+      const ds = await datasets.get(made.id);
+      assert.ok(ds.rowCount === 1 && ds.raster.files[0].name === good.name && ds.raster.skipped[0].code === 'nogeo', JSON.stringify(ds.raster.skipped));
+      return 'ok';
+    });
+  }, 60000);
+
   test('raster map: cleanup', async (assert) => {
     await datasets.flushSaves();
     for (const id of created) await datasets.remove(id).catch(() => {});
