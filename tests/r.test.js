@@ -98,6 +98,15 @@
     return 'ok';
   });
 
+  test('r: R\'s worker gets only webR\'s own assets when it asks, not Python\'s runtime or wheels', (assert) => {
+    const { ownAsset } = D.require('engines/r');
+    for (const name of ['webr/R.wasm', 'webr/libRblas.so', 'webr-repo/bin/emscripten/contrib/4.5/PACKAGES']) assert.ok(ownAsset(name), name + ' is webR\'s');
+    for (const name of ['pyodide/pyodide.asm.wasm', 'pyodide/numpy-2.2.5-cp313-cp313-pyodide_2025_0_wasm32.whl', 'sqljs/sql-wasm.wasm', 'webrfoo/x', '', null, {}]) {
+      assert.ok(!ownAsset(name), JSON.stringify(name) + ' is not');
+    }
+    return 'ok';
+  });
+
   test('r: R has no internet access: download.file, url(), webr::mount and socketConnection fail; in eval_js WebSocket, Worker, EventSource, IndexedDB and the navigator\'s storage, storageBuckets, locks and serviceWorker are gone, and fetch, XMLHttpRequest and Cache.add are refused, also for a Request with its own url and the fetch on WorkerGlobalScope.prototype; a posted proxyWebSocket is dropped', async (assert) => {
     await bridge.start();
     // Port 9 on this computer, which browsers refuse anyway: even a broken block reaches no server.

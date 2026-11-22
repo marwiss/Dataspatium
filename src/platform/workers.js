@@ -82,9 +82,13 @@
         await sendAssets(worker, items.slice(i, i + CHUNK), i + CHUNK >= items.length);
       }
     } else if (msg.type === 'asset-request') {
+      // A worker gets what its provider's `request` allows, or else its own namespace's assets: another engine's are not for it
+      // (Python's runtime and wheels are held in memory once, and a transfer takes them).
+      if (typeof msg.name !== 'string') return;
       const provider = providers.get(worker.dmNamespace);
       try {
-        if (provider && provider.request && (await provider.request(msg.name)) === false) throw new Error('refused by provider');
+        const allowed = provider && provider.request ? (await provider.request(msg.name)) !== false : msg.name.startsWith(worker.dmNamespace + '/');
+        if (!allowed) throw new Error('refused by provider');
         await sendAssets(worker, [msg.name], false);
       } catch (err) {
         D.log('workers', 'asset missing', msg.name, err);

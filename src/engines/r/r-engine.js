@@ -58,6 +58,14 @@
       return true;
     }
 
+    /**
+     * What R's worker may ask for later: webR's own assets and its package repository. JavaScript run from R can post its own
+     * asset requests, and another engine's assets are not for it (Python's runtime and wheels are held in memory once, and a
+     * transfer takes them, which stalled Python's start).
+     * @param {any} name
+     */
+    function ownAsset(name) { return typeof name === 'string' && (name.startsWith('webr/') || name.startsWith('webr-repo/')); }
+
     class REngine {
       constructor() {
         /** @type {any} */ this.webR = null;
@@ -103,7 +111,7 @@
         const sharedChannel = this.interruptible;
         D.workers.provider('webr', {
           initial: async () => D.assets.names('webr/').filter((n) => !MAIN_THREAD_ONLY.has(n)).concat(startupRepo),
-          request: async () => true,
+          request: async (name) => ownAsset(name),
           screen: (data) => screen(data, sharedChannel),
         });
         this.module = await D.assets.importModule('webr/webr.mjs');
@@ -247,6 +255,6 @@
         this.webR = null; this.ready = null;
       }
     }
-    return { REngine, screen, refused: () => refused.slice() };
+    return { REngine, screen, ownAsset, refused: () => refused.slice() };
   });
 })();

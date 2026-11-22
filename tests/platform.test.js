@@ -441,6 +441,27 @@
     return 'ok';
   }, 15000);
 
+  test('workers: a worker asking for an asset gets only its own namespace\'s unless its provider allows more, and another engine\'s stays in memory', async (assert) => {
+    D.assets.provide('tests-own/mine.txt', 'text', 'mine');
+    D.assets.provide('tests-other/theirs.bin', 'binary', new Uint8Array([1, 2, 3]).buffer);
+    D.workers.provider('tests-own', { initial: async () => [] });
+    try {
+      const out = await askWorker({
+        namespace: 'tests-own',
+        source: D.workers.functionSource(function dataspatiumOwnAssetsTestWorker() {
+          self.onmessage = function (ev) {
+            if (ev.data !== 'go') return;
+            var get = function (name) { return self.__dataspatium.getAsync(name).then(function (e) { return e.kind; }, function () { return 'missing'; }); };
+            Promise.all([get('tests-own/mine.txt'), get('tests-other/theirs.bin')]).then(function (r) { self.postMessage(r); });
+          };
+        }),
+      });
+      assert.deepEqual(out, ['text', 'missing'], 'its own asset comes, another namespace\'s does not');
+      assert.ok(D.assets.peek('tests-other/theirs.bin'), 'and that one was not taken from this thread');
+    } finally { D.assets.take('tests-own/mine.txt'); D.assets.take('tests-other/theirs.bin'); }
+    return 'ok';
+  }, 15000);
+
   test('workers: a namespace screens what its worker sends here, and the worker cannot rename itself past the screen', async (assert) => {
     const screened = [];
     D.workers.provider('tests-screen', { initial: async () => [], screen: (d) => { screened.push(d && d.n); return !(d && d.drop); } });
