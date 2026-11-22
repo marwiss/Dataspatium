@@ -1228,6 +1228,18 @@ def _ids_path(source, name=None):
     return path
 
 
+def _ids_open(path):
+    """ifctester.ids.open with the IDS schema read offline. ids.xsd imports three W3C schemas by their http:// addresses
+    (xml.xsd, XMLSchema.xsd, XMLSchema-instance), which xmlschema tries on the network before its own copies; built with
+    allow="local" it takes the copies at once, so an IDS check asks for no network at all."""
+    import ifctester.ids
+    if getattr(ifctester.ids, "schema", None) is None:
+        from xmlschema import XMLSchema
+        xsd = os.path.join(os.path.dirname(os.path.realpath(ifctester.ids.__file__)), "ids.xsd")
+        ifctester.ids.schema = XMLSchema(xsd, allow="local")
+    return ifctester.ids.open(path)
+
+
 def dm_ifc_ids(model, source, name=None):
     """Check the model against an IDS file (buildingSMART Information Delivery Specification) with ifctester.
 
@@ -1242,7 +1254,7 @@ def dm_ifc_ids(model, source, name=None):
     m = _ifc_of(model)
     path = _ids_path(source, name)
     try:
-        ids = ifctester.ids.open(path)
+        ids = _ids_open(path)
     except Exception as e:
         raise DataspatiumError(_msg("ids.invalid", str(e)[:200]))
     ids.validate(m, should_filter_version=True)  # a specification applies only to the IFC versions it names
@@ -7180,9 +7192,8 @@ def _ifc_ids_brief(model, path, limit=8):
     """A candidate against an IDS file for the preview: the specifications that fail, each with its name, how many checks fail and
     the first elements with the reason; {"error"} when ifctester cannot read the file or is missing."""
     try:
-        import ifctester.ids
         import ifctester.reporter
-        ids = ifctester.ids.open(path)
+        ids = _ids_open(path)
         ids.validate(model, should_filter_version=True)
         res = ifctester.reporter.Json(ids).report()
     except Exception as exc:
