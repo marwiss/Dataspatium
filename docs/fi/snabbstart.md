@@ -8,22 +8,22 @@ ohitetusta asetuksesta tai toisesta osoitteesta. [Vianmääritys](#vianmäärity
 mitä tehdä, jos jokin menee vikaan. Sama sivu on Dataregiumin repossa; ne pidetään
 identtisinä.
 
-## Mitä tarvitset
+## What you need
 
-- Docker: Docker Desktop Windowsissa ja macOS:ssä, Docker Engine ja compose-lisäosa
-  Linuxissa. Sen on oltava käynnissä: `docker version` vastaa sekä asiakkaan että
-  palvelimen osalta.
-- Git tai lähdekoodi-ZIP Dataregiumin
-  [uusimmasta julkaisusta](https://github.com/marwiss/Dataregium/releases/latest)
-  alla olevan `git clone` -komennon sijaan.
-- Python 3 pienenä paikallisena web-palvelimena.
-- Microsoft Edge, Google Chrome tai Firefox.
-- Portit 8000, 7484, 7697 ja 8080 vapaina koneella.
+- Docker: Docker Desktop on Windows and macOS, Docker Engine with the compose
+  plugin on Linux. It must be running: `docker version` answers for both client
+  and server.
+- Git, or the source code ZIP from Dataregium's
+  [latest release](https://github.com/marwiss/Dataregium/releases/latest) in place
+  of `git clone` below.
+- Python 3, as a small local web server.
+- Microsoft Edge, Google Chrome or Firefox.
+- The ports 8000, 5442, 7484, 7697 and 8080 free on your machine.
 
-Jos olet kokeillut Dataregiumia tällä koneella aiemmin, aloita kohdasta
-[Aloita alusta](#aloita-alusta).
+If you have tried Dataregium on this machine before, begin with
+[Start over](#start-over).
 
-## 1. Käynnistä Dataregium
+## 1. Start Dataregium
 
 ```sh
 git clone https://github.com/marwiss/Dataregium.git
@@ -31,48 +31,57 @@ cd Dataregium
 cp .env.example .env
 ```
 
-Windowsin komentokehotteessa `cp`:n sijaan käytetään `copy`-komentoa.
+In the Windows Command Prompt, `copy` takes the place of `cp`.
 
-Avaa `.env` tekstieditorissa. Alla olevat neljä riviä ovat jo tiedostossa: muuta ne
-tällaisiksi ja tallenna. Valitse oma salasana, vähintään 16 merkkiä, vain kirjaimia ja
-numeroita.
+Open `.env` in a text editor. The seven lines below are already in the file, two
+of them with a `#` in front: change them to read like this, without the `#`, and
+save. Choose two passwords of your own, at least 16 characters, letters and
+digits only.
 
 ```ini
+COMPOSE_PROFILES=graph
+OPENCDE_TIER=experimental
+OPENCDE_STORE_PASSWORD=YourOwnPassword5678
 OPENCDE_GRAPH_PASSWORD=YourOwnPassword1234
 OPENCDE_DYNAMIC_CLIENT_REGISTRATION=true
 OPENCDE_REQUEST_LOG_ENABLED=true
 OPENCDE_IFC_DB_ENABLED=true
 ```
 
-| Rivi | Mitä se tekee | Ilman sitä |
+| Line | What it does | Without it |
 |---|---|---|
-| `OPENCDE_GRAPH_PASSWORD` | Graafitietokannan salasana | Alle 16 merkkiä: tietokanta ei käynnisty |
-| `OPENCDE_DYNAMIC_CLIENT_REGISTRATION` | Antaa Dataspatiumin rekisteröityä itse palvelimelle | Vaihe 3 pysähtyy, ja sovellus pyytää asiakastunnusta |
-| `OPENCDE_REQUEST_LOG_ENABLED` | Tallentaa sovelluksen kutsut | Vaiheen 5 pyyntöloki pysyy tyhjänä |
-| `OPENCDE_IFC_DB_ENABLED` | Tekee ladatuista malleista graafin | Vaiheessa 5 ei ole graafia |
+| `COMPOSE_PROFILES` | Starts the graph database beside PostgreSQL | No graph database, and the server does not start |
+| `OPENCDE_TIER` | Chooses tier 3, Experimental, which IFC-DB's graph belongs to | Left at `bim-gis`: the server refuses to start, and `docker compose logs api` says why |
+| `OPENCDE_STORE_PASSWORD` | The password of PostgreSQL, which holds the server's own data | Missing or empty: Compose starts nothing |
+| `OPENCDE_GRAPH_PASSWORD` | The password of the graph database | Shorter than 16 characters: the database does not start |
+| `OPENCDE_DYNAMIC_CLIENT_REGISTRATION` | Lets Dataspatium register itself with the server | Step 3 stops, and the app asks for a client id |
+| `OPENCDE_REQUEST_LOG_ENABLED` | Records the app's calls | The request log in step 5 stays empty |
+| `OPENCDE_IFC_DB_ENABLED` | Turns uploaded models into a graph | No graph in step 5 |
 
-Asetukset on tarkoitettu Dataregiumin kokeiluun omalla koneella, ei palvelimelle, jota
-muut käyttävät.
+These settings are for trying Dataregium on your own machine, not for a server that
+others use.
 
-Käynnistä palvelin ja lataa esittelytiedot:
+Start the server and load the demonstration data:
 
 ```sh
 docker compose up -d --build --wait
 docker compose exec api opencde seed
 ```
 
-Ensimmäinen komento vie ensimmäisellä kerralla muutaman minuutin ja palaa, kun palvelin
-on käynnissä. Toinen luo esittelykäyttäjät ja -projektit ja tulostaa niiden salasanat
-**kerran**: tallenna käyttäjien `admin` ja `inspection_manager` salasanat nyt. Älä
-välitä riveistä, jotka alkavat sanalla `client`; Dataspatium rekisteröi oman asiakkaansa.
+The first command takes a few minutes the first time and returns when the server
+is running. The second creates demonstration users and projects and prints their
+passwords **once**: save the passwords of `admin` and `inspection_manager` now.
+Leave the lines that begin with `client` alone; Dataspatium registers a client of
+its own.
 
-Tarkista, että se toimii: <http://127.0.0.1:8000/readyz> vastaa `"status":"ready"`.
-Kirjaudu osoitteessa <http://127.0.0.1:8000/signin> käyttäjänä `admin` ja avaa
-<http://127.0.0.1:8000/admin/projects>, jossa näkyvät *Building permit* ja
+Check that it works: <http://127.0.0.1:8000/readyz> answers
+`"status":"ready","graph":"ok","store":"ok"`: the graph and PostgreSQL answer.
+Sign in at <http://127.0.0.1:8000/signin> as `admin` and open
+<http://127.0.0.1:8000/admin/projects>, which lists *Building permit* and
 *Demolition permit*.
 
-Kun muutat `.env`-tiedostoa myöhemmin, suorita `up`-komento uudelleen. `docker compose
-restart` ei lue tiedostoa.
+When you change `.env` later, run the `up` command again. `docker compose restart`
+does not read the file.
 
 ## 2. Käynnistä Dataspatium
 
@@ -132,85 +141,86 @@ Lähde säilyy.
    ja näkymä ja merkitty seinä tulevat mukaan viewpointina.
 4. Kirjoita asian alla jotain kohtaan *Kirjoita kommentti* ja paina *Lähetä*.
 
-## 5. Katso se palvelimella
+## 5. See it on the server
 
-Käyttäjänä `admin` kirjautuneena avaa <http://127.0.0.1:8000/admin>:
+Signed in as `admin`, open <http://127.0.0.1:8000/admin>:
 
-- *Projektit* näyttää projektin *Building permit*, jossa on kaksi asiaa (`opencde seed`
-  -komennon luoma ja sinun) ja yksi asiakirja.
-- *Tapahtumaloki* näyttää kirjautumisen ja sovelluksen rekisteröinnin.
-- *Pyyntöloki* näyttää jokaisen sovelluksen tekemän kutsun samoilla
-  `X-Request-ID`-arvoilla kuin kortti *Loki* lähteen näkymän alareunassa tilassa *Nouda*,
-  joten epäonnistunut kutsu löytyy molemmilta puolilta.
+- *Projects* shows *Building permit* with two topics (the one from `opencde seed` and
+  yours) and one document.
+- *Audit log* lists the sign-in and the registration of the app.
+- *Request log* shows every call the app made, with the same `X-Request-ID` values
+  as the card *Log* at the bottom of the source's view in *Import*, so a failing
+  call can be found on both sides.
 
-Esimerkkimalli on jo graafi, koska `OPENCDE_IFC_DB_ENABLED=true` oli tiedostossa
-`.env`, kun ajoit komennon `opencde seed`. Neo4j Browser osoitteessa
-<http://127.0.0.1:7484> (yhdistä osoitteeseen `bolt://127.0.0.1:7697` käyttäjänä `neo4j`
-ja tiedoston `.env` salasanalla) vastaa tähän kyselyyn seinällä, joka on linkitetty
-viewpointin komponenttiin:
+The sample model is a graph already, since `OPENCDE_IFC_DB_ENABLED=true` was in
+`.env` when you ran `opencde seed`. Neo4j Browser at <http://127.0.0.1:7484> (connect
+to `bolt://127.0.0.1:7697` as `neo4j` with the password of `OPENCDE_GRAPH_PASSWORD`)
+answers this query with the model's three walls and their GTINs:
 
 ```cypher
-MATCH (c:Component) MATCH (w:IfcWall {GlobalId: c.ifc_guid}) RETURN c, w
+MATCH (w:IfcWall)-[:IS_DEFINED_BY]->(:IfcRelDefinesByProperties)-[:RELATING_PROPERTY_DEFINITION]
+      ->(:IfcPropertySet {Name: 'Reuse'})-[:HAS_PROPERTIES]->(p:IfcPropertySingleValue {Name: 'GTIN'})
+RETURN w.GlobalId, w.Name, p.NominalValue
 ```
 
-Dataspatiumista lähettämästäsi mallista tulee graafi samalla tavalla. Kokeillaksesi
-paina *Kirjaudu ulos* palvelimen sivun yläreunassa, koska lataus tehdään toisena
-käyttäjänä:
+A model you send from Dataspatium becomes a graph the same way. To try it, press
+*Sign out* at the top of the server's page, since the upload is done as another user:
 
-1. Valitse Dataspatiumissa tila *Jaa* ja välilehti *CDE:hen*. Valitse kohdassa *Mitä*
-   *Alkuperäinen tiedosto* ja paina *Lähetä*.
-2. *Tarkistus ennen jakamista* näyttää, mitä tulee mukaan: paina *Jatka*.
-3. Palvelimen lataussivu avautuu ponnahdusikkunassa. Kirjaudu käyttäjänä
-   `inspection_manager` ja paina *Tallenna ja jatka*. Ikkuna sulkeutuu itsestään.
+1. In Dataspatium, choose the mode *Share* and the tab *To the CDE*. Under *What*,
+   choose *The original file*, and press *Send*.
+2. *Review before sharing* lists what goes along: press *Continue*.
+3. The server's upload page opens in a pop-up. Sign in as `inspection_manager` and
+   press *Save and continue*. The pop-up closes by itself.
 
-Muutaman sekunnin kuluttua sama kysely löytää seinän myös uudesta mallista.
+Within seconds the same query finds the walls of the new model too.
 
-## Vianmääritys
+## Troubleshooting
 
-Jokainen rivi lainaa näyttöä sellaisena kuin se on suomenkielisillä nimillä.
+Each row quotes the screen as it reads with the English names.
 
-| Mitä näet | Miksi | Mitä teet |
+| What you see | Why | What to do |
 |---|---|---|
-| `Cannot connect to the Docker daemon`, `error during connect` tai `docker: command not found` | Docker ei ole käynnissä | Käynnistä Docker Desktop, odota, kunnes se kertoo olevansa käynnissä, ja suorita komento uudelleen |
-| `dependency failed to start: container dataregium-graph-1 is unhealthy` | Alle 16 merkin salasana, jonka Neo4j hylkää (`docker compose logs graph` kertoo `A password must be at least 16 characters`), tai aiemmasta asennuksesta jäänyt tietokantaltaltio, jolla on toinen salasana | Korjaa salasana ja suorita `up`-komento uudelleen. Vanhasta taltiosta: katso [Aloita alusta](#aloita-alusta) |
-| `port is already allocated`, `Ports are not available` tai `address already in use` | Toinen ohjelma varaa portin 8000, 7484 tai 7697, ehkä aiempi Dataregium (`docker ps` näyttää sen) | Pysäytä se tai anna muut portit asetuksilla `OPENCDE_DEV_PORT`, `OPENCDE_DEV_NEO4J_HTTP_PORT` ja `OPENCDE_DEV_NEO4J_BOLT_PORT` tiedostossa `.env` ja käytä omaa porttiasi 8000:n sijaan siitä lähtien |
-| Toisen kansion kontit korvautuvat | Kaksi kopiota samalla koneella jakavat Compose-projektin nimen `dataregium` | Anna toiselle `COMPOSE_PROJECT_NAME=dataregium-2` ja muut `OPENCDE_DEV_*`-portit sen tiedostossa `.env` |
-| `the database is not empty` | `opencde seed` on jo suoritettu, ja se tulosti salasanat silloin | Hanki uusi salasana komennolla `docker compose exec api opencde user set-password inspection_manager` tai [aloita alusta](#aloita-alusta) |
-| `python`-komentoa ei löydy, tai Microsoft Store avautuu | Komennolla on tällä koneella toinen nimi | Käytä komentoa `py` tai `python3` |
-| Tiedostoluettelo sovelluksen sijaan | Web-palvelin toimii ulommassa kansiossa | Pysäytä se näppäimillä Ctrl+C ja käynnistä se kansiossa, jossa `index.html` on |
-| Sovelluksen vanha versio tai jotain aivan muuta | Jokin muu vastaa portissa 8080; Windowsissa toinen web-palvelin voi käynnistyä samaan porttiin ilman virhettä | Käytä toista porttia, `python -m http.server 8090 --bind 127.0.0.1`, ja avaa `http://127.0.0.1:8090/` |
-| *Sovellus voi rekisteröityä palvelimelle itse vain, kun se toimii web-palvelimelta …* | Sovellus avattiin kansiosta | Avaa `http://127.0.0.1:8080/` |
-| *Palveluun 127.0.0.1:8000 ei saatu yhteyttä …* | Dataregium ei ole käynnissä, tai osoite on kirjoitettu väärin | Osoitteen <http://127.0.0.1:8000/readyz> on vastattava. Osoite on `http://127.0.0.1:8000` ilman mitään perässä |
-| *Palvelin ei salli sovelluksen rekisteröidä itseään …* | `OPENCDE_DYNAMIC_CLIENT_REGISTRATION` ei ole `true` | Muuta tiedostoa `.env`, suorita `up`-komento uudelleen ja paina *Lisää lähde* uudelleen |
-| *Rekisteröinti epäonnistui:* … `Redirect URIs to http://localhost are not allowed here` | Sovellus avattiin osoitteessa `localhost`, jota palvelin ei hyväksy paluureitiksi | Avaa `http://127.0.0.1:8080/` ja lisää lähde siellä |
-| *Rekisteröinti epäonnistui:* … `rate_limited` | Yli 60 rekisteröintiä tunnin sisällä; jokainen *Lisää lähde* tyhjällä kentällä *Asiakastunnus (client id)* on yksi | `docker compose restart api` nollaa laskurin |
-| *Internetyhteyttä tarkoitukseen … ei ole sallittu.* | Painettiin *Kiellä* | Salli se kohdassa *Hallitse*, *Työtila*, *Internetyhteys* ja yritä uudelleen |
-| *Selain esti kirjautumisikkunan …* | Selaimen ponnahdusikkunoiden esto | Salli ponnahdusikkunat osoitteelle `http://127.0.0.1:8080` ja paina *Kirjaudu* uudelleen |
-| Ponnahdusikkunassa: *Ei voi jatkaa* ja *Tuntematon asiakas.* | Palvelin on unohtanut sovelluksen rekisteröinnin, yleensä komennon `down -v` jälkeen | Sulje ikkuna ja lataa sovellus uudelleen, koska *Kirjaudu* muuten pyörii viisi minuuttia. Poista lähde sen vieressä olevalla ristillä kohdassa *Lisätyt lähteet* ja lisää se uudelleen |
-| Ponnahdusikkunassa: *Ei voi jatkaa* ja *Redirect-URI:a ei ole rekisteröity tälle asiakkaalle.* | Kenttä *Asiakastunnus (client id)* täytettiin, esimerkiksi komennon `opencde seed` tulosteesta | Sulje ikkuna ja lataa sovellus uudelleen. Poista lähde sen vieressä olevalla ristillä kohdassa *Lisätyt lähteet* ja lisää se uudelleen kenttä tyhjänä |
-| Ponnahdusikkunassa: *Käyttäjätunnus tai salasana ei ole oikein.* | Jokaisella käyttäjällä on oma salasanansa komennosta `opencde seed` | Käytä oikeaa tai hanki uusi kuten edellä |
-| *Liian monta epäonnistunutta yritystä tällä käyttäjätunnuksella …* | Viisi väärää salasanaa peräkkäin saa palvelimen odottamaan, enintään 15 minuuttia | Odota ilmoitettu aika ja käytä komennon `opencde seed` antamaa salasanaa |
-| *Lomake on vanhentunut. Yritä uudelleen.* sivulla `/signin`, tai ponnahdusikkunassa *Ei voi jatkaa* ja *Kirjautumislomake on vanhentunut tai sitä on muokattu. Aloita alusta.*, vaikka avasit sivun juuri. `docker compose logs api` näyttää `foreign_service_worker_removed` | Selaimessasi on service worker toisesta web-sovelluksesta, joka on joskus toiminut osoitteessa `http://127.0.0.1:8000`, esimerkiksi käynnistetty komennolla `python -m http.server` ilman porttia. Se vastaa Dataregiumin sivujen vanhoilla kopioilla | Odota muutama sekunti, kunnes sivu on latautunut itsestään uudelleen, ja yritä vielä kerran, koska Dataregium poistaa tällaisen workerin. Jos viesti ei katoa, poista se käsin: `about:debugging#/runtime/this-firefox` Firefoxissa, `edge://serviceworker-internals` Edgessä, `chrome://serviceworker-internals` Chromessa; etsi `127.0.0.1:8000` ja valitse *Unregister*. Jokaisella selaimella on omansa, myös editoriin sisäänrakennetulla. Yksityisessä ikkunassa sitä ei ole, mikä näyttää nopeasti, onko tämä syy. Pidä muut sovellukset poissa portista 8000 |
-| *Et ole jäsenenä missään projektissa palvelimella.* | Kirjauduit käyttäjänä `admin`, joka ei kuulu mihinkään projektiin | Paina *Kirjaudu ulos* ja sitten *Kirjaudu* käyttäjänä `inspection_manager` |
-| *Kirjaudu* pyörii pyörimistään | Ikkuna suljettiin ennen kuin kirjautuminen oli valmis | Lataa sivu uudelleen |
-| Ikkunassa lukee *Kopiera adressen … / Copy the address …* | Se ei saanut yhteyttä sovelluksen ikkunaan, joka ehkä suljettiin tai ladattiin uudelleen sillä välin | Sulje ikkuna ja paina *Kirjaudu* uudelleen |
-| *Toinen tili* lataussivulla | Selain on kirjautunut palvelimelle käyttäjänä `admin`, joka ei aloittanut latausta | Paina sillä sivulla *Kirjaudu ulos* ja kirjaudu käyttäjänä `inspection_manager`; lataus jatkuu sitten samassa ikkunassa |
+| `Cannot connect to the Docker daemon`, `error during connect` or `docker: command not found` | Docker is not running | Start Docker Desktop, wait until it says it is running, and run the command again |
+| `dependency failed to start: container dataregium-graph-1 is unhealthy` | A password of fewer than 16 characters, which Neo4j refuses (`docker compose logs graph` says `A password must be at least 16 characters`), or a database volume left by an earlier installation with another password | Correct the password and run the `up` command again. For the old volume, see [Start over](#start-over) |
+| `required variable OPENCDE_STORE_PASSWORD is missing a value` | `.env` has no password for PostgreSQL, perhaps an `.env` from an earlier try | Add the lines `COMPOSE_PROFILES=graph` and `OPENCDE_STORE_PASSWORD` as in step 1 (an `.env` from an earlier try has neither) and run the command again |
+| `port is already allocated`, `Ports are not available` or `address already in use` | Another program holds 8000, 5442, 7484 or 7697, perhaps an earlier Dataregium (`docker ps` shows it) | Stop it, or set other ports with `OPENCDE_DEV_PORT`, `OPENCDE_DEV_POSTGRES_PORT`, `OPENCDE_DEV_NEO4J_HTTP_PORT` and `OPENCDE_DEV_NEO4J_BOLT_PORT` in `.env` and use your port instead of 8000 from then on |
+| The containers of another folder are replaced | Two checkouts on one machine share the Compose project name `dataregium` | Give the second one `COMPOSE_PROJECT_NAME=dataregium-2` and other `OPENCDE_DEV_*` ports in its `.env` |
+| `the IFC graph is not empty` or `the database is not empty` | `opencde seed` has already run and printed the passwords then | Get a new password with `docker compose exec api opencde user set-password inspection_manager`, or [start over](#start-over) |
+| `python` is not found, or the Microsoft Store opens | The command has another name on this machine | Use `py` or `python3` |
+| A list of files instead of the app | The web server runs in the outer folder | Stop it with Ctrl+C and start it in the folder that holds `index.html` |
+| An old version of the app, or something else entirely | Something else answers on port 8080; on Windows a second web server can start on the same port without an error | Use another port, `python -m http.server 8090 --bind 127.0.0.1`, and open `http://127.0.0.1:8090/` |
+| *The app can register itself with the server only when it runs from a web server …* | The app was opened from the folder | Open `http://127.0.0.1:8080/` |
+| *Could not reach 127.0.0.1:8000 …* | Dataregium is not running, or the address is mistyped | <http://127.0.0.1:8000/readyz> must answer. The address is `http://127.0.0.1:8000` with nothing after it |
+| *The server does not let the app register itself …* | `OPENCDE_DYNAMIC_CLIENT_REGISTRATION` is not `true` | Change `.env`, run the `up` command again, and press *Add source* again |
+| *The registration failed:* … `Redirect URIs to http://localhost are not allowed here` | The app was opened on `localhost`, which the server does not accept as the way back | Open `http://127.0.0.1:8080/` and add the source there |
+| *The registration failed:* … `rate_limited` | More than 60 registrations within an hour; every *Add source* with an empty *Client id* is one | `docker compose restart api` empties the counter |
+| *Internet access for … is not allowed.* | *Deny* was pressed | Allow it under *Manage*, *Workspace*, *Internet access*, and try again |
+| *The browser blocked the sign-in window …* | The browser's pop-up blocker | Allow pop-ups for `http://127.0.0.1:8080` and press *Sign in* again |
+| In the pop-up: *Cannot continue* and *Unknown client.* | The server has forgotten the app's registration, usually after `down -v` | Close the pop-up and reload the app, since *Sign in* otherwise keeps spinning for five minutes. Delete the source with the cross beside it under *Added sources* and add it again |
+| In the pop-up: *Cannot continue* and *The redirect URI is not registered for this client.* | *Client id* was filled in, for instance from the output of `opencde seed` | Close the pop-up and reload the app. Delete the source with the cross beside it under *Added sources* and add it again with *Client id* empty |
+| In the pop-up: *The user name or password is not correct.* | Every user has their own password from `opencde seed` | Use the right one, or get a new one as above |
+| *Too many failed attempts for this user name …* | Five wrong passwords in a row make the server wait, at most 15 minutes | Wait for as long as it says, and use the password from `opencde seed` |
+| *The form has expired. Please try again.* on `/signin`, or in the pop-up *Cannot continue* and *The sign-in form has expired or was tampered with. Start again.*, although you just opened the page. `docker compose logs api` shows `foreign_service_worker_removed` | A service worker in your browser from another web app that once ran on `http://127.0.0.1:8000`, for instance one started with `python -m http.server` without a port. It answers with old copies of Dataregium's pages | Wait a few seconds, until the page has reloaded by itself, and try again, since Dataregium removes such a worker. If the message stays, remove it by hand: `about:debugging#/runtime/this-firefox` in Firefox, `edge://serviceworker-internals` in Edge, `chrome://serviceworker-internals` in Chrome; find `127.0.0.1:8000` and choose *Unregister*. Every browser has its own, also one built into an editor. A private window has none, which shows quickly whether this is the cause. Keep other apps off port 8000 |
+| *You are not a member of any project on the server.* | You signed in as `admin`, who is in no project | Press *Sign out* and then *Sign in* as `inspection_manager` |
+| *Sign in* keeps spinning | The pop-up was closed before the sign-in was finished | Reload the page |
+| The pop-up says *Kopiera adressen … / Copy the address …* | It could not reach the app's window, which was perhaps closed or reloaded meanwhile | Close the pop-up and press *Sign in* again |
+| *Another account* on the upload page | The browser is signed in to the server as `admin`, who did not start the upload | Press *Sign out* on that page and sign in as `inspection_manager`; the upload then continues in the same window |
 
-## Aloita alusta
+## Start over
 
-Kansiossa, josta käynnistit (tai missä tahansa valitsimella `-p dataregium`):
+In the folder you started from (or anywhere, with `-p dataregium`):
 
 ```sh
 docker compose down -v
 ```
 
-Se poistaa tietokannan ja esittelyn tiedostot. Suorita sitten vaiheen 1 `up`- ja
-`seed`-komennot uudelleen, jolloin saat uudet salasanat. Poista Dataspatiumissa lähde sen
-vieressä olevalla ristillä kohdassa *Lisätyt lähteet* ja lisää se uudelleen, koska palvelin
-on unohtanut sovelluksen rekisteröinnin.
+This deletes the databases and the files of the demonstration. Then run the `up` and
+`seed` commands of step 1 again, which gives new passwords. In Dataspatium, delete
+the source with the cross beside it under *Added sources* and add it again, since
+the server has forgotten the app's registration.
 
-Jos haluat pysäyttää poistamatta mitään, jätä `-v` pois. Web-palvelimen pysäytät
-näppäimillä Ctrl+C.
+To stop without deleting anything, leave out `-v`, and stop the web server with
+Ctrl+C.
 
 ## Seuraavaksi
 

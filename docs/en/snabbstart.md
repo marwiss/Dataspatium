@@ -18,7 +18,7 @@ two are kept identical.
   of `git clone` below.
 - Python 3, as a small local web server.
 - Microsoft Edge, Google Chrome or Firefox.
-- The ports 8000, 7484, 7697 and 8080 free on your machine.
+- The ports 8000, 5442, 7484, 7697 and 8080 free on your machine.
 
 If you have tried Dataregium on this machine before, begin with
 [Start over](#start-over).
@@ -33,11 +33,15 @@ cp .env.example .env
 
 In the Windows Command Prompt, `copy` takes the place of `cp`.
 
-Open `.env` in a text editor. The four lines below are already in the file:
-change them to read like this, and save. Choose your own password, at least 16
-characters, letters and digits only.
+Open `.env` in a text editor. The seven lines below are already in the file, two
+of them with a `#` in front: change them to read like this, without the `#`, and
+save. Choose two passwords of your own, at least 16 characters, letters and
+digits only.
 
 ```ini
+COMPOSE_PROFILES=graph
+OPENCDE_TIER=experimental
+OPENCDE_STORE_PASSWORD=YourOwnPassword5678
 OPENCDE_GRAPH_PASSWORD=YourOwnPassword1234
 OPENCDE_DYNAMIC_CLIENT_REGISTRATION=true
 OPENCDE_REQUEST_LOG_ENABLED=true
@@ -46,6 +50,9 @@ OPENCDE_IFC_DB_ENABLED=true
 
 | Line | What it does | Without it |
 |---|---|---|
+| `COMPOSE_PROFILES` | Starts the graph database beside PostgreSQL | No graph database, and the server does not start |
+| `OPENCDE_TIER` | Chooses tier 3, Experimental, which IFC-DB's graph belongs to | Left at `bim-gis`: the server refuses to start, and `docker compose logs api` says why |
+| `OPENCDE_STORE_PASSWORD` | The password of PostgreSQL, which holds the server's own data | Missing or empty: Compose starts nothing |
 | `OPENCDE_GRAPH_PASSWORD` | The password of the graph database | Shorter than 16 characters: the database does not start |
 | `OPENCDE_DYNAMIC_CLIENT_REGISTRATION` | Lets Dataspatium register itself with the server | Step 3 stops, and the app asks for a client id |
 | `OPENCDE_REQUEST_LOG_ENABLED` | Records the app's calls | The request log in step 5 stays empty |
@@ -67,7 +74,8 @@ passwords **once**: save the passwords of `admin` and `inspection_manager` now.
 Leave the lines that begin with `client` alone; Dataspatium registers a client of
 its own.
 
-Check that it works: <http://127.0.0.1:8000/readyz> answers `"status":"ready"`.
+Check that it works: <http://127.0.0.1:8000/readyz> answers
+`"status":"ready","graph":"ok","store":"ok"`: the graph and PostgreSQL answer.
 Sign in at <http://127.0.0.1:8000/signin> as `admin` and open
 <http://127.0.0.1:8000/admin/projects>, which lists *Building permit* and
 *Demolition permit*.
@@ -145,11 +153,13 @@ Signed in as `admin`, open <http://127.0.0.1:8000/admin>:
 
 The sample model is a graph already, since `OPENCDE_IFC_DB_ENABLED=true` was in
 `.env` when you ran `opencde seed`. Neo4j Browser at <http://127.0.0.1:7484> (connect
-to `bolt://127.0.0.1:7697` as `neo4j` with the password from `.env`) answers this
-query with the wall linked to the viewpoint's component:
+to `bolt://127.0.0.1:7697` as `neo4j` with the password of `OPENCDE_GRAPH_PASSWORD`)
+answers this query with the model's three walls and their GTINs:
 
 ```cypher
-MATCH (c:Component) MATCH (w:IfcWall {GlobalId: c.ifc_guid}) RETURN c, w
+MATCH (w:IfcWall)-[:IS_DEFINED_BY]->(:IfcRelDefinesByProperties)-[:RELATING_PROPERTY_DEFINITION]
+      ->(:IfcPropertySet {Name: 'Reuse'})-[:HAS_PROPERTIES]->(p:IfcPropertySingleValue {Name: 'GTIN'})
+RETURN w.GlobalId, w.Name, p.NominalValue
 ```
 
 A model you send from Dataspatium becomes a graph the same way. To try it, press
@@ -161,7 +171,7 @@ A model you send from Dataspatium becomes a graph the same way. To try it, press
 3. The server's upload page opens in a pop-up. Sign in as `inspection_manager` and
    press *Save and continue*. The pop-up closes by itself.
 
-Within seconds the same query finds the wall in the new model too.
+Within seconds the same query finds the walls of the new model too.
 
 ## Troubleshooting
 
@@ -171,9 +181,10 @@ Each row quotes the screen as it reads with the English names.
 |---|---|---|
 | `Cannot connect to the Docker daemon`, `error during connect` or `docker: command not found` | Docker is not running | Start Docker Desktop, wait until it says it is running, and run the command again |
 | `dependency failed to start: container dataregium-graph-1 is unhealthy` | A password of fewer than 16 characters, which Neo4j refuses (`docker compose logs graph` says `A password must be at least 16 characters`), or a database volume left by an earlier installation with another password | Correct the password and run the `up` command again. For the old volume, see [Start over](#start-over) |
-| `port is already allocated`, `Ports are not available` or `address already in use` | Another program holds 8000, 7484 or 7697, perhaps an earlier Dataregium (`docker ps` shows it) | Stop it, or set other ports with `OPENCDE_DEV_PORT`, `OPENCDE_DEV_NEO4J_HTTP_PORT` and `OPENCDE_DEV_NEO4J_BOLT_PORT` in `.env` and use your port instead of 8000 from then on |
+| `required variable OPENCDE_STORE_PASSWORD is missing a value` | `.env` has no password for PostgreSQL, perhaps an `.env` from an earlier try | Add the lines `COMPOSE_PROFILES=graph` and `OPENCDE_STORE_PASSWORD` as in step 1 (an `.env` from an earlier try has neither) and run the command again |
+| `port is already allocated`, `Ports are not available` or `address already in use` | Another program holds 8000, 5442, 7484 or 7697, perhaps an earlier Dataregium (`docker ps` shows it) | Stop it, or set other ports with `OPENCDE_DEV_PORT`, `OPENCDE_DEV_POSTGRES_PORT`, `OPENCDE_DEV_NEO4J_HTTP_PORT` and `OPENCDE_DEV_NEO4J_BOLT_PORT` in `.env` and use your port instead of 8000 from then on |
 | The containers of another folder are replaced | Two checkouts on one machine share the Compose project name `dataregium` | Give the second one `COMPOSE_PROJECT_NAME=dataregium-2` and other `OPENCDE_DEV_*` ports in its `.env` |
-| `the database is not empty` | `opencde seed` has already run and printed the passwords then | Get a new password with `docker compose exec api opencde user set-password inspection_manager`, or [start over](#start-over) |
+| `the IFC graph is not empty` or `the database is not empty` | `opencde seed` has already run and printed the passwords then | Get a new password with `docker compose exec api opencde user set-password inspection_manager`, or [start over](#start-over) |
 | `python` is not found, or the Microsoft Store opens | The command has another name on this machine | Use `py` or `python3` |
 | A list of files instead of the app | The web server runs in the outer folder | Stop it with Ctrl+C and start it in the folder that holds `index.html` |
 | An old version of the app, or something else entirely | Something else answers on port 8080; on Windows a second web server can start on the same port without an error | Use another port, `python -m http.server 8090 --bind 127.0.0.1`, and open `http://127.0.0.1:8090/` |
@@ -202,7 +213,7 @@ In the folder you started from (or anywhere, with `-p dataregium`):
 docker compose down -v
 ```
 
-This deletes the database and the files of the demonstration. Then run the `up` and
+This deletes the databases and the files of the demonstration. Then run the `up` and
 `seed` commands of step 1 again, which gives new passwords. In Dataspatium, delete
 the source with the cross beside it under *Added sources* and add it again, since
 the server has forgotten the app's registration.

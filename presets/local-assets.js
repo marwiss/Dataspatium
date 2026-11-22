@@ -597,7 +597,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/snabbstart.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 15068,
+  "size": 16263,
   "library": "dataspatium"
  },
  "docs/sv/r-guide.md": {
@@ -765,7 +765,7 @@ Dataspatium.assets.addEntries({
  "docs/da/snabbstart.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 14633,
+  "size": 15810,
   "library": "dataspatium"
  },
  "docs/da/r-guide.md": {
@@ -933,7 +933,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/snabbstart.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 14674,
+  "size": 15818,
   "library": "dataspatium"
  },
  "docs/nb/r-guide.md": {
@@ -1101,7 +1101,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/snabbstart.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 14816,
+  "size": 15842,
   "library": "dataspatium"
  },
  "docs/nn/r-guide.md": {
@@ -1269,7 +1269,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/snabbstart.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 16005,
+  "size": 16179,
   "library": "dataspatium"
  },
  "docs/fi/r-guide.md": {
@@ -1437,7 +1437,7 @@ Dataspatium.assets.addEntries({
  "docs/is/snabbstart.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 15953,
+  "size": 16184,
   "library": "dataspatium"
  },
  "docs/is/r-guide.md": {
@@ -1605,7 +1605,7 @@ Dataspatium.assets.addEntries({
  "docs/en/snabbstart.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 14651,
+  "size": 15842,
   "library": "dataspatium"
  },
  "docs/en/r-guide.md": {

@@ -17,7 +17,7 @@ finns i Dataregiums repo; de två hålls identiska.
   `git clone` nedan.
 - Python 3, som en liten lokal webbserver.
 - Microsoft Edge, Google Chrome eller Firefox.
-- Portarna 8000, 7484, 7697 och 8080 lediga på datorn.
+- Portarna 8000, 5442, 7484, 7697 och 8080 lediga på datorn.
 
 Har du provat Dataregium på den här datorn förut, börja med
 [Börja om](#börja-om).
@@ -32,11 +32,14 @@ cp .env.example .env
 
 I Windows kommandotolk används `copy` i stället för `cp`.
 
-Öppna `.env` i en textredigerare. De fyra raderna nedan finns redan i filen: ändra
-dem så att de ser ut så här, och spara. Välj ett eget lösenord, minst 16 tecken,
-bara bokstäver och siffror.
+Öppna `.env` i en textredigerare. De sju raderna nedan finns redan i filen, två av
+dem med ett `#` framför: ändra dem så att de ser ut så här, utan `#`, och spara.
+Välj två egna lösenord, minst 16 tecken, bara bokstäver och siffror.
 
 ```ini
+COMPOSE_PROFILES=graph
+OPENCDE_TIER=experimental
+OPENCDE_STORE_PASSWORD=YourOwnPassword5678
 OPENCDE_GRAPH_PASSWORD=YourOwnPassword1234
 OPENCDE_DYNAMIC_CLIENT_REGISTRATION=true
 OPENCDE_REQUEST_LOG_ENABLED=true
@@ -45,6 +48,9 @@ OPENCDE_IFC_DB_ENABLED=true
 
 | Rad | Vad den gör | Utan den |
 |---|---|---|
+| `COMPOSE_PROFILES` | Startar grafdatabasen bredvid PostgreSQL | Ingen grafdatabas, och servern startar inte |
+| `OPENCDE_TIER` | Väljer nivå 3, Experimentell, som IFC-DB:s graf hör till | Kvar på `bim-gis`: servern vägrar starta, och `docker compose logs api` säger varför |
+| `OPENCDE_STORE_PASSWORD` | Lösenordet till PostgreSQL, som håller serverns egna data | Saknas eller tom: Compose startar ingenting |
 | `OPENCDE_GRAPH_PASSWORD` | Lösenordet till grafdatabasen | Kortare än 16 tecken: databasen startar inte |
 | `OPENCDE_DYNAMIC_CLIENT_REGISTRATION` | Låter Dataspatium registrera sig själv hos servern | Steg 3 stannar, och appen frågar efter ett klient-id |
 | `OPENCDE_REQUEST_LOG_ENABLED` | Sparar appens anrop | Begärandeloggen i steg 5 förblir tom |
@@ -66,7 +72,8 @@ gång**: spara lösenorden för `admin` och `inspection_manager` nu. Bry dig int
 raderna som börjar med `client`; Dataspatium registrerar en egen klient.
 
 Kontrollera att det fungerar: <http://127.0.0.1:8000/readyz> svarar
-`"status":"ready"`. Logga in på <http://127.0.0.1:8000/signin> som `admin` och öppna
+`"status":"ready","graph":"ok","store":"ok"`: grafen och PostgreSQL svarar.
+Logga in på <http://127.0.0.1:8000/signin> som `admin` och öppna
 <http://127.0.0.1:8000/admin/projects>, som listar *Building permit* och
 *Demolition permit*.
 
@@ -144,11 +151,13 @@ Inloggad som `admin`, öppna <http://127.0.0.1:8000/admin>:
 
 Exempelmodellen är redan en graf, eftersom `OPENCDE_IFC_DB_ENABLED=true` fanns i
 `.env` när du körde `opencde seed`. Neo4j Browser på <http://127.0.0.1:7484> (anslut
-till `bolt://127.0.0.1:7697` som `neo4j` med lösenordet från `.env`) svarar på den här
-frågan med väggen kopplad till viewpointens komponent:
+till `bolt://127.0.0.1:7697` som `neo4j` med lösenordet i `OPENCDE_GRAPH_PASSWORD`)
+svarar på den här frågan med modellens tre väggar och deras GTIN:
 
 ```cypher
-MATCH (c:Component) MATCH (w:IfcWall {GlobalId: c.ifc_guid}) RETURN c, w
+MATCH (w:IfcWall)-[:IS_DEFINED_BY]->(:IfcRelDefinesByProperties)-[:RELATING_PROPERTY_DEFINITION]
+      ->(:IfcPropertySet {Name: 'Reuse'})-[:HAS_PROPERTIES]->(p:IfcPropertySingleValue {Name: 'GTIN'})
+RETURN w.GlobalId, w.Name, p.NominalValue
 ```
 
 En modell som du skickar från Dataspatium blir en graf på samma sätt. För att prova,
@@ -161,7 +170,7 @@ användare:
 3. Serverns uppladdningssida öppnas i ett popup-fönster. Logga in som
    `inspection_manager` och tryck *Spara och fortsätt*. Fönstret stänger sig självt.
 
-Inom några sekunder hittar samma fråga väggen i den nya modellen också.
+Inom några sekunder hittar samma fråga väggarna i den nya modellen också.
 
 ## Felsökning
 
@@ -171,9 +180,10 @@ Varje rad citerar skärmen som den ser ut med de svenska namnen.
 |---|---|---|
 | `Cannot connect to the Docker daemon`, `error during connect` eller `docker: command not found` | Docker är inte igång | Starta Docker Desktop, vänta tills det säger att det kör, och kör kommandot igen |
 | `dependency failed to start: container dataregium-graph-1 is unhealthy` | Ett lösenord på färre än 16 tecken, som Neo4j vägrar (`docker compose logs graph` säger `A password must be at least 16 characters`), eller en databasvolym kvar från en tidigare installation med ett annat lösenord | Rätta lösenordet och kör `up`-kommandot igen. För den gamla volymen, se [Börja om](#börja-om) |
-| `port is already allocated`, `Ports are not available` eller `address already in use` | Ett annat program har 8000, 7484 eller 7697, kanske en tidigare Dataregium (`docker ps` visar det) | Stoppa det, eller ange andra portar med `OPENCDE_DEV_PORT`, `OPENCDE_DEV_NEO4J_HTTP_PORT` och `OPENCDE_DEV_NEO4J_BOLT_PORT` i `.env` och använd din port i stället för 8000 från och med då |
+| `required variable OPENCDE_STORE_PASSWORD is missing a value` | `.env` har inget lösenord till PostgreSQL, kanske en `.env` från ett tidigare försök | Lägg till raderna `COMPOSE_PROFILES=graph` och `OPENCDE_STORE_PASSWORD` som i steg 1 (en `.env` från ett tidigare försök har ingen av dem) och kör kommandot igen |
+| `port is already allocated`, `Ports are not available` eller `address already in use` | Ett annat program har 8000, 5442, 7484 eller 7697, kanske en tidigare Dataregium (`docker ps` visar det) | Stoppa det, eller ange andra portar med `OPENCDE_DEV_PORT`, `OPENCDE_DEV_POSTGRES_PORT`, `OPENCDE_DEV_NEO4J_HTTP_PORT` och `OPENCDE_DEV_NEO4J_BOLT_PORT` i `.env` och använd din port i stället för 8000 från och med då |
 | Containrarna från en annan mapp ersätts | Två utcheckningar på en dator delar Compose-projektnamnet `dataregium` | Ge den andra `COMPOSE_PROJECT_NAME=dataregium-2` och andra `OPENCDE_DEV_*`-portar i dess `.env` |
-| `the database is not empty` | `opencde seed` har redan körts och skrev ut lösenorden då | Hämta ett nytt lösenord med `docker compose exec api opencde user set-password inspection_manager`, eller [börja om](#börja-om) |
+| `the IFC graph is not empty` eller `the database is not empty` | `opencde seed` har redan körts och skrev ut lösenorden då | Hämta ett nytt lösenord med `docker compose exec api opencde user set-password inspection_manager`, eller [börja om](#börja-om) |
 | `python` hittas inte, eller Microsoft Store öppnas | Kommandot heter något annat på den här datorn | Använd `py` eller `python3` |
 | En fillista i stället för appen | Webbservern kör i den yttre mappen | Stoppa den med Ctrl+C och starta den i mappen där `index.html` ligger |
 | En gammal version av appen, eller något helt annat | Något annat svarar på port 8080; på Windows kan en andra webbserver starta på samma port utan fel | Använd en annan port, `python -m http.server 8090 --bind 127.0.0.1`, och öppna `http://127.0.0.1:8090/` |
@@ -202,7 +212,7 @@ I mappen du startade från (eller var som helst, med `-p dataregium`):
 docker compose down -v
 ```
 
-Det raderar databasen och demons filer. Kör sedan `up`- och `seed`-kommandona i
+Det raderar databaserna och demons filer. Kör sedan `up`- och `seed`-kommandona i
 steg 1 igen, vilket ger nya lösenord. I Dataspatium tar du bort källan med krysset
 bredvid den under *Tillagda källor* och lägger till den igen, eftersom servern har
 glömt appens registrering.
