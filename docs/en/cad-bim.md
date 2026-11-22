@@ -612,9 +612,11 @@ properties belong to the type, and the AI defines the types first. When the chan
 walls they meet (IfcRelConnectsPathElements): at a corner the thicker wall (for equal thickness the longer) reaches past the corner and
 the other stops against it, and a wall that ends on another's line stops at its side, so that corners have neither gaps nor overlaps
 and no volume is counted twice. The walls' centrelines stay as drawn, and corners at other than right angles are joined as drawn.
-Finally the walls, slabs, roofs, doors and windows the change set created or changed get base quantities (Qto_WallBaseQuantities,
-Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities and Qto_WindowBaseQuantities) computed from their dimensions,
-with the openings deducted and with the names of the schema's templates.
+Finally the walls, slabs, roofs, doors, windows, columns, beams, members and plates the change set created or changed get base
+quantities (Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities, Qto_WindowBaseQuantities,
+Qto_ColumnBaseQuantities, Qto_BeamBaseQuantities, Qto_MemberBaseQuantities and Qto_PlateBaseQuantities) computed from their dimensions
+in the model's units, with the openings deducted and with the names of the schema's templates; IFC2X3, which has no templates, gets
+IFC4's names.
 
 The tool `create_element` makes the building elements that have no tool of their own, of the most specific IFC class and never as
 IfcBuildingElementProxy: columns (IfcColumn), beams (IfcBeam), members such as studs and rafters (IfcMember), footings (IfcFooting),
@@ -623,7 +625,9 @@ piles (IfcPile), coverings such as flooring, ceilings, cladding, roofing and ins
 IfcFurnishingElement in IFC2X3), straight stairs (IfcStair) and curtain walls (IfcCurtainWall). The class and its PredefinedType are
 checked against the model's schema
 as in the other tools. The body is an extruded profile: a rectangle, a circle or an outline in the storey's plane, standing up from a
-height above the storey (columns, footings, coverings, furniture) or lying in a direction (beams, members and railings). The element
+height above the storey (columns, footings, coverings, furniture) or lying in a direction (beams, members and railings). Columns, beams
+and members get their base quantities from the profile and the length: length, cross-section area, outer surface area, total surface
+area and volume. The element
 lies in the storey, or is a part of a whole (`part_of`), such as a railing of a stair, and then lies in the whole and on its storey but
 not directly in the storey. A covering can name what it covers (`host`): a building element or a space. In IFC4 and later it becomes
 a part of the element (IfcRelAggregates) or lies in the space; only in IFC2X3 does it get IfcRelCoversBldgElements or
@@ -648,7 +652,9 @@ sizes from their types; mullions and transoms share the type and its sizes, so q
 the mullions and transoms are 0.05 × 0.15 m of aluminium and the panels 0.03 m of glass, with the PredefinedType on the parts
 themselves; IFC2X3 has no PredefinedType on IfcPlate and IfcMember, and the report says so. The topology reads a curtain wall as a
 wall, so that it can close a storey together with the walls; it gets IsExternal from the topology in Pset_CurtainWallCommon and base
-quantities in Qto_CurtainWallQuantities (length, height, depth and the area of its side).
+quantities in Qto_CurtainWallQuantities (length, height, depth and the area of its side). The mullions and transoms get
+Qto_MemberBaseQuantities and the panels Qto_PlateBaseQuantities (thickness, perimeter, area and volume), so that the app's IDS
+Avfallshantering finds their volumes.
 
 `define_type` also makes types for coverings (with layers, as a slab type), columns, beams, footings, railings, doors and windows
 (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType and IfcWindowType; IfcDoorStyle and

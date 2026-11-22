@@ -7,9 +7,11 @@
  * the real Pyodide (`?python=1` or cached components) the wheel makes, in an IFC4.3 model, a typed façade that closes a storey and an
  * untyped glass partition across it: the curtain walls contained in the storey with an Axis and no body, their mullions and transoms
  * (IfcMember MULLION) and panels (IfcPlate CURTAIN_PANEL) aggregated in them and placed relative to them on the grid, the parts'
- * types and their layer and profile set usages, IsExternal from the topology, the quantities and no rule failures; a second change
- * set takes the type by its GlobalId and its sizes from the types' material sets; IFC4 and IFC2X3 make the same with the schemas'
- * differences, and deleting a curtain wall takes its parts with it.
+ * types and their layer and profile set usages, IsExternal from the topology, the quantities of the curtain walls and of their parts
+ * (Qto_MemberBaseQuantities, Qto_PlateBaseQuantities) and no rule failures, and the model passes the app's own IDS Avfallshantering
+ * (PLAN.md item 7); a second change set takes the type by its GlobalId and its sizes from the types' material sets; IFC4 and IFC2X3
+ * make the same with the schemas' differences (IFC4 passes the IDS too, IFC2X3 gets the quantity sets with IFC4's names), and
+ * deleting a curtain wall takes its parts with it.
  */
 (function () {
   'use strict';
@@ -25,6 +27,8 @@
   const importer = D.require('io/import');
   const ifcOps = D.require('data/ifc-ops');
   const ifcNew = D.require('data/ifc-new');
+  const presets = D.require('analysis/ids-presets');
+  const WASTE = 'presets/ids/SE-Dataspatium_Avfallshantering.ids';
   const created = [];
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const wantReal = () => { try { return new URLSearchParams(location.search).get('python') === '1'; } catch (_e) { return false; } };
@@ -48,6 +52,8 @@
     ['create_element', facade({ type: 'new-4' })],
     ['create_element', facade({ name: 'Glasvägg', curtain: curtain({ start: [6, 0], end: [6, 8], height: 2.5, base: 0.2, bays: 2, bay_width: null, rows: null }) })],
   ];
+  /** The walls' material with its category, which the app's IDS Avfallshantering asks of every wall (AH-01). */
+  const WALLS = ['assign', { ids: ['new-1', 'new-2', 'new-3'], storey: null, material: 'Betong', category: 'concrete' }];
   const stdoutOf = (out) => out.entries.filter((e) => e.kind === 'stdout').map((e) => e.text).join('');
   /** Facts of a written IFC, read back with IfcOpenShell in the app's Python: the code ends by printing one line of JSON. */
   async function factsOf(bytes, code) {
@@ -70,8 +76,13 @@
     if (error) throw new Error(String(error.text));
     return JSON.parse(stdoutOf(out).trim().split('\n').pop() || 'null');
   }
-  /** Per curtain wall by name: storey, representations, type, IsExternal, quantities (metres), part kinds, parts by name, their box. */
+  /** Per curtain wall by name: storey, representations, type, IsExternal, quantities (metres), part kinds, parts by name with their
+   * box, frame, materials, quantity sets (metres) and representations. */
   const CURTAINS = [
+    'def qtos(e):',
+    '    per = {"IfcQuantityLength": scale, "IfcQuantityArea": scale * scale, "IfcQuantityVolume": scale ** 3}',
+    '    return {d.Name: dict({q.Name: round(float(q[3]) * per.get(q.is_a(), 1.0), 6) for q in d.Quantities}, method=d.MethodOfMeasurement)',
+    '            for r in e.IsDefinedBy or () if r.is_a("IfcRelDefinesByProperties") for d in [r.RelatingPropertyDefinition] if d.is_a("IfcElementQuantity")}',
     'facts = {"walls": {w.Name: el.get_pset(w, "Pset_WallCommon", "IsExternal") for w in m.by_type("IfcWall")}, "curtains": {},',
     '         "types": sorted("%s %s %s" % (t.is_a(), t.Name, t.PredefinedType) for t in m.by_type("IfcPlateType") + m.by_type("IfcMemberType"))}',
     'for cw in m.by_type("IfcCurtainWall"):',
@@ -84,7 +95,8 @@
     '        key = "%s %s %s %s" % (p.is_a(), pt, "%s %s" % (pty.is_a(), pty.Name) if pty else None, mat.is_a() if mat else None)',
     '        kinds[key] = kinds.get(key, 0) + 1',
     '        named[p.Name] = {"box": box(world(p, items(p))), "frame": frame(p), "contained": bool(p.ContainedInStructure), "own_pt": getattr(p, "PredefinedType", None),',
-    '                         "materials": [[x.Name, getattr(x, "Category", None)] for x in el.get_materials(p)], "rel": p.ObjectPlacement.PlacementRelTo == cw.ObjectPlacement}',
+    '                         "materials": [[x.Name, getattr(x, "Category", None)] for x in el.get_materials(p)], "rel": p.ObjectPlacement.PlacementRelTo == cw.ObjectPlacement,',
+    '                         "qto": qtos(p), "rep": [[r.RepresentationIdentifier, r.RepresentationType] for r in p.Representation.Representations]}',
     '    q = el.get_pset(cw, "Qto_CurtainWallQuantities") or {}',
     '    per = {"Length": scale, "Height": scale, "Width": scale, "GrossSideArea": scale * scale, "NetSideArea": scale * scale}',
     '    facts["curtains"][cw.Name] = {"storey": c.Name if c else None, "rep": [[r.RepresentationIdentifier, r.RepresentationType] for r in cw.Representation.Representations],',
@@ -95,6 +107,14 @@
   ];
   /** The wheel's notes other than those every new change set may carry: IsExternal left out on an open storey, no CRS yet. */
   const ownNotes = (notes) => (notes || []).filter((n) => !/^IsExternal was left out|^GRF003/.test(String(n)));
+  /** The base quantities of a member w by d metres and `length` long, and of a panel a by b metres and t thick, as the wheel computes them. */
+  const memberQto = (length, w, d) => { const side = 2 * (w + d) * length; return { Length: length, CrossSectionArea: w * d, OuterSurfaceArea: side, GrossSurfaceArea: side + 2 * w * d, NetSurfaceArea: side + 2 * w * d, GrossVolume: w * d * length, NetVolume: w * d * length, method: 'BaseQuantities' }; };
+  const panelQto = (a, b, t) => ({ Width: t, Perimeter: 2 * (a + b), GrossArea: a * b, NetArea: a * b, GrossVolume: a * b * t, NetVolume: a * b * t, method: 'BaseQuantities' });
+  /** That a quantity set has exactly the quantities wanted, each within a micrometre (or cubic micrometre). */
+  const sameQto = (assert, got, want, label) => {
+    assert.ok(got && Object.keys(got).sort().join() === Object.keys(want).sort().join(), label + ': ' + JSON.stringify(got));
+    for (const [k, v] of Object.entries(want)) assert.ok(typeof v === 'string' ? got[k] === v : near(got[k], v, 1e-6), label + ' ' + k + ': ' + JSON.stringify(got));
+  };
   const refused = (cs, name, args, assert, label) => { const out = writeTools.call(cs, name, args); assert.ok(out.error, label + ': ' + JSON.stringify(out)); return String(out.error || ''); };
 
   test('ai curtain: create_element makes an IfcCurtainWall along its axis on an even grid of bays and rows, and checks its curtain, type and fields', async (assert) => {
@@ -192,18 +212,22 @@
     return 'ok';
   });
 
-  test('ai curtain: Python makes a typed façade and an untyped glass partition in an IFC4.3 model: classes, types, aggregation, grid, placements, materials, IsExternal and no rule failures', async (assert) => {
+  test('ai curtain: Python makes a typed façade and an untyped glass partition in an IFC4.3 model: classes, types, aggregation, grid, placements, materials, IsExternal, quantities, no rule failures and the app\'s IDS passed', async (assert) => {
     if (!wantReal() && !(await catalog.cachedRuntime())) return SKIPPED;
     await bridge.start();
     await waitFor(() => bridge.state !== 'busy', 60000, 'Python free');
     const { dataset } = await ifcNew.create({ name: 'Glasfasadprov', schema: 'IFC4X3_ADD2', storey: 'Plan 1' });
     created.push(dataset.id);
+    const waste = await presets.load(WASTE);
     const cs = writeTools.create(dataset.id);
-    for (const [name, args] of STEPS) { const out = writeTools.call(cs, name, args); if (!out.ok) throw new Error(name + ': ' + JSON.stringify(out)); }
-    const res = await ifcOps.previewChangeset(dataset.id, writeTools.toWheel(cs));
+    for (const [name, args] of STEPS.concat([WALLS])) { const out = writeTools.call(cs, name, args); if (!out.ok) throw new Error(name + ': ' + JSON.stringify(out)); }
+    const res = await ifcOps.previewChangeset(dataset.id, writeTools.toWheel(cs), { ids: { name: waste.name, text: waste.text } });
     assert.equal(res.report.errors, 0, 'no errors: ' + JSON.stringify(res.report.findings).slice(0, 2000));
     assert.ok(res.report.rules && res.report.rules.errors === 0 && res.report.rules.warnings === 0, 'no rule failures (IFC102, GEM111, OJT001, SPS007, PSE001, QTY001 …): ' + JSON.stringify(res.report.rules));
     assert.deepEqual(ownNotes(res.report.notes), [], 'nothing left out');
+    const ids = res.report.ids;
+    assert.ok(ids && !ids.error && ids.file === 'SE-Dataspatium_Avfallshantering.ids' && ids.specifications >= 4 && Array.isArray(ids.failed) && ids.failed.length === 0,
+      'the AI\'s preview: the app\'s own IDS Avfallshantering passes the model: ' + JSON.stringify(ids));
     const refs = (res.report.created || []).filter((e) => e.ref).map((e) => [e.ref, e.ifc_class, e.name]);
     assert.deepEqual(refs.slice(3), [['new-4', 'IfcCurtainWallType', 'GF1'], ['new-5', 'IfcCurtainWall', 'Fasad'], ['new-6', 'IfcCurtainWall', 'Glasvägg']], 'one ref per curtain wall and type, as the panel counts');
     assert.equal((res.report.created || []).filter((e) => !e.ref && ['IfcPlate', 'IfcMember'].includes(e.ifc_class)).length, 33 + 16 + 9 + 4, 'the parts among the created, without refs');
@@ -234,16 +258,32 @@
       'the first panel between the members, 0.04 m in the middle of their depth, its z through its thickness: ' + JSON.stringify(G11));
     assert.ok(G82 && nearAll(G82.box, [0.06, 7.98, 1.53, 1.4925, 8.02, 2.94]), 'the last panel at the top of the last bay: ' + JSON.stringify(G82));
     assert.deepEqual(G11.materials, [['Glas', 'glass']], 'the glass through the layer set');
+    // The parts' base quantities from their bodies, one set each: the mullions 3 m, the transoms between them, the panels in the fields.
+    sameQto(assert, P1.qto.Qto_MemberBaseQuantities, memberQto(3, 0.06, 0.2), 'the first mullion\'s Qto_MemberBaseQuantities');
+    sameQto(assert, T11.qto.Qto_MemberBaseQuantities, memberQto(1.4325, 0.06, 0.2), 'the first transom\'s');
+    sameQto(assert, G11.qto.Qto_PlateBaseQuantities, panelQto(1.4325, 1.41, 0.04), 'the first panel\'s Qto_PlateBaseQuantities');
+    assert.ok(Object.entries(F.parts).every(([name, p]) => Object.keys(p.qto).join() === (name.startsWith(`Fasad ${w.panel} `) ? 'Qto_PlateBaseQuantities' : 'Qto_MemberBaseQuantities')),
+      'every part has its own one set: ' + JSON.stringify(Object.entries(F.parts).map(([name, p]) => [name, Object.keys(p.qto)])));
     const G = f.curtains['Glasvägg'];
     assert.ok(G && G.type === null && G.pt === 'NOTDEFINED' && G.external === false, 'the partition untyped and internal: ' + JSON.stringify(Object.assign({}, G, { parts: undefined })));
     assert.deepEqual(G.kinds, { 'IfcMember MULLION None IfcMaterial': 9, 'IfcPlate CURTAIN_PANEL None IfcMaterial': 4 }, 'its parts\' kinds on themselves, 3 + 3 × 2 members and 2 × 2 panels: ' + JSON.stringify(G.kinds));
     assert.ok(nearAll(G.box, [5.925, 0, 0.2, 6.075, 8, 2.7]), 'from (6, 0) to (6, 8), 0.15 m deep, from 0.2 to 2.7 m: ' + JSON.stringify(G.box));
     const g1 = G.parts[`Glasvägg ${w.panel} 1.1`];
     assert.ok(g1 && g1.own_pt === 'CURTAIN_PANEL' && JSON.stringify(g1.materials) === '[["Glass","glass"]]' && JSON.stringify(G.parts[`Glasvägg ${w.mullion} 1`].materials) === '[["Aluminium","aluminium"]]', 'Glass and Aluminium without a type: ' + JSON.stringify(g1));
+    sameQto(assert, G.parts[`Glasvägg ${w.mullion} 1`].qto.Qto_MemberBaseQuantities, memberQto(2.5, 0.05, 0.15), 'the partition\'s first mullion, 0.05 × 0.15 m without a type');
+    sameQto(assert, g1.qto.Qto_PlateBaseQuantities, panelQto(3.925, 1.175, 0.03), 'its first panel');
     // The written model as a model of its own: a second change set adds a façade of the type by its GlobalId.
     const typeGuid = (res.report.created || []).find((e) => e.ifc_class === 'IfcCurtainWallType' && e.name === 'GF1');
     const again = await importer.run(new File([res.bytes], 'glasfasadprov-2.ifc', { type: 'application/octet-stream' }), { format: 'model' }, null, 'Glasfasadprov 2');
     created.push(again.id);
+    // IDS-kontroll on the written model, element by element: every wall, mullion, transom and panel has its material with a category
+    // (AH-01) and its volume (AH-02), and both curtain walls their area (AH-03).
+    await bridge.writeFile('/data/ids/' + waste.name, waste.bytes.slice());
+    const checked = await bridge.ifcTool(again.id, 'ids', { ids: '/data/ids/' + waste.name });
+    const passed = (spec, cls) => checked.rows.filter((r) => r[0] === spec && r[4] === cls && r[2] === 'godkänd').length;
+    assert.ok(!checked.rows.some((r) => r[2] === 'underkänd'), 'nothing fails: ' + JSON.stringify(checked.rows.filter((r) => r[2] === 'underkänd').slice(0, 5)));
+    assert.deepEqual([['Material med kategori', 'IfcWall'], ['Material med kategori', 'IfcMember'], ['Material med kategori', 'IfcPlate'], ['Basmängd: volym', 'IfcWall'], ['Basmängd: volym', 'IfcMember'], ['Basmängd: volym', 'IfcPlate'], ['Basmängd: area', 'IfcCurtainWall']].map(([s, c]) => passed(s, c)),
+      [3, 42, 20, 3, 42, 20, 2], 'the walls, the 33 + 9 members, the 16 + 4 panels and the two curtain walls passed: ' + JSON.stringify(checked.summary));
     const cs2 = writeTools.create(again.id);
     assert.ok(writeTools.call(cs2, 'create_element', facade({ name: 'Fasad 2', type: typeGuid.guid, curtain: curtain({ start: [14, 0], end: [14, 6], bay_width: null, bays: 4, rows: 1 }) })).ok);
     const second = await ifcOps.previewChangeset(again.id, writeTools.toWheel(cs2));
@@ -258,10 +298,11 @@
     return 'ok';
   }, 900000);
 
-  test('ai curtain: Python makes the same curtain walls in IFC4 and IFC2X3, the parts\' kinds on their types where IFC2X3 has none on the parts', async (assert) => {
+  test('ai curtain: Python makes the same curtain walls in IFC4 and IFC2X3, the parts\' kinds on their types where IFC2X3 has none on the parts, and their quantities', async (assert) => {
     if (!wantReal() && !(await catalog.cachedRuntime())) return SKIPPED;
     await bridge.start();
     await waitFor(() => bridge.state !== 'busy', 60000, 'Python free');
+    const waste = await presets.load(WASTE);
     const want = {
       IFC4: { typed: { 'IfcMember MULLION IfcMemberType GF1 IfcMaterialProfileSetUsage': 33, 'IfcPlate CURTAIN_PANEL IfcPlateType GF1 IfcMaterialLayerSetUsage': 16 },
         untyped: { 'IfcMember MULLION None IfcMaterial': 9, 'IfcPlate CURTAIN_PANEL None IfcMaterial': 4 }, notes: [] },
@@ -272,17 +313,23 @@
       const { dataset } = await ifcNew.create({ name: 'Glasfasad ' + schema, schema, storey: 'Plan 1' });
       created.push(dataset.id);
       const cs = writeTools.create(dataset.id);
-      for (const [name, args] of STEPS) { const out = writeTools.call(cs, name, args); if (!out.ok) throw new Error(name + ': ' + JSON.stringify(out)); }
-      const res = await ifcOps.previewChangeset(dataset.id, writeTools.toWheel(cs));
+      // IFC2X3 has no material categories, so its walls keep no material and the app's IDS, for IFC4 and IFC4.3, is tried in IFC4.
+      for (const [name, args] of schema === 'IFC4' ? STEPS.concat([WALLS]) : STEPS) { const out = writeTools.call(cs, name, args); if (!out.ok) throw new Error(name + ': ' + JSON.stringify(out)); }
+      const res = await ifcOps.previewChangeset(dataset.id, writeTools.toWheel(cs), schema === 'IFC4' ? { ids: { name: waste.name, text: waste.text } } : {});
       assert.equal(res.report.errors, 0, schema + ': no errors: ' + JSON.stringify(res.report.findings).slice(0, 2000));
       assert.ok(res.report.rules && res.report.rules.errors === 0 && res.report.rules.warnings === 0, schema + ': no rule failures: ' + JSON.stringify(res.report.rules));
       const notes = ownNotes(res.report.notes);
       assert.ok(notes.length === want[schema].notes.length && want[schema].notes.every((re, i) => re.test(notes[i])), schema + ': the notes: ' + JSON.stringify(notes));
+      if (schema === 'IFC4') assert.ok(res.report.ids && !res.report.ids.error && res.report.ids.specifications === 8 && res.report.ids.failed.length === 0, 'IFC4: the app\'s IDS Avfallshantering passes in the preview: ' + JSON.stringify(res.report.ids));
       const f = await factsOf(res.bytes, CURTAINS);
       assert.deepEqual(f.curtains.Fasad.kinds, want[schema].typed, schema + ': the typed façade\'s parts: ' + JSON.stringify(f.curtains.Fasad.kinds));
       assert.deepEqual(f.curtains['Glasvägg'].kinds, want[schema].untyped, schema + ': the untyped partition\'s parts: ' + JSON.stringify(f.curtains['Glasvägg'].kinds));
       assert.ok(f.curtains.Fasad.external === true && f.curtains['Glasvägg'].external === false && nearAll(f.curtains.Fasad.box, [0, 7.9, 0, 12, 8.1, 3]), schema + ': IsExternal and the grid: ' + JSON.stringify(Object.assign({}, f.curtains.Fasad, { parts: undefined })));
       assert.ok(Object.values(f.curtains.Fasad.parts).every((p) => !p.contained && p.rel), schema + ': the parts aggregated and placed relative to the façade');
+      // The same quantity sets in both, IFC2X3 with IFC4's names, as its walls have them (IFC2X3 has no templates of its own).
+      const words = { mullion: i18n.t('ai.change.curtain.mullion'), panel: i18n.t('ai.change.curtain.panel') };
+      sameQto(assert, f.curtains.Fasad.parts[`Fasad ${words.mullion} 1`].qto.Qto_MemberBaseQuantities, memberQto(3, 0.06, 0.2), schema + ': the first mullion');
+      sameQto(assert, f.curtains['Glasvägg'].parts[`Glasvägg ${words.panel} 1.1`].qto.Qto_PlateBaseQuantities, panelQto(3.925, 1.175, 0.03), schema + ': the partition\'s first panel');
       if (schema !== 'IFC4') continue;
       // Deleting the partition takes its parts with it, so that none is left in no storey and no whole (SPS007).
       const partition = (res.report.created || []).find((e) => e.ifc_class === 'IfcCurtainWall' && e.name === 'Glasvägg');

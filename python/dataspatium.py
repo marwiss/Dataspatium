@@ -1809,6 +1809,12 @@ class _ChangeSet:
             Pset_CurtainWallCommon from the topology, which reads it as a wall.
         delete_elements
             a whole goes with its parts (a curtain wall's, a stair's, a roof's), so that none is left in no storey and no whole.
+
+    Since PLAN.md items 6 and 7 (2026-11-22), so that the app's own IDS Avfallshantering (AH-02) finds their volumes:
+
+        create_element, and a curtain wall's parts
+            the columns, beams and members get Qto_ColumnBaseQuantities, Qto_BeamBaseQuantities and Qto_MemberBaseQuantities and the
+            panels Qto_PlateBaseQuantities from their bodies (qto_profile, qto_plate).
     """
 
     CREATES = ("create_wall", "create_slab", "create_roof", "create_opening", "create_spaces", "define_type", "create_element")
@@ -5174,7 +5180,8 @@ class _ChangeSet:
         curtain_panel). A type (an IfcCurtainWallType of define_type) gives the parts their types, sizes and materials (curtain_parts,
         curtain_materials). The parts get no refs and are named by the curtain wall, their kind (part_names, in the person's language)
         and their place: a mullion by its line from the start, a transom by its bay and its line from the base, a panel by its bay and
-        row. Qto_CurtainWallQuantities follows (qto_curtain_wall), and IsExternal from the topology (write_external)."""
+        row. Qto_CurtainWallQuantities follows (qto_curtain_wall), the parts' base quantities (qto_profile, qto_plate), and IsExternal
+        from the topology (write_external)."""
         import ifcopenshell.guid
         if op.get("shape") is not None or op.get("stair") is not None:
             raise DataspatiumError("an IfcCurtainWall takes curtain, not shape or stair")
@@ -5566,14 +5573,17 @@ class _ChangeSet:
 
     QUANTITIES = (("IfcWall", "Qto_WallBaseQuantities", "qto_wall"), ("IfcSlab", "Qto_SlabBaseQuantities", "qto_slab"),
                   ("IfcRoof", "Qto_RoofBaseQuantities", "qto_roof"), ("IfcDoor", "Qto_DoorBaseQuantities", "qto_filling"),
-                  ("IfcWindow", "Qto_WindowBaseQuantities", "qto_filling"), ("IfcCurtainWall", "Qto_CurtainWallQuantities", "qto_curtain_wall"))
+                  ("IfcWindow", "Qto_WindowBaseQuantities", "qto_filling"), ("IfcCurtainWall", "Qto_CurtainWallQuantities", "qto_curtain_wall"),
+                  ("IfcColumn", "Qto_ColumnBaseQuantities", "qto_profile"), ("IfcBeam", "Qto_BeamBaseQuantities", "qto_profile"),
+                  ("IfcMember", "Qto_MemberBaseQuantities", "qto_profile"), ("IfcPlate", "Qto_PlateBaseQuantities", "qto_plate"))
 
     def base_quantities(self):
-        """The base quantities of the walls, slabs, roofs, doors, windows and curtain walls the change set created or changed, from their
-        parameters without a geometry kernel, in the file's units and with MethodOfMeasurement BaseQuantities (add_qto): a set the
-        element has of its own is updated, one it shares is left alone. Each quantity has the name in IfcOpenShell's template for the
-        file's schema (IFC4X3 spells the wall's footprint areas GrossFootPrintArea and NetFootPrintArea), and one the template lacks
-        is left out; IFC2X3 has no templates and gets IFC4's names. An element of another form gets none."""
+        """The base quantities of the walls, slabs, roofs, doors, windows, curtain walls, columns, beams, members and plates the change
+        set created or changed, from their parameters without a geometry kernel, in the file's units and with MethodOfMeasurement
+        BaseQuantities (add_qto): a set the element has of its own is updated, one it shares is left alone. Each quantity has the name
+        in IfcOpenShell's template for the file's schema (IFC4X3 spells the wall's footprint areas GrossFootPrintArea and
+        NetFootPrintArea), and one the template lacks is left out; IFC2X3 has no templates and gets IFC4's names. An element of another
+        form gets none."""
         for i in dict.fromkeys([r["id"] for r in self.created] + list(self.changed)):
             try:
                 e = self.m.by_id(i)
@@ -5655,31 +5665,41 @@ class _ChangeSet:
         z0 = rel[3][2] + _cs_axes(item.Position)[3][2]
         return cx - half, cx + half, z0, z0 + float(item.Depth)
 
+    FACE_PROFILES = ("IfcRectangleProfileDef", "IfcCircleProfileDef", "IfcArbitraryClosedProfileDef")  # these classes, not their hollow subtypes
+
     def slab_face(self, slab):
-        """(area m², perimeter m, thickness m, (length, depth) m or None, upness) of a slab whose body is one IfcExtrudedAreaSolid of a
-        profile without voids: the profile's area and perimeter in its own plane, the thickness at right angles to it, its sides when
-        it is a rectangle along its axes, and the z of its plane's normal, which projects it to the ground; None for another form."""
+        """(area m², perimeter m, thickness m, (length, depth) m or None, upness, depth m) of a slab, plate, column, beam or member whose
+        body is one IfcExtrudedAreaSolid of a rectangle, a circle or an outline of straight lines without voids: the profile's area and
+        perimeter in its own plane, the thickness at right angles to it, its sides when it is a rectangle along its axes, the z of its
+        plane's normal, which projects it to the ground, and the extrusion's depth along its direction; None for another form."""
         rep = getattr(slab, "Representation", None)
         bodies = [r for r in (rep.Representations if rep is not None else ()) if (r.RepresentationIdentifier or "") == "Body"]
         items = list(bodies[0].Items or ()) if len(bodies) == 1 else []
         m = _cs_placement(getattr(slab, "ObjectPlacement", None))
-        if len(items) != 1 or not items[0].is_a("IfcExtrudedAreaSolid") or m is None or getattr(items[0].SweptArea, "InnerCurves", None):
+        if len(items) != 1 or not items[0].is_a("IfcExtrudedAreaSolid") or m is None or items[0].SweptArea.is_a() not in self.FACE_PROFILES:
             return None
-        item = items[0]
-        pts = [tuple(q) for q in _cs_profile_points(item.SweptArea)]
-        if len(pts) > 3 and math.dist(pts[0], pts[-1]) < 1e-9:
-            pts = pts[:-1]
+        item, s = items[0], self.scale
+        profile, curve = item.SweptArea, getattr(item.SweptArea, "OuterCurve", None)
         d = _cs_unit([float(c) for c in item.ExtrudedDirection.DirectionRatios])
-        if len(pts) < 3 or d is None:
-            return None
-        s = self.scale
-        ring = pts + pts[:1]
-        area = abs(sum(p[0] * q[1] - q[0] * p[1] for p, q in zip(ring, ring[1:]))) / 2.0 * s * s
-        perimeter = sum(math.dist(p, q) for p, q in zip(ring, ring[1:])) * s
+        arcs = curve is not None and curve.is_a("IfcIndexedPolyCurve") and any(getattr(x, "is_a", lambda: "")() != "IfcLineIndex" for x in (curve.Segments or ()))
+        if d is None or arcs:
+            return None  # an arc's points are no polygon
+        if profile.is_a("IfcCircleProfileDef"):
+            pts, r = [], float(profile.Radius) * s
+            area, perimeter = math.pi * r * r, 2.0 * math.pi * r
+        else:
+            pts = [tuple(q) for q in _cs_profile_points(profile)]
+            if len(pts) > 3 and math.dist(pts[0], pts[-1]) < 1e-9:
+                pts = pts[:-1]
+            if len(pts) < 3:
+                return None
+            ring = pts + pts[:1]
+            area = abs(sum(p[0] * q[1] - q[0] * p[1] for p, q in zip(ring, ring[1:]))) / 2.0 * s * s
+            perimeter = sum(math.dist(p, q) for p, q in zip(ring, ring[1:])) * s
         rect = None
-        if _cs_rectangle(pts):
+        if pts and _cs_rectangle(pts):
             rect = ((max(p[0] for p in pts) - min(p[0] for p in pts)) * s, (max(p[1] for p in pts) - min(p[1] for p in pts)) * s)
-        return area, perimeter, float(item.Depth) * abs(d[2]) * s, rect, abs(_cs_compose(m, _cs_axes(item.Position))[2][2])
+        return area, perimeter, float(item.Depth) * abs(d[2]) * s, rect, abs(_cs_compose(m, _cs_axes(item.Position))[2][2]), float(item.Depth) * s
 
     def qto_slab(self, slab):
         """A slab of one extruded profile (slab_face): Width its thickness, Perimeter, Length and Depth when the profile is a
@@ -5687,12 +5707,33 @@ class _ChangeSet:
         face = self.slab_face(slab)
         if face is None:
             return None
-        area, perimeter, width, rect, _ = face
+        area, perimeter, width, rect = face[:4]
         values = {"Width": ("length", width), "Perimeter": ("length", perimeter), "GrossArea": ("area", area), "GrossVolume": ("volume", area * width)}
         if rect is not None:
             values.update({"Length": ("length", rect[0]), "Depth": ("length", rect[1])})
         if not (getattr(slab, "HasOpenings", None) or ()):
             values.update({"NetArea": ("area", area), "NetVolume": ("volume", area * width)})
+        return values
+
+    def qto_plate(self, plate):
+        """A plate, such as a curtain wall's panel, as a slab (qto_slab): Width its thickness, Perimeter, the area of its face and the
+        volume, without the slab's Length and Depth, which Qto_PlateBaseQuantities lacks."""
+        values = self.qto_slab(plate)
+        return {k: v for k, v in values.items() if k not in ("Length", "Depth")} if values else None
+
+    def qto_profile(self, e):
+        """A column, beam or member of one profile extruded at right angles to it (slab_face), as create_element and the curtain walls
+        draw them: Length the extrusion's, CrossSectionArea the profile's, OuterSurfaceArea its sides (perimeter × length),
+        GrossSurfaceArea with its two ends and GrossVolume; Net as Gross when it has no openings. None for another form."""
+        face = self.slab_face(e)
+        if face is None or abs(face[2] - face[5]) > 1e-9 * max(1.0, face[5]):
+            return None
+        area, perimeter, length = face[0], face[1], face[5]
+        side = perimeter * length
+        values = {"Length": ("length", length), "CrossSectionArea": ("area", area), "OuterSurfaceArea": ("area", side),
+                  "GrossSurfaceArea": ("area", side + 2.0 * area), "GrossVolume": ("volume", area * length)}
+        if not (getattr(e, "HasOpenings", None) or ()):
+            values.update({"NetSurfaceArea": ("area", side + 2.0 * area), "NetVolume": ("volume", area * length)})
         return values
 
     def qto_roof(self, roof):

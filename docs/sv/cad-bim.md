@@ -592,9 +592,11 @@ takskivornas uppåt från undersidan), och dess PredefinedType står på typen. 
 definierar typerna först. När ändringssetet körs knyts de väggar det skapar ihop med väggarna de möter (IfcRelConnectsPathElements): i
 ett hörn går den tjockare väggen (vid samma tjocklek den längre) förbi hörnet och den andra slutar mot den, och en vägg som slutar mot
 en annans linje slutar mot dess sida, så att hörnen varken får glipor eller överlapp och ingen volym räknas två gånger. Väggarnas
-mittlinjer ändras inte, och hörn i andra vinklar än räta knyts ihop som de är ritade. Till sist får de väggar, bjälklag, tak, dörrar
-och fönster som ändringssetet skapat eller ändrat basmängder (Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities,
-Qto_DoorBaseQuantities och Qto_WindowBaseQuantities) räknade ur måtten, med öppningarna avdragna och med namnen ur schemats mallar.
+mittlinjer ändras inte, och hörn i andra vinklar än räta knyts ihop som de är ritade. Till sist får de väggar, bjälklag, tak, dörrar,
+fönster, pelare, balkar, stänger och skivor som ändringssetet skapat eller ändrat basmängder (Qto_WallBaseQuantities,
+Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities, Qto_WindowBaseQuantities, Qto_ColumnBaseQuantities,
+Qto_BeamBaseQuantities, Qto_MemberBaseQuantities och Qto_PlateBaseQuantities) räknade ur måtten i modellens enheter, med öppningarna
+avdragna och med namnen ur schemats mallar; IFC2X3, som saknar mallar, får IFC4:s namn.
 
 Verktyget `create_element` gör de byggdelar som inte har ett eget verktyg, av den mest specifika IFC-klassen och aldrig som
 IfcBuildingElementProxy: pelare (IfcColumn), balkar (IfcBeam), stänger som reglar och takstolar (IfcMember), grundsulor och plintar
@@ -603,7 +605,8 @@ IfcBuildingElementProxy: pelare (IfcColumn), balkar (IfcBeam), stänger som regl
 IfcFurnishingElement), raka trappor (IfcStair) och glasfasader (IfcCurtainWall). Klassen och dess PredefinedType kontrolleras mot
 modellens schema som i de andra
 verktygen. Kroppen är en extruderad profil: en rektangel, en cirkel eller en kontur i våningens plan, stående uppåt från en höjd över
-våningen (pelare, grundläggning, beklädnader, möbler) eller liggande i en riktning (balkar, stänger och räcken). Elementet ligger i
+våningen (pelare, grundläggning, beklädnader, möbler) eller liggande i en riktning (balkar, stänger och räcken). Pelare, balkar och
+stänger får sina basmängder ur profilen och längden: längd, tvärsnittsarea, mantelyta, hela ytan och volym. Elementet ligger i
 våningen eller är en del av en helhet (`part_of`), till exempel ett räcke i en trappa, och ligger då i helheten och på dess våning men
 inte direkt i våningen. En beklädnad kan ange vad den täcker (`host`): en byggdel eller ett rum. I IFC4 och senare blir den en del av
 byggdelen (IfcRelAggregates) eller ligger i rummet; bara i IFC2X3 får den IfcRelCoversBldgElements eller IfcRelCoversSpaces. En rak
@@ -627,7 +630,9 @@ och djup som materialprofil (i IFC2X3 bara materialet), så att delarna får sit
 och reglar delar typ och mått, så mängder per typ räknar dem tillsammans. Utan typ är posterna och reglarna 0,05 × 0,15 m aluminium och
 glasen 0,03 m glas, med PredefinedType på själva delarna; IFC2X3 har ingen PredefinedType på IfcPlate och IfcMember, och rapporten
 säger det. Topologin läser en glasfasad som en vägg, så att den kan sluta en våning tillsammans med väggarna; den får IsExternal ur
-topologin i Pset_CurtainWallCommon och basmängder i Qto_CurtainWallQuantities (längd, höjd, djup och sidans area).
+topologin i Pset_CurtainWallCommon och basmängder i Qto_CurtainWallQuantities (längd, höjd, djup och sidans area). Posterna och
+reglarna får Qto_MemberBaseQuantities och glasen Qto_PlateBaseQuantities (tjocklek, omkrets, area och volym), så att appens IDS
+Avfallshantering hittar deras volymer.
 
 `define_type` gör också typer för beklädnader (med skikt, som en bjälklagstyp), pelare, balkar, grundläggning, räcken, dörrar och
 fönster (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType och IfcWindowType; i IFC2X3
