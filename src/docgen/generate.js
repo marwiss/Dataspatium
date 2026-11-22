@@ -16,8 +16,12 @@
       { id: 'tex', label: D.t('doc.format.tex'), ext: 'zip', mime: 'application/zip' },
     ];
 
-    /** Template + dataset -> document model. */
+    /**
+     * Template + dataset -> document model. A report of findings (DS-55) belongs to BIM och GIS with the models: below it the
+     * template is refused in the tier's words wherever it is generated from (a flow, a command, the bridge, Exportera).
+     */
     async function buildAst(doc, datasetId, options = {}) {
+      if (doc.findings) D.require('platform/tier').guard('kind:model');
       const ctx = doc.findings ? await findings.context(datasetId, options, doc.body) : doc.codebook ? await template.codebookContext(datasetId, options) : await template.buildContext(datasetId, options);
       const rendered = await template.renderTemplate(doc.body, ctx);
       return { ast: markdown.parse(rendered.text, rendered), ctx };

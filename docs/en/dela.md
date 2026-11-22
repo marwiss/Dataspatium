@@ -136,7 +136,8 @@ the project; then choose whether the dataset is written in a file format or the 
 through the Documents API, where the server's own page asks for title, version and project and the file then goes up in parts,
 or as a BCF document, which takes the file only. The dataset is written from a copy that has been through the review, and
 original files get the same warning as in bundles. A dataset fetched from the server can be sent as a new version of its
-document, and the card *From the CDE* in Manage then knows about it. Every send is noted in the dataset's history.
+document, and the card *From the CDE* in Manage then knows about it. Every send is noted in the dataset's history. A server with
+the Documents API alone has no project list here and takes no BCF documents; the server's page asks for the project.
 
 *Workspace bundle* sends a bundle instead of a dataset: the bundle dialog chooses datasets and contents as usual, the review is done,
 and the file goes up as a document. The recipient sees the bundle in the source's file list in Import and receives it with a click.

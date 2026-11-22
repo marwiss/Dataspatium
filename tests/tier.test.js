@@ -517,4 +517,358 @@
       return 'ok';
     } finally { if (started) stop(started.root); await restore(); }
   }, 60000);
+
+  test('tier: a plan\'s own map is drawn in Dokument, on the sheet and in a template, and a saved map chart is not', async (assert) => {
+    await reset();
+    const exporter = D.require('io/export');
+    const template = D.require('docgen/template');
+    const charts = D.require('viz/charts');
+    const leaflet = D.require('viz/leaflet');
+    const area = JSON.stringify({ type: 'Polygon', coordinates: [[[15, 60], [15.1, 60], [15.1, 60.1], [15, 60.1], [15, 60]]] });
+    const columns = ['objektid', 'objekttyp', 'beteckning', 'formulering', 'farg', 'geometri'].map((name) => ({ name, type: 'text' }));
+    let plan = null; let chart = null;
+    try {
+      plan = await datasets.create({ name: 'Nivå detaljplan', kind: 'plan', columns, rows: [['o1', 'anvandning', 'B', 'Bostäder', 'brun', area], ['o2', 'egenskap', 'e1', 'Största byggnadsarea är 200 m2', null, area]] });
+      const record = charts.create('map', plan, 'Nivå plankarta');
+      record.map = leaflet.defaultMap(await datasets.columns(plan.id), plan);
+      chart = await charts.save(record);
+      await tier.set('documents');
+      assert.ok(exporter.formatsFor(await datasets.get(plan.id)).some((f) => f.id === 'plan-sheet'), 'Dokument offers the plan map');
+      const sheet = (await exporter.exportDataset(plan.id, 'plan-sheet')).blob;
+      assert.equal(await sheet.slice(0, 4).text(), '%PDF', 'the plan map as PDF in Dokument');
+      const picture = async (body) => (await template.renderTemplate(body, { _filters: [] })).images[0];
+      const own = await picture('{{plan "Nivå detaljplan"}}');
+      assert.ok(own.png && own.png.byteLength > 1000, 'the word plan draws the plan: ' + (own.error || ''));
+      const map = await picture('{{karta "Nivå detaljplan" | bredd: 400}}');
+      assert.ok(map.png && map.png.byteLength > 1000, 'and karta: ' + (map.error || ''));
+      const saved = await picture('{{diagram "Nivå plankarta"}}');
+      assert.ok(saved.error && saved.error.includes(t('tier.bim-gis')), 'a saved map chart belongs to the map view: ' + saved.error);
+      return 'ok';
+    } finally {
+      if (chart) await charts.remove(chart.id).catch(() => {});
+      if (plan) await datasets.remove(plan.id);
+      await restore();
+    }
+  }, 30000);
+
+  test('tier: raising the tier from Inhämta\'s notice for a BCF file leaves no refusal on the page', async (assert) => {
+    await reset();
+    let started = null;
+    try {
+      await tier.set('documents');
+      started = await startShell();
+      const { root, shell } = started;
+      shell.activate('inhamta');
+      const zone = await waitFor(() => root.querySelector('.dm-center dm-dropzone'), 5000, 'the drop zone');
+      zone.dispatchEvent(new CustomEvent('dm-files', { detail: { files: [new File(['PK'], 'arenden.bcfzip')] } }));
+      await waitFor(() => root.querySelector('.dm-center [data-tier-hidden="cde.bcf"]'), 5000, 'the notice for the BCF file');
+      const error = () => root.querySelector('.dm-center .dm-error');
+      assert.ok(!error(), 'the notice in place of an error');
+      /** @type {HTMLElement} */ (root.querySelector('.dm-center [data-tier-raise="bim-gis"]')).click();
+      await waitFor(() => tier.current() === 2 && !root.querySelector('.dm-center [data-tier-hidden]'), 5000, 'the notice gone in BIM och GIS');
+      assert.ok(!error(), 'and the refusal with it: ' + (error() ? error().textContent : ''));
+      assert.ok(root.querySelector('.dm-center dm-dropzone'), 'the file can be chosen again');
+      return 'ok';
+    } finally { if (started) stop(started.root); await restore(); }
+  }, 60000);
+
+  test('tier: a server with the Documents API alone gives and takes documents in Dokument without the BCF API, past a BCF file', async (assert) => {
+    await reset();
+    const opencde = D.require('api/families/opencde');
+    const connectors = D.require('api/connectors');
+    const cdeSend = D.require('ui/share/cde-send');
+    const BASE = 'dataspatium-asset://tests/tier-docs';
+    const REDIRECT = 'http://127.0.0.1:8080/oauth-callback.html';
+    const paths = [];
+    const json = (data) => Promise.resolve({ kind: 'text', data: JSON.stringify(data) });
+    const version = (id, title, name) => ({ links: { document_version_download: { url: `${BASE}/documents/1.0/documents/${id}/versions/1/download` } }, version_number: '1', version_index: 1, title, file_description: { name, size_in_bytes: 12 }, document_id: id });
+    const files = { d1: 'kod,antal\nA,1\n', d2: 'PK', d3: 'kod,antal\nB,2\n' };
+    const session = BASE + '/documents/1.0/upload-sessions/s2';
+    // As a Dataregium with the Documents API alone answers: no BCF version in the Foundation API, and no /bcf/ path at all.
+    D.net.virtual('tests/tier-docs/', (url) => {
+      const path = url.slice(BASE.length).split('?')[0];
+      paths.push(path);
+      const download = /^\/documents\/1\.0\/documents\/(d\d)\/versions\/1\/download$/.exec(path);
+      if (download) return Promise.resolve({ kind: 'text', data: files[download[1]] });
+      switch (path) {
+        case '/foundation/versions': return json({ versions: [{ api_id: 'foundation', version_id: '1.0' }, { api_id: 'documents', version_id: '1.0' }] });
+        case '/foundation/1.0/auth': return json({ oauth2_auth_url: BASE + '/foundation/oauth2/auth', oauth2_token_url: BASE + '/foundation/oauth2/token', oauth2_pkce_required: true });
+        case '/foundation/oauth2/token': return json({ access_token: 'tier-docs-token', expires_in: 3600 });
+        case '/foundation/1.0/current-user': return json({ id: 'reader', name: 'Läsaren' });
+        case '/documents/1.0/select-documents': return json({ select_documents_url: BASE + '/documents/1.0/select-ui/t1', expires_in: 600 });
+        case '/documents/1.0/selection-sessions/s1/documents': return json({ documents: [version('d1', 'Nivå dokument A', 'a.csv'), version('d2', 'Nivå ärenden', 'arenden.bcfzip'), version('d3', 'Nivå dokument B', 'b.csv')] });
+        case '/documents/1.0/upload-documents': return json({ upload_ui_url: BASE + '/documents/1.0/upload-ui/t2', max_size_in_bytes: 1000000 });
+        case '/documents/1.0/upload-sessions/s2/instructions': return json({ documents_to_upload: [{ session_file_id: 'f1', upload_file_parts: [{ url: session + '/part', http_method: 'PUT', content_range_start: 0, content_range_end: 999999 }], upload_completion: { url: session + '/complete' } }] });
+        case '/documents/1.0/upload-sessions/s2/part': return Promise.resolve({ kind: 'text', data: '' });
+        case '/documents/1.0/upload-sessions/s2/complete': return json({ title: 'Nivå skickad', version_number: '1', version_index: 1, document_id: 'd9' });
+        default: return Promise.resolve({ kind: 'text', data: '{"message":"Not Found"}', status: 404 });
+      }
+    });
+    const realRedirect = opencde.redirectUri; const realSelect = opencde.selectDocuments;
+    const made = []; const logs = [];
+    let connector = null; let ui = null; let panel = null; let table = null;
+    try {
+      await tier.set('documents');
+      connector = (await D.require('api/families/databases').createConnector('opencde', { baseUrl: BASE, clientId: 'tier-docs', clientSecret: '' })).connector;
+      assert.ok(!opencde.hasBcf(connector) && opencde.hasDocuments(connector), 'discovery finds the Documents API alone');
+      await opencde.login(connector, { popup: (url) => Promise.resolve(`${REDIRECT}?code=c1&state=${new URL(url).searchParams.get('state')}`), redirectUri: REDIRECT });
+      // Inhämta: Hämta dokument without a project of the BCF API.
+      ui = D.require('ui/api/opencde-view').create({ connector, ctx: {}, log: (m, k) => logs.push([k, m]), onDataset: (m) => made.push(m.id) });
+      document.body.appendChild(ui.el);
+      ui.start();
+      await waitFor(() => ui.state.projects && !ui.state.busy && ui.el.querySelector('[data-opencde-documents]'), 5000, 'the button Hämta dokument');
+      assert.deepEqual(ui.state.projects, [], 'no projects to list');
+      assert.ok(!ui.el.querySelector('[data-opencde-files]') && !ui.el.querySelector('[data-opencde-bcf]'), 'no files card and no BCF version');
+      // The chosen documents come; the BCF file among them is skipped in the tier's words, and the one after it still comes.
+      opencde.redirectUri = () => REDIRECT;
+      opencde.selectDocuments = (c, options) => realSelect(c, Object.assign({ redirectUri: REDIRECT, popup: () => Promise.resolve(`${REDIRECT}?selected_documents_url=${encodeURIComponent(BASE + '/documents/1.0/selection-sessions/s1/documents')}`) }, options || {}));
+      await ui.fetchDocuments();
+      assert.equal(made.length, 2, 'two of the three documents are read: ' + JSON.stringify(logs.slice(-3)));
+      assert.ok(logs.some(([k, m]) => k === 'warn' && m.startsWith('Nivå ärenden: ') && m.includes(t('tier.bim-gis'))), 'the BCF file is skipped in the tier\'s words');
+      assert.ok(logs.some(([, m]) => m === t('opencde.documents.imported', { n: '2' })), 'and the rest are counted');
+      // Dela: the file goes up through the Documents API, whose page asks for the project.
+      table = await datasets.create({ name: 'Nivå att skicka', columns: [{ name: 'kod', type: 'text' }, { name: 'antal', type: 'integer' }], rows: [['A', 1]] });
+      const ctx = { store: { get: () => ({ datasets: [] }), set() {} }, shell: { log: (m, k) => logs.push([k, m]) }, services: { exporter: D.require('io/export') }, ui: Object.assign({ h: D.require('ui/base').h, t, button: D.require('ui/basic').button }, D.require('ui/overlays')) };
+      panel = cdeSend.create(ctx, { dataset: () => table });
+      document.body.appendChild(panel.el);
+      // This server alone among the sources, whatever other tests have left.
+      const realList = connectors.list;
+      connectors.list = async () => [connector];
+      try { await panel.start(); } finally { connectors.list = realList; }
+      const select = (label) => /** @type {any} */ (Array.from(panel.el.querySelectorAll('dm-select')).find((x) => x.getAttribute('label') === t(label)));
+      assert.ok(panel.state.connector.id === connector.id && Array.isArray(panel.state.projects) && !panel.state.projects.length, 'signed in, with no projects to list');
+      assert.ok(!select('opencde.project'), 'no project to choose');
+      assert.deepEqual(select('cde.send.how').options.map((o) => o.value), ['documents'], 'and no BCF document');
+      cdeSend.setPopup(() => Promise.resolve(`${REDIRECT}?upload_documents_url=${encodeURIComponent(session + '/instructions')}`), REDIRECT);
+      await panel.send();
+      assert.equal(panel.state.done, t('cde.send.done.document', { name: 'Nivå skickad', version: '1' }), 'sent without a project: ' + panel.state.error);
+      assert.deepEqual(paths.filter((p) => p.startsWith('/bcf/')), [], 'the BCF API is never asked');
+      return 'ok';
+    } finally {
+      cdeSend.setPopup(null);
+      opencde.redirectUri = realRedirect; opencde.selectDocuments = realSelect;
+      if (panel) { panel.destroy(); panel.el.remove(); }
+      if (ui) { ui.destroy(); ui.el.remove(); }
+      await datasets.flushSaves().catch(() => {});
+      for (const id of made.concat(table ? [table.id] : [])) await datasets.remove(id).catch(() => {});
+      if (connector) { await opencde.logout(connector).catch(() => {}); await connectors.remove(connector.id).catch(() => {}); }
+      D.net.unvirtual('tests/tier-docs/');
+      await restore();
+    }
+  }, 60000);
+
+  test('tier: a server that answers its capabilities with an error keeps the tier it announced; one without the document caps nothing', async (assert) => {
+    const opencde = D.require('api/families/opencde');
+    const idb = D.require('platform/storage/idb');
+    const BASE = 'dataspatium-asset://tests/tier-caps';
+    const status = { dataregium: 200, kontroll: 404 };
+    D.net.virtual('tests/tier-caps/', (url) => {
+      const which = url.endsWith('/.well-known/dataregium') ? 'dataregium' : url.endsWith('/.well-known/kontroll') ? 'kontroll' : '';
+      const code = status[which] || 404;
+      return Promise.resolve(code === 200 ? { kind: 'text', data: JSON.stringify({ server: { name: 'Nivåservern' }, tier: 'documents', extensions: {} }) } : { kind: 'text', data: '{"detail":"no"}', status: code });
+    });
+    const c = { id: 'tier-caps-a', name: 'Nivå C', baseUrl: BASE, family: { type: 'opencde' }, auth: { type: 'none' }, endpoints: [], requestId: false };
+    const remembered = async () => { for (let i = 0; i < 50; i++) { const saved = await idb.getSetting('tier.servers', null); if (saved && saved[c.id] === 1) return true; await wait(20); } return false; };
+    await reset();
+    try {
+      await opencde.capabilities(c, { force: true });
+      assert.equal(tier.serverTier(c.id), 1, 'the server announces Dokument');
+      assert.ok(await remembered(), 'and it is remembered');
+      // A rate limit, a server restarting behind its proxy, a refusal: nothing definite about the server's tier.
+      for (const [dataregium, kontroll] of [[429, 429], [503, 404], [404, 502], [403, 403]]) {
+        Object.assign(status, { dataregium, kontroll });
+        await opencde.capabilities(c, { force: true });
+        assert.equal(tier.serverTier(c.id), 1, `kept after ${dataregium} and ${kontroll}`);
+        await opencde.capabilities(c);
+        assert.equal(tier.serverTier(c.id), 1, `and from the cache after ${dataregium} and ${kontroll}`);
+      }
+      assert.ok(await remembered(), 'still remembered');
+      assert.ok(!tier.shows('cde.bcf', { server: c.id }), 'so BCF stays capped for the server');
+      Object.assign(status, { dataregium: 404, kontroll: 404 });
+      await opencde.capabilities(c, { force: true });
+      assert.equal(tier.serverTier(c.id), null, 'a server without the document at either address caps nothing');
+      return 'ok';
+    } finally {
+      tier.noteServer(c, undefined);
+      D.net.unvirtual('tests/tier-caps/');
+      await restore();
+    }
+  });
+
+  test('tier: Kontrollera offers the reports of findings from BIM och GIS only', async (assert) => {
+    await reset();
+    let table = null; let started = null;
+    try {
+      table = await datasets.create({ name: 'Nivå fynd', columns: [{ name: 'element', type: 'text' }, { name: 'skick', type: 'text' }, { name: 'prioritet', type: 'text' }], rows: [['Vägg', 'brist', 'hog']] });
+      await tier.set('documents');
+      started = await startShell();
+      const { root, shell } = started;
+      await waitFor(() => shell.store.get().datasets.some((d) => d.id === table.id), 3000, 'the table in the store');
+      shell.store.set({ selectedId: table.id });
+      shell.activate('kontrollera');
+      await waitFor(() => root.querySelector('.dm-center [data-kontrollera-summary]'), 8000, 'the table checked');
+      assert.ok(!root.querySelector('.dm-center [data-kontrollera-report]'), 'no card for the reports in Dokument');
+      await tier.set('bim-gis');
+      await waitFor(() => root.querySelector('.dm-center [data-kontrollera-report]'), 8000, 'the card in BIM och GIS');
+      return 'ok';
+    } finally {
+      if (started) stop(started.root);
+      if (table) await datasets.remove(table.id);
+      await restore();
+    }
+  }, 60000);
+
+  test('tier: the AI panel sends a model\'s material to its server only where the server offers BCF', async (assert) => {
+    await reset();
+    const secrets = D.require('api/secrets');
+    const connectors = D.require('api/connectors');
+    let model = null; let connector = null; const panels = [];
+    try {
+      connector = (await D.require('api/families/databases').createConnector('opencde', { baseUrl: 'https://ai.tier.test', name: 'Nivå AI-server' }, { discover: false })).connector;
+      secrets.set(connector.id, { token: 'tier-ai-token', expiresAt: String(Date.now() + 3600000) });
+      model = await D.require('io/import').run(D.require('tests/fixtures/ifc').ifcFile({ walls: 2 }), { format: 'model' }, null, 'Nivå AI-modell');
+      const source = Object.assign({}, (await datasets.get(model.id)).source, { cde: { connectorId: connector.id, host: 'ai.tier.test', projectId: 'p1', projectName: 'Nivåprojektet', documentId: 'd1', versionIndex: 1 } });
+      await datasets.updateMeta(model.id, { source });
+      const material = async () => {
+        const panel = D.require('ui/bearbeta/ai-panel').create({ shell: { log() {} } }, { datasetId: model.id, mode: 'build' });
+        panels.push(panel);
+        await panel.load();
+        return panel.state.material;
+      };
+      assert.ok(await material(), 'the material may go to a server that announces no tier');
+      tier.noteServer(connector, 'documents');
+      assert.equal(await material(), null, 'and not to one that announces Dokument, which has no BCF');
+      return 'ok';
+    } finally {
+      for (const panel of panels) panel.destroy();
+      if (connector) { tier.noteServer(connector, undefined); secrets.set(connector.id, {}); await connectors.remove(connector.id).catch(() => {}); }
+      if (model) await datasets.remove(model.id);
+      await restore();
+    }
+  }, 60000);
+
+  test('tier: in Dokument a Söka hit and a comment on a place open its row, not the hidden map view', async (assert) => {
+    await reset();
+    const block = D.require('ui/kinds/comment-block');
+    const press = (scope, label) => {
+      const b = Array.from(scope.querySelectorAll('dm-button')).find((x) => x.getAttribute('label') === label || x.textContent.trim() === label);
+      if (!b) throw new Error('no button: ' + label);
+      /** @type {HTMLElement} */ (b.querySelector('button')).click();
+    };
+    let place = null; let started = null;
+    try {
+      place = await datasets.create({ name: 'Nivå platser i Dokument', columns: [{ name: 'namn', type: 'text' }, { name: 'lon', type: 'number' }, { name: 'lat', type: 'number' }], rows: [['Blåsippa', 18.06, 59.33], ['Kabbleka', 17.64, 59.86]] });
+      await tier.set('documents');
+      // A comment on a place goes back to its row while the map view is hidden, and to the map once it is shown.
+      let set = null; let mode = '';
+      const ctx = { store: { set: (v) => { set = v; } }, shell: { activate: (m) => { mode = m; } } };
+      block.openTarget(ctx, place, block.placeTarget(place, 2, 'Kabbleka'));
+      assert.deepEqual(set, { selectedId: place.id, openRow: { datasetId: place.id, rowid: 2 } }, 'the row in Dokument');
+      assert.equal(mode, 'bearbeta');
+      await tier.set('bim-gis');
+      block.openTarget(ctx, place, block.placeTarget(place, 2, 'Kabbleka'));
+      assert.deepEqual(set, { selectedId: place.id, openMapRow: { datasetId: place.id, rowid: 2 } }, 'the place on the map in BIM och GIS');
+      await tier.set('documents');
+      // Söka: the hit's button opens the row in the table, and nothing is left waiting for the map view.
+      started = await startShell();
+      const { root, shell } = started;
+      await waitFor(() => shell.store.get().datasets.some((d) => d.id === place.id), 3000, 'the table in the store');
+      shell.store.set({ selectedId: place.id, selectedIds: [] });
+      shell.activate('soka');
+      const input = /** @type {any} */ (await waitFor(() => root.querySelector('dm-input[data-course="search"]'), 5000, 'the search field'));
+      input.value = 'Kabbleka';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      press(root, t('soka.run'));
+      const row = await waitFor(() => root.querySelector(`.dm-search-result[data-dataset="${place.id}"] dm-table .dm-tr`), 8000, 'the hit');
+      /** @type {HTMLElement} */ (row).click();
+      const labels = () => Array.from(root.querySelectorAll('.dm-right dm-button')).map((x) => x.getAttribute('label') || x.textContent.trim());
+      await waitFor(() => labels().includes(t('soka.open.row')), 3000, 'the button Visa raden');
+      assert.ok(!labels().includes(t('soka.open.map')), 'no button to the map view: ' + labels().join(' | '));
+      press(root.querySelector('.dm-right'), t('soka.open.row'));
+      await waitFor(() => shell.store.get().mode === 'bearbeta' && !shell.store.get().openRow, 8000, 'the row in Bearbeta');
+      assert.ok(!shell.store.get().openMapRow, 'and nothing left for the map view');
+      return 'ok';
+    } finally {
+      if (started) stop(started.root);
+      if (place) await datasets.remove(place.id);
+      await restore();
+    }
+  }, 60000);
+
+  test('tier: what a server caps is said with the app\'s own tier and the tier the server announced', async (assert) => {
+    await reset();
+    const tierUi = D.require('ui/settings/tier');
+    const name = (n) => t('tier.' + tier.keyOf(n));
+    const docs = { id: 'tier-words-docs' }; const bim = { id: 'tier-words-bim' };
+    try {
+      tier.noteServer(docs, 'documents');
+      tier.noteServer(bim, 'bim-gis');
+      // The default BIM och GIS and a server that offers Dokument: the server caps BCF, and the app still shows BIM och GIS.
+      const w = tier.why('cde.bcf', { server: docs.id });
+      assert.deepEqual([w.current, w.server, w.cap, w.canRaise], [2, 1, 'server', false], 'the app\'s tier and the server\'s');
+      const bcf = t('tier.hidden', { feature: t('tier.feature.cde.bcf'), tier: name(2), current: name(2) }) + ' ' + t('tier.capped.server', { tier: name(1) });
+      assert.equal(tier.hiddenText('cde.bcf', { server: docs.id }), bcf);
+      let refused = null;
+      try { tier.guard('cmd:cde_topics', { server: docs.id }); } catch (err) { refused = err; }
+      assert.ok(refused && refused.message === bcf, 'a command for the server says the same: ' + (refused && refused.message));
+      const notice = tierUi.notice({}, 'cde.bcf', { server: docs.id });
+      assert.ok(notice.textContent.includes(t('tier.hidden', { feature: t('tier.feature.cde.bcf'), tier: name(2), current: name(2) })), 'the notice names the app\'s tier');
+      assert.equal(notice.querySelector('[data-tier-capped="server"]').textContent, t('tier.capped.server', { tier: name(1) }), 'and the server\'s');
+      assert.ok(!notice.querySelector('[data-tier-raise]'), 'with no raise');
+      // Dokument chosen and a server that offers BIM och GIS: the server caps its IFC graph, and is named with its own tier.
+      await tier.set('documents');
+      const graph = t('tier.hidden', { feature: t('tier.feature.cde.ifc-graph'), tier: name(3), current: name(1) }) + ' ' + t('tier.capped.server', { tier: name(2) });
+      assert.equal(tier.hiddenText('cde.ifc-graph', { server: bim.id }), graph);
+      return 'ok';
+    } finally {
+      tier.noteServer(docs, undefined); tier.noteServer(bim, undefined);
+      await restore();
+    }
+  });
+
+  test('tier: a report of findings is refused below BIM och GIS wherever it is generated from, and made from it', async (assert) => {
+    await reset();
+    const generate = D.require('docgen/generate');
+    let table = null;
+    try {
+      table = await datasets.create({ name: 'Nivå fynd', columns: [{ name: 'skick', type: 'text' }, { name: 'prioritet', type: 'integer' }], rows: [['dåligt', 1]] });
+      const doc = { name: 'Fynd', body: '# Fynd', findings: true };
+      await tier.set('documents');
+      let refused = null;
+      try { await generate.generate(doc, table.id, 'md'); } catch (err) { refused = err; }
+      assert.ok(refused && refused.name === 'TierError' && refused.tierFeature === 'kind:model', 'refused in Dokument: ' + (refused && refused.message));
+      assert.ok((await generate.generate({ name: 'Vanlig', body: '# Vanlig' }, table.id, 'md')).blob, 'an ordinary template still works');
+      await tier.set('bim-gis');
+      assert.ok((await generate.generate(doc, table.id, 'md')).blob, 'and the report is made in BIM och GIS');
+      return 'ok';
+    } finally {
+      if (table) await datasets.remove(table.id);
+      await restore();
+    }
+  }, 30000);
+
+  test('tier: the bridge\'s approval of a writing command needs no group of a higher tier', async (assert) => {
+    await reset();
+    const remote = D.require('api/remote');
+    const realSetAsker = remote.setAsker; const realEnsure = D.ensure;
+    let asker = null; let started = null;
+    remote.setAsker = (fn) => { asker = fn; return realSetAsker(fn); };
+    try {
+      started = await startShell();
+      assert.ok(asker && asker.approve, 'the shell answers for the bridge');
+      assert.ok(D.groups.start().includes('src/ui/approve.js'), 'the approval is in the start list');
+      // As an installed app offline under a lower ceiling, which never loaded the assistant's group nor the AI's.
+      D.ensure = (names, then) => (names.includes('assistant') || names.includes('ai') ? Promise.reject(new Error('the group is not cached')) : realEnsure(names, then));
+      const answer = asker.approve({ name: 'apply_operation' }, { operation: 'trim', columns: ['a'] }, { source: 'bridge' });
+      const shown = await waitFor(() => document.querySelector('dialog[open] [data-assistant-approve="apply_operation"]'), 5000, 'the approval');
+      assert.ok(shown.textContent.includes(t('remote.approve.text', { name: 'apply_operation' })), 'in the bridge\'s words');
+      /** @type {HTMLElement} */ (shown.closest('dialog').querySelectorAll('.dm-dialog-actions dm-button button')[0]).click();
+      assert.equal(await answer, false, 'and Avbryt says no');
+      return 'ok';
+    } finally {
+      D.ensure = realEnsure; remote.setAsker = realSetAsker;
+      if (started) stop(started.root);
+      await restore();
+    }
+  }, 30000);
 })();

@@ -45,6 +45,9 @@
         s.busy = ''; render();
       }
       async function loadProjects() {
+        // The projects are the BCF API's. A server with the Documents API alone has none to list; its own page asks for the project
+        // when a file goes up.
+        if (!opencde.hasBcf(s.connector)) { s.projects = []; s.projectId = ''; render(); return; }
         s.busy = 'projects'; render();
         try {
           s.projects = await opencde.projects(s.connector);
@@ -94,9 +97,11 @@
        */
       async function send(options = {}) {
         const d = ds();
-        if (!d || !s.connector || !s.projectId || s.busy) return;
+        // Only a BCF document needs the project chosen here; the Documents API's page asks for the project itself.
+        const bcfDocument = s.how === 'bcf' && !options.asVersionOf;
+        if (!d || !s.connector || s.busy || (bcfDocument && !s.projectId)) return;
         // A BCF document belongs to the BCF API, BIM och GIS (platform/tier), also capped by the server's own tier.
-        if (s.how === 'bcf' && !options.asVersionOf && !tier.shows('cde.bcf', { server: s.connector.id })) return;
+        if (bcfDocument && !tier.shows('cde.bcf', { server: s.connector.id })) return;
         s.busy = 'send'; s.error = ''; s.done = ''; s.progress = null; render();
         try {
           const file = await fileToSend(d);
@@ -167,7 +172,7 @@
             ui.button({ label: t('opencde.signin'), icon: 'chevron-right', variant: 'primary', loading: s.busy === 'login', onClick: signIn }),
             s.busy === 'login' ? cancelButton() : null));
         } else {
-          if (s.projects) {
+          if (s.projects && opencde.hasBcf(s.connector)) {
             const sel = /** @type {any} */ (h('dm-select', { label: t('opencde.project') }));
             sel.options = s.projects.map((p) => ({ value: p.project_id, label: p.name }));
             sel.value = s.projectId;
@@ -188,10 +193,11 @@
             if (!formats.some((f) => f.id === s.format)) s.format = formats[0] ? formats[0].id : '';
             format.value = s.format;
             format.addEventListener('change', () => { s.format = format.value; });
-            // A server of BCF API 2.1 alone has no Documents API, so a file goes as a BCF document or not at all; a BCF document needs
-            // the tier BIM och GIS, of the app and of the server (platform/tier), and without either way the panel says why.
+            // A server of BCF API 2.1 alone has no Documents API, so a file goes as a BCF document or not at all, and one with the
+            // Documents API alone takes no BCF document; a BCF document needs the tier BIM och GIS, of the app and of the server
+            // (platform/tier), and without either way the panel says why.
             const documents = opencde.hasDocuments(s.connector);
-            const bcfOk = tier.shows('cde.bcf', { server: s.connector.id });
+            const bcfOk = opencde.hasBcf(s.connector) && tier.shows('cde.bcf', { server: s.connector.id });
             if (!documents) s.how = 'bcf';
             else if (s.how === 'bcf' && !bcfOk) s.how = 'documents';
             if (!documents && !bcfOk) { nodes.push(tierUi.notice(ctx, 'cde.bcf', { server: s.connector.id })); replace(el, h('div', { class: 'dm-card dm-stack' }, nodes)); return; }

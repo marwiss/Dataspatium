@@ -59,6 +59,11 @@
     /** Whether the server has the Documents API. A connector that has not been told otherwise is assumed to. @param {any} connector */
     const hasDocuments = (connector) => !(connector && connector.family && connector.family.documents === false);
     /**
+     * Whether the server has the BCF API: false when discovery found none of its versions (a server with the Documents API alone,
+     * such as a Dataregium at the tier Dokument). A connector that has not been told otherwise is assumed to. @param {any} connector
+     */
+    const hasBcf = (connector) => !(connector && connector.family && Array.isArray(connector.family.bcfVersions) && !connector.family.bcfVersions.length);
+    /**
      * The versions of the BCF API to choose between on a connector: what discovery found, or what the capabilities say for a source saved
      * before there was a choice. @param {any} connector @param {any} [caps]
      */
@@ -341,15 +346,18 @@
       try {
         const ask = (path) => send(connector, { url: trimUrl(connector.baseUrl) + path, method: 'GET', headers: { Accept: 'application/json' }, retries: 0, rateKey: connector.id });
         let res = await ask('/.well-known/dataregium');
+        const missing = res.status === 404;
         if (!res.ok) res = await ask('/.well-known/kontroll');
         if (res.ok) {
           const data = JSON.parse(res.text || '{}') || {};
           caps = { present: true, server: data.server || null, tier: typeof data.tier === 'string' ? data.tier : null, apis: data.apis || {}, bcfVersions: Array.isArray(data.bcf_versions) ? data.bcf_versions : null, scopes: Array.isArray(data.scopes) ? data.scopes : [], extensions: data.extensions && typeof data.extensions === 'object' ? data.extensions : {}, limits: data.limits || {}, links: data.links || {} };
         }
-        answered = true;
+        // Only a definite answer counts: the document, or none at either address (a server without it caps nothing). An error of
+        // the moment (429, 5xx, 401, 403) says nothing about the server's tier.
+        answered = res.ok || (missing && res.status === 404);
       } catch (err) { D.log('opencde', 'capabilities', err); }
       // The server's tier (Dataregium announces `tier`: documents, bim-gis or experimental) caps the features that need it; a server
-      // that did not answer leaves what it announced before.
+      // that did not answer, or answered with an error, leaves what it announced before.
       if (answered) tier.noteServer(connector, caps.tier);
       capsCache.set(key, { at: Date.now(), caps, answered });
       return caps;
@@ -1242,7 +1250,7 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { addDeployed, ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, seedStepIds, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
+    return { addDeployed, ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, hasBcf, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, seedStepIds, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
       topicMay, projectMay, topicFiles, filesBody, setTopicFiles, modelFile, linkTopic, attachDocument, identity };
   });
 })();

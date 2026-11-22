@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/kinds/comment-block', ['ui/base', 'data/comments', 'data/kinds'], (base, comments, kinds) => {
+  D.define('ui/kinds/comment-block', ['ui/base', 'data/comments', 'data/kinds', 'platform/tier'], (base, comments, kinds, tier) => {
     const { h, t, i18n, replace } = base;
 
     /**
@@ -23,9 +23,13 @@
     function placeTarget(ds, rowid, label) {
       return { key: `row:${rowid}`, label, open: { openMapRow: { datasetId: ds.id, rowid } } };
     }
-    /** Back to the object in Bearbeta. The dataset may have a new id after a bundle, so the id is set here. */
+    /**
+     * Back to the object in Bearbeta. The dataset may have a new id after a bundle, so the id is set here. A place below BIM och GIS,
+     * where the map view is hidden (platform/tier), is its row in the table.
+     */
     function openTarget(ctx, ds, target) {
-      const store = JSON.parse(JSON.stringify(target.open));
+      let store = JSON.parse(JSON.stringify(target.open));
+      if (store.openMapRow && !tier.shows('view:map')) store = { openRow: { datasetId: ds.id, rowid: store.openMapRow.rowid } };
       for (const v of Object.values(store)) /** @type {any} */ (v).datasetId = ds.id;
       ctx.store.set(Object.assign({ selectedId: ds.id }, store));
       ctx.shell.activate('bearbeta');

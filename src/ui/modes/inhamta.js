@@ -97,8 +97,9 @@
         // A source the tier now hides (after the tier was lowered) gives way to the files.
         const hiddenApi = source.startsWith('api:') && connectorList.some((c) => c.id === source.slice(4) && !tier.showsConnector(c));
         if (hiddenApi || (source === 'newmodel' && !tier.shows('source:newmodel'))) source = 'file';
-        // A file the tier did not read: once the tier is raised the notice goes, and the file can be chosen again.
-        if (wiz.hidden && tier.shows(wiz.hidden)) wiz.hidden = '';
+        // A file the tier did not read: once the tier is raised the notice goes, with the refusal it stood for, and the file can be
+        // chosen again.
+        if (wiz.hidden && tier.shows(wiz.hidden)) { wiz.hidden = ''; wiz.error = ''; }
         if (wiz.project && !tier.shows('import:qgis')) { wiz.project = null; wiz.step = 'file'; wiz.hidden = 'import:qgis'; }
         renderLeft(); renderCenter(); renderRight();
       }

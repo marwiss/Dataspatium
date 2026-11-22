@@ -219,14 +219,18 @@
       const ast = D.require('docgen/markdown').parse(text);
       return D.require('docgen/builders-office').toDocx(ast, { title: meta.name });
     }
-    /** The plan on a sheet: the map with its legend and a title. @param {string} id @returns {Promise<Blob>} */
+    /**
+     * The plan on a sheet: the map with its legend and a title. The plan's own map is Dokument's (platform/tier), so viz/leaflet
+     * draws it, the layers without service tiles, and not viz/render, which refuses a map chart below BIM och GIS.
+     * @param {string} id @returns {Promise<Blob>}
+     */
     async function toPlanSheet(id) {
       const meta = await datasets.get(id);
       const charts = D.require('viz/charts');
       const chart = charts.create('map', meta, meta.name);
       chart.map = D.require('viz/plan-map').defOf(meta, await datasets.columns(id));
       chart.map.legend = true;
-      return D.require('viz/render').toBlob(chart, 'pdf', { width: 1200, height: 800 });
+      return D.require('viz/leaflet').toBlob(chart, 'pdf', { width: 1200, height: 800, title: chart.name });
     }
 
     // ---- models -----------------------------------------------------------------------------------------------------------

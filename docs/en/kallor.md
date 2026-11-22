@@ -184,6 +184,10 @@ has neither the Foundation API nor the Documents API, so the app reads the versi
 several you can change in the source's view. In 2.1 *Files in the project* lists only the BCF documents, issues have no number from the server and a
 viewpoint cannot be deleted. In return a comment can answer another: the button *Reply* in the panel *Issues*.
 
+A server with the Documents API alone, such as a Dataregium at the tier Documents, has no BCF projects to choose. The source's view then shows
+*Fetch documents* without a project list, and the tab *To the CDE* in Share sends through the Documents API, where the server's own page asks
+for the project. Below the tier BIM + GIS, *Fetch documents* skips a BCF file among the chosen ones, says why in the log and fetches the rest.
+
 The card *The project's members* appears when the server has project administration (a Dataregium extension). A project's manager,
 who need not be a server administrator, signs in with *Sign in as project manager* and sees the projects they manage and their members
 with roles: viewer, contributor, editor or manager. You add a person by their exact user name on the server, change a role, remove a

@@ -160,7 +160,8 @@
           const meta = await datasets.create({ name, columns: out.columns.map((c) => ({ name: c.name, type: c.type, label: c.label || c.name })), rows: out.rows, description: t('geo.dataset.description', { tool: t('geo.tool.' + s.tool), name: ds.name }), source: { kind: 'derived', from: ds.id, tool: 'geo:' + s.tool, settings: { other: s.other, mode: s.mode, radius: s.radius, op: s.op, column: s.column, tolerance: s.tolerance } } });
           const msg = t('text.dataset.created', { name: meta.name, rows: i18n.formatNumber(meta.rowCount) });
           shell.log(msg, 'ok');
-          ui.toast.show(msg, { kind: 'ok', action: { label: t('geo.open.map'), onClick: () => { store.set({ selectedId: meta.id }); shell.activate('bearbeta'); } } });
+          // Bearbeta opens it as a map from BIM och GIS (platform/tier), as a table below it.
+          ui.toast.show(msg, { kind: 'ok', action: { label: t(tier.shows('view:map') ? 'geo.open.map' : 'analysera.open.bearbeta'), onClick: () => { store.set({ selectedId: meta.id }); shell.activate('bearbeta'); } } });
         } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
       }
 
