@@ -191,22 +191,23 @@
       return f.tier <= compute({ chosen, ceiling: config.ceiling, server });
     }
     /**
-     * Why a feature is hidden, for the words of a notice: the tier it needs, the tier in effect, what caps it ('deployment',
-     * 'server' or null when the user can raise it) and whether raising is possible.
+     * Why a feature is hidden, for the words of a notice: the tier it needs, the app's tier in effect, the tier the server
+     * announced (null when the feature needs no server or the server announced none), what caps it ('deployment', 'server' or
+     * null when the user can raise it) and whether raising is possible.
      * @param {string} feature @param {{server?: string}} [options]
-     * @returns {{feature: string, needs: number, current: number, cap: 'deployment'|'server'|null, canRaise: boolean}}
+     * @returns {{feature: string, needs: number, current: number, server: number|null, cap: 'deployment'|'server'|null, canRaise: boolean}}
      */
     function why(feature, options = {}) {
       const needs = tierOf(feature);
       const f = FEATURES[featureOf(feature)];
       const server = f && f.server ? serverTier(options.server) : null;
       const cap = needs > ceiling() ? 'deployment' : server !== null && needs > server ? 'server' : null;
-      return { feature: featureOf(feature), needs, current: compute({ chosen, ceiling: config.ceiling, server }), cap, canRaise: !cap };
+      return { feature: featureOf(feature), needs, current: current(), server, cap, canRaise: !cap };
     }
     /** @param {number} n @returns {string} the tier's name in the language in use */
     const nameOf = (n) => D.t('tier.' + keyOf(n));
-    /** @param {{cap: string|null, current: number}} w a `why` @returns {string} what caps a feature, in words */
-    const capText = (w) => (w.cap === 'server' ? D.t('tier.capped.server', { tier: nameOf(w.current) }) : D.t('tier.capped.deployment', { tier: nameOf(ceiling()) }));
+    /** @param {{cap: string|null, server?: number|null}} w a `why` @returns {string} what caps a feature, in words */
+    const capText = (w) => (w.cap === 'server' ? D.t('tier.capped.server', { tier: nameOf(w.server || 1) }) : D.t('tier.capped.deployment', { tier: nameOf(ceiling()) }));
     /**
      * The words for a hidden feature, as the notice has them: what it is, the tier it belongs to and the one in effect, and, when
      * the deployment or the server caps it, that too. @param {string} feature @param {{server?: string}} [options] @returns {string}

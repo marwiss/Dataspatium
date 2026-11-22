@@ -757,4 +757,35 @@
       await restore();
     }
   }, 60000);
+
+  test('tier: what a server caps is said with the app\'s own tier and the tier the server announced', async (assert) => {
+    await reset();
+    const tierUi = D.require('ui/settings/tier');
+    const name = (n) => t('tier.' + tier.keyOf(n));
+    const docs = { id: 'tier-words-docs' }; const bim = { id: 'tier-words-bim' };
+    try {
+      tier.noteServer(docs, 'documents');
+      tier.noteServer(bim, 'bim-gis');
+      // The default BIM och GIS and a server that offers Dokument: the server caps BCF, and the app still shows BIM och GIS.
+      const w = tier.why('cde.bcf', { server: docs.id });
+      assert.deepEqual([w.current, w.server, w.cap, w.canRaise], [2, 1, 'server', false], 'the app\'s tier and the server\'s');
+      const bcf = t('tier.hidden', { feature: t('tier.feature.cde.bcf'), tier: name(2), current: name(2) }) + ' ' + t('tier.capped.server', { tier: name(1) });
+      assert.equal(tier.hiddenText('cde.bcf', { server: docs.id }), bcf);
+      let refused = null;
+      try { tier.guard('cmd:cde_topics', { server: docs.id }); } catch (err) { refused = err; }
+      assert.ok(refused && refused.message === bcf, 'a command for the server says the same: ' + (refused && refused.message));
+      const notice = tierUi.notice({}, 'cde.bcf', { server: docs.id });
+      assert.ok(notice.textContent.includes(t('tier.hidden', { feature: t('tier.feature.cde.bcf'), tier: name(2), current: name(2) })), 'the notice names the app\'s tier');
+      assert.equal(notice.querySelector('[data-tier-capped="server"]').textContent, t('tier.capped.server', { tier: name(1) }), 'and the server\'s');
+      assert.ok(!notice.querySelector('[data-tier-raise]'), 'with no raise');
+      // Dokument chosen and a server that offers BIM och GIS: the server caps its IFC graph, and is named with its own tier.
+      await tier.set('documents');
+      const graph = t('tier.hidden', { feature: t('tier.feature.cde.ifc-graph'), tier: name(3), current: name(1) }) + ' ' + t('tier.capped.server', { tier: name(2) });
+      assert.equal(tier.hiddenText('cde.ifc-graph', { server: bim.id }), graph);
+      return 'ok';
+    } finally {
+      tier.noteServer(docs, undefined); tier.noteServer(bim, undefined);
+      await restore();
+    }
+  });
 })();
