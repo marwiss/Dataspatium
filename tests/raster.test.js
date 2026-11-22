@@ -301,6 +301,18 @@
     return 'ok';
   }, 90000);
 
+  test('raster: two tiles with the same name from two folders both come in, the second named with (2)', async (assert) => {
+    const one = sweref('ruta_01.tif', { width: 16, height: 16 });
+    const two = sweref('ruta_01.tif', { width: 16, height: 16, geo: { res: 1, east: E0 + 16, north: N0, epsg: 3006 } });
+    const meta = track(await importer.runFiles([one, two], { format: 'raster' }, 'Samma namn'));
+    assert.deepEqual((await rowsOf(meta.id)).map((r) => r.fil), ['ruta_01.tif', 'ruta_01 (2).tif']);
+    const ds = await datasets.get(meta.id);
+    assert.deepEqual(ds.raster.files.map((f) => f.name), ['ruta_01.tif', 'ruta_01 (2).tif']);
+    assert.deepEqual((await dsFiles.list(meta.id, 'original')).map((f) => f.name), ['ruta_01 (2).tif', 'ruta_01.tif']);
+    assert.ok(sameBytes((await dsFiles.read(meta.id, 'ruta_01 (2).tif', 'original')).bytes, new Uint8Array(await two.arrayBuffer())), 'the second file\'s own bytes');
+    return 'ok';
+  }, 60000);
+
   test('raster: a TIFF without a place, a rotated file, an unknown compression, too many pixels without overviews and a file that is no TIFF are refused with words the person can act on', async (assert) => {
     const cases = [
       [fx.file({ width: 16, height: 16 }, 'utan-lage.tif'), 'raster.err.nogeo'],

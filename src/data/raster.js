@@ -381,13 +381,29 @@
     }
 
     /**
+     * The files with a name each: a name already taken (the same tile from two folders) gets ' (2)' and on before its extension,
+     * so that the rows and the files in `_files` stay apart. The bytes are not copied.
+     * @param {File[]} list @returns {File[]}
+     */
+    function uniqueNames(list) {
+      const used = new Set();
+      return list.map((f) => {
+        let name = f.name;
+        const dot = name.lastIndexOf('.');
+        const stem = dot > 0 ? name.slice(0, dot) : name; const ext = dot > 0 ? name.slice(dot) : '';
+        for (let k = 2; used.has(name); k++) name = `${stem} (${k})${ext}`;
+        used.add(name);
+        return name === f.name ? f : new File([f], name, { type: f.type, lastModified: f.lastModified });
+      });
+    }
+    /**
      * One dataset of the kind raster from the files, read one at a time (`progress({file, index, total})` before each): at most
      * `limits.maxFiles`, the rest left out with `raster.err.many`; a file that cannot be read is left out with its words, and when
      * none can, the first one's error is thrown.
      * @param {File[]} list @param {any} [_options] @param {string} [name] @param {Function} [progress]
      */
     async function importFiles(list, _options = {}, name, progress) {
-      const all = Array.from(list || []);
+      const all = uniqueNames(Array.from(list || []));
       const taken = all.slice(0, limits.maxFiles); const rest = all.slice(limits.maxFiles);
       const skipped = rest.map((f) => ({ name: f.name, error: t('raster.err.many', { max: limits.maxFiles, n: rest.length }) }));
       const side = taken.length > 4 ? limits.previewMany : limits.preview;
