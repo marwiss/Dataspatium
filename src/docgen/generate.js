@@ -19,10 +19,12 @@
     /**
      * Template + dataset -> document model. A report of findings (DS-55) belongs to BIM och GIS with the models: below it the
      * template is refused in the tier's words wherever it is generated from (a flow, a command, the bridge, Exportera).
+     * `ask: false` (a flow at start): the charts in the template are drawn without asking for anything.
      */
     async function buildAst(doc, datasetId, options = {}) {
       if (doc.findings) D.require('platform/tier').guard('kind:model');
       const ctx = doc.findings ? await findings.context(datasetId, options, doc.body) : doc.codebook ? await template.codebookContext(datasetId, options) : await template.buildContext(datasetId, options);
+      if (options.ask === false) ctx._ask = false;
       const rendered = await template.renderTemplate(doc.body, ctx);
       return { ast: markdown.parse(rendered.text, rendered), ctx };
     }
@@ -61,7 +63,7 @@
     /**
      * One document per value of a column, packed in a ZIP with a manifest.
      * @param {any} doc @param {string} datasetId
-     * @param {{groupColumn: string, format: string, pattern?: string, limit?: number, signal?: AbortSignal, onProgress?: Function}} options
+     * @param {{groupColumn: string, format: string, pattern?: string, limit?: number, signal?: AbortSignal, onProgress?: Function, ask?: boolean}} options
      */
     async function batch(doc, datasetId, options) {
       const values = await vizData.distinctValues(datasetId, options.groupColumn, options.limit || 500);
@@ -73,7 +75,7 @@
         if (options.signal && options.signal.aborted) throw Object.assign(new Error('Avbrutet.'), { kind: 'aborted' });
         try {
           const name = String(options.pattern || '{dokument}-{grupp}').replace('{dokument}', doc.name).replace('{grupp}', String(value));
-          const result = await generate(doc, datasetId, fmt.id, { group: { column: options.groupColumn, value }, filename: name });
+          const result = await generate(doc, datasetId, fmt.id, { group: { column: options.groupColumn, value }, filename: name, ask: options.ask });
           const bytes = new Uint8Array(await result.blob.arrayBuffer());
           if (result.filename.endsWith('.zip') && fmt.id !== 'tex' && fmt.id !== 'md') { out[result.filename] = bytes; }
           else if (fmt.id === 'tex' || (fmt.id === 'md' && result.filename.endsWith('.zip'))) {

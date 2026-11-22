@@ -6,7 +6,8 @@
  * documents, export); a flow only binds them together and keeps a log. The files a flow produces stay in memory until
  * the user fetches them: a flow never sends anything out of the app, since everything that leaves goes through the
  * review in Dela. A flow that runs at start skips itself rather than ask for anything: it needs its consents already
- * given. Flows are stored as settings (`flow:<id>`) and travel in backups, not in bundles.
+ * given (blockers), and its charts, documents and code run with `ask: false`, so whatever else they would need is left
+ * out or fails instead of asking. Flows are stored as settings (`flow:<id>`) and travel in backups, not in bundles.
  * A step can also be one of the app's commands (data/commands), and plans can choose (decision F31 a, F33 b): a step with an id keeps
  * its answer for later steps; `if` runs `steps` or `otherwise` after a condition (data/conditions, read and never run as code);
  * `each` runs its steps for every value of a list or every row of a dataset (`dataset`, a row as an object by column) and
@@ -39,6 +40,23 @@
       const t = (key, params) => D.t(key, params);
       const need = (value, message) => { if (!value) throw new Error(message); return value; };
       async function datasetOf(id) { return need(id && (await datasets.get(id)), t('flows.err.dataset')); }
+      /** What a run at start passes on to drawing and code: nothing may ask, so only consents already kept count. */
+      const askOf = (ctx) => (ctx && ctx.unattended ? { ask: false } : {});
+      /**
+       * Why a saved chart cannot be drawn at start without asking: Python must be fetched already, and the consents its plotly
+       * figure needs (a map, a picture by address) must be kept. What a run needs beyond the saved figure is left out of the
+       * drawing, never asked for (askOf).
+       * @param {any} chart @returns {Promise<string[]>}
+       */
+      async function chartBlockers(chart) {
+        if (!chart || chart.kind !== 'python') return [];
+        const out = [];
+        if (!(await D.require('engines/python/catalog').cachedRuntime())) out.push(t('flows.block.python'));
+        const fig = chart.python && chart.python.plotly;
+        const purposes = new Set(fig ? D.require('viz/plotly').requests(fig).map((q) => q.purpose) : []);
+        for (const purpose of purposes) if ((await consent.state(purpose)) !== 'granted') out.push(t('flows.block.consent', { purpose: t('consent.purpose.' + purpose) }));
+        return out;
+      }
 
       /** The steps a flow can have. `fields` tells the editor what to ask for. */
       const STEPS = {
@@ -84,11 +102,11 @@
             if (script && script.language === 'python' && !(await D.require('engines/python/catalog').cachedRuntime())) return [t('flows.block.python')];
             return [];
           },
-          async run(p) {
+          async run(p, ctx) {
             const script = need(p.scriptId && (await idb.getScript(p.scriptId)), t('flows.err.script'));
             if (script.language !== 'r' && script.language !== 'python') throw new Error(t('flows.err.script'));
             const bridge = script.language === 'python' ? pyBridge.bridge : rBridge.bridge;
-            const res = await bridge.run(script.code);
+            const res = await bridge.run(script.code, askOf(ctx));
             const failed = res.entries.find((e) => e.kind === 'error');
             if (failed) throw new Error(failed.text);
             const made = res.entries.filter((e) => e.kind === 'dataset').map((e) => e.meta.name);
@@ -117,38 +135,49 @@
         chart: {
           icon: 'chart-column',
           fields: [{ name: 'chartId', type: 'chart' }, { name: 'format', type: 'select', options: ['png', 'svg', 'pdf'] }, { name: 'groupColumn', type: 'text', optional: true }],
-          async run(p) {
+          async blockers(p) { return chartBlockers(p.chartId ? await charts.get(p.chartId) : null); },
+          async run(p, ctx) {
             const chart = need(p.chartId && (await charts.get(p.chartId)), t('flows.err.chart'));
             const format = p.format || 'png';
             if (p.groupColumn) {
-              const out = await batch.run(chart, { groupColumn: p.groupColumn, formats: [format], pattern: '{diagram}-{grupp}' });
+              const out = await batch.run(chart, Object.assign({ groupColumn: p.groupColumn, formats: [format], pattern: '{diagram}-{grupp}' }, askOf(ctx)));
               return { message: t('flows.done.chart.batch', { name: chart.name, n: out.count }), files: [{ name: files.safeName(chart.name, 'zip'), blob: out.blob }] };
             }
-            const blob = await render.toBlob(chart, format, { width: 1000, scale: 2, title: chart.name });
+            const blob = await render.toBlob(chart, format, Object.assign({ width: 1000, scale: 2, title: chart.name }, askOf(ctx)));
             return { message: t('flows.done.file', { name: chart.name }), files: [{ name: files.safeName(chart.name, format), blob }] };
           },
         },
         dashboard: {
           icon: 'layout-grid',
           fields: [{ name: 'dashboardId', type: 'dashboard' }],
-          async run(p) {
+          async run(p, ctx) {
             const dash = need(p.dashboardId && (await dashboards.get(p.dashboardId)), t('flows.err.dashboard'));
-            const html = await dashboards.toHtml(dash);
+            const html = await dashboards.toHtml(dash, askOf(ctx));
             return { message: t('flows.done.file', { name: dash.name }), files: [{ name: files.safeName(dash.name, 'html'), blob: new Blob([html], { type: 'text/html;charset=utf-8' }) }] };
           },
         },
         document: {
           icon: 'file-text',
           fields: [{ name: 'documentId', type: 'document' }, { name: 'datasetId', type: 'dataset' }, { name: 'format', type: 'select', options: ['docx', 'pdf', 'html', 'md', 'tex'] }, { name: 'groupColumn', type: 'text', optional: true }],
-          async run(p) {
+          /** The saved charts the template draws ({{diagram "…"}}) need what a chart step needs. */
+          async blockers(p) {
+            const doc = p.documentId ? await documents.get(p.documentId) : null;
+            const names = doc ? Array.from(String(doc.body || '').matchAll(/\{\{diagram\s+"([^"]+)"/g), (m) => m[1]) : [];
+            if (!names.length) return [];
+            const all = await charts.list();
+            const out = [];
+            for (const name of new Set(names)) out.push(...await chartBlockers(all.find((c) => c.name === name)));
+            return out;
+          },
+          async run(p, ctx) {
             const doc = need(p.documentId && (await documents.get(p.documentId)), t('flows.err.document'));
             const ds = await datasetOf(p.datasetId);
             const format = p.format || 'docx';
             if (p.groupColumn) {
-              const out = await generate.batch(doc, ds.id, { groupColumn: p.groupColumn, format });
+              const out = await generate.batch(doc, ds.id, Object.assign({ groupColumn: p.groupColumn, format }, askOf(ctx)));
               return { message: t('flows.done.chart.batch', { name: doc.name, n: out.count }), files: [{ name: files.safeName(doc.name, 'zip'), blob: out.blob }] };
             }
-            const out = await generate.generate(doc, ds.id, format);
+            const out = await generate.generate(doc, ds.id, format, askOf(ctx));
             return { message: t('flows.done.file', { name: out.filename }), files: [{ name: out.filename, blob: out.blob }] };
           },
         },
@@ -271,7 +300,8 @@
       /**
        * Runs a flow's steps in order. It stops at the first error unless the flow says to go on.
        * @param {any} flow a stored flow
-       * @param {{fetch?: Function, signal?: AbortSignal}} [options] fetch is injectable for tests; signal stops the flow from outside, as Stoppa does
+       * @param {{fetch?: Function, signal?: AbortSignal, unattended?: boolean}} [options] fetch is injectable for tests; signal stops the flow from outside, as Stoppa does;
+       *   unattended (a run at start): no step asks for anything, so charts and code get only the consents already kept
        * @returns {Promise<{flowId: string, name: string, ok: boolean, aborted: boolean, startedAt: string, endedAt: string, steps: any[], files: string[]}>}
        */
       async function run(flow, options = {}) {
@@ -281,7 +311,7 @@
         const working = JSON.parse(JSON.stringify(flow));
         running = { flow: working, index: 0, controller };
         const result = { flowId: working.id, name: working.name, ok: true, aborted: false, startedAt: new Date().toISOString(), endedAt: '', steps: [], files: [] };
-        const frame = { scope: {}, signal: controller.signal, fetch: options.fetch, result, made: [], continueOnError: !!working.continueOnError };
+        const frame = { scope: {}, signal: controller.signal, fetch: options.fetch, result, made: [], continueOnError: !!working.continueOnError, unattended: !!options.unattended };
         notify('start', current());
         try {
           await runSteps(working.steps, frame, '');
@@ -353,7 +383,7 @@
               logLine(frame, { type: 'stop', path: at, ok: true, ms: 0, message });
               throw { halt: 'stop', message };
             }
-            const out = await def.run(p, { signal: frame.signal, fetch: frame.fetch, step, scope: frame.scope });
+            const out = await def.run(p, { signal: frame.signal, fetch: frame.fetch, step, scope: frame.scope, unattended: frame.unattended });
             for (const f of out.files || []) { frame.made.push(f); frame.result.files.push(f.name); }
             if (step.id) frame.scope[step.id] = out.value !== undefined ? out.value : { message: out.message || '', files: (out.files || []).map((f) => f.name) };
             logLine(frame, { type: step.type, path: at, ok: true, ms: ms(), message: out.message || '' });
@@ -457,7 +487,7 @@
         for (const flow of (await list()).filter((f) => f.onStart)) {
           const reasons = await blockers(flow);
           if (reasons.length) { if (options.onSkip) options.onSkip(flow, reasons); continue; }
-          results.push(await run(flow, options));
+          results.push(await run(flow, Object.assign({}, options, { unattended: true })));
         }
         return results;
       }

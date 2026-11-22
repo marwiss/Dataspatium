@@ -139,11 +139,12 @@
     async function drawChart(chart, spec, ctx) {
       // R and Python charts render headless through their engines (viz/code-charts) like the other kinds. A dataset's own map
       // ({{karta}}, {{plan}}) is Dokument's (platform/tier): viz/leaflet draws its layers without service tiles, where viz/render
-      // refuses a map chart below BIM och GIS; a saved chart ({{diagram}}) and {{modell}} keep that guard.
+      // refuses a map chart below BIM och GIS; a saved chart ({{diagram}}) and {{modell}} keep that guard. `_ask` false (a flow
+      // at start, docgen/generate) draws without asking for anything.
       const width = spec.opts.bredd || 720;
       const draw = spec.own === 'map' ? D.require('viz/leaflet').toBlob : render.toBlob;
       try {
-        const blob = await draw(chart, 'png', { width, height: spec.opts.hojd || undefined, scale: 2, extraFilters: ctx._filters.length ? ctx._filters : undefined });
+        const blob = await draw(chart, 'png', { width, height: spec.opts.hojd || undefined, scale: 2, extraFilters: ctx._filters.length ? ctx._filters : undefined, ask: ctx._ask });
         const png = await blob.arrayBuffer();
         const size = pngSize(png);
         return { png, width: Math.round(size.width / 2) || width, height: Math.round(size.height / 2) || Math.round(width * 0.56), caption: chart.name };

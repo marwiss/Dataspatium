@@ -126,8 +126,8 @@
       }
 
       /** Packages a piece of code imports, with the package index loaded first (the scan needs the lock's import names). */
-      async referencedPackages(code) {
-        try { await catalog.load(); } catch (err) { D.log('python-bridge', 'package index not available', err); }
+      async referencedPackages(code, options = {}) {
+        try { await catalog.load({ ask: options.ask }); } catch (err) { D.log('python-bridge', 'package index not available', err); }
         return catalog.referenced(code);
       }
 
@@ -159,15 +159,15 @@
       /**
        * Fetch (after consent) and ship the wheels of the packages the code imports. A refusal or a network error
        * only leaves Python to report the missing module. matplotlib gets the Agg backend and the app's theme before
-       * it is first used.
-       * @param {string[]} names package names from catalog.referenced()
+       * it is first used. With `ask: false` (a flow at start) only a consent already kept lets wheels be fetched.
+       * @param {string[]} names package names from catalog.referenced() @param {{ask?: boolean}} [options]
        * @returns {Promise<string[]>} packages newly made available
        */
-      async ensurePackages(names) {
+      async ensurePackages(names, options = {}) {
         if (!names.length) return [];
         let fetched = [];
         try {
-          const res = await catalog.ensurePackages(names, { onProgress: (info) => this.emit('progress', info) });
+          const res = await catalog.ensurePackages(names, { onProgress: (info) => this.emit('progress', info), ask: options.ask });
           if (res.assets.length) await this.engine.shipAssets(res.assets);
           fetched = res.packages;
         } catch (err) {
@@ -228,11 +228,12 @@
       }
 
       /**
-       * Run user code. Resolves with the console entries to display.
-       * @param {string} code
+       * Run user code. Resolves with the console entries to display. `ask: false` (a flow at start): the wheels the code
+       * needs come only with a consent already kept.
+       * @param {string} code @param {{ask?: boolean}} [options]
        * @returns {Promise<{entries: any[], ms: number}>}
        */
-      async run(code) {
+      async run(code, options = {}) {
         await this.start();
         if (this.state === 'busy') throw new Error(D.t('python.err.busy'));
         this.setState('busy');
@@ -245,7 +246,7 @@
           const list = await datasets.list();
           const ids = this.resolveIds(this.referencedNames(code), list);
           await this.mirror(ids);
-          installed = await this.ensurePackages((await this.referencedPackages(code)));
+          installed = await this.ensurePackages((await this.referencedPackages(code, options)), options);
           this.streams = [];
           const res = await this.engine.run(code);
           for (const s of this.streams) entries.push({ kind: s.kind, text: s.text });
@@ -545,14 +546,14 @@
       }
 
       /**
-       * Export a kept figure.
-       * @param {number} key @param {'svg'|'png'|'pdf'} format
+       * Export a kept figure. `ask: false` (a flow at start): a plotly figure is drawn with the consents already kept only.
+       * @param {number} key @param {'svg'|'png'|'pdf'} format @param {{width?: number|string, height?: number|string, dpi?: number, ask?: boolean}} [options]
        * @returns {Promise<Blob>}
        */
       async exportPlot(key, format, options = {}) {
         const width = Number(options.width) || 7; const height = Number(options.height) || 5; const dpi = Number(options.dpi) || 150;
         // plotly figures are drawn by plotly.js on the main thread; sizes in inches become pixels at 96 per inch.
-        if (this.plotlyFigures.has(Number(key))) return D.require('viz/plotly').toBlob(this.plotlyFigures.get(Number(key)), format, { width: Math.round(width * 96), height: Math.round(height * 96), scale: 2 });
+        if (this.plotlyFigures.has(Number(key))) return D.require('viz/plotly').toBlob(this.plotlyFigures.get(Number(key)), format, { width: Math.round(width * 96), height: Math.round(height * 96), scale: 2, ask: options.ask });
         const file = `/tmp/dataspatium-plot-${Number(key)}.${format}`;
         await this.engine.evalJson(`_dataspatium._plot_export(${Number(key)}, ${JSON.stringify(format)}, ${JSON.stringify(file)}, ${width}, ${height}, ${dpi})`);
         const bytes = await this.engine.readFile(file);

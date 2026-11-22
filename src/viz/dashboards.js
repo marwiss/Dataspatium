@@ -107,7 +107,7 @@
      * Standalone HTML with every Vega and D3 chart as inline SVG (R charts as their saved thumbnail); a type of chart the tier in
      * effect hides (platform/tier) is left out of the page.
      * @param {any} dash
-     * @param {{extraFilters?: any[], width?: number, generatedText?: string, filtersLabel?: string, resolved?: any[], after?: string}} [options] texts come from the caller (i18n lives in the UI); `resolved` draws these charts instead of the dashboard's, `after` is finished HTML
+     * @param {{extraFilters?: any[], width?: number, generatedText?: string, filtersLabel?: string, resolved?: any[], after?: string, ask?: boolean}} [options] texts come from the caller (i18n lives in the UI); `resolved` draws these charts instead of the dashboard's, `after` is finished HTML; `ask: false` (a flow at start) fetches plotly.js only with a consent already kept
      */
     async function toHtml(dash, options = {}) {
       const resolved = options.resolved || await resolveCharts(dash);
@@ -129,7 +129,7 @@
         else body = (await (await render.toBlob(chart, 'svg', { width: options.width || 900, extraFilters: options.extraFilters })).text()).replace(/^<\?xml[^>]*>\s*/, '');
         sections.push(`<section><h2>${esc(chart.name)}</h2>${body}<p class="src">${esc(chart.datasetName || '')}</p></section>`);
       }
-      const plotlyScript = plotlyUsed ? `<script>${(await D.require('viz/plotly').source()).replace(/<\/script/gi, '<\\/script')}</script>\n` : '';
+      const plotlyScript = plotlyUsed ? `<script>${(await D.require('viz/plotly').source({ ask: options.ask })).replace(/<\/script/gi, '<\\/script')}</script>\n` : '';
       const leafletSrc = mapUsed ? await D.require('viz/leaflet').source() : null;
       const leafletHead = leafletSrc ? `<style>${leafletSrc.css.replace(/<\/style/gi, '<\\/style')}${D.require('viz/leaflet').htmlCss()}</style>\n<script>${leafletSrc.js.replace(/<\/script/gi, '<\\/script')}</script>\n` : '';
       const filt = filtersText(options.extraFilters);

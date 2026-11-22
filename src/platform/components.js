@@ -104,16 +104,19 @@
 
     /**
      * The bytes of a component: from the cache when present (and matching the pinned digest), otherwise
-     * fetched from the first source that answers, after consent, and verified.
+     * fetched from the first source that answers, after consent, and verified. With `ask: false` (a flow at start) nothing
+     * is asked: only a consent already kept lets it fetch, and otherwise it fails with a ConsentError.
      * @param {{id: string, urls: string[], sha256?: string, size?: number, label?: string, purpose?: string, version?: string, maxAgeMs?: number}} spec
-     * @param {{fetch?: Function, onProgress?: (info: {id: string, received: number, total: number|null}) => void}} [options]
+     * @param {{fetch?: Function, onProgress?: (info: {id: string, received: number, total: number|null}) => void, ask?: boolean}} [options]
      * @returns {Promise<ArrayBuffer>}
      */
     async function ensure(spec, options = {}) {
       const hit = await verified(spec);
       if (hit) return hit;
       const first = spec.urls[0];
-      await consent.require(spec.purpose || 'components', { host: consent.hostOf(first), label: spec.label || spec.id, size: spec.size || null });
+      const purpose = spec.purpose || 'components';
+      if (options.ask === false) { if ((await consent.state(purpose)) !== 'granted') throw new consent.ConsentError(purpose, 'unattended'); }
+      else await consent.require(purpose, { host: consent.hostOf(first), label: spec.label || spec.id, size: spec.size || null });
       const doFetch = options.fetch || globalThis.fetch.bind(globalThis);
       let lastErr = null;
       for (const url of spec.urls) {

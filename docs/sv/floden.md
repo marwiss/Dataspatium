@@ -77,9 +77,13 @@ Med *Kör när appen startar* körs flödet strax efter att appen öppnats. Det 
 - Steg som hämtar från nätet kräver att samtycket redan är givet.
 - Steg som läser genom databasbryggan körs inte vid start, eftersom bryggan kopplas upp för hand.
 - Python-skript kräver att Python redan är hämtat.
+- Python-diagram, även i dokument, kräver att Python redan är hämtat och att samtycket som deras plotly-kartor och bilder
+  behöver redan är givet.
 - Ett flöde som frågar dig (*Fråga mig*) körs aldrig vid start.
 
-Annars hoppas flödet över och loggen säger varför. Inget körs när appen är stängd.
+Annars hoppas flödet över och loggen säger varför. Vid start frågar inget steg: det ett diagram eller ett skript behöver
+utöver det (paket, plotly.js, en karta som diagrammet inte hade förut) hämtas bara med ett samtycke som redan är sparat,
+och annars ritas diagrammet utan det eller så misslyckas steget. Inget körs när appen är stängd.
 
 ## Bevaka en källa
 

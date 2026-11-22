@@ -645,7 +645,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/floden.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 8313,
+  "size": 8730,
   "library": "dataspatium"
  },
  "docs/sv/statistik.md": {
@@ -693,7 +693,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/sakerhet.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 25558,
+  "size": 26185,
   "library": "dataspatium"
  },
  "docs/da/kom-igang.md": {
@@ -1653,7 +1653,7 @@ Dataspatium.assets.addEntries({
  "docs/en/floden.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 8001,
+  "size": 8366,
   "library": "dataspatium"
  },
  "docs/en/statistik.md": {
@@ -1701,7 +1701,7 @@ Dataspatium.assets.addEntries({
  "docs/en/sakerhet.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 25478,
+  "size": 26047,
   "library": "dataspatium"
  }
 });

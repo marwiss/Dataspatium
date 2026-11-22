@@ -48,7 +48,11 @@
 
     function available() { return !!globalThis.Plotly; }
 
-    /** Load the library (from the component cache or jsDelivr after consent) and return the Plotly object. */
+    /**
+     * Load the library (from the component cache or jsDelivr after consent) and return the Plotly object; with `ask: false`
+     * only a consent already kept lets it fetch (platform/components).
+     * @param {{ask?: boolean, onProgress?: Function}} [options]
+     */
     function ensure(options = {}) {
       if (globalThis.Plotly) return Promise.resolve(globalThis.Plotly);
       if (!loading) {
@@ -63,10 +67,10 @@
       return loading;
     }
 
-    /** The library's text, for standalone HTML (Publicera). */
-    async function source() {
-      if (!sourceText) await ensure();
-      return sourceText || components.text(SPEC);
+    /** The library's text, for standalone HTML (Publicera); `ask: false` as in ensure(). */
+    async function source(options = {}) {
+      if (!sourceText) await ensure(options);
+      return sourceText || components.text(SPEC, options);
     }
 
     /** Layout template from the design tokens: palette, font, surfaces, grid, legend below the plot. */
@@ -414,12 +418,13 @@
     }
 
     /**
-     * Export a figure without showing it: svg, png or pdf at the given pixel size.
-     * @param {any} fig @param {'svg'|'png'|'pdf'} format @param {{width?: number, height?: number, scale?: number, title?: string}} [options]
+     * Export a figure without showing it: svg, png or pdf at the given pixel size. With `ask: false` (a flow at start) nothing
+     * is asked: plotly.js and the figure's maps and addresses come only with a consent already kept, as in htmlFor().
+     * @param {any} fig @param {'svg'|'png'|'pdf'} format @param {{width?: number, height?: number, scale?: number, title?: string, ask?: boolean}} [options]
      */
     async function toBlob(fig, format, options = {}) {
-      const Plotly = await ensure();
-      const ready = await prepare(fig);
+      const Plotly = await ensure({ ask: options.ask });
+      const ready = await prepare(fig, { ask: options.ask });
       const width = Number(options.width) || 960;
       const height = Number(options.height) || Math.round(width * 0.6);
       const el = document.createElement('div');
