@@ -249,8 +249,15 @@
           else {
             let n = 0;
             for (const version of selected.documents || []) {
-              const file = await opencde.downloadVersion(connector, version);
-              const meta = await importer.run(file, {}, null, version.title || undefined);
+              let meta;
+              try {
+                const file = await opencde.downloadVersion(connector, version);
+                meta = await importer.run(file, {}, null, version.title || undefined);
+              } catch (err) {
+                // A file the tier does not read (a BCF file below BIM och GIS) is skipped in the tier's words, and the rest come.
+                if (err && err.tierFeature) { log(`${version.title || ''}: ${err.message}`, 'warn'); continue; }
+                throw err;
+              }
               // A model learns the highest STEP id its document has had on the server (ifc_max_step_id), when the server says it.
               if (meta && meta.kind === 'model' && version.document_id && version.version_index) await opencde.seedStepIds(connector, meta.id, version.document_id, Number(version.version_index));
               n++;
