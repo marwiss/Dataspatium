@@ -311,8 +311,9 @@ vad som avgjorde.
   härlett.
 - En sammansatt byggdel, till exempel ett tak av takplattor, räknas i sina delar, och en del som reglerna inte kan avgöra tar
   helhetens kategori. En glasvägg inne i byggnaden, en glasfasad (IfcCurtainWall) med IsExternal falskt i filen eller ur topologin,
-  tar alla sina delar med sig till innerväggarna; i en yttre glasfasad, och i en utan IsExternal, är posterna, reglarna och glasen
-  klimatskärm.
+  tar sina poster, reglar och glas med sig till innerväggarna, medan en del som reglerna lägger utanför klimatskärmen, till exempel
+  en list eller en bärande stolpe, behåller sin kategori; i en yttre glasfasad, och i en utan IsExternal, är posterna, reglarna och
+  glasen klimatskärm.
 
 Under **Att avgöra** väljer du kategori för en hel grupp byggdelar med samma klass, typ och regel. Valet sparas per byggdel (GlobalId)
 i webbläsaren tills du låter reglerna avgöra igen.
