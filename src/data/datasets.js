@@ -18,9 +18,9 @@
     const listeners = new Set();
     const META_KEYS = ['id', 'name', 'shortName', 'description', 'createdAt', 'updatedAt', 'rowCount', 'columnCount', 'source', 'importOptions', 'rules', 'folder', 'tags', 'kind'];
     /** Metadata of the dataset kinds (set by their importers), restored with the file on undo and version restore. */
-    const KIND_META_KEYS = ['graph', 'plan', 'documents', 'images', 'model', 'models', 'field', 'facets', 'dcat'];
-    /** Kinds of datasets: what the file holds and which views apply. Only 'table' exists until later 2.x releases. */
-    const KINDS = ['table', 'graph', 'document', 'images', 'model', 'plan'];
+    const KIND_META_KEYS = ['graph', 'plan', 'documents', 'images', 'model', 'models', 'field', 'facets', 'dcat', 'raster'];
+    /** Kinds of datasets: what the file holds and which views apply (data/kinds says what each one is). */
+    const KINDS = ['table', 'graph', 'document', 'images', 'model', 'plan', 'raster'];
 
     // ---- folders and tags: how the dataset list is organised; stored in _meta, so they travel with the file ----
     /** A folder path: segments separated by "/", trimmed, without empty segments; '' is the root. */
@@ -511,7 +511,7 @@
     /** What a version needs to say what it holds in the kind's own units. */
     function versionFacts(meta) {
       const facts = { kind: meta.kind, rowCount: meta.rowCount, columnCount: meta.columnCount };
-      for (const key of ['documents', 'images', 'model', 'graph', 'plan']) if (meta[key]) facts[key] = meta[key];
+      for (const key of ['documents', 'images', 'model', 'graph', 'plan', 'raster']) if (meta[key]) facts[key] = meta[key];
       return facts;
     }
     async function snapshot(id, label) {
