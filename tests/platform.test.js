@@ -316,7 +316,8 @@
   // navigator.<name> on its navigator. A name is reviewed when it reaches neither the network nor the app's storage or tabs, or when
   // platform/worker-shim pins or replaces it. A browser that adds a name fails the test below, which lists every new name: review
   // each one, then pin it in the shim or add it here. Built from TypeScript 6.0.3's lib.webworker.d.ts (what two engines expose to
-  // workers) and the Edge and Firefox additions known here; not yet compared with a list taken from a real Edge or Firefox.
+  // workers), then compared with what Edge 158 and Firefox 160 showed on 2026-11-22 (file:// and localhost, net 'none' and 'fetch');
+  // the 29 names they added are reviewed one by one in the three "seen" groups.
   // ================================================================================================================================
   const REVIEWED_WORKER_GLOBALS = new Set([
     // ECMAScript and Object.prototype
@@ -385,6 +386,15 @@
     'WebGLVertexArrayObject WebSocketError WebTransportBidirectionalStream WebTransportDatagramDuplexStream',
     'WebTransportError WorkerGlobalScope WorkerLocation WritableStream WritableStreamDefaultController',
     'WritableStreamDefaultWriter XMLHttpRequestEventTarget XMLHttpRequestUpload',
+    // seen in Edge 158 or Firefox 160 on 2026-11-22: constants, value types, base classes, wrapped strings, errors and events
+    'GPUBufferUsage GPUColorWrite GPUMapMode GPUShaderStage GPUTextureUsage Origin QuotaExceededError RTCError',
+    'RTCErrorEvent ReportBody TrustedHTML TrustedScript TrustedScriptURL TrustedTypePolicy TrustedTypePolicyFactory',
+    'UserActivation WebGLObject',
+    // seen there, without a constructor: objects only from the page, from WebTransport (pinned) or from built-in AI (absent)
+    'CreateMonitor CropTarget Directory ElementImage RestrictionTarget WebTransportDatagramsWritable',
+    'WebTransportReceiveStream WebTransportSendGroup WebTransportSendStream',
+    // seen there: CPU pressure, and user idle behind a permission only a window can request; neither has network or storage
+    'IdleDetector PressureObserver PressureRecord',
     // the app's own: the shim and this test's probe
     '__dataspatium dataspatiumGlobalsProbeWorker dataspatiumMakeXHR dataspatiumWorkerShim',
     // navigator: the shim's frozen copy
