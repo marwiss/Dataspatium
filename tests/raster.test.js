@@ -549,6 +549,40 @@
     return 'ok';
   }, 60000);
 
+  test('raster: the review masks the attribution with the column it comes from, or on its own, and pseudonymising the column removes it', async (assert) => {
+    const shareScan = D.require('data/share-scan');
+    const recipes = D.require('data/recipes');
+    const ADDRESS = 'fotograf@example.se';
+    const meta = track(await importer.runFiles([sweref('kredit.tif', { copyright: `Flygbild, ${ADDRESS}` })], { format: 'raster' }, 'Kreditering'));
+    assert.equal((await datasets.get(meta.id)).raster.attribution, `Flygbild, ${ADDRESS}`, 'the attribution is the Copyright text');
+    const found = await shareScan.inspect(meta.id);
+    const kalla = found.parts.find((p) => p.id === 'text:kalla');
+    assert.ok(kalla && kalla.start === 'mask' && !found.parts.some((p) => p.id === 'attribution'), 'the column speaks for the attribution: ' + JSON.stringify(found.parts.map((p) => p.id)));
+    assert.equal(found.parts.find((p) => p.id === 'originals').start, 'remove', 'the original holds the same tag');
+    /** A copy with the choices, as the review gives them, and its raster. */
+    const copyWith = async (tr, name) => {
+      const bytes = await shareScan.copy(meta.id, tr);
+      const c = track(await datasets.importBytes(bytes, { name }, { quiet: true }));
+      return { text: asText(new Uint8Array(bytes)), raster: (await datasets.get(c.id)).raster, rows: await rowsOf(c.id) };
+    };
+    const masked = await copyWith({ mask: ['kalla'], originals: true }, 'Kreditering maskerad');
+    assert.ok(masked.raster.attribution === 'Flygbild, [***]' && masked.rows[0].kalla === 'Flygbild, [***]', 'masked with its column: ' + masked.raster.attribution);
+    assert.ok(!masked.text.includes(ADDRESS), 'the address is nowhere in the copy');
+    const hashed = await copyWith({ hash: ['kalla'], originals: true }, 'Kreditering pseudonymiserad');
+    assert.ok(hashed.raster.attribution === null && !hashed.text.includes(ADDRESS), 'gone when the column is pseudonymised: ' + hashed.raster.attribution);
+    const dropped = await copyWith({ drop: ['kalla'], originals: true }, 'Kreditering borttagen');
+    assert.ok(dropped.raster.attribution === null && !dropped.text.includes(ADDRESS), 'gone when the column is dropped');
+    // The column edited since: the attribution has a choice of its own, and its words show what it holds.
+    const rowid = (await (await datasets.ensureOpen(meta.id)).engine.exec('select rowid from data'))[0].values[0][0];
+    await recipes.apply(meta.id, 'edit_cell', { rowid, column: 'kalla', value: 'Flygbild' });
+    const own = (await shareScan.inspect(meta.id)).parts.find((p) => p.id === 'attribution');
+    assert.ok(own && own.start === 'mask' && own.names[0] === `Flygbild, ${ADDRESS}`, JSON.stringify(own));
+    const alone = await copyWith({ attribution: true, originals: true }, 'Kreditering ensam');
+    assert.ok(alone.raster.attribution === 'Flygbild, [***]' && !alone.text.includes(ADDRESS), 'masked on its own choice: ' + alone.raster.attribution);
+    assert.equal((await datasets.get(meta.id)).raster.attribution, `Flygbild, ${ADDRESS}`, 'the dataset itself is untouched');
+    return 'ok';
+  }, 60000);
+
   test('raster: the orthophoto shown becomes a raster in Web Mercator with Lantmäteriet\'s attribution and licence, and no key, token or file address', async (assert) => {
     const orthophotos = D.require('viz/orthophotos');
     const tier = D.require('platform/tier');

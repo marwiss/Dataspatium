@@ -20,6 +20,8 @@
     /** Tables with their own part, or without free text. */
     const NOT_SCANNED = new Set(['data', '_columns', '_meta', '_log', FILES, '_layout', '_comments']);
     const POSITION_COLUMNS = ['lon', 'lat', 'altitud'];
+    /** The column of a raster's table that holds its files' Copyright text, which is also the raster's attribution (data/raster). */
+    const CREDIT_COLUMN = 'kalla';
     /** What the review finds inside an IFC model, in the order the dialog shows it (ifcParts). */
     const IFC_PARTS = ['persons', 'organizations', 'owner', 'header', 'actors', 'text'];
     /** The tables of an IFC model that are built from its file. */
@@ -87,6 +89,12 @@
         if (c.type !== 'text' || flagged.has(c.name) || derived.has(c.name)) continue;
         const n = number(await engine.exec(`select count(*) from data where dm_has_personal(${q(c.name)}) = 1`));
         if (n) parts.push({ id: 'text:' + c.name, kind: 'text', column: c.name, count: n, choices: ['keep', 'mask', 'drop'], start: 'mask' });
+      }
+      // A raster's attribution is its files' Copyright text, as their column `kalla` is (data/raster), and follows the choice for that
+      // column. When only the attribution holds personal data (the column was edited since), it gets a choice of its own.
+      const credit = handle.meta.raster && typeof handle.meta.raster.attribution === 'string' ? handle.meta.raster.attribution : '';
+      if (credit && !flagged.has(CREDIT_COLUMN) && !parts.some((p) => p.column === CREDIT_COLUMN) && number(await engine.exec('select dm_has_personal(?)', [credit]))) {
+        parts.push({ id: 'attribution', kind: 'attribution', count: 1, names: [credit], choices: ['mask', 'keep'], start: 'mask' });
       }
       const tables = await tablesIn(engine);
       for (const table of tables) {
@@ -227,7 +235,7 @@
     /** Whether a set of choices changes anything in the copy. */
     function changes(tr) {
       if (!tr) return false;
-      return !!(ifcScrubs(tr.ifc) || tr.filename || (tr.only || []).length || (tr.drop || []).length || (tr.hash || []).length || (tr.mask || []).length || Object.keys(tr.side || {}).length || tr.originals || tr.pictures || tr.positions || tr.comments || tr.authors);
+      return !!(ifcScrubs(tr.ifc) || tr.filename || (tr.only || []).length || (tr.drop || []).length || (tr.hash || []).length || (tr.mask || []).length || Object.keys(tr.side || {}).length || tr.originals || tr.pictures || tr.positions || tr.comments || tr.authors || tr.attribution);
     }
 
     async function metaValue(engine, key) {
@@ -329,6 +337,15 @@
       if (tr.authors) {
         const documents = await metaValue(engine, 'documents');
         if (Array.isArray(documents)) await setMeta(engine, 'documents', documents.map((d) => Object.assign({}, d, { author: null })));
+      }
+      // A raster's attribution is the same text as its column `kalla`: masked with it, gone when the column is pseudonymised or
+      // dropped (a name in it is not recognised, so masking would leave it), and masked on its own choice. Read after the originals,
+      // whose change to `_meta.raster` it keeps.
+      const credit = await metaValue(engine, 'raster');
+      if (credit && credit.attribution) {
+        const gone = (tr.drop || []).includes(CREDIT_COLUMN) || (tr.hash || []).includes(CREDIT_COLUMN);
+        const masked = (tr.mask || []).includes(CREDIT_COLUMN) || !!tr.attribution;
+        if (gone || masked) await setMeta(engine, 'raster', Object.assign({}, credit, { attribution: gone ? null : await maskText(credit.attribution, engine) }));
       }
       // The log and the rules can hold the values that were just removed; who delivered what is not for others either.
       const changed = (tr.drop || []).concat(tr.hash || [], tr.mask || []);

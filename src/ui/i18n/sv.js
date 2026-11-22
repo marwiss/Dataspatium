@@ -4845,6 +4845,7 @@
     'review.choice.strip': 'Ta bort sparade utdata och maskera resten',
     'review.choice.omit': 'Lämna utanför paketet',
     'review.part.filename': 'Namnet eller filnamnet innehåller personuppgifter: {names}',
+    'review.part.attribution': 'Rastrets kreditering innehåller personuppgifter: {names}',
     'review.kind.collector': 'Vem som samlade in',
     'review.kind.person': 'Personnamn',
     'review.kind.position': 'Position',

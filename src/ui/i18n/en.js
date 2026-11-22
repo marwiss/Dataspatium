@@ -4823,6 +4823,7 @@
     'review.choice.strip': 'Remove saved outputs and mask the rest',
     'review.choice.omit': 'Leave out of the package',
     'review.part.filename': 'The name or file name holds personal data: {names}',
+    'review.part.attribution': 'The raster\'s attribution holds personal data: {names}',
     'review.kind.collector': 'Who collected',
     'review.kind.person': 'Name of a person',
     'review.kind.position': 'Position',
