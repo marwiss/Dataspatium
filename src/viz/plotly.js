@@ -7,9 +7,10 @@
  * the first time a plotly figure is shown.
  *
  * A figure is data from the Python worker, and plotly.js fetches on the main thread what it names: a geo map's shapes
- * (plotly's topojson), a map's style and tiles, layout images, GeoJSON by address, and what buttons and sliders bring in.
- * Every drawing works on a copy that prepare() cleans: it asks for background maps for a map and for web addresses per
- * host for the rest, leaves out what is refused and says so.
+ * (plotly's topojson), a map's style and tiles, layout images, GeoJSON by address, and what buttons and sliders bring in;
+ * its text is pseudo-HTML whose styles and links reach the page. Every drawing works on a copy built key by key, whose text
+ * keeps only bare tags, and that prepare() cleans: it asks for background maps for a map and for web addresses per host for
+ * the rest, leaves out what is refused and says so.
  */
 (function () {
   'use strict';
@@ -95,7 +96,7 @@
 
     /** The figure's layout with the app's template (replacing plotly's own) and optional fixed size. */
     function layoutFor(fig, options = {}) {
-      const layout = Object.assign({}, (fig && fig.layout) || {});
+      const layout = { ...((fig && fig.layout) || {}) };
       layout.template = template();
       if (options.width) layout.width = options.width;
       if (options.height) layout.height = options.height;
@@ -106,16 +107,73 @@
     // ---- what a figure fetches ---------------------------------------------------------------------------------
     const isPlain = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
     const typeOf = (trace) => String((isPlain(trace) && trace.type) || 'scatter');
-    /** The figure's traces and layout as a copy of their own; plotly's own template is dropped (the app sets its own). */
-    function copyOf(fig) {
-      const clone = (v) => { try { return structuredClone(v); } catch (_err) { return JSON.parse(JSON.stringify(v)); } };
-      const data = fig && Array.isArray(fig.data) ? clone(fig.data) : [];
-      const layout = fig && isPlain(fig.layout) ? clone(fig.layout) : {};
-      delete layout.template;
-      return { data, layout };
-    }
     /** Path segments of an attribute name: 'images[0].source' -> ['images', 'source']. */
     const segments = (key) => String(key).replace(/\[\d+\]/g, '').split('.').filter(Boolean);
+    /** plotly's pseudo-HTML (lib/svg_text_utils): the tags it styles, how it splits a string into tags, and a tag's style. */
+    const TAGS = new Set(['sup', 'sub', 's', 'u', 'b', 'i', 'a', 'span', 'em']);
+    const SPLIT_TAGS = /(<[^<>]*>)/;
+    const ONE_TAG = /^<(\/?)([^ >]*)(\s+(.*))?>$/i;
+    const STYLE = /(^|[\s"'])style\s*=\s*("([^"]*);?"|'([^']*);?')/i;
+    /** A plain colour, the one style a tag keeps: no entity, escape, url() or second declaration fits. */
+    const COLOR = /^\s*color\s*:\s*(#[0-9a-f]{3,8}|[a-z]{3,20}|rgba?\(\s*[\d.]{1,5}%?(\s*,\s*[\d.]{1,5}%?){2,3}\s*\))\s*$/i;
+    const angles = (s) => s.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    /**
+     * Text plotly reads as pseudo-HTML, with every tag it knows rebuilt bare: `<b>`, `<span>` and the rest keep at most a plain
+     * colour, `<br>` and `<extra>` stay, and every other `<` and `>` becomes an entity, which plotly shows as the character. So
+     * no style, link or address reaches the page, also not when a template fills in values (they are cleaned the same way).
+     * @param {string} s @returns {string}
+     */
+    function cleanText(s) {
+      if (s.indexOf('<') < 0 && s.indexOf('>') < 0) return s;
+      return s.split(SPLIT_TAGS).map((part, i) => {
+        const m = i % 2 ? ONE_TAG.exec(part) : null;
+        if (!m) return angles(part);
+        const name = m[2].toLowerCase();
+        if (/^br\/?$/.test(name)) return '<br>';
+        if (name === 'extra') return m[1] ? '</extra>' : '<extra>';
+        if (!TAGS.has(name)) return angles(part);
+        if (m[1]) return `</${name}>`;
+        const style = STYLE.exec(m[4] || '');
+        const color = style ? String(style[3] || style[4] || '').split(';').find((d) => COLOR.test(d)) : null;
+        return color ? `<${name} style="${color.trim()}">` : `<${name}>`;
+      }).join('');
+    }
+    /** MapLibre's comparison operators, the only strings with `<` or `>` a map style needs. */
+    const MAP_OPERATORS = new Set(['<', '<=', '>', '>=']);
+    /** A string in a map's style or layers: MapLibre writes attributions into the page as HTML, so markup becomes plain text. */
+    const cleanMapText = (s) => (MAP_OPERATORS.has(s) || (s.indexOf('<') < 0 && s.indexOf('>') < 0) ? s : angles(s.replace(/<[^<>]*>/g, '')));
+    /** Keys never copied: they would become an object's prototype, or are no plotly attribute at all. */
+    const DROP_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+    /** Where a key leads: inside a map subplot (MapLibre), to an image's own address (checked as an address), or plotly text. */
+    function contextOf(ctx, key) {
+      if (ctx === 'map') return 'map';
+      const parts = segments(key);
+      if (parts.some((p) => MAP_KEY.test(p))) return 'map';
+      return parts[parts.length - 1] === 'source' ? 'source' : ctx;
+    }
+    /**
+     * A copy made key by key: own keys only and never those in DROP_KEYS, no deeper than MAX_DEPTH, and every string cleaned
+     * for where it is drawn.
+     */
+    function cleanCopy(v, ctx, depth) {
+      if (typeof v === 'string') return ctx === 'map' ? cleanMapText(v) : ctx === 'source' ? v : cleanText(v);
+      if (!v || typeof v !== 'object') return v;
+      if (depth > MAX_DEPTH) return null;
+      // Only a source that is an address itself is left as it is; what an object or array under `source` holds is text.
+      if (ctx === 'source') ctx = 'text';
+      if (Array.isArray(v)) return v.map((x) => cleanCopy(x, ctx, depth + 1));
+      if (ArrayBuffer.isView(v)) return /** @type {any} */ (v).slice ? /** @type {any} */ (v).slice() : null;
+      const out = {};
+      for (const k of Object.keys(v)) if (!DROP_KEYS.has(k)) out[k] = cleanCopy(v[k], contextOf(ctx, k), depth + 1);
+      return out;
+    }
+    /** The figure's traces and layout as such a copy, with plotly's own template dropped (the app sets its own). */
+    function copyOf(fig) {
+      const layout = fig && isPlain(fig.layout) ? cleanCopy(fig.layout, 'text', 0) : {};
+      delete layout.template;
+      const data = fig && Array.isArray(fig.data) ? cleanCopy(fig.data, 'text', 0) : [];
+      return { data, layout };
+    }
     /**
      * Where a string that plotly loads as an address (an image, GeoJSON) comes from: 'local' for data: and blob:, the host for
      * http and https, and null for anything else, which is never loaded (relative, protocol-relative, file: and the rest).

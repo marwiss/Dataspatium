@@ -367,6 +367,38 @@
     });
   });
 
+  test('plotly: a figure\'s text keeps only bare tags and its keys never become a prototype, so no label, link or attribution loads anything', (assert) => {
+    const plotly = D.require('viz/plotly');
+    const SPY = 'https://spy.example.invalid/p.png?d=1';
+    const fig = JSON.parse(JSON.stringify({
+      data: [{ type: 'bar', x: ['<b onclick="x">a</b>', 'b'], y: [1, 2], name: `<span style="background-image:url(${SPY})">Sales</span>`,
+        texttemplate: `<span style="cursor:url(${SPY}),auto">%{y}</span>`, hovertemplate: '<span %{customdata}>%{y}</span><extra>e</extra>', customdata: [`style="cursor:url(${SPY})"`, 'x>'] }],
+      layout: {
+        title: { text: `<span style="color:#c00">Red</span> <a href="${SPY}">link</a> <span style="col\\6fr:red;cursor:url(${SPY})">x</span> 1 < 2<br>ny` },
+        annotations: [{ text: `<img src="${SPY}">` }],
+        map: { style: { version: 8, sources: { s: { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, attribution: `<img src="${SPY}">© Någon` } }, layers: [{ id: 'l', type: 'circle', source: 's', filter: ['<', ['get', 'n'], 5] }] }, layers: [{ sourceattribution: `<span style="background:url(${SPY})">x</span>` }] },
+        updatemenus: [{ buttons: [{ method: 'relayout', label: `<span style="cursor:url(${SPY})">b</span>`, args: [{ 'title.text': `<b style="cursor:url(${SPY})">t</b>` }] }] }],
+      },
+    }));
+    const { figure } = plotly.sanitize(fig, { basemaps: true, url: true });
+    const tr = figure.data[0]; const lay = figure.layout;
+    assert.deepEqual([tr.x[0], tr.name, tr.texttemplate, tr.hovertemplate, tr.customdata[1]], ['<b>a</b>', '<span>Sales</span>', '<span>%{y}</span>', '<span>%{y}</span><extra>e</extra>', 'x&gt;'], 'tags lose their attributes, also where a template fills in values');
+    assert.equal(lay.title.text, '<span style="color:#c00">Red</span> <a>link</a> <span>x</span> 1 &lt; 2<br>ny', 'a plain colour stays; a link, an escaped property and a stray < do not');
+    assert.equal(lay.annotations[0].text, `&lt;img src="${SPY}"&gt;`, 'a tag plotly does not know is shown as text');
+    assert.equal(lay.map.style.sources.s.attribution, '© Någon', 'an attribution MapLibre writes as HTML becomes plain text');
+    assert.equal(lay.map.layers[0].sourceattribution, 'x');
+    assert.deepEqual(lay.map.style.layers[0].filter, ['<', ['get', 'n'], 5], 'a map expression keeps its operator');
+    assert.deepEqual([lay.updatemenus[0].buttons[0].label, lay.updatemenus[0].buttons[0].args[0]['title.text']], ['<span>b</span>', '<b>t</b>'], 'a button\'s label and what it sets');
+    assert.equal(JSON.stringify(fig).includes('cursor:url'), true, 'the figure itself is untouched');
+    // An own "__proto__" key (JSON.parse keeps it) never reaches the drawing as a prototype.
+    const proto = JSON.parse(`{"data":[{"type":"bar","y":[1]}],"layout":{"__proto__":{"images":[{"source":"${SPY}"}],"map":{"style":"${SPY}"}}}}`);
+    assert.deepEqual(plotly.requests(proto), [], 'nothing hides behind it');
+    const drawn = plotly.layoutFor(plotly.sanitize(proto, { basemaps: true, url: true }).figure);
+    assert.equal(Object.getPrototypeOf(drawn), Object.prototype, 'the drawn layout has no prototype of the figure\'s');
+    assert.ok(!('images' in drawn) && !('map' in drawn), 'and inherits no images or map');
+    return 'ok';
+  });
+
   test('images: a picture from a file, a worker or storage is drawn only from a data:image/ address, and a web address is left out with a line in the console', async (assert) => {
     const text = D.require('platform/text');
     const GIF = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
