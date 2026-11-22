@@ -44,6 +44,50 @@
     });
   });
 
+  test('consent: a purpose has one question open at a time; the same question asked again shares its answer, a remembered answer settles the waiting ones, and a one-time yes never covers another host', async (assert) => {
+    await withoutOverride(async () => {
+      const originalState = await consent.state('stun');
+      const asked = [];
+      const answers = [];
+      const settle = (p) => p.then(() => 'allowed', (e) => e.name);
+      const askedBy = async (n) => {
+        const t0 = performance.now();
+        while (asked.length < n && performance.now() - t0 < 5000) await new Promise((r) => setTimeout(r, 10));
+        await new Promise((r) => setTimeout(r, 30)); // and no more than n
+      };
+      const q = (host) => consent.require('stun', { host, label: 'stun:' + host });
+      try {
+        consent.setAsker((purpose, info) => new Promise((resolve) => { asked.push(info.host); answers.push(resolve); }));
+        await consent.set('stun', null);
+        const same = [q('a.example'), q('a.example'), q('a.example')].map(settle);
+        await askedBy(1);
+        assert.deepEqual(asked, ['a.example'], 'three identical questions open one dialog');
+        answers.shift()({ allow: true, remember: false });
+        assert.deepEqual(await Promise.all(same), ['allowed', 'allowed', 'allowed'], 'and take its one answer');
+        asked.length = 0;
+        const a = settle(q('a.example'));
+        const b = settle(q('b.example'));
+        await askedBy(1);
+        assert.deepEqual(asked, ['a.example'], 'a question for another host waits for the open one');
+        answers.shift()({ allow: true, remember: false });
+        assert.equal(await a, 'allowed');
+        await askedBy(2);
+        assert.deepEqual(asked, ['a.example', 'b.example'], 'a yes once does not cover the other host, which is asked next');
+        answers.shift()({ allow: false, remember: false });
+        assert.equal(await b, 'ConsentError', 'and has its own answer');
+        asked.length = 0;
+        const c = settle(q('c.example'));
+        const d = settle(q('d.example'));
+        await askedBy(1);
+        answers.shift()({ allow: false, remember: true });
+        assert.deepEqual([await c, await d], ['ConsentError', 'ConsentError'], 'a remembered no also refuses the question that waited');
+        assert.deepEqual(asked, ['c.example'], 'without asking it');
+        assert.equal(await consent.state('stun'), 'denied', 'the no is remembered');
+        return 'ok';
+      } finally { consent.setAsker(null); await consent.set('stun', originalState); }
+    });
+  });
+
   test('components: fetched once with consent, verified against SHA-256, served from the cache afterwards, and removable', async (assert) => {
     const id = 'test:component';
     let calls = 0;

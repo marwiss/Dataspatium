@@ -7,9 +7,23 @@
  * ES-module glue and refuses classic workers; the worker rewrites those three spots of the loader text at run
  * time (proven in the spike notes kept outside the repo, .claude/plans/underlag/spik-fas0-2.md, spike 5), the files themselves stay as published.
  *
- * Messages: main -> worker {id, type: init|run|eval|packages|fs|net-reply}; worker -> main {type: 'result', id,
- * ok, value|error}, {type: 'stream', kind, text} for stdout/stderr lines and {type: 'net', id, url} when Python code
- * (micropip) wants to reach the internet, which the main thread allows only with the user's consent.
+ * Messages: main -> worker {id, type: init|run|eval|packages|fs}; worker -> main {type: 'result', id, ok, value|error} and
+ * {type: 'stream', kind, text} for stdout/stderr lines.
+ *
+ * Python code in this worker reaches the internet only through the worker's fetch, after the user's consent. The worker shim runs
+ * with net 'fetch' (platform/worker-shim): a fetch to anything but an asset, a blob or a data URL asks this thread first (the
+ * provider's `net`, allowNet below) and sends the very Request it asked about once the answer allows that address; the browser
+ * then follows the server's redirects. pyodide.http.pyfetch, micropip and js.fetch go that way, and so do requests and urllib3 in
+ * code run through runPythonAsync (the console, notebooks, charts) where the browser has JSPI (Edge, Chrome), since urllib3 then
+ * uses fetch. Sockets and XMLHttpRequest are refused with a message that points to pyfetch: socket, urllib.request and
+ * http.client over http://, pyodide.http.open_url and pyxhr, js.XMLHttpRequest, importScripts with an address, and requests
+ * without JSPI or in recipe and model steps, which run synchronously through runPython (urllib3 then falls back to
+ * XMLHttpRequest). With https://, urllib.request stops at "unknown url type: https" and http.client has no HTTPSConnection, as
+ * long as Pyodide's on-demand ssl is not loaded. WebSocket and the other constructors that could open a connection read as
+ * undefined, Worker is a stand-in that starts nothing, and navigator is a frozen copy of what Pyodide reads. Emscripten's socket
+ * emulation would turn a connect() into a browser WebSocket to ws://host:port/ (xmlschema tried www.w3.org that way while reading
+ * ifctester's ids.xsd); without WebSocket it fails at once, and Python's socket functions raise an OSError with the same message.
+ * Figures that Python hands to the page are drawn there, under the page's own rules.
  */
 (function () {
   'use strict';
@@ -21,23 +35,25 @@
     var INDEX_URL = 'dataspatium-asset://pyodide/';
     var pyodide = null;
     var reprFn = null;
-    var netSeq = 0;
-    var netPending = new Map();
     function post(msg, transfer) { self.postMessage(msg, transfer || []); }
 
-    // Network gate: anything that is not an asset, a blob or a data URL (micropip against PyPI) asks the main thread
-    // first, which applies the user's consent for components.
-    var shimFetch = self.fetch;
-    self.fetch = function (input, init) {
-      var url = typeof input === 'string' ? input : (input && typeof input.url === 'string' ? input.url : String(input));
-      if (/^(dataspatium-asset:|blob:|data:)/.test(url)) return shimFetch(input, init);
-      var id = ++netSeq;
-      return new Promise(function (resolve) { netPending.set(id, resolve); post({ type: 'net', id: id, url: url }); })
-        .then(function (ok) {
-          if (!ok) throw new TypeError('Dataspatium: internet access was not allowed for ' + url);
-          return shimFetch(input, init);
-        });
-    };
+    // Python's socket functions say why and name the way that asks for consent, with the shim's message (config.netText, in the
+    // user's language). This runs in a namespace of its own before any package or the app's own code; _socket and C extensions
+    // bypass it, and the missing WebSocket stops them.
+    var NO_SOCKETS = [
+      'import socket',
+      'def blocked(*args, **kwargs):',
+      '    raise OSError(text)',
+      'for name in ("connect", "connect_ex", "sendto", "sendmsg"):',
+      '    setattr(socket.socket, name, blocked)',
+      'socket.create_connection = blocked',
+      'socket.getaddrinfo = blocked',
+    ].join('\n');
+    function blockSockets() {
+      var config = (self.__dataspatium && self.__dataspatium.config) || {};
+      var ns = pyodide.toPy({ text: String(config.netText || 'Python has no network sockets ({api})').replace('{api}', 'sockets') });
+      try { pyodide.runPython(NO_SOCKETS, { globals: ns }); } finally { ns.destroy(); }
+    }
 
     // When pyodide.js reaches for its glue with import() (Pyodide 314 ships an ES module, pyodide.asm.mjs; the 0.29 line loads
     // the classic pyodide.asm.js with importScripts through the shim and only falls back to import()), the shim serves the text
@@ -102,6 +118,7 @@
           });
         }).then(function (py) {
           pyodide = py;
+          blockSockets();
           if (msg.interrupt) pyodide.setInterruptBuffer(msg.interrupt);
           // The startup wheels (shipped as assets) are installed now; dataspatium.py imports pandas.
           return pyodide.loadPackage(msg.packages || [], { messageCallback: quiet, errorCallback: quiet });
@@ -145,7 +162,9 @@
 
     self.onmessage = function (ev) {
       var msg = ev.data || {};
-      if (msg.type === 'net-reply') { var r = netPending.get(msg.id); if (r) { netPending.delete(msg.id); r(!!msg.ok); } return; }
+      // The worker shim takes the answers about the internet; one that reaches this handler was made in the worker, and an
+      // "Unknown message" result for its id would fail an unrelated request.
+      if (msg.type === 'net-reply') return;
       var fn = handlers[msg.type];
       if (!fn) { post({ type: 'result', id: msg.id, ok: false, error: 'Unknown message ' + msg.type }); return; }
       Promise.resolve().then(function () { return fn(msg); }).then(function (res) {
@@ -209,8 +228,10 @@
           initial: async () => initial,
           // A wheel the worker asks for later (an import the scanner did not see) is fetched the same way.
           request: (name) => catalog.provideFile(name),
+          // net 'fetch': the worker's fetch asks here before it reaches an address (see the top of this file).
+          net: (url) => this.allowNet(url),
         });
-        this.worker = D.workers.create({ namespace: 'pyodide', source: D.workers.functionSource(dataspatiumPythonWorker), name: 'python' });
+        this.worker = D.workers.create({ namespace: 'pyodide', source: D.workers.functionSource(dataspatiumPythonWorker), name: 'python', net: 'fetch', netText: D.t('python.net.blocked') });
         this.worker.onmessage = (ev) => this.onMessage(ev.data);
         this.worker.onerror = (ev) => this.fail(new Error('Python worker: ' + ((ev && ev.message) || 'error')));
         this.interruptible = !!(D.capabilities && D.capabilities.sharedArrayBuffer);
@@ -227,7 +248,6 @@
       onMessage(msg) {
         if (!msg || typeof msg !== 'object') return;
         if (msg.type === 'stream') { this.handlers[msg.kind === 'stderr' ? 'stderr' : 'stdout'](String(msg.text)); return; }
-        if (msg.type === 'net') { this.allowNet(msg); return; }
         if (msg.type !== 'result') return;
         const p = this.pending.get(msg.id);
         if (!p) return;
@@ -238,12 +258,17 @@
         p.reject(err);
       }
 
-      /** Python code wants the internet (micropip): allowed with the user's consent for components. */
-      async allowNet(msg) {
-        let ok = false;
-        try { await consent.require('components', { host: consent.hostOf(msg.url), label: String(msg.url) }); ok = true; }
-        catch (err) { D.log('python', 'internet access refused', msg.url, (err && err.message) || err); }
-        if (this.worker) this.worker.postMessage({ type: 'net-reply', id: msg.id, ok });
+      /**
+       * Python code wants to fetch `url` (pyfetch, micropip, js.fetch, requests through fetch): allowed with the user's consent.
+       * The worker then sends the very Request it asked about (the browser follows the server's redirects); the call shows in the
+       * network log (platform/workers), with the end and status the worker reports.
+       * @param {string} url @returns {Promise<boolean>}
+       */
+      async allowNet(url) {
+        // The one place that says which consent covers Python's internet.
+        const purpose = 'components';
+        try { await consent.require(purpose, { host: consent.hostOf(url), label: String(url) }); return true; }
+        catch (err) { D.log('python', 'internet access refused', url, (err && err.message) || err); return false; }
       }
 
       request(msg, transfer) {

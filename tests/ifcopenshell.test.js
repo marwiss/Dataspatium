@@ -36,6 +36,8 @@
     'typing-extensions': { version: '4', file_name: 'te-4.whl', sha256: 'e', depends: [], imports: ['typing_extensions'] },
     pytest: { version: '8', file_name: 'pytest-8.whl', sha256: 'f', depends: [], imports: ['pytest'] },
   } };
+  /** Walls with a FireRating and no AcousticRating, against the fixture: one requirement passes, one fails. */
+  const IDS_XML = '<?xml version="1.0" encoding="UTF-8"?>\n<ids xmlns="http://standards.buildingsmart.org/IDS" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://standards.buildingsmart.org/IDS http://standards.buildingsmart.org/IDS/1.0/ids.xsd"><info><title>Provkrav</title></info><specifications><specification name="Väggar har brandklass och ljudklass" ifcVersion="IFC4" identifier="S1"><applicability minOccurs="1" maxOccurs="unbounded"><entity><name><simpleValue>IFCWALL</simpleValue></name></entity></applicability><requirements><property dataType="IFCLABEL" cardinality="required"><propertySet><simpleValue>Pset_WallCommon</simpleValue></propertySet><baseName><simpleValue>FireRating</simpleValue></baseName></property><property dataType="IFCLABEL" cardinality="required"><propertySet><simpleValue>Pset_WallCommon</simpleValue></propertySet><baseName><simpleValue>AcousticRating</simpleValue></baseName></property></requirements></specification></specifications></ids>';
 
   test('ifcopenshell: the wheels are pinned with their digests, install in upstream\'s order after their dependencies, and dm_ifc implies the package', (assert) => {
     catalog.reset();
@@ -244,8 +246,7 @@
     const geometry = await bridge.ifcTool(meta.id, 'geometry', { ifc_class: 'IfcWall' });
     assert.ok(geometry.rows.some((r) => Number(r[3]) > 0), 'a wall has a volume: ' + JSON.stringify(geometry.rows[0]));
     // An IDS file: the walls have a FireRating but no AcousticRating, so one requirement passes and one fails.
-    const idsXml = '<?xml version="1.0" encoding="UTF-8"?>\n<ids xmlns="http://standards.buildingsmart.org/IDS" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://standards.buildingsmart.org/IDS http://standards.buildingsmart.org/IDS/1.0/ids.xsd"><info><title>Provkrav</title></info><specifications><specification name="V\u00e4ggar har brandklass och ljudklass" ifcVersion="IFC4" identifier="S1"><applicability minOccurs="1" maxOccurs="unbounded"><entity><name><simpleValue>IFCWALL</simpleValue></name></entity></applicability><requirements><property dataType="IFCLABEL" cardinality="required"><propertySet><simpleValue>Pset_WallCommon</simpleValue></propertySet><baseName><simpleValue>FireRating</simpleValue></baseName></property><property dataType="IFCLABEL" cardinality="required"><propertySet><simpleValue>Pset_WallCommon</simpleValue></propertySet><baseName><simpleValue>AcousticRating</simpleValue></baseName></property></requirements></specification></specifications></ids>';
-    await bridge.writeFile('/data/ids/prov.ids', new TextEncoder().encode(idsXml));
+    await bridge.writeFile('/data/ids/prov.ids', new TextEncoder().encode(IDS_XML));
     const checked = await bridge.ifcTool(meta.id, 'ids', { ids: '/data/ids/prov.ids' });
     assert.deepEqual(checked.columns.map((c) => c.name), ['specifikation', 'krav', 'status', 'guid', 'typ', 'namn', 'orsak']);
     assert.ok(checked.summary && checked.summary.specifications === 1 && checked.summary.checks > 0 && checked.summary.checks_fail > 0 && checked.summary.checks_pass > 0, JSON.stringify(checked.summary));
@@ -259,6 +260,48 @@
     assert.ok(ds && ds.meta.name === 'Ifckopia' && ds.meta.kind === 'model', JSON.stringify(copied.entries.map((e) => e.kind + ':' + (e.text || '').slice(0, 200))));
     created.push(ds.meta.id);
     return 'ok';
+  }, 900000);
+
+  test('ifcopenshell: the IDS check reads ids.xsd without the network, where xmlschema by itself tries www.w3.org for each W3C schema it imports', async (assert) => {
+    if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them, about 13 MB more for IfcOpenShell)';
+    const meta = await importer.run(fixture.ifcFile(), { format: 'model' }, null, 'Ifcnatlos');
+    created.push(meta.id);
+    await bridge.start();
+    await waitFor(() => bridge.state !== 'busy', 60000, 'Python free');
+    await bridge.writeFile('/data/ids/natlos.ids', new TextEncoder().encode(IDS_XML));
+    // A spy in place of Python's socket functions records every connection tried and refuses it itself, so the test reaches no
+    // server even if the block breaks; ifctester's schema is built anew, first by the app's check, then as xmlschema builds it.
+    const res = await bridge.run([
+      'import json, os, socket, xmlschema, ifctester.ids',
+      'seen = []',
+      'real = (socket.create_connection, socket.getaddrinfo, socket.socket.connect)',
+      'def spy(where):',
+      '    def wrapper(*args, **kwargs):',
+      '        seen.append("%s:%s" % tuple(where(args)[:2]))',
+      '        raise OSError("refused by the test")',
+      '    return wrapper',
+      'socket.create_connection = spy(lambda a: a[0])',
+      'socket.getaddrinfo = spy(lambda a: a)',
+      'socket.socket.connect = spy(lambda a: a[1])',
+      'try:',
+      '    ifctester.ids.schema = None',
+      '    r = dm_ifc_ids(dm_ifc("Ifcnatlos"), "/data/ids/natlos.ids")',
+      '    app = list(seen)',
+      '    del seen[:]',
+      '    xmlschema.XMLSchema(os.path.join(os.path.dirname(os.path.realpath(ifctester.ids.__file__)), "ids.xsd"))',
+      '    alone = list(seen)',
+      'finally:',
+      '    socket.create_connection, socket.getaddrinfo, socket.socket.connect = real',
+      'print(json.dumps({"app": app, "alone": alone, "allow": ifctester.ids.schema.source.allow, "checks": r.attrs["ids"]["checks"], "failed": r.attrs["ids"]["checks_fail"]}))',
+    ].join('\n'));
+    const lines = stdoutOf(res).trim().split('\n');
+    const out = JSON.parse(lines[lines.length - 1] || 'null');
+    assert.ok(out, JSON.stringify(res.entries.map((e) => (e.text || '').slice(0, 300))));
+    assert.deepEqual(out.app, [], 'the app\'s IDS check tries no connection');
+    assert.equal(out.allow, 'local', 'ifctester\'s schema reads local files only');
+    assert.ok(out.checks > 0 && out.failed > 0, 'the check runs as before: ' + JSON.stringify(out));
+    assert.deepEqual(out.alone, ['www.w3.org:80', 'www.w3.org:80', 'www.w3.org:80'], 'by itself xmlschema tries xml.xsd, XMLSchema.xsd and XMLSchema-instance on the network before its own copies');
+    return out.checks + ' checks offline';
   }, 900000);
 
   test('ifcopenshell: cleanup', async () => {

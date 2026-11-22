@@ -9,7 +9,7 @@ Dataspatium.assets.addEntries({
  "python/dataspatium.py": {
   "file": "python/dataspatium.py.js",
   "encoding": "text",
-  "size": 522687,
+  "size": 523313,
   "library": "dataspatium"
  },
  "presets/exempeldata/befolkning-kommuner-2024.csv": {
@@ -603,13 +603,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/r-guide.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 6813,
+  "size": 7152,
   "library": "dataspatium"
  },
  "docs/sv/python.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 10687,
+  "size": 12356,
   "library": "dataspatium"
  },
  "docs/sv/dokument.md": {
@@ -699,7 +699,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/sakerhet.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 25866,
+  "size": 31343,
   "library": "dataspatium"
  },
  "docs/da/kom-igang.md": {
@@ -1617,13 +1617,13 @@ Dataspatium.assets.addEntries({
  "docs/en/r-guide.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 7020,
+  "size": 7370,
   "library": "dataspatium"
  },
  "docs/en/python.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 10778,
+  "size": 12470,
   "library": "dataspatium"
  },
  "docs/en/dokument.md": {
@@ -1713,7 +1713,7 @@ Dataspatium.assets.addEntries({
  "docs/en/sakerhet.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 25851,
+  "size": 31338,
   "library": "dataspatium"
  }
 });

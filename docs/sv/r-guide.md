@@ -94,5 +94,8 @@ isländska eller engelska); kolumnnamnen i `dm_list()` är däremot alltid desam
   https) finns knappen *Avbryt*, som stoppar koden och behåller sessionen (se [faq.md](faq.md)).
 - Minnet begränsas av webbläsaren och WebAssembly; håll datamängder under några hundra megabyte i R.
 - Inmatning under körning (`readline()`, `menu()`) fungerar inte.
-- Grafikfönster, systemkommandon, nätverksanrop och filer utanför det virtuella filsystemet är inte tillgängliga.
+- Grafikfönster, systemkommandon och filer utanför det virtuella filsystemet är inte tillgängliga.
+- R har ingen internetåtkomst: `download.file()`, `url()`, `socketConnection()` och `webr::mount()` med en adress ger
+  ett fel, liksom `fetch` och XMLHttpRequest i `webr::eval_js()`, och `webr::eval_js(..., await = TRUE)` kör ingen
+  JavaScript i sidan. Hämta data under *Inhämta* och läs dem med `dm_read()`; paketen kommer från appen (se Paket).
 - Hjälpsidor finns med: `?dplyr::mutate` skriver ut hjälptexten i konsolen.

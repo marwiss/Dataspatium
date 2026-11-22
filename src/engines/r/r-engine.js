@@ -12,6 +12,12 @@
  * Channel: PostMessage on file:// (no SharedArrayBuffer there), so running R code cannot be interrupted and the
  * engine must be restarted instead. Served from a web server, the page is cross-origin isolated (see src/boot.js
  * and sw-coi.js) and the SharedArrayBuffer channel is used, which lets interrupt() stop running code.
+ *
+ * R has no internet access: its worker shim runs with net 'none' (download.file, url(), webr::mount with an address and
+ * socketConnection fail, and so do fetch and XMLHttpRequest from webr::eval_js), and packages come from the embedded repository
+ * or, after consent, through engines/r/remote-packages on this thread. webR's main thread would open WebSockets and workers for
+ * its worker's proxies and evaluate webr::eval_js(await = TRUE) here; `screen` refuses those messages, also when JavaScript run in
+ * the worker posts them itself.
  */
 (function () {
   'use strict';
@@ -26,6 +32,39 @@
     const STARTUP_PACKAGES = ['DBI', 'RSQLite'];
     /** Where packages for the worker are written when it cannot take messages (see ensurePackages). */
     const FS_ASSETS = '/dataspatium-assets';
+    /** The last webR messages refused by screen(), oldest first (for the log and the tests). */
+    const refused = [];
+
+    /**
+     * Messages from R's worker that webR's main thread must not act on: a proxied WebSocket or worker would be opened here, past
+     * the worker's net 'none', and eval-await would run the code in the page; that one is answered with an error instead, since
+     * the worker waits for the answer. A request the PostMessage channel cannot take would only fail here.
+     * @param {any} data @param {boolean} sharedChannel
+     */
+    function screen(data, sharedChannel) {
+      if (!data || typeof data !== 'object' || !data.data) return true;
+      const what = data.type === 'system' ? data.data.type : data.type === 'sync-request' && data.data.msg ? data.data.msg.type : null;
+      if (what === 'proxyWebSocket' || what === 'proxyWorker' || what === 'post-message-worker' || (data.type === 'sync-request' && !sharedChannel)) {
+        refused.push(String(what || data.type));
+        if (refused.length > 20) refused.shift();
+        D.log('r', 'refused a message from the worker', what || data.type);
+        return false;
+      }
+      if (what === 'eval-await') {
+        refused.push(what);
+        if (refused.length > 20) refused.shift();
+        data.data.msg.data = 'throw new Error(' + JSON.stringify(D.t('r.js.blocked')) + ')';
+      }
+      return true;
+    }
+
+    /**
+     * What R's worker may ask for later: webR's own assets and its package repository. JavaScript run from R can post its own
+     * asset requests, and another engine's assets are not for it (Python's runtime and wheels are held in memory once, and a
+     * transfer takes them, which stalled Python's start).
+     * @param {any} name
+     */
+    function ownAsset(name) { return typeof name === 'string' && (name.startsWith('webr/') || name.startsWith('webr-repo/')); }
 
     class REngine {
       constructor() {
@@ -60,7 +99,7 @@
         const t0 = performance.now();
         D.net.virtual('webr/webr-worker.js', async () => ({
           kind: 'text',
-          data: D.workerShim.buildWorkerSource({ namespace: 'webr' }, await D.assets.loadText('webr/webr-worker.js')),
+          data: D.workerShim.buildWorkerSource({ namespace: 'webr', net: 'none', netText: D.t('r.net.blocked') }, await D.assets.loadText('webr/webr-worker.js')),
         }));
         await packages.load();
         // Startup payload: the R runtime, the package index and the packages the helpers need. Other
@@ -68,13 +107,15 @@
         // synchronous XHR inside the worker, which cannot wait for the main thread.
         const startupRepo = D.assets.names('webr-repo/').filter((n) => /\/PACKAGES(\.gz)?$/.test(n)).concat(packages.assetsFor(packages.closure(STARTUP_PACKAGES)));
         for (const n of startupRepo) this.shippedAssets.add(n);
+        this.interruptible = !!(D.capabilities && D.capabilities.sharedArrayBuffer);
+        const sharedChannel = this.interruptible;
         D.workers.provider('webr', {
           initial: async () => D.assets.names('webr/').filter((n) => !MAIN_THREAD_ONLY.has(n)).concat(startupRepo),
-          request: async () => true,
+          request: async (name) => ownAsset(name),
+          screen: (data) => screen(data, sharedChannel),
         });
         this.module = await D.assets.importModule('webr/webr.mjs');
         const { WebR, ChannelType } = this.module;
-        this.interruptible = !!(D.capabilities && D.capabilities.sharedArrayBuffer);
         this.webR = new WebR({ baseUrl: BASE_URL, repoUrl: REPO_URL, channelType: this.interruptible ? ChannelType.SharedArrayBuffer : ChannelType.PostMessage, interactive: true });
         await this.webR.init();
         // Plots go to the canvas device; images arrive as `canvas` messages in pump(). r/dataspatium.R
@@ -214,6 +255,6 @@
         this.webR = null; this.ready = null;
       }
     }
-    return { REngine };
+    return { REngine, screen, ownAsset, refused: () => refused.slice() };
   });
 })();

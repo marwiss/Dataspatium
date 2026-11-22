@@ -79,6 +79,70 @@
     return 'stopped after ' + Math.round(res.ms) + ' ms';
   }, 120000);
 
+  test('r: webR\'s main thread opens no WebSocket or worker for R\'s worker and runs none of its JavaScript', (assert) => {
+    const { screen } = D.require('engines/r');
+    const sys = (type) => ({ type: 'system', data: { type, data: { uuid: 'u', url: 'ws://127.0.0.1:9/', protocol: '' } } });
+    const req = (type, data) => ({ type: 'sync-request', data: { msg: { type, data }, reqData: {} } });
+    for (const shared of [true, false]) {
+      assert.equal(screen(sys('proxyWebSocket'), shared), false, 'a proxied WebSocket is dropped');
+      assert.equal(screen(sys('proxyWorker'), shared), false, 'a proxied worker is dropped');
+      assert.equal(screen(sys('console.log'), shared), true, 'other system messages pass');
+      assert.equal(screen({ type: 'stdout', data: 'x' }, shared), true, 'output passes');
+    }
+    const evalAwait = req('eval-await', 'fetch("http://127.0.0.1:9/")');
+    assert.equal(screen(evalAwait, true), true, 'eval-await is answered, since the worker waits');
+    assert.equal(evalAwait.data.msg.data, 'throw new Error(' + JSON.stringify(D.t('r.js.blocked')) + ')', 'with an error instead of the code');
+    assert.equal(screen(req('read'), true), true, 'a read passes on the SharedArrayBuffer channel');
+    assert.equal(screen(req('post-message-worker'), true), false, 'a message to a proxied worker is dropped');
+    assert.equal(screen(req('read'), false), false, 'the PostMessage channel takes no sync-request');
+    return 'ok';
+  });
+
+  test('r: R\'s worker gets only webR\'s own assets when it asks, not Python\'s runtime or wheels', (assert) => {
+    const { ownAsset } = D.require('engines/r');
+    for (const name of ['webr/R.wasm', 'webr/libRblas.so', 'webr-repo/bin/emscripten/contrib/4.5/PACKAGES']) assert.ok(ownAsset(name), name + ' is webR\'s');
+    for (const name of ['pyodide/pyodide.asm.wasm', 'pyodide/numpy-2.2.5-cp313-cp313-pyodide_2025_0_wasm32.whl', 'sqljs/sql-wasm.wasm', 'webrfoo/x', '', null, {}]) {
+      assert.ok(!ownAsset(name), JSON.stringify(name) + ' is not');
+    }
+    return 'ok';
+  });
+
+  test('r: R has no internet access: download.file, url(), webr::mount and socketConnection fail; in eval_js WebSocket, Worker, EventSource, IndexedDB and the navigator\'s storage, storageBuckets, locks and serviceWorker are gone, and fetch, XMLHttpRequest and Cache.add are refused, also for a Request with its own url and the fetch on WorkerGlobalScope.prototype; a posted proxyWebSocket is dropped', async (assert) => {
+    await bridge.start();
+    // Port 9 on this computer, which browsers refuse anyway: even a broken block reaches no server.
+    const res = await bridge.run([
+      'dm_probe <- function(expr) tryCatch(withCallingHandlers({ force(expr); "no error" }, warning = function(w) invokeRestart("muffleWarning")), error = function(e) paste("error:", conditionMessage(e)))',
+      'dir.create("/dm-mount", showWarnings = FALSE)',
+      'res <- c(',
+      '  download = dm_probe(download.file("http://127.0.0.1:9/dm.csv", tempfile(), quiet = TRUE)),',
+      '  url = dm_probe(readLines(url("http://127.0.0.1:9/dm.txt"))),',
+      '  mount = dm_probe(webr::mount("/dm-mount", "http://127.0.0.1:9/dm.data")),',
+      '  socket = dm_probe(socketConnection("127.0.0.1", 9, open = "r+b", blocking = TRUE, timeout = 1)),',
+      '  await = dm_probe(webr::eval_js("1", await = TRUE)),',
+      '  types = webr::eval_js("[typeof WebSocket, typeof WebSocketStream, typeof WebTransport, typeof EventSource, typeof Worker, typeof SharedWorker, typeof BroadcastChannel, typeof Notification, typeof caches, typeof indexedDB, typeof navigator.storage, typeof navigator.storageBuckets, typeof navigator.locks, typeof navigator.serviceWorker].join(\' \')"),',
+      '  nav = webr::eval_js("[typeof navigator.userAgent, Object.isFrozen(navigator), typeof Cache === \'function\'].join(\' \')"),',
+      '  xhr = webr::eval_js("(function () { try { var x = new XMLHttpRequest(); x.open(\'GET\', \'http://127.0.0.1:9/xhr\', false); x.send(); return \'sent\'; } catch (e) { return e.message; } })()"),',
+      '  refused = webr::eval_js("(function () { var none = function () {}; fetch(\'http://127.0.0.1:9/fetch\').catch(none); fetch(Object.defineProperty(new Request(\'http://127.0.0.1:9/dressed\'), \'url\', { value: \'blob:x\' })).catch(none); (WorkerGlobalScope.prototype.fetch || fetch).call(self, \'http://127.0.0.1:9/proto\').catch(none); if (typeof Cache === \'function\') Cache.prototype.add.call(Object.create(Cache.prototype), \'http://127.0.0.1:9/cache\').catch(none); return __dataspatium.refused().map(function (r) { return r.api + \' \' + r.url; }).join(\'|\'); })()"),',
+      '  post = webr::eval_js("(function () { postMessage({ type: \'system\', data: { type: \'proxyWebSocket\', data: { uuid: \'dm-probe\', url: \'ws://127.0.0.1:9/\', protocol: \'\' } } }); return \'posted\'; })()")',
+      ')',
+      'cat(paste0(names(res), "=", gsub("[\\r\\n]+", " ", res), collapse = "\\n"))',
+    ].join('\n'));
+    const out = {};
+    for (const line of stdoutOf(res).split('\n')) { const i = line.indexOf('='); if (i > 0) out[line.slice(0, i)] = line.slice(i + 1); }
+    assert.ok(Object.keys(out).length === 10, JSON.stringify(res.entries.map((e) => e.kind + ':' + (e.text || '').slice(0, 200))));
+    for (const key of ['download', 'url', 'mount', 'socket', 'await']) assert.ok(/^error:/.test(out[key]), key + ' fails with an R error: ' + out[key]);
+    assert.equal(out.types, Array(14).fill('undefined').join(' '), 'no sockets, streams, workers, notifications, caches, IndexedDB or BroadcastChannel, and no storage, storageBuckets, locks or serviceWorker on the navigator in R\'s worker');
+    assert.ok(/^string true (true|false)$/.test(out.nav), 'the navigator is a frozen copy that keeps its userAgent: ' + out.nav);
+    assert.equal(out.xhr, D.t('r.net.blocked'), 'XMLHttpRequest from eval_js is refused with the message');
+    const refusedHere = out.refused.split('|');
+    for (const want of ['XMLHttpRequest http://127.0.0.1:9/dm.csv', 'XMLHttpRequest http://127.0.0.1:9/dm.txt', 'XMLHttpRequest http://127.0.0.1:9/dm.js.metadata', 'XMLHttpRequest http://127.0.0.1:9/xhr', 'fetch http://127.0.0.1:9/fetch', 'fetch http://127.0.0.1:9/dressed', 'fetch http://127.0.0.1:9/proto'].concat(/true$/.test(out.nav) ? ['Cache.add http://127.0.0.1:9/cache'] : [])) {
+      assert.ok(refusedHere.includes(want), 'the worker shim refused ' + want + ': ' + out.refused);
+    }
+    const dropped = D.require('engines/r').refused();
+    assert.ok(out.post === 'posted' && dropped[dropped.length - 1] === 'proxyWebSocket', 'the main thread dropped the proxyWebSocket the worker posted, last of all: ' + dropped.join(', '));
+    return 'refused in the worker: ' + refusedHere.length;
+  }, 120000);
+
   test('r: cleanup', async (assert) => {
     for (const id of created) await datasets.remove(id);
     assert.ok(true);

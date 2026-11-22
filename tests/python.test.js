@@ -16,7 +16,30 @@
   const notebooks = D.require('analysis/notebooks');
   const created = [];
   const stdoutOf = (res) => res.entries.filter((e) => e.kind === 'stdout').map((e) => e.text).join('');
+  /** The JSON a run printed last; throws with the console entries when there is none. */
+  const lastJson = (res) => {
+    const lines = stdoutOf(res).trim().split('\n');
+    try { return JSON.parse(lines[lines.length - 1]); } catch (_e) { throw new Error('no JSON printed: ' + JSON.stringify(res.entries.map((e) => (e.text || '').slice(0, 300)))); }
+  };
   const wantReal = () => { try { return new URLSearchParams(location.search).get('python') === '1'; } catch (_e) { return false; } };
+  /** Run with the developer override off (the test page turns it on so that no dialog blocks the suite), as in consent.test.js. */
+  async function withoutOverride(fn) {
+    const saved = localStorage.getItem('dataspatium.consent');
+    localStorage.removeItem('dataspatium.consent');
+    try { return await fn(); } finally { if (saved !== null) localStorage.setItem('dataspatium.consent', saved); }
+  }
+  /** With the override off and components not yet answered, every question goes to `asker`; all is put back afterwards. */
+  async function withAsker(asker, fn) {
+    const consent = D.require('platform/consent');
+    return withoutOverride(async () => {
+      const before = await consent.state('components');
+      try {
+        await consent.set('components', null);
+        consent.setAsker(asker);
+        return await fn();
+      } finally { consent.setAsker(null); await consent.set('components', before); }
+    });
+  }
   let real = false;
 
   test('python: the catalog maps imports to Pyodide packages and follows the lock', (assert) => {
@@ -207,6 +230,239 @@
     }
     return `${bridge.version}; startup ${Math.round(bridge.startupMs)} ms${memory}`;
   }, 900000);
+
+  test('python: Python opens no sockets: its socket functions name pyfetch, a socket past them finds no WebSocket in the emulation, and pyfetch still reads', async (assert) => {
+    if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them from jsDelivr)';
+    await bridge.start();
+    // Emscripten's socket emulation would make each connection a WebSocket to ws://host:port/. The addresses are the discard port
+    // on this computer and a name that never resolves, so even a broken block reaches no server.
+    const res = await bridge.run([
+      'import errno, json, socket, _socket, urllib.request, js, pyodide.http',
+      'def tried(call):',
+      '    try:',
+      '        call()',
+      '    except OSError as e:',
+      '        return [type(e).__name__, e.errno, str(e)]',
+      '    return None',
+      'def raw(kind, call):',
+      '    s = _socket.socket(_socket.AF_INET, kind)',
+      '    try:',
+      '        return tried(lambda: call(s))',
+      '    finally:',
+      '        s.close()',
+      'out = {',
+      '    "create_connection": tried(lambda: socket.create_connection(("127.0.0.1", 9), timeout=1)),',
+      '    "getaddrinfo": tried(lambda: socket.getaddrinfo("dataspatium.invalid", 443)),',
+      '    "connect": tried(lambda: socket.socket().connect(("127.0.0.1", 9))),',
+      '    "urlopen": tried(lambda: urllib.request.urlopen("http://127.0.0.1:9/", timeout=1)),',
+      '    "raw": raw(_socket.SOCK_STREAM, lambda s: s.connect(("127.0.0.1", 9))),',
+      '    "udp": raw(_socket.SOCK_DGRAM, lambda s: s.sendto(b"x", ("127.0.0.1", 9))),',
+      '    "unreachable": errno.EHOSTUNREACH,',
+      '    "js": [n for n in ("WebSocket", "WebTransport") if getattr(js, n, None) is not None],',
+      '}',
+      'r = await pyodide.http.pyfetch("dataspatium-asset://pyodide/pyodide-lock.json")',
+      'out["pyfetch"] = [r.status, len(await r.bytes()) > 1000]',
+      'print(json.dumps(out))',
+    ].join('\n'));
+    const lines = stdoutOf(res).trim().split('\n');
+    const out = JSON.parse(lines[lines.length - 1] || 'null');
+    assert.ok(out, JSON.stringify(res.entries.map((e) => (e.text || '').slice(0, 300))));
+    const said = D.t('python.net.blocked', { api: 'sockets' });
+    for (const key of ['create_connection', 'getaddrinfo', 'connect', 'urlopen']) {
+      assert.ok(out[key] && out[key][2].includes(said), key + ' says why in the app\'s language: ' + JSON.stringify(out[key]));
+    }
+    for (const key of ['raw', 'udp']) assert.ok(out[key] && out[key][1] === out.unreachable, key + ' past the patches fails in the emulation, which has no WebSocket: ' + JSON.stringify(out[key]));
+    assert.deepEqual(out.js, [], 'no WebSocket or WebTransport for Python code');
+    assert.deepEqual(out.pyfetch, [200, true], 'pyfetch reads through the app\'s gate');
+    return 'blocked: ' + out.create_connection[0] + ', ' + out.urlopen[0] + ', _socket errno ' + out.raw[1];
+  }, 300000);
+
+  test('python: Python reaches the internet through fetch only: open_url, pyxhr, XMLHttpRequest, importScripts and Cache.add are refused with the message, EventSource, caches, IndexedDB, BroadcastChannel and the navigator\'s storage, storageBuckets, locks and serviceWorker are gone, Worker starts nothing, and pyfetch still reads an asset', async (assert) => {
+    if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them from jsDelivr)';
+    await bridge.start();
+    // Port 9 on this computer, which browsers refuse anyway: even a broken block reaches no server.
+    const res = await bridge.run([
+      'import json, js, pyodide.code, pyodide.http',
+      'from pyodide.http import pyxhr',
+      'def refused(call):',
+      '    try:',
+      '        call()',
+      '    except Exception as e:',
+      '        return [type(e).__name__, str(e), str(e.__cause__) if e.__cause__ else ""]',
+      '    return None',
+      'def xhr(asynchronous):',
+      '    x = js.XMLHttpRequest.new()',
+      '    x.open("GET", "http://127.0.0.1:9/", asynchronous)',
+      '    x.send()',
+      'out = {',
+      '    "open_url": refused(lambda: pyodide.http.open_url("http://127.0.0.1:9/")),',
+      '    "pyxhr": refused(lambda: pyxhr.get("http://127.0.0.1:9/")),',
+      '    "sync": refused(lambda: xhr(False)),',
+      '    "async": refused(lambda: xhr(True)),',
+      '    "importScripts": refused(lambda: js.importScripts("http://127.0.0.1:9/x.js")),',
+      '    "gone": [n for n in ("WebSocket", "WebSocketStream", "WebTransport", "EventSource", "BroadcastChannel", "Notification", "caches", "indexedDB") if getattr(js, n, None) is not None],',
+      '    "storage": getattr(js.navigator, "storage", None) is None,',
+      '}',
+      'out["nav"] = pyodide.code.run_js("[typeof navigator.userAgent, typeof navigator.storage, typeof navigator.storageBuckets, typeof navigator.locks, typeof navigator.serviceWorker, Object.isFrozen(navigator)].join(\' \')")',
+      'out["cache"] = await pyodide.code.run_js("Promise.resolve(typeof Cache !== \'function\' ? \'no Cache\' : Cache.prototype.add.call(Object.create(Cache.prototype), \'http://127.0.0.1:9/cache\').then(function () { return \'added\'; }, function (e) { return e.message; }))")',
+      'w = js.Worker.new("http://127.0.0.1:9/w.js")',
+      'w.postMessage("hi")',
+      'out["worker"] = pyodide.code.run_js("[typeof Worker, typeof SharedWorker, /native code/.test(String(Worker)), __dataspatium.refused().some(function (r) { return r.api === \'Worker\' && r.url === \'http://127.0.0.1:9/w.js\'; })].join(\' \')")',
+      'r = await pyodide.http.pyfetch("dataspatium-asset://pyodide/pyodide-lock.json")',
+      'out["pyfetch"] = [r.status, len(await r.bytes()) > 1000]',
+      'print(json.dumps(out))',
+    ].join('\n'));
+    const out = lastJson(res);
+    const xhrText = D.t('python.net.blocked', { api: 'XMLHttpRequest' });
+    for (const key of ['open_url', 'sync', 'async']) assert.ok(out[key] && out[key][1].includes(xhrText), key + ': ' + JSON.stringify(out[key]));
+    assert.ok(out.pyxhr && out.pyxhr[0] === 'XHRNetworkError' && out.pyxhr[2].includes(xhrText), 'pyxhr turns the refusal into its network error: ' + JSON.stringify(out.pyxhr));
+    assert.ok(out.importScripts && out.importScripts[1].includes(D.t('python.net.blocked', { api: 'importScripts' })), JSON.stringify(out.importScripts));
+    assert.deepEqual(out.gone, [], 'no sockets, streams, notifications, caches, IndexedDB or BroadcastChannel for Python code');
+    assert.equal(out.storage, true, 'no navigator.storage');
+    assert.equal(out.nav, 'string undefined undefined undefined undefined true', 'the navigator is a frozen copy that keeps its userAgent and has no storage, storageBuckets, locks or serviceWorker');
+    assert.ok(out.cache === 'no Cache' || out.cache === D.t('python.net.blocked', { api: 'Cache.add' }), 'Cache.add is refused with the message: ' + out.cache);
+    assert.equal(out.worker, 'function function false true', 'Worker and SharedWorker are stand-ins: the worker was refused with its address and started nothing');
+    assert.deepEqual(out.pyfetch, [200, true], 'pyfetch of an asset still works');
+    return 'refused: ' + ['open_url', 'pyxhr', 'sync', 'async', 'importScripts'].map((k) => out[k][0]).join(', ');
+  }, 300000);
+
+  test('python: urllib3 and requests import, also from a web server, where urllib3 finds a Worker that starts nothing; requests reaches the internet through fetch only in console code in a browser with JSPI, and otherwise, as in a recipe step, through XMLHttpRequest, which is refused', async (assert) => {
+    // Only with ?python=1 or with every wheel already cached: the wheels of requests and urllib3 come from jsDelivr.
+    if (!wantReal() && !(await catalog.cachedPackages(['requests', 'urllib3']))) return 'skipped: requests and urllib3 not cached (open the page with ?python=1 to fetch them from jsDelivr)';
+    await bridge.start();
+    const t0 = Date.now();
+    // Port 9 on this computer, which browsers refuse anyway: even a broken block reaches no server. The test page allows the
+    // internet for components, so with JSPI the request passes the consent and the browser refuses it.
+    const res = await bridge.run([
+      'import json, js, pyodide.code, pyodide.ffi',
+      'import urllib3, requests',
+      'from urllib3.contrib.emscripten import fetch as u3fetch',
+      'out = {"isolated": bool(getattr(js, "crossOriginIsolated", False)), "fetcher": u3fetch._fetcher is not None, "streaming": u3fetch.streaming_ready(), "jspi": bool(pyodide.ffi.can_run_sync())}',
+      'if u3fetch._fetcher is not None:',
+      '    try:',
+      '        await u3fetch.wait_for_streaming_ready()',
+      '        out["ready"] = "ready"',
+      '    except Exception as e:',
+      '        out["ready"] = type(e).__name__',
+      'try:',
+      '    requests.get("http://127.0.0.1:9/requests", timeout=5)',
+      '    out["get"] = None',
+      'except Exception as e:',
+      '    out["get"] = [type(e).__name__, str(e)]',
+      'out["refused"] = pyodide.code.run_js("__dataspatium.refused().map(function (r) { return r.api; }).join(\' \')")',
+      'print(json.dumps(out))',
+    ].join('\n'));
+    const out = lastJson(res);
+    if (out.isolated) {
+      assert.ok(out.fetcher && out.streaming === false, 'served (cross-origin isolated): urllib3 built its streaming fetcher on the stand-in, which never gets ready: ' + JSON.stringify(out));
+      assert.ok(out.ready && out.ready !== 'ready', 'waiting for it fails instead of hanging: ' + out.ready);
+      assert.ok(out.refused.split(' ').includes('Worker'), 'the stand-in refused the worker: ' + out.refused);
+    } else {
+      assert.equal(out.fetcher, false, 'not isolated (file://): urllib3 builds no streaming fetcher');
+    }
+    assert.ok(out.get && out.get[0] === 'ConnectionError', 'the request fails: ' + JSON.stringify(out.get));
+    const logged = D.net.log().filter((e) => e.at >= t0 && e.url === 'http://127.0.0.1:9/requests');
+    if (out.jspi) {
+      assert.ok(logged.length === 1 && logged[0].status === 'error', 'with JSPI requests went through the worker\'s fetch, past the consent, and is in the network log: ' + JSON.stringify(logged));
+      assert.ok(!out.get[1].includes(D.t('python.net.blocked', { api: 'XMLHttpRequest' })), 'and not through XMLHttpRequest');
+    } else {
+      assert.ok(out.get[1].includes(D.t('python.net.blocked', { api: 'XMLHttpRequest' })), 'without JSPI requests used XMLHttpRequest, refused with the message: ' + out.get[1]);
+      assert.equal(logged.length, 0, 'nothing went out');
+    }
+    // Recipe and model steps run synchronously (the worker's eval, Pyodide's runPython): there is no JSPI there, in any browser.
+    const step = await bridge.engine.evalJson([
+      'import json, pyodide.ffi, requests',
+      'def _dm_probe_step():',
+      '    try:',
+      '        requests.get("http://127.0.0.1:9/step", timeout=5)',
+      '        return None',
+      '    except Exception as e:',
+      '        return str(e)',
+      'json.dumps([bool(pyodide.ffi.can_run_sync()), _dm_probe_step()])',
+    ].join('\n'));
+    assert.ok(step && step[0] === false && String(step[1]).includes(D.t('python.net.blocked', { api: 'XMLHttpRequest' })), 'a synchronous step has no JSPI, so requests uses XMLHttpRequest and is refused: ' + JSON.stringify(step));
+    assert.ok(!D.net.log().some((e) => e.at >= t0 && e.url === 'http://127.0.0.1:9/step'), 'and nothing went out from the step');
+    return (out.isolated ? 'isolated' : 'not isolated') + ', ' + (out.jspi ? 'JSPI: fetch' : 'no JSPI: XMLHttpRequest') + '; step: XMLHttpRequest';
+  }, 300000);
+
+  test('python: pyfetch to the internet asks for consent for components with the host, is refused when the person says no, and shows in the network log when allowed', async (assert) => {
+    if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them from jsDelivr)';
+    await bridge.start();
+    // Port 9 on this computer, which browsers refuse anyway: even a broken gate reaches no server.
+    const probe = async (url) => lastJson(await bridge.run([
+      'import json, pyodide.http',
+      'try:',
+      '    await pyodide.http.pyfetch(' + JSON.stringify(url) + ')',
+      '    out = None',
+      'except Exception as e:',
+      '    out = [type(e).__name__, str(e)]',
+      'print(json.dumps(out))',
+    ].join('\n')));
+    const asked = [];
+    let allow = false;
+    const t0 = Date.now();
+    const out = await withAsker(async (purpose, info) => { asked.push([purpose, info.host, info.label]); return { allow, remember: false }; }, async () => {
+      const refused = await probe('http://127.0.0.1:9/');
+      allow = true;
+      const allowed = await probe('http://127.0.0.1:9/allowed');
+      return { refused, allowed };
+    });
+    assert.ok(out.refused && out.refused[0] === 'AbortError' && out.refused[1].includes('internet access was not allowed for http://127.0.0.1:9/'), 'refused at the gate: ' + JSON.stringify(out.refused));
+    assert.deepEqual(asked, [['components', '127.0.0.1:9', 'http://127.0.0.1:9/'], ['components', '127.0.0.1:9', 'http://127.0.0.1:9/allowed']], 'the person was asked for components, with the host and the address');
+    assert.ok(out.allowed && out.allowed[0] === 'AbortError' && !out.allowed[1].includes('not allowed'), 'once allowed the request went to the browser, which refuses port 9: ' + JSON.stringify(out.allowed));
+    const logged = D.net.log().filter((e) => e.at >= t0 && e.url.startsWith('http://127.0.0.1:9/'));
+    assert.deepEqual(logged.map((e) => [e.method, e.url, e.status]), [['GET', 'http://127.0.0.1:9/allowed', 'error']], 'only the allowed call is in the network log, ended');
+    return 'refused, then allowed: ' + out.allowed[1].slice(0, 60);
+  }, 300000);
+
+  test('python: code in the worker cannot answer its own question about the internet: answers forged through onmessage, dispatchEvent and a MessageChannel, and questions posted for another address, let no fetch through', async (assert) => {
+    if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them from jsDelivr)';
+    await bridge.start();
+    const target = 'http://127.0.0.1:9/forged';
+    const decoy = 'http://127.0.0.1:9/decoy';
+    const asked = [];
+    const t0 = Date.now();
+    const active = D.net.active;
+    // The person allows the decoy and nothing else; the answer about the target waits, so that every forgery lands first.
+    const out = await withAsker(async (purpose, info) => {
+      asked.push(info.label);
+      if (info.label === target) await new Promise((r) => setTimeout(r, 300));
+      return { allow: info.label === decoy, remember: false };
+    }, async () => lastJson(await bridge.run([
+      'import json, pyodide.code',
+      'p = pyodide.code.run_js("""(function () {',
+      '  var target = ' + JSON.stringify(target) + ', decoy = ' + JSON.stringify(decoy) + ';',
+      '  var question = fetch(target);',
+      '  var channel = new MessageChannel();',
+      '  channel.port2.onmessage = function (e) { self.__dmTrusted = e.isTrusted; setTimeout(function () { self.dispatchEvent(e); }, 0); };',
+      '  for (var id = 1; id <= 40; id++) {',
+      '    var forged = { __dm: true, type: "net-reply", id: id, url: target, ok: true, ticket: 1 };',
+      '    self.onmessage({ data: { type: "net-reply", id: id, ok: true } });',
+      '    self.onmessage({ data: forged });',
+      '    self.dispatchEvent(new MessageEvent("message", { data: forged }));',
+      '    channel.port1.postMessage(forged);',
+      '    self.postMessage({ __dm: true, type: "net", id: id, url: decoy });',
+      '  }',
+      '  return question;',
+      '})()""")',
+      'try:',
+      '    await p',
+      '    out = ["fetched"]',
+      'except Exception as e:',
+      '    out = [str(e)]',
+      'out.append(pyodide.code.run_js("self.__dmTrusted === true"))',
+      'print(json.dumps(out))',
+    ].join('\n'))));
+    assert.ok(out[0].includes('internet access was not allowed for ' + target), 'the fetch was refused: ' + out[0]);
+    assert.equal(out[1], true, 'the MessageChannel gave the worker trusted events, which it dispatched to itself');
+    assert.equal(asked.filter((u) => u === target).length, 1, 'the person was asked about the target once');
+    assert.equal(asked.filter((u) => u === decoy).length, 40, 'the questions the worker posted itself were asked about the decoy, not the target');
+    assert.ok(!D.net.log().some((e) => e.at >= t0 && e.url === target), 'the target is not in the network log');
+    const t1 = performance.now();
+    while (D.net.active !== active && performance.now() - t1 < 3000) await new Promise((r) => setTimeout(r, 30));
+    assert.equal(D.net.active, active, 'the allowed decoy questions left nothing open in the network log');
+    return 'refused; asked ' + asked.length;
+  }, 300000);
 
   test('python: running code stops with interrupt() when the page is cross-origin isolated (from a web server)', async (assert) => {
     if (!real) return 'skipped: Pyodide not started in this run';

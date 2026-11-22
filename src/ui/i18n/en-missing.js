@@ -10,6 +10,9 @@
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('i18n/en-missing', [], () => ({
+    'r.net.blocked': 'R in Dataspatium has no internet access; bring data in under Import.',
+    'r.js.blocked': 'R in Dataspatium does not run JavaScript in the page (webr::eval_js with await = TRUE).',
+    'python.net.blocked': 'Python in Dataspatium does not reach the internet through {api}; fetch with pyodide.http.pyfetch, which asks for consent.',
     'datasets.kind.raster': 'Raster',
     'datasets.picture.raster': 'The raster at a small size',
     'raster.files.n': '{n} rasters',

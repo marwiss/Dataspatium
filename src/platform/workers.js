@@ -6,8 +6,9 @@
  * Replaces the global `Worker` with a subclass that (a) filters the shim's control messages
  * (`__dm: true`) out of the message stream the hosted code sees, and (b) answers them: on `hello`
  * it sends the assets registered for the worker's namespace, on `asset-request` it loads and sends a
- * single asset. Third-party code that creates workers itself (webR) therefore gets the shim's
- * services without knowing about Dataspatium.
+ * single asset, and on `net` (a worker under net 'fetch') the namespace's provider decides whether the
+ * worker may fetch an address. Third-party code that creates workers itself (webR) therefore gets the
+ * shim's services without knowing about Dataspatium.
  *
  * `Dataspatium.workers.create()` builds Dataspatium's own Blob workers from a standalone function.
  */
@@ -15,10 +16,17 @@
   'use strict';
   const D = globalThis.Dataspatium;
   const RealWorker = globalThis.Worker;
-  /** @type {Map<string, {initial?: () => Promise<any[]>, request?: (name: string) => Promise<boolean>}>} */
+  /**
+   * Per namespace: the assets sent on hello, how misses are handled, `screen`, which sees every message the worker sends to the
+   * hosted code on this thread and drops it by returning false (it may also change it), and `net`, which decides whether a worker
+   * under net 'fetch' may fetch an address (true lets it go out; without `net` nothing does).
+   * @type {Map<string, {initial?: () => Promise<any[]>, request?: (name: string) => Promise<boolean>, screen?: (data: any) => boolean, net?: (url: string) => Promise<boolean>}>}
+   */
   const providers = new Map();
   const live = new Set();
   const CHUNK = 16;
+  /** Numbers the allowed internet calls of workers, so that each one's end can close its entry in the network log. */
+  let tickets = 0;
 
   /**
    * Turn asset names (or ready-made entries) into transferable entries.
@@ -58,6 +66,8 @@
 
   async function handleControl(worker, msg) {
     if (msg.type === 'hello') {
+      // The first hello names the worker; code running in it cannot rename it later to get past its namespace's screen.
+      if (worker.dmNamespace !== null) return;
       worker.dmNamespace = msg.namespace;
       const provider = providers.get(msg.namespace);
       let items = [];
@@ -72,14 +82,38 @@
         await sendAssets(worker, items.slice(i, i + CHUNK), i + CHUNK >= items.length);
       }
     } else if (msg.type === 'asset-request') {
+      // A worker gets what its provider's `request` allows, or else its own namespace's assets: another engine's are not for it
+      // (Python's runtime and wheels are held in memory once, and a transfer takes them).
+      if (typeof msg.name !== 'string') return;
       const provider = providers.get(worker.dmNamespace);
       try {
-        if (provider && provider.request && (await provider.request(msg.name)) === false) throw new Error('refused by provider');
+        const allowed = provider && provider.request ? (await provider.request(msg.name)) !== false : msg.name.startsWith(worker.dmNamespace + '/');
+        if (!allowed) throw new Error('refused by provider');
         await sendAssets(worker, [msg.name], false);
       } catch (err) {
         D.log('workers', 'asset missing', msg.name, err);
         rawPost(worker, { __dm: true, type: 'asset-missing', name: msg.name });
       }
+    } else if (msg.type === 'net') {
+      // The answer names the address: code in the worker can post questions too, and one it posts for another address must not
+      // answer the shim's. Only what the shim sends is taken (a number or short string for id, a string address); anything else,
+      // such as an object that cannot be sent back, is dropped before it is asked about.
+      const id = msg.id;
+      if (!((typeof id === 'number' && Number.isFinite(id)) || (typeof id === 'string' && id.length <= 64)) || typeof msg.url !== 'string') return;
+      const provider = providers.get(worker.dmNamespace);
+      const url = msg.url;
+      let ok = false;
+      try { ok = !!(provider && provider.net) && (await provider.net(url)) === true; } catch (err) { D.log('workers', 'internet access refused', url, err); }
+      // A worker that ended while its question was open fetches nothing, so nothing is recorded for it.
+      if (!live.has(worker)) ok = false;
+      const ticket = ok ? ++tickets : null;
+      try { rawPost(worker, { __dm: true, type: 'net-reply', id, url, ok, ticket }); } catch (err) { D.log('workers', 'internet answer not delivered', url, err); return; }
+      // Recorded once the answer is on its way, in the same task, so its net-done cannot come first. The call then stays in the
+      // network log, counted as active, until the worker reports its end or ends.
+      if (ok) worker.dmNet.set(ticket, D.net.record(url, typeof msg.method === 'string' ? msg.method : 'GET'));
+    } else if (msg.type === 'net-done') {
+      const done = worker.dmNet.get(msg.ticket);
+      if (done) { worker.dmNet.delete(msg.ticket); done(msg.status); }
     }
   }
 
@@ -92,6 +126,8 @@
       this.dmHandler = null;
       /** @type {Function[]} */
       this.dmListeners = [];
+      /** @type {Map<number, (status: any) => void>} the worker's allowed internet calls still open in the network log */
+      this.dmNet = new Map();
       live.add(this);
       super.addEventListener('message', (ev) => this.dmRoute(/** @type {MessageEvent} */ (ev)));
     }
@@ -99,6 +135,8 @@
     dmRoute(ev) {
       const d = ev.data;
       if (d && d.__dm === true) { handleControl(this, d); return; }
+      const provider = this.dmNamespace === null ? null : providers.get(this.dmNamespace);
+      if (provider && provider.screen && provider.screen(d) === false) return;
       if (this.dmHandler) this.dmHandler.call(this, ev);
       for (const fn of this.dmListeners) fn.call(this, ev);
     }
@@ -113,16 +151,22 @@
       if (type === 'message') { this.dmListeners = this.dmListeners.filter((x) => x !== fn); return; }
       super.removeEventListener(type, fn, options);
     }
-    terminate() { live.delete(this); super.terminate(); }
+    terminate() {
+      live.delete(this);
+      for (const done of this.dmNet.values()) done(null);
+      this.dmNet.clear();
+      super.terminate();
+    }
   }
   globalThis.Worker = /** @type {any} */ (DataspatiumWorker);
 
   /**
-   * Create one of Dataspatium's own shimmed workers.
-   * @param {{namespace: string, source: string, name?: string}} options
+   * Create one of Dataspatium's own shimmed workers; `net` and `netText` go to the shim (see platform/worker-shim).
+   * @param {{namespace: string, source: string, name?: string, net?: 'none'|'fetch', netText?: string}} options
    */
   function create(options) {
-    const text = D.workerShim.buildWorkerSource({ namespace: options.namespace, name: options.name || options.namespace }, options.source);
+    const config = { namespace: options.namespace, name: options.name || options.namespace, net: options.net, netText: options.netText };
+    const text = D.workerShim.buildWorkerSource(config, options.source);
     const url = URL.createObjectURL(new Blob([text], { type: 'text/javascript' }));
     const worker = /** @type {any} */ (new DataspatiumWorker(url, { name: options.name || options.namespace }));
     worker.dmBlobUrl = url;
@@ -136,7 +180,7 @@
   }
 
   D.workers = {
-    /** Register which assets a namespace receives on hello, and how misses are handled. */
+    /** Register which assets a namespace receives on hello, how misses are handled, and what its messages may do here. */
     provider(namespace, provider) { providers.set(namespace, provider); },
     create,
     functionSource,

@@ -133,6 +133,22 @@ språk.
   (localhost eller https) finns knappen *Avbryt*, som stoppar koden och behåller sessionen (se [faq.md](faq.md)).
 - Minnet begränsas av webbläsaren och WebAssembly; håll datamängder under några hundra megabyte i Python.
 - Inmatning under körning (`input()`) fungerar inte, inte heller trådar, processer eller filer utanför det
-  virtuella filsystemet. Nätverksanrop från Python (till exempel `micropip` och `pyodide.http`) kräver att du
-  gett lov till komponenter.
+  virtuella filsystemet.
+- Python-kod i sin worker når internet bara genom workerns `fetch`, och appen frågar om lov för komponenter först
+  (ett sparat lov gäller alla adresser). Det gäller `pyodide.http.pyfetch`, `micropip` och `js.fetch`, och `requests`
+  och `urllib3` i kod som körs i konsolen, en anteckningsbok, ett Python-diagram, ett statistikverktyg eller ett
+  flöde, i webbläsare med JSPI (Edge, Chrome). Ett tillåtet anrop kan följa serverns omdirigeringar. Anropen syns under
+  *Hantera → Arbetsyta → Internetåtkomst*: appen antecknar adressen när anropet tillåts, men slutet och statusen
+  rapporterar workern själv, så listan är en överblick och ingen revisionslogg.
+- Sockets och XMLHttpRequest är spärrade och ger ett fel som pekar på `pyfetch`: det gäller `socket`,
+  `urllib.request` och `http.client` med http://, `pyodide.http.open_url`, `pyodide.http.pyxhr`, `js.XMLHttpRequest`,
+  `js.importScripts` med en adress, och `requests` i webbläsare utan JSPI och i *Python-steg* och *Python på
+  modellen*, som körs synkront (där kan `pyfetch` inte heller väntas in, så hämta data i konsolen eller under
+  *Inhämta* först). Med https:// stannar `urllib.request` på `unknown url type: https` och `http.client` saknar
+  `HTTPSConnection`, eftersom Pyodide laddar `ssl` först när kod importerar den; laddas `ssl` före `http.client` får
+  https samma socketfel som http://.
+- `js.WebSocket`, `js.EventSource`, `js.caches`, `js.indexedDB` och `js.BroadcastChannel` är `None` (`hasattr` ger
+  `True`), `js.Worker` startar ingen worker, och `js.navigator` är en fryst kopia av några uppgifter om webbläsaren
+  (namn, plattform, språk).
+- Figurer som Python lämnar till appen (plotly och SVG) ritas av sidan och följer sidans egna regler, inte workerns.
 - Interaktiva fönster finns inte; matplotlib ritar till SVG och PNG. plotly ritas med plotly.js i appen och seaborn följer med som paket.
