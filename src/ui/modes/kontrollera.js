@@ -102,7 +102,7 @@
         const profile = kinds.of(ds);
         if (profile === kinds.PROFILES.table) { renderTable(ds); return; }
         // The model's cards belong to the tier BIM och GIS (platform/tier); below it the page says so and how to raise the tier.
-        if (profile === kinds.PROFILES.model && !kinds.isDxf(ds) && !kinds.shown(ds)) { replace(slots.center, head(ds), tierUi.notice(ctx, 'kind:model')); replace(slots.right); return; }
+        if (profile === kinds.PROFILES.model && !kinds.isDxf(ds) && !kinds.shown(ds)) { replace(slots.center, head(ds), tierUi.notice(ctx, 'kind:model', { empty: true })); replace(slots.right, h('p', { class: 'dm-help', text: t('tier.hint') })); return; }
         if (profile === kinds.PROFILES.model && !kinds.isDxf(ds)) { renderModel(ds); return; }
         replace(slots.center, head(ds), h('dm-empty-state', { icon: ICON, heading: t('kontrollera.none'), text: t('kontrollera.none.hint'), 'data-kontrollera-none': '' }));
         replace(slots.right, h('p', { class: 'dm-help', text: t('kontrollera.none.hint') }));

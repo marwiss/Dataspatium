@@ -41,7 +41,8 @@
           disabled: capped ? true : null, title: capped ? t('tier.capped.deployment', { tier: nameOf(top) }) : t('tier.choose.hint', { tier: nameOf(x.n) }),
           onclick: () => { if (x.n !== now) choose(ctx, x.n); },
         }, icons.icon(x.icon, 16), h('span', { class: 'dm-list-main' },
-          h('span', { text: t('tier.number', { n: x.n }) + ' · ' + nameOf(x.n) + (tier.choice() === null && x.n === tier.DEFAULT ? ' (' + t('tier.default') + ')' : '') }),
+          // With no choice made, the tier in effect is the default (within the deployment's ceiling).
+          h('span', { text: t('tier.number', { n: x.n }) + ' · ' + nameOf(x.n) + (tier.choice() === null && x.n === now ? ' (' + t('tier.default') + ')' : '') }),
           h('span', { class: 'dm-list-sub', text: t('tier.' + x.key + '.desc') })));
       });
       return h('div', { class: 'dm-card dm-stack', 'data-settings': 'tier', 'data-tier-current': tier.keyOf(now) },
@@ -54,18 +55,20 @@
 
     /**
      * The notice where a function is hidden by the tier: what it is, the tier it belongs to and the one in effect, and a button
-     * that raises the tier; where the deployment or the server caps it, the reason instead of the button.
-     * @param {any} ctx @param {string} feature a feature or an entry of platform/tier @param {{server?: string}} [options]
+     * that raises the tier; where the deployment or the server caps it, the reason instead of the button. With `empty` it is the
+     * page's empty state (dm-empty-state), for a page that has nothing else to show.
+     * @param {any} ctx @param {string} feature a feature or an entry of platform/tier @param {{server?: string, empty?: boolean}} [options]
      * @returns {HTMLElement}
      */
     function notice(ctx, feature, options = {}) {
       const w = tier.why(feature, options);
-      const what = t('tier.feature.' + w.feature);
-      return h('div', { class: 'dm-card dm-stack-sm', role: 'status', 'data-tier-hidden': w.feature, 'data-tier-needs': tier.keyOf(w.needs) },
-        h('p', { text: t('tier.hidden', { feature: what, tier: nameOf(w.needs), current: nameOf(w.current) }) }),
-        w.canRaise
-          ? h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('tier.raise', { tier: nameOf(w.needs) }), icon: 'arrow-up', size: 'sm', title: t('tier.raise.hint', { tier: nameOf(w.needs) }), 'data-tier-raise': tier.keyOf(w.needs), onClick: () => choose(ctx, w.needs) }))
-          : h('p', { class: 'dm-help dm-small', 'data-tier-capped': w.cap, text: w.cap === 'server' ? t('tier.capped.server', { tier: nameOf(w.current) }) : t('tier.capped.deployment', { tier: nameOf(tier.ceiling()) }) }));
+      const text = t('tier.hidden', { feature: t('tier.feature.' + w.feature), tier: nameOf(w.needs), current: nameOf(w.current) });
+      const next = w.canRaise
+        ? basic.button({ label: t('tier.raise', { tier: nameOf(w.needs) }), icon: 'arrow-up', size: 'sm', title: t('tier.raise.hint', { tier: nameOf(w.needs) }), 'data-tier-raise': tier.keyOf(w.needs), onClick: () => choose(ctx, w.needs) })
+        : h('p', { class: 'dm-help dm-small', 'data-tier-capped': w.cap, text: tier.capText(w) });
+      const marks = { role: 'status', 'data-tier-hidden': w.feature, 'data-tier-needs': tier.keyOf(w.needs) };
+      if (options.empty) return h('dm-empty-state', Object.assign({ icon: 'layers', heading: t('tier.feature.' + w.feature), text }, marks), next);
+      return h('div', Object.assign({ class: 'dm-card dm-stack-sm' }, marks), h('p', { text }), w.canRaise ? h('div', { class: 'dm-row-wrap' }, next) : next);
     }
 
     return { tierCard, notice, choose, nameOf };
