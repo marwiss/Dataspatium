@@ -10,7 +10,7 @@
  * (plotly's topojson), a map's style and tiles, layout images, GeoJSON by address, and what buttons and sliders bring in;
  * its text is pseudo-HTML whose styles and links reach the page. Every drawing works on a copy built key by key, whose text
  * keeps only bare tags, and that prepare() cleans: it asks for background maps for a map and for web addresses per host for
- * the rest, leaves out what is refused and says so.
+ * the rest, leaves out what is refused and says so. Plotly's cloud is never offered.
  */
 (function () {
   'use strict';
@@ -46,6 +46,8 @@
     const GEO_KEY = /^geo\d*$/;
     const MAP_KEY = /^(map|mapbox)\d*$/;
     const MAX_DEPTH = 40;
+    /** Nothing goes to Plotly's cloud: the Share chart button is off, and its click has no address to post to. */
+    const NO_CLOUD = { showSendToCloud: false, plotlyServerURL: '' };
 
     function available() { return !!globalThis.Plotly; }
 
@@ -438,8 +440,15 @@
       return Object.assign(ready, { notice: noticeFor(ready.removed) });
     }
 
-    /** plotly's config for a prepared figure: a geo map whose shapes are not allowed gets an address that fetches nothing. */
-    function configFor(ready, config) { return ready.topojson ? config : Object.assign(config, { topojsonURL: NO_TOPOJSON }); }
+    /**
+     * plotly's config for a prepared figure: never a way to Plotly's cloud, and a geo map whose shapes are not allowed gets an
+     * address that fetches nothing.
+     */
+    function configFor(ready, config) {
+      Object.assign(config, NO_CLOUD);
+      if (!ready.topojson) config.topojsonURL = NO_TOPOJSON;
+      return config;
+    }
 
     /**
      * Draw a figure into an element. Returns a handle with finalize() that frees the plot; when something was left out
@@ -449,7 +458,7 @@
     async function render(el, fig, options = {}) {
       const Plotly = await ensure();
       const ready = await prepare(fig);
-      await Plotly.newPlot(el, ready.figure.data, layoutFor(ready.figure, options), configFor(ready, { responsive: !options.width, displaylogo: false, modeBarButtonsToRemove: ['sendDataToCloud', 'lasso2d', 'select2d'] }));
+      await Plotly.newPlot(el, ready.figure.data, layoutFor(ready.figure, options), configFor(ready, { responsive: !options.width, displaylogo: false, modeBarButtonsToRemove: ['sendChartToCloud', 'sendDataToCloud', 'lasso2d', 'select2d'] }));
       let note = null;
       if (ready.notice && el.parentNode) {
         note = document.createElement('p');
@@ -509,7 +518,7 @@
     async function htmlFor(id, fig, options = {}) {
       const ready = await prepare(fig, { ask: false });
       const json = (v) => JSON.stringify(v).replace(/</g, '\\u003c');
-      return `<div id="${id}" class="dm-plotly"></div><script>Plotly.newPlot(${json(id)}, ${json(ready.figure.data)}, ${json(layoutFor(ready.figure, options))}, ${json(configFor(ready, { responsive: true, displaylogo: false }))});</script>`;
+      return `<div id="${id}" class="dm-plotly"></div><script>Plotly.newPlot(${json(id)}, ${json(ready.figure.data)}, ${json(layoutFor(ready.figure, options))}, ${json(configFor(ready, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ['sendChartToCloud', 'sendDataToCloud'] }))});</script>`;
     }
 
     return { VERSION, SPEC, TOPOJSON_HOST, NO_TOPOJSON, available, ensure, source, template, layoutFor, requests, sanitize, prepare, render, toBlob, htmlFor, dataUrlToBlob };

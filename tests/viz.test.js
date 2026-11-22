@@ -399,6 +399,29 @@
     return 'ok';
   });
 
+  test("plotly: a chart offers no way to Plotly's cloud, on the page, in an export and in published HTML", async (assert) => {
+    const plotly = D.require('viz/plotly');
+    const real = globalThis.Plotly;
+    const configs = [];
+    globalThis.Plotly = { newPlot: async (_el, _data, _layout, config) => { configs.push(config); }, purge() {}, toImage: async () => 'data:image/png;base64,iVBORw0KGgo=' };
+    const holder = document.createElement('div'); const el = document.createElement('div');
+    holder.appendChild(el); document.body.appendChild(holder);
+    try {
+      const fig = { data: [{ type: 'bar', y: [1] }], layout: {} };
+      (await plotly.render(el, fig)).finalize();
+      await plotly.toBlob(fig, 'png', { width: 200, height: 100 });
+      assert.equal(configs.length, 2);
+      for (const c of configs) assert.ok(c.showSendToCloud === false && c.plotlyServerURL === '', 'no share button and no address to post to: ' + JSON.stringify(c));
+      assert.ok(configs[0].modeBarButtonsToRemove.includes('sendChartToCloud'), "plotly 4's Share chart button is also removed by name");
+      const html = await plotly.htmlFor('p1', fig);
+      assert.ok(html.includes('"showSendToCloud":false') && html.includes('"plotlyServerURL":""'), 'the same in published HTML');
+      return 'ok';
+    } finally {
+      if (real) globalThis.Plotly = real; else delete globalThis.Plotly;
+      holder.remove();
+    }
+  });
+
   test('images: a picture from a file, a worker or storage is drawn only from a data:image/ address, and a web address is left out with a line in the console', async (assert) => {
     const text = D.require('platform/text');
     const GIF = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
