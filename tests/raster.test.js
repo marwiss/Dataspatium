@@ -69,7 +69,11 @@
     const G0 = /** @type {any} */ (globalThis).GeoTIFF;
     const real = {}; let onPage = 0;
     if (G0) for (const k of ['fromBlob', 'fromArrayBuffer', 'fromCustomClient', 'fromUrl', 'fromFile']) { real[k] = G0[k]; G0[k] = (...args) => { onPage++; return real[k].apply(G0, args); }; }
-    let written;
+    // The worker encodes and decodes the pictures itself (OffscreenCanvas): the page's canvas does neither meanwhile.
+    const toBlob = HTMLCanvasElement.prototype.toBlob; const getImageData = CanvasRenderingContext2D.prototype.getImageData; let canvases = 0;
+    HTMLCanvasElement.prototype.toBlob = function (...args) { canvases++; return toBlob.apply(this, args); };
+    CanvasRenderingContext2D.prototype.getImageData = function (...args) { canvases++; return getImageData.apply(this, args); };
+    let written; let types = '';
     try {
       const file = sweref('sweref.tif', { dateTime: '2023:06:15 12:00:00', copyright: 'Prov AB', geo: { res: 2, east: E0, north: N0, epsg: 3006 } });
       const info = await engines.open(file);
@@ -114,7 +118,9 @@
       written = await engines.write(out.blob, { epsg: 3857, origin: [2000000, 8400000], res: [5, 5] });
       // geotiff.js writes big-endian ("MM"); either byte order is a TIFF.
       assert.ok(written instanceof Uint8Array && written[0] === written[1] && (written[0] === 0x49 || written[0] === 0x4d), 'a TIFF');
-    } finally { if (G0) Object.assign(G0, real); }
+      assert.equal(canvases, 0, 'the worker encoded and decoded the pictures');
+      types = `${out.blob.type} and ${ho.blob.type} from the worker`;
+    } finally { if (G0) Object.assign(G0, real); HTMLCanvasElement.prototype.toBlob = toBlob; CanvasRenderingContext2D.prototype.getImageData = getImageData; }
     assert.ok(onPage === 0 && (G0 || !(/** @type {any} */ (globalThis).GeoTIFF)), 'nothing is decoded on the page');
     assert.ok(D.workers.list().some((w) => /** @type {any} */ (w).dmNamespace === 'raster'), 'the raster worker');
     // Read back with the page's own build: the place, the pixel size, the system and four samples.
@@ -128,7 +134,7 @@
     // The picture went through JPEG on its way, so the values are near, not exact.
     const at = (10 * 64 + 20) * 4;
     assert.ok(Math.abs(rgba[at] - 20) <= 8 && Math.abs(rgba[at + 1] - 10) <= 8 && rgba[at + 3] === 255, `the pixels: ${Array.from(rgba.slice(at, at + 4))}`);
-    return 'ok';
+    return types;
   }, 60000);
 
   test('raster: a GeoTIFF in SWEREF 99 TM becomes one row with its extent in WGS 84, the original byte for byte, and a preview in Web Mercator with each pixel in its place', async (assert) => {
