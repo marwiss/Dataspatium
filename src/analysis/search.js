@@ -74,9 +74,9 @@
       return out;
     }
 
-    /** The side table a dataset's kind searches, when the dataset really has it. */
+    /** The side table a dataset's kind searches, when the dataset really has it and the tier shows the kind (platform/tier). */
     async function sideOf(handle) {
-      const side = kinds.of(handle.meta).sideSearch;
+      const side = kinds.shown(handle.meta) ? kinds.of(handle.meta).sideSearch : null;
       if (!side) return null;
       const r = await handle.engine.exec("select count(*) from sqlite_master where type = 'table' and name = ?", [side.table]);
       return r[0] && Number(r[0].values[0][0]) ? side : null;

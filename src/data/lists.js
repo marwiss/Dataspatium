@@ -66,7 +66,8 @@
       if (rec.kind === 'rows') return datasets.createFromQuery(rec.datasetId, `select * from data where rowid in (${rec.rowids.join(',')})`, { name: name || rec.name, source: { list: { id: rec.id, name: rec.name } } });
       const cols = await datasets.columns(rec.datasetId);
       const meta = await datasets.get(rec.datasetId);
-      const { sql, params } = search.hitsSql(cols, rec.text, rec.filters, D.require('data/kinds').of(meta).sideSearch || null);
+      const kinds = D.require('data/kinds');
+      const { sql, params } = search.hitsSql(cols, rec.text, rec.filters, kinds.shown(meta) ? kinds.of(meta).sideSearch || null : null);
       return datasets.createFromQuery(rec.datasetId, sql, { name: name || rec.name, params, source: { list: { id: rec.id, name: rec.name, text: rec.text, filters: rec.filters } } });
     }
 

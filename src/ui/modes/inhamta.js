@@ -1037,9 +1037,9 @@
         if (!kinds.isCollection(m)) return t('import.done', { name: m.name, rows: i18n.formatNumber(m.rowCount), cols: m.columnCount });
         return t('import.done.kind', { name: m.name, summary: kinds.summary(m) });
       }
-      /** The way on from an import: read, look at, or work in the table. */
+      /** The way on from an import: read, look at, or work in the table (a kind whose own views the tier hides opens as a table). */
       function openAfter(m) {
-        const own = kinds.of(m).open;
+        const own = kinds.shown(m) ? kinds.of(m).open : null;
         return own ? { label: t(own.label), icon: own.icon } : { label: t('import.open.bearbeta'), icon: 'pencil' };
       }
       async function runImport() {

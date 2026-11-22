@@ -147,7 +147,7 @@
         listSel.addEventListener('change', () => {
           usingSelection = listSel.value === '__selection';
           activeList = myLists.find((l) => l.id === listSel.value) || null;
-          listWhere = usingSelection ? selectionMod.whereOf(ds.id) : activeList ? listsMod.whereOf(activeList, cols, kinds.of(ds).sideSearch || null) : null;
+          listWhere = usingSelection ? selectionMod.whereOf(ds.id) : activeList ? listsMod.whereOf(activeList, cols, kinds.shown(ds) ? kinds.of(ds).sideSearch || null : null) : null;
           refresh(current());
         });
         // What the table now shows can follow to the other modes.

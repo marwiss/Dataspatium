@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('io/export', ['data/datasets', 'platform/files', 'data/geo', 'data/graph'], (datasets, files, geo, graph) => {
+  D.define('io/export', ['data/datasets', 'platform/files', 'data/geo', 'data/graph', 'data/kinds'], (datasets, files, geo, graph, kinds) => {
     const FORMATS = [
       { id: 'csv', key: 'export.format.csv', ext: 'csv' },
       { id: 'xlsx', key: 'export.format.xlsx', ext: 'xlsx' },
@@ -49,10 +49,14 @@
       { id: 'model-quantities-xlsx', key: 'export.format.model-quantities-xlsx', ext: 'xlsx', kind: 'model', modelFormat: 'ifc' },
       { id: 'model-glb', key: 'export.format.model-glb', ext: 'glb', kind: 'model', modelFormat: 'ifc' },
     ];
-    /** The formats offered for a dataset: graph and model formats only for those kinds; tables for every dataset. */
+    /**
+     * The formats offered for a dataset: graph and model formats only for those kinds; tables for every dataset. A kind whose own
+     * views the tier hides (platform/tier: a model in Dokument) keeps only its original file beside the table's formats.
+     */
     function formatsFor(meta, facts = {}) {
       const dxf = !!(meta && meta.model && meta.model.format === 'dxf');
-      return FORMATS.filter((f) => !f.kind || (meta && meta.kind === f.kind && (!f.modelFormat || f.modelFormat === (dxf ? 'dxf' : 'ifc'))))
+      const own = kinds.shown(meta);
+      return FORMATS.filter((f) => !f.kind || (meta && meta.kind === f.kind && (!f.modelFormat || f.modelFormat === (dxf ? 'dxf' : 'ifc')) && (own || f.id === 'model-original')))
         .map((f) => (f.id === 'model-original' && dxf ? Object.assign({}, f, { ext: 'dxf' }) : f))
         // A format that cannot work stays visible and says what it needs.
         .map((f) => (f.places && facts.geometry === false ? Object.assign({}, f, { unavailable: 'export.needs.geometry' }) : f));
