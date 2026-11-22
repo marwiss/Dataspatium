@@ -15,8 +15,13 @@
  *   main -> worker  {type: 'assets', entries, final}   entries: [{name, kind: 'text'|'binary', data}]
  *   worker -> main  {type: 'asset-request', name}      async lookup miss (fetch / async XHR only)
  *   main -> worker  {type: 'asset-missing', name}
+ *   worker -> main  {type: 'net', id, url, method}     net 'fetch': may the hosted code fetch this address?
+ *   main -> worker  {type: 'net-reply', id, url, ok, ticket}
+ *   worker -> main  {type: 'net-done', ticket, status} the allowed fetch has ended (for the network log)
  * Until the message with `final: true` arrives, messages addressed to the hosted code are queued,
- * so the hosted code never sees a request before its assets are present.
+ * so the hosted code never sees a request before its assets are present. The worker acts on a control message only when the
+ * browser delivers it from the main thread (a trusted event); code in the worker can post control messages, but the main thread
+ * only answers them.
  */
 
 /**
@@ -163,9 +168,9 @@ function dataspatiumMakeXHR(RealXHR, lookupSync, lookupAsync, assetName, mimeFor
  * `config.net` takes the internet away from the hosted code. With 'none' (R) fetch, XMLHttpRequest and importScripts refuse
  * every URL that is not an asset, a blob or a data URL (XMLHttpRequest serves assets only), and WebSocket, WebSocketStream,
  * WebTransport, EventSource, Worker, SharedWorker, BroadcastChannel, caches, indexedDB and navigator.storage read as undefined,
- * ignoring assignments. 'fetch' (Python) is the same, except that fetch passes through, since the hosted code gates it with the
- * user's consent. `config.netText` is the message, in the user's language, with {api} for the refused interface. Without `net`
- * nothing changes.
+ * ignoring assignments. 'fetch' (Python) is the same, except that fetch asks the main thread first, which asks for the user's
+ * consent (platform/workers, the namespace's `net`). `config.netText` is the message, in the user's language, with {api} for the
+ * refused interface. Without `net` nothing changes.
  * The checks call only built-ins taken before the hosted code runs, and fetch and importScripts replace the native ones on the
  * prototype too, so that code in the worker can neither bend a check nor reach around it.
  * @param {{namespace: string, name?: string, net?: 'none'|'fetch', netText?: string}} config
@@ -179,10 +184,16 @@ function dataspatiumWorkerShim(config, makeXHR) {
   var getter = function (obj, key) { var d = Object.getOwnPropertyDescriptor(obj, key); return d && d.get ? uncurry(d.get) : null; };
   var NativePromise = Promise;
   var NativeRequest = self.Request;
+  var then = uncurry(Promise.prototype.then);
   var startsWith = uncurry(String.prototype.startsWith);
   var hasOwn = uncurry(Object.prototype.hasOwnProperty);
   var toStr = String;
   var requestUrl = getter(NativeRequest.prototype, 'url');
+  var requestMethod = getter(NativeRequest.prototype, 'method');
+  var responseStatus = getter(Response.prototype, 'status');
+  var messageData = getter(MessageEvent.prototype, 'data');
+  // isTrusted is an own, unforgeable property of each event; its getter refuses anything that is not a genuine event.
+  var isTrusted = getter(new Event('message'), 'isTrusted') || getter(Event.prototype, 'isTrusted');
   var policy = config.net === 'none' || config.net === 'fetch' ? config.net : null;
   var assets = new Map();
   var pending = new Map();
@@ -263,11 +274,21 @@ function dataspatiumWorkerShim(config, makeXHR) {
     } else if (d.type === 'asset-missing') {
       list = pending.get(d.name);
       if (list) { pending.delete(d.name); list.forEach(function (p) { p.reject(new Error('Asset not available: ' + d.name)); }); }
+    } else if (d.type === 'net-reply' && policy === 'fetch') {
+      // The answer counts only for the address it names: code in the worker may have posted a question of its own.
+      var asked = asking[d.id];
+      if (asked && asked.url === d.url) { delete asking[d.id]; asked.ticket = d.ticket; asked.resolve(d.ok === true); }
+      else if (d.ok === true) send({ type: 'net-done', ticket: d.ticket, status: null });
     }
   }
+  // Only a message the browser delivers from the main thread is trusted. Code in the worker can call its own handler, dispatch an
+  // event, or take a trusted event from a MessageChannel with data of its choice, but at this listener such events are untrusted
+  // (dispatchEvent clears isTrusted). Registered first and capturing, it reads each event before any listener of the hosted code.
   function route(ev) {
-    var d = ev.data;
-    if (d && d.__dm === true) { control(d); return; }
+    var d, trusted = false;
+    try { d = messageData(ev); trusted = isTrusted(ev) === true; } catch (e) { d = undefined; }
+    if (d !== null && typeof d === 'object' && hasOwn(d, '__dm') && d.__dm === true) { if (trusted) control(d); return; }
+    if (policy && !trusted) return;
     if (!ready) { queued.push(ev); return; }
     dispatch(ev);
   }
@@ -286,7 +307,7 @@ function dataspatiumWorkerShim(config, makeXHR) {
     if (type === 'message') { hostListeners = hostListeners.filter(function (x) { return x !== fn; }); return; }
     return realRemove(type, fn, opts);
   };
-  realAdd('message', route);
+  realAdd('message', route, true);
 
   // --- the internet (config.net): refusals say why in the console too, where webR points R's own messages
   var refused = [];
@@ -355,8 +376,26 @@ function dataspatiumWorkerShim(config, makeXHR) {
     });
   }
   function rejected(err) { return new NativePromise(function (resolve, reject) { reject(err); }); }
-  // With config.net the browser turns the input into a Request once; the address read from it is the one decided on and fetched,
-  // so a Request with an own url, a subclass or an object whose toString differs from its url cannot steer it.
+  // net 'fetch': questions to the main thread, by id, out of reach of the hosted code.
+  var asking = Object.create(null);
+  var askSeq = 0;
+  /** Ask the main thread whether `req` may go out; fetch exactly that Request when the trusted answer allows its address. */
+  function askFirst(req, url) {
+    var id = ++askSeq;
+    var entry = { url: url, ticket: null, resolve: null };
+    var answer = new NativePromise(function (resolve) { entry.resolve = resolve; });
+    asking[id] = entry;
+    send({ type: 'net', id: id, url: url, method: requestMethod(req) });
+    return then(answer, function (ok) {
+      if (ok !== true) throw new TypeError('Dataspatium: internet access was not allowed for ' + url);
+      var res = realFetch(req);
+      then(res, function (r) { send({ type: 'net-done', ticket: entry.ticket, status: responseStatus(r) }); },
+        function () { send({ type: 'net-done', ticket: entry.ticket, status: null }); });
+      return res;
+    });
+  }
+  // With config.net the browser turns the input into a Request once; the address read from it is the one decided on, asked about
+  // and fetched, so a Request with an own url, a subclass or an object whose toString differs from its url cannot steer it.
   replace('fetch', function (input, init) {
     var name = typeof input === 'string' ? assetName(input) : null;
     if (name !== null) return fromAsset(name);
@@ -371,7 +410,7 @@ function dataspatiumWorkerShim(config, makeXHR) {
     if (name !== null) return fromAsset(name);
     if (isLocal(url)) return realFetch(req);
     if (policy === 'none') return rejected(new TypeError(refuse('fetch', url)));
-    return realFetch(req);
+    return askFirst(req, url);
   });
 
   // --- WebAssembly.instantiateStreaming accepts our synthetic Response; fall back to ArrayBuffer otherwise

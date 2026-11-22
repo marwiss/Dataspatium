@@ -203,6 +203,69 @@
     return 'none refuses ' + out.refusedUrls.length + '; fetch found on ' + plain.fetchLevels + ' levels, indexedDB on ' + plain.under.indexedDB.split(' ').length + ' (plain)';
   }, 30000);
 
+  /** Runs under net 'fetch': tries to answer its own question about the internet, and to ask about another address. */
+  function dataspatiumNetGateWorker() {
+    self.onmessage = function (ev) {
+      if (ev.data !== 'go') return;
+      var out = {};
+      var target = 'http://127.0.0.1:9/target';
+      var decoy = 'http://127.0.0.1:9/decoy';
+      // A gate that waited with .then() would be handed true.
+      var realThen = Promise.prototype.then;
+      Promise.prototype.then = function (a, b) { return realThen.call(this, function () { return a ? a(true) : true; }, b); };
+      var question = fetch(target);
+      Promise.prototype.then = realThen;
+      // A MessageChannel hands out trusted events with data of the worker's choice.
+      var channel = new MessageChannel();
+      channel.port2.onmessage = function (e) { out.portTrusted = e.isTrusted; setTimeout(function () { self.dispatchEvent(e); }, 0); };
+      for (var id = 1; id <= 10; id++) {
+        var forged = { __dm: true, type: 'net-reply', id: id, url: target, ok: true, ticket: 1 };
+        self.onmessage({ data: forged });
+        self.dispatchEvent(new MessageEvent('message', { data: forged }));
+        channel.port1.postMessage(forged);
+        self.postMessage({ __dm: true, type: 'net', id: id, url: decoy });
+      }
+      question.then(function () { out.target = 'fetched'; }, function (e) { out.target = e.message; })
+        .then(function () { return fetch(decoy).then(function () { out.decoy = 'fetched'; }, function (e) { out.decoy = e.message; }); })
+        .then(function () { return fetch(Object.defineProperty(new Request(target), 'url', { value: decoy })).then(function () { out.dressed = 'fetched'; }, function (e) { out.dressed = e.message; }); })
+        .then(function () { self.postMessage(out); });
+    };
+  }
+
+  test('worker shim: with net fetch, fetch asks the main thread about the address it fetches and goes out only on a trusted answer for that address and an allowed call shows in the network log', async (assert) => {
+    const target = 'http://127.0.0.1:9/target';
+    const decoy = 'http://127.0.0.1:9/decoy';
+    const asked = [];
+    const t0 = Date.now();
+    const active = D.net.active;
+    // The answer about the target waits a little, so that every forgery lands while its question is open.
+    D.workers.provider('tests-gate', { initial: async () => [], net: async (url) => { asked.push(url); if (url === target) await new Promise((r) => setTimeout(r, 200)); return url === decoy; } });
+    const out = await askWorker({ namespace: 'tests-gate', source: D.workers.functionSource(dataspatiumNetGateWorker), net: 'fetch', netText: 'Ingen internet ({api}).' });
+    assert.equal(out.portTrusted, true, 'the MessageChannel gave the worker a trusted event, which it dispatched here');
+    assert.equal(out.target, 'Dataspatium: internet access was not allowed for ' + target, 'only the main thread\'s answer about the target counts, not the forged ones');
+    assert.equal(asked.filter((u) => u === target).length, 2, 'asked about the target twice: by its fetch and by the Request dressed as the decoy');
+    assert.equal(out.dressed, 'Dataspatium: internet access was not allowed for ' + target, 'a Request with the decoy as its own url is asked about, and refused, as the target');
+    assert.ok(asked.filter((u) => u === decoy).length === 11, 'the ten questions the worker posted itself and its fetch of the decoy were answered: ' + asked.length);
+    assert.ok(out.decoy !== 'fetched' && !/not allowed/.test(out.decoy), 'the allowed decoy went to the browser, which refuses port 9: ' + out.decoy);
+    const logged = D.net.log().filter((e) => e.at >= t0 && e.url.startsWith('http://127.0.0.1:9/'));
+    assert.ok(logged.some((e) => e.url === decoy && e.method === 'GET'), 'the allowed call is in the network log: ' + JSON.stringify(logged));
+    assert.ok(!logged.some((e) => e.url === target), 'the refused one is not');
+    const t1 = performance.now();
+    while (D.net.active !== active && performance.now() - t1 < 3000) await new Promise((r) => setTimeout(r, 30));
+    assert.equal(D.net.active, active, 'every allowed call has ended in the log, the forged questions too');
+    D.workers.provider('tests-net', { initial: async () => [{ name: 'tests-net/a.txt', kind: 'text', data: 'hej' }], net: async (url) => { asked.push('probe ' + url); return false; } });
+    const probe = await askWorker({ namespace: 'tests-net', source: D.workers.functionSource(dataspatiumNetProbeWorker), net: 'fetch', netText: 'Ingen internet ({api}).' });
+    for (const k of Object.keys(probe.types)) assert.equal(probe.types[k], 'undefined', 'fetch: ' + k);
+    for (const k of Object.keys(probe.under)) assert.ok(probe.under[k].split(' ').every((x) => x === 'undefined'), 'fetch: ' + k + ' on every level: ' + probe.under[k]);
+    assert.equal(probe.nativeFetches, 0, 'fetch: no native fetch on the prototype chain');
+    for (const [k, url] of Object.entries(CRAFTED)) {
+      assert.equal(probe.fetches[k], 'Dataspatium: internet access was not allowed for ' + url, k + ' asked about the address fetch would use');
+      assert.ok(asked.includes('probe ' + url), k + ' reached the main thread as ' + url);
+    }
+    assert.deepEqual(probe.refusedBy, { XMLHttpRequest: 3, importScripts: 2 }, 'the refusals are recorded');
+    return 'asked ' + asked.length + ', logged ' + logged.length;
+  }, 30000);
+
   test('workers: a namespace screens what its worker sends here, and the worker cannot rename itself past the screen', async (assert) => {
     const screened = [];
     D.workers.provider('tests-screen', { initial: async () => [], screen: (d) => { screened.push(d && d.n); return !(d && d.drop); } });

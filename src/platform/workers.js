@@ -6,8 +6,9 @@
  * Replaces the global `Worker` with a subclass that (a) filters the shim's control messages
  * (`__dm: true`) out of the message stream the hosted code sees, and (b) answers them: on `hello`
  * it sends the assets registered for the worker's namespace, on `asset-request` it loads and sends a
- * single asset. Third-party code that creates workers itself (webR) therefore gets the shim's
- * services without knowing about Dataspatium.
+ * single asset, and on `net` (a worker under net 'fetch') the namespace's provider decides whether the
+ * worker may fetch an address. Third-party code that creates workers itself (webR) therefore gets the
+ * shim's services without knowing about Dataspatium.
  *
  * `Dataspatium.workers.create()` builds Dataspatium's own Blob workers from a standalone function.
  */
@@ -16,13 +17,16 @@
   const D = globalThis.Dataspatium;
   const RealWorker = globalThis.Worker;
   /**
-   * Per namespace: the assets sent on hello, how misses are handled, and `screen`, which sees every message the worker sends to the
-   * hosted code on this thread and drops it by returning false (it may also change it).
-   * @type {Map<string, {initial?: () => Promise<any[]>, request?: (name: string) => Promise<boolean>, screen?: (data: any) => boolean}>}
+   * Per namespace: the assets sent on hello, how misses are handled, `screen`, which sees every message the worker sends to the
+   * hosted code on this thread and drops it by returning false (it may also change it), and `net`, which decides whether a worker
+   * under net 'fetch' may fetch an address (true lets it go out; without `net` nothing does).
+   * @type {Map<string, {initial?: () => Promise<any[]>, request?: (name: string) => Promise<boolean>, screen?: (data: any) => boolean, net?: (url: string) => Promise<boolean>}>}
    */
   const providers = new Map();
   const live = new Set();
   const CHUNK = 16;
+  /** Numbers the allowed internet calls of workers, so that each one's end can close its entry in the network log. */
+  let tickets = 0;
 
   /**
    * Turn asset names (or ready-made entries) into transferable entries.
@@ -86,6 +90,19 @@
         D.log('workers', 'asset missing', msg.name, err);
         rawPost(worker, { __dm: true, type: 'asset-missing', name: msg.name });
       }
+    } else if (msg.type === 'net') {
+      // The answer names the address: code in the worker can post questions too, and one it posts for another address must not
+      // answer the shim's. An allowed call stays in the network log, counted as active, until the worker reports its end.
+      const provider = providers.get(worker.dmNamespace);
+      const url = String(msg.url);
+      let ok = false;
+      try { ok = !!(provider && provider.net) && (await provider.net(url)) === true; } catch (err) { D.log('workers', 'internet access refused', url, err); }
+      const ticket = ok ? ++tickets : null;
+      if (ok) worker.dmNet.set(ticket, D.net.record(url, msg.method));
+      rawPost(worker, { __dm: true, type: 'net-reply', id: msg.id, url, ok, ticket });
+    } else if (msg.type === 'net-done') {
+      const done = worker.dmNet.get(msg.ticket);
+      if (done) { worker.dmNet.delete(msg.ticket); done(msg.status); }
     }
   }
 
@@ -98,6 +115,8 @@
       this.dmHandler = null;
       /** @type {Function[]} */
       this.dmListeners = [];
+      /** @type {Map<number, (status: any) => void>} the worker's allowed internet calls still open in the network log */
+      this.dmNet = new Map();
       live.add(this);
       super.addEventListener('message', (ev) => this.dmRoute(/** @type {MessageEvent} */ (ev)));
     }
@@ -121,7 +140,12 @@
       if (type === 'message') { this.dmListeners = this.dmListeners.filter((x) => x !== fn); return; }
       super.removeEventListener(type, fn, options);
     }
-    terminate() { live.delete(this); super.terminate(); }
+    terminate() {
+      live.delete(this);
+      for (const done of this.dmNet.values()) done(null);
+      this.dmNet.clear();
+      super.terminate();
+    }
   }
   globalThis.Worker = /** @type {any} */ (DataspatiumWorker);
 

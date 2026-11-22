@@ -55,16 +55,31 @@
     if (/^https?:/i.test(url)) return true;
     return !/^[a-z][a-z0-9+.-]*:/i.test(url) && /^https?:$/.test(globalThis.location ? location.protocol : '');
   }
-  /** Track one request: counts it while in flight and records url, method, status and duration. */
-  function track(url, init, promise) {
-    const entry = { at: Date.now(), url: String(url), method: ((init && init.method) || 'GET').toUpperCase(), status: null, ms: null };
+  /**
+   * Record one request: counted while in flight, with url, method, status and duration in the log. The returned function ends it
+   * once, with the HTTP status (anything else counts as an error).
+   * @param {string} url @param {string} [method] @returns {(status: any) => void}
+   */
+  function record(url, method) {
+    const entry = { at: Date.now(), url: String(url), method: String(method || 'GET').toUpperCase(), status: null, ms: null };
     activity.log.push(entry);
     if (activity.log.length > LOG_MAX) activity.log.shift();
     activity.active++;
     notify();
-    const t0 = Date.now();
-    const done = (res) => { activity.active--; entry.ms = Date.now() - t0; entry.status = res && typeof res.status === 'number' ? res.status : 'error'; notify(); return res; };
-    return promise.then(done, (err) => { done(null); throw err; });
+    let open = true;
+    return (status) => {
+      if (!open) return;
+      open = false;
+      activity.active--;
+      entry.ms = Date.now() - entry.at;
+      entry.status = typeof status === 'number' ? status : 'error';
+      notify();
+    };
+  }
+  /** Track one request made here. */
+  function track(url, init, promise) {
+    const done = record(url, init && init.method);
+    return promise.then((res) => { done(res && res.status); return res; }, (err) => { done(null); throw err; });
   }
 
   // fetch()
@@ -115,6 +130,8 @@
     onActivity(fn) { activity.listeners.add(fn); return () => activity.listeners.delete(fn); },
     /** The most recent real network requests (newest last): {at, url, method, status, ms}. */
     log() { return activity.log.slice(); },
+    /** Record a request made elsewhere (a worker's fetch after consent); call the returned function with its status when it ends. */
+    record,
   };
   D.define('platform/net', [], () => D.net);
 })();
