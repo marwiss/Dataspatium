@@ -322,7 +322,10 @@ stairs, ramps and railings are load-bearing; ceilings, suspended ceilings and in
   your consent): the walls along a storey's outer boundary are external, and on a closed storey the rooms' other walls are internal.
   The rule says when a value is derived.
 - A composite element, for example a roof made of roof slabs, is counted in its parts, and a part the rules cannot decide takes the
-  category of its whole.
+  category of its whole. A glass wall inside the building, a curtain wall (IfcCurtainWall) whose IsExternal is false in the file or
+  from the topology, takes its mullions, transoms and panels with it to the interior walls, while a part the rules place outside the
+  building envelope, such as a moulding or a load-bearing post, keeps its category; in an external curtain wall, and in one without
+  IsExternal, the mullions, transoms and panels are building envelope.
 
 Under **To settle** you choose the category for a whole group of elements with the same class, type and rule. The choice is kept per
 element (GlobalId) in the browser until you let the rules decide again.
@@ -615,9 +618,11 @@ properties belong to the type, and the AI defines the types first. When the chan
 walls they meet (IfcRelConnectsPathElements): at a corner the thicker wall (for equal thickness the longer) reaches past the corner and
 the other stops against it, and a wall that ends on another's line stops at its side, so that corners have neither gaps nor overlaps
 and no volume is counted twice. The walls' centrelines stay as drawn, and corners at other than right angles are joined as drawn.
-Finally the walls, slabs, roofs, doors and windows the change set created or changed get base quantities (Qto_WallBaseQuantities,
-Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities and Qto_WindowBaseQuantities) computed from their dimensions,
-with the openings deducted and with the names of the schema's templates.
+Finally the walls, slabs, roofs, doors, windows, columns, beams, members, plates, footings and stair flights the change set created
+or changed get base quantities (Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities,
+Qto_WindowBaseQuantities, Qto_ColumnBaseQuantities, Qto_BeamBaseQuantities, Qto_MemberBaseQuantities, Qto_PlateBaseQuantities,
+Qto_FootingBaseQuantities and Qto_StairFlightBaseQuantities) computed from their dimensions in the model's units, with the openings
+deducted and with the names of the schema's templates; IFC2X3, which has no templates, gets IFC4's names.
 
 The tool `create_element` makes the building elements that have no tool of their own, of the most specific IFC class and never as
 IfcBuildingElementProxy: columns (IfcColumn), beams (IfcBeam), members such as studs and rafters (IfcMember), footings (IfcFooting),
@@ -626,13 +631,17 @@ piles (IfcPile), coverings such as flooring, ceilings, cladding, roofing and ins
 IfcFurnishingElement in IFC2X3), straight stairs (IfcStair) and curtain walls (IfcCurtainWall). The class and its PredefinedType are
 checked against the model's schema
 as in the other tools. The body is an extruded profile: a rectangle, a circle or an outline in the storey's plane, standing up from a
-height above the storey (columns, footings, coverings, furniture) or lying in a direction (beams, members and railings). The element
+height above the storey (columns, footings, coverings, furniture) or lying in a direction (beams, members and railings). Columns, beams
+and members get their base quantities from the profile and the length: length, cross-section area, outer surface area, total surface
+area and volume; footings get their volume, their height and, when the profile is a rectangle, their length and width (the longer
+and the shorter side). The element
 lies in the storey, or is a part of a whole (`part_of`), such as a railing of a stair, and then lies in the whole and on its storey but
 not directly in the storey. A covering can name what it covers (`host`): a building element or a space. In IFC4 and later it becomes
 a part of the element (IfcRelAggregates) or lies in the space; only in IFC2X3 does it get IfcRelCoversBldgElements or
 IfcRelCoversSpaces. A straight stair (STRAIGHT_RUN_STAIR) is a sloped flight (IfcStairFlight, STRAIGHT) with the number of risers,
 the riser height, the tread length and the width as attributes and in Pset_StairFlightCommon, and on request a landing (IfcSlab,
-LANDING) at the top; the last riser is the front edge of the landing or of the floor above.
+LANDING) at the top; the last riser is the front edge of the landing or of the floor above. The flight gets its volume in
+Qto_StairFlightBaseQuantities and the landing its base quantities as a slab.
 
 A curtain wall (IfcCurtainWall), a glass façade, runs along its axis as a wall does, from a start to an end in the storey's plane, with
 its height from a base above the storey. The axis is its representation, but it has no body of its own: it is made of its parts, which
@@ -647,11 +656,15 @@ a mullion: the parts are named by the curtain wall, their kind and their place, 
 Panel 1.1 (bay and row). A curtain wall type from `define_type` (IfcCurtainWallType) gives the parts types of its name: an IfcPlateType
 CURTAIN_PANEL with the glass as a material layer, and an IfcMemberType MULLION with the frame's material, such as aluminium or steel,
 and the members' width and depth as its material profile (only the material in IFC2X3), so that the parts take their kind, material and
-sizes from their types; mullions and transoms share the type and its sizes, so quantities by type count them together. Without a type
+sizes from their types; mullions and transoms share the type and its sizes, so quantities by type count them together. A typed mullion
+or transom in IFC4 and IFC4.3 also gets an axis ('Axis', a line through the profile's centre along the whole part) beside its body, as
+IFC4.3 asks of a profile with IfcMaterialProfileSetUsage. Without a type
 the mullions and transoms are 0.05 × 0.15 m of aluminium and the panels 0.03 m of glass, with the PredefinedType on the parts
 themselves; IFC2X3 has no PredefinedType on IfcPlate and IfcMember, and the report says so. The topology reads a curtain wall as a
 wall, so that it can close a storey together with the walls; it gets IsExternal from the topology in Pset_CurtainWallCommon and base
-quantities in Qto_CurtainWallQuantities (length, height, depth and the area of its side).
+quantities in Qto_CurtainWallQuantities (length, height, depth and the area of its side). The mullions and transoms get
+Qto_MemberBaseQuantities and the panels Qto_PlateBaseQuantities (thickness, perimeter, area and volume), so that the app's IDS
+Avfallshantering finds their volumes.
 
 `define_type` also makes types for coverings (with layers, as a slab type), columns, beams, footings, railings, doors and windows
 (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType and IfcWindowType; IfcDoorStyle and

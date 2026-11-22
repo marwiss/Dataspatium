@@ -310,7 +310,10 @@ vad som avgjorde.
   väggarna längs en vånings yttre gräns är yttre, och på en sluten våning är rummens övriga väggar inre. Regeln säger när ett värde är
   härlett.
 - En sammansatt byggdel, till exempel ett tak av takplattor, räknas i sina delar, och en del som reglerna inte kan avgöra tar
-  helhetens kategori.
+  helhetens kategori. En glasvägg inne i byggnaden, en glasfasad (IfcCurtainWall) med IsExternal falskt i filen eller ur topologin,
+  tar sina poster, reglar och glas med sig till innerväggarna, medan en del som reglerna lägger utanför klimatskärmen, till exempel
+  en list eller en bärande stolpe, behåller sin kategori; i en yttre glasfasad, och i en utan IsExternal, är posterna, reglarna och
+  glasen klimatskärm.
 
 Under **Att avgöra** väljer du kategori för en hel grupp byggdelar med samma klass, typ och regel. Valet sparas per byggdel (GlobalId)
 i webbläsaren tills du låter reglerna avgöra igen.
@@ -595,9 +598,12 @@ takskivornas uppåt från undersidan), och dess PredefinedType står på typen. 
 definierar typerna först. När ändringssetet körs knyts de väggar det skapar ihop med väggarna de möter (IfcRelConnectsPathElements): i
 ett hörn går den tjockare väggen (vid samma tjocklek den längre) förbi hörnet och den andra slutar mot den, och en vägg som slutar mot
 en annans linje slutar mot dess sida, så att hörnen varken får glipor eller överlapp och ingen volym räknas två gånger. Väggarnas
-mittlinjer ändras inte, och hörn i andra vinklar än räta knyts ihop som de är ritade. Till sist får de väggar, bjälklag, tak, dörrar
-och fönster som ändringssetet skapat eller ändrat basmängder (Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities,
-Qto_DoorBaseQuantities och Qto_WindowBaseQuantities) räknade ur måtten, med öppningarna avdragna och med namnen ur schemats mallar.
+mittlinjer ändras inte, och hörn i andra vinklar än räta knyts ihop som de är ritade. Till sist får de väggar, bjälklag, tak, dörrar,
+fönster, pelare, balkar, stänger, skivor, fundament och trapplopp som ändringssetet skapat eller ändrat basmängder
+(Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities, Qto_WindowBaseQuantities,
+Qto_ColumnBaseQuantities, Qto_BeamBaseQuantities, Qto_MemberBaseQuantities, Qto_PlateBaseQuantities, Qto_FootingBaseQuantities och
+Qto_StairFlightBaseQuantities) räknade ur måtten i modellens enheter, med öppningarna avdragna och med namnen ur schemats mallar;
+IFC2X3, som saknar mallar, får IFC4:s namn.
 
 Verktyget `create_element` gör de byggdelar som inte har ett eget verktyg, av den mest specifika IFC-klassen och aldrig som
 IfcBuildingElementProxy: pelare (IfcColumn), balkar (IfcBeam), stänger som reglar och takstolar (IfcMember), grundsulor och plintar
@@ -606,13 +612,15 @@ IfcBuildingElementProxy: pelare (IfcColumn), balkar (IfcBeam), stänger som regl
 IfcFurnishingElement), raka trappor (IfcStair) och glasfasader (IfcCurtainWall). Klassen och dess PredefinedType kontrolleras mot
 modellens schema som i de andra
 verktygen. Kroppen är en extruderad profil: en rektangel, en cirkel eller en kontur i våningens plan, stående uppåt från en höjd över
-våningen (pelare, grundläggning, beklädnader, möbler) eller liggande i en riktning (balkar, stänger och räcken). Elementet ligger i
+våningen (pelare, grundläggning, beklädnader, möbler) eller liggande i en riktning (balkar, stänger och räcken). Pelare, balkar och
+stänger får sina basmängder ur profilen och längden: längd, tvärsnittsarea, mantelyta, hela ytan och volym; fundament får sin
+volym, sin höjd och, när profilen är en rektangel, sin längd och bredd (den längre och den kortare sidan). Elementet ligger i
 våningen eller är en del av en helhet (`part_of`), till exempel ett räcke i en trappa, och ligger då i helheten och på dess våning men
 inte direkt i våningen. En beklädnad kan ange vad den täcker (`host`): en byggdel eller ett rum. I IFC4 och senare blir den en del av
 byggdelen (IfcRelAggregates) eller ligger i rummet; bara i IFC2X3 får den IfcRelCoversBldgElements eller IfcRelCoversSpaces. En rak
 trappa (STRAIGHT_RUN_STAIR) består av ett lutande trapplopp (IfcStairFlight, STRAIGHT) med antal steg, steghöjd, stegdjup och bredd
 som attribut och i Pset_StairFlightCommon, och på begäran ett vilplan (IfcSlab, LANDING) överst; den sista steghöjden är vilplanets
-eller bjälklagets framkant.
+eller bjälklagets framkant. Trapploppet får sin volym i Qto_StairFlightBaseQuantities och vilplanet sina basmängder som ett bjälklag.
 
 En glasfasad (IfcCurtainWall) går längs sin axel som en vägg, från en start till ett slut i våningens plan, med sin höjd från en
 underkant över våningen. Axeln är dess representation, men den har ingen egen kropp: den består av sina delar, som ligger i den
@@ -627,10 +635,14 @@ posterna: delarna heter efter fasaden, sitt slag och sin plats, till exempel Fas
 rad). En glasfasadstyp från `define_type` (IfcCurtainWallType) ger delarna typer med typens namn: en IfcPlateType CURTAIN_PANEL med
 glaset som ett materialskikt och en IfcMemberType MULLION med ramens material, till exempel aluminium eller stål, och profilens bredd
 och djup som materialprofil (i IFC2X3 bara materialet), så att delarna får sitt slag, sitt material och sina mått från typerna; poster
-och reglar delar typ och mått, så mängder per typ räknar dem tillsammans. Utan typ är posterna och reglarna 0,05 × 0,15 m aluminium och
+och reglar delar typ och mått, så mängder per typ räknar dem tillsammans. En post eller regel med typ får i IFC4 och IFC4.3 också en
+axel ('Axis', en linje genom profilens mitt längs hela delen) intill sin kropp, som IFC4.3 anger för en profil med
+IfcMaterialProfileSetUsage. Utan typ är posterna och reglarna 0,05 × 0,15 m aluminium och
 glasen 0,03 m glas, med PredefinedType på själva delarna; IFC2X3 har ingen PredefinedType på IfcPlate och IfcMember, och rapporten
 säger det. Topologin läser en glasfasad som en vägg, så att den kan sluta en våning tillsammans med väggarna; den får IsExternal ur
-topologin i Pset_CurtainWallCommon och basmängder i Qto_CurtainWallQuantities (längd, höjd, djup och sidans area).
+topologin i Pset_CurtainWallCommon och basmängder i Qto_CurtainWallQuantities (längd, höjd, djup och sidans area). Posterna och
+reglarna får Qto_MemberBaseQuantities och glasen Qto_PlateBaseQuantities (tjocklek, omkrets, area och volym), så att appens IDS
+Avfallshantering hittar deras volymer.
 
 `define_type` gör också typer för beklädnader (med skikt, som en bjälklagstyp), pelare, balkar, grundläggning, räcken, dörrar och
 fönster (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType och IfcWindowType; i IFC2X3

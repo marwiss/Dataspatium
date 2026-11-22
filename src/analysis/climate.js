@@ -8,7 +8,8 @@
  * provisionally (the element is surely declared but its category is uncertain, say an interior wall without LoadBearing: it
  * counts in the totals and is listed for the person), or cannot decide (it does not count until the person settles it). When
  * IsExternal is not given it may be derived: from the building's topology when the person has run it, and for a door or window
- * from the wall it sits in; the rule then says so. The person's settlement of an element is kept per GlobalId.
+ * from the wall it sits in; the rule then says so. The mullions, transoms and panels of an internal curtain wall follow it to the
+ * interior walls. The person's settlement of an element is kept per GlobalId.
  * Quantities come from the file's quantity sets, otherwise from a simple extrusion in the geometry (profile area × depth) or a
  * door's or window's overall size, otherwise there is none. A post is one material of one element (a layer, a constituent, the
  * only material), or the element itself keyed by its type when it is a window, a door or has no material. Each material is
@@ -185,8 +186,10 @@
 
     /**
      * The decision for every element and post. IsExternal is the file's, else the topology's, else (for a door or a window) its
-     * host's; a part the rules cannot decide for sure takes the decision of the element it belongs to; and the person's settlement
-     * (GlobalId → category) goes before everything. The data from gather is not changed.
+     * host's; a part the rules cannot decide for sure takes the decision of the element it belongs to, and so does a part of an
+     * internal curtain wall that the rules put in the envelope (IsExternal false: a glazed partition's mullions, transoms and panels
+     * are interior walls, while its other parts keep their rules); and the person's settlement (GlobalId → category) goes before
+     * everything. The data from gather is not changed.
      * @param {{elements: any[], posts: any[]}} data @param {{derived?: Map<number, boolean>|null, settled?: Record<string, string>|null}} [options]
      * @returns {{elements: any[], posts: any[]}}
      */
@@ -210,7 +213,10 @@
       }
       for (const el of elements) {
         const parent = el.parent !== null && el.parent !== undefined ? byId.get(el.parent) : null;
-        if ((el.category === 'oklar' || el.uncertain) && parent && parent.category !== 'oklar' && !parent.uncertain) {
+        // The part rules (member-mullion, plate-curtain) say envelope; those parts of an internal curtain wall follow their whole
+        // instead, and a part its own rule puts elsewhere (a moulding, a load-bearing post) keeps that rule.
+        const inside = !!parent && classKey(parent.cls) === 'IFCCURTAINWALL' && parent.external === false && el.category === 'skarm';
+        if (parent && (inside || ((el.category === 'oklar' || el.uncertain) && parent.category !== 'oklar' && !parent.uncertain))) {
           Object.assign(el, { category: parent.category, layer: parent.layer, rule: 'part', reason: null, uncertain: false, ruleText: t('climate.reason.part', { cls: parent.cls, rule: parent.ruleText }) });
         }
       }

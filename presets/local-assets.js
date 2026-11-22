@@ -9,7 +9,7 @@ Dataspatium.assets.addEntries({
  "python/dataspatium.py": {
   "file": "python/dataspatium.py.js",
   "encoding": "text",
-  "size": 516487,
+  "size": 522687,
   "library": "dataspatium"
  },
  "presets/exempeldata/befolkning-kommuner-2024.csv": {
@@ -645,7 +645,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/cad-bim.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 82001,
+  "size": 83447,
   "library": "dataspatium"
  },
  "docs/sv/floden.md": {
@@ -1659,7 +1659,7 @@ Dataspatium.assets.addEntries({
  "docs/en/cad-bim.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 83178,
+  "size": 84722,
   "library": "dataspatium"
  },
  "docs/en/floden.md": {
