@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/files', ['api/connectors', 'api/auth', 'api/http', 'data/datasets', 'io/import', 'platform/storage/zip', 'platform/files'], (connectors, auth, http, datasets, importer, zip, platformFiles) => {
+  D.define('api/files', ['api/connectors', 'api/auth', 'api/http', 'data/datasets', 'io/import', 'platform/storage/zip', 'platform/files', 'platform/tier'], (connectors, auth, http, datasets, importer, zip, platformFiles, tier) => {
     /** Files the app reads as datasets; a ZIP is opened and the same kinds are taken from inside it. */
     const VECTOR = /\.(gpkg|geojson|zip)$/i;
     const INSIDE = /\.(gpkg|geojson)$/i;
@@ -19,7 +19,8 @@
     const hostOf = (url) => { try { return new URL(url).host; } catch (_e) { return ''; } };
 
     /**
-     * The files a dataset points at, with its connector, or null when the dataset did not come from a connector with files.
+     * The files a dataset points at, with its connector, or null when the dataset did not come from a connector with files or the
+     * tier in effect hides that connector (platform/tier: Lantmäteriet's STAC is a geodata service).
      * @param {any} ds dataset metadata
      * @returns {Promise<{connector: any, files: Array<{url: string, name: string, importable: boolean}>}|null>}
      */
@@ -28,7 +29,7 @@
       if (!source || source.kind !== 'api' || !source.connectorId) return null;
       const connector = await connectors.get(source.connectorId);
       const spec = connector && connector.files;
-      if (!spec || !spec.column) return null;
+      if (!spec || !spec.column || !tier.showsConnector(connector)) return null;
       const index = (await datasets.columns(ds.id)).findIndex((c) => c.name === spec.column);
       if (index < 0) return null;
       const seen = new Set(); const files = [];

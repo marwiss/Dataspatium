@@ -80,6 +80,8 @@
         tabs.active = tab;
         tabs.addEventListener('dm-change', (e) => { tab = /** @type {any} */ (e).detail.id; render(); });
         const body = h('div', { class: 'dm-center-fill' });
+        // A source the tier hides (platform/tier, api/runner) is neither fetched again nor watched from here.
+        const sourceHidden = !!(ds.source && ds.source.kind === 'api' && await D.require('api/runner').hidden(ds.source));
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon(ui.datasetList.kindIcon(ds.kind), 20), ds.name, ' ', ...kindBadges(ds)),
@@ -88,8 +90,8 @@
               kinds.of(ds).open && kinds.shown(ds) ? ui.button({ label: t(kinds.of(ds).open.label), icon: kinds.of(ds).open.icon, variant: 'primary', title: t(kinds.of(ds).open.hint), onClick: () => openView(ds) }) : null,
               // Two tables (nodes and edges) become a graph dataset.
               !kinds.isCollection(ds) ? ui.button({ label: t('graph.from.button'), icon: 'share-2', title: t('graph.from.button.hint'), onClick: () => D.ensure(['bearbeta'], () => D.require('ui/analysis/graph-panel').fromTablesDialog(ctx, ds.id)).then((meta) => { if (meta) { store.set({ selectedId: meta.id }); render(); } }, (err) => shell.partFailed(err)) }) : null,
-              ds.source && (ds.source.kind === 'api' || ds.source.kind === 'bridge') ? ui.button({ label: t('api.refetch'), icon: 'refresh-cw', onClick: () => refetch(ds) }) : null,
-              watches.watchable(ds) ? watchButton(ds) : null,
+              ds.source && (ds.source.kind === 'api' || ds.source.kind === 'bridge') && !sourceHidden ? ui.button({ label: t('api.refetch'), icon: 'refresh-cw', onClick: () => refetch(ds) }) : null,
+              watches.watchable(ds) && !sourceHidden ? watchButton(ds) : null,
               ds.source && ds.source.kind === 'file' && ds.source.linked ? ui.button({ label: t('linked.refresh'), icon: 'refresh-cw', onClick: () => refreshLinked(ds) }) : null,
               ui.button({ label: t('bearbeta.versions'), icon: 'history', onClick: async () => { const columns = await services.datasets.columns(ds.id); return D.ensure(['bearbeta'], () => D.require('ui/dialogs').versionsDialog({ datasetId: ds.id, columns, onApplied: () => render() })); } }),
               ui.button({ label: t('common.rename'), icon: 'pencil', onClick: () => rename(ds) }),
@@ -397,7 +399,8 @@
           await settings.componentsCard(ctx, render));
       }
 
-      function apiDatasets() { return store.get().datasets.filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge')); }
+      /** The datasets from a source that can be fetched again: those whose source the tier hides are left out (api/runner). */
+      function apiDatasets() { return store.get().datasets.filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge') && !D.require('api/runner').hiddenBy(d.source)); }
 
       /** Re-fetch every API-sourced dataset (replace mode), one after the other, with progress in a toast. */
       async function refreshAllApi() {

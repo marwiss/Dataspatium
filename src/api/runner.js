@@ -8,8 +8,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/runner', ['api/connectors', 'api/request', 'api/auth', 'api/http', 'api/parsers', 'api/pagination', 'api/secrets', 'api/families/pxweb', 'api/families/socialstyrelsen', 'api/families/statbank', 'api/families/fhi', 'api/families/opencde', 'data/types', 'data/datasets', 'io/import'],
-    (connectors, request, auth, http, parsers, pagination, secrets, pxweb, socialstyrelsen, statbank, fhi, opencde, types, datasets, importer) => {
+  D.define('api/runner', ['api/connectors', 'api/request', 'api/auth', 'api/http', 'api/parsers', 'api/pagination', 'api/secrets', 'api/families/pxweb', 'api/families/socialstyrelsen', 'api/families/statbank', 'api/families/fhi', 'api/families/opencde', 'data/types', 'data/datasets', 'io/import', 'platform/tier'],
+    (connectors, request, auth, http, parsers, pagination, secrets, pxweb, socialstyrelsen, statbank, fhi, opencde, types, datasets, importer, tier) => {
       const families = { pxweb, socialstyrelsen, statbank, fhi, opencde };
 
       /** Union of columns by name; rows padded with null. */
@@ -96,9 +96,14 @@
         const meta = await datasets.get(id);
         const source = meta && meta.source;
         if (!source || (source.kind !== 'api' && source.kind !== 'bridge' && !(source.kind === 'file' && source.linked))) throw new Error(D.t('api.err.nosource'));
+        // What the tier hides is not fetched: the source's service, or a step of the recipe (platform/tier).
+        const hid = await hidden(source);
+        if (hid) tier.guard(hid.entry, hid.options);
         const recipes = D.require('data/recipes');
         const ops = D.require('data/operations');
         const steps = await recipes.steps(id);
+        const above = steps.find((s) => !tier.shows('op:' + s.op));
+        if (above) tier.guard('op:' + above.op);
         // Steps with a secret (the salt of a pseudonymisation) cannot be replayed without it.
         const secret = steps.find((s) => ((ops.get(s.op) || {}).params || []).some((p) => p.secret && s.params && s.params[p.name] === '***'));
         if (secret) throw new Error(D.t('api.refresh.secret', { step: secret.description }));
@@ -143,7 +148,9 @@
        * @returns {Promise<Array<{id: string, name: string, ok: boolean, rows?: number, error?: string}>>}
        */
       async function refreshAll(options = {}) {
-        const list = (await datasets.list()).filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge'));
+        // The sources the tier hides are left out, as the lists of saved fetches leave them out.
+        const list = [];
+        for (const d of await datasets.list()) if (d.source && (d.source.kind === 'api' || d.source.kind === 'bridge') && !(await hidden(d.source))) list.push(d);
         const results = [];
         for (const ds of list) {
           if (options.signal && options.signal.aborted) break;
@@ -156,6 +163,29 @@
         return results;
       }
 
+      /**
+       * What hides a dataset's source in the tier in effect (platform/tier): its connector's family or preset (the geodata services),
+       * or what a CDE's list needs of that server (the BCF topics, the IFC graph's query); null when the tier shows it. Without the
+       * connector, only the preset and the server are looked at.
+       * @param {any} source @param {any} [connector]
+       * @returns {{entry: string, options: {server?: string}}|null}
+       */
+      function hiddenBy(source, connector) {
+        if (!source || source.kind !== 'api') return null;
+        const entry = connector ? tier.connectorEntry(connector) : (source.connectorId && !tier.shows('preset:' + source.connectorId) ? 'preset:' + source.connectorId : null);
+        if (entry) return { entry, options: {} };
+        const spec = source.family === 'opencde' && source.opencde;
+        if (!spec) return null;
+        const server = { server: source.connectorId };
+        const needs = spec.kind === 'admin' ? (spec.admin === 'graph' ? 'cde.ifc-graph' : null) : 'cde.bcf';
+        return needs && !tier.shows(needs, server) ? { entry: needs, options: server } : null;
+      }
+      /** The same, with the source's connector looked up. @param {any} source */
+      async function hidden(source) {
+        const connector = source && source.kind === 'api' && source.connectorId ? await connectors.get(source.connectorId).catch(() => null) : null;
+        return hiddenBy(source, connector);
+      }
+
       async function refetch(source, options = {}) {
         // Datasets from the local database bridge are fetched again by api/bridge (same table or SQL, secrets from the session).
         if (source && source.kind === 'bridge') return D.require('api/bridge').refetch(source, options);
@@ -164,6 +194,9 @@
         if (!source || source.kind !== 'api') throw new Error(D.t('api.err.nosource'));
         const connector = await connectors.get(source.connectorId);
         if (!connector) throw new Error(D.t('api.err.connector.gone', { name: source.connectorName || source.connectorId }));
+        // A source the tier hides is never contacted, whoever asks (an update, a watch, a flow, a command).
+        const hid = hiddenBy(source, connector);
+        if (hid) tier.guard(hid.entry, hid.options);
         if (source.family) {
           const fam = families[source.family];
           if (!fam) throw new Error(D.t('api.err.family', { family: source.family }));
@@ -195,6 +228,6 @@
       }
       function clearOptionCache() { optionCache.clear(); }
 
-      return { fetchTable, toDataset, typedTable, intoDataset, describeSource, refetch, refreshDataset, refreshAll, onFetched, optionsFor, clearOptionCache, mergeTables, families };
+      return { fetchTable, toDataset, typedTable, intoDataset, describeSource, refetch, refreshDataset, refreshAll, hiddenBy, hidden, onFetched, optionsFor, clearOptionCache, mergeTables, families };
     });
 })();

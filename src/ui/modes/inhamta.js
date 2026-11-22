@@ -263,8 +263,8 @@
         replace(slots.center, h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('download', 20), t('import.title')), stepper), body);
       }
 
-      // ---- saved fetches: every dataset from an API, updated with one click ----
-      const apiDatasets = () => store.get().datasets.filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge'));
+      // ---- saved fetches: every dataset from an API, updated with one click; those whose source the tier hides are left out ----
+      const apiDatasets = () => store.get().datasets.filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge') && !D.require('api/runner').hiddenBy(d.source, connectorList.find((c) => c.id === d.source.connectorId)));
       /** Ids being updated; '*' while everything is. */
       const updating = new Set();
       function renderSaved() {
