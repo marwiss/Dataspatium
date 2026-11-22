@@ -86,12 +86,18 @@
     /**
      * The cached bytes when they may be used, without fetching: fresh, and with the spec's pinned digest when it has one.
      * The bytes are hashed at every call and compared with `spec.sha256`, never with the stored row; a copy that fails
-     * is removed, so that ensure() fetches it again after consent. The buffer returned is the one that was hashed.
+     * is removed, so that ensure() fetches it again after consent. The buffer returned is the one that was hashed. A row that
+     * cannot be read (a chunk that is not bytes) goes the same way.
      * @param {{id: string, sha256?: string, maxAgeMs?: number}} spec
      * @returns {Promise<ArrayBuffer|null>}
      */
     async function verified(spec) {
-      const hit = await cached(spec.id);
+      let hit;
+      try { hit = await cached(spec.id); } catch (err) {
+        console.warn('[components] the cached copy of ' + spec.id + ' cannot be read; removed, to be fetched again', err);
+        await remove(spec.id).catch(() => {});
+        return null;
+      }
       if (!hit) return null;
       const fresh = !spec.maxAgeMs || Date.now() - Date.parse(hit.meta.fetchedAt) < spec.maxAgeMs;
       if (!fresh) return null;
