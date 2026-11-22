@@ -19,8 +19,9 @@
   /**
    * Per namespace: the assets sent on hello, how misses are handled, `screen`, which sees every message the worker sends to the
    * hosted code on this thread and drops it by returning false (it may also change it), and `net`, which decides whether a worker
-   * under net 'fetch' may fetch an address (true lets it go out; without `net` nothing does).
-   * @type {Map<string, {initial?: () => Promise<any[]>, request?: (name: string) => Promise<boolean>, screen?: (data: any) => boolean, net?: (url: string) => Promise<boolean>}>}
+   * under net 'fetch' may fetch an address (true lets it go out; without `net` nothing does), given `wanted()`, which says whether the
+   * worker still lives.
+   * @type {Map<string, {initial?: () => Promise<any[]>, request?: (name: string) => Promise<boolean>, screen?: (data: any) => boolean, net?: (url: string, options: {wanted: () => boolean}) => Promise<boolean>}>}
    */
   const providers = new Map();
   const live = new Set();
@@ -103,7 +104,8 @@
       const provider = providers.get(worker.dmNamespace);
       const url = msg.url;
       let ok = false;
-      try { ok = !!(provider && provider.net) && (await provider.net(url)) === true; } catch (err) { D.log('workers', 'internet access refused', url, err); }
+      // `wanted` lets the consent queue drop, unasked, a question whose worker ended while it waited.
+      try { ok = !!(provider && provider.net) && (await provider.net(url, { wanted: () => live.has(worker) })) === true; } catch (err) { D.log('workers', 'internet access refused', url, err); }
       // A worker that ended while its question was open fetches nothing, so nothing is recorded for it.
       if (!live.has(worker)) ok = false;
       const ticket = ok ? ++tickets : null;

@@ -416,6 +416,67 @@
     return count + ' names, all reviewed';
   }, 30000);
 
+  test('worker shim: with net fetch, one refusal ends a burst of questions about the internet, and a worker that ended has its waiting questions dropped unasked', async (assert) => {
+    const consent = D.require('platform/consent');
+    const asked = [];
+    let answer = null;
+    const active = D.net.active;
+    // Asks through consent as the Python engine's allowNet does, under a purpose this test owns.
+    D.workers.provider('tests-burst', {
+      initial: async () => [],
+      net: (url, options) => consent.require('stun', { host: consent.hostOf(url), label: url, wanted: options.wanted }).then(() => true, () => false),
+    });
+    const make = () => D.workers.create({
+      namespace: 'tests-burst', net: 'fetch', netText: 'Ingen internet ({api}).',
+      source: D.workers.functionSource(function dataspatiumBurstTestWorker() {
+        self.onmessage = function (ev) {
+          if (ev.data !== 'go') return;
+          var tries = [];
+          for (var i = 0; i < 20; i++) tries.push(fetch('http://127.0.0.1:9/burst' + i).then(function () { return 'fetched'; }, function (e) { return e.message; }));
+          Promise.all(tries).then(function (r) { self.postMessage(r); });
+        };
+      }),
+    });
+    const askedBy = async (n) => {
+      const t0 = performance.now();
+      while (asked.length < n && performance.now() - t0 < 5000) await new Promise((r) => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 100)); // and no more than n
+    };
+    const saved = localStorage.getItem('dataspatium.consent');
+    localStorage.removeItem('dataspatium.consent');
+    const originalState = await consent.state('stun');
+    const first = make();
+    let second = null;
+    try {
+      await consent.set('stun', null);
+      consent.setAsker((purpose, info) => new Promise((resolve) => { asked.push(info.label); answer = resolve; }));
+      const results = new Promise((resolve) => { first.onmessage = (ev) => resolve(ev.data); });
+      first.postMessage('go');
+      await askedBy(1);
+      assert.equal(asked.length, 1, 'twenty questions open one dialog');
+      answer({ allow: false, remember: false });
+      const out = await results;
+      assert.ok(out.length === 20 && out.every((m) => /internet access was not allowed/.test(m)), 'one no, not remembered, refuses all twenty: ' + out[19]);
+      assert.equal(asked.length, 1, 'without asking the other nineteen');
+      asked.length = 0;
+      second = make();
+      second.postMessage('go');
+      await askedBy(1);
+      second.terminate();
+      answer({ allow: true, remember: false });
+      await askedBy(2);
+      assert.equal(asked.length, 1, 'a worker that ended has its waiting questions dropped, not shown');
+      assert.equal(D.net.active, active, 'and nothing is left open in the network log');
+      return 'ok';
+    } finally {
+      first.terminate();
+      if (second) second.terminate();
+      consent.setAsker(null);
+      await consent.set('stun', originalState);
+      if (saved !== null) localStorage.setItem('dataspatium.consent', saved);
+    }
+  }, 30000);
+
   test('workers: an allowed answer about the internet that comes after its worker ended records nothing in the network log', async (assert) => {
     const url = 'http://127.0.0.1:9/late';
     const t0 = Date.now();

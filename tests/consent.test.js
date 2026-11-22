@@ -88,6 +88,46 @@
     });
   });
 
+  test('consent: one refusal, also a one-time one, refuses the burst of questions waiting behind it with one dialog, a later question is asked, and a question no longer wanted is never shown', async (assert) => {
+    await withoutOverride(async () => {
+      const originalState = await consent.state('stun');
+      const asked = [];
+      const answers = [];
+      const settle = (p) => p.then(() => 'allowed', (e) => e.name);
+      const askedBy = async (n) => {
+        const t0 = performance.now();
+        while (asked.length < n && performance.now() - t0 < 5000) await new Promise((r) => setTimeout(r, 10));
+        await new Promise((r) => setTimeout(r, 30)); // and no more than n
+      };
+      const q = (host, wanted) => consent.require('stun', { host, label: 'stun:' + host, wanted });
+      try {
+        consent.setAsker((purpose, info) => new Promise((resolve) => { asked.push(info.host); answers.push(resolve); }));
+        await consent.set('stun', null);
+        const burst = Array.from({ length: 12 }, (_, i) => settle(q('h' + i + '.example')));
+        await askedBy(1);
+        assert.deepEqual(asked, ['h0.example'], 'twelve questions for twelve hosts open one dialog');
+        answers.shift()({ allow: false, remember: false });
+        assert.deepEqual(await Promise.all(burst), Array(12).fill('ConsentError'), 'one no, not remembered, refuses all twelve');
+        assert.deepEqual(asked, ['h0.example'], 'without asking the other eleven');
+        assert.equal(await consent.state('stun'), null, 'and nothing is remembered');
+        const later = settle(q('later.example'));
+        await askedBy(2);
+        assert.deepEqual(asked, ['h0.example', 'later.example'], 'a question that comes after the answer is asked');
+        answers.shift()({ allow: true, remember: false });
+        assert.equal(await later, 'allowed');
+        asked.length = 0;
+        const gone = settle(q('gone.example', () => false));
+        const kept = settle(q('kept.example', () => true));
+        await askedBy(1);
+        assert.deepEqual(asked, ['kept.example'], 'a question no longer wanted is not shown');
+        assert.equal(await gone, 'ConsentError', 'it is refused');
+        answers.shift()({ allow: true, remember: false });
+        assert.equal(await kept, 'allowed', 'and it refuses nothing else');
+        return 'ok';
+      } finally { consent.setAsker(null); await consent.set('stun', originalState); }
+    });
+  });
+
   test('components: fetched once with consent, verified against SHA-256, served from the cache afterwards, and removable', async (assert) => {
     const id = 'test:component';
     let calls = 0;
