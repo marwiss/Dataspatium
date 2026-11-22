@@ -326,8 +326,9 @@
     return 'refused: ' + ['open_url', 'pyxhr', 'sync', 'async', 'importScripts'].map((k) => out[k][0]).join(', ');
   }, 300000);
 
-  test('python: urllib3 and requests import, also from a web server, where urllib3 finds a Worker that starts nothing; requests reaches the internet through fetch where the browser has JSPI and through XMLHttpRequest, which is refused, elsewhere', async (assert) => {
-    if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them from jsDelivr)';
+  test('python: urllib3 and requests import, also from a web server, where urllib3 finds a Worker that starts nothing; requests reaches the internet through fetch only in console code in a browser with JSPI, and otherwise, as in a recipe step, through XMLHttpRequest, which is refused', async (assert) => {
+    // Only with ?python=1 or with every wheel already cached: the wheels of requests and urllib3 come from jsDelivr.
+    if (!wantReal() && !(await catalog.cachedPackages(['requests', 'urllib3']))) return 'skipped: requests and urllib3 not cached (open the page with ?python=1 to fetch them from jsDelivr)';
     await bridge.start();
     const t0 = Date.now();
     // Port 9 on this computer, which browsers refuse anyway: even a broken block reaches no server. The test page allows the
@@ -368,7 +369,20 @@
       assert.ok(out.get[1].includes(D.t('python.net.blocked', { api: 'XMLHttpRequest' })), 'without JSPI requests used XMLHttpRequest, refused with the message: ' + out.get[1]);
       assert.equal(logged.length, 0, 'nothing went out');
     }
-    return (out.isolated ? 'isolated' : 'not isolated') + ', ' + (out.jspi ? 'JSPI: fetch' : 'no JSPI: XMLHttpRequest');
+    // Recipe and model steps run synchronously (the worker's eval, Pyodide's runPython): there is no JSPI there, in any browser.
+    const step = await bridge.engine.evalJson([
+      'import json, pyodide.ffi, requests',
+      'def _dm_probe_step():',
+      '    try:',
+      '        requests.get("http://127.0.0.1:9/step", timeout=5)',
+      '        return None',
+      '    except Exception as e:',
+      '        return str(e)',
+      'json.dumps([bool(pyodide.ffi.can_run_sync()), _dm_probe_step()])',
+    ].join('\n'));
+    assert.ok(step && step[0] === false && String(step[1]).includes(D.t('python.net.blocked', { api: 'XMLHttpRequest' })), 'a synchronous step has no JSPI, so requests uses XMLHttpRequest and is refused: ' + JSON.stringify(step));
+    assert.ok(!D.net.log().some((e) => e.at >= t0 && e.url === 'http://127.0.0.1:9/step'), 'and nothing went out from the step');
+    return (out.isolated ? 'isolated' : 'not isolated') + ', ' + (out.jspi ? 'JSPI: fetch' : 'no JSPI: XMLHttpRequest') + '; step: XMLHttpRequest';
   }, 300000);
 
   test('python: pyfetch to the internet asks for consent for components with the host, is refused when the person says no, and shows in the network log when allowed', async (assert) => {

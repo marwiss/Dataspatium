@@ -271,8 +271,26 @@
       return true;
     }
 
+    /**
+     * Whether the runtime, the startup packages and the named packages with their dependencies are all in the component cache, so
+     * that using them needs no download. The lock is read only once the runtime, which holds it, is known to be cached.
+     * @param {string[]} names
+     */
+    async function cachedPackages(names) {
+      if (!(await cachedRuntime())) return false;
+      await load();
+      if (!names.every(has)) return false;
+      for (const name of closure(STARTUP.concat(names))) {
+        const entry = index.get(name);
+        if (entry.asset) continue; // shipped with the app
+        const m = await components.meta('pyodide:' + entry.file);
+        if (!m || m.sha256 !== entry.sha256) return false;
+      }
+      return true;
+    }
+
     function reset() { index = null; importMap = new Map(); provided.clear(); }
 
-    return { VERSION, BASE, PREFIX, INDEX_URL, RUNTIME, RUNTIME_SIZE, STARTUP, EXTRA, VENDORED, IFC_VERSION, IFC_WHEELS, IFC_SIZE, parse, load, has, info, all, referenced, closure, ensureRuntime, ensurePackages, provideFile, cachedRuntime, provided: () => Array.from(provided), reset };
+    return { VERSION, BASE, PREFIX, INDEX_URL, RUNTIME, RUNTIME_SIZE, STARTUP, EXTRA, VENDORED, IFC_VERSION, IFC_WHEELS, IFC_SIZE, parse, load, has, info, all, referenced, closure, ensureRuntime, ensurePackages, provideFile, cachedRuntime, cachedPackages, provided: () => Array.from(provided), reset };
   });
 })();
