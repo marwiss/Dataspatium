@@ -55,9 +55,9 @@
         }
         return graphBench;
       }
-      /** A model's page asked for its graph and the session may now read it. */
+      /** A model's page asked for its graph and the session may now read it, where the tier holds the IFC graph. */
       function followGraphLink() {
-        if (!graphLink || !s.caps || !opencde.hasExtension(s.caps, 'graph_query') || !admin.hasAdminScope(connector)) return;
+        if (!graphLink || !s.caps || !opencde.hasExtension(s.caps, 'graph_query') || !admin.hasAdminScope(connector) || !shows('cde.ifc-graph')) return;
         const link = graphLink; graphLink = null;
         benchOnce().follow(link).catch((err) => D.log('opencde-view', err));
       }

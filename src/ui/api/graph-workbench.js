@@ -37,6 +37,11 @@
       let editor = null; let viewSel = null; let built = false;
       let handle = null; let canvasEl = null; let statusEl = null; let legendEl = null; let saveEl = null; let tableEl = null;
       const log = (msg, kind) => { if (api.log) api.log(msg, kind || 'ok'); };
+      /**
+       * Whether the IFC graph's own parts show (platform/tier, DS-07 and DS-59): its models, starter queries and steps from an element,
+       * and a model's request to open its graph. Over Bolt the tier decides; through Dataregium's query the server's tier too.
+       */
+      const ifcShown = () => (api.via === 'admin' ? tier.shows('cde.ifc-graph', { server: connector.id }) : tier.shows('graph.ifc'));
       const model = () => (s.models || []).find((m) => m.id === s.modelId) || null;
       const inspectorChanged = () => { if (api.onInspector) api.onInspector(); };
 
@@ -101,6 +106,7 @@
        * @param {{documentId?: string|null, versionIndex?: number|null, guid?: string|null}} link
        */
       async function follow(link) {
+        if (!ifcShown()) return;
         await loadModels();
         if (!s.models || !s.models.length) return;
         const m = ifcGraph.pickModel(s.models, link);
@@ -241,9 +247,8 @@
         editor = /** @type {any} */ (h('dm-code', { language: 'sql', placeholder: 'MATCH (n) RETURN n LIMIT 25' }));
         editor.value = s.query;
         editor.addEventListener('input', () => { s.query = editor.value; });
-        // The IFC graph's models and starter queries belong to the tier Experimentell (platform/tier, DS-07 and DS-59): over Bolt they
-        // show only there, and on Dataregium's own card, which the tier gates already, always.
-        const ifc = api.via === 'admin' || tier.shows('graph.ifc');
+        // The IFC graph's models and starter queries belong to the tier Experimentell.
+        const ifc = ifcShown();
         replace(el, h('div', { class: 'dm-card dm-stack-sm' }, h('p', { class: 'dm-help dm-small', text: api.hint }), ifc ? modelsEl : null, ifc ? examplesRow() : null, editor, buttonsEl, keptEl), resultEl);
         renderModels(); renderButtons(); renderKept();
       }
@@ -336,7 +341,7 @@
           : [{ label: t('graph.field.type'), value: d.typ || t('graph.notype') }, { label: t('graph.field.source'), value: d.source }, { label: t('graph.field.target'), value: d.target }])
           .concat(Object.entries(props).map(([k, v]) => ({ label: k, value: typeof v === 'object' ? JSON.stringify(v) : String(v) })))
           .concat(Array.isArray(labels) ? [{ label: t('ifcgraph.labels'), value: labels.join(', ') }] : []);
-        const product = sel.kind === 'node' && Array.isArray(labels) && labels.includes('IfcProduct');
+        const product = sel.kind === 'node' && Array.isArray(labels) && labels.includes('IfcProduct') && ifcShown();
         const step = (id, icon) => basic.button({ label: t('ifcgraph.act.' + id), icon, size: 'sm', loading: s.acting === id, title: t('ifcgraph.act.' + id + '.hint'), 'data-ifcgraph-act': id, onClick: () => act(/** @type {any} */ (id)) });
         return h('div', { class: 'dm-stack-sm', 'data-graph-selected': sel.id },
           h('h4', { text: t(sel.kind === 'node' ? 'graph.selected.node' : 'graph.selected.edge') }),
