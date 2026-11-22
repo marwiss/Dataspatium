@@ -267,40 +267,45 @@
       return true;
     }
 
-    /** A yes from cachedRuntime() holds until the component cache changes; every use still checks its bytes (components.ensure). */
-    let runtimeVerified = false;
-    components.subscribe(() => { runtimeVerified = false; });
+    /** Files whose cached bytes matched their pinned digest: a yes holds until the component cache changes, and every use still checks the bytes (components.ensure). */
+    const verifiedFiles = new Set();
+    components.subscribe(() => { verifiedFiles.clear(); });
+    /** Whether a file's cached bytes are those pinned in its spec (hashed, never trusted from the stored row). */
+    async function cachedFile(spec) {
+      if (verifiedFiles.has(spec.id)) return true;
+      if (!(await components.verified(spec))) return false;
+      verifiedFiles.add(spec.id);
+      return true;
+    }
     /**
      * Whether the runtime is already in the component cache (no download needed to start). The cached bytes are checked
      * against the pinned digests, not the stored rows, so that a changed copy never lets a flow start Python at start and
      * then ask for the download.
      */
     async function cachedRuntime() {
-      if (runtimeVerified) return true;
-      for (const f of RUNTIME) { if (!(await components.verified(runtimeSpec(f)))) return false; }
-      runtimeVerified = true;
+      for (const f of RUNTIME) { if (!(await cachedFile(runtimeSpec(f)))) return false; }
       return true;
     }
 
     /**
-     * Whether the runtime, the startup packages and the named packages with their dependencies are all in the component cache, so
-     * that using them needs no download. The lock is read only once the runtime, which holds it, is known to be cached.
+     * Whether the runtime, the startup packages (what Python's start loads) and the named packages with their dependencies are
+     * all in the component cache with their pinned bytes, so that using them needs no download and asks nothing. The lock is
+     * read only once the runtime, which holds it, is known to be cached, and never asked for.
      * @param {string[]} names
      */
     async function cachedPackages(names) {
       if (!(await cachedRuntime())) return false;
-      await load();
+      try { await load({ ask: false }); } catch (_err) { return false; }
       if (!names.every(has)) return false;
       for (const name of closure(STARTUP.concat(names))) {
         const entry = index.get(name);
         if (entry.asset) continue; // shipped with the app
-        const m = await components.meta('pyodide:' + entry.file);
-        if (!m || m.sha256 !== entry.sha256) return false;
+        if (!(await cachedFile(wheelSpec(entry)))) return false;
       }
       return true;
     }
 
-    function reset() { index = null; importMap = new Map(); provided.clear(); runtimeVerified = false; }
+    function reset() { index = null; importMap = new Map(); provided.clear(); verifiedFiles.clear(); }
 
     return { VERSION, BASE, PREFIX, INDEX_URL, RUNTIME, RUNTIME_SIZE, STARTUP, EXTRA, VENDORED, IFC_VERSION, IFC_WHEELS, IFC_SIZE, parse, load, has, info, all, referenced, closure, ensureRuntime, ensurePackages, provideFile, cachedRuntime, cachedPackages, provided: () => Array.from(provided), reset };
   });

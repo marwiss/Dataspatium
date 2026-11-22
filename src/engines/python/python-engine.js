@@ -198,6 +198,12 @@
          * until the next command (run or eval) or a restart, so a flood ends with one answer. A no for the session only.
          */
         this.netRefused = false;
+        /**
+         * Set by the bridge for a command nobody watches (a flow at start, `ask: false`), and cleared by the next command that
+         * someone runs: until then the worker's wheel requests and internet questions are answered from the consents already
+         * kept and never asked, also for tasks the command leaves running. data/python-bridge keeps one command at a time.
+         */
+        this.unattended = false;
         this.handlers = {
           stdout: (/** @type {string} */ _text) => {},
           stderr: (/** @type {string} */ _text) => {},
@@ -209,14 +215,23 @@
       /** Register a handler: stdout, stderr, progress (downloads), closed (the worker died). */
       on(event, fn) { this.handlers[event] = fn; return this; }
 
-      /** Start Python (idempotent; a failed start is retried by the next call). */
-      start() {
-        if (!this.ready) this.ready = this.boot().catch((err) => { this.ready = null; throw err; });
+      /**
+       * Start Python (idempotent; a failed start is retried by the next call). `ask: false` (a flow at start): the runtime and
+       * the startup wheels come only from the cache or with a consent already kept, and the start fails with a ConsentError
+       * otherwise.
+       * @param {{ask?: boolean}} [options]
+       */
+      start(options = {}) {
+        if (!this.ready) {
+          this.unattended = options.ask === false;
+          this.ready = this.boot().catch((err) => { this.ready = null; throw err; });
+        }
         return this.ready;
       }
 
       async boot() {
         const t0 = performance.now();
+        const ask = this.unattended ? false : undefined;
         const files = new Map();
         const total = catalog.RUNTIME_SIZE + STARTUP_SIZE;
         const onProgress = (info) => {
@@ -226,13 +241,14 @@
           this.handlers.progress({ received: sum, total });
         };
         // Runtime and startup wheels: from the component cache, or downloaded after consent.
-        const runtime = await catalog.ensureRuntime({ onProgress });
-        const startup = await catalog.ensurePackages(catalog.STARTUP, { onProgress });
+        const runtime = await catalog.ensureRuntime({ onProgress, ask });
+        const startup = await catalog.ensurePackages(catalog.STARTUP, { onProgress, ask });
         const initial = runtime.concat(startup.assets);
         D.workers.provider('pyodide', {
           initial: async () => initial,
-          // A wheel the worker asks for later (an import the scanner did not see) is fetched the same way.
-          request: (name) => catalog.provideFile(name),
+          // A wheel the worker asks for later (an import the scanner did not see) is fetched the same way; while a command nobody
+          // watches is the last one, only from the cache or with a consent already kept (unattended).
+          request: (name) => catalog.provideFile(name, this.unattended ? { ask: false } : {}),
           // net 'fetch': the worker's fetch asks here before it reaches an address (see the top of this file).
           net: (url, options) => this.allowNet(url, options),
         });
@@ -268,14 +284,15 @@
        * Python code wants to fetch `url` (pyfetch, micropip, js.fetch, requests through fetch): allowed with the user's consent.
        * The worker then sends the very Request it asked about (the browser follows the server's redirects); the call shows in the
        * network log (platform/workers), with the end and status the worker reports. After a refusal the worker's further questions
-       * are refused unasked until the next command (see netRefused); `wanted()` drops a question whose worker has ended.
+       * are refused unasked until the next command (see netRefused); `wanted()` drops a question whose worker has ended. While a
+       * command nobody watches is the last one (unattended), nothing is asked: only a consent already kept lets it through.
        * @param {string} url @param {{wanted?: () => boolean}} [options] @returns {Promise<boolean>}
        */
       async allowNet(url, options = {}) {
         if (this.netRefused) { D.log('python', 'internet access refused, as earlier in this command', url); return false; }
         // The one place that says which consent covers Python's internet.
         const purpose = 'components';
-        try { await consent.require(purpose, { host: consent.hostOf(url), label: String(url), wanted: options.wanted }); return true; }
+        try { await consent.require(purpose, { host: consent.hostOf(url), label: String(url), wanted: options.wanted, ask: this.unattended ? false : undefined }); return true; }
         catch (err) {
           if (err && err.name === 'ConsentError') this.netRefused = true;
           D.log('python', 'internet access refused', url, (err && err.message) || err);
