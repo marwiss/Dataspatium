@@ -179,7 +179,8 @@
     const ui = D.require('ui/assistant');
     const handle = ui.open(ctx);
     try {
-      await waitFor(() => handle.state.providers.length && handle.state.earlier.length, 3000, 'the providers and the memory');
+      // The panel sets its state before it reads the last provider and renders, so wait for the line itself.
+      await waitFor(() => handle.state.providers.length && handle.panel.el.querySelector('[data-assistant-memory]'), 3000, 'the providers and the memory');
       assert.equal(handle.panel.el.querySelector('[data-assistant-memory]').getAttribute('data-assistant-memory'), '2', 'the memory shown');
       handle.state.providerId = provider.id;
       handle.state.task = 'Och nu?';
