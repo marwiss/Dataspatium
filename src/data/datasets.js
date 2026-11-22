@@ -486,6 +486,9 @@
     /** Replace the dataset file wholesale (undo, version restore). */
     async function replaceBytes(id, bytes, logEntry) {
       const handle = await ensureOpen(id);
+      // The highest STEP id a model has had never falls (decision F70 d), also when an undo or a restored version brings back an
+      // earlier file: the wheel then gives no new instance an id that the later version had (ifcmerge merges on ids).
+      const maxId = (handle.meta.model && Number(handle.meta.model.maxId)) || 0;
       await handle.engine.open(bytes.slice(0));
       handle.columns = await readColumns(handle.engine);
       handle.replaced = (handle.replaced || 0) + 1;
@@ -496,6 +499,10 @@
       for (const key of KIND_META_KEYS) {
         const r = await handle.engine.exec('select value from _meta where key = ?', [key]);
         if (r[0] && r[0].values.length) { try { handle.meta[key] = JSON.parse(r[0].values[0][0]); } catch (_e) { /* keep the current value */ } }
+      }
+      if (handle.meta.model && maxId > (Number(handle.meta.model.maxId) || 0)) {
+        handle.meta.model = Object.assign({}, handle.meta.model, { maxId });
+        await handle.engine.run('insert or replace into _meta (key, value) values (?, ?)', ['model', JSON.stringify(handle.meta.model)]);
       }
       return save(id);
     }

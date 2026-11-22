@@ -640,7 +640,10 @@ närmast väggens start. Med `side: right` vänds den: i liv med högra sidan oc
 tjock fyller hela smygen.
 Ett ändringsset ändrar modellen på plats: varje instans som inte raderas behåller sitt STEP-id (#-numret) och sin klass, och
 nya instanser får id över det högsta som modellen har haft i datamängden, också när en tidigare version raderade de sista, så att
-inget id ges två gånger. Det kräver ifcmerge, som Dataregium sammanfogar versioner med. En ny modell är en ny fil, numrerad från #1.
+inget id ges två gånger. Det kräver ifcmerge, som Dataregium sammanfogar versioner med. När filens eget högsta id är lägre skriver
+appen in en id-vakt, en lös IfcDocumentReference med namnet StepIdGuard vars Identification är det högsta id:t, så att historiken
+följer med filen också utanför datamängden; Dataregium skriver och läser samma vakt och anger det högsta id:t för en version
+(`ifc_max_step_id`). Vakten visas aldrig som element, dokument eller fynd. En ny modell är en ny fil, numrerad från #1.
 Verktyget `edit_element` ändrar ett befintligt element på plats, så att det behåller sitt GlobalId hela sin livstid: en väggs start,
 slut, tjocklek, höjd och typ, ett bjälklags kontur, tjocklek och typ, en öppnings läge, bredd, höjd och underkant tillsammans med dess
 dörr eller fönster, ett taks lutning, takfot och takfotens höjd, och vilket elements namn som helst. Måtten läses ur elementets egen

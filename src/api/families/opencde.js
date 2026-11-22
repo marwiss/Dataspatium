@@ -609,7 +609,23 @@
       const cde = { connectorId: connector.id, connectorName: connector.name, host: hostOf(connector.baseUrl), projectId: project.project_id, projectName: project.name || '', kind: entry.documentId ? 'document' : 'bcf-document', reference: entry.reference, documentId: entry.documentId, versionIndex: entry.versionIndex, ifcProject: entry.ifcProject, fetchedAt: new Date().toISOString() };
       const source = Object.assign({}, meta.source || { kind: 'file', fileName: entry.filename }, { cde });
       await datasets.updateMeta(meta.id, { source });
+      if (meta.kind === 'model' && entry.documentId && entry.versionIndex) await seedStepIds(connector, meta.id, entry.documentId, entry.versionIndex);
       return datasets.get(meta.id);
+    }
+    /**
+     * The highest STEP id the server knows a model document has had (Dataregium's version metadata `ifc_max_step_id`, an integer)
+     * into the model dataset's facts (data/model.raiseMaxId), so that the wheel gives no new instance an id an earlier version had
+     * (decision F70 d). A server without the entry, or an answer that fails, leaves the facts as the file gives them.
+     * @param {any} connector @param {string} datasetId @param {string} documentId @param {number} versionIndex
+     * @returns {Promise<boolean>} whether the facts were raised
+     */
+    async function seedStepIds(connector, datasetId, documentId, versionIndex) {
+      try {
+        const entry = (await versionMetadata(connector, documentId, versionIndex)).find((x) => x && x.name === 'ifc_max_step_id');
+        const value = entry ? (Array.isArray(entry.value) ? entry.value[0] : entry.value) : null;
+        if (value === null || value === undefined || !/^\s*\d+\s*$/.test(String(value))) return false;
+        return await D.require('data/model').raiseMaxId(datasetId, Number(value));
+      } catch (err) { D.log('opencde', 'version metadata for the STEP ids not read', err); return false; }
     }
     /**
      * The latest versions the server has of some documents (Documents API `POST document-versions`).
@@ -1226,7 +1242,7 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { addDeployed, ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
+    return { addDeployed, ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, seedStepIds, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
       topicMay, projectMay, topicFiles, filesBody, setTopicFiles, modelFile, linkTopic, attachDocument, identity };
   });
 })();
