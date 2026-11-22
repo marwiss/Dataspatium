@@ -71,6 +71,28 @@
     assert.deepEqual(catalog.STARTUP, ['numpy', 'pandas', 'micropip', 'sqlite3']);
   }
 
+  test('python: a wheel shipped in the ZIP is given to each session as its own copy, so a restart can send it again', async (assert) => {
+    const entry = catalog.VENDORED[0];
+    const name = catalog.PREFIX + entry.file;
+    // No lock needed: the wheels in the ZIP join the index from the catalog itself.
+    catalog.reset();
+    catalog.parse({ packages: {} });
+    let whole = 0;
+    try {
+      for (const session of [1, 2]) {
+        assert.equal(await catalog.provideFile(name), true, 'session ' + session + ': provided');
+        // What sending it to the worker does: the asset leaves the cache and its buffer is transferred, which detaches it.
+        const e = D.assets.take(name);
+        if (session === 1) whole = e.data.byteLength;
+        assert.ok(whole > 0 && e.data.byteLength === whole, 'session ' + session + ': the whole wheel, ' + e.data.byteLength + ' bytes');
+        structuredClone(e.data, { transfer: [e.data] });
+        assert.equal(e.data.byteLength, 0, 'session ' + session + ': its copy went to the worker');
+      }
+      assert.equal(/** @type {ArrayBuffer} */ (await D.assets.load(entry.asset)).byteLength, whole, 'the wheel\'s own asset is still whole');
+    } finally { D.assets.take(name); catalog.reset(); }
+    return entry.file + ', ' + whole + ' bytes';
+  });
+
   test('python: the bridge mirrors datasets, turns output into console entries and imports dm_write() files', async (assert) => {
     const file = new File(['kommun;befolkning\nStockholm;984748\nGöteborg;596841\n'], 'pytest.csv', { type: 'text/csv' });
     const meta = await importer.run(file, {}, null, 'Pythontest');
