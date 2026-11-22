@@ -7,7 +7,9 @@ The app loads the start list (`full`, with the language files) at start and each
   - a file is in no list, in two lists, or listed but missing; a group is named twice or needs a group that is not earlier;
   - a module depends (define's list) on a module that is neither in the start list nor in its own group or a group it needs;
   - a module requires one at run time (D.require, D.has, and the module names that data/workspace and io/url-import look up)
-    that is not loaded with it, unless its file awaits that group (D.ensure([...]) or D.loadGroup('...') naming it);
+    that is not loaded with it, unless its file awaits the very group that module is in (D.ensure([...]) or D.loadGroup('...')
+    naming it; a group that only needs that group does not count, so that the file names what it waits for);
+  - the start list has a file that FORBIDDEN names (what the start must never load);
   - a module of the mobile page (MOBILE) depends on a module that is not in MOBILE.
 Run from the repo root: python tools/check_groups.py (exit code 0 when everything holds; -v lists the awaited requires too).
 """
@@ -22,6 +24,13 @@ import sys
 BOOT = 'src/boot.js'
 # Page scripts that the pages load themselves, not through the boot loader's lists.
 PAGE_SCRIPTS = {'src/boot.js', 'src/start.js', 'src/mobile/start.js', 'src/mobile/profile.js'}
+# What the start list must never have (a folder ends in /): the modes of the groups and the folders only groups use. It grows as
+# parts of the start move to groups (PLAN 4).
+FORBIDDEN = [
+    'src/ui/modes/soka.js', 'src/ui/modes/bearbeta.js', 'src/ui/modes/kontrollera.js', 'src/ui/modes/analysera.js',
+    'src/ui/modes/visualisera.js', 'src/ui/modes/exportera.js', 'src/ui/modes/dela.js',
+    'src/ui/analysis/', 'src/ui/assistant/', 'src/ui/docs/', 'src/ui/viz/', 'src/mobile/',
+]
 PATH = re.compile(r"'((?:src|vendor|presets|tests)/[^']+\.js)'")
 DEFINE = re.compile(r"(?<![\w$])(?:D|Dataspatium|globalThis\.Dataspatium)\.define\(\s*'([^']+)'\s*,\s*(\[[^\]]*\])?", re.S)
 REQUIRE = re.compile(r"(?<![\w$.])(?:D|Dataspatium|globalThis\.Dataspatium)\.(require|has)\(\s*'([^']+)'\s*\)")
@@ -90,6 +99,14 @@ def main(argv: list[str]) -> int:
             errors.append('%s is in MOBILE but in no list of the app' % p)
     for p in sorted(set(f.replace(os.sep, '/') for f in glob.glob('src/**/*.js', recursive=True)) - PAGE_SCRIPTS - set(where)):
         errors.append('%s is in no list of src/boot.js' % p)
+    def forbidden(f: str, p: str) -> bool:
+        return p == f or (f.endswith('/') and p.startswith(f))
+    for f in FORBIDDEN:
+        if not any(forbidden(f, p) for p in where):
+            errors.append('FORBIDDEN names %s, which no listed file is' % f)
+        for p in start:
+            if forbidden(f, p):
+                errors.append('%s is in the start list, which must never load it (FORBIDDEN %s)' % (p, f))
     # Each group's needs: earlier groups, and the closure of them.
     closure: dict[str, set[str]] = {'start': {'start'}}
     for i, g in enumerate(groups):
@@ -127,7 +144,7 @@ def main(argv: list[str]) -> int:
             if g not in closure:
                 errors.append('%s awaits the group %s, which src/boot.js does not have' % (p, g))
                 continue
-            lazy |= closure[g]
+            lazy |= {g}
         for no, kind, target in f['uses']:
             if target not in module_list:
                 if kind == 'require' and not target.startswith('tests/'):
