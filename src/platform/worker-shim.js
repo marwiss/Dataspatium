@@ -169,8 +169,8 @@ function dataspatiumMakeXHR(RealXHR, lookupSync, lookupAsync, assetName, mimeFor
  * every URL that is not an asset, a blob or a data URL (XMLHttpRequest serves assets only), and WebSocket, WebSocketStream,
  * WebTransport, EventSource, Worker, SharedWorker, BroadcastChannel, caches, indexedDB and navigator.storage read as undefined,
  * ignoring assignments. 'fetch' (Python) is the same, except that fetch asks the main thread first, which asks for the user's
- * consent (platform/workers, the namespace's `net`). `config.netText` is the message, in the user's language, with {api} for the
- * refused interface. Without `net` nothing changes.
+ * consent (platform/workers, the namespace's `net`), and that Worker and SharedWorker are stand-ins that start nothing.
+ * `config.netText` is the message, in the user's language, with {api} for the refused interface. Without `net` nothing changes.
  * The checks call only built-ins taken before the hosted code runs, and fetch and importScripts replace the native ones on the
  * prototype too, so that code in the worker can neither bend a check nor reach around it.
  * @param {{namespace: string, name?: string, net?: 'none'|'fetch', netText?: string}} config
@@ -328,13 +328,34 @@ function dataspatiumWorkerShim(config, makeXHR) {
     var desc = { get: function () { return value; }, set: function () {}, enumerable: false, configurable: false };
     for (var o = obj; o; o = Object.getPrototypeOf(o)) if (o === obj || hasOwn(o, key)) Object.defineProperty(o, key, desc);
   }
+  /**
+   * Under 'fetch' a stand-in for Worker and SharedWorker: it starts nothing and fails on the next task like a worker that cannot
+   * load. Python packages probe for workers (urllib3 builds a streaming fetcher with Worker.new() in a cross-origin isolated
+   * page, the app served from a web server), and an undefined Worker reads as None there, which broke `import requests`.
+   */
+  function standIn(api) {
+    return function (url) {
+      var text = refuse(api, url);
+      var w = {
+        onmessage: null, onerror: null,
+        postMessage: function () {}, terminate: function () {},
+        addEventListener: function () {}, removeEventListener: function () {}, dispatchEvent: function () { return true; },
+      };
+      setTimeout(function () {
+        if (typeof w.onerror !== 'function') return;
+        try { w.onerror.call(w, typeof ErrorEvent === 'function' ? new ErrorEvent('error', { message: text }) : { type: 'error', message: text }); }
+        catch (e) { /* the handler's own failure */ }
+      }, 0);
+      return w;
+    };
+  }
   if (policy) {
     // Accessors rather than deletions: a global that resolves its constructors lazily cannot bring one back, and hosted code
     // that installs its own (webR's proxies, whose sockets and workers its main thread would open) neither fails nor succeeds.
     // indexedDB, BroadcastChannel and navigator.storage would reach the app's own storage and tabs (consents, connectors, cached
     // components); neither engine needs them, and Emscripten's IndexedDB code (webR's Fetch.init) takes an undefined one as missing.
     ['WebSocket', 'WebSocketStream', 'WebTransport', 'EventSource', 'Worker', 'SharedWorker', 'BroadcastChannel', 'caches', 'indexedDB'].forEach(function (key) {
-      pin(self, key, undefined);
+      pin(self, key, policy === 'fetch' && (key === 'Worker' || key === 'SharedWorker') ? standIn(key) : undefined);
     });
     if (self.navigator) pin(self.navigator, 'storage', undefined);
   }

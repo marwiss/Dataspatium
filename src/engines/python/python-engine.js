@@ -17,10 +17,10 @@
  * XMLHttpRequest are refused with a message that points to pyfetch: socket, urllib.request and http.client over http://,
  * pyodide.http.open_url and pyxhr, js.XMLHttpRequest, importScripts with an address, and requests without JSPI (urllib3 then falls
  * back to XMLHttpRequest). https:// in urllib.request and http.client stops earlier with "unknown url type: https", since Pyodide
- * ships without ssl. WebSocket, Worker and the other constructors that could open a connection read as undefined. Emscripten's
- * socket emulation would turn a connect() into a browser WebSocket to ws://host:port/ (xmlschema tried www.w3.org that way while
- * reading ifctester's ids.xsd); without WebSocket it fails at once, and Python's socket functions raise an OSError with the same
- * message.
+ * ships without ssl. WebSocket and the other constructors that could open a connection read as undefined, and Worker is a stand-in
+ * that starts nothing. Emscripten's socket emulation would turn a connect() into a browser WebSocket to ws://host:port/ (xmlschema
+ * tried www.w3.org that way while reading ifctester's ids.xsd); without WebSocket it fails at once, and Python's socket functions
+ * raise an OSError with the same message.
  */
 (function () {
   'use strict';

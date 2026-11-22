@@ -151,9 +151,18 @@
         tries.toString = function () { return fetch({ url: 'data:,', toString: function () { return 'http://127.0.0.1:9/str'; } }); };
         tries.prototype = function () { return (WorkerGlobalScope.prototype.fetch || self.fetch).call(self, 'http://127.0.0.1:9/proto'); };
       }
+      if (mode === 'fetch') {
+        // A real worker from this blob would answer at once; the stand-in starts nothing and fails on the next task.
+        var echo = URL.createObjectURL(new Blob(['postMessage("started");'], { type: 'text/javascript' }));
+        var w = new Worker(echo);
+        w.onmessage = function () { out.workerAnswered = true; };
+        w.onerror = function (e) { out.workerError = e.message; };
+        w.postMessage('hi');
+        out.workerNative = /\[native code\]/.test(String(Worker)) || /\[native code\]/.test(String(SharedWorker));
+      }
       Promise.all(Object.keys(tries).map(function (k) {
         return tries[k]().then(function (r) { return r.text(); }).then(function (t) { out.fetches[k] = 'read ' + t.length; }, function (e) { out.fetches[k] = e.message; });
-      })).then(function () {
+      })).then(function () { return new Promise(function (r) { setTimeout(r, 300); }); }).then(function () {
         self.__dataspatium.refused().forEach(function (r) { out.refusedBy[r.api] = (out.refusedBy[r.api] || 0) + 1; out.refusedUrls.push(r.url); });
         self.postMessage(out);
       });
@@ -232,7 +241,7 @@
     };
   }
 
-  test('worker shim: with net fetch, fetch asks the main thread about the address it fetches and goes out only on a trusted answer for that address and an allowed call shows in the network log', async (assert) => {
+  test('worker shim: with net fetch, fetch asks the main thread about the address it fetches and goes out only on a trusted answer for that address, an allowed call shows in the network log, and Worker is a stand-in that starts nothing', async (assert) => {
     const target = 'http://127.0.0.1:9/target';
     const decoy = 'http://127.0.0.1:9/decoy';
     const asked = [];
@@ -255,14 +264,16 @@
     assert.equal(D.net.active, active, 'every allowed call has ended in the log, the forged questions too');
     D.workers.provider('tests-net', { initial: async () => [{ name: 'tests-net/a.txt', kind: 'text', data: 'hej' }], net: async (url) => { asked.push('probe ' + url); return false; } });
     const probe = await askWorker({ namespace: 'tests-net', source: D.workers.functionSource(dataspatiumNetProbeWorker), net: 'fetch', netText: 'Ingen internet ({api}).' });
-    for (const k of Object.keys(probe.types)) assert.equal(probe.types[k], 'undefined', 'fetch: ' + k);
+    assert.ok(probe.types.Worker === 'function' && probe.types.SharedWorker === 'function' && probe.workerNative === false, 'Worker and SharedWorker are stand-ins, not the native ones');
+    for (const k of ['WebSocket', 'WebSocketStream', 'WebTransport', 'EventSource', 'BroadcastChannel', 'caches', 'indexedDB', 'navigator.storage']) assert.equal(probe.types[k], 'undefined', 'fetch: ' + k);
     for (const k of Object.keys(probe.under)) assert.ok(probe.under[k].split(' ').every((x) => x === 'undefined'), 'fetch: ' + k + ' on every level: ' + probe.under[k]);
     assert.equal(probe.nativeFetches, 0, 'fetch: no native fetch on the prototype chain');
+    assert.ok(probe.workerAnswered === undefined && probe.workerError === 'Ingen internet (Worker).', 'the stand-in started nothing and failed with the refusal: ' + JSON.stringify([probe.workerAnswered, probe.workerError]));
     for (const [k, url] of Object.entries(CRAFTED)) {
       assert.equal(probe.fetches[k], 'Dataspatium: internet access was not allowed for ' + url, k + ' asked about the address fetch would use');
       assert.ok(asked.includes('probe ' + url), k + ' reached the main thread as ' + url);
     }
-    assert.deepEqual(probe.refusedBy, { XMLHttpRequest: 3, importScripts: 2 }, 'the refusals are recorded');
+    assert.deepEqual(probe.refusedBy, { XMLHttpRequest: 3, importScripts: 2, Worker: 1 }, 'the refusals are recorded');
     return 'asked ' + asked.length + ', logged ' + logged.length;
   }, 30000);
 

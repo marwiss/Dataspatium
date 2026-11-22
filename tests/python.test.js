@@ -258,7 +258,7 @@
       '    "raw": raw(_socket.SOCK_STREAM, lambda s: s.connect(("127.0.0.1", 9))),',
       '    "udp": raw(_socket.SOCK_DGRAM, lambda s: s.sendto(b"x", ("127.0.0.1", 9))),',
       '    "unreachable": errno.EHOSTUNREACH,',
-      '    "js": [n for n in ("WebSocket", "WebTransport", "Worker") if getattr(js, n, None) is not None],',
+      '    "js": [n for n in ("WebSocket", "WebTransport") if getattr(js, n, None) is not None],',
       '}',
       'r = await pyodide.http.pyfetch("dataspatium-asset://pyodide/pyodide-lock.json")',
       'out["pyfetch"] = [r.status, len(await r.bytes()) > 1000]',
@@ -272,17 +272,17 @@
       assert.ok(out[key] && out[key][2].includes(said), key + ' says why in the app\'s language: ' + JSON.stringify(out[key]));
     }
     for (const key of ['raw', 'udp']) assert.ok(out[key] && out[key][1] === out.unreachable, key + ' past the patches fails in the emulation, which has no WebSocket: ' + JSON.stringify(out[key]));
-    assert.deepEqual(out.js, [], 'no WebSocket, WebTransport or Worker for Python code');
+    assert.deepEqual(out.js, [], 'no WebSocket or WebTransport for Python code');
     assert.deepEqual(out.pyfetch, [200, true], 'pyfetch reads through the app\'s gate');
     return 'blocked: ' + out.create_connection[0] + ', ' + out.urlopen[0] + ', _socket errno ' + out.raw[1];
   }, 300000);
 
-  test('python: Python reaches the internet through pyfetch only: open_url, pyxhr, XMLHttpRequest and importScripts are refused with the message, EventSource, caches, IndexedDB and BroadcastChannel are gone, and pyfetch still reads an asset', async (assert) => {
+  test('python: Python reaches the internet through fetch only: open_url, pyxhr, XMLHttpRequest and importScripts are refused with the message, EventSource, caches, IndexedDB and BroadcastChannel are gone, Worker starts nothing, and pyfetch still reads an asset', async (assert) => {
     if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them from jsDelivr)';
     await bridge.start();
     // Port 9 on this computer, which browsers refuse anyway: even a broken block reaches no server.
     const res = await bridge.run([
-      'import json, js, pyodide.http',
+      'import json, js, pyodide.code, pyodide.http',
       'from pyodide.http import pyxhr',
       'def refused(call):',
       '    try:',
@@ -300,24 +300,71 @@
       '    "sync": refused(lambda: xhr(False)),',
       '    "async": refused(lambda: xhr(True)),',
       '    "importScripts": refused(lambda: js.importScripts("http://127.0.0.1:9/x.js")),',
-      '    "gone": [n for n in ("WebSocket", "WebSocketStream", "WebTransport", "EventSource", "Worker", "SharedWorker", "BroadcastChannel", "caches", "indexedDB") if getattr(js, n, None) is not None],',
+      '    "gone": [n for n in ("WebSocket", "WebSocketStream", "WebTransport", "EventSource", "BroadcastChannel", "caches", "indexedDB") if getattr(js, n, None) is not None],',
       '    "storage": getattr(js.navigator, "storage", None) is None,',
       '}',
+      'w = js.Worker.new("http://127.0.0.1:9/w.js")',
+      'w.postMessage("hi")',
+      'out["worker"] = pyodide.code.run_js("[typeof Worker, typeof SharedWorker, /native code/.test(String(Worker)), __dataspatium.refused().some(function (r) { return r.api === \'Worker\' && r.url === \'http://127.0.0.1:9/w.js\'; })].join(\' \')")',
       'r = await pyodide.http.pyfetch("dataspatium-asset://pyodide/pyodide-lock.json")',
       'out["pyfetch"] = [r.status, len(await r.bytes()) > 1000]',
       'print(json.dumps(out))',
     ].join('\n'));
-    const lines = stdoutOf(res).trim().split('\n');
-    const out = JSON.parse(lines[lines.length - 1] || 'null');
-    assert.ok(out, JSON.stringify(res.entries.map((e) => (e.text || '').slice(0, 300))));
+    const out = lastJson(res);
     const xhrText = D.t('python.net.blocked', { api: 'XMLHttpRequest' });
     for (const key of ['open_url', 'sync', 'async']) assert.ok(out[key] && out[key][1].includes(xhrText), key + ': ' + JSON.stringify(out[key]));
     assert.ok(out.pyxhr && out.pyxhr[0] === 'XHRNetworkError' && out.pyxhr[2].includes(xhrText), 'pyxhr turns the refusal into its network error: ' + JSON.stringify(out.pyxhr));
     assert.ok(out.importScripts && out.importScripts[1].includes(D.t('python.net.blocked', { api: 'importScripts' })), JSON.stringify(out.importScripts));
-    assert.deepEqual(out.gone, [], 'no sockets, streams, other workers, caches, IndexedDB or BroadcastChannel for Python code');
+    assert.deepEqual(out.gone, [], 'no sockets, streams, caches, IndexedDB or BroadcastChannel for Python code');
     assert.equal(out.storage, true, 'no navigator.storage');
+    assert.equal(out.worker, 'function function false true', 'Worker and SharedWorker are stand-ins: the worker was refused with its address and started nothing');
     assert.deepEqual(out.pyfetch, [200, true], 'pyfetch of an asset still works');
     return 'refused: ' + ['open_url', 'pyxhr', 'sync', 'async', 'importScripts'].map((k) => out[k][0]).join(', ');
+  }, 300000);
+
+  test('python: urllib3 and requests import, also from a web server, where urllib3 finds a Worker that starts nothing; requests reaches the internet through fetch where the browser has JSPI and through XMLHttpRequest, which is refused, elsewhere', async (assert) => {
+    if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them from jsDelivr)';
+    await bridge.start();
+    const t0 = Date.now();
+    // Port 9 on this computer, which browsers refuse anyway: even a broken block reaches no server. The test page allows the
+    // internet for components, so with JSPI the request passes the consent and the browser refuses it.
+    const res = await bridge.run([
+      'import json, js, pyodide.code, pyodide.ffi',
+      'import urllib3, requests',
+      'from urllib3.contrib.emscripten import fetch as u3fetch',
+      'out = {"isolated": bool(getattr(js, "crossOriginIsolated", False)), "fetcher": u3fetch._fetcher is not None, "streaming": u3fetch.streaming_ready(), "jspi": bool(pyodide.ffi.can_run_sync())}',
+      'if u3fetch._fetcher is not None:',
+      '    try:',
+      '        await u3fetch.wait_for_streaming_ready()',
+      '        out["ready"] = "ready"',
+      '    except Exception as e:',
+      '        out["ready"] = type(e).__name__',
+      'try:',
+      '    requests.get("http://127.0.0.1:9/requests", timeout=5)',
+      '    out["get"] = None',
+      'except Exception as e:',
+      '    out["get"] = [type(e).__name__, str(e)]',
+      'out["refused"] = pyodide.code.run_js("__dataspatium.refused().map(function (r) { return r.api; }).join(\' \')")',
+      'print(json.dumps(out))',
+    ].join('\n'));
+    const out = lastJson(res);
+    if (out.isolated) {
+      assert.ok(out.fetcher && out.streaming === false, 'served (cross-origin isolated): urllib3 built its streaming fetcher on the stand-in, which never gets ready: ' + JSON.stringify(out));
+      assert.ok(out.ready && out.ready !== 'ready', 'waiting for it fails instead of hanging: ' + out.ready);
+      assert.ok(out.refused.split(' ').includes('Worker'), 'the stand-in refused the worker: ' + out.refused);
+    } else {
+      assert.equal(out.fetcher, false, 'not isolated (file://): urllib3 builds no streaming fetcher');
+    }
+    assert.ok(out.get && out.get[0] === 'ConnectionError', 'the request fails: ' + JSON.stringify(out.get));
+    const logged = D.net.log().filter((e) => e.at >= t0 && e.url === 'http://127.0.0.1:9/requests');
+    if (out.jspi) {
+      assert.ok(logged.length === 1 && logged[0].status === 'error', 'with JSPI requests went through the worker\'s fetch, past the consent, and is in the network log: ' + JSON.stringify(logged));
+      assert.ok(!out.get[1].includes(D.t('python.net.blocked', { api: 'XMLHttpRequest' })), 'and not through XMLHttpRequest');
+    } else {
+      assert.ok(out.get[1].includes(D.t('python.net.blocked', { api: 'XMLHttpRequest' })), 'without JSPI requests used XMLHttpRequest, refused with the message: ' + out.get[1]);
+      assert.equal(logged.length, 0, 'nothing went out');
+    }
+    return (out.isolated ? 'isolated' : 'not isolated') + ', ' + (out.jspi ? 'JSPI: fetch' : 'no JSPI: XMLHttpRequest');
   }, 300000);
 
   test('python: pyfetch to the internet asks for consent for components with the host, is refused when the person says no, and shows in the network log when allowed', async (assert) => {
