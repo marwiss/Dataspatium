@@ -110,7 +110,7 @@
       }
 
       /** Each kind's symbol, as in the app. The phone page does not load the module that describes the kinds. */
-      const ICONS = { document: 'file-text', images: 'images', plan: 'layers', graph: 'share-2', model: 'box' };
+      const ICONS = { document: 'file-text', images: 'images', plan: 'layers', graph: 'share-2', model: 'box', raster: 'image' };
       class Mobile {
         /** @param {HTMLElement} root @param {{hash?: string, certificate?: RTCCertificate}} options */
         constructor(root, options) {

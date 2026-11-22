@@ -5,6 +5,8 @@
  * (zoom and pan, click on a feature shows its attributes in the inspector), an optional background map after
  * consent (OpenStreetMap or an orthophoto, ui/viz/basemap-choice), and buttons to save the map as a chart for Visualisera and to switch to the table. The dataset itself
  * is always the table; what is done there (filter, correct, remove rows) shows here too.
+ * It is also a raster's own view (the kind raster): the previews of its files under their outlines, with the raster's facts,
+ * the opacity of its pictures and the files that have no place in the inspector; a hit in Söka (`openRaster`) goes to its file.
  */
 (function () {
   'use strict';
@@ -72,7 +74,8 @@
         mapEl = h('div', { class: 'dm-map-view dm-center-fill', 'aria-label': t('map.view') });
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
-            h('h1', null, ui.icon('map', 20), dataset.name, ' ', h('dm-badge', { text: t('common.rows', { n: i18n.formatNumber(dataset.rowCount || 0) }) })),
+            // A collection counts itself in its own units (files and resolution for a raster), a table in rows.
+            h('h1', null, ui.icon('map', 20), dataset.name, ' ', h('dm-badge', { text: kinds.isCollection(dataset) ? kinds.summary(dataset) : t('common.rows', { n: i18n.formatNumber(dataset.rowCount || 0) }) })),
             h('div', { class: 'dm-toolbar' }, basemapSel, orthoBtn,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: () => { if (handle) handle.fit(); } }),
               tier.shows('chart:map') ? ui.button({ label: t('map.save.chart'), icon: 'save', title: t('map.save.chart.hint'), onClick: saveChart }) : null,
@@ -89,7 +92,8 @@
         if (handle) { handle.finalize(); handle = null; }
         mapEl.replaceChildren();
         try {
-          const hd = await leaflet.render(mapEl, s.chart, { onSelect: (sel) => { s.selected = sel; renderInspector(); } });
+          // A raster can be a drone's image of a few metres: its map may come as close as the background maps go.
+          const hd = await leaflet.render(mapEl, s.chart, Object.assign({ onSelect: (sel) => { s.selected = sel; renderInspector(); } }, isRaster() ? { fitMaxZoom: 19 } : {}));
           if (my !== seq) { hd.finalize(); return; }
           handle = hd;
           if (orthoBtn) orthoBtn.hidden = !hd.info.basemapView;
@@ -127,22 +131,47 @@
         const crs = geoMod.crsOfMeta(ds);
         return crs ? { label: t('map.crs'), value: geoMod.crsText(crs) } : null;
       }
+      /** Whether the dataset is drawn as pictures (the kind raster) rather than as features only. */
+      const isRaster = () => !!ds && kinds.of(ds).mapLayer === 'raster';
+      /**
+       * A raster's block in the inspector: its facts (system, resolution, pixels, the original, the attribution), the opacity of
+       * its pictures, applied at once and kept in the map's definition, and the files the map cannot place.
+       */
+      function rasterBlock(info) {
+        const layer = s.chart.map.layers.find((l) => l.kind === 'raster');
+        if (!layer) return [];
+        const facts = /** @type {any} */ (h('dm-kv', { 'data-raster-facts': '' }));
+        facts.items = kinds.facts(ds);
+        const opacity = /** @type {any} */ (h('dm-input', { type: 'number', min: '0', max: '1', step: '0.05', label: t('map.style.opacity'), 'data-raster-opacity': '' }));
+        opacity.value = layer.style && layer.style.opacity !== undefined ? layer.style.opacity : 1;
+        opacity.addEventListener('input', () => {
+          const v = Number(opacity.value);
+          if (opacity.value === '' || !Number.isFinite(v)) return;
+          layer.style = Object.assign({}, layer.style, { opacity: Math.max(0, Math.min(1, v)) });
+          if (handle) handle.setRasterOpacity(layer.id, layer.style.opacity);
+        });
+        const unplaced = info && info.rasterUnplaced ? info.rasterUnplaced.length : 0;
+        return [h('h4', { text: t('datasets.kind.raster') }), facts, opacity,
+          unplaced ? h('p', { class: 'dm-help dm-small', 'data-raster-unplaced': '', text: t('raster.unplaced', { n: i18n.formatNumber(unplaced) }) }) : null];
+      }
       function renderInspector() {
         if (!slots) return;
         const items = [];
         const info = handle ? handle.info : null;
         if (info) {
           const kv = /** @type {any} */ (h('dm-kv'));
-          const layer = s.chart.map.layers[0] || {};
+          // The layer of features: the dataset's own, or a raster's outlines of its files (its pictures are a layer of their own).
+          const layer = s.chart.map.layers.find((l) => l.kind === 'dataset') || {};
           kv.items = [
             { label: t('map.features'), value: i18n.formatNumber(info.rows) + (info.truncated ? ` ${t('map.truncated', { n: i18n.formatNumber(layer.maxRows || 0) })}` : '') },
-            layer.geometry ? { label: t('viz.channel.geometry'), value: layer.geometry } : { label: t('map.coordinates'), value: `${layer.lon}, ${layer.lat}` },
+            layer.geometry ? { label: t('viz.channel.geometry'), value: layer.geometry } : layer.lon ? { label: t('map.coordinates'), value: `${layer.lon}, ${layer.lat}` } : null,
             { label: t('map.basemap'), value: t('map.basemap.' + (s.basemap || 'none')) },
             crsItem(),
           ].filter(Boolean);
           items.push(h('h4', { text: t('map.layer') }), kv);
           if (info.crsUnknown && info.crsUnknown.length) items.push(h('p', { class: 'dm-error dm-small', 'data-map-crs-unknown': '', text: t('map.crs.unknown', { crs: info.crsUnknown.join(', ') }) }));
         }
+        if (isRaster()) items.push(...rasterBlock(info).filter(Boolean));
         if (s.selected) {
           const props = s.selected.properties || {};
           // The picture of a place: its own when this is a photo, or the ones the row names.
@@ -207,22 +236,29 @@
         await markSelection();
         ui.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });
       }
-      /** A search hit: the map goes to the row's place and marks it. */
+      /**
+       * A search hit: the map goes to the row's place and marks it. A hit in a raster (`openRaster`) names its file, whose
+       * outline is marked; the map may come closer then, since a file can be small.
+       */
       async function showPending() {
-        const pending = store.get().openMapRow;
-        if (!pending || !ds || pending.datasetId !== ds.id || !handle) return;
-        store.set({ openMapRow: null });
+        const state = store.get();
+        const row = state.openMapRow && ds && state.openMapRow.datasetId === ds.id ? state.openMapRow : null;
+        const file = state.openRaster && ds && state.openRaster.datasetId === ds.id ? state.openRaster : null;
+        if ((!row && !file) || !handle) return;
+        store.set(row ? { openMapRow: null } : { openRaster: null });
         const dsHandle = await D.require('data/datasets').ensureOpen(ds.id);
         const leaflet2 = D.require('viz/leaflet');
         const geoMod = D.require('data/geo');
         const name = (c) => '"' + String(c).replace(/"/g, '""') + '"';
-        const geometry = leaflet2.geometryColumn(dsHandle.columns);
+        const geometry = file ? 'geometri' : leaflet2.geometryColumn(dsHandle.columns);
         const coords = geometry ? null : leaflet2.coordinateColumns(dsHandle.columns);
+        if (!geometry && !coords) return;
         const cols = geometry ? name(geometry) : `${name(coords.lon)}, ${name(coords.lat)}`;
-        const r = await dsHandle.engine.exec(`select ${cols} from data where rowid = ?`, [Number(pending.rowid)]);
+        const r = file ? await dsHandle.engine.exec(`select ${cols} from data where fil = ? limit 1`, [String(file.name)])
+          : await dsHandle.engine.exec(`select ${cols} from data where rowid = ?`, [Number(row.rowid)]);
         if (!r[0] || !r[0].values.length || !handle) return;
-        const row = r[0].values[0];
-        const shape = geometry ? geoMod.parseGeometry(row[0]) : (typeof row[0] === 'number' && typeof row[1] === 'number' ? { type: 'Point', coordinates: [row[0], row[1]] } : null);
+        const values = r[0].values[0];
+        const shape = geometry ? geoMod.parseGeometry(values[0]) : (typeof values[0] === 'number' && typeof values[1] === 'number' ? { type: 'Point', coordinates: [values[0], values[1]] } : null);
         if (!shape) return;
         const L = globalThis.L;
         const place = geoMod.isProjected([shape]) ? geoMod.toWgs84(shape, geoMod.crsOfMeta(ds) || undefined) : shape;
@@ -230,7 +266,7 @@
         const color = D.require('viz/theme').tokens().accent;
         const marked = L.geoJSON(place, { style: { color, weight: 4, fillOpacity: 0.1 }, pointToLayer: (_f, at) => L.circleMarker(at, { radius: 9, color, weight: 4, fillOpacity: 0.2 }) }).addTo(handle.map);
         const bounds = marked.getBounds();
-        if (bounds.isValid()) handle.map.fitBounds(bounds.pad(0.5), { maxZoom: 15 });
+        if (bounds.isValid()) handle.map.fitBounds(bounds.pad(file ? 0.1 : 0.5), { maxZoom: file ? 19 : 15 });
       }
 
       function destroy() { seq++; if (handle) { handle.finalize(); handle = null; } mapEl = null; slots = null; }

@@ -319,7 +319,8 @@
         if (src.publisher) return [src.publisher, src.table, src.license ? `(${src.license})` : ''].filter(Boolean).join(' · ');
         if (src.fileName) return `${src.fileName}${src.format ? ` (${src.format})` : ''}${src.linked ? ' · ' + t('linked.label') : ''}`;
         if (src.kind === 'paste') return t('import.sources.paste');
-        if (src.kind === 'files') return t('import.source.files', { n: Array.isArray(src.files) ? src.files.length : 0, format: src.format === 'images' ? t('import.format.images.short') : t('import.format.documents.short') });
+        // Files of a collection, named by their format's short name (pictures, documents, GeoTIFF).
+        if (src.kind === 'files') return t('import.source.files', { n: Array.isArray(src.files) ? src.files.length : 0, format: i18n.has('import.format.' + src.format + '.short') ? t('import.format.' + src.format + '.short') : t('import.format.documents.short') });
         return src.kind || '';
       }
 

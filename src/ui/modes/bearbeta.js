@@ -84,7 +84,13 @@
             onChanged: () => updateUndo(),
             // A collection with places can also be seen on a map, and go back to its own view from there, where the tier holds the map.
             onMap: tier.shows('view:map') ? () => { viewId = 'map'; const d = current(); if (d) renderMain(d); } : null,
-            onOwnView: viewId === 'map' && kinds.ownView(ds) ? () => { viewId = kinds.ownView(ds); const d = current(); if (d) renderMain(d); } : null,
+            // Asked when the map draws, so that it follows the dataset shown (the view is kept from one dataset to the next); a kind
+            // whose own view is the map (a raster) has nothing to go back to.
+            get onOwnView() {
+              const d = current();
+              const own = d ? kinds.ownView(d) : null;
+              return viewId === 'map' && own && own !== 'map' ? () => { viewId = own; const now = current(); if (now) renderMain(now); } : null;
+            },
           });
           kindViewFor = viewId;
         }

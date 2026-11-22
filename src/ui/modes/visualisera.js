@@ -170,7 +170,8 @@
           disposePreview(); if (rpanel) { rpanel.destroy(); rpanel = null; } controls = null;
           columns = chart.datasetId ? await D.require('viz/data').columnsOf(chart.datasetId, chart.kind === 'vega' && chart.vega ? chart.vega.table : null).catch(() => []) : [];
           if (chart.kind === 'vega' && !chart.vega.state) chart.vega.state = builder.defaultState(chart.vega.type || 'bar', columns);
-          if (chart.kind === 'map' && !chart.map) chart.map = leaflet.defaultMap(columns, { id: chart.datasetId, name: chart.datasetName, shortName: chart.datasetShort });
+          // The dataset's kind decides its layers: a raster's pictures and outlines, a table's features.
+          if (chart.kind === 'map' && !chart.map) chart.map = leaflet.defaultMap(columns, { id: chart.datasetId, name: chart.datasetName, shortName: chart.datasetShort, kind: (store.get().datasets.find((d) => d.id === chart.datasetId) || {}).kind });
           render();
           if (!isPanel(chart.kind)) schedulePreview(0);
         }

@@ -97,10 +97,13 @@
 
       const head = (ds, ...actions) => h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon(ICON, 20), ds.name), h('div', { class: 'dm-toolbar' }, ...actions));
 
-      /** The checks of the dataset's kind: rules for a table, the model's cards for an IFC model, nothing yet for the rest. */
+      /**
+       * The checks of the dataset's kind: rules for a table and for a kind that is checked as its table (a raster's table of
+       * files), the model's cards for an IFC model, nothing yet for the rest.
+       */
       function renderMain(ds) {
         const profile = kinds.of(ds);
-        if (profile === kinds.PROFILES.table) { renderTable(ds); return; }
+        if (profile === kinds.PROFILES.table || profile.checks === 'table') { renderTable(ds); return; }
         // The model's cards belong to the tier BIM och GIS (platform/tier); below it the page says so and how to raise the tier.
         if (profile === kinds.PROFILES.model && !kinds.isDxf(ds) && !kinds.shown(ds)) { replace(slots.center, head(ds), tierUi.notice(ctx, 'kind:model', { empty: true })); replace(slots.right, h('p', { class: 'dm-help', text: t('tier.hint') })); return; }
         if (profile === kinds.PROFILES.model && !kinds.isDxf(ds)) { renderModel(ds); return; }
