@@ -637,15 +637,18 @@ lie in it (IfcRelAggregates) and are placed relative to it on an even grid of ba
 the most a bay or a row measures in metres (with neither, at most 1.5 m). The mullions stand on the bays' lines from the base to the
 top, the outer ones flush with the ends; the transoms lie between the mullions on the rows' lines, the lowest on the base and the
 highest under the top; and a glass panel (IfcPlate CURTAIN_PANEL) fills each field in the middle of the members' depth. Mullions and
-transoms are both IfcMember MULLION: IFC's MULLION is any member between the panels, and IFC has no value of its own for transoms. The
-parts are named by the curtain wall, their kind and their place, such as Facade Mullion 1, Facade Transom 1.1 and Facade Panel 1.1 (bay
-and row). A curtain wall type from `define_type` (IfcCurtainWallType) gives the parts types of its name: an IfcPlateType CURTAIN_PANEL
-with the glass as a material layer, and an IfcMemberType MULLION with the frame's material, such as aluminium or steel, and the
-members' width and depth as its material profile (only the material in IFC2X3), so that the parts take their kind, material and sizes
-from their types. Without a type the mullions and transoms are 0.05 × 0.15 m of aluminium and the panels 0.03 m of glass, with the
-PredefinedType on the parts themselves; IFC2X3 has no PredefinedType on IfcPlate and IfcMember, and the report says so. The topology
-reads a curtain wall as a wall, so that it can close a storey together with the walls; it gets IsExternal from the topology in
-Pset_CurtainWallCommon and base quantities in Qto_CurtainWallQuantities (length, height, depth and the area of its side).
+transoms are both IfcMember MULLION: in IFC, MULLION is any linear element that connects the panels of a curtain wall, whichever way it
+runs, and IFC has no value of its own for transoms. The app does not write transoms as USERDEFINED, since IFC's USERDEFINED is for
+kinds the class's list lacks, and an IDS that selects or requires IfcMember MULLION would then miss them. The name tells a transom from
+a mullion: the parts are named by the curtain wall, their kind and their place, such as Facade Mullion 1, Facade Transom 1.1 and Facade
+Panel 1.1 (bay and row). A curtain wall type from `define_type` (IfcCurtainWallType) gives the parts types of its name: an IfcPlateType
+CURTAIN_PANEL with the glass as a material layer, and an IfcMemberType MULLION with the frame's material, such as aluminium or steel,
+and the members' width and depth as its material profile (only the material in IFC2X3), so that the parts take their kind, material and
+sizes from their types; mullions and transoms share the type and its sizes, so quantities by type count them together. Without a type
+the mullions and transoms are 0.05 × 0.15 m of aluminium and the panels 0.03 m of glass, with the PredefinedType on the parts
+themselves; IFC2X3 has no PredefinedType on IfcPlate and IfcMember, and the report says so. The topology reads a curtain wall as a
+wall, so that it can close a storey together with the walls; it gets IsExternal from the topology in Pset_CurtainWallCommon and base
+quantities in Qto_CurtainWallQuantities (length, height, depth and the area of its side).
 
 `define_type` also makes types for coverings (with layers, as a slab type), columns, beams, footings, railings, doors and windows
 (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType and IfcWindowType; IfcDoorStyle and

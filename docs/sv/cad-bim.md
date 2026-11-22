@@ -617,15 +617,17 @@ underkant över våningen. Axeln är dess representation, men den har ingen egen
 eller som det största avståndet i meter (utan något av dem högst 1,5 m). Posterna står på fackens linjer från underkant till överkant,
 de yttersta i liv med ändarna; reglarna ligger mellan posterna på radernas linjer, den nedersta på underkanten och den översta under
 överkanten; och ett glas (IfcPlate av typen CURTAIN_PANEL) fyller varje fält mitt i profilernas djup. Poster och reglar är båda
-IfcMember av typen MULLION: IFC:s MULLION är varje profil mellan glasen, och IFC har inget eget värde för reglar. Delarna heter efter
-fasaden, sitt slag och sin plats, till exempel Fasad Post 1, Fasad Regel 1.1 och Fasad Glas 1.1 (fack och rad). En glasfasadstyp från
-`define_type` (IfcCurtainWallType) ger delarna typer med typens namn: en IfcPlateType CURTAIN_PANEL med glaset som ett materialskikt
-och en IfcMemberType MULLION med ramens material, till exempel aluminium eller stål, och profilens bredd och djup som materialprofil (i
-IFC2X3 bara materialet), så att delarna får sitt slag, sitt material och sina mått från typerna. Utan typ är posterna och reglarna
-0,05 × 0,15 m aluminium och glasen 0,03 m glas, med PredefinedType på själva delarna; IFC2X3 har ingen PredefinedType på IfcPlate och
-IfcMember, och rapporten säger det. Topologin läser en glasfasad som en vägg, så att den kan sluta en våning tillsammans med väggarna;
-den får IsExternal ur topologin i Pset_CurtainWallCommon och basmängder i Qto_CurtainWallQuantities (längd, höjd, djup och sidans
-area).
+IfcMember av typen MULLION: i IFC är MULLION varje linjärt element som förbinder glasen i en glasfasad, i vilken riktning det än går,
+och IFC har inget eget värde för reglar. Appen skriver inte reglarna som USERDEFINED, eftersom IFC:s USERDEFINED är till för slag som
+klassens lista saknar och en IDS-fil som väljer eller kräver IfcMember MULLION då skulle missa dem. Namnet skiljer reglarna från
+posterna: delarna heter efter fasaden, sitt slag och sin plats, till exempel Fasad Post 1, Fasad Regel 1.1 och Fasad Glas 1.1 (fack och
+rad). En glasfasadstyp från `define_type` (IfcCurtainWallType) ger delarna typer med typens namn: en IfcPlateType CURTAIN_PANEL med
+glaset som ett materialskikt och en IfcMemberType MULLION med ramens material, till exempel aluminium eller stål, och profilens bredd
+och djup som materialprofil (i IFC2X3 bara materialet), så att delarna får sitt slag, sitt material och sina mått från typerna; poster
+och reglar delar typ och mått, så mängder per typ räknar dem tillsammans. Utan typ är posterna och reglarna 0,05 × 0,15 m aluminium och
+glasen 0,03 m glas, med PredefinedType på själva delarna; IFC2X3 har ingen PredefinedType på IfcPlate och IfcMember, och rapporten
+säger det. Topologin läser en glasfasad som en vägg, så att den kan sluta en våning tillsammans med väggarna; den får IsExternal ur
+topologin i Pset_CurtainWallCommon och basmängder i Qto_CurtainWallQuantities (längd, höjd, djup och sidans area).
 
 `define_type` gör också typer för beklädnader (med skikt, som en bjälklagstyp), pelare, balkar, grundläggning, räcken, dörrar och
 fönster (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType och IfcWindowType; i IFC2X3

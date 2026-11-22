@@ -639,7 +639,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/cad-bim.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 81303,
+  "size": 81691,
   "library": "dataspatium"
  },
  "docs/sv/floden.md": {
@@ -1647,7 +1647,7 @@ Dataspatium.assets.addEntries({
  "docs/en/cad-bim.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 82461,
+  "size": 82839,
   "library": "dataspatium"
  },
  "docs/en/floden.md": {
