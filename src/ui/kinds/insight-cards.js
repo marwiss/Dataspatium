@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/kinds/insight-cards', ['ui/base', 'data/facets', 'data/kind-health'], (base, facets, health) => {
+  D.define('ui/kinds/insight-cards', ['ui/base', 'data/facets', 'data/kind-health', 'platform/tier'], (base, facets, health, tier) => {
     const { h, t, i18n, replace } = base;
 
     /**
@@ -89,6 +89,8 @@
       const el = h('div', { class: 'dm-card dm-stack-sm', 'data-card': 'cde' });
       const state = { checking: false, result: null, error: '', fetching: false, pub: null, pubBusy: '' };
       const connectorOf = async () => (await D.require('api/connectors').get(cde.connectorId)) || null;
+      /** What the tier in effect and the source's server show (platform/tier). @param {string} feature */
+      const shows = (feature) => tier.shows(feature, { server: cde.connectorId });
       async function check() {
         state.checking = true; state.error = ''; state.result = null; draw();
         try {
@@ -169,9 +171,9 @@
           kv,
           h('div', { class: 'dm-row-wrap' },
             cde.documentId ? ui.button({ label: t('cde.check'), icon: 'refresh-cw', size: 'sm', loading: state.checking, title: t('cde.check.hint'), 'data-cde-check': '', onClick: check }) : null,
-            ds.kind === 'model' && cde.documentId && !D.require('data/model').isDxf(ds) ? ui.button({ label: t('merge.button'), icon: 'layers', size: 'sm', title: t('merge.button.hint'), 'data-cde-merge': '', onClick: () => D.require('ui/api/merge-dialog').open(ctx, ds).catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) }) : null,
-            ds.kind === 'model' ? ui.button({ label: t('issues.title'), icon: 'message-square', size: 'sm', title: t('cde.issues.hint'), onClick: () => { store.set({ selectedId: ds.id, openModelIssues: { datasetId: ds.id } }); ctx.shell.activate('bearbeta'); } }) : null,
-            ds.kind === 'model' && !D.require('data/model').isDxf(ds) ? ui.button({ label: t('ifcgraph.title'), icon: 'network', size: 'sm', title: t('ifcgraph.open.hint'), 'data-cde-graph': '', onClick: async () => { if (!(await D.require('api/graph-source').open(ctx, ds))) ui.toast.show(t('cde.err.noconnector', { host: cde.host }), { kind: 'warn' }); } }) : null),
+            ds.kind === 'model' && cde.documentId && !D.require('data/model').isDxf(ds) && shows('cde.merge') ? ui.button({ label: t('merge.button'), icon: 'layers', size: 'sm', title: t('merge.button.hint'), 'data-cde-merge': '', onClick: () => D.require('ui/api/merge-dialog').open(ctx, ds).catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) }) : null,
+            ds.kind === 'model' && shows('cde.bcf') ? ui.button({ label: t('issues.title'), icon: 'message-square', size: 'sm', title: t('cde.issues.hint'), onClick: () => { store.set({ selectedId: ds.id, openModelIssues: { datasetId: ds.id } }); ctx.shell.activate('bearbeta'); } }) : null,
+            ds.kind === 'model' && !D.require('data/model').isDxf(ds) && shows('cde.ifc-graph') ? ui.button({ label: t('ifcgraph.title'), icon: 'network', size: 'sm', title: t('ifcgraph.open.hint'), 'data-cde-graph': '', onClick: async () => { if (!(await D.require('api/graph-source').open(ctx, ds))) ui.toast.show(t('cde.err.noconnector', { host: cde.host }), { kind: 'warn' }); } }) : null),
           r && r.newer ? h('div', { class: 'dm-row-wrap', 'data-cde-newer': '' }, h('span', { class: 'dm-warn', text: t('cde.newer', { have: String(r.have), latest: String(r.version.version_index) }) }), ui.button({ label: t('cde.fetch.version', { n: String(r.version.version_number || r.version.version_index) }), icon: 'download', size: 'sm', variant: 'primary', loading: state.fetching, onClick: fetchNew })) : null,
           r && !r.newer && r.version ? h('p', { class: 'dm-help dm-small', 'data-cde-current': '', text: t('cde.current') }) : null,
           publicationPart(),
@@ -399,7 +401,7 @@
               ruleSelect(issues),
               ui.button({ label: t('validation.mark'), icon: 'scan-line', size: 'sm', title: t('validation.mark.hint'), 'data-validation-mark': '', disabled: !issues.length, onClick: () => mark().catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) }),
               ui.button({ label: t('validation.table'), icon: 'table', size: 'sm', loading: state.busy === 'table', title: t('validation.table.hint'), 'data-validation-table': '', disabled: !issues.length, onClick: saveTable }),
-              reachCheck(report) ? ui.button({ label: t('validation.unreachable'), icon: 'trash-2', size: 'sm', loading: state.busy === 'unreachable', title: t('validation.unreachable.hint'), 'data-validation-unreachable': '', onClick: unreachable }) : null)) : null,
+              reachCheck(report) && tier.shows('cde.unreachable', { server: cde && cde.connectorId }) ? ui.button({ label: t('validation.unreachable'), icon: 'trash-2', size: 'sm', loading: state.busy === 'unreachable', title: t('validation.unreachable.hint'), 'data-validation-unreachable': '', onClick: unreachable }) : null)) : null,
         ];
       }
       function localPart() {

@@ -10,7 +10,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/kinds/federated-card', ['ui/base', 'data/kinds', 'data/datasets', 'data/selection', 'analysis/federated'], (base, kinds, datasets, selection, federated) => {
+  D.define('ui/kinds/federated-card', ['ui/base', 'data/kinds', 'data/datasets', 'data/selection', 'analysis/federated', 'platform/tier'], (base, kinds, datasets, selection, federated, tier) => {
     const { h, t, i18n, replace } = base;
     const PREVIEW_ROWS = 2000;
     const fmt = (n) => i18n.formatNumber(Number(n) || 0);
@@ -93,7 +93,7 @@
           r.shared ? h('p', { class: 'dm-help dm-xs', 'data-federated-shared-note': '', text: t('kontrollera.federated.shared', { n: fmt(r.shared) }) }) : null,
           none ? null : h('div', { class: 'dm-row-wrap', 'data-federated-result': '' }, marks,
             ui.button({ label: t('clash.bcf'), icon: 'download', size: 'sm', title: t('kontrollera.federated.bcf.hint'), 'data-federated-bcf': '', onClick: () => saveBcf(r) }),
-            cde && cde.connectorId && cde.projectId ? ui.button({ label: t('clash.send'), icon: 'upload', size: 'sm', title: t('kontrollera.federated.send.hint'), 'data-federated-send': '', onClick: () => sendTopics(r) }) : null,
+            cde && cde.connectorId && cde.projectId && tier.shows('cde.bcf', { server: cde.connectorId }) ? ui.button({ label: t('clash.send'), icon: 'upload', size: 'sm', title: t('kontrollera.federated.send.hint'), 'data-federated-send': '', onClick: () => sendTopics(r) }) : null,
             ui.button({ label: t('text.create.dataset'), icon: 'table', size: 'sm', title: t('text.create.dataset.hint'), 'data-federated-dataset': '', onClick: () => createDataset(r) })),
           none ? null : tableView(r));
       }

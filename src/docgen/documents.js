@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('docgen/documents', ['platform/storage/idb', 'platform/sync'], (idb, sync) => {
+  D.define('docgen/documents', ['platform/storage/idb', 'platform/sync', 'platform/tier'], (idb, sync, tier) => {
     const FORMAT = 'dataspatium-doc/1';
     const listeners = new Set();
     function notify() { for (const fn of listeners) { try { fn(); } catch (err) { console.error(err); } } }
@@ -23,7 +23,11 @@
       { id: 'builtin-underhall', name: D.t('doc.builtin.underhall.name'), builtin: true, findings: true, body: D.t('doc.builtin.underhall.body'), description: D.t('doc.builtin.underhall.description') },
     ];
 
-    async function list() { return BUILTINS.map((b) => Object.assign({}, b)).concat(await idb.listDocuments()); }
+    /**
+     * The templates: the built-in ones and the user's. The reports of findings (Besiktningsrapport, Underhållsplan; DS-55) are the
+     * model's and listed where the tier shows models (platform/tier); get() still finds them for a flow saved earlier.
+     */
+    async function list() { return BUILTINS.filter((b) => !b.findings || tier.shows('kind:model')).map((b) => Object.assign({}, b)).concat(await idb.listDocuments()); }
     async function get(id) { return BUILTINS.find((b) => b.id === id) || idb.getDocument(id); }
     async function save(doc) {
       const now = new Date().toISOString();

@@ -11,7 +11,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/plan-view', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'data/geo', 'viz/leaflet', 'viz/charts', 'viz/data', 'platform/files', 'ui/viz/basemap-choice', 'ui/viz/tiles-dialog'], (base, datasets, plan, catalog, geo, leaflet, charts, vizData, files, basemapChoice, tilesDialog) => {
+  D.define('ui/bearbeta/plan-view', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'data/geo', 'viz/leaflet', 'viz/charts', 'viz/data', 'platform/files', 'ui/viz/basemap-choice', 'ui/viz/tiles-dialog', 'platform/tier'], (base, datasets, plan, catalog, geo, leaflet, charts, vizData, files, basemapChoice, tilesDialog, tier) => {
     const { h, t, i18n, replace } = base;
     const MAX_ROWS = 20000;
     const OUTLINE_STYLES = {
@@ -133,9 +133,10 @@
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon('layers', 20), dataset.name, ' ', h('dm-badge', { text: t('plan.slag.' + s.slag) }), info.land && info.land !== 'SE' ? h('dm-badge', { text: t('plan.land.' + info.land) }) : null, info.status ? h('dm-badge', { kind: /laga kraft|antagen|vedtaget|í gildi|voimassa|^13$/i.test(info.status) ? 'ok' : 'accent', text: info.status }) : null),
-            h('div', { class: 'dm-toolbar' }, projectionSel, basemapSel, wmsEdit, tilesEdit, orthoBtn, labels,
+            // The background maps from services belong to the tier BIM och GIS (platform/tier); the plan itself stays in Dokument.
+            h('div', { class: 'dm-toolbar' }, projectionSel, ...(tier.shows('map.basemap') ? [basemapSel, wmsEdit, tilesEdit, orthoBtn] : []), labels,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: fit }),
-              ui.button({ label: t('map.save.chart'), icon: 'save', title: t('plan.save.chart.hint'), onClick: saveChart }),
+              tier.shows('chart:map') ? ui.button({ label: t('map.save.chart'), icon: 'save', title: t('plan.save.chart.hint'), onClick: saveChart }) : null,
               s.slag === 'detaljplan' ? ui.button({ label: t('plan.provisions.export'), icon: 'file-text', title: t('plan.provisions.export.hint'), onClick: exportProvisions }) : null,
               ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('bearbeta.view.table.hint'), onClick: options.onTable }))),
           mapEl);

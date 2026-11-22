@@ -237,7 +237,8 @@
           if (controller.signal.aborted) { stopped = 'cancelled'; break; }
           emit({ type: 'thinking', turn });
           const system = building ? SYSTEM_BUILD : checking ? `${SYSTEM_CHECK} Today is ${checkTools.today()}.` : changing ? SYSTEM_CHANGE : SYSTEM;
-          const offered = checking ? tools.TOOLS.concat(checkTools.TOOLS, checkTools.WRITES, [PREVIEW_TOOL]) : changing ? tools.TOOLS.concat(writeTools.TOOLS, [PREVIEW_TOOL]) : tools.TOOLS;
+          const own = tools.offered();
+          const offered = checking ? own.concat(checkTools.TOOLS, checkTools.WRITES, [PREVIEW_TOOL]) : changing ? own.concat(writeTools.TOOLS, [PREVIEW_TOOL]) : own;
           const res = await providers.chat(input.provider, { system, messages, tools: offered.concat(askTools), maxTokens: building || checking ? 4000 : 1500, signal: controller.signal, timeoutMs: input.timeoutMs || 180000 });
           usage.input += res.usage.input; usage.output += res.usage.output;
           messages.push({ role: 'assistant', content: res.content.length ? res.content : [{ type: 'text', text: res.text }] });

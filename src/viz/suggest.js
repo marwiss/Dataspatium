@@ -7,7 +7,9 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/suggest', ['data/datasets', 'data/kinds', 'data/facets', 'viz/charts', 'viz/vega-builder', 'viz/leaflet'], (datasets, kinds, facets, charts, builder, leaflet) => {
+  D.define('viz/suggest', ['data/datasets', 'data/kinds', 'data/facets', 'viz/charts', 'viz/vega-builder', 'viz/leaflet', 'platform/tier'], (datasets, kinds, facets, charts, builder, leaflet, tier) => {
+    /** The map view with layers belongs to BIM och GIS (platform/tier); the Vega maps of the chart builder stay. */
+    const maps = () => tier.shows('chart:map');
     const q = (s) => '"' + String(s).replace(/"/g, '""') + '"';
     const MAX_CATEGORIES = 30;
     const isNumber = (c) => c.type === 'number' || c.type === 'integer';
@@ -62,7 +64,7 @@
         const value = numbers.find((c) => c.name !== period.name);
         if (value) out.push({ key: 'viz.suggest.series', params: { value: value.name }, chart: vegaChart(ds, `${ds.name}: ${value.name}`, 'timeseries', columns, (state) => { state.x = builder.channel(period); state.y = builder.channel(value, { aggregate: 'sum' }); }) });
       }
-      if (found.some((f) => f.id === 'spatial')) out.push({ key: 'viz.suggest.map', params: {}, chart: await ownChart(ds, 'map') });
+      if (maps() && found.some((f) => f.id === 'spatial')) out.push({ key: 'viz.suggest.map', params: {}, chart: await ownChart(ds, 'map') });
       const category = await categoryOf(handle, columns);
       const value = numbers.find((c) => !series || c.name !== series.columns[0]);
       if (found.some((f) => f.id === 'bcf')) {
@@ -83,11 +85,11 @@
           out.push({ key: 'viz.suggest.documents', params: {}, chart: bars(ds, `${ds.name}: ${t('document.characters')}`, columns, col('dokument'), col('tecken')) });
           break;
         case kinds.PROFILES.images:
-          if (await facets.has(ds.id, 'spatial')) out.push({ key: 'viz.suggest.map', params: {}, chart: await ownChart(ds, 'map') });
+          if (maps() && await facets.has(ds.id, 'spatial')) out.push({ key: 'viz.suggest.map', params: {}, chart: await ownChart(ds, 'map') });
           out.push({ key: 'viz.suggest.cameras', params: {}, chart: bars(ds, `${ds.name}: ${t('gallery.camera')}`, columns, col('kamera'), null) });
           break;
         case kinds.PROFILES.plan:
-          out.push({ key: 'viz.suggest.map', params: {}, chart: await ownChart(ds, 'map') });
+          if (maps()) out.push({ key: 'viz.suggest.map', params: {}, chart: await ownChart(ds, 'map') });
           break;
         case kinds.PROFILES.graph: {
           out.push({ key: 'viz.suggest.graph', params: {}, chart: await ownChart(ds, 'graph') });
@@ -100,7 +102,7 @@
             out.push({ key: 'viz.suggest.layers', params: {}, chart: bars(ds, `${ds.name}: ${t('model.col.lager')}`, columns, col('lager'), null) });
             break;
           }
-          out.push({ key: 'viz.suggest.model', params: {}, chart: await ownChart(ds, 'model') });
+          if (kinds.shown(ds)) out.push({ key: 'viz.suggest.model', params: {}, chart: await ownChart(ds, 'model') });
           out.push({ key: 'viz.suggest.types', params: {}, chart: bars(ds, `${ds.name}: ${t('model.col.typ')}`, columns, col('typ'), null) });
           {
             const amounts = await D.require('viz/data').columnsOf(ds.id, '_quantities');

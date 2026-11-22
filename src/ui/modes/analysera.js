@@ -13,7 +13,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/python-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel', 'ui/analysis/regex-panel', 'ui/analysis/stats-panel', 'ui/analysis/text-panel', 'ui/analysis/images-panel', 'ui/analysis/geo-panel', 'ui/analysis/plan-panel', 'ui/analysis/graph-panel', 'ui/analysis/model-panel', 'viz/leaflet', 'data/kinds'], (base, rb, pb, recipes, presets, notebooks, notebookPanel, regexPanelModule, statsPanelModule, textPanelModule, imagesPanelModule, geoPanelModule, planPanelModule, graphPanelModule, modelPanelModule, leaflet, kinds) => {
+  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/python-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel', 'ui/analysis/regex-panel', 'ui/analysis/stats-panel', 'ui/analysis/text-panel', 'ui/analysis/images-panel', 'ui/analysis/geo-panel', 'ui/analysis/plan-panel', 'ui/analysis/graph-panel', 'ui/analysis/model-panel', 'viz/leaflet', 'data/kinds', 'platform/tier'], (base, rb, pb, recipes, presets, notebooks, notebookPanel, regexPanelModule, statsPanelModule, textPanelModule, imagesPanelModule, geoPanelModule, planPanelModule, graphPanelModule, modelPanelModule, leaflet, kinds, tier) => {
     const { h, t, i18n, replace } = base;
     /** The two code consoles share one implementation; these are their bridges and texts. */
     const bridges = { r: rb.bridge, python: pb.bridge };
@@ -85,33 +85,38 @@
           if (!userChose && slots) {
             const next = await facetsMod.startTab(ds.id).catch(() => null);
             if (geoFor !== key || !slots) return;
-            if (next && next !== tab) { tab = next; renderCenter(); renderLeft(); renderRight(); return; }
+            if (next && next !== tab && tier.shows('tab:' + next)) { tab = next; renderCenter(); renderLeft(); renderRight(); return; }
           }
         }
         if (tabsEl) tabsEl.tabs = tabList();
       }
       const KIND_TAB_IDS = ['text', 'images', 'plan', 'geo', 'graph', 'cypher', 'model', 'stats'];
       const kindPanel = () => (tab === 'stats' ? statsPanel() : tab === 'model' ? modelPanel() : tab === 'text' ? textPanel() : tab === 'images' ? imagesPanel() : tab === 'plan' ? planPanel() : tab === 'geo' ? geoPanel() : tab === 'graph' ? graphPanel() : tab === 'cypher' ? cypherPanel() : null);
+      /** The tabs offered, those the tier in effect hides left out (platform/tier, the entries `tab:<id>`). */
       function tabList() {
         const ds = selectedDataset();
         const profile = kinds.of(ds);
-        const kind = ds && KIND_TABS[profile.tab] ? KIND_TABS[profile.tab] : (textOk ? KIND_TABS.text : null);
+        const own = ds ? kinds.ownTab(ds) : null;
+        const kind = own && KIND_TABS[own] ? KIND_TABS[own] : (textOk ? KIND_TABS.text : null);
         const isGraph = (!!ds && !!profile.cypher) || tab === 'cypher';
         // Fixed order: R, Python, SQL, Regex, then the kind tool; the notebook is always last because it joins pieces from the others.
         return [{ id: 'r', label: t('analysera.tabs.r'), icon: 'terminal' }, { id: 'python', label: t('analysera.tabs.python'), icon: 'code' }, { id: 'sql', label: t('analysera.tabs.sql'), icon: 'database' }].concat(isGraph ? [{ id: 'cypher', label: t('analysera.tabs.cypher'), icon: 'git-branch' }] : []).concat([{ id: 'regex', label: t('analysera.tabs.regex'), icon: 'regex' }]).concat(!isGraph ? [{ id: 'stats', label: t('analysera.tabs.stats'), icon: 'chart-column' }] : [])
           .concat(kind ? [{ id: kind.id, label: t(kind.label), icon: kind.icon }] : KIND_TABS[tab] ? [{ id: tab, label: t(KIND_TABS[tab].label), icon: KIND_TABS[tab].icon }] : [])
           .concat(geoOk || tab === 'geo' ? [{ id: 'geo', label: t('analysera.tabs.geo'), icon: 'map' }] : [])
-          .concat([{ id: 'notebook', label: t('analysera.tabs.notebook'), icon: 'file-text' }]);
+          .concat([{ id: 'notebook', label: t('analysera.tabs.notebook'), icon: 'file-text' }])
+          .filter((x) => tier.shows('tab:' + x.id));
       }
 
       function activate(s) {
         slots = s;
         // Opens in the dataset's own tool, so R does not start for someone who came to read a document.
         const opening = selectedDataset();
-        if (!userChose && opening) tab = kinds.of(opening).tab;
+        if (!userChose && opening) tab = kinds.ownTab(opening);
         // A check asked for in Hantera (the card Validera modellen) opens the model tools, as a tab the user chose.
         const askedTool = store.get().openModelTool;
-        if (askedTool && opening && askedTool.datasetId === opening.id) { tab = 'model'; userChose = true; }
+        if (askedTool && opening && askedTool.datasetId === opening.id && kinds.shown(opening)) { tab = 'model'; userChose = true; }
+        // A tab the tier hides now (after the tier was lowered) gives way to the statistics.
+        if (!tier.shows('tab:' + tab)) tab = 'stats';
         geoFor = '';
         unsubStore = store.subscribe((state, changed) => {
           if (changed.includes('pendingCode')) takePending();

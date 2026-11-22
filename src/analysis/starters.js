@@ -69,7 +69,8 @@
     };
     /** A comprehensive plan is grouped by its theme, a detailed plan by the type of object. */
     function planColumn(ds) { return ds.plan && ds.plan.slag === 'oversiktsplan' ? 'tema' : 'objekttyp'; }
-    const kindOf = (ds) => (BY_KIND[ds && ds.kind] ? ds.kind : 'table');
+    /** A kind whose own tools the tier hides (platform/tier: a model in Dokument) starts as a table. */
+    const kindOf = (ds) => (BY_KIND[ds && ds.kind] && kinds.shown(ds) ? ds.kind : 'table');
 
     /**
      * The pieces that follow from the kind alone.

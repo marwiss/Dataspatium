@@ -14,7 +14,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/leaflet', ['viz/theme', 'viz/export', 'viz/data', 'data/datasets', 'data/geo', 'data/boundaries', 'platform/consent', 'viz/orthophotos'], (theme, vizExport, vizData, datasets, geo, boundaries, consent, orthophotos) => {
+  D.define('viz/leaflet', ['viz/theme', 'viz/export', 'viz/data', 'data/datasets', 'data/geo', 'data/boundaries', 'platform/consent', 'viz/orthophotos', 'platform/tier'], (theme, vizExport, vizData, datasets, geo, boundaries, consent, orthophotos, tier) => {
     const VENDOR = 'vendor/leaflet/';
     const BASEMAPS = ['none', 'osm', 'custom', 'wms', 'tiles'];
     const WMS_DEFAULTS = { url: '', layers: '', format: 'image/png', transparent: false, attribution: '', version: '1.3.0' };
@@ -352,7 +352,8 @@
      * axis order); OpenStreetMap and XYZ templates exist in Web Mercator only (info.basemapProjection is set).
      */
     async function tileLayer(def, options, info, grid) {
-      if (!def || !def.basemap || def.basemap === 'none' || options.noTiles) return null;
+      // Background maps from services belong to the tier BIM och GIS (platform/tier); below it a map draws its own features only.
+      if (!def || !def.basemap || def.basemap === 'none' || options.noTiles || !tier.shows('map.basemap')) return null;
       if (orthophotos.isPreset(def.basemap)) return presetLayer(def.basemap, options, info, grid);
       const src = tileSource(def);
       if (!src) return null;
@@ -401,7 +402,7 @@
      */
     async function overlayLayers(def, options, info, grid) {
       const out = [];
-      if (!def || options.noTiles) return out;
+      if (!def || options.noTiles || !tier.shows('map.basemap')) return out;
       for (const layer of def.layers || []) {
         if (!imagery(layer) || layer.visible === false) continue;
         const src = overlaySource(layer);
@@ -663,9 +664,11 @@
         type: 'FeatureCollection',
         features: item.features.map((f) => { const s = item.styleOf(f.properties || {}); const label = item.layer.label ? (f.properties || {})[item.layer.label] : null; return { type: 'Feature', geometry: f.geometry, properties: { __style: { color: s.color, fillColor: s.fillColor, weight: s.weight, opacity: s.opacity, fillOpacity: s.fillOpacity, radius: s.radius }, __label: label === null || label === undefined ? '' : String(label) } }; }),
       }));
-      const src = def.basemap && def.basemap !== 'none' ? (orthophotos.isPreset(def.basemap) ? await publishedPreset(def.basemap) : tileSource(def)) : null;
+      // Background maps and imagery from services belong to the tier BIM och GIS (platform/tier), as on screen (tileLayer, overlayLayers).
+      const services = tier.shows('map.basemap');
+      const src = services && def.basemap && def.basemap !== 'none' ? (orthophotos.isPreset(def.basemap) ? await publishedPreset(def.basemap) : tileSource(def)) : null;
       const tileJs = (s, extra) => (s.wms ? `L.tileLayer.wms(${json(s.url)},${json(tileOptions(s, extra))}).addTo(m);` : `L.tileLayer(${json(s.url)},${json(tileOptions(s, extra))}).addTo(m);`);
-      const overlays = (def.layers || []).filter((l) => imagery(l) && l.visible !== false).map((l) => ({ src: overlaySource(l), opacity: l.style && l.style.opacity !== undefined ? l.style.opacity : 0.8 })).filter((o) => o.src);
+      const overlays = services ? (def.layers || []).filter((l) => imagery(l) && l.visible !== false).map((l) => ({ src: overlaySource(l), opacity: l.style && l.style.opacity !== undefined ? l.style.opacity : 0.8 })).filter((o) => o.src) : [];
       const legend = def.legend === false ? '' : `<div class="dm-map-legend">${prepared.layers.flatMap((l) => (l.legend.length > 1 ? l.legend : l.legend.map((e) => Object.assign({}, e, { label: e.label || l.layer.name })))).slice(0, 24).map((e) => `<div><span style="background:${e.color}"></span>${String(e.label).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>`).join('')}</div>`;
       const view = def.view && def.view.center && def.view.zoom ? `m.setView(${json(def.view.center)}, ${json(def.view.zoom)});` : `if (b) m.fitBounds(b, {padding: [16, 16], maxZoom: 14}); else m.setView(${json(DEFAULT_VIEW.center)}, ${DEFAULT_VIEW.zoom});`;
       return `<div class="dm-map-wrap"><div id="${id}" class="dm-map" style="height:${options.height || def.height || 480}px"></div>${legend}</div>`

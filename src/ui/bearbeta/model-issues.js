@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/model-issues', ['ui/base', 'data/datasets', 'api/families/opencde', 'api/connectors', 'data/bcf-xml', 'data/issues', 'viz/charts', 'api/runner', 'ui/bearbeta/issue-fields'], (base, datasets, opencde, connectors, bcfXml, issuesLogic, charts, runner, issueFields) => {
+  D.define('ui/bearbeta/model-issues', ['ui/base', 'data/datasets', 'api/families/opencde', 'api/connectors', 'data/bcf-xml', 'data/issues', 'viz/charts', 'api/runner', 'ui/bearbeta/issue-fields', 'platform/tier'], (base, datasets, opencde, connectors, bcfXml, issuesLogic, charts, runner, issueFields, tier) => {
     const { h, t, i18n, replace } = base;
     /** Badge colours follow what a status means (data/issues.rank, also the Swedish review statuses); unknown statuses are plain. */
     const BADGE = ['warn', 'accent', 'ok'];
@@ -37,7 +37,8 @@
       const may = (kind, action) => !!(s.rights && s.rights[kind] && s.rights[kind].includes(action));
 
       async function start() {
-        s.connectors = (await connectors.list()).filter((c) => opencde.isOpenCde(c));
+        // The servers whose own tier holds the BCF API (platform/tier); one that announces Dokument offers no issues.
+        s.connectors = (await connectors.list()).filter((c) => opencde.isOpenCde(c) && tier.shows('cde.bcf', { server: c.id }));
         s.connector = s.connectors.find((c) => c.id === (hooks.connectorId || cde.connectorId)) || s.connectors[0] || null;
         render();
         if (s.connector && opencde.signedIn(s.connector) && s.projectId) await load();

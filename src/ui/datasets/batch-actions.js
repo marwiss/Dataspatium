@@ -28,7 +28,7 @@
       const facets = D.require('data/facets');
       const out = [];
       const spatial = await Promise.all(chosen.map((d) => facets.has(d.id, 'spatial').catch(() => false)));
-      if (spatial.every(Boolean)) out.push({ id: 'map', label: 'datasets.batch.map', hint: 'datasets.batch.map.hint', icon: 'map' });
+      if (spatial.every(Boolean) && D.require('platform/tier').shows('chart:map')) out.push({ id: 'map', label: 'datasets.batch.map', hint: 'datasets.batch.map.hint', icon: 'map' });
       if (chosen.every((d) => !kinds.isCollection(d))) {
         const shapes = await Promise.all(chosen.map(async (d) => (await datasets.columns(d.id)).map((c) => c.name).join('\u0000')));
         if (shapes.every((x) => x === shapes[0])) out.push({ id: 'append', label: 'datasets.batch.append', hint: 'datasets.batch.append.hint', icon: 'rows-3' });
@@ -236,7 +236,8 @@
       const targets = chosen.filter((d) => d.id !== sel.value);
       let good = 0;
       for (const d of targets) {
-        try { await recipes.replay(d.id, steps); good++; shell.log(t('datasets.batch.recipe.one', { name: d.name }), 'ok'); }
+        // A step that fails (one the tier hides among them) stops the replay on that dataset, and the log says why.
+        try { const failed = (await recipes.replay(d.id, steps)).find((r) => !r.ok); if (failed) throw new Error(failed.error); good++; shell.log(t('datasets.batch.recipe.one', { name: d.name }), 'ok'); }
         catch (err) { shell.log(`${d.name}: ${(err && err.message) || err}`, 'error'); }
       }
       done(ctx, t('datasets.batch.recipe.done', { ok: good, n: targets.length }));

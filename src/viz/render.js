@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/render', ['viz/vega-builder', 'viz/vega-render', 'viz/d3-templates', 'viz/data', 'viz/export', 'viz/theme', 'data/boundaries', 'data/datasets', 'viz/leaflet', 'viz/graph-draw', 'viz/model-draw'], (builder, vegaRender, d3t, vizData, vizExport, theme, basemaps, datasets, leaflet, graphDraw, modelDraw) => {
+  D.define('viz/render', ['viz/vega-builder', 'viz/vega-render', 'viz/d3-templates', 'viz/data', 'viz/export', 'viz/theme', 'data/boundaries', 'data/datasets', 'viz/leaflet', 'viz/graph-draw', 'viz/model-draw', 'platform/tier'], (builder, vegaRender, d3t, vizData, vizExport, theme, basemaps, datasets, leaflet, graphDraw, modelDraw, tier) => {
     /** Data for a Vega chart: rows plus the spec built for them. */
     async function prepareVega(chart, options = {}) {
       const meta = await datasets.get(chart.datasetId);
@@ -49,10 +49,12 @@
     }
 
     /**
-     * Render into a container. Returns handles for export.
+     * Render into a container. Returns handles for export. A type of chart the tier in effect hides (platform/tier, `chart:<kind>`:
+     * the map view, the 3D model, the height profile) is refused in the notice's words, here and in toBlob.
      * @returns {Promise<{kind: string, svg: () => Promise<string>, png: (scale?: number) => Promise<Blob>, finalize: Function, info: any}>}
      */
     async function renderInto(chart, container, options = {}) {
+      tier.guard('chart:' + chart.kind);
       if (chart.kind === 'vega') {
         const prep = await prepareVega(chart, options);
         container.replaceChildren();
@@ -100,6 +102,7 @@
 
     /** Export a chart to a blob without showing it (vega and d3). */
     async function toBlob(chart, format, options = {}) {
+      tier.guard('chart:' + chart.kind);
       const width = options.width || 800;
       let svgText;
       if (chart.kind === 'vega') {

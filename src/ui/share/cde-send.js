@@ -11,7 +11,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/share/cde-send', ['ui/base', 'data/datasets', 'data/kinds', 'api/families/opencde', 'api/connectors', 'ui/share/review', 'data/share-scan'], (base, datasets, kinds, opencde, connectors, review, shareScan) => {
+  D.define('ui/share/cde-send', ['ui/base', 'data/datasets', 'data/kinds', 'api/families/opencde', 'api/connectors', 'ui/share/review', 'data/share-scan', 'platform/tier', 'ui/settings/tier'], (base, datasets, kinds, opencde, connectors, review, shareScan, tier, tierUi) => {
     const { h, t, i18n, replace } = base;
     /** Tests give a popup of their own; the app opens the server's page in a window. */
     let popup = null;
@@ -95,6 +95,8 @@
       async function send(options = {}) {
         const d = ds();
         if (!d || !s.connector || !s.projectId || s.busy) return;
+        // A BCF document belongs to the BCF API, BIM och GIS (platform/tier), also capped by the server's own tier.
+        if (s.how === 'bcf' && !options.asVersionOf && !tier.shows('cde.bcf', { server: s.connector.id })) return;
         s.busy = 'send'; s.error = ''; s.done = ''; s.progress = null; render();
         try {
           const file = await fileToSend(d);
@@ -186,11 +188,15 @@
             if (!formats.some((f) => f.id === s.format)) s.format = formats[0] ? formats[0].id : '';
             format.value = s.format;
             format.addEventListener('change', () => { s.format = format.value; });
-            // A server of BCF API 2.1 alone has no Documents API, so a file goes as a BCF document or not at all.
+            // A server of BCF API 2.1 alone has no Documents API, so a file goes as a BCF document or not at all; a BCF document needs
+            // the tier BIM och GIS, of the app and of the server (platform/tier), and without either way the panel says why.
             const documents = opencde.hasDocuments(s.connector);
+            const bcfOk = tier.shows('cde.bcf', { server: s.connector.id });
             if (!documents) s.how = 'bcf';
+            else if (s.how === 'bcf' && !bcfOk) s.how = 'documents';
+            if (!documents && !bcfOk) { nodes.push(tierUi.notice(ctx, 'cde.bcf', { server: s.connector.id })); replace(el, h('div', { class: 'dm-card dm-stack' }, nodes)); return; }
             const how = /** @type {any} */ (h('dm-select', { label: t('cde.send.how') }));
-            how.options = (documents ? [{ value: 'documents', label: t('cde.send.how.documents') }] : []).concat([{ value: 'bcf', label: t('cde.send.how.bcf') }]);
+            how.options = (documents ? [{ value: 'documents', label: t('cde.send.how.documents') }] : []).concat(bcfOk ? [{ value: 'bcf', label: t('cde.send.how.bcf') }] : []);
             how.value = s.how;
             how.addEventListener('change', () => { s.how = how.value; render(); });
             const own = documents && d.source && d.source.cde && d.source.cde.documentId && d.source.cde.connectorId === s.connector.id ? d.source.cde : null;

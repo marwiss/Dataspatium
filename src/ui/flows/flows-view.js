@@ -145,7 +145,13 @@
           el.addEventListener('change', () => set(!!el.checked));
           return el;
         }
-        if (field.type === 'command') return select(label, [{ value: '', label: '–' }].concat(D.require('data/commands').list().map((c) => ({ value: c.name, label: c.name }))), value || '', set);
+        if (field.type === 'command') {
+          // The commands the tier shows (data/commands), and the step's own when the tier now hides it, so that it is kept.
+          const commands = D.require('data/commands');
+          const names = commands.list().map((c) => c.name);
+          if (value && !names.includes(value) && commands.get(value)) names.push(value);
+          return select(label, [{ value: '', label: '–' }].concat(names.map((name) => ({ value: name, label: name }))), value || '', set);
+        }
         if (field.type === 'text') {
           const el = /** @type {any} */ (h('dm-input', { label, help: t('flows.field.' + field.name + '.help') }));
           el.value = value || '';

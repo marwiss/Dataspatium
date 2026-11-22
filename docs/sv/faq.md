@@ -98,6 +98,32 @@ Chrome via ikonen *Installera* i adressfältet eller webbläsarens meny. Den få
 filerna sparas i webbläsaren så att den fungerar utan nätverk, och lagringen blir beständig. Nya versioner hämtas
 när appen öppnas igen med nätverk.
 
+## Hur ställer man in appen för en organisation?
+
+Bredvid `index.html` ligger `dataspatium.config.js`, som appen läser före allt annat, både från mappen (file://) och från
+en webbserver. Som den levereras ställer den inte in något. Ta bort kommentarstecknen runt exemplet och behåll de rader
+du behöver:
+
+```js
+globalThis.DATASPATIUM_CONFIG = {
+  tier: 'bim-gis',
+  language: 'sv',
+  server: { baseUrl: 'https://cde.example.org', name: 'Vår Dataregium' },
+};
+```
+
+- `tier`: den högsta nivån användarna kan välja: `documents` (Dokument), `bim-gis` (BIM och GIS) eller `experimental`
+  (Experimentell). Användarna väljer själva sin nivå under Hantera > Arbetsyta, högst denna. Utan `tier`, eller med ett
+  värde som inte är ett av de tre, finns inget tak.
+- `language`: språket innan användaren väljer ett: `sv`, `en`, `da`, `nb`, `nn`, `fi` eller `is`. Frågan om språk vid
+  första starten hoppas då över; språkknappen byter det som vanligt. Dataspatium Mobil (`m/`) använder samma språk.
+- `server`: en Dataregium-server som läggs till som källa i Inhämta vid första starten. Appen kontaktar den inte förrän
+  användaren öppnar källan och ger samtycke till OpenCDE-servrar. En källa som användaren tar bort läggs inte till igen,
+  och en källa som användaren redan har på samma värd ersätts aldrig.
+
+Ett värde som inte går att tolka hoppas över med en varning i konsolen, så en felskriven fil låser aldrig appen. En ny version
+av appen levereras med en ny fil utan inställningar: spara en kopia av din egen och lägg tillbaka den efter uppdateringen.
+
 ## Kan jag öppna index.html direkt i ZIP-filen?
 
 Nej. Packa upp ZIP-filen först (högerklicka och välj *Extrahera alla* i Windows) och öppna sedan `index.html` i
@@ -260,10 +286,12 @@ textlager kan läsas med textigenkänning. Se [dokument.md](dokument.md).
 
 ## Kan jag visa kartor och räkna på geodata?
 
-Ja. En datamängd med geometri (GeoJSON, Shapefile, GeoPackage, KML, GPX) eller longitud och latitud öppnas som en karta
-i Bearbeta. I Visualisera gör diagramslaget *Karta* kartvyer med flera lager och bakgrundskarta för dashboards och
-publicering, och i Analysera räknar fliken *Geo* area, punkter i områden, närmaste, buffert och överlagring utan kod.
-QGIS-projekt kan släppas i Inhämta. Bakgrundskartor hämtas bara efter ditt samtycke. Se [kartor.md](kartor.md).
+Ja. I nivån BIM och GIS öppnas en datamängd med geometri (GeoJSON, Shapefile, GeoPackage, KML, GPX) eller longitud och
+latitud som en karta i Bearbeta. I Visualisera gör diagramslaget *Karta* kartvyer med flera lager och bakgrundskarta för
+dashboards och publicering, och i Analysera räknar fliken *Geo* area, punkter i områden, närmaste, buffert och
+överlagring utan kod. QGIS-projekt kan släppas i Inhämta. Bakgrundskartor hämtas bara efter ditt samtycke. I nivån
+Dokument finns geodatafilerna som tabeller, diagrambyggarens kartor och fliken *Geo* med punkter i områden. Se
+[kartor.md](kartor.md).
 
 ## Hur ser jag vad appen skickar till en OpenCDE-server?
 
@@ -274,7 +302,7 @@ inte själv sparar den som JSON eller datamängd. Se [kallor.md](kallor.md).
 
 ## Kan jag se en modells IFC-graf och fråga den med Cypher?
 
-Ja, om modellen finns på en Dataregium-server. Öppna källan i Inhämta, kortet *IFC-DB* (tidigare IFC-LPG) eller en Neo4j-källa, och välj modell och vy.
+Ja, i nivån Experimentell (Hantera > Arbetsyta > Nivå), om modellen finns på en Dataregium-server. Öppna källan i Inhämta, kortet *IFC-DB* (tidigare IFC-LPG) eller en Neo4j-källa, och välj modell och vy.
 Noder och relationer ritas, du hämtar grannar med ett dubbelklick och skriver egen Cypher i rutan. Se [grafer.md](grafer.md).
 
 ## Fungerar appen mot en server som bara har BCF API 2.1?

@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/analysis/model-panel', ['ui/base', 'ui/basic', 'data/datasets', 'data/model', 'analysis/model', 'data/issues', 'ui/analysis/climate-panel', 'ui/analysis/inventory-panel', 'analysis/ids-presets'], (base, basic, datasets, model, analysis, issuesLogic, climateModule, inventoryModule, idsPresets) => {
+  D.define('ui/analysis/model-panel', ['ui/base', 'ui/basic', 'data/datasets', 'data/model', 'analysis/model', 'data/issues', 'ui/analysis/climate-panel', 'ui/analysis/inventory-panel', 'analysis/ids-presets', 'platform/tier'], (base, basic, datasets, model, analysis, issuesLogic, climateModule, inventoryModule, idsPresets, tier) => {
     const { h, t, i18n, replace } = base;
     const PREVIEW_ROWS = 2000;
     const IFC_TOOLS = ['summary', 'quantities', 'list', 'climate', 'inventory', 'properties', 'entities', 'issues', 'validate', 'ids', 'clash', 'structure', 'psets', 'select', 'geometry'];
@@ -77,7 +77,7 @@
           const tables = issuesLogic.tablesFor(store.get().datasets, ds);
           if (!tables.length) {
             parts.push(h('p', { class: 'dm-help', text: t('model.issues.none') }),
-              h('div', null, ui.button({ label: t('issues.title'), icon: 'message-square', size: 'sm', title: t('model.issues.open.hint'), onClick: () => { store.set({ selectedId: ds.id, openModelIssues: { datasetId: ds.id } }); shell.activate('bearbeta'); } })));
+              !tier.shows('cde.bcf', { server: ds.source && ds.source.cde ? ds.source.cde.connectorId : '' }) ? null : h('div', null, ui.button({ label: t('issues.title'), icon: 'message-square', size: 'sm', title: t('model.issues.open.hint'), onClick: () => { store.set({ selectedId: ds.id, openModelIssues: { datasetId: ds.id } }); shell.activate('bearbeta'); } })));
           } else {
             if (!tables.some((x) => x.id === s.issuesId)) s.issuesId = tables[0].id;
             const groupOpts = (none) => (none ? [{ value: '', label: t('map.none') }] : []).concat(issuesLogic.SUMMARY_GROUPS.map((g) => ({ value: g, label: t('issues.field.' + g) })));
@@ -337,7 +337,7 @@
           h('div', { class: 'dm-row-wrap', 'data-clash-result': '' }, h('span', { class: 'dm-help dm-grow', text: out.note }),
             ui.button({ label: t('clash.mark'), icon: 'scan-line', size: 'sm', title: t('clash.mark.hint'), disabled: none, 'data-clash-mark': '', onClick: () => markClashes(ds, r) }),
             ui.button({ label: t('clash.bcf'), icon: 'download', size: 'sm', title: t('clash.bcf.hint'), disabled: none, 'data-clash-bcf': '', onClick: () => saveBcf(ds, r) }),
-            cde && cde.connectorId && cde.projectId ? ui.button({ label: t('clash.send'), icon: 'upload', size: 'sm', title: t('clash.send.hint'), disabled: none, 'data-clash-send': '', onClick: () => sendTopics(ds, r) }) : null,
+            cde && cde.connectorId && cde.projectId && tier.shows('cde.bcf', { server: cde.connectorId }) ? ui.button({ label: t('clash.send'), icon: 'upload', size: 'sm', title: t('clash.send.hint'), disabled: none, 'data-clash-send': '', onClick: () => sendTopics(ds, r) }) : null,
             ui.button({ label: t('text.create.dataset'), icon: 'table', size: 'sm', disabled: none, onClick: () => createDataset(out) })),
           h('div', { class: 'dm-table-wrap' }, (() => {
             const table = /** @type {any} */ (h('dm-table'));

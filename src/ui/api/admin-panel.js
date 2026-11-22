@@ -10,7 +10,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/admin-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'api/families/opencde', 'api/families/opencde-admin', 'api/runner'], (base, basic, overlays, opencde, admin, runner) => {
+  D.define('ui/api/admin-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'api/families/opencde', 'api/families/opencde-admin', 'api/runner', 'platform/tier'], (base, basic, overlays, opencde, admin, runner, tier) => {
     const { h, t, i18n, replace } = base;
     const SECTIONS = ['overview', 'users', 'projects', 'clients', 'sessions', 'audit', 'settings', 'health'];
     const ICONS = { overview: 'info', users: 'key-round', projects: 'folder', clients: 'cpu', sessions: 'monitor', audit: 'history', settings: 'settings', health: 'activity', graph: 'network' };
@@ -32,6 +32,8 @@
         log(`${connector.name}: ${s.error}`, 'error');
       };
       const when = (iso) => { if (!iso) return ''; const d = new Date(iso); return Number.isNaN(d.getTime()) ? String(iso) : i18n.formatDateTime(d); };
+      /** The graph parts (the graph query and the graph's health) where the tier and the server's tier hold the IFC graph (DS-32, DS-59). */
+      const graphShown = () => tier.shows('cde.ifc-graph', { server: connector.id });
       const n = (v) => i18n.formatNumber(Number(v) || 0);
 
       /** The card appears when the server has the API; the lists load when the session has the scope. */
@@ -357,13 +359,13 @@
           h('div', { class: 'dm-row-wrap' }, counts.map((k) => h('div', { class: 'dm-stat' }, h('span', { class: 'dm-stat-value', text: n(o[k]) }), h('span', { class: 'dm-stat-label', text: t('admin.count.' + k) })))),
           h('p', { class: 'dm-help dm-small', text: t('admin.overview.line', { version: String(o.version || '?'), uptime: uptime(o.uptime_s), dialect: String(o.dialect || '?') }) }),
           h('div', { class: 'dm-row-wrap' },
-            badge(!!o.graph_ok, t('admin.graph.ok'), t('admin.graph.down')),
+            graphShown() ? badge(!!o.graph_ok, t('admin.graph.ok'), t('admin.graph.down')) : null,
             badge(!!(o.request_log && o.request_log.enabled), t('admin.requestlog.on', { n: n(o.request_log && o.request_log.rows) }), t('admin.requestlog.off'))));
       }
 
       // ------------------------------------------------------------------------------------------------ graph query
       async function runGraph() {
-        if (s.busy === 'write' || s.busy === 'graph' || !s.q.cypher.trim()) return;
+        if (s.busy === 'write' || s.busy === 'graph' || !s.q.cypher.trim() || !graphShown()) return;
         if (loading) await loading;
         s.busy = 'graph'; s.error = ''; render();
         try { s.data.graph = await admin.graphQuery(connector, s.q.cypher, {}); log(t('admin.graph.ran', { n: n(s.data.graph.rows && s.data.graph.rows.length) })); } catch (err) { fail(err); }
@@ -397,8 +399,10 @@
           nodes.push(h('p', { class: 'dm-help', text: t('admin.scope.missing') }));
           nodes.push(h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('admin.signin'), icon: 'lock', size: 'sm', 'data-admin-signin': '', loading: s.busy === 'signin', onClick: signIn })));
         } else {
+          // A tab the tier hides now (after the tier was lowered) gives way to the overview.
+          if (s.tab === 'graph' && !graphShown()) s.tab = 'overview';
           const tabs = /** @type {any} */ (h('dm-tabs'));
-          tabs.tabs = SECTIONS.concat(s.graph ? ['graph'] : []).map((id) => ({ id, label: t('admin.tab.' + id), icon: ICONS[id] }));
+          tabs.tabs = SECTIONS.concat(s.graph && graphShown() ? ['graph'] : []).map((id) => ({ id, label: t('admin.tab.' + id), icon: ICONS[id] }));
           tabs.active = s.tab;
           tabs.addEventListener('dm-change', (e) => { s.tab = /** @type {any} */ (e).detail.id; render(); if (!s.data[s.tab] && s.tab !== 'graph') load(s.tab); });
           nodes.push(tabs);

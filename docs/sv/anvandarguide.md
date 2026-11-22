@@ -210,6 +210,7 @@ Allt som ska till andra människor finns i läget *Dela* (se [dela.md](dela.md))
 
 ## AI-assistenten
 
+AI-assistenten hör till nivån Experimentell (se [Nivåer](#nivåer)); i nivå 1 och 2 finns varken knappen eller kommandot.
 *AI-assistent* i statusraden, eller *AI-assistent* i kommandopaletten (Ctrl+K), öppnar en panel där en AI gör uppgifter åt dig
 med appens kommandon, i alla lägen. Den använder den AI-leverantör du har lagt till under *Leverantörer*, en molntjänst med din
 nyckel eller en lokal modell, och nås först när du har gett samtycke för leverantörens värd.
@@ -250,6 +251,30 @@ Flikar byts med vänster- och högerpil, Home och End. Alla knappar, fält och k
 läser upp, dialoger läses upp med sin rubrik och sidan har landmärken för lägesväxlaren, objektpanelen, arbetsytan
 och inspektören. Text och fältkanter har kontrast enligt WCAG AA i både ljust och mörkt tema. Diagrammen i
 diagrambyggaren beskrivs för skärmläsare av Vega; i R-diagram och D3-mallar finns uppgifterna i tabellen i Bearbeta.
+
+## Nivåer
+
+Dataspatium och servern Dataregium är ett program i tre nivåer som bygger på varandra:
+
+1. **Dokument**: tabeller, bearbetning, analys, diagram (också diagrambyggarens kartor), dokument och delning,
+   geodatafiler som tabeller och platser per område (fliken *Geo*), planfiler och dokumenten i en Dataregium-server.
+2. **BIM och GIS**: dessutom BIM-modeller i 3D med sina kontroller och mått, BCF-ärenden och BCF-filer, kartvyerna i
+   Bearbeta och Visualisera med de andra geoverktygen och QGIS-projekten, geodatatjänsterna, bakgrundskartor och
+   ortofoton, Dataregiums team och AI-modellering.
+3. **Experimentell**: dessutom IFC-grafen, AI-assistenten och det som är på prov.
+
+Utan eget val gäller nivå 2. Nivån väljs under **Hantera > Arbetsyta > Nivå** (eller med kommandot *Nivå* i paletten,
+Ctrl+K) och gäller på en gång. En lägre nivå döljer funktioner men behåller alla datamängder: en IFC-modell visas då som
+tabell, och källor som hör till en högre nivå ligger kvar men syns inte i listan. En högre nivå visar allt igen. En
+modell vars egna vyer nivån döljer säger i Hantera, Bearbeta och Kontrollera vilken nivå vyerna hör till, med knappen
+*Byt till …*; det gör också ett sparat diagram av en dold typ, en fil som bara en dold funktion läser (BCF-filer och
+QGIS-projekt) och en länk (`#/<läge>/<datamängd>`) till en sådan modell. Andra funktioner i en högre nivå syns inte.
+Flöden, kommandon, bryggan och recept kör inte det som nivån döljer och säger vilken nivå det hör till.
+
+Den som driftsätter appen kan sätta en högsta nivå (se [faq.md](faq.md#hur-ställer-man-in-appen-för-en-organisation));
+då går de högre nivåerna inte att välja. En Dataregium-server kan också erbjuda en lägre nivå, och då gäller den för det
+som behöver servern, till exempel BCF-ärendena och IFC-grafen. Appen minns vad servern har sagt, också efter en
+omladdning.
 
 ## Språk
 

@@ -14,7 +14,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ai/model-tools', ['data/datasets', 'data/selection', 'api/connectors', 'api/families/opencde'], (datasets, selection, connectors, opencde) => {
+  D.define('ai/model-tools', ['data/datasets', 'data/selection', 'api/connectors', 'api/families/opencde', 'platform/tier'], (datasets, selection, connectors, opencde, tier) => {
     const LIMIT = 200;
     const MAX_LIMIT = 500;
     const str = (nullable = true) => ({ type: nullable ? ['string', 'null'] : 'string' });
@@ -42,6 +42,8 @@
         parameters: { type: 'object', properties: { name: str(), class: str(), pset: str(), property: str(), global_id: str(), since: str() } } },
     ];
     const names = () => TOOLS.map((tool) => tool.name);
+    /** The tools offered to the model: those the tier in effect shows (platform/tier, the entries `tool:<name>`). */
+    const offered = () => TOOLS.filter((tool) => tier.shows('tool:' + tool.name));
     const q = (s) => "'" + String(s).replace(/'/g, "''") + "'";
     const like = (s) => "'%" + String(s).replace(/'/g, "''").replace(/[%_]/g, (c) => '\\' + c) + "%'";
 
@@ -169,6 +171,9 @@
       const connector = await connectors.get(cde.connectorId);
       if (!connector || !opencde.isOpenCde(connector)) return { error: 'the source of the model is no longer among the sources' };
       if (!opencde.signedIn(connector)) return { error: `the user must sign in to ${connector.name} first` };
+      // Only where the tier in effect and the server's own tier (its capabilities) allow it (platform/tier, DS-47).
+      await opencde.capabilities(connector);
+      if (!tier.shows('tool:server_query', { server: connector.id })) return { error: 'server_query belongs to the tier Experimentell, which this app or the server does not offer; only the local tools apply' };
       const base = `/documents/1.0/documents/${encodeURIComponent(cde.documentId)}/versions/${encodeURIComponent(String(cde.versionIndex))}/ifc-queries`;
       if (!args.name) { const list = await opencde.api(connector, base); return { queries: list && list.queries ? list.queries : list, model_state: list && list.model_state }; }
       const params = new URLSearchParams();
@@ -208,6 +213,6 @@
       if (result && Number.isFinite(Number(result.id)) && !Array.isArray(result.elements)) out.push(Number(result.id));
       return out;
     }
-    return { TOOLS, names, call, idsOf, LIMIT, MAX_LIMIT };
+    return { TOOLS, offered, names, call, idsOf, LIMIT, MAX_LIMIT };
   });
 })();

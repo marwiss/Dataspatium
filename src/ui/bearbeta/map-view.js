@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/map-view', ['ui/base', 'data/datasets', 'viz/leaflet', 'viz/charts', 'data/kinds', 'ui/viz/basemap-choice'], (base, datasets, leaflet, charts, kinds, basemapChoice) => {
+  D.define('ui/bearbeta/map-view', ['ui/base', 'data/datasets', 'viz/leaflet', 'viz/charts', 'data/kinds', 'ui/viz/basemap-choice', 'platform/tier'], (base, datasets, leaflet, charts, kinds, basemapChoice, tier) => {
     /** More marks than this say nothing that the list of rows does not say better. */
     const MAX_MARKS = 5000;
     const { h, t, i18n, replace } = base;
@@ -75,7 +75,7 @@
             h('h1', null, ui.icon('map', 20), dataset.name, ' ', h('dm-badge', { text: t('common.rows', { n: i18n.formatNumber(dataset.rowCount || 0) }) })),
             h('div', { class: 'dm-toolbar' }, basemapSel, orthoBtn,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: () => { if (handle) handle.fit(); } }),
-              ui.button({ label: t('map.save.chart'), icon: 'save', title: t('map.save.chart.hint'), onClick: saveChart }),
+              tier.shows('chart:map') ? ui.button({ label: t('map.save.chart'), icon: 'save', title: t('map.save.chart.hint'), onClick: saveChart }) : null,
               ui.button({ label: t('selection.use.map'), icon: 'list-checks', title: t('selection.use.map.hint'), onClick: () => useWhatShows().catch((err) => shell.log(String((err && err.message) || err), 'error')) }),
               options.onOwnView ? ui.button({ label: t('bearbeta.view.' + dataset.kind), icon: 'chevron-left', title: t('bearbeta.view.' + dataset.kind + '.hint'), onClick: options.onOwnView }) : null,
               ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('bearbeta.view.table.hint'), onClick: options.onTable }))),

@@ -4,7 +4,9 @@
  * Styrning utifrån (decision F30 a, the third layer): programs on the computer run the app's commands through the bridge. The
  * page cannot listen, so it polls the bridge for queued commands (GET /commands/next), runs each through data/commands under the
  * app's own rules and posts the answer back (POST /commands/<id>/result); first it tells the bridge which commands exist
- * (POST /commands/catalog), so that the CLI and the MCP server (tools/dataspatium.py) can list them. Off at every start: the switch
+ * (POST /commands/catalog), so that the CLI and the MCP server (tools/dataspatium.py) can list them; the catalog holds the commands the
+ * tier in effect shows (platform/tier) and is sent again when the tier changes, and a command the tier hides is refused like any
+ * other answer (data/commands). Off at every start: the switch
  * lives in the session, turning it on asks the person once, the bridge must have been started with --allow-commands, and a command
  * that changes something is approved in the app's own dialog each time, like the AI's. A program can cancel what it queued
  * (POST /commands/<id>/cancel on the bridge, decision F37 b): a queued command never reaches the page, and a running one is watched
@@ -14,7 +16,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/remote', ['api/bridge', 'data/commands'], (bridge, commands) => {
+  D.define('api/remote', ['api/bridge', 'data/commands', 'platform/tier'], (bridge, commands, tier) => {
     const WAIT = 20;
     const PAUSE = 500;
     const CANCEL_POLL = 1000;
@@ -104,6 +106,8 @@
         }
       })();
     }
+    // The tier changes while the bridge listens: the programs see the commands it now holds.
+    tier.subscribe(() => { if (state.connected) bridge.call('/commands/catalog', { commands: commands.list() }).catch((err) => D.log('remote', 'catalog', err)); });
     // The bridge connects or goes away while the switch is on: follow it.
     bridge.subscribe(() => {
       if (!state.on) return;

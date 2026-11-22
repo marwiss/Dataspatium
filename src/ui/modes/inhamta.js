@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'api/bridge', 'platform/files', 'data/linked', 'io/importers/qgis', 'data/kinds', 'io/file-sense', 'viz/leaflet', 'ui/kinds/sketches'], (base, csv, encoding, types, connectors, bridge, files, linked, qgis, kinds, fileSense, leaflet, sketches) => {
+  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'api/bridge', 'platform/files', 'data/linked', 'io/importers/qgis', 'data/kinds', 'io/file-sense', 'viz/leaflet', 'ui/kinds/sketches', 'platform/tier', 'ui/settings/tier'], (base, csv, encoding, types, connectors, bridge, files, linked, qgis, kinds, fileSense, leaflet, sketches, tier, tierUi) => {
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
@@ -38,7 +38,10 @@
       /** @type {any} */ let fieldUi = null;
       /** @type {any} */ let guidesUi = null;
 
-      function reset() { return { step: 'file', answers: {}, sorted: null, results: null, file: null, files: [], progress: null, project: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '' }; }
+      /** `hidden`: the entry of a file the tier does not read (platform/tier), shown as the tier's notice in place of an error. */
+      function reset() { return { step: 'file', answers: {}, sorted: null, results: null, file: null, files: [], progress: null, project: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '', hidden: '' }; }
+      /** What went wrong with the file chosen: the tier's notice for a file the tier does not read, else the error. */
+      const problem = () => (wiz.hidden ? tierUi.notice(ctx, wiz.hidden) : wiz.error ? h('p', { class: 'dm-error dm-small', text: wiz.error }) : null);
       function restart() { freeThumbs(); Object.assign(wiz, reset()); render(); }
       /** Pictures chosen but not yet read, shown from the files themselves. @type {Map<File, string>} */
       const thumbs = new Map();
@@ -85,11 +88,18 @@
         if (slots) renderLeft();
       }
       const isAddedConnector = (c) => !c.preset || addedPresets.has(c.id);
-      const addedConnectors = () => connectorList.filter(isAddedConnector);
-      const catalogueConnectors = () => connectorList.filter((c) => c.preset && !addedPresets.has(c.id));
+      // The sources of a family or a preset the tier hides (platform/tier) are kept and left out of the lists.
+      const addedConnectors = () => connectorList.filter((c) => isAddedConnector(c) && tier.showsConnector(c));
+      const catalogueConnectors = () => connectorList.filter((c) => c.preset && !addedPresets.has(c.id) && tier.showsConnector(c));
 
       function render() {
         if (!slots) return;
+        // A source the tier now hides (after the tier was lowered) gives way to the files.
+        const hiddenApi = source.startsWith('api:') && connectorList.some((c) => c.id === source.slice(4) && !tier.showsConnector(c));
+        if (hiddenApi || (source === 'newmodel' && !tier.shows('source:newmodel'))) source = 'file';
+        // A file the tier did not read: once the tier is raised the notice goes, and the file can be chosen again.
+        if (wiz.hidden && tier.shows(wiz.hidden)) wiz.hidden = '';
+        if (wiz.project && !tier.shows('import:qgis')) { wiz.project = null; wiz.step = 'file'; wiz.hidden = 'import:qgis'; }
         renderLeft(); renderCenter(); renderRight();
       }
 
@@ -103,7 +113,7 @@
             sourceItem('file', 'folder-open', t('import.sources.files'), t('import.sources.files.hint')),
             sourceItem('paste', 'clipboard-paste', t('import.sources.paste'), t('import.sources.paste.hint')),
             sourceItem('url', 'link', t('import.sources.url'), t('import.sources.url.hint')),
-            sourceItem('newmodel', 'box', t('import.sources.newmodel'), t('import.sources.newmodel.hint'))]),
+            tier.shows('source:newmodel') ? sourceItem('newmodel', 'box', t('import.sources.newmodel'), t('import.sources.newmodel.hint')) : null]),
           group('import.sources.addgroup', [
             sourceItem('bridge', 'database', t('bridge.title'), t('bridge.hint')),
             sourceItem('catalog', 'globe', t('api.sources'), t('api.catalog.hint')),
@@ -111,7 +121,7 @@
             actionItem('family', 'database', t('families.add.short'), t('families.hint'), () => addFamily()),
             actionItem('opencde', 'building-2', t('families.opencde.add'), t('families.opencde.add.hint'), () => addFamily(null, 'opencde')),
             actionItem('neo4j', 'share-2', t('families.neo4j.add'), t('families.neo4j.add.hint'), () => addFamily(null, 'neo4j')),
-            actionItem('geodata', 'map', t('geodata.add.short'), t('geodata.add.hint'), () => addFamily('geodata'))], { 'data-add-sources': '' }),
+            tier.shows('source:geodata') ? actionItem('geodata', 'map', t('geodata.add.short'), t('geodata.add.hint'), () => addFamily('geodata')) : null], { 'data-add-sources': '' }),
           h('h4', { text: t('import.sources.added') }),
           added.length || bridges.length
             ? h('div', { class: 'dm-list', 'data-added-sources': '' }, bridges, added)
@@ -226,7 +236,7 @@
           all.map((code) => chip(t('country.' + code), !countryFilter || countryFilter.has(code), () => toggleCountry(code))));
       }
       function sourceItem(id, icon, label, sub) {
-        return h('button', { type: 'button', class: 'dm-list-item', 'aria-current': source === id ? 'true' : null, onclick: () => { source = id; if (!id.startsWith('api:') && wiz.step !== 'file') restart(); else render(); } },
+        return h('button', { type: 'button', class: 'dm-list-item', 'data-source': id, 'aria-current': source === id ? 'true' : null, onclick: () => { source = id; if (!id.startsWith('api:') && wiz.step !== 'file') restart(); else render(); } },
           ui.icon(icon, 16), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: label }), sub ? h('span', { class: 'dm-list-sub dm-truncate', text: sub }) : null));
       }
       async function addConnector() {
@@ -259,8 +269,8 @@
         replace(slots.center, h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('download', 20), t('import.title')), stepper), body);
       }
 
-      // ---- saved fetches: every dataset from an API, updated with one click ----
-      const apiDatasets = () => store.get().datasets.filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge'));
+      // ---- saved fetches: every dataset from an API, updated with one click; those whose source the tier hides are left out ----
+      const apiDatasets = () => store.get().datasets.filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge') && !D.require('api/runner').hiddenBy(d.source, connectorList.find((c) => c.id === d.source.connectorId)));
       /** Ids being updated; '*' while everything is. */
       const updating = new Set();
       function renderSaved() {
@@ -495,7 +505,7 @@
           input.addEventListener('keydown', (e) => { if (/** @type {any} */ (e).key === 'Enter') fetchUrl(input.value.trim()); });
           return h('div', { class: 'dm-stack' }, input,
             h('div', { class: 'dm-row' }, ui.button({ label: t('import.url.fetch'), variant: 'primary', icon: 'download', loading: wiz.busy, onClick: () => fetchUrl(input.value.trim()) })),
-            wiz.error ? h('p', { class: 'dm-error dm-small', text: wiz.error }) : null,
+            problem(),
             h('p', { class: 'dm-help', text: t('import.url.help') }));
         }
         if (source === 'paste') {
@@ -527,7 +537,7 @@
         pick.value = wiz.boundary || boundaries[0].id;
         pick.addEventListener('change', () => { wiz.boundary = pick.value; });
         return h('div', { class: 'dm-stack' }, dz,
-          wiz.error ? h('p', { class: 'dm-error dm-small', text: wiz.error }) : null,
+          problem(),
           h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('import.folder'), icon: 'folder', title: t('import.folder.hint'), onClick: async () => chooseFiles(await services.files.pick({ directory: true })) })),
           linked.supported() ? h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('linked.pick'), icon: 'link', onClick: pickLinked }), h('span', { class: 'dm-help', text: t('linked.pick.hint') })) : null,
           h('div', { class: 'dm-row-wrap' }, tables.map((p, i) => ui.button({ label: i === 0 ? t('presets.try') : (p.nameKey ? t(p.nameKey) : p.name), 'data-course': i === 0 ? 'example' : null, icon: 'sparkles', onClick: () => importPreset(p) }))),
@@ -543,8 +553,10 @@
         if (!list || !list.length) return;
         // A form or rows from the field are not a table to read: they go where bundles go.
         if (list.length === 1 && /\.(insamling|formular)\.zip$/i.test(list[0].name)) { await D.require('ui/share/bundle').receiveFile(ctx, list[0]); return; }
-        // A QGIS project (with or without its data files) becomes a map view, not a dataset.
+        // A QGIS project (with or without its data files) becomes a map view, not a dataset; the map view belongs to BIM och GIS.
+        wiz.hidden = '';
         const projectFile = list.find((f) => qgis.detect(f));
+        if (projectFile && !tier.shows('import:qgis')) { wiz.error = ''; wiz.hidden = 'import:qgis'; render(); return; }
         if (projectFile) { await openProject(projectFile, list.filter((f) => f !== projectFile)); return; }
         const collection = services.importer.collectionFor(list);
         if (list.length > 1 && !collection) { await sortChosen(list); return; }
@@ -726,7 +738,7 @@
       }
 
       async function runPreview() {
-        wiz.busy = true; wiz.error = ''; render();
+        wiz.busy = true; wiz.error = ''; wiz.hidden = ''; render();
         try {
           const opts = cleanOptions();
           wiz.preview = wiz.file ? await services.importer.preview(wiz.file, opts) : await services.importer.previewText(wiz.text, opts);
@@ -740,7 +752,9 @@
           wiz.step = wiz.step === 'file' ? 'options' : wiz.step;
         } catch (err) {
           wiz.error = (err && err.message) || String(err);
-          shell.log(t('import.error', { message: wiz.error }), 'error');
+          // A file the tier does not read (a BCF file below BIM och GIS) shows the tier's notice, with the way to raise it.
+          if (err && err.tierFeature) { wiz.hidden = err.tierFeature; wiz.step = 'file'; }
+          shell.log(t('import.error', { message: wiz.error }), wiz.hidden ? 'info' : 'error');
         }
         wiz.busy = false; render();
       }
@@ -1033,9 +1047,9 @@
         if (!kinds.isCollection(m)) return t('import.done', { name: m.name, rows: i18n.formatNumber(m.rowCount), cols: m.columnCount });
         return t('import.done.kind', { name: m.name, summary: kinds.summary(m) });
       }
-      /** The way on from an import: read, look at, or work in the table. */
+      /** The way on from an import: read, look at, or work in the table (a kind whose own views the tier hides opens as a table). */
       function openAfter(m) {
-        const own = kinds.of(m).open;
+        const own = kinds.shown(m) ? kinds.of(m).open : null;
         return own ? { label: t(own.label), icon: own.icon } : { label: t('import.open.bearbeta'), icon: 'pencil' };
       }
       async function runImport() {

@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/hantera', ['ui/base', 'ui/flows/flows-view', 'data/watches', 'platform/storage/folder', 'ui/share/bundle', 'ui/batch-actions', 'ui/settings/network', 'data/kinds'], (base, flowsView, watches, folder, share, batch, settings, kinds) => {
+  D.define('ui/modes/hantera', ['ui/base', 'ui/flows/flows-view', 'data/watches', 'platform/storage/folder', 'ui/share/bundle', 'ui/batch-actions', 'ui/settings/network', 'data/kinds', 'ui/settings/tier', 'platform/tier'], (base, flowsView, watches, folder, share, batch, settings, kinds, tierUi, tier) => {
     const { h, t, i18n, replace } = base;
     const WORKSPACE = '__workspace';
     const FLOWS = '__flows';
@@ -80,16 +80,18 @@
         tabs.active = tab;
         tabs.addEventListener('dm-change', (e) => { tab = /** @type {any} */ (e).detail.id; render(); });
         const body = h('div', { class: 'dm-center-fill' });
+        // A source the tier hides (platform/tier, api/runner) is neither fetched again nor watched from here.
+        const sourceHidden = !!(ds.source && ds.source.kind === 'api' && await D.require('api/runner').hidden(ds.source));
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon(ui.datasetList.kindIcon(ds.kind), 20), ds.name, ' ', ...kindBadges(ds)),
             h('div', { class: 'dm-row' },
               // A dataset with a view of its own opens there: the reading view, the gallery, the model.
-              kinds.of(ds).open ? ui.button({ label: t(kinds.of(ds).open.label), icon: kinds.of(ds).open.icon, variant: 'primary', title: t(kinds.of(ds).open.hint), onClick: () => openView(ds) }) : null,
+              kinds.of(ds).open && kinds.shown(ds) ? ui.button({ label: t(kinds.of(ds).open.label), icon: kinds.of(ds).open.icon, variant: 'primary', title: t(kinds.of(ds).open.hint), onClick: () => openView(ds) }) : null,
               // Two tables (nodes and edges) become a graph dataset.
               !kinds.isCollection(ds) ? ui.button({ label: t('graph.from.button'), icon: 'share-2', title: t('graph.from.button.hint'), onClick: () => D.ensure(['bearbeta'], () => D.require('ui/analysis/graph-panel').fromTablesDialog(ctx, ds.id)).then((meta) => { if (meta) { store.set({ selectedId: meta.id }); render(); } }, (err) => shell.partFailed(err)) }) : null,
-              ds.source && (ds.source.kind === 'api' || ds.source.kind === 'bridge') ? ui.button({ label: t('api.refetch'), icon: 'refresh-cw', onClick: () => refetch(ds) }) : null,
-              watches.watchable(ds) ? watchButton(ds) : null,
+              ds.source && (ds.source.kind === 'api' || ds.source.kind === 'bridge') && !sourceHidden ? ui.button({ label: t('api.refetch'), icon: 'refresh-cw', onClick: () => refetch(ds) }) : null,
+              watches.watchable(ds) && !sourceHidden ? watchButton(ds) : null,
               ds.source && ds.source.kind === 'file' && ds.source.linked ? ui.button({ label: t('linked.refresh'), icon: 'refresh-cw', onClick: () => refreshLinked(ds) }) : null,
               ui.button({ label: t('bearbeta.versions'), icon: 'history', onClick: async () => { const columns = await services.datasets.columns(ds.id); return D.ensure(['bearbeta'], () => D.require('ui/dialogs').versionsDialog({ datasetId: ds.id, columns, onApplied: () => render() })); } }),
               ui.button({ label: t('common.rename'), icon: 'pencil', onClick: () => rename(ds) }),
@@ -115,7 +117,7 @@
             { label: t('common.source'), value: describeSource(src) },
           ].filter(Boolean);
           const insight = D.require('ui/kinds/insight-cards');
-          replace(body, D.require('ui/kinds/dataset-picture').create(ds), h('div', { class: 'dm-card' }, kv), insight.cdeCard(ctx, ds), insight.filesCard(ctx, ds), insight.validationCard(ctx, ds), insight.bcfCard(ctx, ds), insight.facetCard(ctx, ds), insight.codeListCard(ctx, ds), insight.healthCard(ds), ds.kind === 'document' ? documentList(ds) : null, ds.kind === 'images' ? await imageGrid(ds) : null);
+          replace(body, D.require('ui/kinds/dataset-picture').create(ds), h('div', { class: 'dm-card' }, kv), insight.cdeCard(ctx, ds), insight.filesCard(ctx, ds), kinds.shown(ds) ? insight.validationCard(ctx, ds) : tierUi.notice(ctx, 'kind:' + ds.kind), tier.shows('cde.bcf', { server: ds.source && ds.source.cde ? ds.source.cde.connectorId : '' }) ? insight.bcfCard(ctx, ds) : null, insight.facetCard(ctx, ds), insight.codeListCard(ctx, ds), insight.healthCard(ds), ds.kind === 'document' ? documentList(ds) : null, ds.kind === 'images' ? await imageGrid(ds) : null);
         } else if (tab === 'columns') {
           const cols = await services.datasets.columns(ds.id);
           const table = /** @type {any} */ (h('dm-table'));
@@ -392,11 +394,13 @@
               backupInfo()),
             h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('datasets.restore') }), restoreZone)),
           folderEl,
+          tierUi.tierCard(ctx),
           await settings.networkCard(ctx, render),
           await settings.componentsCard(ctx, render));
       }
 
-      function apiDatasets() { return store.get().datasets.filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge')); }
+      /** The datasets from a source that can be fetched again: those whose source the tier hides are left out (api/runner). */
+      function apiDatasets() { return store.get().datasets.filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge') && !D.require('api/runner').hiddenBy(d.source)); }
 
       /** Re-fetch every API-sourced dataset (replace mode), one after the other, with progress in a toast. */
       async function refreshAllApi() {

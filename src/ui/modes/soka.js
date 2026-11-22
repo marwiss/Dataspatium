@@ -259,7 +259,7 @@
         const value = (name) => { const i = found.columns.findIndex((c) => c.name === name); return i < 0 ? undefined : found.row[i + 1]; };
         const id = found.datasetId;
         const rowid = found.row[0];
-        const own = kinds.of(ds).hit;
+        const own = kinds.shown(ds) ? kinds.of(ds).hit : null;
         if (own) return own(value, id);
         const leaflet = D.require('viz/leaflet');
         if (leaflet.mapDefault(found.columns)) return { label: 'soka.open.map', icon: 'map', store: { openMapRow: { datasetId: id, rowid } } };

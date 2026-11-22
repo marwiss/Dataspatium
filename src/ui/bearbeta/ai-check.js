@@ -89,7 +89,8 @@
           const cde = m && m.source && m.source.cde;
           if (!cde || !cde.connectorId || !cde.projectId) return;
           const c = await connectors.get(cde.connectorId).catch(() => null);
-          if (c && opencde.isOpenCde(c) && opencde.signedIn(c)) s.server = { cde, connector: c, project: String(cde.projectName || cde.projectId) };
+          // Topics on the server need its BCF API, which a server announcing Dokument does not offer (platform/tier).
+          if (c && opencde.isOpenCde(c) && opencde.signedIn(c) && D.require('platform/tier').shows('cde.bcf', { server: c.id })) s.server = { cde, connector: c, project: String(cde.projectName || cde.projectId) };
         }
         function boxOf(f) {
           if (!f.elementId || !options.bounds) return null;

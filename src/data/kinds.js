@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/kinds', ['ui/i18n'], (i18n) => {
+  D.define('data/kinds', ['ui/i18n', 'platform/tier'], (i18n, tier) => {
     const t = D.t;
     const n = (x) => i18n.formatNumber(x || 0);
     const isDxf = (ds) => !!(ds && ds.model && ds.model.format === 'dxf');
@@ -82,6 +82,16 @@
       const kind = typeof ds === 'string' ? ds : ds && ds.kind;
       return PROFILES[kind] || PROFILES.table;
     }
+    /**
+     * Whether the tier in effect shows a kind's own views and tools (platform/tier, the entry `kind:<kind>`); when it does not,
+     * the dataset is kept and shows as a table.
+     * @param {{kind?: string}|string|null|undefined} ds @returns {boolean}
+     */
+    const shown = (ds) => tier.shows('kind:' + ((typeof ds === 'string' ? ds : ds && ds.kind) || 'table'));
+    /** @param {any} ds @returns {string|null} the kind's own view where the tier shows it, else null (the table) */
+    const ownView = (ds) => (shown(ds) ? of(ds).view : null);
+    /** @param {any} ds @returns {string} the Analysera tab a kind opens in where the tier shows it, else the statistics */
+    const ownTab = (ds) => (shown(ds) ? of(ds).tab : PROFILES.table.tab);
     /** True for anything that is more than a table; such a dataset counts itself in its own units. */
     const isCollection = (ds) => of(ds) !== PROFILES.table;
     /** @param {any} ds @returns {string} one line about its size, in its own units */
@@ -134,6 +144,6 @@
       ].filter(Boolean);
     }
 
-    return { PROFILES, of, isCollection, summary, guarded, badges, facts, isDxf };
+    return { PROFILES, of, isCollection, summary, guarded, badges, facts, isDxf, shown, ownView, ownTab };
   });
 })();

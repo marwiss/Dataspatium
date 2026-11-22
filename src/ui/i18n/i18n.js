@@ -80,8 +80,14 @@
     const DOCS_BASE = 'https://github.com/marwiss/Dataspatium';
     const numberFormats = new Map();
 
-    /** True when a language has been chosen (by the user or a ?lang= link); false on the very first start. */
+    /** The language set by the deployment (dataspatium.config.js, read by src/boot.js), or null. */
+    const preset = () => { const code = D.boot && D.boot.configLanguage ? D.boot.configLanguage() : null; return code && isCode(code) ? code : null; };
+    /**
+     * True when a language has been chosen (by the user or a ?lang= link) or set by the deployment; false on the very first
+     * start, which then asks for one.
+     */
     function hasChoice() {
+      if (preset()) return true;
       try { const saved = localStorage.getItem(KEY); return !!(saved && isCode(saved)); } catch (_e) { return true; }
     }
 
@@ -107,7 +113,7 @@
     function browserLanguage(prefs) { return D.boot && D.boot.browserLanguage ? D.boot.browserLanguage(prefs) : 'sv'; }
 
     /**
-     * The saved language, else the first browser language among the seven, else Swedish. A `?lang=xx`
+     * The saved language, else the deployment's (dataspatium.config.js), else the first browser language among the seven, else Swedish. A `?lang=xx`
      * query parameter (used by links and tools/screenshot.ps1) wins and is remembered like a choice.
      */
     function detect() {
@@ -116,6 +122,7 @@
         if (q && isCode(q)) { try { localStorage.setItem(KEY, q); } catch (_e) { /* ignore */ } return q; }
       } catch (_e) { /* no location */ }
       try { const saved = localStorage.getItem(KEY); if (saved && isCode(saved)) return saved; } catch (_e) { /* storage may be unavailable */ }
+      if (preset()) return /** @type {string} */ (preset());
       return browserLanguage(navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'sv']);
     }
     let current = detect();
