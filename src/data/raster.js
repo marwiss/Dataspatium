@@ -174,13 +174,18 @@
       const p = g.proj4(def);
       return (lon, lat) => p.forward([lon, lat]);
     }
+    /** The latitude where Web Mercator ends, as on the maps (Leaflet draws nothing beyond it). */
+    const MAX_LAT = 85.0511287798;
     /**
      * The Web Mercator grid over corners in degrees: the longest side at most `side` pixels, and a pixel never finer than the source's
-     * ground resolution at the centre in Mercator metres.
+     * ground resolution at the centre in Mercator metres. The corners are cut at Web Mercator's latitudes (a world file reaches the
+     * poles, where Mercator has no end), and the grid's own corners are given back; null when nothing of the box is left.
      * @param {number[][]} bounds [[north, west], [south, east]] @param {number|null} groundRes @param {number} side
      */
     function webGrid(bounds, groundRes, side) {
-      const [[n, w], [s, e]] = bounds;
+      const n = Math.min(MAX_LAT, bounds[0][0]); const s = Math.max(-MAX_LAT, bounds[1][0]);
+      const w = bounds[0][1]; const e = bounds[1][1];
+      if (!(n > s) || !(e > w)) return null;
       const [X0, Y0] = merc(w, s); const [X1, Y1] = merc(e, n);
       const c = Math.cos(((s + n) / 2) * DEG);
       const pixel = Math.max(Math.max(X1 - X0, Y1 - Y0) / side, groundRes && groundRes > 0 ? groundRes / c : 0);
@@ -347,9 +352,12 @@
         const nw = unmerc(bbox[0], bbox[3]); const se = unmerc(bbox[2], bbox[1]);
         bounds = [[nw[1], nw[0]], [se[1], se[0]]];
       } else if (fp.geometry && fp.bounds) {
+        // A file wholly beyond Web Mercator's latitudes keeps its extent in the table, but has no place on the maps.
         const grid = webGrid(fp.bounds, resolution, side);
-        warp = controlPoints(grid, await forward(/** @type {number} */ (crs.code)), { minX: bbox[0], maxY: bbox[3], r: m.r });
-        bounds = grid.bounds;
+        if (grid) {
+          warp = controlPoints(grid, await forward(/** @type {number} */ (crs.code)), { minX: bbox[0], maxY: bbox[3], r: m.r });
+          bounds = grid.bounds;
+        }
       }
       let out;
       try { out = await engines.render(file, { r: m.r, Wm: m.Wm, Hm: m.Hm, display: displayOf(info), warp, keepPixels: !!options.keepPixels }, { signal: options.signal, onProgress: options.onProgress }); } catch (err) { throw engineError(err, file); }

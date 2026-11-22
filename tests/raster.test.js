@@ -192,6 +192,26 @@
     return 'ok';
   }, 60000);
 
+  test('raster: a world file in degrees is cut at Web Mercator\'s latitudes on the maps and keeps its whole extent in the table', async (assert) => {
+    const world = fx.file({ width: 72, height: 36, geo: { res: 5, east: -180, north: 90, geographic: 4326 } }, 'varlden.tif');
+    const meta = track(await importer.runFiles([world], { format: 'raster' }, 'Världen'));
+    const ds = await datasets.get(meta.id);
+    const f = ds.raster.files[0];
+    const [[n, w], [s, e]] = f.preview.bounds;
+    assert.ok(Math.abs(n - 85.0511287798) < 1e-9 && Math.abs(s + 85.0511287798) < 1e-9 && w === -180 && e === 180, 'the preview within Web Mercator: ' + JSON.stringify(f.preview.bounds));
+    assert.ok(f.preview.width > 0 && f.preview.height > 0 && f.preview.width <= 2048 && f.preview.height <= 2048, `${f.preview.width} × ${f.preview.height}`);
+    assert.deepEqual(ds.raster.extent, [-180, s, 180, n], 'the extent drawn');
+    const lats = JSON.parse((await rowsOf(meta.id))[0].geometri).coordinates[0].map((p) => p[1]);
+    assert.ok(Math.max(...lats) === 90 && Math.min(...lats) === -90, 'the table keeps the whole extent');
+    // A file wholly beyond them keeps its extent and its picture, but has no place on the maps.
+    const polar = fx.file({ width: 8, height: 4, geo: { res: 1, east: 10, north: 90, geographic: 4326 } }, 'polen.tif');
+    const pm = track(await importer.runFiles([polar], { format: 'raster' }, 'Polen'));
+    const pd = await datasets.get(pm.id);
+    assert.ok(pd.raster.files[0].preview.bounds === null && pd.raster.extent === null && (await rowsOf(pm.id))[0].geometri, 'no place on the maps: ' + JSON.stringify(pd.raster.files[0].preview));
+    assert.ok(await dsFiles.read(pm.id, 'polen.tif', 'preview'), 'a picture all the same');
+    return 'ok';
+  }, 60000);
+
   test('raster: the overview that fits is read, a file over the limit keeps no original, and one band of floats is stretched from 2 to 98 per cent with its empty value transparent', async (assert) => {
     // Overviews at 1, 2 and 4 m beside the full image at 0.5 m; blue says which level a pixel came from.
     const cog = sweref('cog.tif', { width: 1024, height: 1024, tile: 64, overviews: [2, 4, 8], geo: { res: 0.5, east: E0, north: N0, epsg: 3006 }, pixel: (x, y, level, f) => [(x * f) & 255, (y * f) & 255, 10 + level, 255] });
