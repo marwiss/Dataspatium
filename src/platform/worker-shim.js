@@ -160,17 +160,30 @@ function dataspatiumMakeXHR(RealXHR, lookupSync, lookupAsync, assetName, mimeFor
 
 /**
  * Install the asset shim inside a worker. Standalone: safe to stringify.
- * `config.net` takes the internet away from the hosted code: with 'none' (R) fetch, XMLHttpRequest and importScripts refuse
+ * `config.net` takes the internet away from the hosted code. With 'none' (R) fetch, XMLHttpRequest and importScripts refuse
  * every URL that is not an asset, a blob or a data URL (XMLHttpRequest serves assets only), and WebSocket, WebSocketStream,
- * WebTransport, EventSource, Worker, SharedWorker and caches read as undefined, ignoring assignments; 'fetch' (Python) is the
- * same except that fetch passes through, since the hosted code gates it with the user's consent. `config.netText` is the
- * message, in the user's language, with {api} for the refused interface. Without `net` nothing changes.
+ * WebTransport, EventSource, Worker, SharedWorker, BroadcastChannel, caches, indexedDB and navigator.storage read as undefined,
+ * ignoring assignments. 'fetch' (Python) is the same, except that fetch passes through, since the hosted code gates it with the
+ * user's consent. `config.netText` is the message, in the user's language, with {api} for the refused interface. Without `net`
+ * nothing changes.
+ * The checks call only built-ins taken before the hosted code runs, and fetch and importScripts replace the native ones on the
+ * prototype too, so that code in the worker can neither bend a check nor reach around it.
  * @param {{namespace: string, name?: string, net?: 'none'|'fetch', netText?: string}} config
  * @param {typeof dataspatiumMakeXHR} makeXHR
  */
 function dataspatiumWorkerShim(config, makeXHR) {
   'use strict';
   var SCHEME = 'dataspatium-asset://';
+  // Built-ins taken now, before any hosted code runs: called through these, they cannot be patched later.
+  var uncurry = function (fn) { return Function.prototype.call.bind(fn); };
+  var getter = function (obj, key) { var d = Object.getOwnPropertyDescriptor(obj, key); return d && d.get ? uncurry(d.get) : null; };
+  var NativePromise = Promise;
+  var NativeRequest = self.Request;
+  var startsWith = uncurry(String.prototype.startsWith);
+  var hasOwn = uncurry(Object.prototype.hasOwnProperty);
+  var toStr = String;
+  var requestUrl = getter(NativeRequest.prototype, 'url');
+  var policy = config.net === 'none' || config.net === 'fetch' ? config.net : null;
   var assets = new Map();
   var pending = new Map();
   var queued = [];
@@ -182,8 +195,8 @@ function dataspatiumWorkerShim(config, makeXHR) {
   var realPost = self.postMessage.bind(self);
   function send(msg, transfer) { msg.__dm = true; realPost(msg, transfer || []); }
   function assetName(url) {
-    var s = String(url);
-    if (s.indexOf(SCHEME) !== 0) return null;
+    var s = toStr(url);
+    if (!startsWith(s, SCHEME)) return null;
     return s.slice(SCHEME.length).replace(/[?#].*$/, '').replace(/\/{2,}/g, '/').replace(/^\//, '');
   }
   function mimeFor(name) {
@@ -276,9 +289,9 @@ function dataspatiumWorkerShim(config, makeXHR) {
   realAdd('message', route);
 
   // --- the internet (config.net): refusals say why in the console too, where webR points R's own messages
-  var policy = config.net === 'none' || config.net === 'fetch' ? config.net : null;
   var refused = [];
-  function isLocal(url) { return /^(dataspatium-asset:|blob:|data:)/i.test(String(url)); }
+  /** blob: and data: addresses never leave the browser (`url` is a string). */
+  function isLocal(url) { return startsWith(url, 'blob:') || startsWith(url, 'data:'); }
   function refuse(api, url) {
     var text = String(config.netText || 'This worker has no internet access ({api}).').replace('{api}', api);
     refused.push({ api: api, url: String(url) });
@@ -286,42 +299,80 @@ function dataspatiumWorkerShim(config, makeXHR) {
     try { console.warn('Dataspatium: ' + text + ' ' + url); } catch (e) { /* no console */ }
     return text;
   }
+  /**
+   * `key` of `obj` reads as `value` and ignores assignments, also on the prototypes that hold it natively (caches and indexedDB on
+   * WorkerGlobalScope.prototype, storage on WorkerNavigator.prototype), where a getter would hand the native object back.
+   */
+  function pin(obj, key, value) {
+    var desc = { get: function () { return value; }, set: function () {}, enumerable: false, configurable: false };
+    for (var o = obj; o; o = Object.getPrototypeOf(o)) if (o === obj || hasOwn(o, key)) Object.defineProperty(o, key, desc);
+  }
   if (policy) {
     // Accessors rather than deletions: a global that resolves its constructors lazily cannot bring one back, and hosted code
     // that installs its own (webR's proxies, whose sockets and workers its main thread would open) neither fails nor succeeds.
-    ['WebSocket', 'WebSocketStream', 'WebTransport', 'EventSource', 'Worker', 'SharedWorker', 'caches'].forEach(function (key) {
-      Object.defineProperty(self, key, { get: function () { return undefined; }, set: function () {}, enumerable: false, configurable: false });
+    // indexedDB, BroadcastChannel and navigator.storage would reach the app's own storage and tabs (consents, connectors, cached
+    // components); neither engine needs them, and Emscripten's IndexedDB code (webR's Fetch.init) takes an undefined one as missing.
+    ['WebSocket', 'WebSocketStream', 'WebTransport', 'EventSource', 'Worker', 'SharedWorker', 'BroadcastChannel', 'caches', 'indexedDB'].forEach(function (key) {
+      pin(self, key, undefined);
     });
+    if (self.navigator) pin(self.navigator, 'storage', undefined);
+  }
+  /**
+   * Put `fn` in place of the native function: on self, and with config.net also on the prototype that holds the native one
+   * (WorkerGlobalScope.prototype), so that neither `delete self.fetch` nor WorkerGlobalScope.prototype.fetch.call(self, url)
+   * reaches it.
+   */
+  function replace(key, fn) {
+    self[key] = fn;
+    if (!policy) return;
+    for (var o = Object.getPrototypeOf(self); o; o = Object.getPrototypeOf(o)) {
+      if (hasOwn(o, key)) Object.defineProperty(o, key, { value: fn, writable: true, enumerable: true, configurable: true });
+    }
   }
 
   // --- importScripts: evaluate asset text in the global scope
-  var realImportScripts = self.importScripts;
-  self.importScripts = function () {
+  var nativeImportScripts = uncurry(self.importScripts);
+  replace('importScripts', function () {
     for (var i = 0; i < arguments.length; i++) {
-      var url = String(arguments[i]);
+      var url = toStr(arguments[i]);
       var name = assetName(url);
       if (name === null && policy && !isLocal(url)) throw new DOMException(refuse('importScripts', url), 'NetworkError');
-      if (name === null) { realImportScripts.call(self, url); continue; }
+      if (name === null) { nativeImportScripts(self, url); continue; }
       var entry = lookupSync(name);
       if (!entry) throw new Error('Dataspatium: asset not loaded for importScripts: ' + name);
       (0, eval)(toText(entry) + '\n//# sourceURL=' + SCHEME + name);
     }
-  };
+  });
 
   // --- fetch
   var realFetch = self.fetch.bind(self);
-  self.fetch = function (input, init) {
-    var url = typeof input === 'string' ? input : (input && typeof input.url === 'string' ? input.url : String(input));
-    var name = assetName(url);
-    if (name === null && policy === 'none' && !isLocal(url)) return Promise.reject(new TypeError(refuse('fetch', url)));
-    if (name === null) return realFetch(input, init);
+  function fromAsset(name) {
     return lookupAsync(name).then(function (entry) {
       var buf = toBuffer(entry);
       return new Response(buf.slice(0), { status: 200, statusText: 'OK', headers: { 'Content-Type': mimeFor(name), 'Content-Length': String(buf.byteLength) } });
     }, function () {
       return new Response('Not found: ' + name, { status: 404, statusText: 'Not Found' });
     });
-  };
+  }
+  function rejected(err) { return new NativePromise(function (resolve, reject) { reject(err); }); }
+  // With config.net the browser turns the input into a Request once; the address read from it is the one decided on and fetched,
+  // so a Request with an own url, a subclass or an object whose toString differs from its url cannot steer it.
+  replace('fetch', function (input, init) {
+    var name = typeof input === 'string' ? assetName(input) : null;
+    if (name !== null) return fromAsset(name);
+    if (!policy) {
+      name = assetName(input && typeof input.url === 'string' ? input.url : String(input));
+      return name === null ? realFetch(input, init) : fromAsset(name);
+    }
+    var req;
+    try { req = new NativeRequest(input, init); } catch (err) { return rejected(err); }
+    var url = requestUrl(req);
+    name = assetName(url);
+    if (name !== null) return fromAsset(name);
+    if (isLocal(url)) return realFetch(req);
+    if (policy === 'none') return rejected(new TypeError(refuse('fetch', url)));
+    return realFetch(req);
+  });
 
   // --- WebAssembly.instantiateStreaming accepts our synthetic Response; fall back to ArrayBuffer otherwise
   if (typeof WebAssembly !== 'undefined' && typeof WebAssembly.instantiateStreaming === 'function') {

@@ -254,7 +254,7 @@
     return 'blocked: ' + out.create_connection[0] + ', ' + out.urlopen[0] + ', _socket errno ' + out.raw[1];
   }, 300000);
 
-  test('python: Python reaches the internet through pyfetch only: open_url, pyxhr, XMLHttpRequest and importScripts are refused with the message, EventSource and caches are gone, and pyfetch still reads an asset', async (assert) => {
+  test('python: Python reaches the internet through pyfetch only: open_url, pyxhr, XMLHttpRequest and importScripts are refused with the message, EventSource, caches, IndexedDB and BroadcastChannel are gone, and pyfetch still reads an asset', async (assert) => {
     if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them from jsDelivr)';
     await bridge.start();
     // Port 9 on this computer, which browsers refuse anyway: even a broken block reaches no server.
@@ -277,7 +277,8 @@
       '    "sync": refused(lambda: xhr(False)),',
       '    "async": refused(lambda: xhr(True)),',
       '    "importScripts": refused(lambda: js.importScripts("http://127.0.0.1:9/x.js")),',
-      '    "gone": [n for n in ("WebSocket", "WebSocketStream", "WebTransport", "EventSource", "Worker", "SharedWorker", "caches") if getattr(js, n, None) is not None],',
+      '    "gone": [n for n in ("WebSocket", "WebSocketStream", "WebTransport", "EventSource", "Worker", "SharedWorker", "BroadcastChannel", "caches", "indexedDB") if getattr(js, n, None) is not None],',
+      '    "storage": getattr(js.navigator, "storage", None) is None,',
       '}',
       'r = await pyodide.http.pyfetch("dataspatium-asset://pyodide/pyodide-lock.json")',
       'out["pyfetch"] = [r.status, len(await r.bytes()) > 1000]',
@@ -290,7 +291,8 @@
     for (const key of ['open_url', 'sync', 'async']) assert.ok(out[key] && out[key][1].includes(xhrText), key + ': ' + JSON.stringify(out[key]));
     assert.ok(out.pyxhr && out.pyxhr[0] === 'XHRNetworkError' && out.pyxhr[2].includes(xhrText), 'pyxhr turns the refusal into its network error: ' + JSON.stringify(out.pyxhr));
     assert.ok(out.importScripts && out.importScripts[1].includes(D.t('python.net.blocked', { api: 'importScripts' })), JSON.stringify(out.importScripts));
-    assert.deepEqual(out.gone, [], 'no sockets, streams, other workers or caches for Python code');
+    assert.deepEqual(out.gone, [], 'no sockets, streams, other workers, caches, IndexedDB or BroadcastChannel for Python code');
+    assert.equal(out.storage, true, 'no navigator.storage');
     assert.deepEqual(out.pyfetch, [200, true], 'pyfetch of an asset still works');
     return 'refused: ' + ['open_url', 'pyxhr', 'sync', 'async', 'importScripts'].map((k) => out[k][0]).join(', ');
   }, 300000);

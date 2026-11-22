@@ -112,67 +112,95 @@
 
   /** Runs in a shimmed worker: what the hosted code finds of the internet. Port 9 is refused by browsers, so a broken block reaches nothing. */
   function dataspatiumNetProbeWorker() {
-    var out = { types: {}, refusedBy: {} };
-    var KEYS = ['WebSocket', 'WebSocketStream', 'WebTransport', 'EventSource', 'Worker', 'SharedWorker', 'caches'];
+    var out = { types: {}, under: {}, refusedBy: {}, refusedUrls: [], fetches: {} };
+    var KEYS = ['WebSocket', 'WebSocketStream', 'WebTransport', 'EventSource', 'Worker', 'SharedWorker', 'BroadcastChannel', 'caches', 'indexedDB'];
     function message(call) { try { call(); return null; } catch (e) { return String(e && e.message); } }
     function xhr(url, async) { var x = new XMLHttpRequest(); x.open('GET', url, async); x.send(); return x; }
-    self.onmessage = function () {
+    /** What every level of the prototype chain hands out for key: a getter there could give the native object back. */
+    function underneath(obj, key) {
+      var seen = [];
+      for (var o = obj; o; o = Object.getPrototypeOf(o)) { var d = Object.getOwnPropertyDescriptor(o, key); if (d) seen.push(d.get ? typeof d.get.call(obj) : d.value); }
+      return seen;
+    }
+    self.onmessage = function (ev) {
+      if (ev.data !== 'go') return;
       var mode = self.__dataspatium.config.net || '';
       KEYS.forEach(function (k) { out.types[k] = typeof self[k]; });
+      out.types['navigator.storage'] = typeof self.navigator.storage;
+      ['indexedDB', 'caches'].forEach(function (k) { out.under[k] = underneath(self, k).join(' '); });
+      out.under.storage = underneath(self.navigator, 'storage').join(' ');
+      var fetches = underneath(self, 'fetch');
+      out.fetchLevels = fetches.length;
+      out.nativeFetches = fetches.filter(function (f) { return f !== self.fetch; }).length;
       try { self.WebSocket = function () {}; out.assigned = typeof self.WebSocket; } catch (e) { out.assigned = 'threw ' + e.message; }
       var asset = xhr('dataspatium-asset://tests-net/a.txt', false);
       out.asset = asset.status + ' ' + asset.responseText;
       var blob = URL.createObjectURL(new Blob(['self.__blobScript = 7;'], { type: 'text/javascript' }));
       out.importBlob = message(function () { importScripts(blob); }) || self.__blobScript;
+      var tries = { blob: function () { return fetch(blob); } };
       if (mode) {
         out.sync = message(function () { xhr('http://127.0.0.1:9/sync', false); });
         out.async = message(function () { xhr('http://127.0.0.1:9/async', true); });
         out.blobXhr = message(function () { xhr(blob, false); });
         out.importScripts = message(function () { importScripts('http://127.0.0.1:9/x.js'); });
+        out.importProto = message(function () { WorkerGlobalScope.prototype.importScripts.call(self, 'http://127.0.0.1:9/proto.js'); });
+        // Each one names a local address where the old check looked and the internet where fetch looks.
+        tries.plain = function () { return fetch('http://127.0.0.1:9/fetch'); };
+        tries.ownUrl = function () { return fetch(Object.defineProperty(new Request('http://127.0.0.1:9/own'), 'url', { value: 'blob:x' })); };
+        tries.subclass = function () { class LocalLooking extends Request { get url() { return 'data:,'; } } return fetch(new LocalLooking('http://127.0.0.1:9/sub')); };
+        tries.toString = function () { return fetch({ url: 'data:,', toString: function () { return 'http://127.0.0.1:9/str'; } }); };
+        tries.prototype = function () { return (WorkerGlobalScope.prototype.fetch || self.fetch).call(self, 'http://127.0.0.1:9/proto'); };
       }
-      var fetches = [fetch(blob).then(function (r) { return r.text(); }).then(function (t) { out.fetchBlob = t.length; }, function (e) { out.fetchBlob = e.message; })];
-      if (mode) fetches.push(fetch('http://127.0.0.1:9/fetch').then(function () { out.fetch = 'fetched'; }, function (e) { out.fetch = e.message; }));
-      Promise.all(fetches).then(function () {
-        self.__dataspatium.refused().forEach(function (r) { out.refusedBy[r.api] = (out.refusedBy[r.api] || 0) + 1; });
+      Promise.all(Object.keys(tries).map(function (k) {
+        return tries[k]().then(function (r) { return r.text(); }).then(function (t) { out.fetches[k] = 'read ' + t.length; }, function (e) { out.fetches[k] = e.message; });
+      })).then(function () {
+        self.__dataspatium.refused().forEach(function (r) { out.refusedBy[r.api] = (out.refusedBy[r.api] || 0) + 1; out.refusedUrls.push(r.url); });
         self.postMessage(out);
       });
     };
   }
 
-  test('worker shim: with net none, fetch, XMLHttpRequest and importScripts refuse the internet and sockets and workers read as undefined; net fetch leaves fetch; without net nothing changes', async (assert) => {
+  /** Create a shimmed worker from fn, send it 'go' and resolve with its first answer. */
+  async function askWorker(options) {
+    const worker = D.workers.create(options);
+    try {
+      return await new Promise((resolve, reject) => {
+        worker.onmessage = (ev) => resolve(ev.data);
+        worker.onerror = (ev) => reject(new Error('worker error: ' + ev.message));
+        worker.postMessage('go');
+        setTimeout(() => reject(new Error('worker timeout')), 15000);
+      });
+    } finally { worker.terminate(); }
+  }
+  const CRAFTED = { plain: 'http://127.0.0.1:9/fetch', ownUrl: 'http://127.0.0.1:9/own', subclass: 'http://127.0.0.1:9/sub', toString: 'http://127.0.0.1:9/str', prototype: 'http://127.0.0.1:9/proto' };
+
+  test('worker shim: with net none, fetch, XMLHttpRequest and importScripts refuse the internet, also for a Request with its own url, a Request subclass, an object whose toString differs from its url and the native functions on WorkerGlobalScope.prototype, and sockets, workers, caches, IndexedDB, BroadcastChannel and navigator.storage are gone; without net nothing changes', async (assert) => {
     D.workers.provider('tests-net', { initial: async () => [{ name: 'tests-net/a.txt', kind: 'text', data: 'hej' }] });
-    const probe = async (net) => {
-      const worker = D.workers.create({ namespace: 'tests-net', source: D.workers.functionSource(dataspatiumNetProbeWorker), net, netText: net ? 'Testarbetaren har inget internet ({api}).' : undefined });
-      try {
-        return await new Promise((resolve, reject) => {
-          worker.onmessage = (ev) => resolve(ev.data);
-          worker.onerror = (ev) => reject(new Error('worker error: ' + ev.message));
-          worker.postMessage('go');
-          setTimeout(() => reject(new Error('worker timeout')), 15000);
-        });
-      } finally { worker.terminate(); }
-    };
     const text = (api) => 'Testarbetaren har inget internet (' + api + ').';
-    for (const net of ['none', 'fetch']) {
-      const out = await probe(net);
-      for (const k of Object.keys(out.types)) assert.equal(out.types[k], 'undefined', net + ': ' + k);
-      assert.equal(out.assigned, 'undefined', net + ': an assignment neither throws nor brings WebSocket back');
-      assert.equal(out.asset, '200 hej', net + ': assets still load through XMLHttpRequest');
-      assert.equal(out.importBlob, 7, net + ': a blob script still loads');
-      assert.equal(out.fetchBlob, 22, net + ': fetch of a blob still works');
-      assert.equal(out.sync, text('XMLHttpRequest'), net + ': sync XMLHttpRequest refused at send()');
-      assert.equal(out.async, text('XMLHttpRequest'), net + ': async XMLHttpRequest refused at send()');
-      assert.equal(out.blobXhr, text('XMLHttpRequest'), net + ': no real XMLHttpRequest even for a blob');
-      assert.equal(out.importScripts, text('importScripts'), net + ': importScripts refused');
-      if (net === 'none') assert.equal(out.fetch, text('fetch'), 'none: fetch refused');
-      else assert.ok(out.fetch !== text('fetch') && !out.refusedBy.fetch, 'fetch: fetch passes to the hosted code\'s own gate (the browser refuses port 9): ' + out.fetch);
-      assert.deepEqual(out.refusedBy, net === 'none' ? { XMLHttpRequest: 3, importScripts: 1, fetch: 1 } : { XMLHttpRequest: 3, importScripts: 1 }, net + ': the refusals are recorded');
+    const out = await askWorker({ namespace: 'tests-net', source: D.workers.functionSource(dataspatiumNetProbeWorker), net: 'none', netText: 'Testarbetaren har inget internet ({api}).' });
+    for (const k of Object.keys(out.types)) assert.equal(out.types[k], 'undefined', 'none: ' + k);
+    for (const k of Object.keys(out.under)) assert.ok(out.under[k].split(' ').every((x) => x === 'undefined'), k + ' reads as undefined on every level of the prototype chain: ' + out.under[k]);
+    assert.equal(out.nativeFetches, 0, 'no level of the prototype chain holds the native fetch, so deleting self.fetch reaches none');
+    assert.equal(out.assigned, 'undefined', 'an assignment neither throws nor brings WebSocket back');
+    assert.equal(out.asset, '200 hej', 'assets still load through XMLHttpRequest');
+    assert.equal(out.importBlob, 7, 'a blob script still loads');
+    assert.equal(out.fetches.blob, 'read 22', 'fetch of a blob still works');
+    assert.equal(out.sync, text('XMLHttpRequest'), 'sync XMLHttpRequest refused at send()');
+    assert.equal(out.async, text('XMLHttpRequest'), 'async XMLHttpRequest refused at send()');
+    assert.equal(out.blobXhr, text('XMLHttpRequest'), 'no real XMLHttpRequest even for a blob');
+    assert.equal(out.importScripts, text('importScripts'), 'importScripts refused');
+    assert.equal(out.importProto, text('importScripts'), 'importScripts on WorkerGlobalScope.prototype refused');
+    for (const [k, url] of Object.entries(CRAFTED)) {
+      assert.equal(out.fetches[k], text('fetch'), k + ' refused');
+      assert.ok(out.refusedUrls.includes(url), k + ' recorded with the address fetch would have used: ' + out.refusedUrls.join(' '));
     }
-    const plain = await probe(undefined);
-    assert.ok(plain.types.WebSocket === 'function' && plain.types.Worker === 'function' && plain.assigned === 'function', 'without net the constructors stay: ' + JSON.stringify(plain.types));
+    assert.deepEqual(out.refusedBy, { XMLHttpRequest: 3, importScripts: 2, fetch: 5 }, 'the refusals are recorded');
+    const plain = await askWorker({ namespace: 'tests-net', source: D.workers.functionSource(dataspatiumNetProbeWorker) });
+    assert.ok(plain.types.WebSocket === 'function' && plain.types.Worker === 'function' && plain.types.indexedDB === 'object' && plain.assigned === 'function', 'without net the constructors and IndexedDB stay: ' + JSON.stringify(plain.types));
+    assert.equal(plain.nativeFetches, plain.fetchLevels - 1, 'without net only self.fetch is the shim\'s');
     assert.equal(plain.asset, '200 hej');
     assert.deepEqual(plain.refusedBy, {}, 'nothing refused without net');
-    return 'none and fetch refuse, plain unchanged';
+    return 'none refuses ' + out.refusedUrls.length + '; fetch found on ' + plain.fetchLevels + ' levels, indexedDB on ' + plain.under.indexedDB.split(' ').length + ' (plain)';
   }, 30000);
 
   test('workers: a namespace screens what its worker sends here, and the worker cannot rename itself past the screen', async (assert) => {

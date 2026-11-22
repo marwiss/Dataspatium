@@ -98,7 +98,7 @@
     return 'ok';
   });
 
-  test('r: R has no internet access: download.file, url(), webr::mount and socketConnection fail, eval_js finds no WebSocket, Worker or EventSource, its fetch and XMLHttpRequest are refused, and a posted proxyWebSocket is dropped', async (assert) => {
+  test('r: R has no internet access: download.file, url(), webr::mount and socketConnection fail, eval_js finds no WebSocket, Worker, EventSource or IndexedDB, its fetch and XMLHttpRequest are refused, also for a Request with its own url and the fetch on WorkerGlobalScope.prototype, and a posted proxyWebSocket is dropped', async (assert) => {
     await bridge.start();
     // Port 9 on this computer, which browsers refuse anyway: even a broken block reaches no server.
     const res = await bridge.run([
@@ -110,9 +110,9 @@
       '  mount = dm_probe(webr::mount("/dm-mount", "http://127.0.0.1:9/dm.data")),',
       '  socket = dm_probe(socketConnection("127.0.0.1", 9, open = "r+b", blocking = TRUE, timeout = 1)),',
       '  await = dm_probe(webr::eval_js("1", await = TRUE)),',
-      '  types = webr::eval_js("[typeof WebSocket, typeof WebSocketStream, typeof WebTransport, typeof EventSource, typeof Worker, typeof SharedWorker, typeof caches].join(\' \')"),',
+      '  types = webr::eval_js("[typeof WebSocket, typeof WebSocketStream, typeof WebTransport, typeof EventSource, typeof Worker, typeof SharedWorker, typeof BroadcastChannel, typeof caches, typeof indexedDB, typeof navigator.storage].join(\' \')"),',
       '  xhr = webr::eval_js("(function () { try { var x = new XMLHttpRequest(); x.open(\'GET\', \'http://127.0.0.1:9/xhr\', false); x.send(); return \'sent\'; } catch (e) { return e.message; } })()"),',
-      '  refused = webr::eval_js("(function () { fetch(\'http://127.0.0.1:9/fetch\').catch(function () {}); return __dataspatium.refused().map(function (r) { return r.api + \' \' + r.url; }).join(\'|\'); })()"),',
+      '  refused = webr::eval_js("(function () { var none = function () {}; fetch(\'http://127.0.0.1:9/fetch\').catch(none); fetch(Object.defineProperty(new Request(\'http://127.0.0.1:9/dressed\'), \'url\', { value: \'blob:x\' })).catch(none); (WorkerGlobalScope.prototype.fetch || fetch).call(self, \'http://127.0.0.1:9/proto\').catch(none); return __dataspatium.refused().map(function (r) { return r.api + \' \' + r.url; }).join(\'|\'); })()"),',
       '  post = webr::eval_js("(function () { postMessage({ type: \'system\', data: { type: \'proxyWebSocket\', data: { uuid: \'dm-probe\', url: \'ws://127.0.0.1:9/\', protocol: \'\' } } }); return \'posted\'; })()")',
       ')',
       'cat(paste0(names(res), "=", gsub("[\\r\\n]+", " ", res), collapse = "\\n"))',
@@ -121,10 +121,10 @@
     for (const line of stdoutOf(res).split('\n')) { const i = line.indexOf('='); if (i > 0) out[line.slice(0, i)] = line.slice(i + 1); }
     assert.ok(Object.keys(out).length === 9, JSON.stringify(res.entries.map((e) => e.kind + ':' + (e.text || '').slice(0, 200))));
     for (const key of ['download', 'url', 'mount', 'socket', 'await']) assert.ok(/^error:/.test(out[key]), key + ' fails with an R error: ' + out[key]);
-    assert.equal(out.types, 'undefined undefined undefined undefined undefined undefined undefined', 'no sockets, streams, workers or caches in R\'s worker');
+    assert.equal(out.types, Array(10).fill('undefined').join(' '), 'no sockets, streams, workers, caches, IndexedDB, BroadcastChannel or navigator.storage in R\'s worker');
     assert.equal(out.xhr, D.t('r.net.blocked'), 'XMLHttpRequest from eval_js is refused with the message');
     const refusedHere = out.refused.split('|');
-    for (const want of ['XMLHttpRequest http://127.0.0.1:9/dm.csv', 'XMLHttpRequest http://127.0.0.1:9/dm.txt', 'XMLHttpRequest http://127.0.0.1:9/dm.js.metadata', 'XMLHttpRequest http://127.0.0.1:9/xhr', 'fetch http://127.0.0.1:9/fetch']) {
+    for (const want of ['XMLHttpRequest http://127.0.0.1:9/dm.csv', 'XMLHttpRequest http://127.0.0.1:9/dm.txt', 'XMLHttpRequest http://127.0.0.1:9/dm.js.metadata', 'XMLHttpRequest http://127.0.0.1:9/xhr', 'fetch http://127.0.0.1:9/fetch', 'fetch http://127.0.0.1:9/dressed', 'fetch http://127.0.0.1:9/proto']) {
       assert.ok(refusedHere.includes(want), 'the worker shim refused ' + want + ': ' + out.refused);
     }
     const dropped = D.require('engines/r').refused();
