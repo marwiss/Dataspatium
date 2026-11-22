@@ -322,15 +322,19 @@
      * enabled extensions (dynamic_client_registration, request_log, admin_api, ifcgraph, graph_query), limits and links, and its tier
      * (`tier`, noted in platform/tier; none announced caps nothing). A server from
      * before the name change (Kontroll, up to 3.0.0) only answers on /.well-known/kontroll, which is asked when the first address gives
-     * no document. A server without the document has no extensions; unknown keys count as absent. Cached a few minutes per connector.
+     * no document. A server without the document has no extensions; unknown keys count as absent. Cached a few minutes per server
+     * address; every source on the address is noted with the server's tier, also from the cache.
      * @param {any} connector @param {{force?: boolean}} [options]
      * @returns {Promise<{present: boolean, server: any, tier?: string|null, apis: any, scopes: string[], extensions: Record<string, any>, limits: any, links: any}>}
      */
     async function capabilities(connector, options = {}) {
       const key = trimUrl(connector.baseUrl);
       const hit = capsCache.get(key);
-      if (hit && !options.force && Date.now() - hit.at < CAPS_TTL) return hit.caps;
-      let caps = EMPTY_CAPS;
+      if (hit && !options.force && Date.now() - hit.at < CAPS_TTL) {
+        if (hit.answered) tier.noteServer(connector, hit.caps.tier);
+        return hit.caps;
+      }
+      let caps = EMPTY_CAPS; let answered = false;
       try {
         const ask = (path) => send(connector, { url: trimUrl(connector.baseUrl) + path, method: 'GET', headers: { Accept: 'application/json' }, retries: 0, rateKey: connector.id });
         let res = await ask('/.well-known/dataregium');
@@ -339,10 +343,12 @@
           const data = JSON.parse(res.text || '{}') || {};
           caps = { present: true, server: data.server || null, tier: typeof data.tier === 'string' ? data.tier : null, apis: data.apis || {}, bcfVersions: Array.isArray(data.bcf_versions) ? data.bcf_versions : null, scopes: Array.isArray(data.scopes) ? data.scopes : [], extensions: data.extensions && typeof data.extensions === 'object' ? data.extensions : {}, limits: data.limits || {}, links: data.links || {} };
         }
+        answered = true;
       } catch (err) { D.log('opencde', 'capabilities', err); }
-      // The server's tier (Dataregium announces `tier`: documents, bim-gis or experimental) caps the features that need it.
-      tier.noteServer(connector, caps.tier);
-      capsCache.set(key, { at: Date.now(), caps });
+      // The server's tier (Dataregium announces `tier`: documents, bim-gis or experimental) caps the features that need it; a server
+      // that did not answer leaves what it announced before.
+      if (answered) tier.noteServer(connector, caps.tier);
+      capsCache.set(key, { at: Date.now(), caps, answered });
       return caps;
     }
     /** The setting that remembers the deployment's server once added, so that one the user took away stays away. */

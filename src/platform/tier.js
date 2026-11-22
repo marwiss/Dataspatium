@@ -5,12 +5,14 @@
  * 1 Dokument (`documents`), 2 BIM och GIS (`bim-gis`) and 3 Experimentell (`experimental`). The user picks one in Hantera's
  * workspace page; with no choice made it is tier 2. Whoever deploys the app may set a ceiling in dataspatium.config.js (next to
  * index.html, a classic script that sets `DATASPATIUM_CONFIG`), and a Dataregium server that announces `tier` in its
- * capabilities document caps what needs that server; a server that announces nothing caps nothing.
+ * capabilities document caps what needs that server; a server that announces nothing caps nothing. What a server announced is
+ * remembered (IndexedDB), so that the cap holds after a reload too.
  *
  * FEATURES is the one table of what belongs above tier 1, and ENTRIES names the entry points that open each; everything not in
  * them is tier 1. The modes ask `shows(feature or entry)` at their entry points (source list, cards, tabs, actions, palette
- * commands, the status bar) and never test the tier themselves. Going
- * down hides functions and keeps every dataset; going up shows them again, at once (subscribers redraw).
+ * commands, the status bar), and the paths that run without the UI (recipes, commands, fetching again, imports) refuse with
+ * `guard`, in the words of the notice; none tests the tier itself. Going down hides functions and keeps every dataset; going up
+ * shows them again, at once (subscribers redraw).
  */
 (function () {
   'use strict';
@@ -26,6 +28,8 @@
     /** The tier with no choice made (F52 a). */
     const DEFAULT = 2;
     const SETTING = 'ui.tier';
+    /** What the servers announced, by connector id and address. */
+    const SERVERS = 'tier.servers';
     /**
      * What lies above tier 1, with the rows of Dataregium's nivaerna.md (DS-nn) it follows. `server` marks a feature that needs a
      * Dataregium server, which may cap it with its own tier; `group` names the group of scripts (src/boot.js) that only it opens.
@@ -90,20 +94,23 @@
 
     /**
      * The deployment's settings, read from `DATASPATIUM_CONFIG` and checked: a ceiling, a language and a Dataregium server
-     * {baseUrl, name}. Anything that does not check out is left out (and logged), so a mistyped file never locks the app.
+     * {baseUrl, name}. Anything that does not check out is left out and said in the console, so a mistyped file never locks the
+     * app (a mistyped tier means no ceiling).
      * @param {any} raw
      * @returns {{ceiling: number|null, language: string|null, server: {baseUrl: string, name: string}|null}}
      */
     function readConfig(raw) {
       const out = { ceiling: null, language: null, server: null };
       if (!raw || typeof raw !== 'object') return out;
-      if (raw.tier !== undefined) { out.ceiling = level(raw.tier); if (out.ceiling === null) D.log('tier', 'config: unknown tier', raw.tier); }
+      const warn = (what, value) => console.warn('[dataspatium.config.js] ' + what, value === undefined ? '' : value);
+      if (raw.tier !== undefined) { out.ceiling = level(raw.tier); if (out.ceiling === null) warn('unknown tier, no ceiling set (documents, bim-gis or experimental):', raw.tier); }
       const langs = D.boot && D.boot.LANGUAGES ? D.boot.LANGUAGES : [];
       if (typeof raw.language === 'string' && langs.indexOf(raw.language) >= 0) out.language = raw.language;
+      else if (raw.language !== undefined) warn('unknown language, ignored (' + langs.join(', ') + '):', raw.language);
       const s = raw.server;
       if (s && typeof s === 'object' && typeof s.baseUrl === 'string' && /^https?:\/\/[^\s/]+/i.test(s.baseUrl.trim())) {
         out.server = { baseUrl: s.baseUrl.trim().replace(/\/+$/, ''), name: typeof s.name === 'string' ? s.name.trim().slice(0, 120) : '' };
-      } else if (s !== undefined) D.log('tier', 'config: the server needs a baseUrl with http(s)');
+      } else if (s !== undefined) warn('server ignored: it needs a baseUrl with http(s)');
       return out;
     }
     let rawConfig = /** @type {any} */ (globalThis).DATASPATIUM_CONFIG;
@@ -111,7 +118,7 @@
 
     /** The user's choice (1–3) or null before one is made. @type {number|null} */
     let chosen = null;
-    /** What each Dataregium server announced, by its connector id and its address: a tier, or null for nothing announced. */
+    /** What each Dataregium server announced, by its connector id and its address: its tier; one that announced none is absent. */
     const servers = new Map();
     const listeners = new Set();
     const notify = () => { for (const fn of Array.from(listeners)) { try { fn(current()); } catch (err) { console.error('[tier] listener failed', err); } } };
@@ -140,13 +147,21 @@
       return hit === undefined ? null : hit;
     }
     /**
-     * Note what a server announced in its capabilities (`tier`), for the features that need it.
+     * Note what a server announced in its capabilities (`tier`), for the features that need it, and remember it. Only an answer
+     * counts: the caller notes nothing when the server could not be reached. An unknown value caps nothing and is said in the console.
      * @param {{id?: string, baseUrl?: string}} connector @param {any} announced
      */
     function noteServer(connector, announced) {
       const n = level(announced);
-      if (connector && connector.id) servers.set(connector.id, n);
-      if (connector && connector.baseUrl) servers.set(trim(connector.baseUrl), n);
+      if (n === null && announced !== undefined && announced !== null && announced !== '') console.warn('[tier] the server announces an unknown tier, no ceiling:', announced);
+      let changed = false;
+      const put = (key) => {
+        if (!key || (servers.has(key) ? servers.get(key) : null) === n) return;
+        if (n === null) servers.delete(key); else servers.set(key, n);
+        changed = true;
+      };
+      if (connector) { put(connector.id || ''); put(connector.baseUrl ? trim(connector.baseUrl) : ''); }
+      if (changed) idb.setSetting(SERVERS, Object.fromEntries(servers)).catch((err) => D.log('tier', 'servers', err));
     }
     /** @param {string} feature @returns {number} the tier a feature belongs to (1 when the table does not name it) */
     const tierOf = (feature) => (FEATURES[featureOf(feature)] ? FEATURES[featureOf(feature)].tier : 1);
@@ -176,36 +191,76 @@
       const cap = needs > ceiling() ? 'deployment' : server !== null && needs > server ? 'server' : null;
       return { feature: featureOf(feature), needs, current: compute({ chosen, ceiling: config.ceiling, server }), cap, canRaise: !cap };
     }
+    /** @param {number} n @returns {string} the tier's name in the language in use */
+    const nameOf = (n) => D.t('tier.' + keyOf(n));
+    /** @param {{cap: string|null, current: number}} w a `why` @returns {string} what caps a feature, in words */
+    const capText = (w) => (w.cap === 'server' ? D.t('tier.capped.server', { tier: nameOf(w.current) }) : D.t('tier.capped.deployment', { tier: nameOf(ceiling()) }));
+    /**
+     * The words for a hidden feature, as the notice has them: what it is, the tier it belongs to and the one in effect, and, when
+     * the deployment or the server caps it, that too. @param {string} feature @param {{server?: string}} [options] @returns {string}
+     */
+    function hiddenText(feature, options = {}) {
+      const w = why(feature, options);
+      const text = D.t('tier.hidden', { feature: D.t('tier.feature.' + w.feature), tier: nameOf(w.needs), current: nameOf(w.current) });
+      return w.cap ? text + ' ' + capText(w) : text;
+    }
+    /**
+     * Refuse what the tier hides, where something runs without the UI (recipes, commands, fetching again, imports): throws an Error
+     * in the notice's words, with `tierFeature` (the name asked with, for ui/settings/tier.notice), `tierOptions` and `tier` (the key
+     * of the tier it needs).
+     * @param {string} feature @param {{server?: string}} [options]
+     */
+    function guard(feature, options = {}) {
+      if (shows(feature, options)) return;
+      const err = /** @type {any} */ (new Error(hiddenText(feature, options)));
+      err.name = 'TierError'; err.tierFeature = feature; err.tierOptions = Object.assign({}, options); err.tier = keyOf(tierOf(feature));
+      throw err;
+    }
+    /**
+     * The entry that hides a source (a connector, added or in the catalogue): its family's or its preset's; null when it is shown.
+     * @param {{id?: string, preset?: any, family?: {type?: string}}} connector @returns {string|null}
+     */
+    function connectorEntry(connector) {
+      if (!connector) return null;
+      const type = connector.family && connector.family.type;
+      if (type && !shows('family:' + type)) return 'family:' + type;
+      return shows('preset:' + connector.id) ? null : 'preset:' + connector.id;
+    }
     /**
      * Whether a source (a connector, added or in the catalogue) is shown: its family and, for a ready-made one, its preset.
      * @param {{id?: string, preset?: any, family?: {type?: string}}} connector
      */
-    function showsConnector(connector) {
-      if (!connector) return false;
-      const type = connector.family && connector.family.type;
-      return (!type || shows('family:' + type)) && shows('preset:' + connector.id);
-    }
-    /** Whether the group of scripts that only a feature opens may be opened. @param {string} name */
-    function groupShown(name) {
-      const entry = Object.entries(FEATURES).find(([, f]) => f.group === name);
-      return entry ? shows(entry[0]) : true;
-    }
+    const showsConnector = (connector) => !!connector && !connectorEntry(connector);
+    /** @param {string} name a group of scripts @returns {string|null} the feature that only it opens */
+    const groupFeature = (name) => { const entry = Object.entries(FEATURES).find(([, f]) => f.group === name); return entry ? entry[0] : null; };
+    /** Whether the group of scripts that only a feature opens may be opened now. @param {string} name */
+    const groupShown = (name) => { const f = groupFeature(name); return f ? shows(f) : true; };
+    /**
+     * Whether the deployment's ceiling allows a group at all, so that it may be loaded ahead: the installed app keeps every group
+     * the user could reach by raising the tier without a network. @param {string} name
+     */
+    const groupAllowed = (name) => { const f = groupFeature(name); return f ? FEATURES[f].tier <= ceiling() : true; };
 
-    /** Read the user's choice (the shell, before the first mode opens). */
+    /** Read the user's choice and what the servers announced (the shell, before the first mode opens). */
     async function load() {
       try { chosen = level(await idb.getSetting(SETTING, null)); } catch (_e) { chosen = null; }
+      try {
+        const saved = await idb.getSetting(SERVERS, null);
+        if (saved && typeof saved === 'object') for (const [key, value] of Object.entries(saved)) { const n = level(value); if (n !== null && !servers.has(key)) servers.set(key, n); }
+      } catch (_e) { /* nothing remembered: no server caps anything until it is asked */ }
       return current();
     }
     /**
-     * Choose a tier, or null to go back to the default. A tier above the deployment's ceiling is refused.
+     * Choose a tier, or null to go back to the default. A tier above the deployment's ceiling is refused. The choice is stored
+     * first, so that a failed write changes nothing.
      * @param {number|string|null} value @returns {Promise<number>} the tier in effect
      */
     async function set(value) {
       const n = value === null ? null : level(value);
       if (value !== null && n === null) throw new Error('Unknown tier: ' + value);
-      if (n !== null && n > ceiling()) throw new Error(D.t('tier.capped.deployment', { tier: D.t('tier.' + keyOf(ceiling())) }));
-      chosen = n;
+      if (n !== null && n > ceiling()) throw new Error(D.t('tier.capped.deployment', { tier: nameOf(ceiling()) }));
       if (n === null) await idb.deleteSetting(SETTING); else await idb.setSetting(SETTING, n);
+      chosen = n;
       notify();
       return current();
     }
@@ -213,8 +268,8 @@
     function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 
     return {
-      TIERS, DEFAULT, FEATURES, ENTRIES, featureOf, showsConnector, level, keyOf, compute, current, ceiling, choice: () => chosen, shows, why, tierOf, groupShown,
-      serverTier, noteServer, load, set, subscribe,
+      TIERS, DEFAULT, FEATURES, ENTRIES, featureOf, showsConnector, connectorEntry, level, keyOf, compute, current, ceiling, choice: () => chosen, shows, why, tierOf,
+      hiddenText, capText, guard, groupShown, groupAllowed, serverTier, noteServer, load, set, subscribe,
       /** The deployment's checked settings: {ceiling, language, server}. */
       deployment: () => ({ ceiling: config.ceiling, language: config.language, server: config.server ? Object.assign({}, config.server) : null }),
       readConfig,
