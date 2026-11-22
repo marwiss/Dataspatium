@@ -178,7 +178,8 @@
     const script = { id: 'script_flode_py', name: 'Pyskript', language: 'python', code: 'print(1)', updatedAt: new Date().toISOString() };
     await idb.putScript(script); scriptIds.push(script.id);
     const reasons = await flows.blockers({ steps: [{ type: 'code', params: { scriptId: script.id } }] });
-    const cached = await D.require('engines/python/catalog').cachedRuntime();
+    // What Python's start loads: the runtime and the startup wheels.
+    const cached = await D.require('engines/python/catalog').cachedPackages([]);
     assert.deepEqual(reasons, cached ? [] : [t('flows.block.python')], 'Python is never fetched at start');
     await flows.save(Object.assign(await flows.get(flow.id), { onStart: false }));
     api.stop();
@@ -431,7 +432,7 @@
         const reasons = await flows.blockers({ steps: [chartStep] });
         assert.ok(reasons.includes(reason), 'the chart step waits for the consent: ' + reasons.join('; '));
         assert.ok((await flows.blockers({ steps: [docStep] })).includes(reason), 'so does a document that draws the chart');
-        const cached = await D.require('engines/python/catalog').cachedRuntime();
+        const cached = await D.require('engines/python/catalog').cachedPackages([]);
         assert.equal(reasons.includes(t('flows.block.python')), !cached, 'and for Python when it is not fetched');
         const skipped = [];
         const ran = await flows.runOnStart({ force: true, onSkip: (f, why) => skipped.push([f.id, why]) });
@@ -445,18 +446,27 @@
 
   test('floden: a chart step at start draws a Python chart with the consents already kept only, so the map is left out and nothing is asked', async (assert) => {
     const chart = await pythonMapChart('Karta utan samtycke');
-    const flow = await saved({ name: 'Karta, ritad', steps: [{ type: 'chart', params: { chartId: chart.id, format: 'png' } }] });
+    // Saved without its map, so that the check at start lets the flow run: today's run of the script draws the map.
+    chart.python.plotly = null;
+    await charts.save(chart);
+    const flow = await saved({ name: 'Karta, ritad', onStart: true, steps: [{ type: 'chart', params: { chartId: chart.id, format: 'png' } }] });
     const plotly = D.require('viz/plotly');
     const components = D.require('platform/components');
+    const catalog = D.require('engines/python/catalog');
     const bridge = D.require('data/python-bridge').bridge;
-    // No Python and no plotly.js in the suite: the script's run gives the saved figure back, and a stand-in records the drawing.
-    const real = { run: bridge.run, Plotly: globalThis.Plotly };
+    // No Python and no plotly.js in the suite: Python counts as fetched, the script's run gives the figure with its map, and a
+    // stand-in records the drawing.
+    const real = { run: bridge.run, Plotly: globalThis.Plotly, cachedPackages: catalog.cachedPackages };
     const runs = []; const drawn = [];
+    catalog.cachedPackages = async () => true;
     bridge.run = async (code, options) => { runs.push(options); bridge.plotlyFigures.set(9001, GEO); return { entries: [{ kind: 'plot', key: 9001, plotly: GEO }], ms: 0 }; };
     globalThis.Plotly = { newPlot: async (_el, data, layout, config) => { drawn.push({ data, layout, config }); }, purge: () => {}, toImage: async () => 'data:image/png;base64,iVBORw0KGgo=' };
     try {
       await withoutConsent(async (asked) => {
-        const result = await flows.run(flow, { unattended: true });
+        // Through the start itself, as the shell runs it: runOnStart marks the run as one nobody watches.
+        const skipped = [];
+        const result = (await flows.runOnStart({ force: true, onSkip: (f, why) => skipped.push([f.id, why]) })).find((r) => r.flowId === flow.id);
+        assert.ok(result, 'the flow ran at start: ' + JSON.stringify(skipped.filter(([id]) => id === flow.id)));
         assert.ok(result.ok, JSON.stringify(result.steps));
         assert.deepEqual(runs.map((o) => o && o.ask), [false], 'the script runs without asking for packages');
         assert.deepEqual(drawn[0].data.map((d) => d.type), ['scattergeo'], 'the country by code is left out');
@@ -475,12 +485,114 @@
         assert.deepEqual(asked.map((a) => a[0]), ['basemaps'], 'a run with someone at the keyboard asks');
       });
     } finally {
+      await flows.save(Object.assign(await flows.get(flow.id), { onStart: false }));
+      catalog.cachedPackages = real.cachedPackages;
       bridge.run = real.run;
       bridge.plotlyFigures.delete(9001);
       if (real.Plotly) globalThis.Plotly = real.Plotly; else delete globalThis.Plotly;
     }
     return 'ok';
   }, 60000);
+
+  test('floden: a flow at start with every step that can fetch asks nothing, and what it lacks fails or skips it with the reason and how to allow it', async (assert) => {
+    const consent = D.require('platform/consent');
+    const commands = D.require('data/commands');
+    const components = D.require('platform/components');
+    const meta = await table('Startdata');
+    const copy = await table('Startkopia');
+    const api = await apiDataset([{ a: 1 }], 'Startkälla med Python');
+    // A recipe with a Python step, logged as if it had run: replaying it at start needs Python.
+    const handle = await datasets.ensureOpen(api.meta.id);
+    await datasets.appendLog(handle, 'op', { op: 'python_step', params: { code: 'def step(df):\n    return df' }, result: {}, description: 'Python' });
+    const PY = 'import matplotlib.pyplot as plt\nplt.plot([1, 2])\n';
+    const R = 'library(zzdataspatiumprov)\nprint(1)\n';
+    const py = { id: 'script_start_py', name: 'Start-Python', language: 'python', code: PY, updatedAt: new Date().toISOString() };
+    const rs = { id: 'script_start_r', name: 'Start-R', language: 'r', code: R, updatedAt: new Date().toISOString() };
+    await idb.putScript(py); await idb.putScript(rs); scriptIds.push(py.id, rs.id);
+    const rChart = charts.create('r', meta, 'R vid start');
+    rChart.r = { code: R + 'plot(1:3)\n' };
+    const savedR = await charts.save(rChart); chartIds.push(savedR.id);
+    const pyChart = charts.create('python', meta, 'Python vid start');
+    pyChart.python = { code: 'import plotly.express as px\nfig = px.bar(x=[1], y=[1])\nfig', plotly: { data: [{ type: 'bar', x: [1], y: [1] }], layout: {} } };
+    const savedPy = await charts.save(pyChart); chartIds.push(savedPy.id);
+    const dash = dashboards.create('Panel vid start');
+    dash.items = [{ chartId: savedPy.id }];
+    const savedDash = await dashboards.save(dash); dashIds.push(savedDash.id);
+    const doc = await documents.save({ name: 'Dokument vid start', format: 'markdown', body: '# Start\n\n{{diagram "R vid start"}}' });
+    docIds.push(doc.id);
+    const cmd = (command, args) => ({ type: 'command', params: { command, args } });
+    const steps = [
+      { type: 'code', params: { scriptId: py.id } },
+      { type: 'code', params: { scriptId: rs.id } },
+      { type: 'recipe', params: { from: api.meta.id, to: copy.id } },
+      { type: 'refresh', params: { datasetId: api.meta.id } },
+      { type: 'chart', params: { chartId: savedR.id, format: 'png' } },
+      { type: 'chart', params: { chartId: savedPy.id, format: 'png' } },
+      { type: 'document', params: { documentId: doc.id, datasetId: meta.id, format: 'html' } },
+      { type: 'dashboard', params: { dashboardId: savedDash.id } },
+      cmd('run_python', { code: PY }), cmd('run_r', { code: R }), cmd('run_script', { script: py.id }),
+      cmd('render_chart', { chart: savedR.id, format: 'png', group_column: null }),
+      cmd('generate_document', { document: doc.id, dataset: meta.id, format: 'html', group_column: null }),
+      cmd('make_document', { document: doc.id, dataset: meta.id, format: 'html' }),
+      cmd('replay_recipe', { from: api.meta.id, to: copy.id }), cmd('refresh_dataset', { dataset: api.meta.id }),
+      cmd('apply_operation', { dataset: copy.id, operation: 'python_step', params: JSON.stringify({ code: 'def step(df):\n    return df' }) }),
+      cmd('cde_projects', { source: 'ingen' }),
+    ];
+    const flow = await saved({ name: 'Allt vid start', onStart: true, continueOnError: true, steps });
+    const unattended = (purpose) => t('consent.unattended', { purpose: t('consent.purpose.' + purpose) });
+    const before = localStorage.getItem('dataspatium.consent');
+    localStorage.removeItem('dataspatium.consent');
+    const asked = [];
+    const kept = {};
+    const PURPOSES = ['api', 'url', 'components', 'basemaps', 'databases', 'opencde'];
+    // The test fails if anything is asked: the asker records, and refuses.
+    consent.setAsker(async (purpose, info) => { asked.push([purpose, info.host, info.label]); return { allow: false, remember: false }; });
+    const checks = {};
+    try {
+      for (const p of PURPOSES) { kept[p] = await consent.state(p); await consent.set(p, null); }
+      // 1. As the checks see it: skipped with its reasons, kept for Flöden, nothing asked.
+      const reasons = await flows.blockers(flow);
+      assert.ok(reasons.includes(t('flows.block.attended', { name: 'cde_projects' })), 'a CDE command runs only by hand: ' + reasons.join('; '));
+      if (!(await D.require('engines/python/catalog').cachedPackages([]))) assert.ok(reasons.includes(t('flows.block.python')), 'Python not fetched');
+      if (!(await components.verified(D.require('viz/plotly').SPEC))) assert.ok(reasons.includes(t('flows.block.packages', { names: 'plotly.js' })), 'plotly.js not fetched');
+      const skipped = [];
+      const none = await flows.runOnStart({ force: true, onSkip: (f, why) => skipped.push([f.id, why]) });
+      assert.ok(skipped.some(([id]) => id === flow.id) && !none.some((r) => r.flowId === flow.id), 'skipped at start');
+      const stored = await flows.get(flow.id);
+      assert.ok(stored.lastSkip && stored.lastSkip.reasons.includes(t('flows.block.attended', { name: 'cde_projects' })), 'the reasons are kept for Flöden: ' + JSON.stringify(stored.lastSkip));
+      assert.deepEqual(asked, [], 'the checks ask nothing');
+      // 2. What the checks cannot foresee (an import they miss, a cache that changes after them): every step runs with no check,
+      //    through runOnStart itself, and still nothing is asked; what a step lacks fails it with the reason and the remedy.
+      for (const [type, def] of Object.entries(flows.STEPS)) if (def.blockers) { checks[type] = def.blockers; def.blockers = async () => []; }
+      const ran = (await flows.runOnStart({ force: true })).find((r) => r.flowId === flow.id);
+      assert.ok(ran, 'the flow ran at start');
+      assert.deepEqual(asked, [], 'nothing asked at start: ' + JSON.stringify(asked));
+      assert.equal(ran.steps.length, steps.length, 'every step ran: ' + JSON.stringify(ran.steps.map((s) => s.message)));
+      const allowed = PURPOSES.map(unattended).concat([t('commands.err.attended', { name: 'cde_projects' }), D.require('platform/tier').hiddenText('cmd:cde_projects')]);
+      // An index of webR's repository already in this profile's cache leaves R to say the package is missing.
+      const rIndex = !!(await components.meta('webr-repo:PACKAGES'));
+      for (const s of ran.steps) {
+        if (s.ok) continue;
+        assert.ok(allowed.some((a) => s.message.includes(a)) || (rIndex && s.message.includes('zzdataspatiumprov')), `step ${s.path} ${s.type} fails only for what it may not ask: ${s.message}`);
+      }
+      assert.ok(ran.steps.some((s) => !s.ok && s.message.includes(unattended('components'))), 'something was refused without asking: ' + JSON.stringify(ran.steps.map((s) => s.message)));
+      assert.ok(!/error/.test(D.require('data/python-bridge').bridge.state), 'Python is not left broken: ' + D.require('data/python-bridge').bridge.state);
+      // 3. The marker went with the run, not with the page: the person's own question right after it is asked.
+      let refused = null;
+      try { await consent.require('components', { host: 'person.example', label: 'person' }); } catch (e) { refused = e; }
+      assert.deepEqual(asked.map((a) => a[1]), ['person.example'], 'the person is asked');
+      assert.ok(refused && refused.name === 'ConsentError' && refused.reason === 'denied', 'and their no is a refusal of their own');
+      assert.ok(commands.get('cde_projects').attended, 'the CDE commands are marked as needing someone at the keyboard');
+      return 'ok';
+    } finally {
+      for (const [type, fn] of Object.entries(checks)) flows.STEPS[type].blockers = fn;
+      consent.setAsker(null);
+      for (const [p, v] of Object.entries(kept)) await consent.set(p, v);
+      localStorage.setItem('dataspatium.consent', before || 'granted');
+      await flows.save(Object.assign(await flows.get(flow.id), { onStart: false }));
+      api.stop();
+    }
+  }, 240000);
 
   test('floden: cleanup', async (assert) => {
     for (const id of flowIds) await flows.remove(id).catch(() => {});
