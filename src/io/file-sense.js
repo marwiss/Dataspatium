@@ -86,10 +86,12 @@
       const count = files.length || 1;
       if (p.importer === 'images') return { icon: kinds.PROFILES.images.icon, key: 'import.sense.images', params: { n: count } };
       if (p.kind === 'raster') {
-        // The system of the first file, as its facts say it (an unnamed one with the system it is read as).
+        // The system of the first file, as its facts say it; a file that names none says so, with the system it is read as.
         const f = (p.raster && Array.isArray(p.raster.files) && p.raster.files[0]) || {};
-        const crs = f.crsSource === 'assumed' ? D.t('raster.crs.assumed', { crs: f.crsText || f.crs }) : f.crsText || f.crs || D.t('raster.crs.none');
-        return { icon: kinds.PROFILES.raster.icon, key: count > 1 ? 'import.sense.rasters' : 'import.sense.raster', params: { n: count, crs } };
+        const icon = kinds.PROFILES.raster.icon;
+        if (count > 1) return { icon, key: 'import.sense.rasters', params: { n: count } };
+        if (f.crsSource === 'assumed') return { icon, key: 'import.sense.raster.assumed', params: { n: 1, crs: f.crsText || f.crs } };
+        return { icon, key: 'import.sense.raster', params: { n: 1, crs: f.crsText || f.crs || D.t('raster.crs.none') } };
       }
       if (p.importer === 'documents') {
         const icon = kinds.PROFILES.document.icon;

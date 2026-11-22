@@ -3258,6 +3258,7 @@
     'import.collection.raster': 'Raster ({n} filer)',
     'import.collection.hint.raster': 'Varje fil blir en rad med storlek, upplösning, koordinatsystem och utbredning. En förhandsvisning på kartan (högst 2 048 bildpunkter) och en miniatyr sparas, och originalfilen när den är högst 32 MB.',
     'import.sense.raster': 'Det här är ett raster i {crs}, som blir en datamängd av slaget raster.',
+    'import.sense.raster.assumed': 'Det här är ett raster utan angivet koordinatsystem, som läses som {crs} och blir en datamängd av slaget raster.',
     'import.sense.rasters': 'Det här är {n} raster, som blir en datamängd av slaget raster.',
     'health.raster.unplaced': '{n} filer saknar läge på kartan.',
     'health.raster.original': '{n} filer har ingen originalfil i datamängden; bara förhandsvisningen finns.',

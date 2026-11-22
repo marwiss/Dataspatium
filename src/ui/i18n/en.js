@@ -3236,6 +3236,7 @@
     'import.collection.raster': 'Raster ({n} files)',
     'import.collection.hint.raster': 'Each file becomes a row with its size, resolution, coordinate system and extent. A preview on the map (at most 2,048 pixels) and a thumbnail are kept, and the original file when it is at most 32 MB.',
     'import.sense.raster': 'This is a raster in {crs}, which becomes a dataset of the kind raster.',
+    'import.sense.raster.assumed': 'This is a raster with no coordinate system given, read as {crs}, which becomes a dataset of the kind raster.',
     'import.sense.rasters': 'These are {n} rasters, which become one dataset of the kind raster.',
     'health.raster.unplaced': '{n} files have no place on the map.',
     'health.raster.original': '{n} files have no original file in the dataset; only the preview is there.',

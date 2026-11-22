@@ -290,6 +290,11 @@
     assert.ok(p.dataRows.length === 1 && p.dataRows[0][11] === null && p.raster.files[0].preview.bounds === null && !p.raster.files[0].placed, 'no place in the preview');
     const sense = D.require('io/file-sense').describe(p, { files: [gk] });
     assert.ok(sense.key === 'import.sense.raster' && sense.params.crs === 'EPSG:31467', JSON.stringify(sense));
+    // A file that names no system says so, with the system it is read as.
+    const bare = sweref('utan-system.tif', { width: 16, height: 16, geo: { res: 1, east: E0, north: N0 } });
+    const said = D.require('io/file-sense').describe(await importer.preview(bare), { files: [bare] });
+    assert.ok(said.key === 'import.sense.raster.assumed' && said.params.crs === 'SWEREF 99 TM (EPSG:3006)', JSON.stringify(said));
+    assert.ok(!t(said.key, said.params).includes(t('raster.crs.assumed', { crs: said.params.crs })), 'one sentence: ' + t(said.key, said.params));
     assert.ok(p.pictures.length === 1 && /^data:image\//.test(p.pictures[0]), 'a picture of it all the same');
     const unplaced = track(await importer.runFiles([gk], { format: 'raster' }, 'Okänt system'));
     const u = await datasets.get(unplaced.id);
