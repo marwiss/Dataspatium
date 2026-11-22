@@ -53,14 +53,23 @@
     const text = (v, max) => (v === undefined || v === null ? '' : String(v).replace(/\u0000/g, ' ').trim().slice(0, max));
     const one = (v) => (v !== null && typeof v === 'object' && typeof v.length === 'number' ? v[0] : v);
 
-    // The full image and its overviews (IFDs marked as reduced, masks left out, with the same samples), finest first.
+    /** The most IFDs read from a file: a COG's overviews and masks are far fewer. */
+    const MAX_IFDS = 64;
+    // The full image and its overviews (IFDs marked as reduced, masks left out, with the same samples), finest first. The IFDs are
+    // followed one at a time, at most MAX_IFDS and never to one already read: geotiff.js getImageCount follows the chain for as long
+    // as it goes, so a file whose next IFD points back would never be done.
     async function levelsOf(tiff) {
       const first = await tiff.getImage(0);
       const spp = first.getSamplesPerPixel();
-      const count = await tiff.getImageCount();
+      const seen = new Set([tiff.firstIFDOffset]);
       const out = [];
-      for (let i = 1; i < count; i++) {
-        const image = await tiff.getImage(i);
+      for (let i = 1; i < MAX_IFDS; i++) {
+        let next = 0;
+        try { next = Number((await tiff.requestIFD(i - 1)).nextIFDByteOffset) || 0; } catch (_e) { break; }
+        if (!next || seen.has(next)) break;
+        seen.add(next);
+        let image;
+        try { image = await tiff.getImage(i); } catch (_e) { break; }
         const sub = Number(image.fileDirectory.NewSubfileType || 0);
         if (!(sub & 1) || (sub & 4) || image.getSamplesPerPixel() !== spp) continue;
         out.push({ image, width: image.getWidth(), height: image.getHeight() });

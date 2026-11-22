@@ -328,6 +328,30 @@
     return 'ok';
   }, 90000);
 
+  test('raster: a TIFF whose IFDs point back in a loop opens all the same, read to the loop and no further', async (assert) => {
+    /** A TIFF with the next-IFD offset of its `k`-th IFD pointing back to the first. */
+    const looped = (spec, k, name) => {
+      const buf = fx.writeTiff(spec);
+      const view = new DataView(buf);
+      const first = view.getUint32(4, true);
+      let at = first;
+      for (let i = 0; i < k; i++) at = view.getUint32(at + 2 + view.getUint16(at, true) * 12, true);
+      view.setUint32(at + 2 + view.getUint16(at, true) * 12, first, true);
+      return new File([buf], name, { type: 'image/tiff' });
+    };
+    /** The promise, or an error after `ms` (the worker is then stopped, so that the tests after this one can run). */
+    const within = (p, ms) => Promise.race([p, new Promise((_, reject) => setTimeout(() => { engines.stop(); reject(new Error(`no answer in ${ms} ms`)); }, ms))]);
+    const self = looped({ width: 16, height: 16, geo: { res: 1, east: E0, north: N0, epsg: 3006 } }, 0, 'ring.tif');
+    const info = await within(engines.open(self), 10000);
+    assert.deepEqual(info.levels, [{ width: 16, height: 16 }], 'the image itself, once');
+    const back = looped({ width: 64, height: 64, overviews: [2], geo: { res: 1, east: E0, north: N0, epsg: 3006 } }, 1, 'ring-oversikt.tif');
+    const levels = (await within(engines.open(back), 10000)).levels;
+    assert.deepEqual(levels, [{ width: 64, height: 64 }, { width: 32, height: 32 }], 'the overview once, then the loop ends it');
+    const meta = track(await within(importer.runFiles([back], { format: 'raster' }, 'Ring'), 20000));
+    assert.equal((await datasets.get(meta.id)).raster.files[0].levels.length, 2, 'and it imports');
+    return 'ok';
+  }, 60000);
+
   test('raster: importing never keeps the page waiting more than 50 ms', async (assert) => {
     const file = sweref('stor-cog.tif', { width: 2048, height: 1024, tile: 256, overviews: [2, 4], geo: { res: 0.5, east: E0, north: N0, epsg: 3006 } });
     // The worker is started by the tests before; the measure is the import itself.
