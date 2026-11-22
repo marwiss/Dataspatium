@@ -422,6 +422,28 @@
     }
   });
 
+  test("plotly: a person's chart asks for plotly.js even while a flow at start is loading it without asking", async (assert) => {
+    const plotly = D.require('viz/plotly');
+    if (plotly.available()) return 'skipped: plotly.js is loaded already';
+    const components = D.require('platform/components');
+    const consent = D.require('platform/consent');
+    const realText = components.text;
+    const calls = [];
+    // No plotly.js is fetched: the flow's load is refused a moment later, as an unkept consent is, and the person's is refused when asked.
+    components.text = (_spec, options) => {
+      const unattended = !!options && options.ask === false;
+      calls.push(unattended ? 'unattended' : 'asking');
+      return unattended ? new Promise((_resolve, reject) => setTimeout(() => reject(new consent.ConsentError('components', 'unattended')), 20)) : Promise.reject(new consent.ConsentError('components', 'denied'));
+    };
+    try {
+      const [flow, person] = await Promise.allSettled([plotly.ensure({ ask: false }), plotly.ensure()]);
+      assert.ok(flow.status === 'rejected' && flow.reason.reason === 'unattended', 'the flow is refused without asking');
+      assert.ok(person.status === 'rejected' && person.reason.reason === 'denied', "the person's call made an attempt of its own, which asks");
+      assert.deepEqual(calls, ['unattended', 'asking']);
+      return 'ok';
+    } finally { components.text = realText; }
+  });
+
   test('images: a picture from a file, a worker or storage is drawn only from a data:image/ address, and a web address is left out with a line in the console', async (assert) => {
     const text = D.require('platform/text');
     const GIF = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';

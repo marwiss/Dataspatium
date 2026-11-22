@@ -53,7 +53,8 @@
 
     /**
      * Load the library (from the component cache or jsDelivr after consent) and return the Plotly object; with `ask: false`
-     * only a consent already kept lets it fetch (platform/components).
+     * only a consent already kept lets it fetch (platform/components). A call that may ask and joins a load that failed only
+     * because it could not ask (a flow at start) loads again, asking.
      * @param {{ask?: boolean, onProgress?: Function}} [options]
      */
     function ensure(options = {}) {
@@ -67,7 +68,8 @@
           return globalThis.Plotly;
         })().catch((err) => { loading = null; throw err; });
       }
-      return loading;
+      if (options.ask === false) return loading;
+      return loading.catch((err) => { if (err && err.name === 'ConsentError' && err.reason === 'unattended') return ensure(options); throw err; });
     }
 
     /** The library's text, for standalone HTML (Publicera); `ask: false` as in ensure(). */
