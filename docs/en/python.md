@@ -134,13 +134,22 @@ of language.
   server (localhost or https) there is a *Stop* button that stops the code and keeps the session (see [faq.md](faq.md)).
 - Memory is limited by the browser and WebAssembly; keep datasets below a few hundred megabytes in Python.
 - Input while running (`input()`) does not work, nor do threads, processes or files outside the virtual file system.
-- Python reaches the internet only through the worker's `fetch`, and the app first asks for permission for components
-  (a remembered permission covers every address). This covers `pyodide.http.pyfetch`, `micropip` and `js.fetch`, and
-  `requests` and `urllib3` in browsers with JSPI (Edge, Chrome). The calls are listed under *Manage → Workspace →
-  Internet access*.
+- Python code in its worker reaches the internet only through the worker's `fetch`, and the app first asks for
+  permission for components (a remembered permission covers every address). This covers `pyodide.http.pyfetch`,
+  `micropip` and `js.fetch`, and `requests` and `urllib3` in code run in the console, a notebook, a Python chart, a
+  statistics tool or a flow, in browsers with JSPI (Edge, Chrome). An allowed call may follow the server's redirects.
+  The calls are listed under *Manage → Workspace → Internet access*: the app notes the address when a call is allowed,
+  but the worker itself reports its end and status, so the list is an overview, not an audit trail.
 - Sockets and XMLHttpRequest are blocked and raise an error that points to `pyfetch`: this covers `socket`,
   `urllib.request` and `http.client` over http://, `pyodide.http.open_url`, `pyodide.http.pyxhr`, `js.XMLHttpRequest`,
-  `js.importScripts` with an address, and `requests` in browsers without JSPI. With https://, `urllib.request` and
-  `http.client` stop earlier with `unknown url type: https`, since Pyodide has no ssl. `js.WebSocket`, `js.EventSource`,
-  `js.caches`, `js.indexedDB` and `js.BroadcastChannel` do not exist, and `js.Worker` starts no worker.
+  `js.importScripts` with an address, and `requests` in browsers without JSPI and in a *Python step* or *Python on the
+  model*, which run synchronously (there `pyfetch` cannot be awaited either, so fetch the data in the console or under
+  *Import* first). With https://, `urllib.request` stops at `unknown url type: https` and `http.client` has no
+  `HTTPSConnection`, because Pyodide loads `ssl` only when code imports it; with `ssl` loaded before `http.client`,
+  https gets the same socket error as http://.
+- `js.WebSocket`, `js.EventSource`, `js.caches`, `js.indexedDB` and `js.BroadcastChannel` are `None` (`hasattr` is
+  `True`), `js.Worker` starts no worker, and `js.navigator` is a frozen copy of a few facts about the browser (name,
+  platform, languages).
+- Figures that Python hands to the app (plotly and SVG) are drawn by the page and follow the page's own rules, not the
+  worker's.
 - There are no interactive windows; matplotlib draws to SVG and PNG. plotly is drawn with plotly.js in the app and seaborn comes along as a package.

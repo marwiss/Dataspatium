@@ -10,17 +10,20 @@
  * Messages: main -> worker {id, type: init|run|eval|packages|fs}; worker -> main {type: 'result', id, ok, value|error} and
  * {type: 'stream', kind, text} for stdout/stderr lines.
  *
- * Python reaches the internet only through the worker's fetch, after the user's consent. The worker shim runs with net 'fetch'
- * (platform/worker-shim): a fetch to anything but an asset, a blob or a data URL asks this thread first (the provider's `net`,
- * allowNet below) and goes out only when the answer allows that very address. pyodide.http.pyfetch, micropip and js.fetch go
- * that way, and so do requests and urllib3 where the browser has JSPI (Edge, Chrome), since urllib3 then uses fetch. Sockets and
- * XMLHttpRequest are refused with a message that points to pyfetch: socket, urllib.request and http.client over http://,
- * pyodide.http.open_url and pyxhr, js.XMLHttpRequest, importScripts with an address, and requests without JSPI (urllib3 then falls
- * back to XMLHttpRequest). https:// in urllib.request and http.client stops earlier with "unknown url type: https", since Pyodide
- * ships without ssl. WebSocket and the other constructors that could open a connection read as undefined, and Worker is a stand-in
- * that starts nothing. Emscripten's socket emulation would turn a connect() into a browser WebSocket to ws://host:port/ (xmlschema
- * tried www.w3.org that way while reading ifctester's ids.xsd); without WebSocket it fails at once, and Python's socket functions
- * raise an OSError with the same message.
+ * Python code in this worker reaches the internet only through the worker's fetch, after the user's consent. The worker shim runs
+ * with net 'fetch' (platform/worker-shim): a fetch to anything but an asset, a blob or a data URL asks this thread first (the
+ * provider's `net`, allowNet below) and sends the very Request it asked about once the answer allows that address; the browser
+ * then follows the server's redirects. pyodide.http.pyfetch, micropip and js.fetch go that way, and so do requests and urllib3 in
+ * code run through runPythonAsync (the console, notebooks, charts) where the browser has JSPI (Edge, Chrome), since urllib3 then
+ * uses fetch. Sockets and XMLHttpRequest are refused with a message that points to pyfetch: socket, urllib.request and
+ * http.client over http://, pyodide.http.open_url and pyxhr, js.XMLHttpRequest, importScripts with an address, and requests
+ * without JSPI or in recipe and model steps, which run synchronously through runPython (urllib3 then falls back to
+ * XMLHttpRequest). With https://, urllib.request stops at "unknown url type: https" and http.client has no HTTPSConnection, as
+ * long as Pyodide's on-demand ssl is not loaded. WebSocket and the other constructors that could open a connection read as
+ * undefined, Worker is a stand-in that starts nothing, and navigator is a frozen copy of what Pyodide reads. Emscripten's socket
+ * emulation would turn a connect() into a browser WebSocket to ws://host:port/ (xmlschema tried www.w3.org that way while reading
+ * ifctester's ids.xsd); without WebSocket it fails at once, and Python's socket functions raise an OSError with the same message.
+ * Figures that Python hands to the page are drawn there, under the page's own rules.
  */
 (function () {
   'use strict';
@@ -257,7 +260,8 @@
 
       /**
        * Python code wants to fetch `url` (pyfetch, micropip, js.fetch, requests through fetch): allowed with the user's consent.
-       * The worker then fetches only that address; the call shows in the network log (platform/workers).
+       * The worker then sends the very Request it asked about (the browser follows the server's redirects); the call shows in the
+       * network log (platform/workers), with the end and status the worker reports.
        * @param {string} url @returns {Promise<boolean>}
        */
       async allowNet(url) {
