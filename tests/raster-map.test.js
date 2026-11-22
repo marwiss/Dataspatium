@@ -207,6 +207,9 @@
       assert.equal(head.querySelector('dm-badge').textContent, kinds.summary(meta), 'counted in files');
       const labels = Array.from(head.querySelectorAll('dm-button')).map((b) => b.textContent.trim());
       assert.ok(labels.includes(t('bearbeta.view.table')), 'the table one button away');
+      // Spara ortofotot stands beside Hämta ortofoto för vyn and shows with it, when Lantmäteriet's orthophoto is the background.
+      const load = /** @type {HTMLElement} */ (head.querySelector('[data-map-ortho-load]')); const save = /** @type {HTMLElement} */ (head.querySelector('[data-ortho-save]'));
+      assert.ok(load && save && load.nextElementSibling === save && load.hidden && save.hidden, 'the save button waits beside the load button');
       assert.ok(!labels.includes(t('bearbeta.view.map')) && !labels.some((l) => l.startsWith('bearbeta.view')), 'no button back to itself: ' + labels.join(' | '));
       const facts = /** @type {HTMLElement} */ (await waitFor(() => root.querySelector('.dm-right [data-raster-facts]'), 5000, 'the facts'));
       assert.ok(facts.textContent.includes(t('raster.field.crs')) && facts.textContent.includes(t('raster.field.attribution')) && facts.textContent.includes('Provbild'), facts.textContent);
@@ -333,6 +336,41 @@
     } finally { view.close(); }
     return 'ok';
   }, 90000);
+
+  test('raster map: Inhämta shows a GeoTIFF\'s facts and picture, warns about a system it cannot convert, and imports without a column step', async (assert) => {
+    // Gauss-Krüger zone 3 (EPSG:31467): read, but with no place on the map, which Inhämta says before the import.
+    const file = fixture.file({ width: 48, height: 32, geo: { res: 10, east: 3500000, north: 5800000, epsg: 31467 }, copyright: 'Flygbild © Prov' }, 'gauss-kruger-inhamta.tif');
+    const name = 'gauss kruger inhamta';
+    return withApp(async (shell, root) => {
+      shell.activate('inhamta');
+      const zone = await waitFor(() => root.querySelector('.dm-center dm-dropzone'), 5000, 'the drop zone');
+      zone.dispatchEvent(new CustomEvent('dm-files', { detail: { files: [file] }, bubbles: true }));
+      const card = /** @type {HTMLElement} */ (await waitFor(() => root.querySelector('.dm-center [data-import-raster]'), 15000, 'the raster\'s facts'));
+      const center = /** @type {HTMLElement} */ (root.querySelector('.dm-center'));
+      for (const text of [t('datasets.kind.raster'), t('raster.field.crs'), 'EPSG:31467', t('raster.field.size'), '48 × 32', t('raster.field.bands'), '3 · uint8', t('raster.kept.original'), 'Flygbild © Prov']) {
+        assert.ok(card.textContent.includes(text), 'the facts say ' + text + ': ' + card.textContent);
+      }
+      // The browsers cannot draw a TIFF file: the picture is the one the raster worker made of it.
+      const picture = /** @type {HTMLImageElement} */ (await waitFor(() => center.querySelector('.dm-photos.dm-import-photos > img.dm-import-photo[data-import-raster-picture]'), 8000, 'the picture'));
+      assert.ok(picture.src.startsWith('data:image/') && picture.alt === file.name, 'a picture of the file, named by it');
+      await waitFor(() => picture.naturalWidth > 0, 3000, 'the picture decoded');
+      const warning = center.querySelector('[data-import-crs-unknown]');
+      assert.ok(warning && warning.textContent === t('import.crs.unknown', { crs: 'EPSG:31467' }), 'the system it cannot convert is said: ' + (warning && warning.textContent));
+      const sense = center.querySelector('.dm-sense');
+      assert.ok(sense && sense.textContent.includes(t('import.sense.raster', { crs: 'EPSG:31467' })), 'what the file is: ' + (sense && sense.textContent));
+      assert.ok(center.textContent.includes(t('import.collection.hint.raster')), 'what each file becomes');
+      // No column step: the name and Import.
+      assert.ok(!buttonIn(center, t('common.next')), 'no column step');
+      press(await waitFor(() => buttonIn(center, t('common.import')), 3000, 'the import button'));
+      const done = /** @type {HTMLElement} */ (await waitFor(() => center.querySelector('.dm-success'), 15000, 'the result'));
+      const made = await waitFor(() => shell.store.get().datasets.find((d) => d.kind === 'raster' && d.name === name), 5000, 'the raster in the workspace');
+      created.push(made.id);
+      assert.ok(done.textContent.includes(kinds.summary(made)) && buttonIn(done, t('hantera.view.raster')), 'counted in files, with the way on to its map: ' + done.textContent);
+      const ds = await datasets.get(made.id);
+      assert.ok(ds.raster.files[0].placed === false && ds.raster.files[0].kept === 'original' && ds.raster.attribution === 'Flygbild © Prov', 'kept without a place: ' + JSON.stringify(ds.raster.files[0]));
+      return 'ok';
+    });
+  }, 60000);
 
   test('raster map: cleanup', async (assert) => {
     await datasets.flushSaves();

@@ -337,6 +337,89 @@
     return 'ok';
   }, 60000);
 
+  test('orthophoto-cog: the orthophoto shown is saved as a raster without reading anything again, and the place of a new building lies on it offline', async (assert) => {
+    // A view of its own (another size than the map above), so that the image is read here.
+    const el = host(360, 280);
+    const centre = geo.swerefToWgs84(674192, 6580128, 3006);
+    const c = centre;
+    const square = { type: 'Polygon', coordinates: [[[c[0], c[1]], [c[0] + 0.0002, c[1]], [c[0] + 0.0002, c[1] + 0.0001], [c[0], c[1] + 0.0001], [c[0], c[1]]]] };
+    const site = D.require('ui/bearbeta/site-map').create({}, { tileFactory: () => { throw new Error('no tiles'); } });
+    const made = [];
+    const closeDialogs = () => { for (const d of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (d).close(); };
+    const sameBounds = (lb, b) => [lb.getNorth() - b[0][0], lb.getWest() - b[0][1], lb.getSouth() - b[1][0], lb.getEast() - b[1][1]].every((d) => Math.abs(d) < 1e-9);
+    try {
+      await withLantmateriet({}, async ({ asked, all }) => {
+        const chart = { kind: 'map', name: 'Ortofoto att spara', map: { layers: [], basemap: 'ortho-se', view: { center: [centre[1], centre[0]], zoom: 19 } } };
+        const hd = await leaflet.render(el, chart, { tileFactory: () => { throw new Error('no tiles'); } });
+        try {
+          assert.ok(!choice.savable(hd), 'nothing to keep before the image is read');
+          const none = await choice.saveView(hd).catch((e) => e);
+          assert.equal(none && none.message, t('raster.ortho.none'), 'it says to fetch the orthophoto first');
+          assert.ok(['drawn', 'kept'].includes(await choice.drawView(hd, { load: true, quiet: true })), 'the image for the view');
+          assert.ok(choice.savable(hd), 'the image shown in Web Mercator can be kept');
+          const layer = imageLayers(hd.map)[0];
+          const read = all.length; const questions = asked.length;
+          const meta = await choice.saveView(hd, { name: 'Sparat ortofoto (vy)' });
+          made.push(meta.id);
+          assert.equal(all.length, read, 'nothing is read again');
+          const ds = await datasets.get(meta.id);
+          const f = ds.raster.files[0];
+          assert.ok(ds.kind === 'raster' && f.crs === 'EPSG:3857' && f.placed && f.kept === 'none' && f.skipped === 'view', JSON.stringify(f));
+          assert.ok(sameBounds(layer.getBounds(), f.preview.bounds), 'where the image lay: ' + JSON.stringify(f.preview.bounds));
+          assert.ok(ds.raster.attribution.includes('Ortofoto © Lantmäteriet (2025)') && ds.raster.attribution.includes(t('ortho.se.processed')), ds.raster.attribution);
+          assert.ok(ds.raster.license && ds.raster.license.name === 'CC BY 4.0', JSON.stringify(ds.raster.license));
+          const text = new TextDecoder('latin1').decode(new Uint8Array(await datasets.exportBytes(meta.id)));
+          assert.ok(![SECRET, TOKEN, 'nyckel-ortofoto', 'lmo-files'].some((x) => text.includes(x)), 'no key, token or file address in the file');
+          // The button beside Hämta ortofoto för vyn asks the name with the years proposed, keeps the image the same way and says so.
+          const opened = [];
+          const button = /** @type {HTMLElement} */ (choice.saveButton(() => hd, { onOpen: (m) => opened.push(m) }));
+          document.body.appendChild(button);
+          try {
+            const inner = /** @type {HTMLElement} */ (button.querySelector('button'));
+            assert.ok(button.hasAttribute('data-ortho-save') && button.textContent.trim() === t('raster.ortho.save') && inner.getAttribute('data-tip') === t('raster.ortho.save.hint'), 'the button and its tip');
+            inner.click();
+            const input = /** @type {any} */ (await waitFor(() => document.querySelector('dialog[open] dm-input'), 3000, 'the name asked'));
+            assert.equal(input.value, t('raster.ortho.name', { years: '2025' }), 'the years proposed');
+            input.value = 'Sparat ortofoto (knapp)';
+            /** @type {HTMLElement} */ (document.querySelector('dialog[open] .dm-dialog-actions dm-button[variant="primary"] button')).click();
+            const toast = /** @type {HTMLElement} */ (await waitFor(() => Array.from(document.querySelectorAll('.dm-toast')).find((x) => x.textContent.includes(t('raster.ortho.saved', { name: 'Sparat ortofoto (knapp)' }))), 8000, 'the toast'));
+            const byButton = (await datasets.list()).find((d) => d.kind === 'raster' && d.name === 'Sparat ortofoto (knapp)');
+            if (byButton) made.push(byButton.id);
+            assert.ok(byButton && byButton.raster.files[0].preview.bounds.length === 2, 'a raster from the button');
+            const open = /** @type {HTMLElement} */ (Array.from(toast.querySelectorAll('dm-button')).find((b) => b.textContent.trim() === t('import.open.bearbeta')).querySelector('button'));
+            open.click();
+            assert.ok(opened.length === 1 && opened[0].id === byButton.id, 'the toast opens it');
+          } finally { button.remove(); closeDialogs(); }
+          assert.ok(all.length === read && asked.length === questions, 'nothing asked or read to keep it');
+          // The place of a new building: the saved raster is offered as its background and drawn without anything asked or fetched.
+          const tomt = await datasets.create({ name: 'Tomt på sparat ortofoto', columns: [{ name: 'namn', type: 'text' }, { name: 'geometry', type: 'text' }], rows: [['Huset', JSON.stringify(square)]] });
+          made.push(tomt.id);
+          document.body.appendChild(site.el);
+          site.setDataset(tomt.id);
+          /** @type {HTMLDetailsElement} */ (site.el).open = true;
+          await site.draw();
+          const value = 'raster:' + meta.id;
+          await waitFor(() => site.handle && site.state.rasters.some((o) => o.value === value), 8000, 'the saved raster among the backgrounds');
+          const offered = site.state.rasters.find((o) => o.value === value);
+          assert.ok(offered.label === meta.name && offered.group === t('map.basemap.group.rasters'), JSON.stringify(offered));
+          assert.ok(/** @type {any} */ (site.el.querySelector('[data-site-map-basemap]')).options.some((o) => o.value === value), 'in the choice of background');
+          const fetched = all.length; const before = asked.length;
+          assert.equal(await site.choose(value), true);
+          const under = imageLayers(site.handle.map);
+          assert.ok(under.length === 1 && /dm-raster-image/.test(under[0].options.className) && sameBounds(under[0].getBounds(), f.preview.bounds), 'the saved picture under the place, where it was shown');
+          assert.ok(all.length === fetched && asked.length === before, 'nothing asked or fetched');
+          const note = site.el.querySelector('[data-site-map-note]').textContent;
+          assert.ok(note.includes(meta.name) && note.includes('CC BY 4.0'), 'the note names the background and its licence: ' + note);
+          assert.ok(!site.el.querySelector('[data-ortho-save]'), 'no orthophoto to keep from a raster');
+        } finally { hd.finalize(); }
+      });
+    } finally {
+      site.destroy(); site.el.remove(); el.remove();
+      for (const id of made) await datasets.remove(id).catch(() => {});
+    }
+    return 'ok';
+  }, 60000);
+
   /** The worker that reads the files, once a reading has started it. */
   const orthoWorker = () => D.workers.list().find((w) => /** @type {any} */ (w).dmNamespace === 'geotiff');
   /** A finer file over b.tif's square: 1 024 × 1 024 at 25 cm, red the column and green the row modulo 256, blue 30. */
