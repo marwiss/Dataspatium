@@ -334,6 +334,9 @@
         if (hit.answered) tier.noteServer(connector, hit.caps.tier);
         return hit.caps;
       }
+      // The first request to a server asks for the purpose OpenCDE, as discovering and signing in do (a source the deployment
+      // added was never discovered); a refusal is not kept as "no capabilities".
+      await consent.require('opencde', { host: hostOf(connector.baseUrl) });
       let caps = EMPTY_CAPS; let answered = false;
       try {
         const ask = (path) => send(connector, { url: trimUrl(connector.baseUrl) + path, method: 'GET', headers: { Accept: 'application/json' }, retries: 0, rateKey: connector.id });
@@ -356,7 +359,8 @@
     /**
      * The Dataregium server a deployment names (dataspatium.config.js, platform/tier.deployment): added as a source once, without
      * contacting it; the user opens it and signs in, after the consent, like any other. Nothing happens when a source with that
-     * address exists already or the same server was added before.
+     * address exists already or the same server was added before. A source's id comes from its host alone, so a source on the same
+     * host under another address (scheme, port or path) is the user's own and is never replaced: the server is then not added.
      * @param {{baseUrl: string, name?: string}|null} server
      * @returns {Promise<any>} the new connector, or null
      */
@@ -364,8 +368,12 @@
       if (!server || !server.baseUrl) return null;
       const address = trimUrl(server.baseUrl).toLowerCase();
       if ((await idb.getSetting(DEPLOYED, null)) === address) return null;
-      const known = (await connectors.list()).some((c) => isOpenCde(c) && trimUrl(c.baseUrl).toLowerCase() === address);
-      const made = known ? null : (await databases.createConnector('opencde', { baseUrl: server.baseUrl, name: server.name || '' }, { discover: false })).connector;
+      const all = await connectors.list();
+      const known = all.some((c) => isOpenCde(c) && trimUrl(c.baseUrl).toLowerCase() === address);
+      const id = databases.build(FAMILY, { baseUrl: server.baseUrl }).id;
+      const taken = !known && all.some((c) => c.id === id);
+      if (taken) console.warn('[dataspatium.config.js] a source on the same host exists already, so the server was not added:', server.baseUrl);
+      const made = known || taken ? null : (await databases.createConnector('opencde', { baseUrl: server.baseUrl, name: server.name || '' }, { discover: false })).connector;
       await idb.setSetting(DEPLOYED, address);
       return made;
     }
