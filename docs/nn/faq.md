@@ -97,6 +97,33 @@ Chrome via ikonet *Installer* i adressefeltet eller menyen i nettlesaren. Han f�
 filene blir lagra i nettlesaren slik at han fungerer utan nettverk, og lagringa blir varig. Nye versjonar blir henta når
 appen blir opna igjen med nettverk.
 
+## How do I set up the app for an organisation?
+
+Next to `index.html` lies `dataspatium.config.js`, which the app reads before anything else, from the folder (file://)
+as well as from a web server. As shipped it sets nothing. Remove the comment markers around the example and keep the
+lines you need:
+
+```js
+globalThis.DATASPATIUM_CONFIG = {
+  tier: 'bim-gis',
+  language: 'sv',
+  server: { baseUrl: 'https://cde.example.org', name: 'Our Dataregium' },
+};
+```
+
+- `tier`: the highest tier the users can choose: `documents` (Documents), `bim-gis` (BIM + GIS) or `experimental`
+  (Experimental). The users choose their own tier under Manage > Workspace, at most this one. Without `tier`, or with a
+  value that is not one of the three, there is no ceiling.
+- `language`: the language before the user chooses one: `sv`, `en`, `da`, `nb`, `nn`, `fi` or `is`. The language
+  question at the first start is then skipped; the language button changes it as usual. Dataspatium Mobil (`m/`) uses
+  the same language.
+- `server`: a Dataregium server added as a source in Import at the first start. The app does not contact it until the
+  user opens the source and agrees to OpenCDE servers. A source the user removes is not added again, and a source the
+  user already has on the same host is never replaced.
+
+A value that cannot be read is skipped with a warning in the console, so a mistyped file never locks the app. A new version of
+the app ships a new file with nothing set: keep a copy of yours and put it back after updating.
+
 ## Kan eg opne index.html direkte i ZIP-fila?
 
 Nei. Pakk ut ZIP-fila først (høgreklikk og vel *Pakk ut alle* i Windows), og opne deretter `index.html` i den utpakka

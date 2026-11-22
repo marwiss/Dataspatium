@@ -239,6 +239,29 @@ hlutaspjaldið, vinnusvæðið og eiginleikaspjaldið. Texti og reitarammar hafa
 og dökku þema. Vega lýsir myndritum úr myndritasmiðnum fyrir skjálesara; tölurnar á bak við R-myndrit og D3-snið eru í
 töflunni í Vinna.
 
+## Tiers
+
+Dataspatium and its server Dataregium are one program in three tiers, each building on the one below:
+
+1. **Documents**: tables, processing, analysis, charts (the chart builder's maps too), documents and sharing, geodata
+   files as tables and places per area (the tab *Geo*), plan files and the documents on a Dataregium server.
+2. **BIM + GIS**: also BIM models in 3D with their checks and measures, BCF issues and BCF files, the map views in Process
+   and Visualise with the other geo tools and QGIS projects, the geodata services, background maps and orthophotos,
+   Dataregium's teams and AI modelling.
+3. **Experimental**: also the IFC graph, the AI assistant and what is on trial.
+
+With no choice made, tier 2 applies. The tier is chosen under **Manage > Workspace > Tier** (or with the command *Tier*
+in the palette, Ctrl+K) and applies at once. A lower tier hides functions but keeps every dataset: an IFC model then shows
+as a table, and sources that belong to a higher tier stay but are left out of the list. A higher tier shows everything
+again. A model whose own views the tier hides says in Manage, Process and Check which tier the views belong to, with the
+button *Switch to …*; so do a saved chart of a hidden type, a file that only a hidden function reads (BCF files and QGIS
+projects) and a link (`#/<mode>/<dataset>`) to such a model. Other functions of a higher tier are not shown. Flows,
+commands, the bridge and recipes do not run what the tier hides, and they say which tier it belongs to.
+
+Whoever deploys the app can set a highest tier (see [faq.md](faq.md#how-do-i-set-up-the-app-for-an-organisation)); the
+tiers above it cannot then be chosen. A Dataregium server may also offer a lower tier, which then applies to what needs
+the server, such as the BCF issues and the IFC graph. The app remembers what the server said, also after a reload.
+
 ## Tungumál
 
 Viðmótið er á sænsku, dönsku, norsku (bókmáli og nýnorsku), finnsku, íslensku og ensku. Í fyrsta skipti sem forritið er opnað velurðu

@@ -112,15 +112,17 @@ globalThis.DATASPATIUM_CONFIG = {
 };
 ```
 
-- `tier`: the highest tier the users can choose: `documents` (Documents), `bim-gis` (BIM and GIS) or `experimental`
-  (Experimental). The users choose their own tier under Hantera > Workspace, at most this one. Without `tier` there is no
-  ceiling.
+- `tier`: the highest tier the users can choose: `documents` (Documents), `bim-gis` (BIM + GIS) or `experimental`
+  (Experimental). The users choose their own tier under Manage > Workspace, at most this one. Without `tier`, or with a
+  value that is not one of the three, there is no ceiling.
 - `language`: the language before the user chooses one: `sv`, `en`, `da`, `nb`, `nn`, `fi` or `is`. The language
-  question at the first start is then skipped; the language button changes it as usual.
-- `server`: a Dataregium server added as a source in Inhämta at the first start. The app does not contact it until the
-  user opens the source and agrees to the network access. A source the user removes is not added again.
+  question at the first start is then skipped; the language button changes it as usual. Dataspatium Mobil (`m/`) uses
+  the same language.
+- `server`: a Dataregium server added as a source in Import at the first start. The app does not contact it until the
+  user opens the source and agrees to OpenCDE servers. A source the user removes is not added again, and a source the
+  user already has on the same host is never replaced.
 
-A value that cannot be read is skipped (the console says so), so a mistyped file never locks the app. A new version of
+A value that cannot be read is skipped with a warning in the console, so a mistyped file never locks the app. A new version of
 the app ships a new file with nothing set: keep a copy of yours and put it back after updating.
 
 ## Can I open index.html directly inside the ZIP file?
@@ -287,10 +289,12 @@ without a text layer can be read with text recognition. See [dokument.md](dokume
 
 ## Can I show maps and compute on geodata?
 
-Yes. A dataset with geometry (GeoJSON, Shapefile, GeoPackage, KML, GPX) or longitude and latitude opens as a map in
-Process. In Visualise the chart kind *Map* makes map views with several layers and a background map for dashboards and
-publishing, and in Analyse the tab *Geo* computes area, points in areas, nearest, buffers and overlays without code.
-QGIS projects can be dropped in Import. Background maps are fetched only after your consent. See [kartor.md](kartor.md).
+Yes. In the tier BIM + GIS a dataset with geometry (GeoJSON, Shapefile, GeoPackage, KML, GPX) or longitude and latitude
+opens as a map in Process. In Visualise the chart kind *Map* makes map views with several layers and a background map for
+dashboards and publishing, and in Analyse the tab *Geo* computes area, points in areas, nearest, buffers and overlays
+without code. QGIS projects can be dropped in Import. Background maps are fetched only after your consent. In the tier
+Documents there are the geodata files as tables, the chart builder's maps and the tab *Geo* with points in areas. See
+[kartor.md](kartor.md).
 
 ## How do I see what the app sends to an OpenCDE server?
 
@@ -301,7 +305,7 @@ computer unless you save it as JSON or a dataset yourself. See [kallor.md](kallo
 
 ## Can I see a model's IFC graph and query it with Cypher?
 
-Yes, if the model is on a Dataregium server. Open the source in Import, the card *IFC-DB* (formerly IFC-LPG) or a Neo4j source, and choose a model and a view.
+Yes, in the tier Experimental (Manage > Workspace > Tier), if the model is on a Dataregium server. Open the source in Import, the card *IFC-DB* (formerly IFC-LPG) or a Neo4j source, and choose a model and a view.
 Nodes and relationships are drawn, you fetch neighbours with a double click and write your own Cypher in the box. See [grafer.md](grafer.md).
 
 ## Does the app work with a server that has only BCF API 2.1?
