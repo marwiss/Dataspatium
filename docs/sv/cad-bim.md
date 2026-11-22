@@ -629,7 +629,9 @@ posterna: delarna heter efter fasaden, sitt slag och sin plats, till exempel Fas
 rad). En glasfasadstyp från `define_type` (IfcCurtainWallType) ger delarna typer med typens namn: en IfcPlateType CURTAIN_PANEL med
 glaset som ett materialskikt och en IfcMemberType MULLION med ramens material, till exempel aluminium eller stål, och profilens bredd
 och djup som materialprofil (i IFC2X3 bara materialet), så att delarna får sitt slag, sitt material och sina mått från typerna; poster
-och reglar delar typ och mått, så mängder per typ räknar dem tillsammans. Utan typ är posterna och reglarna 0,05 × 0,15 m aluminium och
+och reglar delar typ och mått, så mängder per typ räknar dem tillsammans. En post eller regel med typ får i IFC4 och IFC4.3 också en
+axel ('Axis', en linje genom profilens mitt längs hela delen) intill sin kropp, som IFC4.3 anger för en profil med
+IfcMaterialProfileSetUsage. Utan typ är posterna och reglarna 0,05 × 0,15 m aluminium och
 glasen 0,03 m glas, med PredefinedType på själva delarna; IFC2X3 har ingen PredefinedType på IfcPlate och IfcMember, och rapporten
 säger det. Topologin läser en glasfasad som en vägg, så att den kan sluta en våning tillsammans med väggarna; den får IsExternal ur
 topologin i Pset_CurtainWallCommon och basmängder i Qto_CurtainWallQuantities (längd, höjd, djup och sidans area). Posterna och

@@ -650,7 +650,9 @@ a mullion: the parts are named by the curtain wall, their kind and their place, 
 Panel 1.1 (bay and row). A curtain wall type from `define_type` (IfcCurtainWallType) gives the parts types of its name: an IfcPlateType
 CURTAIN_PANEL with the glass as a material layer, and an IfcMemberType MULLION with the frame's material, such as aluminium or steel,
 and the members' width and depth as its material profile (only the material in IFC2X3), so that the parts take their kind, material and
-sizes from their types; mullions and transoms share the type and its sizes, so quantities by type count them together. Without a type
+sizes from their types; mullions and transoms share the type and its sizes, so quantities by type count them together. A typed mullion
+or transom in IFC4 and IFC4.3 also gets an axis ('Axis', a line through the profile's centre along the whole part) beside its body, as
+IFC4.3 asks of a profile with IfcMaterialProfileSetUsage. Without a type
 the mullions and transoms are 0.05 × 0.15 m of aluminium and the panels 0.03 m of glass, with the PredefinedType on the parts
 themselves; IFC2X3 has no PredefinedType on IfcPlate and IfcMember, and the report says so. The topology reads a curtain wall as a
 wall, so that it can close a storey together with the walls; it gets IsExternal from the topology in Pset_CurtainWallCommon and base

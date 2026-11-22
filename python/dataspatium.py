@@ -1810,11 +1810,13 @@ class _ChangeSet:
         delete_elements
             a whole goes with its parts (a curtain wall's, a stair's, a roof's), so that none is left in no storey and no whole.
 
-    Since PLAN.md items 6 and 7 (2026-11-22), so that the app's own IDS Avfallshantering (AH-02) finds their volumes:
+    Since PLAN.md items 6 and 7 (2026-11-22):
 
         create_element, and a curtain wall's parts
             the columns, beams and members get Qto_ColumnBaseQuantities, Qto_BeamBaseQuantities and Qto_MemberBaseQuantities and the
-            panels Qto_PlateBaseQuantities from their bodies (qto_profile, qto_plate).
+            panels Qto_PlateBaseQuantities from their bodies (qto_profile, qto_plate), so that the app's own IDS Avfallshantering
+            (AH-02) finds their volumes; a member with an IfcMaterialProfileSetUsage (a typed mullion or transom, IFC4 and later)
+            also gets an 'Axis' along its body, as IFC4.3 says (member_axis).
     """
 
     CREATES = ("create_wall", "create_slab", "create_roof", "create_opening", "create_spaces", "define_type", "create_element")
@@ -5276,7 +5278,8 @@ class _ChangeSet:
         """The kinds and materials of a curtain wall and its parts. A type types the curtain wall. With its parts' types
         (curtain_parts) the panels are typed by the plate type and share one IfcMaterialLayerSetUsage of its layers (AXIS3, through
         their thickness), and the members by the member type with, in IFC4 and later, one IfcMaterialProfileSetUsage of its profiles
-        (CardinalPoint 5: the profile's centre on the member's axis); the kinds are then the types' (OJT001). Without them the panels
+        (CardinalPoint 5: the profile's centre on the member's axis) and their 'Axis' (member_axis); the kinds are then the types'
+        (OJT001). Without them the panels
         are IfcPlate CURTAIN_PANEL of Glass and the members IfcMember MULLION of Aluminium (CURTAIN_MATERIALS), one
         IfcRelAssociatesMaterial each for all of them; IFC2X3 has no PredefinedType on plates and members, which a note says."""
         import ifcopenshell.guid
@@ -5296,6 +5299,8 @@ class _ChangeSet:
             profiles = self.type_material(member, "IfcMaterialProfileSet") if self.m.schema != "IFC2X3" else None
             if profiles is not None:
                 associate_all(members, self.m.create_entity("IfcMaterialProfileSetUsage", ForProfileSet=profiles, CardinalPoint=5))
+                for e in members:
+                    self.member_axis(e)
             return
         old = self.m.schema == "IFC2X3"
         if old:
@@ -5309,6 +5314,15 @@ class _ChangeSet:
         (glass_name, glass_category), (frame_name, frame_category) = self.CURTAIN_MATERIALS
         associate_all(panels, self.named_material(glass_name, None if old else glass_category))
         associate_all(members, self.named_material(frame_name, None if old else frame_category))
+
+    def member_axis(self, e):
+        """The 'Axis' (Curve3D) that IFC4.3 asks of a member with an IfcMaterialProfileSetUsage, added after its body as a wall's is:
+        the line its body (curtain_member's) is extruded along, from its placement's origin up its z through the profile's centre
+        (CardinalPoint 5)."""
+        rep = e.Representation
+        depth = float(rep.Representations[0].Items[0].Depth)
+        line = self.m.createIfcPolyline([self.point(0.0, 0.0, 0.0), self.point(0.0, 0.0, depth)])
+        rep.Representations = list(rep.Representations) + [self.m.createIfcShapeRepresentation(self.axis_context(), "Axis", "Curve3D", [line])]
 
     def qto_curtain_wall(self, e):
         """A curtain wall that create_element made in this change set (curtain_memo): Length along its axis, Height, Width the members'

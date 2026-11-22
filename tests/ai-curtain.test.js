@@ -7,11 +7,11 @@
  * the real Pyodide (`?python=1` or cached components) the wheel makes, in an IFC4.3 model, a typed façade that closes a storey and an
  * untyped glass partition across it: the curtain walls contained in the storey with an Axis and no body, their mullions and transoms
  * (IfcMember MULLION) and panels (IfcPlate CURTAIN_PANEL) aggregated in them and placed relative to them on the grid, the parts'
- * types and their layer and profile set usages, IsExternal from the topology, the quantities of the curtain walls and of their parts
- * (Qto_MemberBaseQuantities, Qto_PlateBaseQuantities) and no rule failures, and the model passes the app's own IDS Avfallshantering
- * (PLAN.md item 7); a second change set takes the type by its GlobalId and its sizes from the types' material sets; IFC4 and IFC2X3
- * make the same with the schemas' differences (IFC4 passes the IDS too, IFC2X3 gets the quantity sets with IFC4's names), and
- * deleting a curtain wall takes its parts with it.
+ * types and their layer and profile set usages, the typed members' 'Axis' (IFC4.3, PLAN.md item 6), IsExternal from the topology,
+ * the quantities of the curtain walls and of their parts (Qto_MemberBaseQuantities, Qto_PlateBaseQuantities) and no rule failures,
+ * and the model passes the app's own IDS Avfallshantering (PLAN.md item 7); a second change set takes the type by its GlobalId and its
+ * sizes from the types' material sets; IFC4 and IFC2X3 make the same with the schemas' differences (IFC4 passes the IDS too, IFC2X3
+ * gets the quantity sets with IFC4's names and, without profile sets, no Axis), and deleting a curtain wall takes its parts with it.
  */
 (function () {
   'use strict';
@@ -77,12 +77,16 @@
     return JSON.parse(stdoutOf(out).trim().split('\n').pop() || 'null');
   }
   /** Per curtain wall by name: storey, representations, type, IsExternal, quantities (metres), part kinds, parts by name with their
-   * box, frame, materials, quantity sets (metres) and representations. */
+   * box, frame, materials, quantity sets (metres), representations and the points of their 'Axis' in the world (metres). */
   const CURTAINS = [
     'def qtos(e):',
     '    per = {"IfcQuantityLength": scale, "IfcQuantityArea": scale * scale, "IfcQuantityVolume": scale ** 3}',
     '    return {d.Name: dict({q.Name: round(float(q[3]) * per.get(q.is_a(), 1.0), 6) for q in d.Quantities}, method=d.MethodOfMeasurement)',
     '            for r in e.IsDefinedBy or () if r.is_a("IfcRelDefinesByProperties") for d in [r.RelatingPropertyDefinition] if d.is_a("IfcElementQuantity")}',
+    'def axis(e):',
+    '    M = matrix(e.ObjectPlacement)',
+    '    return [[round((M[k][0] * c[0] + M[k][1] * c[1] + M[k][2] * c[2] + M[k][3]) * scale, 4) + 0.0 for k in range(3)]',
+    '            for r in e.Representation.Representations if r.RepresentationIdentifier == "Axis" for i in r.Items for c in [(list(p.Coordinates) + [0.0])[:3] for p in i.Points]]',
     'facts = {"walls": {w.Name: el.get_pset(w, "Pset_WallCommon", "IsExternal") for w in m.by_type("IfcWall")}, "curtains": {},',
     '         "types": sorted("%s %s %s" % (t.is_a(), t.Name, t.PredefinedType) for t in m.by_type("IfcPlateType") + m.by_type("IfcMemberType"))}',
     'for cw in m.by_type("IfcCurtainWall"):',
@@ -96,7 +100,7 @@
     '        kinds[key] = kinds.get(key, 0) + 1',
     '        named[p.Name] = {"box": box(world(p, items(p))), "frame": frame(p), "contained": bool(p.ContainedInStructure), "own_pt": getattr(p, "PredefinedType", None),',
     '                         "materials": [[x.Name, getattr(x, "Category", None)] for x in el.get_materials(p)], "rel": p.ObjectPlacement.PlacementRelTo == cw.ObjectPlacement,',
-    '                         "qto": qtos(p), "rep": [[r.RepresentationIdentifier, r.RepresentationType] for r in p.Representation.Representations]}',
+    '                         "qto": qtos(p), "rep": [[r.RepresentationIdentifier, r.RepresentationType] for r in p.Representation.Representations], "axis": axis(p)}',
     '    q = el.get_pset(cw, "Qto_CurtainWallQuantities") or {}',
     '    per = {"Length": scale, "Height": scale, "Width": scale, "GrossSideArea": scale * scale, "NetSideArea": scale * scale}',
     '    facts["curtains"][cw.Name] = {"storey": c.Name if c else None, "rep": [[r.RepresentationIdentifier, r.RepresentationType] for r in cw.Representation.Representations],',
@@ -264,6 +268,10 @@
     sameQto(assert, G11.qto.Qto_PlateBaseQuantities, panelQto(1.4325, 1.41, 0.04), 'the first panel\'s Qto_PlateBaseQuantities');
     assert.ok(Object.entries(F.parts).every(([name, p]) => Object.keys(p.qto).join() === (name.startsWith(`Fasad ${w.panel} `) ? 'Qto_PlateBaseQuantities' : 'Qto_MemberBaseQuantities')),
       'every part has its own one set: ' + JSON.stringify(Object.entries(F.parts).map(([name, p]) => [name, Object.keys(p.qto)])));
+    // A member with IfcMaterialProfileSetUsage has an 'Axis' (IFC4.3), after its Body: the line it is extruded along, through the profile's centre.
+    const reps = (parts, prefix) => Object.entries(parts).map(([name, p]) => (name.startsWith(prefix) ? 'panel ' : 'member ') + JSON.stringify(p.rep));
+    assert.deepEqual(Array.from(new Set(reps(F.parts, `Fasad ${w.panel} `))).sort(), ['member [["Body","SweptSolid"],["Axis","Curve3D"]]', 'panel [["Body","SweptSolid"]]'], 'the typed members\' Body and Axis, the panels\' Body');
+    assert.ok(nearAll(P1.axis.flat(), [11.97, 8, 0, 11.97, 8, 3]) && nearAll(T11.axis.flat(), [11.94, 8, 0.03, 10.5075, 8, 0.03]), 'the first mullion\'s axis up its middle, the first transom\'s along the façade: ' + JSON.stringify([P1.axis, T11.axis]));
     const G = f.curtains['Glasvägg'];
     assert.ok(G && G.type === null && G.pt === 'NOTDEFINED' && G.external === false, 'the partition untyped and internal: ' + JSON.stringify(Object.assign({}, G, { parts: undefined })));
     assert.deepEqual(G.kinds, { 'IfcMember MULLION None IfcMaterial': 9, 'IfcPlate CURTAIN_PANEL None IfcMaterial': 4 }, 'its parts\' kinds on themselves, 3 + 3 × 2 members and 2 × 2 panels: ' + JSON.stringify(G.kinds));
@@ -272,6 +280,7 @@
     assert.ok(g1 && g1.own_pt === 'CURTAIN_PANEL' && JSON.stringify(g1.materials) === '[["Glass","glass"]]' && JSON.stringify(G.parts[`Glasvägg ${w.mullion} 1`].materials) === '[["Aluminium","aluminium"]]', 'Glass and Aluminium without a type: ' + JSON.stringify(g1));
     sameQto(assert, G.parts[`Glasvägg ${w.mullion} 1`].qto.Qto_MemberBaseQuantities, memberQto(2.5, 0.05, 0.15), 'the partition\'s first mullion, 0.05 × 0.15 m without a type');
     sameQto(assert, g1.qto.Qto_PlateBaseQuantities, panelQto(3.925, 1.175, 0.03), 'its first panel');
+    assert.deepEqual(Array.from(new Set(reps(G.parts, `Glasvägg ${w.panel} `))).sort(), ['member [["Body","SweptSolid"]]', 'panel [["Body","SweptSolid"]]'], 'the untyped parts, without a profile set, have their Body alone');
     // The written model as a model of its own: a second change set adds a façade of the type by its GlobalId.
     const typeGuid = (res.report.created || []).find((e) => e.ifc_class === 'IfcCurtainWallType' && e.name === 'GF1');
     const again = await importer.run(new File([res.bytes], 'glasfasadprov-2.ifc', { type: 'application/octet-stream' }), { format: 'model' }, null, 'Glasfasadprov 2');
@@ -294,6 +303,7 @@
     assert.deepEqual(g.types, ['IfcMemberType GF1 MULLION', 'IfcPlateType GF1 CURTAIN_PANEL'], 'no new part types');
     assert.deepEqual(F2.kinds, { 'IfcMember MULLION IfcMemberType GF1 IfcMaterialProfileSetUsage': 5 + 4 * 2, 'IfcPlate CURTAIN_PANEL IfcPlateType GF1 IfcMaterialLayerSetUsage': 4 }, 'typed by the same part types: ' + JSON.stringify(F2.kinds));
     assert.ok(nearAll(F2.parts[`Fasad 2 ${w.mullion} 1`].box, [13.9, 0, 0, 14.1, 0.06, 3]), 'the members 0.06 × 0.2 m from the profile set, along +y: ' + JSON.stringify(F2.parts[`Fasad 2 ${w.mullion} 1`]));
+    assert.ok(nearAll(F2.parts[`Fasad 2 ${w.mullion} 1`].axis.flat(), [14, 0.03, 0, 14, 0.03, 3]), 'and their Axis: ' + JSON.stringify(F2.parts[`Fasad 2 ${w.mullion} 1`].axis));
     assert.ok(near(F2.parts[`Fasad 2 ${w.panel} 1.1`].box[3] - F2.parts[`Fasad 2 ${w.panel} 1.1`].box[0], 0.04), 'the panels 0.04 m from the layer set: ' + JSON.stringify(F2.parts[`Fasad 2 ${w.panel} 1.1`]));
     return 'ok';
   }, 900000);
@@ -330,6 +340,9 @@
       const words = { mullion: i18n.t('ai.change.curtain.mullion'), panel: i18n.t('ai.change.curtain.panel') };
       sameQto(assert, f.curtains.Fasad.parts[`Fasad ${words.mullion} 1`].qto.Qto_MemberBaseQuantities, memberQto(3, 0.06, 0.2), schema + ': the first mullion');
       sameQto(assert, f.curtains['Glasvägg'].parts[`Glasvägg ${words.panel} 1.1`].qto.Qto_PlateBaseQuantities, panelQto(3.925, 1.175, 0.03), schema + ': the partition\'s first panel');
+      // IFC4's typed members have their profile set usage and so an Axis; IFC2X3's, of the material alone, have neither.
+      const typedReps = Object.entries(f.curtains.Fasad.parts).filter(([name]) => !name.startsWith(`Fasad ${words.panel} `)).map(([, p]) => JSON.stringify(p.rep));
+      assert.ok(typedReps.length === 33 && typedReps.every((r) => r === (schema === 'IFC2X3' ? '[["Body","SweptSolid"]]' : '[["Body","SweptSolid"],["Axis","Curve3D"]]')), schema + ': the typed members\' representations: ' + Array.from(new Set(typedReps)).join(' | '));
       if (schema !== 'IFC4') continue;
       // Deleting the partition takes its parts with it, so that none is left in no storey and no whole (SPS007).
       const partition = (res.report.created || []).find((e) => e.ifc_class === 'IfcCurtainWall' && e.name === 'Glasvägg');
