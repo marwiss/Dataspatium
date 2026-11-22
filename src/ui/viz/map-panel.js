@@ -179,7 +179,8 @@
       function layerCard(layer) {
         const index = def.layers.indexOf(layer);
         const details = h('details', { class: 'dm-more dm-map-layer', open: def.layers.length <= 2 ? true : null });
-        const head = h('summary', null, h('span', { class: 'dm-map-layer-swatch', style: { background: (layer.style && (layer.style.fillColor || layer.style.color)) || '' } }), h('span', { class: 'dm-truncate', text: layer.name || layer.datasetName || layer.boundary }));
+        // The swatch shows the layer's colour only when it is a colour: an imported chart can name anything there.
+        const head = h('summary', null, h('span', { class: 'dm-map-layer-swatch', style: { background: leaflet.swatchColor(layer) } }), h('span', { class: 'dm-truncate', text: layer.name || layer.datasetName || layer.boundary }));
         const fields = h('div', { class: 'dm-stack-sm' });
         details.append(head, fields);
         fields.appendChild(h('div', { class: 'dm-row-wrap' },

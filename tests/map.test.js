@@ -156,6 +156,126 @@
     return 'ok';
   }, 30000);
 
+  /**
+   * A published page in a frame with its scripts run in order. The test page's content policy, which a srcdoc frame inherits,
+   * keeps inline scripts from running there, so the test runs them; `loaded(win)` is called once the page has Leaflet, before
+   * the map's own script. Returns null when the page's scripts ran by themselves (no policy), so nothing could be hooked.
+   */
+  async function publishedFrame(blob, loaded, fn) {
+    const frame = document.createElement('iframe');
+    frame.style.cssText = 'position:absolute; left:-10000px; top:0; width:900px; height:700px;';
+    frame.srcdoc = await blob.text();
+    document.body.appendChild(frame);
+    try {
+      await new Promise((resolve) => { frame.onload = resolve; });
+      const win = /** @type {any} */ (frame.contentWindow);
+      if (win.L) return null;
+      let hooked = false;
+      for (const s of Array.from(frame.contentDocument.querySelectorAll('script:not([src])'))) {
+        if (s.type && !/javascript/.test(s.type)) continue;
+        win.eval(s.textContent);
+        if (win.L && !hooked) { hooked = true; loaded(win); }
+      }
+      return await fn(frame.contentDocument, win);
+    } finally { frame.remove(); }
+  }
+
+  test('map: a label from the data stays text, attributions are escaped and colours from a chart definition are colours, in the app, the export and published HTML', async (assert) => {
+    const theme = D.require('viz/theme');
+    const viewers = D.require('docgen/viewers');
+    const GIF = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    const LABEL = '<img src="https://img.example.invalid/label.png" onerror="window.__dmMapLabel=1"><style>body{display:none}</style>Plats A';
+    const ATTRIBUTION = '<img src="https://img.example.invalid/attr.png" onerror="window.__dmMapAttr=1">';
+    const ESCAPED = '&lt;img src=&quot;https://img.example.invalid/attr.png&quot; onerror=&quot;window.__dmMapAttr=1&quot;&gt;';
+    // The colour checker itself: colours pass, anything that is more than a colour gives null.
+    for (const ok of ['#0072b2', '#abc', '#0072b2cc', 'rgb(0, 114, 178)', 'rgba(0 114 178 / 50%)', 'hsl(200, 100%, 35%)', 'red', 'Transparent']) assert.ok(theme.cssColor(ok), 'a colour: ' + ok);
+    for (const bad of ['url(https://img.example.invalid/x.png)', 'red;background:url(x)', '#123456"/><image href="x"/>', 'notacolour', 'rgb(1,2,3);x', 'expression(alert(1))', '', null, 42, { a: 1 }]) assert.equal(theme.cssColor(bad), null, 'not a colour: ' + String(bad));
+    const meta = await datasets.create({ name: 'Märkta platser', columns: [{ name: 'namn', type: 'text' }, { name: 'lon', type: 'number' }, { name: 'lat', type: 'number' }, { name: 'v', type: 'integer' }], rows: [[LABEL, 17.1, 60.1, 3], ['B', 17.3, 60.2, 7]] });
+    created.push(meta.id);
+    const columns = await datasets.columns(meta.id);
+    // A chart as an imported viz file can carry it (charts.importJson keeps the map definition as it is).
+    const chart = charts.create('map', meta, 'Märkt karta');
+    chart.map = leaflet.defaultMap(columns, meta);
+    const layer = chart.map.layers[0];
+    assert.equal(layer.label, 'namn', 'the name column is the label without anyone choosing it');
+    Object.assign(layer.style, { color: '#123456"/><image href="https://img.example.invalid/svg.png"/><path d="', fillColor: 'url(https://img.example.invalid/fill.png)', weight: '1" onload="window.__dmMapW=1' });
+    layer.colorBy = { column: 'v', mode: 'graduated', ranges: [{ lower: 0, upper: 5, color: 'red;background-image:url(https://img.example.invalid/legend.png)', label: 'låg' }, { lower: 5, upper: 10, color: '#c81e1e', label: 'hög' }] };
+    chart.map.height = '300px;background:url(https://img.example.invalid/h.png)';
+    chart.map.basemap = 'custom';
+    chart.map.custom = { url: 'https://tiles.example.invalid/{z}/{x}/{y}.png', attribution: ATTRIBUTION };
+    chart.map.layers.unshift(leaflet.wmsLayer({ url: 'https://wms.example.invalid/wms', layers: 'topo', attribution: ATTRIBUTION }, 'WMS'));
+    assert.equal(leaflet.tileSource(chart.map).attribution, ESCAPED, 'the custom template\'s attribution is escaped');
+    assert.equal(leaflet.wmsSource(chart.map.layers[0].wms).attribution, ESCAPED, 'a WMS attribution is escaped');
+    assert.equal(leaflet.tileSource({ basemap: 'custom', custom: { url: 'file:///C:/t/{z}/{y}/{x}.png' } }), null, 'a template must be an http(s) address');
+    const key = 'dataspatium.consent';
+    const before = localStorage.getItem(key);
+    localStorage.removeItem(key);
+    const prior = await consent.state('basemaps');
+    await consent.set('basemaps', null);
+    consent.setAsker(async () => ({ allow: true, remember: false }));
+    const el = host(600, 400);
+    try {
+      // The tiles are a data: picture, so the attribution control is Leaflet's own and nothing is fetched.
+      const L = await leaflet.ensure();
+      const made = [];
+      const hd = await leaflet.render(el, chart, { tileFactory: (url, opts) => { made.push(opts.attribution); return L.tileLayer(GIF, { attribution: opts.attribution }); } });
+      assert.deepEqual(made, [ESCAPED, ESCAPED], 'the background map and the WMS layer get the escaped attribution');
+      const credit = el.querySelector('.leaflet-control-attribution');
+      assert.ok(credit && credit.textContent.includes('<img src="https://img.example.invalid/attr.png"'), 'the attribution is shown as text: ' + (credit && credit.textContent));
+      assert.equal(credit.querySelector('img, [onerror]'), null, 'no element from the attribution');
+      const point = hd.groups[0].group.getLayers().find((l) => l.feature.properties.namn === LABEL);
+      point.openTooltip();
+      const tip = await waitFor(() => el.querySelector('.leaflet-tooltip'), 3000, 'the tooltip');
+      assert.equal(tip.querySelector('img, style'), null, 'no element from the label');
+      assert.equal(tip.textContent, LABEL, 'the label as text');
+      assert.ok(theme.cssColor(point.options.color) && theme.cssColor(point.options.fillColor) && typeof point.options.weight === 'number', 'the live layer is drawn in colours and numbers: ' + JSON.stringify([point.options.color, point.options.fillColor, point.options.weight]));
+      assert.ok(Array.from(hd.legend[0].entries).every((e) => theme.cssColor(e.color)), 'the legend in colours');
+      hd.finalize();
+      // The exported SVG: colours and numbers only, no element from a colour.
+      const svg = await (await leaflet.toBlob(chart, 'svg', { width: 400, height: 240 })).text();
+      assert.ok(!/example\.invalid|onload/.test(svg), 'nothing from the definition but colours in the SVG');
+      const sdoc = new DOMParser().parseFromString(svg, 'image/svg+xml');
+      assert.equal(sdoc.querySelector('parsererror, image'), null, 'well formed, without a picture');
+      const paints = Array.from(sdoc.querySelectorAll('path, circle, rect')).flatMap((n) => [n.getAttribute('fill'), n.getAttribute('stroke')]).filter((c) => c && c !== 'none');
+      assert.ok(paints.length > 2 && paints.every((c) => theme.cssColor(c)), 'every paint a colour: ' + paints.join(' '));
+      // Published HTML: the legend in colours, the height a number and the attributions escaped in the tile options.
+      const html = await leaflet.htmlFor('m-marked', chart);
+      const pdoc = new DOMParser().parseFromString(`<!doctype html><body>${html}</body>`, 'text/html');
+      const swatches = Array.from(pdoc.querySelectorAll('.dm-map-legend span'));
+      assert.ok(swatches.length === 2 && swatches.every((s) => { const m = /^background:([^;]*)$/.exec(s.getAttribute('style') || ''); return m && theme.cssColor(m[1]); }), 'legend swatches: ' + swatches.map((s) => s.getAttribute('style')).join(' | '));
+      assert.equal(pdoc.querySelector('.dm-map').getAttribute('style'), 'height:480px');
+      const tileOpts = Array.from(html.matchAll(/L\.tileLayer(?:\.wms)?\("[^"]*",(\{[^{}]*\})\)\.addTo/g)).map((m) => JSON.parse(m[1]));
+      assert.deepEqual(tileOpts.map((o) => o.attribution), [ESCAPED, ESCAPED], 'the published tile layers carry the escaped attribution');
+      // The layer list in Visualisera: the swatch shows no url().
+      const panelChart = Object.assign({}, chart, { map: Object.assign({}, chart.map, { basemap: 'none', layers: [layer] }) });
+      const panel = D.require('ui/viz/map-panel').create({ chart: panelChart, columns, onChange() {}, log() {} });
+      const swatch = /** @type {HTMLElement} */ (panel.el.querySelector('.dm-map-layer-swatch'));
+      panel.destroy();
+      assert.ok(swatch && !/url/i.test(swatch.getAttribute('style') || ''), 'the swatch: ' + (swatch && swatch.getAttribute('style')));
+    } finally {
+      consent.setAsker(null);
+      await consent.set('basemaps', prior === 'granted' || prior === 'denied' ? prior : null);
+      if (before !== null) localStorage.setItem(key, before);
+      el.remove();
+    }
+    // The dataset's own published page (Dela › Publicera): its map gives Leaflet the label as a text node.
+    const bound = [];
+    const ran = await publishedFrame(await viewers.pageFor(meta.id), (win) => {
+      const proto = win.L.Layer.prototype; const bind = proto.bindTooltip;
+      proto.bindTooltip = function (content, opts) { bound.push({ layer: this, content }); return bind.call(this, content, opts); };
+    }, async (page, win) => {
+      assert.ok(bound.length >= 1, 'the published map binds its labels');
+      assert.ok(bound.every((b) => typeof b.content !== 'string'), 'never as a string of HTML');
+      const marked = bound.find((b) => b.layer.feature && b.layer.feature.properties.__label === LABEL);
+      marked.layer.openTooltip();
+      const tip = page.querySelector('.leaflet-tooltip');
+      assert.ok(tip && tip.textContent === LABEL && !tip.querySelector('img, style'), 'the published tooltip is text: ' + (tip && tip.innerHTML));
+      assert.ok(!win.__dmMapLabel, 'nothing from the label ran');
+      return true;
+    });
+    return ran ? 'ok' : 'ok (the page ran its own scripts; its tooltip was not opened)';
+  }, 60000);
+
   test('map: 10 000 polygons render in under 5 seconds and pan without errors', async (assert) => {
     const rows = [];
     for (let i = 0; i < 100; i++) for (let j = 0; j < 100; j++) rows.push([i * 100 + j, (i + j) % 7, JSON.stringify(square(11 + i * 0.1, 55 + j * 0.1, 0.09))]);
