@@ -4350,6 +4350,7 @@
     'commands.err.approval': 'The command {name} changes the app and must be approved first.',
     'commands.err.refused': 'The command {name} was not approved and did not run.',
     'commands.err.cancelled': 'Cancelled before the command ran.',
+    'commands.err.attended': 'The command {name} may have to ask you, so a flow at start does not run it. Run the flow by hand.',
     'commands.err.aborted': 'Cancelled while the command was running.',
     'commands.err.ambiguous': '{what}: several are called {ref}; give the id instead.',
     'commands.err.missing': '{what}: {ref} does not exist.',

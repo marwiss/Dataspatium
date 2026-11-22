@@ -81,6 +81,8 @@
         if (Array.isArray(value) && schema.items) value.forEach((v, i) => out.push(...check(schema.items, v, `${path}[${i}]`)));
         return out;
       }
+      /** What a run nobody watches (a flow at start, ctx.unattended) passes on: `ask: false`, so nothing is asked. */
+      const askOf = (ctx) => (ctx && ctx.unattended ? { ask: false } : {});
       /** Arguments without the fields left out (null), as the steps expect them. */
       function present(args) {
         const out = {};
@@ -129,8 +131,9 @@
 
       // ---------------------------------------------------------------------------- the registry
       /**
-       * Adds a command.
-       * @param {{name: string, writes: boolean, description: string, parameters: any, run: (args: any, ctx: any) => Promise<any>}} cmd
+       * Adds a command. `attended`: it may have to ask the person (signing in, a consent of its own), so a flow at start never
+       * runs it. The run's ctx says `unattended` for a flow at start; whatever the command fetches then gets `ask: false`.
+       * @param {{name: string, writes: boolean, description: string, parameters: any, attended?: boolean, run: (args: any, ctx: any) => Promise<any>}} cmd
        */
       function define(cmd) {
         if (!/^[a-z][a-z0-9_]*$/.test(cmd.name)) throw new Error('A command name is snake_case: ' + cmd.name);
@@ -159,8 +162,10 @@
        * Runs a command. Never throws: the answer says what went wrong, so that a caller (or an AI) can act on it.
        * @param {string} name
        * @param {any} args
-       * @param {{trusted?: boolean, approve?: (cmd: {name: string, description: string}, args: any) => Promise<boolean>, signal?: AbortSignal}} [options]
-       *   trusted: the person runs it themselves (a button, their own flow); approve: asked before a writing command otherwise
+       * @param {{trusted?: boolean, approve?: (cmd: {name: string, description: string}, args: any) => Promise<boolean>, signal?: AbortSignal, unattended?: boolean}} [options]
+       *   trusted: the person runs it themselves (a button, their own flow); approve: asked before a writing command otherwise;
+       *   unattended: a flow at start, which nobody watches: the command asks for nothing (its steps, code and documents get
+       *   `ask: false`), and a command that may have to ask (`attended`) is refused
        * @returns {Promise<{ok: boolean, result?: any, error?: string, refused?: boolean}>}
        */
       async function run(name, args, options = {}) {
@@ -178,8 +183,9 @@
           if (!yes) return { ok: false, refused: true, error: t('commands.err.refused', { name: cmd.name }) };
         }
         if (options.signal && options.signal.aborted) return { ok: false, error: t('commands.err.cancelled') };
+        if (options.unattended && cmd.attended) return { ok: false, error: t('commands.err.attended', { name: cmd.name }) };
         try {
-          const result = await cmd.run(present(given), { signal: options.signal });
+          const result = await cmd.run(present(given), { signal: options.signal, unattended: !!options.unattended });
           return { ok: true, result: result === undefined ? null : JSON.parse(JSON.stringify(result)) };
         } catch (err) {
           console.error('[commands] ' + cmd.name, err);
@@ -337,7 +343,7 @@
         name: 'apply_operation', writes: true,
         description: 'Runs one operation of Bearbeta on a dataset, as a recipe step that can be undone. params is a JSON object as text, with the parameters describe_operation gives.',
         parameters: S.obj({ dataset: DATASET, operation: S.str('operation id'), params: S.str('the parameters as a JSON object, e.g. {"column": "a", "name": "b"}') }),
-        async run(a) {
+        async run(a, ctx = {}) {
           const d = await dataset(a.dataset);
           const op = operation(a.operation);
           let params;
@@ -345,7 +351,7 @@
           const wrong = check(operationSchema(op), params);
           if (wrong.length) throw new Error(t('commands.err.args', { name: op.id, detail: wrong.slice(0, 8).join('; ') }));
           for (const p of op.params || []) if (params[p.name] === undefined && p.default !== undefined) params[p.name] = p.default;
-          const result = await recipes.apply(d.id, op.id, params);
+          const result = await recipes.apply(d.id, op.id, params, askOf(ctx));
           const after = await datasets.get(d.id);
           return { done: recipes.describe(op.id, params, result), rows: after ? after.rowCount || 0 : null, columns: after ? after.columnCount || 0 : null, changed: typeof result.rows === 'number' ? result.rows : null };
         },
@@ -362,12 +368,15 @@
       });
 
       // ---------------------------------------------------------------------------- the steps of flows
-      /** A command from a flow step: the same code, with references by id or name and the files kept here. */
+      /**
+       * A command from a flow step: the same code, with references by id or name and the files kept here. `step` tells data/flows
+       * which step it is, so that a flow at start checks what that step needs.
+       */
       function fromStep(type, name, description, parameters, toParams) {
         define({
-          name, writes: true, description, parameters,
+          name, writes: true, description, parameters, step: { type, toParams },
           async run(a, ctx) {
-            const out = await flows.STEPS[type].run(await toParams(a), { signal: ctx.signal, step: {} });
+            const out = await flows.STEPS[type].run(await toParams(a), { signal: ctx.signal, step: {}, unattended: !!ctx.unattended });
             const made = keep(out.files);
             return Object.assign({ done: out.message || '' }, made.length ? { files: made } : {});
           },
@@ -401,9 +410,9 @@
         name: 'run_flow', writes: true,
         description: 'Runs a saved flow from start to end; answers how each step went and the files it made.',
         parameters: S.obj({ flow: S.str('flow id or name') }),
-        async run(a) {
+        async run(a, ctx = {}) {
           const flow = await item('flows', a.flow, 'flow');
-          const r = await flows.run(await flows.get(flow.id));
+          const r = await flows.run(await flows.get(flow.id), { unattended: !!ctx.unattended });
           const out = await flows.output(flow.id);
           return { ok: r.ok, steps: r.steps.map((s) => ({ type: s.type, ok: s.ok, message: s.message })), files: out ? keep([out]) : [] };
         },
@@ -420,7 +429,7 @@
           if (problem) throw new Error(problem);
           // A plan is a flow that is never stored: its own id keeps its files apart, and run() writes nothing back for it.
           const flow = Object.assign(flows.blank(String(a.name || '')), { id: 'plan_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), steps });
-          const r = await flows.run(flow, { signal: options.signal });
+          const r = await flows.run(flow, { signal: options.signal, unattended: !!options.unattended });
           if (r.aborted && options.signal && options.signal.aborted) throw new Error(t('commands.err.aborted'));
           const out = await flows.output(flow.id);
           return { ok: r.ok, stopped: r.stopped || null, steps: r.steps.map((s) => ({ path: s.path, type: s.type, ok: s.ok, message: s.message })), files: out ? keep([out]) : [] };
@@ -500,10 +509,10 @@
         name: 'make_document', writes: true,
         description: 'Renders a document template (by id or exact name) with a dataset into a file: format docx, pdf, html or md. The file stays in the app until the person fetches it (list_files). Answers the file\'s name.',
         parameters: S.obj({ document: S.str('the template\'s id or exact name'), dataset: DATASET, format: S.str('docx, pdf, html or md') }),
-        async run(a) {
+        async run(a, ctx = {}) {
           const doc = await item('documents', a.document, 'document');
           const d = await dataset(a.dataset);
-          const out = await D.require('docgen/generate').generate(doc, d.id, String(a.format || 'html'));
+          const out = await D.require('docgen/generate').generate(doc, d.id, String(a.format || 'html'), askOf(ctx));
           return { files: keep([{ name: out.filename, blob: out.blob }]) };
         },
       });
@@ -541,13 +550,13 @@
         async run() { const opencde = D.require('api/families/opencde'); return { sources: (await cdeSources()).map((c) => ({ id: c.id, name: c.name, host: hostOf(c.baseUrl), signed_in: opencde.signedIn(c) })) }; },
       });
       define({
-        name: 'cde_projects', writes: false,
+        name: 'cde_projects', attended: true, writes: false,
         description: 'The projects of a signed-in OpenCDE source: id and name.',
         parameters: S.obj({ source: SOURCE }),
         async run(a) { const { opencde, connector } = await cde(a.source); return { projects: (await opencde.projects(connector)).map((p) => ({ id: p.project_id, name: p.name })) }; },
       });
       define({
-        name: 'cde_topics', writes: false,
+        name: 'cde_topics', attended: true, writes: false,
         description: `The BCF topics (issues) of a project as a table: number, guid, title, type, status, priority, assigned to and dates; at most ${MAX_ROWS} rows.`,
         parameters: S.obj({ source: SOURCE, project: PROJECT }),
         async run(a) {
@@ -558,7 +567,7 @@
         },
       });
       define({
-        name: 'cde_create_topic', writes: true,
+        name: 'cde_create_topic', attended: true, writes: true,
         description: 'Creates a BCF topic (issue) in a project: a title, and optionally a description, a status, a priority and a type among the values the server allows. Answers the topic\'s guid and number.',
         parameters: S.obj({ source: SOURCE, project: PROJECT, title: S.str('the title'), description: S.strOrNull('the description'), status: S.strOrNull('topic_status'), priority: S.strOrNull('priority'), type: S.strOrNull('topic_type') }),
         async run(a) {
@@ -574,7 +583,7 @@
         },
       });
       define({
-        name: 'cde_comment', writes: true,
+        name: 'cde_comment', attended: true, writes: true,
         description: 'Adds a comment to a BCF topic (by guid or exact title) in a project. Answers the comment\'s guid.',
         parameters: S.obj({ source: SOURCE, project: PROJECT, topic: S.str('the topic\'s guid or exact title'), comment: S.str('the comment') }),
         async run(a) {
@@ -586,7 +595,7 @@
         },
       });
       define({
-        name: 'cde_files', writes: false,
+        name: 'cde_files', attended: true, writes: false,
         description: 'The files of a project on the server: name, whether it is a model, its version, date and document id.',
         parameters: S.obj({ source: SOURCE, project: PROJECT }),
         async run(a) {
@@ -596,7 +605,7 @@
         },
       });
       define({
-        name: 'cde_fetch_file', writes: true,
+        name: 'cde_fetch_file', attended: true, writes: true,
         description: 'Fetches a project file (by exact name or document id) into the app as a dataset of its kind: a model, a document, a table. Answers the dataset\'s id and name.',
         parameters: S.obj({ source: SOURCE, project: PROJECT, file: S.str('the file\'s exact name or document id') }),
         async run(a) {
@@ -625,15 +634,15 @@
         name: 'run_r', writes: true,
         description: 'Runs R code in the app\'s R (WebR) with the datasets under /data, as the R console in Analysera; tables written with dm_write() become datasets. Answers the printed output, new datasets and the number of plots.',
         parameters: S.obj({ code: S.str('R code') }),
-        async run(a) { return codeAnswer(await D.require('data/r-bridge').bridge.run(String(a.code))); },
+        async run(a, ctx = {}) { return codeAnswer(await D.require('data/r-bridge').bridge.run(String(a.code), askOf(ctx))); },
       });
       define({
         name: 'run_python', writes: true,
         description: 'Runs Python code in the app\'s Python (Pyodide) with the datasets under /data, as the Python console in Analysera; tables written with dm_write() become datasets. Python starts when the person approves. Answers the printed output, new datasets and the number of plots.',
         parameters: S.obj({ code: S.str('Python code') }),
-        async run(a) { return codeAnswer(await D.require('data/python-bridge').bridge.run(String(a.code))); },
+        async run(a, ctx = {}) { return codeAnswer(await D.require('data/python-bridge').bridge.run(String(a.code), askOf(ctx))); },
       });
 
-      return { define, get, list, tools, validate, run, check, files, take, operationSchema, MAX_ROWS };
+      return { define, get, list, tools, validate, run, check, present, files, take, operationSchema, MAX_ROWS };
     });
 })();

@@ -59,7 +59,7 @@
     /**
      * Download and provide the packages needed for the names, if any are missing locally.
      * @param {string[]} names referenced packages
-     * @param {{fetch?: Function, onProgress?: Function}} [options]
+     * @param {{fetch?: Function, onProgress?: Function, ask?: boolean}} [options] `ask: false`: only from the cache or with a consent already kept
      * @returns {Promise<{packages: string[], assets: string[], indexAsset: string|null}>} what was provided (assets to ship)
      */
     async function ensure(names, options = {}) {
@@ -85,8 +85,25 @@
       return { packages: wanted, assets, indexAsset };
     }
 
+    /**
+     * Whether the packages that code names can be used without fetching anything: bundled, or with the repository's index and
+     * every file they need already in the component cache. Nothing is asked (a flow at start checks this before it runs).
+     * @param {string[]} names referenced packages @returns {Promise<boolean>}
+     */
+    async function cached(names) {
+      await packages.load();
+      const need = missing(names);
+      if (!need.length) return true;
+      try { await index({ ask: false }); } catch (_err) { return false; }
+      for (const pkg of closure(need)) {
+        if (provided.has(pkg)) continue;
+        if (!(await components.meta('webr-repo:' + `${pkg}_${remote.get(pkg).version}.tgz`))) return false;
+      }
+      return true;
+    }
+
     function reset() { remote = null; blocks.clear(); provided.clear(); }
 
-    return { index, missing, closure, ensure, contribUrl, provided: () => Array.from(provided.keys()), reset, REPO };
+    return { index, missing, closure, ensure, cached, contribUrl, provided: () => Array.from(provided.keys()), reset, REPO };
   });
 })();

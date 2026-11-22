@@ -4372,6 +4372,7 @@
     'commands.err.approval': 'Kommandot {name} ändrar i appen och måste godkännas först.',
     'commands.err.refused': 'Kommandot {name} godkändes inte och kördes inte.',
     'commands.err.cancelled': 'Avbrutet innan kommandot kördes.',
+    'commands.err.attended': 'Kommandot {name} kan behöva fråga dig och körs därför inte i ett flöde vid start. Kör flödet för hand.',
     'commands.err.aborted': 'Avbrutet medan kommandot kördes.',
     'commands.err.ambiguous': '{what}: flera heter {ref}; ange id i stället.',
     'commands.err.missing': '{what}: {ref} finns inte.',
