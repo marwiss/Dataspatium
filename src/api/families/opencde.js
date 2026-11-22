@@ -346,15 +346,18 @@
       try {
         const ask = (path) => send(connector, { url: trimUrl(connector.baseUrl) + path, method: 'GET', headers: { Accept: 'application/json' }, retries: 0, rateKey: connector.id });
         let res = await ask('/.well-known/dataregium');
+        const missing = res.status === 404;
         if (!res.ok) res = await ask('/.well-known/kontroll');
         if (res.ok) {
           const data = JSON.parse(res.text || '{}') || {};
           caps = { present: true, server: data.server || null, tier: typeof data.tier === 'string' ? data.tier : null, apis: data.apis || {}, bcfVersions: Array.isArray(data.bcf_versions) ? data.bcf_versions : null, scopes: Array.isArray(data.scopes) ? data.scopes : [], extensions: data.extensions && typeof data.extensions === 'object' ? data.extensions : {}, limits: data.limits || {}, links: data.links || {} };
         }
-        answered = true;
+        // Only a definite answer counts: the document, or none at either address (a server without it caps nothing). An error of
+        // the moment (429, 5xx, 401, 403) says nothing about the server's tier.
+        answered = res.ok || (missing && res.status === 404);
       } catch (err) { D.log('opencde', 'capabilities', err); }
       // The server's tier (Dataregium announces `tier`: documents, bim-gis or experimental) caps the features that need it; a server
-      // that did not answer leaves what it announced before.
+      // that did not answer, or answered with an error, leaves what it announced before.
       if (answered) tier.noteServer(connector, caps.tier);
       capsCache.set(key, { at: Date.now(), caps, answered });
       return caps;

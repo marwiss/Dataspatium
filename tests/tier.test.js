@@ -619,4 +619,42 @@
       await restore();
     }
   }, 60000);
+
+  test('tier: a server that answers its capabilities with an error keeps the tier it announced; one without the document caps nothing', async (assert) => {
+    const opencde = D.require('api/families/opencde');
+    const idb = D.require('platform/storage/idb');
+    const BASE = 'dataspatium-asset://tests/tier-caps';
+    const status = { dataregium: 200, kontroll: 404 };
+    D.net.virtual('tests/tier-caps/', (url) => {
+      const which = url.endsWith('/.well-known/dataregium') ? 'dataregium' : url.endsWith('/.well-known/kontroll') ? 'kontroll' : '';
+      const code = status[which] || 404;
+      return Promise.resolve(code === 200 ? { kind: 'text', data: JSON.stringify({ server: { name: 'Nivåservern' }, tier: 'documents', extensions: {} }) } : { kind: 'text', data: '{"detail":"no"}', status: code });
+    });
+    const c = { id: 'tier-caps-a', name: 'Nivå C', baseUrl: BASE, family: { type: 'opencde' }, auth: { type: 'none' }, endpoints: [], requestId: false };
+    const remembered = async () => { for (let i = 0; i < 50; i++) { const saved = await idb.getSetting('tier.servers', null); if (saved && saved[c.id] === 1) return true; await wait(20); } return false; };
+    await reset();
+    try {
+      await opencde.capabilities(c, { force: true });
+      assert.equal(tier.serverTier(c.id), 1, 'the server announces Dokument');
+      assert.ok(await remembered(), 'and it is remembered');
+      // A rate limit, a server restarting behind its proxy, a refusal: nothing definite about the server's tier.
+      for (const [dataregium, kontroll] of [[429, 429], [503, 404], [404, 502], [403, 403]]) {
+        Object.assign(status, { dataregium, kontroll });
+        await opencde.capabilities(c, { force: true });
+        assert.equal(tier.serverTier(c.id), 1, `kept after ${dataregium} and ${kontroll}`);
+        await opencde.capabilities(c);
+        assert.equal(tier.serverTier(c.id), 1, `and from the cache after ${dataregium} and ${kontroll}`);
+      }
+      assert.ok(await remembered(), 'still remembered');
+      assert.ok(!tier.shows('cde.bcf', { server: c.id }), 'so BCF stays capped for the server');
+      Object.assign(status, { dataregium: 404, kontroll: 404 });
+      await opencde.capabilities(c, { force: true });
+      assert.equal(tier.serverTier(c.id), null, 'a server without the document at either address caps nothing');
+      return 'ok';
+    } finally {
+      tier.noteServer(c, undefined);
+      D.net.unvirtual('tests/tier-caps/');
+      await restore();
+    }
+  });
 })();
