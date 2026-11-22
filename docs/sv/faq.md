@@ -147,9 +147,9 @@ Ja. Första gången appen öppnas väljer du språk; därefter öppnar språkkna
 bokstäver) eller kommandot *Språk* i paletten samma val. Svenska, danska, norska (bokmål och nynorsk), finska, isländska och
 engelska finns. Appen laddas om på det valda språket när osparade ändringar har sparats. Valet sparas i
 webbläsaren, så varje dator och profil har sitt eget. Dokumentationen finns på samma språk i mappen `docs`.
-Det valda språket laddas när appen startar, för danska, norska, finska och isländska tillsammans med engelskan, som
-visas där en text ännu inte är översatt (nya texter skrivs tills vidare bara på svenska och engelska). Första gången
-laddas webbläsarens språk och de få ord som språkvalet visar på varje språk.
+Det valda språket laddas när appen startar, för danska, norska, finska och isländska tillsammans med de engelska texter
+som språket saknar och som visas där en text ännu inte är översatt (nya texter skrivs tills vidare bara på svenska och
+engelska). Första gången laddas webbläsarens språk och de få ord som språkvalet visar på varje språk.
 
 ## Hur öppnar jag Grundkursen igen?
 

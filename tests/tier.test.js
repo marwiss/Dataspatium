@@ -90,7 +90,7 @@
     // The language the deployment sets comes after a choice and a ?lang= link, and before the browser's.
     assert.deepEqual(D.boot.chosenLanguages({ search: '', stored: null, preset: 'en', prefs: ['sv-SE'] }), ['en']);
     assert.deepEqual(D.boot.chosenLanguages({ search: '', stored: 'sv', preset: 'en', prefs: ['sv-SE'] }), ['sv']);
-    assert.deepEqual(D.boot.chosenLanguages({ search: '?lang=fi', stored: null, preset: 'en', prefs: ['sv-SE'] }), ['fi', 'en']);
+    assert.deepEqual(D.boot.chosenLanguages({ search: '?lang=fi', stored: null, preset: 'en', prefs: ['sv-SE'] }), ['fi', 'en-missing']);
     assert.deepEqual(D.boot.chosenLanguages({ search: '', stored: null, preset: 'xx', prefs: ['sv-SE'] }), ['languages', 'sv'], 'an unknown preset is ignored');
     return 'ok';
   });

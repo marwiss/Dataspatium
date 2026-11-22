@@ -55,6 +55,7 @@ def parse_boot() -> tuple[list[str], list[str], list[dict]]:
     langs = re.findall(r"'([a-z]{2})'", between(text, 'const LANGUAGES = [', ']'))
     lang_files = ['src/ui/i18n/%s.js' % code for code in langs]
     lang_files.append('src/ui/i18n/languages.js')  # the chooser's words, in place of all seven at the first start (f51-lang)
+    lang_files.append('src/ui/i18n/en-missing.js')  # the English texts the five lack, in place of all of en.js with them
     mobile = PATH.findall(between(text, 'const MOBILE = [', ']);')) + lang_files
     start = PATH.findall(between(text, 'const full = [', ']);')) + lang_files
     groups = []

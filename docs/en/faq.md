@@ -148,9 +148,9 @@ Yes. The first time the app is opened you choose a language; afterwards the lang
 icon with letters) or the command *Language* in the palette opens the same chooser. Swedish, Danish, Norwegian
 (Bokmål and Nynorsk), Finnish, Icelandic and English are available. The app reloads in the chosen language after unsaved
 changes have been saved. The choice is stored in the browser, so each computer and profile has its own.
-The chosen language is loaded when the app starts, for Danish, Norwegian, Finnish and Icelandic together with English,
-which shows where a text is not yet translated (for now, new texts are written in Swedish and English only). The first
-time, the browser's language is loaded together with the few words the chooser shows in each language.
+The chosen language is loaded when the app starts, for Danish, Norwegian, Finnish and Icelandic together with the English
+texts the language lacks, which show where a text is not yet translated (for now, new texts are written in Swedish and English
+only). The first time, the browser's language is loaded together with the few words the chooser shows in each language.
 
 ## Are there sources from the other Nordic countries?
 
