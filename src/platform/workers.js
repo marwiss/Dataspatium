@@ -92,14 +92,21 @@
       }
     } else if (msg.type === 'net') {
       // The answer names the address: code in the worker can post questions too, and one it posts for another address must not
-      // answer the shim's. An allowed call stays in the network log, counted as active, until the worker reports its end.
+      // answer the shim's. Only what the shim sends is taken (a number or short string for id, a string address); anything else,
+      // such as an object that cannot be sent back, is dropped before it is asked about.
+      const id = msg.id;
+      if (!((typeof id === 'number' && Number.isFinite(id)) || (typeof id === 'string' && id.length <= 64)) || typeof msg.url !== 'string') return;
       const provider = providers.get(worker.dmNamespace);
-      const url = String(msg.url);
+      const url = msg.url;
       let ok = false;
       try { ok = !!(provider && provider.net) && (await provider.net(url)) === true; } catch (err) { D.log('workers', 'internet access refused', url, err); }
+      // A worker that ended while its question was open fetches nothing, so nothing is recorded for it.
+      if (!live.has(worker)) ok = false;
       const ticket = ok ? ++tickets : null;
-      if (ok) worker.dmNet.set(ticket, D.net.record(url, msg.method));
-      rawPost(worker, { __dm: true, type: 'net-reply', id: msg.id, url, ok, ticket });
+      try { rawPost(worker, { __dm: true, type: 'net-reply', id, url, ok, ticket }); } catch (err) { D.log('workers', 'internet answer not delivered', url, err); return; }
+      // Recorded once the answer is on its way, in the same task, so its net-done cannot come first. The call then stays in the
+      // network log, counted as active, until the worker reports its end or ends.
+      if (ok) worker.dmNet.set(ticket, D.net.record(url, typeof msg.method === 'string' ? msg.method : 'GET'));
     } else if (msg.type === 'net-done') {
       const done = worker.dmNet.get(msg.ticket);
       if (done) { worker.dmNet.delete(msg.ticket); done(msg.status); }

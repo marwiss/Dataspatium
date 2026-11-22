@@ -181,16 +181,21 @@
     };
   }
 
-  /** Create a shimmed worker from fn, send it 'go' and resolve with its first answer. */
-  async function askWorker(options) {
+  /**
+   * Create a shimmed worker, send it 'go' and resolve with its first answer. `inspect(answer)` runs while the worker is still alive,
+   * before terminate(), which itself closes whatever the worker left open in the network log.
+   */
+  async function askWorker(options, inspect) {
     const worker = D.workers.create(options);
     try {
-      return await new Promise((resolve, reject) => {
+      const answer = await new Promise((resolve, reject) => {
         worker.onmessage = (ev) => resolve(ev.data);
         worker.onerror = (ev) => reject(new Error('worker error: ' + ev.message));
         worker.postMessage('go');
         setTimeout(() => reject(new Error('worker timeout')), 15000);
       });
+      if (inspect) await inspect(answer);
+      return answer;
     } finally { worker.terminate(); }
   }
   const CRAFTED = { plain: 'http://127.0.0.1:9/fetch', ownUrl: 'http://127.0.0.1:9/own', subclass: 'http://127.0.0.1:9/sub', toString: 'http://127.0.0.1:9/str', prototype: 'http://127.0.0.1:9/proto' };
@@ -252,6 +257,12 @@
         channel.port1.postMessage(forged);
         self.postMessage({ __dm: true, type: 'net', id: id, url: decoy });
       }
+      // Questions the shim never sends: an id that could not be sent back, an object, a long string, an address that is no string.
+      var port = new MessageChannel().port1;
+      self.postMessage({ __dm: true, type: 'net', id: port, url: decoy }, [port]);
+      self.postMessage({ __dm: true, type: 'net', id: { n: 1 }, url: decoy });
+      self.postMessage({ __dm: true, type: 'net', id: new Array(100).join('x'), url: decoy });
+      self.postMessage({ __dm: true, type: 'net', id: 99, url: { href: decoy } });
       question.then(function () { out.target = 'fetched'; }, function (e) { out.target = e.message; })
         .then(function () { return fetch(decoy).then(function () { out.decoy = 'fetched'; }, function (e) { out.decoy = e.message; }); })
         .then(function () { return fetch(Object.defineProperty(new Request(target), 'url', { value: decoy })).then(function () { out.dressed = 'fetched'; }, function (e) { out.dressed = e.message; }); })
@@ -267,19 +278,22 @@
     const active = D.net.active;
     // The answer about the target waits a little, so that every forgery lands while its question is open.
     D.workers.provider('tests-gate', { initial: async () => [], net: async (url) => { asked.push(url); if (url === target) await new Promise((r) => setTimeout(r, 200)); return url === decoy; } });
-    const out = await askWorker({ namespace: 'tests-gate', source: D.workers.functionSource(dataspatiumNetGateWorker), net: 'fetch', netText: 'Ingen internet ({api}).' });
+    // The worker's net-done messages come before its answer on the same port, so the log is checked as the answer arrives.
+    let alive = null;
+    const out = await askWorker({ namespace: 'tests-gate', source: D.workers.functionSource(dataspatiumNetGateWorker), net: 'fetch', netText: 'Ingen internet ({api}).' }, () => {
+      const entries = D.net.log().filter((e) => e.at >= t0 && e.url.startsWith('http://127.0.0.1:9/'));
+      alive = { active: D.net.active, open: entries.filter((e) => e.ms === null).length, decoys: entries.filter((e) => e.url === decoy).length };
+    });
     assert.equal(out.portTrusted, true, 'the MessageChannel gave the worker a trusted event, which it dispatched here');
     assert.equal(out.target, 'Dataspatium: internet access was not allowed for ' + target, 'only the main thread\'s answer about the target counts, not the forged ones');
     assert.equal(asked.filter((u) => u === target).length, 2, 'asked about the target twice: by its fetch and by the Request dressed as the decoy');
     assert.equal(out.dressed, 'Dataspatium: internet access was not allowed for ' + target, 'a Request with the decoy as its own url is asked about, and refused, as the target');
-    assert.ok(asked.filter((u) => u === decoy).length === 11, 'the ten questions the worker posted itself and its fetch of the decoy were answered: ' + asked.length);
+    assert.ok(asked.filter((u) => u === decoy).length === 11, 'the ten questions the worker posted itself and its fetch of the decoy were answered, the four the shim never sends were not: ' + asked.length);
     assert.ok(out.decoy !== 'fetched' && !/not allowed/.test(out.decoy), 'the allowed decoy went to the browser, which refuses port 9: ' + out.decoy);
     const logged = D.net.log().filter((e) => e.at >= t0 && e.url.startsWith('http://127.0.0.1:9/'));
     assert.ok(logged.some((e) => e.url === decoy && e.method === 'GET'), 'the allowed call is in the network log: ' + JSON.stringify(logged));
     assert.ok(!logged.some((e) => e.url === target), 'the refused one is not');
-    const t1 = performance.now();
-    while (D.net.active !== active && performance.now() - t1 < 3000) await new Promise((r) => setTimeout(r, 30));
-    assert.equal(D.net.active, active, 'every allowed call has ended in the log, the forged questions too');
+    assert.deepEqual(alive, { active, open: 0, decoys: 11 }, 'while the worker still ran, every allowed call had ended in the log, the forged questions too');
     D.workers.provider('tests-net', { initial: async () => [{ name: 'tests-net/a.txt', kind: 'text', data: 'hej' }], net: async (url) => { asked.push('probe ' + url); return false; } });
     const probe = await askWorker({ namespace: 'tests-net', source: D.workers.functionSource(dataspatiumNetProbeWorker), net: 'fetch', netText: 'Ingen internet ({api}).' });
     assert.ok(probe.types.Worker === 'function' && probe.types.SharedWorker === 'function' && probe.workerNative === false, 'Worker and SharedWorker are stand-ins, not the native ones');
@@ -401,6 +415,31 @@
     assert.ok(unknown.size === 0, unknown.size + ' names not reviewed; pin each in platform/worker-shim or add it to REVIEWED_WORKER_GLOBALS: ' + Array.from(unknown).sort().join(' '));
     return count + ' names, all reviewed';
   }, 30000);
+
+  test('workers: an allowed answer about the internet that comes after its worker ended records nothing in the network log', async (assert) => {
+    const url = 'http://127.0.0.1:9/late';
+    const t0 = Date.now();
+    const active = D.net.active;
+    let answer = null;
+    D.workers.provider('tests-late', { initial: async () => [], net: () => new Promise((resolve) => { answer = resolve; }) });
+    const worker = D.workers.create({
+      namespace: 'tests-late', net: 'fetch', netText: 'Ingen internet ({api}).',
+      source: D.workers.functionSource(function dataspatiumLateTestWorker() {
+        self.onmessage = function (ev) { if (ev.data === 'go') fetch('http://127.0.0.1:9/late').catch(function () {}); };
+      }),
+    });
+    try {
+      worker.postMessage('go');
+      const t1 = performance.now();
+      while (!answer && performance.now() - t1 < 10000) await new Promise((r) => setTimeout(r, 20));
+      assert.ok(answer, 'the worker asked about ' + url);
+    } finally { worker.terminate(); }
+    answer(true);
+    await new Promise((r) => setTimeout(r, 50));
+    assert.equal(D.net.active, active, 'nothing is counted as active');
+    assert.ok(!D.net.log().some((e) => e.at >= t0 && e.url === url), 'and nothing is in the log');
+    return 'ok';
+  }, 15000);
 
   test('workers: a namespace screens what its worker sends here, and the worker cannot rename itself past the screen', async (assert) => {
     const screened = [];
