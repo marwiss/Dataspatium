@@ -3,7 +3,7 @@
 /**
  * Tests for what the start loads of the languages: the chosen dictionary (with the English texts that the five lack,
  * en-missing.js, F49 a), or the chooser's words and the browser's language; and that the five show those English texts
- * without en.js, which loads only for a key the excerpt lacks too.
+ * without en.js, which loads only for a key the excerpt lacks too, and sv.js only for a key en.js lacks as well.
  */
 (function () {
   'use strict';
@@ -85,38 +85,52 @@
     return Object.keys(words).length + ' keys';
   });
 
-  test('i18n start: Danish shows the English texts it lacks from the excerpt without en.js, and a key missing there too loads en.js', async (assert) => {
+  test('i18n start: Danish shows the English texts it lacks from the excerpt without en.js, a key missing there too loads en.js, and Swedish comes after it', async (assert) => {
     for (const code of ['sv', 'da', 'en']) assert.equal(await i18n.loadLanguage(code), true, 'dictionary loaded: ' + code);
     const words = await excerpt();
-    const da = D.require('i18n/da');
+    const sv = D.require('i18n/sv');
     const en = D.require('i18n/en');
-    const key = Object.keys(words).find((k) => !(k in da) && !k.endsWith('.one'));
-    assert.ok(key, 'a key Danish lacks');
+    // Test keys put into the excerpt and the dictionaries (the registry hands out the same objects as ui/i18n reads) and taken
+    // out again, so that the test does not depend on which keys the translations lack today.
+    const lacked = 'test.excerpt.lacked'; // in the excerpt, as one that Danish lacks
+    const stale = 'test.excerpt.stale'; // in sv.js and en.js only: a new key before tools/shared_glossary.py has run
+    const swedish = 'test.excerpt.swedish'; // in sv.js only: a new key before its English text
+    const loaded = (code) => i18n.loaded().includes(code);
+    const until = async (code) => { const t0 = performance.now(); while (!loaded(code) && performance.now() - t0 < 5000) await new Promise((r) => setTimeout(r, 20)); return loaded(code); };
     const before = i18n.language();
-    const stale = 'test.excerpt.stale';
-    en[stale] = 'Only in en.js';
     try {
+      Object.assign(words, { [lacked]: 'From the excerpt' });
+      Object.assign(en, { [lacked]: 'From the excerpt', [stale]: 'New in en.js' });
+      Object.assign(sv, { [lacked]: 'Från utdraget', [stale]: 'Ny i sv.js', [swedish]: 'Bara i sv.js' });
       assert.ok(i18n.setLanguage('da', { persist: false }));
-      // As a start in Danish: its own dictionary and the excerpt, not en.js.
+      // As a start in Danish: its own dictionary and the excerpt, neither en.js nor sv.js.
       i18n.unloadLanguage('en');
-      assert.ok(!i18n.loaded().includes('en'), 'en.js not loaded: ' + i18n.loaded().join(','));
-      assert.equal(i18n.t(String(key)), words[String(key)], 'the English text from the excerpt: ' + key);
-      assert.equal(i18n.has(String(key)), true, 'has() sees the excerpt');
-      assert.equal(i18n.tIn('da', String(key)), words[String(key)], 'tIn reads the excerpt too');
+      i18n.unloadLanguage('sv');
+      assert.ok(!loaded('en') && !loaded('sv'), 'neither en.js nor sv.js loaded: ' + i18n.loaded().join(','));
+      assert.equal(i18n.t(lacked), 'From the excerpt', 'the English text from the excerpt');
+      assert.equal(i18n.has(lacked), true, 'has() sees the excerpt');
+      assert.equal(i18n.tIn('da', lacked), 'From the excerpt', 'tIn reads the excerpt too');
       assert.equal(i18n.t('common.save'), 'Gem', 'a key Danish has stays Danish');
-      assert.ok(!i18n.loaded().includes('en'), 'and en.js is still not loaded');
-      // A key that Danish and the excerpt lack (a new key before the tool has run) loads en.js, which shows it from then on.
-      assert.equal(i18n.has(stale), false, 'not in Danish, the excerpt or Swedish');
+      assert.ok(!loaded('en') && !loaded('sv'), 'and neither is loaded after them');
+      // A key that Danish and the excerpt lack loads en.js, which shows it from then on, and not sv.js as well: Swedish has
+      // no key that English lacks once the dictionaries are complete.
+      assert.equal(i18n.has(stale), false, 'not in Danish or the excerpt, and Swedish is not loaded');
       assert.equal(i18n.t(stale), stale, 'the key itself until en.js is there');
-      const t0 = performance.now();
-      while (!i18n.loaded().includes('en') && performance.now() - t0 < 5000) await new Promise((r) => setTimeout(r, 20));
-      assert.ok(i18n.loaded().includes('en'), 'en.js loaded for a key the excerpt lacks');
-      assert.equal(i18n.t(stale), 'Only in en.js', 'and the key shows in English');
+      assert.ok(await until('en'), 'en.js loaded for a key the excerpt lacks');
+      assert.ok(!loaded('sv'), 'and sv.js not with it');
+      assert.equal(i18n.t(stale), 'New in en.js', 'the key shows in English');
+      assert.ok(!loaded('sv'), 'and sv.js is still not loaded');
+      // A key that en.js lacks as well loads sv.js on a lookup after en.js is there.
+      assert.equal(i18n.t(swedish), swedish, 'the key itself until sv.js is there');
+      assert.ok(await until('sv'), 'sv.js loaded for a key en.js lacks too');
+      assert.equal(i18n.t(swedish), 'Bara i sv.js', 'the key shows in Swedish');
     } finally {
-      delete en[stale];
+      delete words[lacked];
+      for (const key of [lacked, stale]) delete en[key];
+      for (const key of [lacked, stale, swedish]) delete sv[key];
+      await i18n.loadLanguage('sv');
       await i18n.loadLanguage('en');
       i18n.setLanguage(before, { persist: false });
     }
-    return key;
   });
 })();

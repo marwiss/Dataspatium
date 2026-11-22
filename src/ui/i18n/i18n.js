@@ -152,9 +152,16 @@
       const text = lookup(codes, key, params, dictionary);
       if (!languages[current] || !(key in languages[current])) {
         D.log('i18n', 'missing key', current, key);
-        // Ask for the fallbacks that are not loaded, up to the first one that has the key (English as the excerpt until
-        // en.js is loaded). Swedish has every key, so nothing is loaded for a key it lacks (English would not have it either).
-        if (current !== 'sv' || !languages.sv) for (const code of codes.slice(1)) { const d = dictionary(code); if (d && key in d) break; requestFallback(code); }
+        // Ask for the first fallback that is not loaded, unless one before it has the key (English as the excerpt until en.js
+        // is loaded), and only that one: Swedish on a later lookup, once en.js is there and lacks the key too. Swedish has
+        // every key, so nothing is loaded for a key it lacks (English would not have it either).
+        if (current !== 'sv' || !languages.sv) {
+          for (const code of codes.slice(1)) {
+            const d = dictionary(code);
+            if (d && key in d) break;
+            if (!languages[code]) { requestFallback(code); break; }
+          }
+        }
       }
       return fill(text === undefined ? key : text, params);
     }
