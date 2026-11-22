@@ -107,7 +107,7 @@
      * Standalone HTML with every Vega and D3 chart as inline SVG (R charts as their saved thumbnail); a type of chart the tier in
      * effect hides (platform/tier) is left out of the page.
      * @param {any} dash
-     * @param {{extraFilters?: any[], width?: number, generatedText?: string, filtersLabel?: string, resolved?: any[], after?: string}} [options] texts come from the caller (i18n lives in the UI); `resolved` draws these charts instead of the dashboard's, `after` is finished HTML
+     * @param {{extraFilters?: any[], width?: number, generatedText?: string, filtersLabel?: string, resolved?: any[], after?: string, ask?: boolean}} [options] texts come from the caller (i18n lives in the UI); `resolved` draws these charts instead of the dashboard's, `after` is finished HTML; `ask: false` (a flow at start) fetches plotly.js only with a consent already kept
      */
     async function toHtml(dash, options = {}) {
       const resolved = options.resolved || await resolveCharts(dash);
@@ -119,17 +119,17 @@
         if (!tier.shows('chart:' + chart.kind)) continue;
         let body = '';
         // Python charts with a plotly figure stay interactive (plotly.js inlined once); other code charts are their saved image.
-        if (chart.kind === 'python' && chart.python && chart.python.plotly) { plotlyUsed = true; body = D.require('viz/plotly').htmlFor('plotly-' + sections.length, chart.python.plotly, { width: options.width || 900 }); }
+        if (chart.kind === 'python' && chart.python && chart.python.plotly) { plotlyUsed = true; body = await D.require('viz/plotly').htmlFor('plotly-' + sections.length, chart.python.plotly, { width: options.width || 900 }); }
         // Maps stay interactive too: Leaflet inlined once, the features as GeoJSON with their styles.
         else if (chart.kind === 'map') { mapUsed = true; body = await D.require('viz/leaflet').htmlFor('map-' + sections.length, chart, { extraFilters: options.extraFilters }); }
         // Graph charts are drawn as inline SVG from the saved positions (no libraries in the page).
         else if (chart.kind === 'model') body = await D.require('viz/model-draw').htmlFor('model-' + sections.length, chart, { width: options.width || 900 });
         else if (chart.kind === 'graph') body = await D.require('viz/graph-draw').htmlFor('graph-' + sections.length, chart, { width: options.width || 900 });
-        else if (codeCharts.isCode(chart.kind)) body = chart.thumbnail ? `<img src="${chart.thumbnail}" alt="${esc(chart.name)}">` : '';
+        else if (codeCharts.isCode(chart.kind)) { const thumb = text.imageSource(chart.thumbnail); body = thumb ? `<img src="${esc(thumb)}" alt="${esc(chart.name)}">` : ''; }
         else body = (await (await render.toBlob(chart, 'svg', { width: options.width || 900, extraFilters: options.extraFilters })).text()).replace(/^<\?xml[^>]*>\s*/, '');
         sections.push(`<section><h2>${esc(chart.name)}</h2>${body}<p class="src">${esc(chart.datasetName || '')}</p></section>`);
       }
-      const plotlyScript = plotlyUsed ? `<script>${(await D.require('viz/plotly').source()).replace(/<\/script/gi, '<\\/script')}</script>\n` : '';
+      const plotlyScript = plotlyUsed ? `<script>${(await D.require('viz/plotly').source({ ask: options.ask })).replace(/<\/script/gi, '<\\/script')}</script>\n` : '';
       const leafletSrc = mapUsed ? await D.require('viz/leaflet').source() : null;
       const leafletHead = leafletSrc ? `<style>${leafletSrc.css.replace(/<\/style/gi, '<\\/style')}${D.require('viz/leaflet').htmlCss()}</style>\n<script>${leafletSrc.js.replace(/<\/script/gi, '<\\/script')}</script>\n` : '';
       const filt = filtersText(options.extraFilters);

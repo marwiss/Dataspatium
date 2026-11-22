@@ -4,6 +4,9 @@
  * Components on demand: files the app can fetch after consent (R packages from webR's repository, later Python,
  * plotly.js, OCR, background maps), verified against SHA-256 when a digest is known, kept in IndexedDB and listed
  * under Hantera with their size so they can be removed. The standard ZIP never needs this; it works without a network.
+ *
+ * A cached copy is hashed again at every use and compared with the digest pinned in the caller's spec, never with the
+ * digest stored beside it: code in a worker, or another page on the same origin, can rewrite both rows.
  */
 (function () {
   'use strict';
@@ -73,21 +76,47 @@
       return out.buffer;
     }
 
+    /** The stored bytes as an ArrayBuffer of their own, or null when the row holds something else. */
+    function ownBuffer(bytes) {
+      if (bytes instanceof ArrayBuffer) return bytes;
+      if (ArrayBuffer.isView(bytes)) return new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength).slice().buffer;
+      return null;
+    }
+
     /**
-     * The bytes of a component: from the cache when present (and matching the expected digest), otherwise
-     * fetched from the first source that answers, after consent, and verified.
+     * The cached bytes when they may be used, without fetching: fresh, and with the spec's pinned digest when it has one.
+     * The bytes are hashed at every call and compared with `spec.sha256`, never with the stored row; a copy that fails
+     * is removed, so that ensure() fetches it again after consent. The buffer returned is the one that was hashed.
+     * @param {{id: string, sha256?: string, maxAgeMs?: number}} spec
+     * @returns {Promise<ArrayBuffer|null>}
+     */
+    async function verified(spec) {
+      const hit = await cached(spec.id);
+      if (!hit) return null;
+      const fresh = !spec.maxAgeMs || Date.now() - Date.parse(hit.meta.fetchedAt) < spec.maxAgeMs;
+      if (!fresh) return null;
+      const bytes = ownBuffer(hit.bytes);
+      if (bytes && (!spec.sha256 || (await sha256Hex(bytes)) === spec.sha256)) return bytes;
+      console.warn('[components] the cached copy of ' + spec.id + ' is not the pinned file; removed, to be fetched again');
+      await remove(spec.id);
+      return null;
+    }
+
+    /**
+     * The bytes of a component: from the cache when present (and matching the pinned digest), otherwise
+     * fetched from the first source that answers, after consent, and verified. With `ask: false` (a flow at start) nothing
+     * is asked: only a consent already kept lets it fetch, and otherwise it fails with a ConsentError.
      * @param {{id: string, urls: string[], sha256?: string, size?: number, label?: string, purpose?: string, version?: string, maxAgeMs?: number}} spec
-     * @param {{fetch?: Function, onProgress?: (info: {id: string, received: number, total: number|null}) => void}} [options]
+     * @param {{fetch?: Function, onProgress?: (info: {id: string, received: number, total: number|null}) => void, ask?: boolean}} [options]
      * @returns {Promise<ArrayBuffer>}
      */
     async function ensure(spec, options = {}) {
-      const hit = await cached(spec.id);
-      if (hit) {
-        const fresh = !spec.maxAgeMs || Date.now() - Date.parse(hit.meta.fetchedAt) < spec.maxAgeMs;
-        if (fresh && (!spec.sha256 || hit.meta.sha256 === spec.sha256)) return hit.bytes;
-      }
+      const hit = await verified(spec);
+      if (hit) return hit;
       const first = spec.urls[0];
-      await consent.require(spec.purpose || 'components', { host: consent.hostOf(first), label: spec.label || spec.id, size: spec.size || null });
+      const purpose = spec.purpose || 'components';
+      if (options.ask === false) { if ((await consent.state(purpose)) !== 'granted') throw new consent.ConsentError(purpose, 'unattended'); }
+      else await consent.require(purpose, { host: consent.hostOf(first), label: spec.label || spec.id, size: spec.size || null });
       const doFetch = options.fetch || globalThis.fetch.bind(globalThis);
       let lastErr = null;
       for (const url of spec.urls) {
@@ -123,6 +152,6 @@
 
     async function totalSize() { return (await list()).reduce((n, m) => n + (m.size || 0), 0); }
 
-    return { list, meta, cached, ensure, text, remove, totalSize, subscribe, sha256Hex };
+    return { list, meta, cached, verified, ensure, text, remove, totalSize, subscribe, sha256Hex };
   });
 })();

@@ -326,6 +326,26 @@
     return 'ok';
   }, 240000);
 
+  test('stats: a plot from Python is shown as an image from a data: address, so its images, styles and links never enter the page', (assert) => {
+    const { plotNode } = D.require('ui/analysis/stats-panel');
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100" height="80">'
+      + '<style>rect { fill: url(https://example.invalid/fill.png) }</style><image href="https://example.invalid/x" width="10" height="10"/>'
+      + '<a xlink:href="https://example.invalid/go"><rect width="5" height="5"/></a></svg>';
+    const node = plotNode({ kind: 'plot', svg, width: 100, height: 80 });
+    assert.equal(node.tagName, 'IMG');
+    assert.ok(node.src.startsWith('data:image/svg+xml'), 'a data: address: ' + node.src.slice(0, 40));
+    assert.equal(decodeURIComponent(node.src.slice(node.src.indexOf(',') + 1)), svg, 'the SVG travels whole inside the address');
+    const holder = document.createElement('div');
+    document.body.appendChild(holder);
+    try {
+      holder.appendChild(node);
+      assert.equal(holder.querySelectorAll('image, style, a, svg').length, 0, 'nothing of the SVG is a node in the page');
+    } finally { holder.remove(); }
+    assert.ok(plotNode({ png: 'iVBORw0KGgo=' }).src.startsWith('data:image/png;base64,'), 'a PNG only');
+    assert.equal(plotNode({}).tagName, 'P', 'no plot');
+    return 'ok';
+  });
+
   test('recipes: every operation reads as a sentence or its name, never as its id', async (assert) => {
     const ops = D.require('data/operations');
     const raw = ops.list().map((op) => op.id).filter((id) => {

@@ -41,7 +41,8 @@ sorting, time unit and axis title. Other settings: title and subtitle, number fo
 stacking (stacked, percent, overlapping), value labels on bars and points on lines. **Filters** limit the rows with
 conditions on columns. Under **More options** there are the row limit, colour scale (sequential or diverging) and
 **Custom Vega-Lite specification**: the JSON specification can be edited directly for anything the builder does not
-cover; data is inserted from the dataset when the chart is rendered.
+cover; data is inserted from the dataset when the chart is rendered. Data and pictures with an address of their own in
+the specification are read only from `data:` addresses (pictures from `data:image/`); a web address is never fetched.
 
 The chart is saved as the builder's state (or the custom specification) together with the dataset's name and short
 name, so it can be recreated on new data with the same columns.

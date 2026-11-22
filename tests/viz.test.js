@@ -30,6 +30,27 @@
     for (;;) { if (fn()) return; if (performance.now() - t0 > timeoutMs) throw new Error('timeout waiting for ' + label); await wait(50); }
   }
   const CSV = 'kommun;lan;ar;befolkning;kon\nStockholm;Stockholms län;2023;984748;T\nGöteborg;Västra Götalands län;2023;596841;T\nMalmö;Skåne län;2023;362133;T\nStockholm;Stockholms län;2024;995574;T\nGöteborg;Västra Götalands län;2024;608993;T\nMalmö;Skåne län;2024;365644;T\n';
+  /** Run with the developer override off (the test page turns it on so that no dialog blocks the suite). */
+  async function withoutOverride(fn) {
+    const saved = localStorage.getItem('dataspatium.consent');
+    localStorage.removeItem('dataspatium.consent');
+    try { return await fn(); } finally { if (saved !== null) localStorage.setItem('dataspatium.consent', saved); }
+  }
+  /** A plotly figure that fetches from every place plotly.js can: a geo map, a map, images, GeoJSON by address and a button. */
+  const remoteFigure = () => ({
+    data: [
+      { type: 'scattergeo', lon: [18.07], lat: [59.33] },
+      { type: 'choropleth', locations: ['SWE'], z: [1] },
+      { type: 'scattermap', lon: [18.07], lat: [59.33] },
+      { type: 'choroplethmap', geojson: 'https://geo.example.invalid/regions.geojson', locations: ['a'], z: [1] },
+      { type: 'bar', x: ['a'], y: [1] },
+    ],
+    layout: {
+      images: [{ source: 'data:image/png;base64,iVBORw0KGgo=' }, { source: 'https://img.example.invalid/p.png?d=1' }, { source: 'logo.png' }],
+      updatemenus: [{ buttons: [{ method: 'relayout', args: [{ images: [{ source: 'https://img.example.invalid/q.png' }] }] }, { method: 'restyle', args: [{ visible: true }] }] }],
+      template: { layout: { images: [{ source: 'https://template.example.invalid/t.png' }] } },
+    },
+  });
 
   test('viz: theme config, locale and colour helpers come from the design tokens', (assert) => {
     const cfg = theme.vegaConfig();
@@ -268,6 +289,144 @@
       root.remove();
     }
   }, 60000);
+
+  test('plotly: the figure sanitizer keeps data: and blob:, and without consent leaves out the geo shapes, maps, images, GeoJSON and buttons that fetch from a host', (assert) => {
+    const plotly = D.require('viz/plotly');
+    const fig = remoteFigure();
+    const before = JSON.stringify(fig);
+    assert.deepEqual(plotly.requests(fig).map((q) => q.purpose + ' ' + q.hosts.join(',')), ['basemaps cdn.plot.ly', 'basemaps basemaps.cartocdn.com,tiles.basemaps.cartocdn.com', 'url img.example.invalid', 'url geo.example.invalid'], 'one question per map and per host');
+    const none = plotly.sanitize(fig, {});
+    assert.deepEqual(none.figure.data.map((d) => d.type), ['scattergeo', 'bar'], 'the trace by country code, the map and the GeoJSON by address go; points by position stay');
+    assert.ok(['showcoastlines', 'showland', 'showocean', 'showlakes', 'showrivers', 'showcountries', 'showsubunits'].every((k) => none.figure.layout.geo[k] === false), 'no layer from the topojson');
+    assert.equal(none.topojson, false);
+    assert.deepEqual(none.figure.layout.images.map((i) => i.source), ['data:image/png;base64,iVBORw0KGgo='], 'only the data: image');
+    assert.deepEqual(none.figure.layout.updatemenus[0].buttons.map((b) => b.method), ['restyle'], 'the button that brings an image in goes');
+    assert.equal(none.figure.layout.template, undefined, "plotly's own template is not drawn");
+    assert.deepEqual(none.removed, { basemaps: true, url: true });
+    assert.equal(JSON.stringify(fig), before, 'the figure itself is untouched');
+    const all = plotly.sanitize(fig, { basemaps: new Set(['cdn.plot.ly', 'basemaps.cartocdn.com', 'tiles.basemaps.cartocdn.com']), url: new Set(['geo.example.invalid', 'img.example.invalid']) });
+    assert.equal(all.figure.data.length, 5);
+    assert.deepEqual(all.figure.layout.images.map((i) => i.source), ['data:image/png;base64,iVBORw0KGgo=', 'https://img.example.invalid/p.png?d=1'], 'a relative address is never loaded');
+    assert.equal(all.figure.layout.updatemenus[0].buttons.length, 2);
+    assert.equal(all.topojson, true);
+    // Addresses that resolve to another host than they name, or that fetch nothing a chart may show.
+    const odd = plotly.sanitize({ data: [{ type: 'scattermap' }], layout: { map: { style: { version: 8, sources: { t: { type: 'raster', tiles: ['//tiles.example.invalid/{z}/{x}/{y}.png'] } }, layers: [] } }, images: [{ source: '//img.example.invalid/x.png' }, { source: 'javascript:void(0)' }, { source: 'blob:' + location.origin + '/x' }] } }, { basemaps: true, url: true });
+    assert.equal(odd.figure.data.length, 0, 'a protocol-relative tile address keeps the map out');
+    assert.deepEqual(odd.figure.layout.images.map((i) => i.source), ['blob:' + location.origin + '/x']);
+    return 'ok';
+  });
+
+  test('plotly: a figure asks for background maps per map and for web addresses per host before it is drawn, a refusal draws it without them and says so, and published HTML asks nothing', async (assert) => {
+    const plotly = D.require('viz/plotly');
+    const consent = D.require('platform/consent');
+    // plotly.js is a component the suite may not have: a stand-in records what would be drawn.
+    const real = globalThis.Plotly;
+    const drawn = [];
+    globalThis.Plotly = { newPlot: async (_el, data, layout, config) => { drawn.push({ data, layout, config }); }, purge: () => {}, toImage: async () => 'data:image/png;base64,iVBORw0KGgo=' };
+    const holder = document.createElement('div');
+    const el = document.createElement('div');
+    holder.appendChild(el); document.body.appendChild(holder);
+    return withoutOverride(async () => {
+      const saved = { basemaps: await consent.state('basemaps'), url: await consent.state('url') };
+      const asked = [];
+      let allow = (_purpose) => true;
+      try {
+        for (const p of Object.keys(saved)) await consent.set(p, null);
+        consent.setAsker(async (purpose, info) => { asked.push([purpose, info.host]); return { allow: allow(purpose), remember: false }; });
+        // Maps allowed, web addresses refused.
+        allow = (purpose) => purpose === 'basemaps';
+        const hd = await plotly.render(el, remoteFigure());
+        assert.deepEqual(asked, [['basemaps', 'cdn.plot.ly'], ['basemaps', 'basemaps.cartocdn.com, tiles.basemaps.cartocdn.com'], ['url', 'img.example.invalid'], ['url', 'geo.example.invalid']], 'asked before drawing: ' + JSON.stringify(asked));
+        assert.deepEqual(drawn[0].data.map((d) => d.type), ['scattergeo', 'choropleth', 'scattermap', 'bar'], 'the trace with GeoJSON by address goes');
+        assert.deepEqual(drawn[0].layout.images.map((i) => i.source), ['data:image/png;base64,iVBORw0KGgo=']);
+        assert.equal(drawn[0].config.topojsonURL, undefined, 'the geo map takes its shapes from plotly');
+        assert.equal(hd.notice, t('plotly.denied.url'));
+        assert.equal(el.nextElementSibling && el.nextElementSibling.textContent, t('plotly.denied.url'), 'a line under the chart says it');
+        hd.finalize();
+        assert.equal(el.nextElementSibling, null, 'and goes with the chart');
+        // Everything refused: no map, no shapes from plotly's server, and the export is drawn all the same.
+        asked.length = 0; allow = () => false;
+        const png = await plotly.toBlob(remoteFigure(), 'png', { width: 300, height: 200 });
+        assert.equal(png.type, 'image/png');
+        assert.deepEqual(drawn[1].data.map((d) => d.type), ['scattergeo', 'bar']);
+        assert.equal(drawn[1].config.topojsonURL, plotly.NO_TOPOJSON, 'a shape plotly still asks for is not fetched');
+        assert.equal(asked.length, 4);
+        // Published HTML is drawn later and elsewhere: nothing is asked, and only a consent kept for good counts.
+        asked.length = 0;
+        const html = await plotly.htmlFor('p1', remoteFigure());
+        assert.equal(asked.length, 0, 'nothing asked');
+        assert.ok(!/example\.invalid/.test(html), 'no address of the figure in the page');
+        assert.ok(html.includes(plotly.NO_TOPOJSON));
+        return 'ok';
+      } finally {
+        consent.setAsker(null);
+        for (const [p, v] of Object.entries(saved)) await consent.set(p, v);
+        if (real) globalThis.Plotly = real; else delete globalThis.Plotly;
+        holder.remove();
+      }
+    });
+  });
+
+  test('images: a picture from a file, a worker or storage is drawn only from a data:image/ address, and a web address is left out with a line in the console', async (assert) => {
+    const text = D.require('platform/text');
+    const GIF = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    const REMOTE = 'https://img.example.invalid/tracker.png?d=1';
+    const warned = [];
+    const warn = console.warn;
+    console.warn = (...args) => { warned.push(args.join(' ')); };
+    const holder = document.createElement('div');
+    document.body.appendChild(holder);
+    try {
+      assert.equal(text.imageSource(GIF), GIF);
+      for (const bad of [REMOTE, 'x.png', '//img.example.invalid/x.png', 'blob:https://img.example.invalid/1', 'javascript:alert(1)', 'data:text/html,<b>x</b>', 42]) assert.equal(text.imageSource(bad), '', String(bad));
+      assert.ok(warned.some((w) => w.includes('img.example.invalid/tracker.png')), 'logged: ' + warned.join(' | '));
+      assert.equal(text.imageSource(null), '');
+      // A notebook from a file: its outputs name the pictures.
+      const panel = D.require('ui/analysis/notebook-panel').create({ store: { set() {} }, shell: { activate() {} } }, {
+        notebook: { name: 'Bilder', cells: [{ id: 'c1', type: 'r', source: '', outputs: [{ kind: 'image', dataUrl: REMOTE }, { kind: 'image', dataUrl: GIF }] }] },
+        onDeleted() {}, log() {},
+      });
+      panel.start();
+      holder.appendChild(panel.bodyEl);
+      assert.deepEqual(Array.from(holder.querySelectorAll('img')).map((i) => i.getAttribute('src')), [GIF], 'only the data:image/ output is drawn');
+      // Saved charts: the gallery card and the published dashboard.
+      const charts = [{ id: 'c-bad', kind: 'r', name: 'Fjärrbild', datasetName: '', thumbnail: REMOTE + '" onerror="alert(1)' }, { id: 'c-good', kind: 'r', name: 'Egen bild', datasetName: '', thumbnail: GIF }];
+      const gallery = D.require('ui/viz/gallery').create({ charts, onOpen() {}, onExport() {}, onDelete() {} });
+      holder.appendChild(gallery.el);
+      assert.deepEqual(Array.from(gallery.el.querySelectorAll('img')).map((i) => i.getAttribute('src')), [GIF], 'the gallery draws the data:image/ thumbnail only');
+      const html = await (await D.require('viz/dashboards').toHtml({ name: 'Bilder' }, { resolved: charts.map((chart) => ({ chart })) })).text();
+      assert.ok(!/example\.invalid|onerror/.test(html), 'no remote address and no attribute from the thumbnail in the page');
+      assert.ok(html.includes(`<img src="${GIF}"`), 'the data:image/ thumbnail is published');
+      return 'ok';
+    } finally {
+      console.warn = warn;
+      holder.remove();
+    }
+  });
+
+  test('vega: a custom spec reads its data and pictures only from data: addresses, so Vega fetches nothing for it', async (assert) => {
+    const GIF = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    const warned = [];
+    const warn = console.warn;
+    console.warn = (...args) => { warned.push(args.join(' ')); };
+    try {
+      const view = await vegaRender.headless({
+        $schema: 'https://vega.github.io/schema/vega-lite/v6.json', width: 120, height: 60,
+        layer: [
+          { data: { values: [{ x: 1, u: 'https://img.example.invalid/mark.png' }, { x: 2, u: GIF }] }, mark: { type: 'image', width: 10, height: 10 }, encoding: { x: { field: 'x', type: 'quantitative' }, url: { field: 'u', type: 'nominal' } } },
+          { data: { url: 'https://data.example.invalid/rows.csv' }, mark: 'point', encoding: { x: { field: 'x', type: 'quantitative' } } },
+        ],
+      });
+      const svg = await vegaRender.toSvg(view);
+      view.finalize();
+      // The address stays only as text in the marks' aria-label; no picture or link loads it.
+      assert.ok(!/(?:href|src)="[^"]*example\.invalid/.test(svg), 'no remote address as a picture or a link');
+      assert.ok(svg.includes(`href="${GIF}"`), 'the data:image/ picture is drawn');
+      assert.ok(warned.some((w) => w.includes('img.example.invalid/mark.png')), 'the picture was refused: ' + warned.join(' | '));
+      assert.ok(warned.some((w) => w.includes('data.example.invalid/rows.csv')), 'the data was refused: ' + warned.join(' | '));
+      return 'ok';
+    } finally { console.warn = warn; }
+  });
 
   test('viz: cleanup', async () => {
     for (const cid of chartIds) { try { await charts.remove(cid); } catch (_e) { /* ignore */ } }

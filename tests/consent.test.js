@@ -1,6 +1,6 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
-/** Tests of internet access by consent, components fetched on demand (hash, cache, removal) and remote R packages. */
+/** Tests of internet access by consent, components fetched on demand (hash, cache, a changed cached copy, removal) and remote R packages. */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
@@ -156,6 +156,55 @@
       assert.ok(!(await components.meta(id)), 'removed');
       return 'ok';
     } finally { for (const x of [id, 'test:bad', 'test:second']) await components.remove(x).catch(() => {}); }
+  });
+
+  test('components: a cached copy that fails its pinned digest is never used, even when its stored row carries that digest, and is fetched again after consent', async (assert) => {
+    const idb = D.require('platform/storage/idb');
+    const id = 'test:tampered';
+    const good = enc('genuine component');
+    const digest = await components.sha256Hex(good);
+    const spec = { id, urls: ['https://example.invalid/component.js'], sha256: digest, label: 'Test' };
+    const text = (bytes) => new TextDecoder().decode(new Uint8Array(bytes));
+    let calls = 0;
+    const fetcher = () => { calls++; return response(good.slice()); };
+    // What code in a worker, or another page on the same origin, can write: other bytes under a row with the pinned digest.
+    const tamper = async () => {
+      await idb.saveBlob('component:' + id, enc('evil()').buffer);
+      await idb.setSetting('component:' + id, { id, label: 'Test', sha256: digest, size: 6, fetchedAt: new Date().toISOString() });
+    };
+    return withoutOverride(async () => {
+      const before = await consent.state('components');
+      const asked = [];
+      let allow = true;
+      try {
+        await consent.set('components', null);
+        consent.setAsker(async (purpose, info) => { asked.push([purpose, info.host]); return { allow, remember: false }; });
+        await tamper();
+        assert.equal(text(await components.ensure(spec, { fetch: fetcher })), 'genuine component', 'the downloaded bytes, not the cached ones');
+        assert.equal(calls, 1, 'fetched again');
+        assert.deepEqual(asked, [['components', 'example.invalid']], 'through the consent');
+        assert.equal(text(await idb.loadBlob('component:' + id)), 'genuine component', 'the cache holds the genuine bytes again');
+        assert.equal(text(await components.ensure(spec, { fetch: fetcher })), 'genuine component');
+        assert.equal(calls, 1, 'a sound copy is served from the cache');
+        // Refused: the changed copy is not used, and it is gone.
+        await tamper();
+        allow = false;
+        let err = null;
+        try { await components.ensure(spec, { fetch: fetcher }); } catch (e) { err = e; }
+        assert.ok(err && err.name === 'ConsentError', 'refused: ' + (err && err.message));
+        assert.ok(!(await components.meta(id)), 'the changed copy is removed');
+        assert.equal(calls, 1, 'nothing fetched without consent');
+        // The bytes count, not the row: sound bytes under a wrong stored digest are used.
+        await idb.saveBlob('component:' + id, good.slice().buffer);
+        await idb.setSetting('component:' + id, { id, label: 'Test', sha256: 'deadbeef', size: good.byteLength, fetchedAt: new Date().toISOString() });
+        assert.equal(text(await components.verified(spec)), 'genuine component');
+        return 'ok';
+      } finally {
+        consent.setAsker(null);
+        await consent.set('components', before);
+        await components.remove(id).catch(() => {});
+      }
+    });
   });
 
   test('remote R packages: the webR index is fetched once, only packages that are not bundled are downloaded, and the worker index is extended', async (assert) => {

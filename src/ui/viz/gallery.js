@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/viz/gallery', ['ui/base', 'ui/basic', 'ui/icons', 'viz/render'], (base, basic, icons, render) => {
+  D.define('ui/viz/gallery', ['ui/base', 'ui/basic', 'ui/icons', 'viz/render', 'platform/text'], (base, basic, icons, render, text) => {
     const { h, t, i18n, replace } = base;
 
     /**
@@ -21,13 +21,14 @@
 
       function card(chart) {
         const body = h('div', { class: 'dm-gallery-body' });
+        const thumb = text.imageSource(chart.thumbnail);
         if (live && !D.require('viz/code-charts').isCode(chart.kind)) {
           const holder = h('div', { class: 'dm-chart-preview' });
           body.appendChild(holder);
           // A type the tier hides says so in plain words (viz/render), not as an error.
           render.renderInto(chart, holder, { width: undefined }).then((hd) => handles.push(hd)).catch((err) => replace(holder, h('p', { class: err && err.name === 'TierError' ? 'dm-help dm-small' : 'dm-error dm-small', text: String((err && err.message) || err) })));
-        } else if (chart.thumbnail) {
-          body.appendChild(h('img', { class: 'dm-gallery-thumb', src: chart.thumbnail, alt: chart.name }));
+        } else if (thumb) {
+          body.appendChild(h('img', { class: 'dm-gallery-thumb', src: thumb, alt: chart.name }));
         } else {
           body.appendChild(h('div', { class: 'dm-gallery-thumb dm-gallery-placeholder' }, icons.icon(chart.kind === 'r' ? 'terminal' : chart.kind === 'python' ? 'code' : 'chart-column', 32)));
         }

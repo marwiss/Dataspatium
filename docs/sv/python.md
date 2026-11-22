@@ -101,6 +101,11 @@ sista rad, lämnar figuren till appen, som ritar den med plotly.js (hämtas som 
 appens tema, och exporterar den till SVG, PNG och PDF. I anteckningsboken sparas plotly-figurer som PNG, med den
 interaktiva vyn kvar så länge plotly.js finns.
 
+En plotly-karta (till exempel `px.scatter_geo`, `px.choropleth` och `px.scatter_map`) frågar om samtycke till
+bakgrundskartor innan kartan laddas, och en bild, GeoJSON eller annat som figuren hämtar från en webbadress frågar om
+samtycke till webbadresser för varje värd. Utan samtycke ritas diagrammet utan dem, med en rad under som säger det.
+I publicerad HTML följer de med bara när samtycket är sparat.
+
 ## Python-diagram i Visualisera
 
 I Visualisera kan ett diagram vara ett **Python-skript**: datamängden finns som `df`, och det senaste diagrammet

@@ -79,9 +79,13 @@ With *Run when the app starts* the flow runs shortly after the app opens. It onl
 - Steps that fetch from the net need the consent already given.
 - Steps that read through the database bridge do not run at start, since the bridge is connected by hand.
 - Python scripts need Python already fetched.
+- Python charts, also in documents, need Python already fetched and the consent their plotly maps and pictures need
+  already given.
 - A flow that asks you (*Ask me*) never runs at start.
 
-Otherwise the flow is skipped and the log says why. Nothing runs while the app is closed.
+Otherwise the flow is skipped and the log says why. At start no step asks: whatever a chart or a script needs beyond that
+(packages, plotly.js, a map the chart did not have before) comes only with a consent already kept, and otherwise the chart
+is drawn without it or the step fails. Nothing runs while the app is closed.
 
 ## Watching a source
 

@@ -147,12 +147,14 @@
 
       /**
        * Packages that are not bundled come from webR's repository after consent and are shipped together with the
-       * extended package index. A refusal or a network error only leaves R to report the missing package.
+       * extended package index. A refusal or a network error only leaves R to report the missing package. With
+       * `ask: false` (a flow at start) only a consent already kept lets them be fetched.
+       * @param {string[]} names @param {{ask?: boolean}} [options]
        */
-      async ensureRemote(names) {
+      async ensureRemote(names, options = {}) {
         if (!remote.missing(names).length) return;
         try {
-          const res = await remote.ensure(names);
+          const res = await remote.ensure(names, { ask: options.ask });
           if (res.assets.length) {
             this.emit('stream', { kind: 'stderr', text: D.t('r.remote.packages', { names: res.packages.join(', ') }) + '\n' });
             await this.engine.shipAssets(res.assets);
@@ -180,11 +182,12 @@
       }
 
       /**
-       * Run user code. Resolves with the console entries to display.
-       * @param {string} code
+       * Run user code. Resolves with the console entries to display. `ask: false` (a flow at start): packages from webR's
+       * repository come only with a consent already kept.
+       * @param {string} code @param {{ask?: boolean}} [options]
        * @returns {Promise<{entries: any[], ms: number}>}
        */
-      async run(code) {
+      async run(code, options = {}) {
         await this.start();
         if (this.state === 'busy') throw new Error(D.t('r.err.busy'));
         this.setState('busy');
@@ -202,7 +205,7 @@
           // from webR's repository after consent (a refusal just leaves R to report the missing package).
           const referenced = packages.referenced(code);
           await this.engine.ensurePackages(referenced);
-          await this.ensureRemote(referenced);
+          await this.ensureRemote(referenced, options);
           const res = await this.engine.capture(code, { captureConditions: false });
           for (const o of res.output) {
             const text = String(o.data);

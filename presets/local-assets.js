@@ -561,7 +561,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/visualisera.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 16030,
+  "size": 16178,
   "library": "dataspatium"
  },
  "docs/sv/anteckningsbok.md": {
@@ -609,7 +609,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/python.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 12539,
+  "size": 12956,
   "library": "dataspatium"
  },
  "docs/sv/dokument.md": {
@@ -651,7 +651,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/floden.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 8313,
+  "size": 8730,
   "library": "dataspatium"
  },
  "docs/sv/statistik.md": {
@@ -699,7 +699,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/sakerhet.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 32068,
+  "size": 34878,
   "library": "dataspatium"
  },
  "docs/da/kom-igang.md": {
@@ -1575,7 +1575,7 @@ Dataspatium.assets.addEntries({
  "docs/en/visualisera.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 15908,
+  "size": 16076,
   "library": "dataspatium"
  },
  "docs/en/anteckningsbok.md": {
@@ -1623,7 +1623,7 @@ Dataspatium.assets.addEntries({
  "docs/en/python.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 12656,
+  "size": 13069,
   "library": "dataspatium"
  },
  "docs/en/dokument.md": {
@@ -1665,7 +1665,7 @@ Dataspatium.assets.addEntries({
  "docs/en/floden.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 8001,
+  "size": 8366,
   "library": "dataspatium"
  },
  "docs/en/statistik.md": {
@@ -1713,7 +1713,7 @@ Dataspatium.assets.addEntries({
  "docs/en/sakerhet.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 32058,
+  "size": 34780,
   "library": "dataspatium"
  }
 });

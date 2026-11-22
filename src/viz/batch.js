@@ -16,7 +16,8 @@
 
     /**
      * @param {any} chart saved chart (vega or d3; r through options.renderR)
-     * @param {{groupColumn: string, formats?: string[], pattern?: string, width?: number, scale?: number, limit?: number, signal?: AbortSignal, onProgress?: Function, renderR?: (chart: any, value: any, format: string) => Promise<Blob>}} options
+     * @param {{groupColumn: string, formats?: string[], pattern?: string, width?: number, scale?: number, limit?: number, signal?: AbortSignal, onProgress?: Function, renderR?: (chart: any, value: any, format: string) => Promise<Blob>, ask?: boolean}} options
+     *   `ask: false` (a flow at start): nothing is asked while the charts are drawn (viz/render, viz/code-charts)
      * @returns {Promise<{blob: Blob, count: number, files: string[], errors: Array<{group: any, message: string}>}>}
      */
     async function run(chart, options) {
@@ -33,7 +34,7 @@
             // A code chart open in its panel exports through it (options.renderR); otherwise every kind renders headless.
             const blob = options.renderR && D.require('viz/code-charts').isCode(chart.kind)
               ? await options.renderR(chart, value, format)
-              : await render.toBlob(chart, format, { extraFilters, titleSuffix: ` – ${value}`, width: options.width || 800, scale: options.scale || 2 });
+              : await render.toBlob(chart, format, { extraFilters, titleSuffix: ` – ${value}`, width: options.width || 800, scale: options.scale || 2, ask: options.ask });
             const name = fileName(options.pattern, chart, value, format);
             out[name] = new Uint8Array(await blob.arrayBuffer());
             names.push(name);

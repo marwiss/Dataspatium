@@ -390,6 +390,98 @@
     } finally { root.remove(); }
   }, 60000);
 
+  /** A plotly figure on a geo map: its land and the country by code come from plotly's server (consent for background maps). */
+  const GEO = { data: [{ type: 'scattergeo', lon: [18.07], lat: [59.33] }, { type: 'choropleth', locations: ['SWE'], z: [1] }], layout: { geo: { showland: true } } };
+  async function pythonMapChart(name) {
+    const meta = await table(name + ' data');
+    const chart = charts.create('python', meta, name);
+    chart.python = { code: 'import plotly.express as px\nfig = px.scatter_geo(lat=[59.33], lon=[18.07])\nfig', plotly: GEO };
+    const saved = await charts.save(chart);
+    chartIds.push(saved.id);
+    return saved;
+  }
+  /** Run with the developer override off and the consents for maps, addresses and components not given; the asker only counts. */
+  async function withoutConsent(fn) {
+    const consent = D.require('platform/consent');
+    const before = localStorage.getItem('dataspatium.consent');
+    localStorage.removeItem('dataspatium.consent');
+    const asked = [];
+    const saved = {};
+    try {
+      for (const p of ['basemaps', 'url', 'components']) { saved[p] = await consent.state(p); await consent.set(p, null); }
+      consent.setAsker(async (purpose, info) => { asked.push([purpose, info.host]); return { allow: false, remember: false }; });
+      return await fn(asked);
+    } finally {
+      consent.setAsker(null);
+      for (const [p, v] of Object.entries(saved)) await consent.set(p, v);
+      localStorage.setItem('dataspatium.consent', before || 'granted');
+    }
+  }
+
+  test('floden: at start a Python chart whose plotly map has no consent yet is skipped with the reason, and nothing is asked', async (assert) => {
+    const chart = await pythonMapChart('Karta vid start');
+    const doc = await documents.save({ name: 'Kartrapport', format: 'markdown', body: '# Karta\n\n{{diagram "Karta vid start"}}' });
+    docIds.push(doc.id);
+    const chartStep = { type: 'chart', params: { chartId: chart.id, format: 'png' } };
+    const docStep = { type: 'document', params: { documentId: doc.id, datasetId: chart.datasetId, format: 'html' } };
+    const flow = await saved({ name: 'Karta vid start', onStart: true, steps: [chartStep, docStep] });
+    try {
+      await withoutConsent(async (asked) => {
+        const reason = t('flows.block.consent', { purpose: t('consent.purpose.basemaps') });
+        const reasons = await flows.blockers({ steps: [chartStep] });
+        assert.ok(reasons.includes(reason), 'the chart step waits for the consent: ' + reasons.join('; '));
+        assert.ok((await flows.blockers({ steps: [docStep] })).includes(reason), 'so does a document that draws the chart');
+        const cached = await D.require('engines/python/catalog').cachedRuntime();
+        assert.equal(reasons.includes(t('flows.block.python')), !cached, 'and for Python when it is not fetched');
+        const skipped = [];
+        const ran = await flows.runOnStart({ force: true, onSkip: (f, why) => skipped.push([f.id, why]) });
+        assert.ok(skipped.some(([id, why]) => id === flow.id && why.includes(reason)), 'skipped with the reason');
+        assert.ok(!ran.some((r) => r.flowId === flow.id), 'not run');
+        assert.deepEqual(asked, [], 'nothing asked');
+      });
+    } finally { await flows.save(Object.assign(await flows.get(flow.id), { onStart: false })); }
+    return 'ok';
+  }, 60000);
+
+  test('floden: a chart step at start draws a Python chart with the consents already kept only, so the map is left out and nothing is asked', async (assert) => {
+    const chart = await pythonMapChart('Karta utan samtycke');
+    const flow = await saved({ name: 'Karta, ritad', steps: [{ type: 'chart', params: { chartId: chart.id, format: 'png' } }] });
+    const plotly = D.require('viz/plotly');
+    const components = D.require('platform/components');
+    const bridge = D.require('data/python-bridge').bridge;
+    // No Python and no plotly.js in the suite: the script's run gives the saved figure back, and a stand-in records the drawing.
+    const real = { run: bridge.run, Plotly: globalThis.Plotly };
+    const runs = []; const drawn = [];
+    bridge.run = async (code, options) => { runs.push(options); bridge.plotlyFigures.set(9001, GEO); return { entries: [{ kind: 'plot', key: 9001, plotly: GEO }], ms: 0 }; };
+    globalThis.Plotly = { newPlot: async (_el, data, layout, config) => { drawn.push({ data, layout, config }); }, purge: () => {}, toImage: async () => 'data:image/png;base64,iVBORw0KGgo=' };
+    try {
+      await withoutConsent(async (asked) => {
+        const result = await flows.run(flow, { unattended: true });
+        assert.ok(result.ok, JSON.stringify(result.steps));
+        assert.deepEqual(runs.map((o) => o && o.ask), [false], 'the script runs without asking for packages');
+        assert.deepEqual(drawn[0].data.map((d) => d.type), ['scattergeo'], 'the country by code is left out');
+        assert.ok(drawn[0].layout.geo.showland === false && drawn[0].config.topojsonURL === plotly.NO_TOPOJSON, 'the map is drawn without its land');
+        // A component that is not cached is not fetched either.
+        let fetched = 0; let err = null;
+        try { await components.ensure({ id: 'test:unattended', urls: ['https://example.invalid/c.js'], sha256: '0'.repeat(64) }, { ask: false, fetch: () => { fetched++; return Promise.resolve(new Response('x')); } }); } catch (e) { err = e; }
+        assert.ok(err && err.name === 'ConsentError' && err.reason === 'unattended', 'refused without asking: ' + (err && err.message));
+        assert.equal(fetched, 0);
+        assert.deepEqual(asked, [], 'nothing asked');
+      });
+      // A manual run may ask, as before.
+      await withoutConsent(async (asked) => {
+        drawn.length = 0;
+        await flows.run(flow);
+        assert.deepEqual(asked.map((a) => a[0]), ['basemaps'], 'a run with someone at the keyboard asks');
+      });
+    } finally {
+      bridge.run = real.run;
+      bridge.plotlyFigures.delete(9001);
+      if (real.Plotly) globalThis.Plotly = real.Plotly; else delete globalThis.Plotly;
+    }
+    return 'ok';
+  }, 60000);
+
   test('floden: cleanup', async (assert) => {
     for (const id of flowIds) await flows.remove(id).catch(() => {});
     for (const id of chartIds) await charts.remove(id).catch(() => {});

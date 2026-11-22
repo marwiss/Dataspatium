@@ -65,8 +65,9 @@
     /**
      * Run a code chart's script in its engine and return the last plot as a blob (svg, png or pdf). `extraFilters`
      * filter `df`; width and height are pixels (96 per inch when the engine draws in inches). A plotly figure from
-     * Python is drawn by plotly.js.
-     * @param {any} chart @param {'svg'|'png'|'pdf'} format @param {{extraFilters?: any[], width?: number, height?: number}} [options]
+     * Python is drawn by plotly.js. With `ask: false` (a flow at start) nothing is asked: packages, plotly.js and the
+     * figure's maps and addresses come only with a consent already kept.
+     * @param {any} chart @param {'svg'|'png'|'pdf'} format @param {{extraFilters?: any[], width?: number, height?: number, ask?: boolean}} [options]
      * @returns {Promise<Blob>}
      */
     async function toBlob(chart, format, options = {}) {
@@ -74,7 +75,7 @@
       if (!isCode(lang)) throw new Error(D.t('viz.err.rkind', { kind: chart.kind }));
       const bridge = bridgeFor(lang);
       const code = (chart[lang] && chart[lang].code) || '';
-      const res = await bridge.run(prelude(lang, chart.datasetShort || chart.datasetName, options.extraFilters || []) + code);
+      const res = await bridge.run(prelude(lang, chart.datasetShort || chart.datasetName, options.extraFilters || []) + code, { ask: options.ask });
       const plots = res.entries.filter((e) => e.kind === 'plot' && e.key);
       if (!plots.length) {
         const error = res.entries.find((e) => e.kind === 'error');
@@ -83,7 +84,7 @@
       const last = plots[plots.length - 1];
       const width = Number(options.width) || 960;
       const height = Number(options.height) || Math.round(width * 0.6);
-      return bridge.exportPlot(last.key, format, { width: (width / 96).toFixed(2), height: (height / 96).toFixed(2), dpi: 150 });
+      return bridge.exportPlot(last.key, format, { width: (width / 96).toFixed(2), height: (height / 96).toFixed(2), dpi: 150, ask: options.ask });
     }
 
     return { KINDS, isCode, filterCode, prelude, toBlob };
