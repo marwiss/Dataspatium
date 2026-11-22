@@ -224,6 +224,78 @@
     return 'ok';
   });
 
+  /** An IFC4 storey in millimetres with a glass partition (IsExternal false) and a façade without IsExternal, each a curtain wall
+   * that aggregates a mullion and a panel, written for these tests. */
+  function glazedText() {
+    const lines = []; let next = 100; let g = 1;
+    const add = (text) => { const id = next++; lines.push(`#${id}=${text};`); return id; };
+    const G = () => ('0Glas' + String(g++).padStart(17, '0')).slice(0, 22);
+    const units = add(`IFCUNITASSIGNMENT((#${add('IFCSIUNIT(*,.LENGTHUNIT.,.MILLI.,.METRE.)')},#${add('IFCSIUNIT(*,.AREAUNIT.,$,.SQUARE_METRE.)')},#${add('IFCSIUNIT(*,.VOLUMEUNIT.,$,.CUBIC_METRE.)')}))`);
+    const zDir = add('IFCDIRECTION((0.,0.,1.))');
+    const world = add(`IFCAXIS2PLACEMENT3D(#${add('IFCCARTESIANPOINT((0.,0.,0.))')},#${zDir},#${add('IFCDIRECTION((1.,0.,0.))')})`);
+    const context = add(`IFCGEOMETRICREPRESENTATIONCONTEXT($,'Model',3,1.E-05,#${world},$)`);
+    const body = add(`IFCGEOMETRICREPRESENTATIONSUBCONTEXT('Body','Model',*,*,*,*,#${context},$,.MODEL_VIEW.,$)`);
+    const project = add(`IFCPROJECT('${G()}',$,'Glasprojekt',$,$,$,$,(#${context}),#${units})`);
+    const place = add(`IFCLOCALPLACEMENT($,#${world})`);
+    const site = add(`IFCSITE('${G()}',$,'Tomten',$,$,#${place},$,$,.ELEMENT.,$,$,$,$,$)`);
+    const building = add(`IFCBUILDING('${G()}',$,'Glashuset',$,$,#${place},$,$,.ELEMENT.,$,$,$)`);
+    const storey = add(`IFCBUILDINGSTOREY('${G()}',$,'Plan 1',$,$,#${place},$,$,.ELEMENT.,0.)`);
+    add(`IFCRELAGGREGATES('${G()}',$,$,$,#${project},(#${site}))`);
+    add(`IFCRELAGGREGATES('${G()}',$,$,$,#${site},(#${building}))`);
+    add(`IFCRELAGGREGATES('${G()}',$,$,$,#${building},(#${storey}))`);
+    const p2 = add(`IFCAXIS2PLACEMENT2D(#${add('IFCCARTESIANPOINT((0.,0.))')},$)`);
+    const box = (x, y, depth) => add(`IFCPRODUCTDEFINITIONSHAPE($,$,(#${add(`IFCSHAPEREPRESENTATION(#${body},'Body','SweptSolid',(#${add(`IFCEXTRUDEDAREASOLID(#${add(`IFCRECTANGLEPROFILEDEF(.AREA.,$,#${p2},${x}.,${y}.)`)},#${world},#${zDir},${depth}.)`)}))`)}))`);
+    const el = (cls, name, shapeId, pt) => add(`${cls}('${G()}',$,'${name}',$,$,#${place},${shapeId ? '#' + shapeId : '$'},$,.${pt}.)`);
+    const material = (name, category) => add(`IFCMATERIAL('${name}',$,'${category}')`);
+    const aluminium = material('Aluminium', 'aluminium'); const glas = material('Glas', 'glass');
+    const glazed = (name) => {
+      const whole = el('IFCCURTAINWALL', name, null, 'NOTDEFINED');
+      const mullion = el('IFCMEMBER', name + ' Post 1', box(50, 150, 2500), 'MULLION');
+      const panel = el('IFCPLATE', name + ' Glas 1.1', box(1000, 30, 1200), 'CURTAIN_PANEL');
+      add(`IFCRELAGGREGATES('${G()}',$,$,$,#${whole},(#${mullion},#${panel}))`);
+      add(`IFCRELASSOCIATESMATERIAL('${G()}',$,$,$,(#${mullion}),#${aluminium})`);
+      add(`IFCRELASSOCIATESMATERIAL('${G()}',$,$,$,(#${panel}),#${glas})`);
+      return whole;
+    };
+    const partition = glazed('Glasvägg');
+    add(`IFCRELDEFINESBYPROPERTIES('${G()}',$,$,$,(#${partition}),#${add(`IFCPROPERTYSET('${G()}',$,'Pset_CurtainWallCommon',$,(#${add("IFCPROPERTYSINGLEVALUE('IsExternal',$,IFCBOOLEAN(.F.),$)")}))`)})`);
+    const facade = glazed('Fasad');
+    add(`IFCRELCONTAINEDINSPATIALSTRUCTURE('${G()}',$,$,$,(#${partition},#${facade}),#${storey})`);
+    const head = ['ISO-10303-21;', 'HEADER;', "FILE_DESCRIPTION(('ViewDefinition [DesignTransferView]'),'2;1');",
+      "FILE_NAME('glashus.ifc','2026-11-22T12:00:00',('Testare'),('Testbolaget'),'Testverktyg','Testprogram 1.0','');", "FILE_SCHEMA(('IFC4'));", 'ENDSEC;', 'DATA;'];
+    return head.concat(lines, ['ENDSEC;', 'END-ISO-10303-21;']).join('\n') + '\n';
+  }
+
+  test('climate: the parts of an internal curtain wall are interior walls with it, from the file or the topology, and an external or unknown one\'s stay envelope', async (assert) => {
+    const raw = (id, cls, extra) => Object.assign({ id, guid: 'g' + id, typ: cls, cls, namn: cls, vaning: 'Plan 1', typnamn: null, predefined: null, external: null, loadBearing: null, parent: null, host: null }, extra || {});
+    const glazed = (id, external) => [raw(id, 'IfcCurtainWall', { external }), raw(id + 1, 'IfcMember', { predefined: 'MULLION', parent: id }),
+      raw(id + 2, 'IfcPlate', { predefined: 'CURTAIN_PANEL', parent: id }), raw(id + 3, 'IfcMember', { predefined: 'MULLION', parent: id, loadBearing: true })];
+    const data = { elements: [].concat(glazed(10, false), glazed(20, true), glazed(30, null), glazed(40, null)), posts: [{ id: 12, key: 'm:glas' }, { id: 22, key: 'm:glas' }, { id: 42, key: 'm:glas' }] };
+    const out = climate.decide(data, { derived: new Map([[40, false]]) });
+    const by = new Map(out.elements.map((e) => [e.id, e]));
+    const cat = (id) => [by.get(id).category, by.get(id).layer, by.get(id).rule, by.get(id).uncertain];
+    const inner = ['inner', 5, 'part', false];
+    assert.deepEqual([cat(10), cat(11), cat(12), cat(13)], [['inner', 5, 'curtainwall-internal', false], inner, inner, inner], 'IsExternal false: the partition and every part of it, a load-bearing mullion too, are interior walls');
+    assert.ok(by.get(11).ruleText === t('climate.reason.part', { cls: 'IfcCurtainWall', rule: by.get(10).ruleText }) && by.get(11).ruleText.includes('IsExternal = false'), 'the rule names the whole that decided: ' + by.get(11).ruleText);
+    assert.deepEqual([cat(20), cat(21), cat(22)], [['skarm', 3, 'curtainwall', false], ['skarm', 3, 'member-mullion', false], ['skarm', 3, 'plate-curtain', false]], 'an external façade\'s parts are envelope by their own rules');
+    assert.deepEqual([cat(30), cat(31), cat(32)], [['skarm', 3, 'curtainwall', false], ['skarm', 3, 'member-mullion', false], ['skarm', 3, 'plate-curtain', false]], 'and so are those of one without IsExternal, as before');
+    assert.deepEqual([cat(40), cat(41), cat(42)], [['inner', 5, 'curtainwall-internal', false], inner, inner], 'internal from the topology');
+    assert.ok(by.get(41).ruleText.includes(t('climate.derived.topology')), 'the rule says the whole\'s value is derived: ' + by.get(41).ruleText);
+    assert.deepEqual(out.posts.map((p) => p.category), ['inner', 'skarm', 'inner'], 'the posts follow their parts');
+    // The same from a model file: Pset_CurtainWallCommon.IsExternal and IfcRelAggregates as the file gives them.
+    const meta = await imports.run(new File([glazedText()], 'glashus.ifc', { type: 'application/octet-stream' }), { format: 'model' }, null, 'Glashuset');
+    created.push(meta.id);
+    const gathered = await climate.gather(meta.id);
+    assert.ok(gathered.hasFile && gathered.containers === 2, 'the two curtain walls are counted in their parts: ' + gathered.containers);
+    const decided = climate.decide(gathered);
+    const of = (name) => { const e = decided.elements.find((x) => x.namn === name); return e ? [e.category, e.layer, e.rule] : null; };
+    assert.deepEqual([of('Glasvägg'), of('Glasvägg Post 1'), of('Glasvägg Glas 1.1')], [['inner', 5, 'curtainwall-internal'], ['inner', 5, 'part'], ['inner', 5, 'part']], 'the glass partition\'s parts are interior walls');
+    assert.deepEqual([of('Fasad'), of('Fasad Post 1'), of('Fasad Glas 1.1')], [['skarm', 3, 'curtainwall'], ['skarm', 3, 'member-mullion'], ['skarm', 3, 'plate-curtain']], 'the façade\'s are envelope');
+    const panel = decided.posts.find((p) => p.namn === 'Glasvägg Glas 1.1');
+    assert.ok(panel && panel.category === 'inner' && near(panel.volume, 1 * 0.03 * 1.2), 'the partition\'s glass counts with the interior walls: ' + JSON.stringify(panel && [panel.category, panel.volume]));
+    return 'ok';
+  }, 60000);
+
   test('climate: quantities from the quantity sets, else the extrusion, else a door\'s size, else none; layers by thickness', async (assert) => {
     const q = climate.quantitiesOf('IfcWall', [['NetFootprintArea', 0.8, 'area'], ['NetSideArea', 10, 'area'], ['GrossVolume', 2.2, 'volym'], ['NetVolume', 2, 'volym']], null);
     assert.deepEqual([q.volume, q.area, q.sources], [2, 10, { volume: 'qto', area: 'qto' }], 'net before gross, the side area of a wall');

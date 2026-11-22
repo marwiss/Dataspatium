@@ -322,7 +322,9 @@ stairs, ramps and railings are load-bearing; ceilings, suspended ceilings and in
   your consent): the walls along a storey's outer boundary are external, and on a closed storey the rooms' other walls are internal.
   The rule says when a value is derived.
 - A composite element, for example a roof made of roof slabs, is counted in its parts, and a part the rules cannot decide takes the
-  category of its whole.
+  category of its whole. A glass wall inside the building, a curtain wall (IfcCurtainWall) whose IsExternal is false in the file or
+  from the topology, takes all its parts with it to the interior walls; in an external curtain wall, and in one without IsExternal,
+  the mullions, transoms and panels are building envelope.
 
 Under **To settle** you choose the category for a whole group of elements with the same class, type and rule. The choice is kept per
 element (GlobalId) in the browser until you let the rules decide again.
