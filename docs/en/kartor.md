@@ -35,7 +35,7 @@ correct, remove rows) shows on the map.
 Large datasets are drawn on a canvas; 10 000 polygons pan smoothly. More than 50 000 features per layer are not
 drawn (the limit can be raised per layer in the map view).
 
-Picture collections with positions have the button *Show on the map*. Click a place and the inspector shows the picture. A table whose rows name pictures shows them the same way. *Use what shows* turns what the map shows right now into a selection that follows to the other modes. In a map view in Visualise, picture collections and plans can be layers.
+Picture collections with positions have the button *Show on the map*. Click a place and the inspector shows the picture. A table whose rows name pictures shows them the same way. *Use what shows* turns what the map shows right now into a selection that follows to the other modes. In a map view in Visualise, picture collections, plans and rasters (georeferenced images, see [raster.md](raster.md)) can be layers.
 
 ## Map views in Visualise
 
@@ -123,6 +123,9 @@ in Process, in the map views in Visualise, on the plan map and under the place o
   the hosts. A saved map view fetches nothing when it is opened; it shows the button.
 - The attribution in the corner of the map follows Lantmäteriet's terms: "Ortofoto © Lantmäteriet (year), processed for the map (CC BY
   4.0)". The image is not included in export (SVG, PNG, PDF), saved map views or published HTML.
+- *Save the orthophoto* beside the button saves the image shown as a dataset of the kind raster, with the attribution and the licence
+  but without the key. Nothing is fetched again, and the raster is then shown without the net, for example under the place of a new
+  building. See [raster.md](raster.md#save-the-orthophoto).
 - The tiles are decoded, put together and converted in a thread of their own (a worker), so that the page does not freeze. The page
   fetches only the bytes the thread asks for, with the same key and consent, and receives the finished image; the key and the login
   stay on the page. A view of 1 km² takes a few seconds.

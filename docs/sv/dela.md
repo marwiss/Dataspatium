@@ -62,6 +62,10 @@ telefonnummer, både i hela kolumner och inne i löptext, och listar det som ann
 | Kommentarer och författare i dokumentens metadata | Behåll eller ta bort |
 | Insamlade rader | Vem som samlade in kan pseudonymiseras, och positionen kan tas bort |
 
+Ett rasters originalfiler (GeoTIFF) kan bära taggar som namnger en person, till exempel Artist och HostComputer. Appen läser aldrig ut
+värdena, men granskningen nämner taggarna vid filen och föreslår då att originalen tas bort. Kopian behåller rastrets förhandsvisningar
+och miniatyrer (se [raster.md](raster.md#exportera-och-dela)).
+
 Bara kopian som delas ändras, och datamängden i appen är kvar som den är. Ändrar du något följer varken ändringsloggen eller receptet med, eftersom de kan innehålla de ursprungliga
 värdena. Paket rensas också från rester av borttagna värden i själva filen.
 

@@ -26,6 +26,7 @@
 | Access (mdb, accdb) | Ja | Nej | Läses direkt i webbläsaren med mdb-reader; tabellen väljs i steget Inställningar och typerna kommer från Access. Frågor, länkade tabeller och lösenord kräver [databasbryggan](kallor.md). |
 | Dokument: PDF, Word (docx), OpenDocument (odt), Markdown (md), text (txt) | Ja | Nej | Blir en dokumentsamling med ett stycke per rad (dokument, sida, stycke, typ, text, tecken); flera filer på en gång blir en samling och originalen följer med. Se [dokument.md](dokument.md) |
 | Bilder: JPEG, PNG, WebP, GIF, BMP, AVIF | Ja | Nej | Blir en bildsamling med en rad per bild (mått, storlek, datum, kamera och position ur EXIF); en förhandsvisning och en miniatyr sparas, inte originalen. Se [dokument.md](dokument.md) |
+| GeoTIFF och molnoptimerad GeoTIFF (tif, tiff) | Ja | Ja | Blir ett raster med en rad per fil (bildpunkter, band, datatyp, upplösning, koordinatsystem och utbredning); en förhandsvisning i Web Mercator och en miniatyr sparas, och originalet när det är högst 32 MB. Exporteras som originalfilen eller som bilden på kartan i Web Mercator med `kreditering.txt`. Se [raster.md](raster.md) |
 | BCF (bcf, bcfzip) | Ja | Ja | BCF-XML 3.0 och 2.1, även från andra program. Ärendena blir en tabell, kommentarer och viewpoint-komponenter tabeller bredvid, och filen sparas med ärendena så att viewpoints, ögonblicksbilder och dokument finns kvar. Export enligt BCF 3.0 av ett projekts ärenden från modellvyns panel Ärenden, av kollisioner och av AI-kontrollens fynd; se [cad-bim.md](cad-bim.md#bcf-filer) |
 | QGIS-projekt (qgs, qgz) | Ja | Nej | Blir en kartvy i Visualisera med projektets lagerordning, synlighet och symboler (färger, linjebredder, punktstorlekar); lagren kopplas till datamängder med samma filnamn och medföljande datafiler importeras. Se [kartor.md](kartor.md) |
 | SPSS sav, zsav, por | Ja | sav | Via R-paketet haven. Variabeletiketter blir kolumnetiketter och värdeetiketter kolumnmetadata (se nedan) |
@@ -108,7 +109,9 @@ Varje datamängd är en SQLite-fil med tabellerna `data` (raderna), `_columns` (
 beskrivning, enhet och värdeetiketter; de tre sista läggs till när en äldre fil öppnas), `_meta` (namn, kortnamn,
 beskrivning, tidsstämplar, källa, importinställningar), `_log` (allt som gjorts med datamängden) och, när någon har
 kommenterat, `_comments` (tid, namn, text, kolumn och om kommentaren är löst). Filen går att öppna i R med RSQLite,
-i DB Browser for SQLite och i de flesta andra verktyg.
+i DB Browser for SQLite och i de flesta andra verktyg. Ett raster har dessutom tabellen `_files` med varje fils original,
+förhandsvisning (`preview`) och miniatyr (`thumb`) under filens namn, och `_meta.raster` med filernas uppgifter: koordinatsystem,
+utbredning, upplösning, band, vad som blev av originalet, kreditering och licens.
 
 ## Arbetsytans filer
 
@@ -128,7 +131,7 @@ för borttagna datamängder tas bort. Mappen kan läsas in på en annan dator p�
 Manifestet har `format: 2` sedan version 2.0: varje datamängd i listan har förutom `id`, `name` och `shortName`
 även `folder` (mappen, som `Ekonomi/2026`, eller tom) och `tags` (en lista). Äldre paket och säkerhetskopior (utan
 `format`) läses som förut. Mapp och taggar ligger också i datamängdens egen fil (`_meta`), så de följer med var
-filen än hamnar, liksom `kind` (`table`, `graph`, `document`, `images`, `model`).
+filen än hamnar, liksom `kind` (`table`, `graph`, `document`, `images`, `model`, `plan`, `raster`).
 
 Raderna i `_log` har tidsstämpel, åtgärdstyp och detaljer som JSON. Åtgärdstyperna är bland andra `import`, `op`
 (ett receptsteg med `op`, `params`, `result` och `description`; det är dessa rader som utgör receptet), `undo`,

@@ -26,6 +26,7 @@
 | Access (mdb, accdb) | Yes | No | Read directly in the browser with mdb-reader; the table is chosen in the Settings step and the types come from Access. Queries, linked tables and passwords need the [database bridge](kallor.md). |
 | Documents: PDF, Word (docx), OpenDocument (odt), Markdown (md), text (txt) | Yes | No | Becomes a document collection with one paragraph per row (document, page, paragraph, type, text, characters); several files at once become one collection and the originals travel along. See [dokument.md](dokument.md) |
 | Images: JPEG, PNG, WebP, GIF, BMP, AVIF | Yes | No | Becomes an image collection with one row per picture (dimensions, size, date, camera and position from EXIF); a preview and a thumbnail are stored, not the originals. See [dokument.md](dokument.md) |
+| GeoTIFF and cloud-optimised GeoTIFF (tif, tiff) | Yes | Yes | Becomes a raster with one row per file (pixels, bands, data type, resolution, coordinate system and extent); a preview in Web Mercator and a thumbnail are stored, and the original when it is at most 32 MB. Exported as the original file or as the image on the map in Web Mercator with `kreditering.txt`. See [raster.md](raster.md) |
 | BCF (bcf, bcfzip) | Yes | Yes | BCF-XML 3.0 and 2.1, also from other programs. The issues become a table, comments and viewpoint components tables beside it, and the file is kept with the issues so that viewpoints, snapshots and documents stay. Export as BCF 3.0 of a project's issues from the Issues panel of the model view, of clashes and of the AI check's findings; see [cad-bim.md](cad-bim.md#bcf-files) |
 | QGIS project (qgs, qgz) | Yes | No | Becomes a map view in Visualise with the project's layer order, visibility and symbols (colours, line widths, point sizes); the layers are matched to datasets with the same file name and bundled data files are imported. See [kartor.md](kartor.md) |
 | SPSS sav, zsav, por | Yes | sav | Through the R package haven. Variable labels become column labels and value labels column metadata (see below) |
@@ -109,7 +110,9 @@ Each dataset is an SQLite file with the tables `data` (the rows), `_columns` (na
 description, unit and value labels; the last three are added when an older file is opened), `_meta` (name, short name,
 description, timestamps, source, import settings), `_log` (everything done with the dataset) and, once someone has
 commented, `_comments` (time, name, text, column and whether the comment is resolved). The file can be opened in R
-with RSQLite, in DB Browser for SQLite and in most other tools.
+with RSQLite, in DB Browser for SQLite and in most other tools. A raster also has the table `_files` with each file's
+original, preview (`preview`) and thumbnail (`thumb`) under the file's name, and `_meta.raster` with the files' facts:
+coordinate system, extent, resolution, bands, what became of the original, attribution and licence.
 
 ## The workspace's files
 
@@ -129,7 +132,7 @@ are removed. The folder can be loaded on another computer in the same way as a b
 The manifest has `format: 2` since version 2.0: every dataset in the list has, besides `id`, `name` and `shortName`,
 also `folder` (the folder, such as `Economy/2026`, or empty) and `tags` (a list). Older bundles and backups (without
 `format`) are read as before. Folder and tags are also in the dataset's own file (`_meta`), so they come along
-wherever the file goes, as does `kind` (`table`, `graph`, `document`, `images`, `model`).
+wherever the file goes, as does `kind` (`table`, `graph`, `document`, `images`, `model`, `plan`, `raster`).
 
 The rows in `_log` have a timestamp, action type and details as JSON. The action types are among others `import`, `op`
 (a recipe step with `op`, `params`, `result` and `description`; these rows make up the recipe), `undo`, `snapshot`,

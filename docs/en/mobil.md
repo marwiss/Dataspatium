@@ -46,7 +46,7 @@ that have already arrived when you connect again.
   installed as an app; the files end up under *Received*.
 - *Settings* holds the phone's name (what the computer shows), its code and the language.
 
-A dataset is shown in its own form: pictures to look through, documents to read, places as points, a graph's nodes with their number of edges, what a model is made of and a plan's provisions. The rows are under *The rows*.
+A dataset is shown in its own form: pictures to look through, documents to read, places as points, a graph's nodes with their number of edges, what a model is made of, a plan's provisions and a raster's pictures with their attribution and licence. The rows are under *The rows*.
 
 ## Computer to computer
 

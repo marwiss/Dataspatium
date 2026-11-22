@@ -38,7 +38,7 @@ LOCAL_GZIP_GLOBS = [
 # Swedish lives in docs/, the other languages in docs/<lang>/. Developer documents are not embedded.
 HELP_DOCS = [
     "kom-igang", "anvandarguide", "lagen", "soka", "bearbeta", "visualisera", "anteckningsbok", "regex",
-    "format", "api-konfiguration", "kallor", "snabbstart", "r-guide", "python", "dokument", "kartor", "planer", "grafer", "cad-bim", "floden", "statistik", "insamling", "dokumentmallar", "dela", "mobil", "faq", "licenser", "sakerhet",
+    "format", "api-konfiguration", "kallor", "snabbstart", "r-guide", "python", "dokument", "kartor", "raster", "planer", "grafer", "cad-bim", "floden", "statistik", "insamling", "dokumentmallar", "dela", "mobil", "faq", "licenser", "sakerhet",
 ]
 HELP_LANGS = ["sv", "da", "nb", "nn", "fi", "is", "en"]
 # The languages that must have every document; the others fall back to English, then Swedish (ui/help).

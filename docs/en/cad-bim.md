@@ -510,6 +510,9 @@ that covers the place: you see the building from above while you place it. The m
 only when you choose a background and give your consent. Denmark, Finland and Iceland have open orthophotos as tiles; in Sweden the app
 reads Lantmäteriet's orthophoto for the place and 250 m around it from Lantmäteriet's files with your key from Geotorget (the same as
 for the ground height); Norway has no open orthophoto (see [kartor.md](kartor.md#orthophotos)).
+A raster in the workspace that covers the place, for example the orthophoto you saved with *Save the orthophoto* beside the choice or
+a drone's picture, is in the same choice under *Rasters in the workspace* and is drawn under the footprint without the net, a key or
+consent (see [raster.md](raster.md#under-the-place-of-a-new-building)).
 After the walls of each storey the preview reads the building's topology: the walls' centrelines become rooms, and the storey is closed
 when the walls enclose at least one room and no wall end is left open; the AI mends open ends by moving or adding walls before it lays
 the slabs. The external walls with their compass directions let the AI match a photo of the south façade to the right walls (the read

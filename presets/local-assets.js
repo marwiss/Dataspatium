@@ -537,7 +537,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/anvandarguide.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 23584,
+  "size": 23729,
   "library": "dataspatium"
  },
  "docs/sv/lagen.md": {
@@ -579,7 +579,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/format.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 13652,
+  "size": 14345,
   "library": "dataspatium"
  },
  "docs/sv/api-konfiguration.md": {
@@ -621,7 +621,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/kartor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 16434,
+  "size": 16787,
+  "library": "dataspatium"
+ },
+ "docs/sv/raster.md": {
+  "file": "docs/help/sv.js",
+  "encoding": "text",
+  "size": 10649,
   "library": "dataspatium"
  },
  "docs/sv/planer.md": {
@@ -639,7 +645,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/cad-bim.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 81303,
+  "size": 81613,
   "library": "dataspatium"
  },
  "docs/sv/floden.md": {
@@ -669,13 +675,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/dela.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 11729,
+  "size": 12073,
   "library": "dataspatium"
  },
  "docs/sv/mobil.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 5832,
+  "size": 5879,
   "library": "dataspatium"
  },
  "docs/sv/faq.md": {
@@ -1545,7 +1551,7 @@ Dataspatium.assets.addEntries({
  "docs/en/anvandarguide.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 23305,
+  "size": 23449,
   "library": "dataspatium"
  },
  "docs/en/lagen.md": {
@@ -1587,7 +1593,7 @@ Dataspatium.assets.addEntries({
  "docs/en/format.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 14050,
+  "size": 14737,
   "library": "dataspatium"
  },
  "docs/en/api-konfiguration.md": {
@@ -1629,7 +1635,13 @@ Dataspatium.assets.addEntries({
  "docs/en/kartor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 16449,
+  "size": 16835,
+  "library": "dataspatium"
+ },
+ "docs/en/raster.md": {
+  "file": "docs/help/en.js",
+  "encoding": "text",
+  "size": 10845,
   "library": "dataspatium"
  },
  "docs/en/planer.md": {
@@ -1647,7 +1659,7 @@ Dataspatium.assets.addEntries({
  "docs/en/cad-bim.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 82461,
+  "size": 82800,
   "library": "dataspatium"
  },
  "docs/en/floden.md": {
@@ -1677,13 +1689,13 @@ Dataspatium.assets.addEntries({
  "docs/en/dela.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 11700,
+  "size": 12024,
   "library": "dataspatium"
  },
  "docs/en/mobil.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 5897,
+  "size": 5953,
   "library": "dataspatium"
  },
  "docs/en/faq.md": {

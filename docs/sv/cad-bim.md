@@ -494,6 +494,9 @@ byggnaden syns då uppifrån medan du placerar den. Kartan ritas när du öppnar
 ger samtycke. Danmark, Finland och Island har öppna ortofoton som rutor; i Sverige läser appen Lantmäteriets ortofoto för platsen och
 250 m runt den ur Lantmäteriets filer med din nyckel från Geotorget (samma som för markhöjden); Norge saknar öppet ortofoto (se
 [kartor.md](kartor.md#ortofoton)).
+Ett raster i arbetsytan som täcker platsen, till exempel ortofotot som du sparat med *Spara ortofotot* bredvid valet eller en
+drönarbild, finns i samma val under *Raster i arbetsytan* och ritas under byggnadsytan utan nät, nyckel eller samtycke (se
+[raster.md](raster.md#under-platsen-för-en-ny-byggnad)).
 Efter väggarna på varje våning läser förhandsvisningen byggnadens topologi: väggarnas mittlinjer blir rum, och våningen är sluten när
 väggarna sluter minst ett rum och ingen väggände står lös; AI:n lagar lösa ändar genom att flytta eller lägga till väggar innan den
 lägger bjälklagen. Ytterväggarna med sina väderstreck låter AI:n para ett foto av fasaden mot söder med rätt väggar (läsverktyget

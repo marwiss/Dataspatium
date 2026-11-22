@@ -62,6 +62,10 @@ phone numbers, both in whole columns and inside running text, and lists what oth
 | Comments and authors in the documents' metadata | Keep or remove |
 | Collected rows | Who collected can be pseudonymised, and the position can be removed |
 
+A raster's original files (GeoTIFF) can carry tags that name a person, such as Artist and HostComputer. The app never reads out the
+values, but the review names the tags by the file and then suggests removing the originals. The copy keeps the raster's previews and
+thumbnails (see [raster.md](raster.md#export-and-share)).
+
 Only the copy that is shared changes, and the dataset in the app stays as it is. If you change anything, neither the change log nor the recipe comes along, since they can hold the original values.
 Bundles are also cleaned of traces of removed values in the file itself.
 
