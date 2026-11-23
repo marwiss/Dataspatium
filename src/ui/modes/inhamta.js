@@ -902,7 +902,7 @@
             { label: t('plan.field.format'), value: t('plan.format.' + (p.planFormat || 'detaljplan')) },
             info.crs ? { label: t('plan.field.crs'), value: D.require('data/geo').crsText(info.crs) } : null,
             info.arkivpaket ? { label: t('plan.archive.title'), value: info.arkivpaket.andrade.length + info.arkivpaket.saknas.length ? t('plan.archive.bad', { n: info.arkivpaket.andrade.length + info.arkivpaket.saknas.length }) : t('plan.archive.ok', { n: info.arkivpaket.stammer }) } : null,
-            info.leverans ? { label: t('plan.delivery.files'), value: info.leverans.filer.map((f) => `${f.namn} (${t('plan.role.' + f.roll)})`).join(', ') } : null,
+            info.leverans ? { label: t('plan.delivery.files'), value: info.leverans.filer.map((f) => `${f.namn} (${t('plan.files.role.' + f.roll)})`).join(', ') } : null,
             info.leverans && p.sections ? { label: t('plan.delivery.sections'), value: t('plan.delivery.sections.n', { n: i18n.formatNumber(p.sections), links: i18n.formatNumber(p.links || 0) }) } : null,
           ].filter(Boolean);
           left.appendChild(h('div', { class: 'dm-card', 'data-plan-preview': '' }, kv));
