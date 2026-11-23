@@ -13,8 +13,8 @@ one click away.
 |---|---|---|
 | National specification Detaljplan (Lantmäteriet, version 4.1) | GeoJSON with `feature:mediatyp application/vnd.lm.detaljplan.v4+json` or `feature:typ` (detaljplan, användningsbestämmelse, egenskapsbestämmelse, administrativ bestämmelse; also written without å, ä and ö) | Plan area, provisions with catalogue reference, formulation, values and motive, geometries as areas, lines, points and bodies (with height in RH 2000), decision information (started, adopted, legal force, implementation period, case number) and the plan description's name |
 | Reference objects from the national geodata platform | STAC items with `properties.detaljplan` and `properties.planbestammelse` (the answer of Lantmäteriet's detailed-plan API) | The plan's facts, the provisions' formulation, catalogue reference, category and value |
-| National specification Översiktsplan (Lantmäteriet, version 2.0, test version 4) | GeoJSON with `feature:mediatyp application/vnd.lm.oversiktsplan.v2+json` or `feature:typ` oversiktsplan, innehallOP, beslutOP | The plan's facts and decision (taken, legal force), content objects with content type, theme by the ÖP catalogue's category, name, specification, plan event, level of connection and links, also content described only in text |
-| Boverket's ÖP model (GeoPackage, database model 0.4) | Tables `innehall_op_<theme>_<geometry type>` and `oversiktsplan` | Every content layer as one plan with a theme per layer, the plan's decision (`beslut_op`), links between content and the plan document's sections (bookmarks) |
+| National specification Översiktsplan (Lantmäteriet, version 2.0, test version 5 of 2026-10-23) | GeoJSON with `feature:mediatyp application/vnd.lm.oversiktsplan.v2+json` or `feature:typ` oversiktsplan, innehallOP, beslutOP | The plan's facts and decision (taken, legal force), content objects with content type, theme by the ÖP catalogue's category, name, specification, plan event, level of connection and links, also content described only in text |
+| Boverket's ÖP model (GeoPackage, database model 0.4) | Tables `innehall_op_<theme>_<geometry type>` and `oversiktsplan` | Every content layer as one plan with a theme per layer, the plan's decision (`beslut_op`), planning data and documents, links between content and the text document's sections (bookmarks), also to the whole plan; with the text document, see [A digital comprehensive plan in several files](#a-digital-comprehensive-plan-in-several-files) |
 | Detailed development plan in GeoPackage | The tables `detaljplan`, `bestammelse` and `anvandning_yta`, `egenskap_yta`, `egenskap_linje`, `egenskap_punkt` with the national specification's field names | The plan as the planning tool saves it: plan area, areas, lines and points with their provisions, designations, colours, motives and heights, decision information and documents; areas without a provision yet are shown as drawn |
 
 Coordinates in SWEREF 99 TM and the local SWEREF 99 zones (EPSG:3006–3018, read from `koordinatsystemPlan`) as well
@@ -70,7 +70,49 @@ Plans drawn in a planning tool are read like all plans of the same kind, whichev
 | Comprehensive plan in GeoPackage (Boverket's database model 0.4) | Comprehensive plan per theme with decision, links and the plan document's sections |
 | Archive package (folder or ZIP file with `metadata/PREMIS.xml`) | The plan from the folder `content` with the documents, and the check of the files |
 
-Drop the file in Import, or fetch it with *From web address* when it is on the web (for example a plan the municipality publishes); a file without an extension is recognised by its content type. An archive package is dropped as a folder or as a ZIP file: the app reads the plan from the folder `content` (the GeoPackage first, else the delivery file), keeps the package's files with the plan and compares each file with its checksum (SHA-256) in `PREMIS.xml`. The inspector shows under *Archive package* whether the files match, which have changed or are missing, and opens the documents (plan map and plan description) in a new tab. Only PDF files and pictures (PNG, JPEG) whose extension and content agree open in a tab; other files in the package, such as XML, HTML and SVG, are downloaded instead. A place that points outside the package is not checked and never read. The plan's own documents in an ordinary folder are opened on their own, as documents.
+Drop the file in Import, or fetch it with *From web address* when it is on the web (for example a plan the municipality publishes); a file without an extension is recognised by its content type. An archive package is dropped as a folder or as a ZIP file: the app reads the plan from the folder `content` (the GeoPackage first, else the delivery file), keeps the package's files with the plan and compares each file with its checksum (SHA-256) in `PREMIS.xml`. The inspector shows under *Archive package* whether the files match, which have changed or are missing, and opens the documents (plan map and plan description) in a new tab. Only PDF files and pictures (PNG, JPEG) whose extension and content agree open in a tab; other files in the package, such as XML, HTML and SVG, are downloaded instead. A place that points outside the package is not checked and never read. An ordinary folder with the plan's GeoPackage and text document can become one plan (see below); switched off, the documents are opened on their own, as documents.
+
+## A digital comprehensive plan in several files
+
+A digital comprehensive plan is often delivered as a folder, a ZIP file or a few files: one or more GeoPackages (the plan
+map in Boverket's ÖP model and perhaps planning data), one or more Word files (the text document and appendices) and
+sometimes a `manifest.xml` and a `metadata.xml`. Drop the folder, the ZIP file or the files in Import. The step that sorts
+the files then has the choice **Digital comprehensive plan (all files as one plan)**. It is on when a GeoPackage follows
+the ÖP model; off, each file is imported on its own as before.
+
+On, all the files become one dataset of the kind plan:
+
+- **The files are recognised by their contents**, not their names: a GeoPackage by its SQLite header and its tables, a
+  Word file by its parts in the ZIP file and a manifest or metadata file by its root element. Each file is kept in the plan
+  with its role: *plan map* (the GeoPackage in the ÖP model), *planning data* (other GeoPackages), *text document* (the Word
+  file the GeoPackage refers to, else the only one or the one with most of the plan's bookmarks), *appendix* (other Word
+  files and PDF files), *manifest*, *metadata* and *other*.
+- **Every layer with objects** becomes rows of the plan. The column `lager` says which table of the GeoPackage the row
+  comes from and `fil` which file. The layers are recognised by `gpkg_contents` (value lists and link tables are no layers),
+  with their names from there. Empty layers are left out. Layers with the endings `_point`, `_line` and `_polygon` are read,
+  and so are `_punkt` and `_linje`.
+- **The text document's sections**: every bookmark in the Word files becomes a section with its text, also when the
+  bookmark spans several paragraphs, and the nearest heading before it. The table `dokumentavsnitt` in the GeoPackage links
+  the bookmarks to the objects on the map. A ställningstagande (the municipality's position) can concern several areas,
+  and an area can have several sections. A section can also concern the whole plan. The section type (for example
+  *Ställningstagande*) is read from the GeoPackage, by the ÖP catalogue's id or by its name. Ids are compared without
+  braces and regardless of case.
+- **Manifest and metadata** have no formal role in an ÖP delivery. They are read when present and never required. The
+  plan's facts are always read from the GeoPackage. Checksums in the files (SHA-1, SHA-256, SHA-384 and SHA-512) are
+  compared with the files; other algorithms, such as MD5, are said not to be checked.
+- **Warnings** are kept with the plan and shown in Import before the import. Examples are a bookmark the GeoPackage names
+  but the text document lacks, a text document the GeoPackage refers to but that was not delivered, a checksum that does
+  not match and bookmarks whose names do not follow the exchange model's rule. Such a bookmark is read all the same.
+
+The sections are in the table `_sections` (avsnitt, dokument, rubrik, text, typ, ordning) and the links in
+`_section_links` (avsnitt, objektid, dokument, typ; an empty objektid is the whole plan). Both can be read with SQL in
+Analyse. A GeoPackage in the ÖP model imported on its own with *The whole comprehensive plan as a plan* gets the same tables,
+with the headings from the GeoPackage, and a warning that the text document is missing. A text document added to the plan
+later is read the same way, and the sections and links are made anew.
+
+Nothing in the files runs and nothing is fetched. Macros in a Word file are never run, links to other places are not
+followed, and the text is only ever shown as text. An XML file with a document type declaration (DOCTYPE) is not read. Nor
+is a part of a Word file that unpacks to more than 64 MB.
 
 ## The Plan tab in Analyse
 

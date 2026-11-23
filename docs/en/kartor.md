@@ -152,6 +152,19 @@ The tools work in the browser without the net and in chunks so the page stays re
 of thousands of complex polygons) take time. Measures and coordinate conversion also exist as recipe steps in Process
 (the Geodata group).
 
+## Map layers: a GeoPackage with all its layers
+
+A GeoPackage with several layers can be imported whole as one dataset of the kind *map layers*. Choose **The whole
+GeoPackage as one dataset (layers chosen afterwards)** in Import, instead of one table. This works for any GeoPackage, not
+only plans. A GeoPackage in the ÖP model still becomes a plan with the choice *The whole comprehensive plan as a plan*;
+switched off, both other choices are there.
+
+The dataset has one object per row: `lager` (the table in the file), `fil`, `objektid` (the object's id in its layer),
+`geometrityp`, `geometri` (GeoJSON in WGS 84), `egenskaper` (all the object's attributes as JSON) and `ordning`. The layers
+are the tables with the `data_type` *features* in `gpkg_contents`, with their names from there; value lists and other
+attribute tables are no layers. Empty layers are left out, but counted in the dataset's facts in Manage. The original file
+is kept in the dataset. Which layers are shown on the map is chosen afterwards.
+
 ## QGIS projects
 
 Drop a project file (`.qgs` or `.qgz`) in Import, preferably together with the data files (GeoPackage, GeoJSON,

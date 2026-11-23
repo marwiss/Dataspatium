@@ -12,8 +12,8 @@ Tabellen är alltid en knapp bort.
 |---|---|---|
 | Nationell specifikation Detaljplan (Lantmäteriet, version 4.1) | GeoJSON med `feature:mediatyp application/vnd.lm.detaljplan.v4+json` eller `feature:typ` (detaljplan, användningsbestämmelse, egenskapsbestämmelse, administrativ bestämmelse; även skrivna utan å, ä och ö) | Planområde, bestämmelser med katalogreferens, formulering, värden och motiv, geometrier som ytor, linjer, punkter och kroppar (med höjd i RH 2000), beslutsinformation (påbörjad, antagen, laga kraft, genomförandetid, diarienummer) och planbeskrivningens namn |
 | Referensobjekt från Nationella geodataplattformen | STAC-objekt med `properties.detaljplan` och `properties.planbestammelse` (svaret från Lantmäteriets detaljplans-API) | Planens uppgifter, bestämmelsernas formulering, katalogreferens, kategori och värde |
-| Nationell specifikation Översiktsplan (Lantmäteriet, version 2.0, testversion 4) | GeoJSON med `feature:mediatyp application/vnd.lm.oversiktsplan.v2+json` eller `feature:typ` oversiktsplan, innehallOP, beslutOP | Planens uppgifter och beslut (fattat, laga kraft), innehållsobjekt med innehållstyp, tema efter ÖP-katalogens kategori, namn, precisering, planhändelse, sambandsnivå och kopplingar, även innehåll som bara beskrivs i text |
-| Boverkets ÖP-modell (GeoPackage, databasmodell 0.4) | Tabeller `innehall_op_<tema>_<geometrityp>` och `oversiktsplan` | Alla innehållslager som en plan med tema per lager, planens beslut (`beslut_op`), kopplingar mellan innehåll och planhandlingens avsnitt (bokmärken) |
+| Nationell specifikation Översiktsplan (Lantmäteriet, version 2.0, testversion 5 av 2026-10-23) | GeoJSON med `feature:mediatyp application/vnd.lm.oversiktsplan.v2+json` eller `feature:typ` oversiktsplan, innehallOP, beslutOP | Planens uppgifter och beslut (fattat, laga kraft), innehållsobjekt med innehållstyp, tema efter ÖP-katalogens kategori, namn, precisering, planhändelse, sambandsnivå och kopplingar, även innehåll som bara beskrivs i text |
+| Boverkets ÖP-modell (GeoPackage, databasmodell 0.4) | Tabeller `innehall_op_<tema>_<geometrityp>` och `oversiktsplan` | Alla innehållslager som en plan med tema per lager, planens beslut (`beslut_op`), underlag och dokument, kopplingar mellan innehåll och textdokumentets avsnitt (bokmärken), även till hela planen; med textdokumentet, se [Digital översiktsplan i flera filer](#digital-översiktsplan-i-flera-filer) |
 | Detaljplan i GeoPackage | Tabellerna `detaljplan`, `bestammelse` och `anvandning_yta`, `egenskap_yta`, `egenskap_linje`, `egenskap_punkt` med den nationella specifikationens fältnamn | Planen som den sparas i planeringsverktyget: planområde, ytor, linjer och punkter med sina bestämmelser, beteckningar, färger, motiv och höjder, beslutsinformation och handlingar; ytor som ännu saknar bestämmelse visas som de är ritade |
 
 Koordinater i SWEREF 99 TM och de lokala SWEREF 99-zonerna (EPSG:3006–3018, lästa ur `koordinatsystemPlan`) samt
@@ -82,7 +82,48 @@ Släpp filen i Inhämta, eller hämta den med *Från webbadress* när den finns 
 kontrollsumman (SHA-256) i `PREMIS.xml`. Inspektören visar under *Arkivpaket* om filerna stämmer, vilka som har ändrats
 eller saknas, och öppnar handlingarna (plankarta och planbeskrivning) i en ny flik. Bara PDF-filer och bilder (PNG, JPEG) vars filändelse
 och innehåll stämmer öppnas i en flik; andra filer i paketet, till exempel XML, HTML och SVG, laddas ned i stället. En plats som pekar utanför paketet
-kontrolleras inte och läses aldrig. Planens egna handlingar i en vanlig mapp öppnas för sig, som dokument.
+kontrolleras inte och läses aldrig. En vanlig mapp med planens GeoPackage-fil och textdokument kan bli en plan (se nedan); avslaget öppnas handlingarna för sig, som dokument.
+
+## Digital översiktsplan i flera filer
+
+En digital översiktsplan levereras ofta som en mapp, en ZIP-fil eller några filer: en eller flera GeoPackage-filer
+(plankartan i Boverkets ÖP-modell och kanske underlag), en eller flera Word-filer (textdokumentet och bilagor) och ibland
+en `manifest.xml` och en `metadata.xml`. Släpp mappen, ZIP-filen eller filerna i Inhämta. Steget som sorterar filerna har då
+valet **Digital översiktsplan (alla filer som en plan)**. Det är påslaget när en GeoPackage-fil följer ÖP-modellen; avslaget
+importeras varje fil för sig som förut.
+
+Påslaget blir alla filer en datamängd av slaget plan:
+
+- **Filerna känns igen på innehållet**, inte på namnet: en GeoPackage-fil på sitt SQLite-huvud och sina tabeller, en
+  Word-fil på sina delar i ZIP-filen och en manifest- eller metadatafil på sitt rotelement. Varje fil sparas i planen med
+  sin roll: *plankarta* (GeoPackage-filen i ÖP-modellen), *underlag* (andra GeoPackage-filer), *textdokument* (Word-filen
+  som GeoPackage-filen hänvisar till, annars den enda eller den med flest av planens bokmärken), *bilaga* (andra Word-filer
+  och PDF-filer), *manifest*, *metadata* och *övrigt*.
+- **Alla lager med objekt** blir rader i planen. Kolumnen `lager` säger vilken tabell i GeoPackage-filen raden kommer från
+  och `fil` vilken fil. Lagren känns igen på `gpkg_contents` (värdelistor och kopplingstabeller är inga lager), med sina
+  namn därifrån. Tomma lager tas inte med. Lager med ändelserna `_point`, `_line` och `_polygon` läses liksom `_punkt` och
+  `_linje`.
+- **Textdokumentets avsnitt**: varje bokmärke i Word-filerna blir ett avsnitt med sin text, även när bokmärket går över
+  flera stycken, och den närmaste rubriken före det. Tabellen `dokumentavsnitt` i GeoPackage-filen kopplar bokmärkena till
+  objekten i kartan. Ett ställningstagande kan gälla flera områden, och ett område kan ha flera avsnitt. Ett avsnitt kan
+  också gälla hela planen. Avsnittstypen (till exempel *Ställningstagande*) läses ur GeoPackage-filen, på ÖP-katalogens id
+  eller på namnet. Id:n jämförs utan klamrar och oberoende av versaler.
+- **Manifest och metadata** har ingen formell roll i en ÖP-leverans. De läses när de finns och krävs aldrig. Planens
+  uppgifter läses alltid ur GeoPackage-filen. Kontrollsummor i filerna (SHA-1, SHA-256, SHA-384 och SHA-512) jämförs med
+  filerna; andra algoritmer, till exempel MD5, sägs inte kontrollerade.
+- **Varningar** sparas med planen och visas i Inhämta före importen. Det gäller till exempel ett bokmärke som GeoPackage-filen
+  nämner men textdokumentet saknar, ett textdokument som GeoPackage-filen hänvisar till men som inte levererades, en
+  kontrollsumma som inte stämmer och bokmärken vars namn inte följer utbytesmodellens regel. Ett sådant bokmärke läses ändå.
+
+Avsnitten ligger i tabellen `_sections` (avsnitt, dokument, rubrik, text, typ, ordning) och kopplingarna i
+`_section_links` (avsnitt, objektid, dokument, typ; ett tomt objektid är hela planen). Båda kan läsas med SQL i Analysera.
+En GeoPackage-fil i ÖP-modellen som importeras ensam med *Hela översiktsplanen som plan* får samma tabeller, med rubrikerna
+ur GeoPackage-filen, och en varning om att textdokumentet saknas. Ett textdokument som läggs till i planen i efterhand läses
+på samma sätt, och avsnitten och kopplingarna görs om.
+
+Ingenting i filerna körs och ingenting hämtas. Makron i en Word-fil körs aldrig, länkar till andra platser följs inte, och
+texten visas bara som text. En XML-fil med en dokumenttypsdeklaration (DOCTYPE) läses inte. En del av en Word-fil som packas
+upp till mer än 64 MB läses inte heller.
 
 ## Fliken Plan i Analysera
 

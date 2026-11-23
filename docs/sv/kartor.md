@@ -148,6 +148,19 @@ kolumn `geometry` som kan sparas som datamängd med *Skapa datamängd* och öppn
 Verktygen arbetar i webbläsaren utan nät och i omgångar så att sidan svarar; mycket stora datamängder (tiotusentals
 komplexa polygoner) tar tid. Mått och koordinatomräkning finns också som receptsteg i Bearbeta (gruppen Geodata).
 
+## Kartlager: en GeoPackage-fil med alla lager
+
+En GeoPackage-fil med flera lager kan importeras hel som en datamängd av slaget *kartlager*. Välj **Hela GeoPackagen som en
+datamängd (lagren väljs i efterhand)** i Inhämta, i stället för en tabell. Det gäller alla GeoPackage-filer, inte bara
+planer. En GeoPackage-fil i ÖP-modellen blir fortfarande en plan med valet *Hela översiktsplanen som plan*; avslaget finns
+båda de andra valen.
+
+Datamängden har ett objekt per rad: `lager` (tabellen i filen), `fil`, `objektid` (objektets id i lagret), `geometrityp`,
+`geometri` (GeoJSON i WGS 84), `egenskaper` (alla objektets attribut som JSON) och `ordning`. Lagren är tabellerna med
+`data_type` *features* i `gpkg_contents`, med namnet därifrån; värdelistor och andra attributtabeller är inga lager. Tomma
+lager tas inte med, men räknas i datamängdens uppgifter i Hantera. Originalfilen sparas i datamängden. Vilka lager som
+visas på kartan väljs i efterhand.
+
 ## QGIS-projekt
 
 Släpp en projektfil (`.qgs` eller `.qgz`) i Inhämta, gärna tillsammans med datafilerna (GeoPackage, GeoJSON,

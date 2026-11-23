@@ -579,7 +579,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/format.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 14388,
+  "size": 14644,
   "library": "dataspatium"
  },
  "docs/sv/api-konfiguration.md": {
@@ -621,7 +621,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kartor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 17119,
+  "size": 18096,
   "library": "dataspatium"
  },
  "docs/sv/raster.md": {
@@ -633,7 +633,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/planer.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 13485,
+  "size": 17423,
   "library": "dataspatium"
  },
  "docs/sv/grafer.md": {
@@ -1593,7 +1593,7 @@ Dataspatium.assets.addEntries({
  "docs/en/format.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 14771,
+  "size": 15035,
   "library": "dataspatium"
  },
  "docs/en/api-konfiguration.md": {
@@ -1635,7 +1635,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kartor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 17205,
+  "size": 18223,
   "library": "dataspatium"
  },
  "docs/en/raster.md": {
@@ -1647,7 +1647,7 @@ Dataspatium.assets.addEntries({
  "docs/en/planer.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 13891,
+  "size": 17927,
   "library": "dataspatium"
  },
  "docs/en/grafer.md": {
