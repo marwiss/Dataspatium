@@ -37,8 +37,9 @@ formulering. Lagren slås av och på per typ, bakgrundskarta visas efter samtyck
 kartvy* (för Visualisera, dashboards och Publicera), *Planbestämmelser* (bestämmelselistan som Markdown) och
 *Visa som tabell*.
 
-En översiktsplan ritas per tema: mark- och vattenanvändningen fylld per innehållstyp, övriga teman med en färg per
-tema och valbar synlighet. Inspektören visar arean per mark- och vattenanvändning.
+En översiktsplan ritas lager för lager: mark- och vattenanvändningen fylld per innehållstyp med Boverkets färger och
+övriga lager med var sin färg (se [Lagren](#lagren)). Teckenförklaringen i inspektören visar arean per mark- och
+vattenanvändning.
 
 Linjer (utfartsförbud, stängsel, utvecklingsinriktningar) och punkter (till exempel markens höjd) ritas som de är. En
 bestämmelse som är begränsad i höjd ritas med sitt fotavtryck, och inspektören visar höjden i planens höjdsystem (RH 2000 i planer till NGP): underkant,
@@ -47,6 +48,59 @@ diarienummer, beslutstyp), planbeskrivningens namn och handlingarna, och för de
 giltighetstid, sekundär egenskapsgräns, vilka användningsbestämmelser en egenskap reglerar, sambandsnivå, vad
 innehållet berör och var i planhandlingen det beskrivs. Innehåll som bara beskrivs i text, utan läge i kartan, listas
 under *objekt utan läge i kartan* och kan väljas där.
+
+## En digital översiktsplan: lager, ställningstaganden och filer
+
+En digital översiktsplan levereras som en eller flera GeoPackage-filer i Boverkets ÖP-modell, planbeskrivningen (översiktsplanens
+textdokument) som DOCX och ibland filerna `manifest.xml` och `metadata.xml`. Hela leveransen är en datamängd av slaget plan, och
+planvyn i Bearbeta visar den samlat: kartan med lagren, planbeskrivningens ställningstaganden och leveransens filer. En enskild
+DOCX-fil är fortfarande en dokumentsamling och ett enskilt lager en tabell, som förut.
+
+### Lagren
+
+Under *Lager* i inspektören listas lagren per GeoPackage-fil och därunder lager för lager, ett för varje tabell i filen (till
+exempel mark- och vattenanvändning, utvecklingsinriktning som ytor och som linjer, riksintressen). En äldre plan utan uppgift om
+källagret har ett lager per tema. Varje lager har en växel, sitt antal objekt och sin symbol.
+
+- Alla lager visas från början, och flera kan visas samtidigt.
+- *Visa alla* och *Dölj alla* överst gäller alla lager som filtret visar. Varje fil har egna knappar för att visa och dölja sina
+  lager, och ögat vid ett lager (*Visa bara detta*) visar bara det lagret.
+- Har planen fler än tolv lager finns ett filter som smalnar av listan på lagrets eller filens namn.
+- Vilka lager som är dolda sparas per datamängd och gäller igen när du kommer tillbaka till planen, också efter en omladdning.
+
+Symbolerna skiljer lagren åt. Mark- och vattenanvändningen behåller Boverkets färger per användning, så att markanvändningskartan
+ser ut som Boverkets. Planens gräns är en mörk kontur och områdena en streckad. Övriga lager får var sin färg ur appens
+färgblindsäkra palett: ytor fylls och har kontur, linjer ritas som linjer (streckade när två linjelager annars skulle få samma
+färg) och punkter med en egen markörform (cirkel, kvadrat, triangel eller romb). Teckenförklaringen i inspektören visar bara de
+lager som visas, grupperade som listan och med samma symboler, och mark- och vattenanvändningen med sina användningar och deras
+area i hektar.
+
+### Ställningstaganden
+
+När planen har planbeskrivningens avsnitt eller leveransens filer finns flikarna *Karta*, *Ställningstaganden* och *Filer* över
+kartan. Kartan är huvudvyn, och panelerna runt den är desamma som förut. Fliken *Ställningstaganden* visar planbeskrivningens
+avsnitt med rubrik och text:
+
+- *Gäller hela planen* överst: avsnitt som är kopplade till planen som helhet.
+- Därefter ställningstagandena (avsnittstypen Ställningstagande) och sist övriga avsnitt, som beskrivningar och konsekvenser.
+- Texten visas alltid som text, aldrig som HTML.
+- *Visa 3 områden i kartan* (med avsnittets antal) markerar alla områden som avsnittet pekar på, i accentfärgen och även om
+  deras lager är dolda, och zoomar kartan till dem. Inspektören visar det markerade avsnittet med *Visa i planbeskrivningen* och *Avmarkera*.
+
+Klicka på ett område i kartan så listar inspektören under *I planbeskrivningen* de ställningstaganden och andra avsnitt som pekar
+på området, ställningstagandena först. *Visa i planbeskrivningen* öppnar fliken *Ställningstaganden* vid avsnittet.
+
+### Filer
+
+Fliken *Filer* listar leveransens filer med roll (plankarta, underlag, textdokument, bilaga, manifest, metadata eller övrigt) och
+storlek, och de varningar som leveransen lästes med. Filer som leveransen nämner men som inte sparades står för sig.
+
+- Bara en PDF eller en bild (PNG eller JPEG) vars innehåll stämmer med filändelsen öppnas i en ny flik. Alla andra filer laddas
+  ned, så att en fil som utger sig för att vara något annat aldrig visas i appen.
+- *Lägg till fil i planen* sparar filer från datorn med planen, till exempel ett granskningsyttrande.
+
+En GeoPackage med många lager som inte är en plan kan på samma sätt bli en enda datamängd, se
+[Kartlager](kartor.md#kartlager-en-geopackage-med-många-lager).
 
 ## Koordinatsystem och höjder
 

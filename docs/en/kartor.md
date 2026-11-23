@@ -158,6 +158,15 @@ The tools work in the browser without the net and in chunks so the page stays re
 of thousands of complex polygons) take time. Measures and coordinate conversion also exist as recipe steps in Process
 (the Geodata group).
 
+## Map layers: a GeoPackage with many layers
+
+A GeoPackage file, or several, with many layers can be one dataset of the kind *map layers* instead of a table per layer. The
+dataset has a feature per row with its layer's name, the file, the geometry and the feature's attributes. In Process every layer
+is drawn on the same map, each with its symbol, and under *Layers* in the inspector they are listed per file: show and hide them
+one by one, all at once or just one (*Show only this*). The legend shows the layers that show. The list, the symbols and the
+legend are the same as in the plan view, see [Plans](planer.md#the-layers). Click a feature and the inspector shows its
+attributes. Which layers show is kept per dataset, and the table is one button away.
+
 ## QGIS projects
 
 Drop a project file (`.qgs` or `.qgz`) in Import, preferably together with the data files (GeoPackage, GeoJSON,

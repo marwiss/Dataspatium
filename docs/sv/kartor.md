@@ -153,6 +153,15 @@ kolumn `geometry` som kan sparas som datamängd med *Skapa datamängd* och öppn
 Verktygen arbetar i webbläsaren utan nät och i omgångar så att sidan svarar; mycket stora datamängder (tiotusentals
 komplexa polygoner) tar tid. Mått och koordinatomräkning finns också som receptsteg i Bearbeta (gruppen Geodata).
 
+## Kartlager: en GeoPackage med många lager
+
+En GeoPackage-fil, eller flera, med många lager kan bli en enda datamängd av slaget *kartlager* i stället för en tabell per lager.
+Datamängden har ett objekt per rad med lagrets namn, filen, geometrin och objektets egenskaper. I Bearbeta ritas alla lager på
+samma karta, var och ett med sin symbol, och under *Lager* i inspektören listas de per fil: visa och dölj dem ett och ett, alla
+på en gång eller bara ett (*Visa bara detta*). Teckenförklaringen visar de lager som visas. Listan, symbolerna och
+teckenförklaringen är desamma som i planvyn, se [Planer](planer.md#lagren). Klicka på ett objekt så visar inspektören dess
+egenskaper. Vilka lager som visas sparas per datamängd, och tabellen är en knapp bort.
+
 ## QGIS-projekt
 
 Släpp en projektfil (`.qgs` eller `.qgz`) i Inhämta, gärna tillsammans med datafilerna (GeoPackage, GeoJSON,
