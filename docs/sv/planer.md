@@ -119,7 +119,7 @@ Avsnitten ligger i tabellen `_sections` (avsnitt, dokument, rubrik, text, typ, o
 `_section_links` (avsnitt, objektid, dokument, typ; ett tomt objektid är hela planen). Båda kan läsas med SQL i Analysera.
 En GeoPackage-fil i ÖP-modellen som importeras ensam med *Hela översiktsplanen som plan* får samma tabeller, med rubrikerna
 ur GeoPackage-filen, och en varning om att textdokumentet saknas. Ett textdokument som läggs till i planen i efterhand läses
-på samma sätt, och avsnitten och kopplingarna görs om.
+på samma sätt, och avsnitten och kopplingarna görs om; ett med samma namn som ett i planen ersätter det.
 
 Ingenting i filerna körs och ingenting hämtas. Makron i en Word-fil körs aldrig, länkar till andra platser följs inte, och
 texten visas bara som text. En XML-fil med en dokumenttypsdeklaration (DOCTYPE) läses inte. En del av en Word-fil som packas

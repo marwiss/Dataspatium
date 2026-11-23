@@ -108,7 +108,7 @@ The sections are in the table `_sections` (avsnitt, dokument, rubrik, text, typ,
 `_section_links` (avsnitt, objektid, dokument, typ; an empty objektid is the whole plan). Both can be read with SQL in
 Analyse. A GeoPackage in the ÖP model imported on its own with *The whole comprehensive plan as a plan* gets the same tables,
 with the headings from the GeoPackage, and a warning that the text document is missing. A text document added to the plan
-later is read the same way, and the sections and links are made anew.
+later is read the same way, and the sections and links are made anew; one with the name of a document in the plan replaces it.
 
 Nothing in the files runs and nothing is fetched. Macros in a Word file are never run, links to other places are not
 followed, and the text is only ever shown as text. An XML file with a document type declaration (DOCTYPE) is not read. Nor

@@ -199,6 +199,7 @@
     const syfte = sections.find((s) => s.avsnitt === 'op_syfte');
     assert.ok(syfte.helaPlanen && !syfte.objekt.length, 'linked to the whole plan, not to an object');
     assert.deepEqual((await delivery.sectionsForObject(meta.id, '')).map((s) => s.avsnitt), ['op_syfte']);
+    assert.deepEqual(await delivery.objectsForSection(meta.id, 'op_syfte'), [''], "'' is the whole plan, as _section_links keeps it");
     assert.equal(syfte.typ, 'Översiktsplanens syfte');
     // The appendix's bookmark is a section too; Word's own is not.
     assert.ok(sections.some((s) => s.avsnitt === 'op_kons' && s.dokument === 'Bilaga_1_Konsekvenser.docx' && s.rubrik === 'Konsekvenser'));
@@ -316,6 +317,12 @@
     assert.ok(after.plan.leverans.varningar.includes(t('plan.delivery.warn.bookmark.missing', { name: 'op_saknas', file: 'Planbeskrivning_Testkoping.docx' })));
     assert.ok(!after.plan.leverans.varningar.some((w) => w === t('plan.delivery.warn.doc.missing', { file: 'Planbeskrivning_Testkoping.docx' })), 'the document is there now');
     assert.equal(after.rowCount, 5, 'the rows are as they were');
+    // The text document again, corrected: it replaces the one of the same name.
+    await delivery.addFiles(meta.id, [new File([await docx(TEXT_XML.replace('nära stationen', 'vid stationen'))], 'Planbeskrivning_Testkoping.docx')]);
+    assert.deepEqual((await dsFiles.list(meta.id)).map((f) => [f.name, f.kind]), [['Planbeskrivning_Testkoping.docx', 'textdokument'], ['Samradsredogorelse.pdf', 'bilaga'], ['op-testkoping.gpkg', 'plankarta']]);
+    const again = (await delivery.sectionsOf(meta.id)).find((s) => s.avsnitt === 'op_stall_bostader');
+    assert.ok(/byggs vid stationen/.test(again.text), again.text);
+    assert.equal((await datasets.get(meta.id)).plan.leverans.filer.length, 3);
     const other = keep(await datasets.create({ name: 'Inte en plan', columns: [{ name: 'x', type: 'integer' }], rows: [[1]] }));
     await assert.throws(async () => delivery.addFiles(other.id, [pdf]), new RegExp(t('plan.delivery.err.notplan').slice(0, 20)));
     return 'ok';

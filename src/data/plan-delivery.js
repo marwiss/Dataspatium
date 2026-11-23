@@ -436,14 +436,14 @@
       const top = paths.length && paths.every((p) => p.includes('/')) ? paths[0].split('/')[0] : '';
       const shared = top && paths.every((p) => p.split('/')[0] === top) ? top + '/' : '';
       const used = taken || new Set();
-      for (const c of items) {
-        const wanted = shared ? c.path.slice(shared.length) : c.name;
-        let n = wanted;
-        for (let k = 2; used.has(n); k++) n = wanted.replace(/(\.[^./]+)?$/, (ext) => ` (${k})${ext}`);
-        used.add(n);
-        c.stored = n;
-      }
+      for (const c of items) { c.stored = uniqueName(shared ? c.path.slice(shared.length) : c.name, used); used.add(c.stored); }
       return shared ? top : '';
+    }
+    /** A name not among `used`: the name itself, else with (2), (3) … before its ending. */
+    function uniqueName(wanted, used) {
+      let n = wanted;
+      for (let k = 2; used.has(n); k++) n = wanted.replace(/(\.[^./]+)?$/, (ext) => ` (${k})${ext}`);
+      return n;
     }
     const plainName = (s) => { let v = str(s).trim(); try { v = decodeURIComponent(v); } catch (_e) { /* keep it */ } return baseOf(v.replace(/[?#].*$/, '').replace(/\\/g, '/')); };
     /** The delivered document a dokumentreferens names, by the file name in its link or its name (with or without the ending). */
@@ -814,18 +814,32 @@
     const asFile = (bytes, name, type) => new File([bytes], baseOf(name) || 'fil', { type: type || '' });
     /**
      * Files added to a plan later: a Word file (its bookmarks become sections and are linked as the plan's GeoPackage says), a PDF,
-     * a manifest or metadata file, anything else; a GeoPackage comes in as underlag with its layers as rows. The sections, links
-     * and warnings are made anew from every file the plan holds. The change is logged and saved.
+     * a manifest or metadata file, anything else; a GeoPackage comes in as underlag with its layers as rows. A file with the name of
+     * one the plan holds replaces it (a corrected text document), unless either is a GeoPackage, which is added beside under a name
+     * of its own. The sections, links and warnings are made anew from every file the plan holds. The change is logged and saved.
      * @param {string} datasetId @param {File[]} files
      * @returns {Promise<{added: Array<{namn: string, roll: string}>, sections: number, links: number, warnings: string[]}>}
      */
     async function addFiles(datasetId, files) {
       const handle = await datasets.ensureOpen(datasetId);
       if (handle.meta.kind !== 'plan') throw new Error(t('plan.delivery.err.notplan'));
-      const before = await dsFiles.list(datasetId);
-      const taken = new Set(before.map((f) => f.name));
+      const all0 = await dsFiles.list(datasetId);
+      const d = await readDelivery(files);
+      const isMap = (kind) => kind === 'plankarta' || kind === 'underlag';
+      const taken = new Set(all0.map((f) => f.name));
+      const replaced = new Set();
+      for (const c of d.items) {
+        const old = all0.find((f) => f.name === c.stored);
+        if (old && c.sort !== 'sqlite' && !isMap(old.kind) && !replaced.has(c.stored)) { replaced.add(c.stored); continue; }
+        if (taken.has(c.stored)) c.stored = uniqueName(c.stored, taken);
+        taken.add(c.stored);
+      }
+      for (const name of replaced) await handle.engine.run(`delete from ${dsFiles.TABLE} where name = ?`, [name]);
+      const before = all0.filter((f) => !replaced.has(f.name));
       const info = Object.assign({}, handle.meta.plan || {});
       const leverans = Object.assign({ filer: [], manifest: null, metadata: null, varningar: [] }, info.leverans || {});
+      leverans.filer = (Array.isArray(leverans.filer) ? leverans.filer : []).filter((x) => !replaced.has(x.namn));
+      for (const role of ['manifest', 'metadata']) if (leverans[role] && replaced.has(leverans[role].fil)) leverans[role] = null;
       // What the plan holds: its GeoPackage's links, its Word files' bookmarks, its manifest and metadata.
       const held = [];
       for (const f of before.filter((x) => dsFiles.ORIGINAL_KINDS.includes(x.kind))) {
@@ -835,7 +849,6 @@
         c.stored = f.name; c.role = f.kind === 'original' ? '' : f.kind;
         held.push(c);
       }
-      const d = await readDelivery(files, { taken });
       const newGpkgs = d.items.filter((c) => c.role === 'plankarta' || c.role === 'underlag');
       for (const c of newGpkgs) c.role = 'underlag';
       let links = d.links; let documents = d.documents;
@@ -893,8 +906,10 @@
       Object.assign(info, { leverans, lager, antal: counts });
       await setMeta(handle, 'plan', info);
       if (newGpkgs.length) await datasets.refreshCounts(handle);
-      await datasets.appendLog(handle, 'plan_add_files', { files: added });
+      await datasets.appendLog(handle, 'plan_add_files', { files: added, replaced: Array.from(replaced) });
       await datasets.save(datasetId);
+      // A replaced file's address for the views is stale now (data/dataset-files drops them on 'changed').
+      datasets.notify('changed', { id: datasetId });
       return { added, sections: joined.sections.length, links: joined.links.length, warnings: leverans.varningar };
     }
 
@@ -937,14 +952,14 @@
       return (res[0] ? res[0].values : []).map(sectionOf);
     }
     /**
-     * The objects a section is linked to (their objektid, as the plan's rows have it), without the whole plan; `dokument` narrows it
-     * to one Word file when the same bookmark is in several.
+     * The objects a section is linked to (their objektid, as the plan's rows have it), '' for the whole plan as `_section_links`
+     * keeps it; `dokument` narrows it to one Word file when the same bookmark is in several.
      * @param {string} datasetId @param {string} avsnitt @param {string} [dokument] @returns {Promise<string[]>}
      */
     async function objectsForSection(datasetId, avsnitt, dokument) {
       const { engine } = await datasets.ensureOpen(datasetId);
       if (!(await tableIn(engine, LINKS))) return [];
-      const res = await engine.exec(`select distinct objektid from ${LINKS} where avsnitt = ? and objektid <> ''${dokument ? ' and dokument = ?' : ''} order by objektid`, dokument ? [avsnitt, dokument] : [avsnitt]);
+      const res = await engine.exec(`select distinct objektid from ${LINKS} where avsnitt = ?${dokument ? ' and dokument = ?' : ''} order by objektid`, dokument ? [avsnitt, dokument] : [avsnitt]);
       return (res[0] ? res[0].values : []).map((r) => str(r[0]));
     }
 
