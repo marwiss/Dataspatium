@@ -27,16 +27,29 @@
       const zipped = f.zipSync(input, { level: options.level === undefined ? 6 : options.level });
       return new Blob([zipped], { type: 'application/zip' });
     }
+    const bytesOf = async (source) => (source instanceof Uint8Array ? source : new Uint8Array(source instanceof Blob ? await source.arrayBuffer() : source));
     /**
+     * The entries of a ZIP, or only those `options.filter` keeps (it sees each entry's name and sizes before it is unpacked).
      * @param {Blob|ArrayBuffer|Uint8Array} source
+     * @param {{filter?: (entry: {name: string, size: number, originalSize: number}) => boolean}} [options]
      * @returns {Promise<Record<string, Uint8Array>>} path -> bytes
      */
-    async function readZip(source) {
+    async function readZip(source, options = {}) {
       const f = await lib();
-      const bytes = source instanceof Uint8Array ? source : new Uint8Array(source instanceof Blob ? await source.arrayBuffer() : source);
-      return f.unzipSync(bytes);
+      const bytes = await bytesOf(source);
+      return options.filter ? f.unzipSync(bytes, { filter: options.filter }) : f.unzipSync(bytes);
+    }
+    /**
+     * The names and sizes of a ZIP's entries, without unpacking any.
+     * @param {Blob|ArrayBuffer|Uint8Array} source @returns {Promise<Array<{name: string, size: number, compressed: number}>>}
+     */
+    async function listZip(source) {
+      const f = await lib();
+      const out = [];
+      f.unzipSync(await bytesOf(source), { filter: (e) => { out.push({ name: e.name, size: e.originalSize, compressed: e.size }); return false; } });
+      return out;
     }
     function text(bytes) { return new TextDecoder().decode(bytes); }
-    return { createZip, readZip, text };
+    return { createZip, readZip, listZip, text };
   });
 })();

@@ -62,6 +62,8 @@
     async function importFile(file, options = {}, name, progress) {
       if (progress) progress({ step: 'read', file: file.name });
       const r = await read(file, options);
+      // An översiktsplan's rows name the file they came in (OP_COLUMNS `fil`); a GeoJSON file has no layers.
+      if (r.plan.slag === 'oversiktsplan') for (const row of r.rows) row.fil = file.name;
       const original = { name: file.name, kind: 'original', type: file.type || 'application/geo+json', bytes: new Uint8Array(await file.arrayBuffer()) };
       return createPlanDataset(r.plan, r.rows, name || defaultName(r.plan, file), { kind: 'file', fileName: file.name, size: file.size, lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null, format: 'detaljplan', planFormat: r.format }, [original]);
     }
@@ -82,7 +84,7 @@
     const q = (name) => '"' + String(name).replace(/"/g, '""') + '"';
     const cellOf = (v) => (v instanceof Uint8Array || (v && typeof v === 'object' && v.buffer) ? null : v);
     /** The tables of Boverket's ÖP model (0.4) the plan is read from, besides the content: the plan, its decisions and links. */
-    const OP_TABLES = ['oversiktsplan', 'beslut_op', 'beslut_op_handelse', 'dokumentavsnitt', 'avsnittsbokmärke', 'avsnittsbokmarke'];
+    const OP_TABLES = ['oversiktsplan', 'beslut_op', 'beslut_op_handelse', 'beslut_op_dokumentreferens', 'dokumentavsnitt', 'avsnittsbokmärke', 'avsnittsbokmarke', 'dokumentreferens_op', 'oversiktsplan_underlag', 'oversiktsplan_underlag_underlag'];
     /** The tables of Rita Detaljplan's GeoPackage that make up the plan (the helper layers and the plug-in's own table are left out). */
     const DP_TABLES = ['detaljplan', 'anvandning_yta', 'egenskap_yta', 'egenskap_linje', 'egenskap_punkt', 'bestammelse', 'beslutsinformation', 'dokument'];
     /** Which plan a GeoPackage holds, by its table names: 'oversiktsplan', 'detaljplan' (Rita Detaljplan), a Nordic kind or null. */
@@ -116,13 +118,14 @@
           const pragma = await engine.exec(`pragma table_info(${q(t)})`);
           const cols = (pragma[0] ? pragma[0].values : []).map((r) => String(r[1]));
           const geomCol = info.geometryColumns.get(t) || cols.find((c) => /^(geom|shape)$/i.test(c)) || null;
-          const res = await engine.exec(`select * from ${q(t)}`);
-          const rows = (res[0] ? res[0].values : []).map((r) => r.map((v, i) => (geomCol && cols[i] === geomCol ? sqliteImp.gpbToGeoJson(v) : cellOf(v))));
+          // In batches, so that a large layer leaves the main thread free between them.
+          const rows = [];
+          await sqliteImp.readRows(engine, t, { columns: cols, geometryColumn: geomCol, onRows: (batch) => { for (const r of batch) rows.push(r.map(cellOf)); } });
           tables.push({ name: t, columns: cols, rows, crs: info.crs.get(t) || '' });
           done++;
           if (progress) progress({ step: 'table', done, total: wanted.length, table: t });
         }
-        const parsed = kind === 'oversiktsplan' ? plan.fromOpTables(tables, options) : kind === 'detaljplan' ? plan.fromDpTables(tables, options) : await plan.nordic.readTables(kind, tables, options);
+        const parsed = kind === 'oversiktsplan' ? plan.fromOpTables(tables, Object.assign({ fileName: file.name }, options)) : kind === 'detaljplan' ? plan.fromDpTables(tables, options) : await plan.nordic.readTables(kind, tables, options);
         // Tables without a single row: most often a copy made while QGIS had the project open, with the edits still in the -wal file.
         if (!parsed.rows.length) throw new Error(D.t(tables.length && tables.every((x) => !x.rows.length) ? 'plan.err.empty.gpkg' : 'plan.err.empty'));
         if (kind === 'detaljplan') await plan.decorate(parsed.rows);
