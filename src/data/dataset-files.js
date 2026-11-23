@@ -9,9 +9,16 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/dataset-files', ['data/datasets'], (datasets) => {
+  D.define('data/dataset-files', ['data/datasets', 'data/types'], (datasets, types) => {
     const TABLE = '_files';
     const FIELDS = ['name', 'kind', 'type', 'size', 'bytes'];
+    /**
+     * The roles of a plan delivery's files (data/plan-delivery), kept as their `kind`: the plan map and other GeoPackages, the text
+     * document and its appendices, the delivery's manifest and metadata, and anything else that came with it.
+     */
+    const ROLES = ['plankarta', 'underlag', 'textdokument', 'bilaga', 'manifest', 'metadata', 'ovrigt'];
+    /** The sorts of files that are originals, as they came: everything but what the app made itself (previews, thumbnails). */
+    const ORIGINAL_KINDS = ['original'].concat(ROLES);
     /** @type {Map<string, Map<string, string>>} dataset id -> (kind/name -> object URL) */
     const urls = new Map();
 
@@ -114,14 +121,29 @@
     });
 
     /**
+     * Create (or empty) a side table of a dataset and fill it: `columns` as [{name, type}] with the types of data/types.
+     * @param {{engine: any}} handle @param {{name: string, columns: Array<{name: string, type: string}>, rows: any[][], index?: string[]}} table
+     */
+    async function writeTable(handle, table) {
+      const q = datasets.quoteIdent;
+      await handle.engine.run(`drop table if exists ${q(table.name)}`);
+      await handle.engine.run(`create table ${q(table.name)} (${table.columns.map((c) => `${q(c.name)} ${types.sqlType(c.type)}`).join(', ')})`);
+      for (const column of table.index || []) await handle.engine.run(`create index if not exists ${q(table.name + '_' + column)} on ${q(table.name)} (${q(column)})`);
+      const names = table.columns.map((c) => c.name);
+      for (let i = 0; i < table.rows.length; i += 2000) await handle.engine.insertRows(table.name, names, table.rows.slice(i, i + 2000));
+    }
+
+    /**
      * Create a dataset of a collection kind (document, images) with its rows, files and extra metadata in one go.
-     * @param {{name: string, kind: string, columns: any[], rows: any[][], files?: any[], source?: any, description?: string, meta?: Record<string, any>, importOptions?: any}} input
+     * Side tables (`tables`, see writeTable) are made before the metadata.
+     * @param {{name: string, kind: string, columns: any[], rows: any[][], files?: any[], tables?: any[], source?: any, description?: string, meta?: Record<string, any>, importOptions?: any}} input
      */
     async function createDataset(input) {
       const handle = await datasets.createEmpty({ name: input.name, columns: input.columns, kind: input.kind, source: input.source || null, description: input.description || '', importOptions: input.importOptions || null });
       try {
         for (let i = 0; i < input.rows.length; i += 2000) await datasets.appendImportRows(handle, input.rows.slice(i, i + 2000));
         if (input.files && input.files.length) await put(handle, input.files);
+        for (const table of input.tables || []) await writeTable(handle, table);
         for (const [key, value] of Object.entries(input.meta || {})) {
           handle.meta[key] = value;
           await handle.engine.run('insert or replace into _meta (key, value) values (?, ?)', [key, JSON.stringify(value)]);
@@ -133,6 +155,6 @@
       }
     }
 
-    return { TABLE, ensureTable, put, list, read, listed, url, tabType, clearUrls, hasTable, createDataset };
+    return { TABLE, ROLES, ORIGINAL_KINDS, ensureTable, put, list, read, listed, url, tabType, clearUrls, hasTable, writeTable, createDataset };
   });
 })();

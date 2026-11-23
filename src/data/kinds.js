@@ -35,6 +35,8 @@
     const metres = (r) => i18n.formatNumber(r, { maximumSignificantDigits: 3 });
     /** How many files a raster has: the rows of its table, which is the list of its files (a row removed there takes its file away). */
     const rasterCount = (ds) => (typeof ds.rowCount === 'number' ? ds.rowCount : rasterFiles(ds).length);
+    /** The layers of a GeoPackage read whole (`_meta.layers.lager`, data/plan-delivery importLayers); the empty ones are not among them. */
+    const layersOf = (ds) => (ds && ds.layers && Array.isArray(ds.layers.lager) ? ds.layers.lager : []);
     /** A raster's summary in parts: its files and, when the first file has one, its resolution. */
     function rasterParts(ds) {
       const files = rasterFiles(ds);
@@ -78,7 +80,8 @@
         hit: (value, id) => ({ label: 'soka.open.image', icon: 'images', store: { openImage: { datasetId: id, name: value('fil') } } }),
       },
       plan: {
-        icon: 'layers', view: 'plan', tab: 'plan', chart: 'map', sideTables: [], files: 'originals', picture: 'map', wholeFormat: 'geojson',
+        // A delivered översiktsplan (data/plan-delivery) has its Word files' bookmarks and their links to the objects beside the rows.
+        icon: 'layers', view: 'plan', tab: 'plan', chart: 'map', sideTables: ['_sections', '_section_links'], files: 'originals', picture: 'map', wholeFormat: 'geojson',
         open: { label: 'hantera.view.plan', hint: 'hantera.view.plan.hint', icon: 'layers' },
         protect: () => ['objektid', 'objekttyp', 'geometri', 'tema'],
         summary: (ds) => `${t('plan.slag.' + planKind(ds))} · ${t('plan.objects.n', { n: n(ds.rowCount) })}`,
@@ -105,6 +108,15 @@
         protect: (ds) => (isDxf(ds) ? ['id', 'typ', 'lager'] : ['id', 'guid', 'typ']),
         summary: (ds) => (isDxf(ds) ? t('model.entities.n', { n: n(ds.rowCount) }) : t('model.elements.n', { n: n(ds.model && ds.model.elements ? ds.model.elements : ds.rowCount) })),
         hit: (value, id) => ({ label: 'soka.open.element', icon: 'box', store: { openElement: { datasetId: id, id: value('id') } } }),
+      },
+      layers: {
+        // A GeoPackage's feature layers in one dataset (data/plan-delivery importLayers): a feature per row, the layers to show
+        // are chosen in its own view.
+        icon: 'map', view: 'layers', tab: 'sql', chart: 'map', sideTables: [], files: 'originals', picture: 'map', wholeFormat: 'geojson',
+        open: { label: 'hantera.view.layers', hint: 'hantera.view.layers.hint', icon: 'map' },
+        protect: () => ['lager', 'objektid', 'geometri'],
+        summary: (ds) => `${t('layers.n', { n: n(layersOf(ds).length) })} · ${t('layers.objects.n', { n: n(ds.rowCount) })}`,
+        hit: (value, id) => ({ label: 'soka.open.layer', icon: 'map', store: { openLayerObject: { datasetId: id, lager: value('lager'), objektid: value('objektid') } } }),
       },
       raster: {
         icon: 'image', view: 'map', tab: 'sql', chart: 'map', sideTables: [], files: 'originals',
@@ -154,6 +166,7 @@
         case PROFILES.graph: return [t('graph.nodes.n', { n: n(ds.rowCount) }), t('graph.edges.n', { n: n(ds.graph && ds.graph.edges) })];
         case PROFILES.model: return [summary(ds)];
         case PROFILES.raster: return rasterParts(ds);
+        case PROFILES.layers: return [t('layers.n', { n: n(layersOf(ds).length) }), t('layers.objects.n', { n: n(ds.rowCount) })];
         default: return [t('common.rows', { n: n(ds.rowCount) }), t('common.columns', { n: ds.columnCount || 0 })];
       }
     }
@@ -223,6 +236,10 @@
         ds.kind === 'document' ? { label: t('document.paragraphs'), value: i18n.formatNumber(ds.rowCount || 0) } : null,
         ds.kind === 'images' && ds.images ? { label: t('images.count'), value: i18n.formatNumber(ds.images.count || 0) + (ds.images.skipped && ds.images.skipped.length ? ` (${t('images.skipped', { n: ds.images.skipped.length })})` : '') } : null,
         ...(ds.kind === 'raster' ? rasterFacts(ds) : []),
+        ds.kind === 'layers' ? { label: t('layers.field.layers'), value: layersOf(ds).map((l) => `${l.titel || l.namn} (${i18n.formatNumber(l.antal || 0)})`).join(', ') } : null,
+        ds.kind === 'layers' && ds.layers && Array.isArray(ds.layers.tomma) && ds.layers.tomma.length ? { label: t('layers.field.empty'), value: i18n.formatNumber(ds.layers.tomma.length) } : null,
+        pl && pl.leverans && Array.isArray(pl.leverans.filer) ? { label: t('plan.delivery.files'), value: pl.leverans.filer.map((f) => `${f.namn} (${t('plan.role.' + f.roll)})`).join(', ') } : null,
+        pl && pl.leverans && Array.isArray(pl.leverans.varningar) && pl.leverans.varningar.length ? { label: t('plan.delivery.warnings'), value: i18n.formatNumber(pl.leverans.varningar.length) } : null,
       ].filter(Boolean);
     }
 
