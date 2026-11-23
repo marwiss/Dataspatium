@@ -8,14 +8,14 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes', 'ui/bearbeta/document-view', 'ui/bearbeta/gallery-view', 'ui/bearbeta/map-view', 'ui/bearbeta/plan-view', 'ui/bearbeta/graph-view', 'ui/bearbeta/model-view', 'viz/leaflet', 'data/kinds', 'platform/tier', 'ui/settings/tier'], (base, dialogs, recipes, documentViewModule, galleryViewModule, mapViewModule, planViewModule, graphViewModule, modelViewModule, leaflet, kinds, tier, tierUi) => {
+  D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes', 'ui/bearbeta/document-view', 'ui/bearbeta/gallery-view', 'ui/bearbeta/map-view', 'ui/bearbeta/plan-view', 'ui/bearbeta/graph-view', 'ui/bearbeta/model-view', 'ui/bearbeta/layers-view', 'viz/leaflet', 'data/kinds', 'platform/tier', 'ui/settings/tier'], (base, dialogs, recipes, documentViewModule, galleryViewModule, mapViewModule, planViewModule, graphViewModule, modelViewModule, layersViewModule, leaflet, kinds, tier, tierUi) => {
     const { h, t, i18n, replace } = base;
     /**
      * Views of their own: document collections, image collections and (for tables with geometry) the map; the table
      * is one click away. Keyed by view id: the dataset kind, or 'map' for a table with geometry or coordinates.
      */
-    const KIND_VIEWS = { document: documentViewModule, images: galleryViewModule, map: mapViewModule, plan: planViewModule, graph: graphViewModule, model: modelViewModule };
-    const VIEW_ICONS = { document: 'file-text', images: 'images', map: 'map', plan: 'layers', graph: 'share-2', model: 'box' };
+    const KIND_VIEWS = { document: documentViewModule, images: galleryViewModule, map: mapViewModule, plan: planViewModule, graph: graphViewModule, model: modelViewModule, layers: layersViewModule };
+    const VIEW_ICONS = { document: 'file-text', images: 'images', map: 'map', plan: 'layers', graph: 'share-2', model: 'box', layers: 'layers' };
     const QUICK = [
       { op: 'rename_column', icon: 'pencil' }, { op: 'set_label', icon: 'info' }, { op: 'set_value_labels', icon: 'list-ordered' }, { op: 'apply_value_labels', icon: 'arrow-up-down', labelled: true }, { op: 'set_type', icon: 'braces' }, { op: 'trim', icon: 'wand-sparkles', textOnly: true },
       { op: 'replace_text', icon: 'search', textOnly: true }, { op: 'change_case', icon: 'file-text', textOnly: true }, { op: 'fix_encoding', icon: 'refresh-cw', textOnly: true },

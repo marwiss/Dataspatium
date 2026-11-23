@@ -31,6 +31,8 @@
       const boxes = (files || []).map((f) => (f && f.preview && Array.isArray(f.preview.bounds) ? f.preview.bounds : null)).filter(Boolean).map((b) => [b[0][1], b[1][0], b[1][1], b[0][0]]);
       return boxes.length ? [Math.min(...boxes.map((b) => b[0])), Math.min(...boxes.map((b) => b[1])), Math.max(...boxes.map((b) => b[2])), Math.max(...boxes.map((b) => b[3]))] : null;
     }
+    /** How many layers a dataset of the kind `layers` has, as `_meta.layers` describes them. */
+    const layerCount = (ds) => (ds && ds.layers && Array.isArray(ds.layers.lager) ? ds.layers.lager.length : 0);
     /** Ground metres per pixel in three significant digits. */
     const metres = (r) => i18n.formatNumber(r, { maximumSignificantDigits: 3 });
     /** How many files a raster has: the rows of its table, which is the list of its files (a row removed there takes its file away). */
@@ -83,6 +85,14 @@
         protect: () => ['objektid', 'objekttyp', 'geometri', 'tema'],
         summary: (ds) => `${t('plan.slag.' + planKind(ds))} · ${t('plan.objects.n', { n: n(ds.rowCount) })}`,
         hit: (value, id) => ({ label: 'soka.open.plan', icon: 'layers', store: { openPlanObject: { datasetId: id, objektid: value('objektid') } } }),
+      },
+      // Kartlager: GeoPackages with many layers kept as one dataset, a row per feature; the layers are chosen for display in its view.
+      layers: {
+        icon: 'layers', view: 'layers', tab: 'sql', chart: 'map', sideTables: [], files: 'originals', picture: 'map', wholeFormat: 'geojson',
+        open: { label: 'hantera.view.layers', hint: 'hantera.view.layers.hint', icon: 'layers' },
+        protect: () => ['lager', 'geometri'],
+        summary: (ds) => `${t('layers.count', { n: n(layerCount(ds)) })} · ${t('layers.objects.n', { n: n(ds.rowCount) })}`,
+        hit: (value, id) => ({ label: 'soka.open.layers', icon: 'layers', store: { openLayerObject: { datasetId: id, lager: value('lager'), objektid: value('objektid') } } }),
       },
       graph: {
         icon: 'share-2', view: 'graph', tab: 'graph', chart: 'graph', sideTables: ['_edges', '_layout'], chartTables: ['_edges'], files: 'originals', cypher: true, noStats: true, loses: 'export.loses.graph',
@@ -154,6 +164,7 @@
         case PROFILES.graph: return [t('graph.nodes.n', { n: n(ds.rowCount) }), t('graph.edges.n', { n: n(ds.graph && ds.graph.edges) })];
         case PROFILES.model: return [summary(ds)];
         case PROFILES.raster: return rasterParts(ds);
+        case PROFILES.layers: return [t('layers.count', { n: n(layerCount(ds)) }), t('layers.objects.n', { n: n(ds.rowCount) })];
         default: return [t('common.rows', { n: n(ds.rowCount) }), t('common.columns', { n: ds.columnCount || 0 })];
       }
     }
@@ -223,6 +234,8 @@
         ds.kind === 'document' ? { label: t('document.paragraphs'), value: i18n.formatNumber(ds.rowCount || 0) } : null,
         ds.kind === 'images' && ds.images ? { label: t('images.count'), value: i18n.formatNumber(ds.images.count || 0) + (ds.images.skipped && ds.images.skipped.length ? ` (${t('images.skipped', { n: ds.images.skipped.length })})` : '') } : null,
         ...(ds.kind === 'raster' ? rasterFacts(ds) : []),
+        ds.kind === 'layers' ? { label: t('layers.field.layers'), value: n(layerCount(ds)) } : null,
+        ds.kind === 'layers' && ds.layers && Array.isArray(ds.layers.filer) && ds.layers.filer.length ? { label: t('layers.field.files'), value: ds.layers.filer.map((f) => String((f && (f.namn || f.name)) || f)).join(', ') } : null,
       ].filter(Boolean);
     }
 

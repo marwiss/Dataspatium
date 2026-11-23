@@ -18,9 +18,9 @@
     const listeners = new Set();
     const META_KEYS = ['id', 'name', 'shortName', 'description', 'createdAt', 'updatedAt', 'rowCount', 'columnCount', 'source', 'importOptions', 'rules', 'folder', 'tags', 'kind'];
     /** Metadata of the dataset kinds (set by their importers), restored with the file on undo and version restore. */
-    const KIND_META_KEYS = ['graph', 'plan', 'documents', 'images', 'model', 'models', 'field', 'facets', 'dcat', 'raster'];
+    const KIND_META_KEYS = ['graph', 'plan', 'documents', 'images', 'model', 'models', 'field', 'facets', 'dcat', 'raster', 'layers'];
     /** Kinds of datasets: what the file holds and which views apply (data/kinds says what each one is). */
-    const KINDS = ['table', 'graph', 'document', 'images', 'model', 'plan', 'raster'];
+    const KINDS = ['table', 'graph', 'document', 'images', 'model', 'plan', 'raster', 'layers'];
 
     // ---- folders and tags: how the dataset list is organised; stored in _meta, so they travel with the file ----
     /** A folder path: segments separated by "/", trimmed, without empty segments; '' is the root. */

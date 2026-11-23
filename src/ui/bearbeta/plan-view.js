@@ -8,11 +8,15 @@
  * the map's grid per plan (ui/viz/basemap-memory) so that they are there again when the person comes back to the plan,
  * the provisions listed in the inspector and the clicked provision explained from the embedded catalogue. The
  * dataset itself is always the table of plan objects; the table is one click away.
+ * The layers (per GeoPackage and source layer of a delivered comprehensive plan, else per theme or object type) are shown and
+ * hidden with ui/viz/layer-list, each with its own symbol and in the legend (ui/bearbeta/plan-layers); a delivery's text and
+ * files are the tabs Ställningstaganden and Filer beside the map, and a chosen area's sections are in the inspector
+ * (ui/bearbeta/plan-sections).
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/plan-view', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'data/geo', 'viz/leaflet', 'viz/charts', 'viz/data', 'platform/files', 'ui/viz/basemap-choice', 'ui/viz/basemap-memory', 'ui/viz/tiles-dialog', 'platform/tier'], (base, datasets, plan, catalog, geo, leaflet, charts, vizData, files, basemapChoice, memory, tilesDialog, tier) => {
+  D.define('ui/bearbeta/plan-view', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'data/geo', 'viz/leaflet', 'viz/charts', 'viz/data', 'platform/files', 'ui/viz/basemap-choice', 'ui/viz/basemap-memory', 'ui/viz/tiles-dialog', 'platform/tier', 'ui/viz/layer-list', 'ui/bearbeta/plan-layers', 'ui/bearbeta/plan-sections'], (base, datasets, plan, catalog, geo, leaflet, charts, vizData, files, basemapChoice, memory, tilesDialog, tier, layerList, planLayers, planSections) => {
     const { h, t, i18n, replace } = base;
     const MAX_ROWS = 20000;
     const OUTLINE_STYLES = {
@@ -29,8 +33,12 @@
      */
     function create(ctx, options) {
       const { ui, shell, store } = ctx;
-      const s = { id: null, basemap: 'none', wms: null, tiles: null, projection: 'web', labels: true, hidden: new Set(), selected: null, rows: [], info: null, slag: 'detaljplan', updatedAt: null };
+      const s = { id: null, basemap: 'none', wms: null, tiles: null, projection: 'web', labels: true, hidden: new Set(), selected: null, rows: [], info: null, slag: 'detaljplan', updatedAt: null, layers: [], marked: [] };
       let ds = null; let slots = null; let mapEl = null; let handle = null; let seq = 0; let groups = []; let labelLayer = null; let L = null;
+      /** The layer list and legend of the plan drawn (ui/viz/layer-list), the layers' symbols, and the areas marked for a section. */
+      let layerCtl = null; let symbols = new Map(); let marks = null;
+      /** The plan's text and files beside the map. */
+      const sections = planSections.create(ctx, { mark: (ids) => markObjects(ids), shown: () => { if (handle) { handle.map.invalidateSize(); if (marks) fitMarks(); else fit(); } }, changed: () => { s.updatedAt = null; if (ds && slots) render(ds, slots); } });
       /** Sweden's orthophoto: read on the next drawing, because the person chose it (for the plan's extent, at most a square kilometre). */
       let orthoLoad = false;
       /** A background map remembered for the plan, checked against the choices once they are known. */
@@ -59,11 +67,16 @@
             if (kept.wms && typeof kept.wms === 'object') s.wms = kept.wms;
             if (kept.tiles && typeof kept.tiles === 'object') s.tiles = kept.tiles;
           }
+          // The layers the person hid on this plan's map before (ui/viz/layer-list); all show the first time.
+          const hidden = await layerList.recall(dataset.id);
+          if (hidden && s.id === dataset.id) s.hidden = hidden;
+          s.marked = [];
         }
         if (s.updatedAt === dataset.updatedAt && s.rows.length) return;
         const columns = await datasets.columns(dataset.id);
         const data = await vizData.fetchRows(dataset.id, { fields: columns.map((c) => c.name), limit: MAX_ROWS });
         s.rows = data.rows.map((r, i) => Object.assign({ _i: i }, r));
+        s.layers = planLayers.of(s.rows, { slag: s.slag, name: dataset.name, symbolFor: dpSymbol });
         s.updatedAt = dataset.updatedAt;
       }
       /** The grid the plan map can be drawn in: the plan's own system when the app reads it, else the country's usual one. */
@@ -72,25 +85,11 @@
         if (own && geo.proj4Def(own)) return own;
         return { DK: 25832, NO: 25833, FI: 3067, IS: 3057 }[(s.info || {}).land] || 3006;
       }
-      /** Grouping key of a row: object type for a detailed plan, theme for a comprehensive plan. */
-      const keyOf = (row) => (s.slag === 'oversiktsplan' ? (row.tema || 'omrade') : (row.objekttyp || 'annan'));
-      function groupKeys() {
-        if (s.slag === 'detaljplan') return plan.OBJECT_TYPES.filter((typ) => s.rows.some((r) => r.objekttyp === typ));
-        const seen = []; for (const r of s.rows) { const k = keyOf(r); if (!seen.includes(k)) seen.push(k); }
-        return seen.sort((a, b) => (a === 'markochvattenanvandning' ? -1 : b === 'markochvattenanvandning' ? 1 : a.localeCompare(b, 'sv')));
-      }
-      function groupLabel(key) {
-        if (s.slag === 'detaljplan') return t('plan.type.' + key);
-        return D.require('ui/i18n').has('plan.theme.' + key) ? t('plan.theme.' + key) : key;
-      }
-      function styleFor(row) {
-        if (s.slag === 'oversiktsplan') {
-          const fill = plan.opFillOf(row);
-          return { color: '#3b3f46', weight: row.tema === 'plangeometri' ? 2.5 : 1, fillColor: fill, fillOpacity: row.tema === 'markochvattenanvandning' ? 0.6 : (row.tema === 'plangeometri' || row.tema === 'omrade' ? 0 : 0.35), dashArray: row.tema === 'omrade' ? '6 4' : null };
-        }
-        if (row.objekttyp === 'anvandning') return { color: '#4a4f57', weight: 1, fillColor: plan.fillOf(row) || '#dadde1', fillOpacity: 0.6, dashArray: null };
-        const o = OUTLINE_STYLES[row.objekttyp] || OUTLINE_STYLES.annan;
-        return { color: o.color, weight: o.weight, fillColor: o.color, fillOpacity: o.fillOpacity, dashArray: o.dashArray };
+      /** A detailed plan's object type drawn as on the plan map: uses filled with Boverket's colours, the rest as outlines. */
+      function dpSymbol(key) {
+        if (key === 'anvandning') return { mark: 'polygon', color: '#4a4f57', weight: 1, fill: null, fillOpacity: 0.6, byRow: (row) => plan.fillOf(row) || '#dadde1' };
+        const o = OUTLINE_STYLES[key] || OUTLINE_STYLES.annan;
+        return { color: o.color, weight: o.weight, dash: o.dashArray, fill: null, fillOpacity: o.fillOpacity };
       }
       const labelText = (row) => (s.slag === 'oversiktsplan' ? (row.tema === 'markochvattenanvandning' ? row.innehallstyp : row.namn) : row.beteckning);
 
@@ -153,6 +152,9 @@
         labels.checked = s.labels;
         labels.addEventListener('change', () => { s.labels = labels.checked; updateLabels(); });
         mapEl = h('div', { class: 'dm-map-view dm-plan-view dm-center-fill', 'aria-label': t('plan.view') });
+        // The map alone, or with the tabs Ställningstaganden and Filer of a delivered plan (ui/bearbeta/plan-sections).
+        const body = await sections.mount(dataset, mapEl);
+        if (my !== seq || !slots) return;
         const info = s.info || {};
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
@@ -163,7 +165,7 @@
               tier.shows('chart:map') ? ui.button({ label: t('map.save.chart'), icon: 'save', title: t('plan.save.chart.hint'), onClick: saveChart }) : null,
               s.slag === 'detaljplan' ? ui.button({ label: t('plan.provisions.export'), icon: 'file-text', title: t('plan.provisions.export.hint'), onClick: exportProvisions }) : null,
               ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('bearbeta.view.table.hint'), onClick: options.onTable }))),
-          mapEl);
+          body);
         await draw();
         renderInspector();
       }
@@ -172,7 +174,7 @@
         if (!mapEl || !ds) return;
         const my = ++seq;
         if (handle) { handle.finalize(); handle = null; }
-        groups = []; labelLayer = null;
+        groups = []; labelLayer = null; marks = null;
         mapEl.replaceChildren();
         try {
           L = await leaflet.ensure();
@@ -186,20 +188,15 @@
           if (hd.info.basemapDenied) ui.toast.show(t('map.basemap.denied'), { kind: 'warn' });
           basemapChoice.notifyKey(hd.info, () => { orthoLoad = true; draw(); });
           if (hd.info.basemapProjection) ui.toast.show(t('map.projection.osm', { crs: geo.crsLabel(planGrid()) }), { kind: 'info', timeout: 9000 });
-          for (const key of groupKeys()) {
-            const rows = s.rows.filter((r) => keyOf(r) === key && r.geometri);
-            if (!rows.length) continue;
-            const features = rows.map((r) => ({ type: 'Feature', geometry: geo.parseGeometry(r.geometri), properties: { _i: r._i } })).filter((f) => f.geometry && f.geometry.type);
-            const group = L.geoJSON({ type: 'FeatureCollection', features }, {
-              style: (f) => Object.assign({ fill: true }, styleFor(s.rows[f.properties._i])),
-              pointToLayer: (f, latlng) => { const st = styleFor(s.rows[f.properties._i]); return L.circleMarker(latlng, { radius: 6, color: st.color, fillColor: st.fillColor, weight: st.weight, fillOpacity: Math.max(0.7, st.fillOpacity) }); },
-              onEachFeature: (f, lyr) => { lyr.on('click', () => { s.selected = s.rows[f.properties._i]; renderInspector(); highlight(lyr); }); },
-            });
-            if (!s.hidden.has(key)) group.addTo(hd.map);
-            groups.push({ key, group, count: rows.length });
-          }
+          // One layer per source layer, theme or object type, each with its symbol (ui/viz/layer-list); the hidden ones are not added.
+          symbols = layerList.symbols(s.layers);
+          groups = layerList.draw(L, hd.map, s.layers, symbols, s.hidden, { rowAt: (i) => s.rows[i], geometryOf: (r) => geo.parseGeometry(r.geometri), onClick: (row, lyr) => { s.selected = row; renderInspector(); highlight(lyr); } });
+          layerCtl = layerList.create({ layers: s.layers, symbols, hidden: s.hidden, onChange: onLayers });
           updateLabels();
           fit();
+          // A section's areas stay marked when the map is drawn again (another background map or grid).
+          if (s.marked.length) markObjects(s.marked, { fit: true });
+          mapEl.setAttribute('data-plan-layers-drawn', String(groups.length));
           openPending();
           renderInspector();
           // Sweden's orthophoto for the plan's extent, under the plan objects, once the map has fitted them.
@@ -240,9 +237,10 @@
         if (!s.labels) return;
         const markers = [];
         for (const g of groups) {
-          if (s.hidden.has(g.key) || g.key === 'planomrade' || g.key === 'plangeometri') continue;
+          if (s.hidden.has(g.key)) continue;
           g.group.eachLayer((lyr) => {
             const row = s.rows[lyr.feature.properties._i];
+            if (row.objekttyp === 'planomrade' || row.tema === 'plangeometri') return;
             const text = labelText(row);
             if (!text) return;
             const center = lyr.getBounds ? lyr.getBounds().getCenter() : (lyr.getLatLng ? lyr.getLatLng() : null);
@@ -259,12 +257,28 @@
         for (const g of groups) { const b = g.group.getBounds(); if (b && b.isValid()) bounds = bounds ? bounds.extend(b) : L.latLngBounds(b.getSouthWest(), b.getNorthEast()); }
         if (bounds) handle.map.fitBounds(bounds, { padding: [16, 16], maxZoom: 18, animate: false });
       }
-      function toggleGroup(key, visible) {
-        if (visible) s.hidden.delete(key); else s.hidden.add(key);
-        const g = groups.find((x) => x.key === key);
-        if (g && handle) { if (visible) g.group.addTo(handle.map); else handle.map.removeLayer(g.group); }
+      /** The layer list changed what shows: the map and the labels follow, and the plan remembers it. */
+      function onLayers(hidden) {
+        if (handle) layerList.apply(handle.map, groups, hidden);
         updateLabels();
+        layerList.remember(s.id, hidden);
       }
+      /**
+       * Mark a section's areas on the map (above the layers, shown or not) and fit the view to them; none clears the marking.
+       * @param {string[]} ids objects' identities @param {{fit?: boolean}} [opts]
+       */
+      function markObjects(ids, opts = { fit: true }) {
+        if (marks && handle) handle.map.removeLayer(marks);
+        marks = null;
+        s.marked = (ids || []).slice();
+        const wanted = new Set(s.marked.map((x) => String(x).trim().toLowerCase().replace(/[{}]/g, '')));
+        const shapes = wanted.size ? s.rows.filter((r) => r.geometri && wanted.has(String(r.objektid || '').trim().toLowerCase().replace(/[{}]/g, ''))).map((r) => geo.parseGeometry(r.geometri)) : [];
+        if (handle && L) marks = layerList.mark(L, handle.map, shapes);
+        if (mapEl) mapEl.setAttribute('data-plan-marked', String(marks ? marks.getLayers().length : 0));
+        if (marks && opts.fit) fitMarks();
+        renderInspector();
+      }
+      function fitMarks() { if (handle && marks) { const b = marks.getBounds(); if (b.isValid()) handle.map.fitBounds(b, { padding: [24, 24], maxZoom: 17, animate: false }); } }
 
       /** Save the plan as a map chart for Visualisera: uses coloured by Boverket's colour names, the rest as outlines. */
       async function saveChart() {
@@ -374,18 +388,18 @@
         items.push(h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('plan.status.edit'), icon: 'pencil', size: 'sm', title: t('plan.status.edit.hint'), onClick: () => editStatus().catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) })));
         const archive = archiveBlock(info);
         if (archive) items.push(archive);
-        // Layers: one switch per object type or theme, with counts.
-        const layerList = h('div', { class: 'dm-stack-sm dm-plan-layers' }, groups.map((g) => {
-          const sw = /** @type {any} */ (h('dm-switch', { label: `${groupLabel(g.key)} (${i18n.formatNumber(g.count)})` }));
-          sw.checked = !s.hidden.has(g.key);
-          sw.addEventListener('change', () => toggleGroup(g.key, sw.checked));
-          return sw;
-        }));
-        items.push(h('h4', { text: t('map.layers') }), layerList);
+        // The section whose areas are marked on the map (ui/bearbeta/plan-sections).
+        const chosen = s.marked.length ? sections.chosenBlock() : null;
+        if (chosen) items.push(chosen);
+        // Layers: shown and hidden per file and layer, with counts and symbols (ui/viz/layer-list).
+        items.push(h('h4', { text: t('map.layers') }), h('div', { class: 'dm-stack-sm dm-plan-layers' }, layerCtl ? layerCtl.list() : null));
         if (s.selected) {
           items.push(h('h4', { text: t('plan.selected') }), selectedDetails(s.selected));
           const block = D.require('ui/kinds/comment-block');
           const objekt = s.selected.objektid;
+          // The ställningstaganden and other sections that concern the area, each with the way to its text.
+          const about = objekt ? sections.forObject(objekt) : null;
+          if (about) items.push(about);
           if (objekt) items.push(block.create(ctx, ds, block.targetOf(ds, `plan:${objekt}`, s.selected.namn || String(objekt), () => objekt)));
         } else if (s.slag === 'detaljplan') {
           const legend = plan.legend(s.rows);
@@ -396,8 +410,8 @@
               h('ul', { class: 'dm-plan-provisions' }, g.rows.slice(0, 200).map((r) => h('li', { onclick: () => { s.selected = r; renderInspector(); } }, h('strong', { text: (r.beteckning || '–') + ' ' }), h('span', { text: r.formulering || '' }))))));
           }
         } else {
-          const areas = plan.areasByUse(s.rows, 'oversiktsplan').slice(0, 30);
-          if (areas.length) items.push(h('h4', { text: t('plan.theme.markochvattenanvandning') }), h('ul', { class: 'dm-map-legend-list dm-plan-legend' }, areas.map((e) => h('li', null, h('span', { class: 'dm-map-legend-swatch', style: { background: e.color } }), h('span', { class: 'dm-truncate', text: `${e.label} · ${i18n.formatNumber(Math.round(e.area / 10000))} ha` })))));
+          // The legend of the layers that show, land use with Boverket's colours and its area per use.
+          if (layerCtl) items.push(h('h4', { text: t('map.legend') }), layerCtl.legend());
           items.push(h('p', { class: 'dm-help', text: t('plan.help.op') }));
         }
         if (!s.selected) { const unplaced = withoutPlace(); if (unplaced) items.push(unplaced); }
@@ -503,7 +517,7 @@
         const kv = /** @type {any} */ (h('dm-kv'));
         const isOp = s.slag === 'oversiktsplan';
         kv.items = (isOp ? [
-          { label: t('plan.field.tema'), value: groupLabel(row.tema) }, { label: t('plan.field.innehallstyp'), value: row.innehallstyp }, row.namn ? { label: t('common.name'), value: row.namn } : null,
+          { label: t('plan.field.tema'), value: planLayers.themeLabel(row.tema) }, { label: t('plan.field.innehallstyp'), value: row.innehallstyp }, row.namn ? { label: t('common.name'), value: row.namn } : null,
           row.precisering ? { label: t('plan.field.precisering'), value: row.precisering } : null, row.kompletterande ? { label: t('plan.field.kompletterande'), value: row.kompletterande } : null,
           row.anvandningsstatus ? { label: t('plan.field.anvandningsstatus'), value: row.anvandningsstatus } : null, row.planhandelse ? { label: t('plan.field.planhandelse'), value: `${row.planhandelse} ${row.planhandelse_datum || ''}`.trim() } : null,
           row.utbyggnadsordning ? { label: t('plan.prop.utbyggnadsordning'), value: row.utbyggnadsordning } : null,
@@ -532,8 +546,8 @@
         return box;
       }
 
-      function destroy() { seq++; if (handle) { handle.finalize(); handle = null; } groups = []; labelLayer = null; mapEl = null; slots = null; }
-      return { render, destroy, state: s };
+      function destroy() { seq++; sections.destroy(); if (handle) { handle.finalize(); handle = null; } groups = []; labelLayer = null; marks = null; layerCtl = null; mapEl = null; slots = null; }
+      return { render, destroy, state: s, sections, get handle() { return handle; }, get layers() { return layerCtl; }, get marks() { return marks; } };
     }
     return { create };
   });
