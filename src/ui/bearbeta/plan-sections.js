@@ -153,8 +153,9 @@
         if (st.id !== ds.id) Object.assign(st, { id: ds.id, tab: 'map', chosen: null, current: null });
         st.plan = ds.plan || {};
         const [sections, list] = await Promise.all([delivery.sectionsOf(ds.id).catch(() => []), dsFiles.list(ds.id).catch(() => [])]);
-        const objects = new Map();
-        for (const s of sections) if (!objects.has(s.avsnitt)) objects.set(s.avsnitt, await delivery.objectsForSection(ds.id, s.avsnitt).catch(() => []));
+        const names = Array.from(new Set(sections.map((s) => s.avsnitt)));
+        const found = await Promise.all(names.map((a) => delivery.objectsForSection(ds.id, a).catch(() => [])));
+        const objects = new Map(names.map((a, i) => [a, found[i]]));
         if (my !== seq) return mapEl;
         const planId = idOf(st.plan.objektid);
         const wholePlan = (ids) => ids.some((x) => !idOf(x) || (planId && idOf(x) === planId));
