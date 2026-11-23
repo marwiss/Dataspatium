@@ -214,6 +214,27 @@ dm-table .dm-cell-editor { width: 100%; height: 28px; margin: 0; padding: 0 var(
 .dm-plan-provisions li { cursor: pointer; }
 .dm-plan-provisions li:hover { color: var(--dm-accent); }
 .dm-plan-layers dm-switch { display: block; }
+/* A delivered plan's tabs beside the map (ui/bearbeta/plan-sections): its sections as text and its files. */
+.dm-plan-body > dm-tabs { flex: 0 0 auto; }
+.dm-plan-text, .dm-plan-files { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: var(--dm-s-4); }
+.dm-plan-text h3 { font-size: var(--dm-text-md); }
+.dm-plan-section { display: flex; flex-direction: column; gap: var(--dm-s-1); padding: var(--dm-s-3); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-md); background: var(--dm-surface); }
+.dm-plan-section-current { border-color: var(--dm-accent); box-shadow: 0 0 0 1px var(--dm-accent); }
+.dm-plan-section-head { display: flex; align-items: baseline; gap: var(--dm-s-2); flex-wrap: wrap; }
+.dm-plan-section-head h4 { margin: 0; font-size: var(--dm-text-md); }
+.dm-plan-section-text { margin: 0; white-space: pre-line; overflow-wrap: anywhere; line-height: var(--dm-leading); }
+.dm-plan-object-sections { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--dm-s-3); }
+.dm-plan-object-sections li { display: flex; flex-direction: column; gap: var(--dm-s-1); align-items: flex-start; }
+.dm-plan-filelist, .dm-plan-warnings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--dm-s-1); }
+.dm-plan-file { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto; align-items: center; gap: var(--dm-s-2); padding: var(--dm-s-1) 0; border-bottom: 1px solid var(--dm-border); font-size: var(--dm-text-sm); }
+.dm-plan-file-size { color: var(--dm-text-muted); font-variant-numeric: tabular-nums; text-align: right; }
+@media (max-width: 1099px) {
+  .dm-plan-body dm-tabs [role="tab"], .dm-plan-text dm-button > button, .dm-plan-files dm-button > button, .dm-plan-object-sections dm-button > button, [data-plan-chosen] dm-button > button { min-height: 44px; }
+}
+@media (max-width: 759px) {
+  .dm-plan-file { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .dm-plan-file dm-button { grid-column: 1 / -1; justify-self: start; }
+}
 /* The ready-made geodata services in the dialog Lägg till geodatakälla. */
 .dm-geodata-ready-list { max-height: 300px; overflow: auto; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); padding: var(--dm-s-1); }
 .dm-geodata-ready-item { align-items: center; }

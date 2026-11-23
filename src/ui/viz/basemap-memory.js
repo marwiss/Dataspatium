@@ -7,9 +7,10 @@
  * it: no background map, a raster of the workspace, or a background map from the net when the consent for background maps is
  * kept for good (an orthophoto with a key only when its key is already in the session). Otherwise the view starts without a
  * background map, so that a link opened at start asks nothing and fetches nothing.
- * The setting `basemaps.remembered` holds one object by dataset id, {<id>: {at, <view>: choice}}, for the MAX datasets chosen
- * last that still exist. A choice holds the background map's id and what the person entered with it (a WMS, OGC API – Tiles,
- * the plan map's grid), never a key: an orthophoto's key stays in api/secrets.
+ * The setting `basemaps.remembered` holds one object by dataset id, {<id>: {at, <view>: choice, layers}}, for the MAX datasets
+ * chosen last that still exist. A choice holds the background map's id and what the person entered with it (a WMS, OGC API –
+ * Tiles, the plan map's grid), never a key: an orthophoto's key stays in api/secrets. `layers` is the map's layers the person
+ * hid ({hidden: [key]}, ui/viz/layer-list), kept the same way; a layer not named there shows.
  */
 (function () {
   'use strict';
@@ -103,9 +104,35 @@
      */
     function within(id, choices) { return id === 'none' || choices.some((c) => c.value === id) ? id : 'none'; }
 
+    /** The field of a dataset's entry that holds the layers the person hid (a view name never takes it). */
+    const LAYERS = 'layers';
+    /**
+     * Remember the layers the person hid on a dataset's map (ui/viz/layer-list): at once for this session, then in the setting;
+     * none hidden leaves nothing in the setting. @param {string} datasetId @param {Iterable<string>} hidden @returns {Promise<void>}
+     */
+    function rememberLayers(datasetId, hidden) {
+      if (!datasetId) return Promise.resolve();
+      const kept = { hidden: Array.from(hidden || [], String).slice(0, 2000) };
+      session.set(keyOf(LAYERS, datasetId), kept);
+      writing = writing.then(() => persist(LAYERS, datasetId, kept.hidden.length ? kept : {})).catch((err) => D.log('basemaps', err));
+      return writing;
+    }
+    /**
+     * The layers hidden on a dataset's map, this session's or the setting's, or null when none are remembered. Never asks.
+     * @param {string} datasetId @returns {Promise<string[]|null>}
+     */
+    async function recallLayers(datasetId) {
+      if (!datasetId) return null;
+      const own = session.get(keyOf(LAYERS, datasetId));
+      if (own) return own.hidden.slice();
+      const entry = (await read())[datasetId];
+      const kept = isObject(entry) && isObject(entry[LAYERS]) && Array.isArray(entry[LAYERS].hidden) ? entry[LAYERS].hidden : null;
+      return kept ? kept.map(String) : null;
+    }
+
     /** Forget this session's choices and read the setting again on the next recall, as after a reload (for the tests). */
     function reset() { session.clear(); stored = null; }
 
-    return { SETTING, MAX, remember, recall, within, trim, reset };
+    return { SETTING, MAX, remember, recall, within, trim, reset, rememberLayers, recallLayers };
   });
 })();

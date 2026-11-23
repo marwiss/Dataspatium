@@ -171,6 +171,12 @@ are the tables with the `data_type` *features* in `gpkg_contents`, with their na
 attribute tables are no layers. Empty layers are left out, but counted in the dataset's facts in Manage. The original file
 is kept in the dataset. Which layers are shown on the map is chosen afterwards.
 
+In Process every layer
+is drawn on the same map, each with its symbol, and under *Layers* in the inspector they are listed per file: show and hide them
+one by one, all at once or just one (*Show only this*). The legend shows the layers that show. The list, the symbols and the
+legend are the same as in the plan view, see [Plans](planer.md#the-layers). Click a feature and the inspector shows its
+attributes. Which layers show is kept per dataset, and the table is one button away.
+
 ## QGIS projects
 
 Drop a project file (`.qgs` or `.qgz`) in Import, preferably together with the data files (GeoPackage, GeoJSON,

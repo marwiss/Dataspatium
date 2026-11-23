@@ -166,6 +166,12 @@ Datamängden har ett objekt per rad: `lager` (tabellen i filen), `fil`, `objekti
 lager tas inte med, men räknas i datamängdens uppgifter i Hantera. Originalfilen sparas i datamängden. Vilka lager som
 visas på kartan väljs i efterhand.
 
+I Bearbeta ritas alla lager på
+samma karta, var och ett med sin symbol, och under *Lager* i inspektören listas de per fil: visa och dölj dem ett och ett, alla
+på en gång eller bara ett (*Visa bara detta*). Teckenförklaringen visar de lager som visas. Listan, symbolerna och
+teckenförklaringen är desamma som i planvyn, se [Planer](planer.md#lagren). Klicka på ett objekt så visar inspektören dess
+egenskaper. Vilka lager som visas sparas per datamängd, och tabellen är en knapp bort.
+
 ## QGIS-projekt
 
 Släpp en projektfil (`.qgs` eller `.qgz`) i Inhämta, gärna tillsammans med datafilerna (GeoPackage, GeoJSON,

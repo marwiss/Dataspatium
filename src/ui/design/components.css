@@ -247,3 +247,25 @@ dm-viewcube { position: absolute; top: var(--dm-s-2); right: var(--dm-s-2); z-in
 .dm-viewcube-iso:hover { background: var(--dm-surface-hover); color: var(--dm-text); }
 @media (max-width: 759px) { .dm-viewcube-iso { width: 44px; height: 44px; } }
 dm-input input[type="range"].dm-field { padding: 0; border: none; background: none; box-shadow: none; accent-color: var(--dm-accent); min-height: var(--dm-s-6); }
+
+/* The layers of a map with many of them, and their legend (ui/viz/layer-list): per file, then per layer with its swatch,
+   switch, count and Visa bara detta; touch targets grow in the narrow layouts. */
+.dm-layer-list, .dm-layer-groups { display: flex; flex-direction: column; gap: var(--dm-s-2); min-width: 0; }
+.dm-layer-group-head { display: flex; align-items: center; gap: var(--dm-s-1); min-width: 0; }
+.dm-layer-group-head h5, .dm-layer-legend h5 { flex: 1 1 auto; min-width: 0; margin: 0; font-size: var(--dm-text-xs); font-weight: var(--dm-weight-semibold); color: var(--dm-text-muted); }
+.dm-layer-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--dm-s-1); }
+.dm-layer-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: var(--dm-s-2); min-height: var(--dm-s-8); }
+.dm-layer-item dm-switch, .dm-layer-item dm-switch > label { min-width: 0; }
+.dm-layer-item dm-switch > label > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dm-layer-count { font-size: var(--dm-text-xs); color: var(--dm-text-muted); font-variant-numeric: tabular-nums; text-align: right; }
+.dm-layer-swatch { display: inline-block; width: var(--dm-s-4); height: var(--dm-s-4); flex: 0 0 auto; }
+.dm-layer-marker { background: transparent; border: 0; }
+.dm-layer-marker svg { display: block; }
+.dm-layer-legend .dm-map-legend-list li { align-items: flex-start; }
+.dm-layer-legend-text { display: flex; flex-direction: column; min-width: 0; }
+.dm-layer-legend-categories { margin-top: var(--dm-s-1); font-size: var(--dm-text-xs); }
+@media (max-width: 1099px) {
+  .dm-layer-item { min-height: 44px; }
+  .dm-layer-list dm-button > button { min-height: 44px; }
+  .dm-layer-list dm-button[icon-only] > button { width: 44px; }
+}

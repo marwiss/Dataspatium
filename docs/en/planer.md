@@ -35,10 +35,67 @@ catalogue says about the provision: code, type, validity and the catalogue's for
 off per type, a background map appears after consent, and the buttons give *Save as map view* (for Visualise,
 dashboards and Publish), *Plan provisions* (the list as Markdown) and *Show as table*.
 
-A comprehensive plan is drawn per theme: land and water use filled per content type, other themes with one colour
-per theme and switchable visibility. The inspector shows the area per land and water use.
+A comprehensive plan is drawn layer by layer: land and water use filled per content type in Boverket's colours and the
+other layers each in a colour of its own (see [The layers](#the-layers)). The legend in the inspector shows the area per
+land and water use.
 
 Lines (no-exit lines, fences, development directions) and points (for example the height of the ground) are drawn as they are. A provision limited in height is drawn by its footprint, and the inspector shows the height in the plan's height system (RH 2000 in plans to NGP): lower limit, upper limit or both. The inspector also shows the plan's decision (adopted, legal force, appealed, implementation period, case number, type of decision), the plan description's name and the documents, and for the chosen object other facts such as the period of validity, a secondary property boundary, which use provisions a property provision regulates, the level of connection, what the content touches and where in the plan document it is described. Content described only in text, without a place on the map, is listed under *objects without a place on the map* and can be chosen there.
+
+## A digital comprehensive plan: layers, positions and files
+
+A digital comprehensive plan is delivered as one or more GeoPackage files in Boverket's ÖP model, the plan description (the
+comprehensive plan's text document) as DOCX and sometimes the files `manifest.xml` and `metadata.xml`. The whole delivery is one
+dataset of the kind plan, and the plan view in Process shows it together: the map with its layers, the plan description's
+positions (ställningstaganden) and the delivery's files. A single DOCX file is still a document collection and a single layer a
+table, as before.
+
+### The layers
+
+Under *Layers* in the inspector the layers are listed per GeoPackage file and then layer by layer, one for each table in the file
+(for example land and water use, development direction as areas and as lines, national interests). An older plan without its
+source layers has one layer per theme. Each layer has a switch, its number of objects and its symbol.
+
+- Every layer shows at the start, and several can show at once.
+- *Show all* and *Hide all* at the top apply to every layer the filter shows. Each file has buttons of its own to show and hide its
+  layers, and the eye beside a layer (*Show only this*) shows only that layer.
+- A plan with more than twelve layers has a filter that narrows the list by the layer's or the file's name.
+- Which layers are hidden is kept per dataset and applies again when you come back to the plan, also after a reload.
+
+The symbols tell the layers apart. Land and water use keeps Boverket's colours per use, so that the land use map looks like
+Boverket's. The plan boundary is a dark outline and the areas a dashed one. The other layers each get a colour from the app's
+colour-blind safe palette: areas are filled with an outline, lines are drawn as lines (dashed when two line layers would
+otherwise share a colour) and points with a marker shape of their own (circle, square, triangle or diamond). The legend in the
+inspector lists only the layers that show, grouped as the list and with the same symbols, and land and water use with its uses
+and their area in hectares.
+
+### Positions
+
+When the plan has the plan description's sections or the delivery's files, the tabs *Map*, *Positions* and *Files* are above the
+map. The map is the main view, and the panels around it stay as they were. The *Positions* tab shows the plan description's
+sections with heading and text:
+
+- *Applies to the whole plan* at the top: sections linked to the plan as a whole.
+- Then the positions (the section type Ställningstagande) and last the other sections, such as descriptions and consequences.
+- The text always shows as text, never as HTML.
+- *Show 3 areas on the map* (with the section's number) marks every area the section points to, in the accent colour and even when
+  their layers are hidden, and zooms the map to them. The inspector shows the marked section with *Show in the plan description*
+  and *Unmark*.
+
+Click an area on the map and the inspector lists under *In the plan description* the positions and other sections that point to
+the area, the positions first. *Show in the plan description* opens the *Positions* tab at the section.
+
+### Files
+
+The *Files* tab lists the delivery's files with their role (plan map, background material, text document, appendix, manifest,
+metadata or other) and size, and the warnings the delivery was read with. Files the delivery names but that were not kept are
+listed apart.
+
+- Only a PDF or a picture (PNG or JPEG) whose contents agree with its file extension opens in a new tab. Every other file is
+  downloaded, so that a file that claims to be something else is never shown in the app.
+- *Add a file to the plan* keeps files from the computer with the plan, for example a review statement.
+
+A GeoPackage with many layers that is not a plan can be one dataset in the same way, see
+[Map layers](kartor.md#map-layers-a-geopackage-with-many-layers).
 
 ## Coordinate and height systems
 
