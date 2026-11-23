@@ -276,6 +276,34 @@
     return ran ? 'ok' : 'ok (the page ran its own scripts; its tooltip was not opened)';
   }, 60000);
 
+  test('map: a floating panel such as the AI assistant stays above a map under it, with its controls and popups', async (assert) => {
+    const overlays = D.require('ui/overlays');
+    const meta = await datasets.create({ name: 'Under panelen', columns: [{ name: 'id', type: 'integer' }, { name: 'geometry', type: 'text' }], rows: [[1, JSON.stringify(square(17, 59, 1))]] });
+    created.push(meta.id);
+    const chart = charts.create('map', meta, 'Under panelen');
+    chart.map = leaflet.defaultMap(await datasets.columns(meta.id), meta);
+    // A map that fills the whole window, as the map view does in the centre, with the panel docked bottom right on top of it.
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed; inset:0;';
+    document.body.appendChild(el);
+    const panel = overlays.floating({});
+    try {
+      const hd = await leaflet.render(el, chart, {});
+      panel.update({ title: 'Panel', body: [Object.assign(document.createElement('p'), { textContent: 'över kartan' })] });
+      hd.map.openPopup('popup', hd.map.getCenter());
+      const box = panel.el.getBoundingClientRect();
+      assert.ok(box.width > 0 && box.height > 0, 'the panel is drawn');
+      const points = [[box.left + box.width / 2, box.top + box.height / 2], [box.right - 4, box.bottom - 4], [box.left + 4, box.top + 4]];
+      for (const [x, y] of points) {
+        const hit = document.elementFromPoint(x, y);
+        assert.ok(hit && panel.el.contains(hit), `the panel is on top at ${Math.round(x)},${Math.round(y)}: ${hit && hit.className}`);
+      }
+      assert.equal(getComputedStyle(el.querySelector('.leaflet-container') || el).isolation, 'isolate', 'the map keeps its z-indexes inside');
+      hd.finalize();
+    } finally { panel.close(); el.remove(); }
+    return 'ok';
+  });
+
   test('map: 10 000 polygons render in under 5 seconds and pan without errors', async (assert) => {
     const rows = [];
     for (let i = 0; i < 100; i++) for (let j = 0; j < 100; j++) rows.push([i * 100 + j, (i + j) % 7, JSON.stringify(square(11 + i * 0.1, 55 + j * 0.1, 0.09))]);

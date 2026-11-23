@@ -461,6 +461,9 @@ body.dm-presenting { overflow: hidden; }
 .dm-map .leaflet-tooltip { font-family: var(--dm-font-sans); border-color: var(--dm-border); color: var(--dm-text); background: var(--dm-surface); }
 /* base.css caps every canvas at the width of its parent, and Leaflet's panes have no width: the vector layer would be 0 px wide. */
 .leaflet-pane > canvas { max-width: none; }
+/* Leaflet's panes and controls carry z-index 400-1000; without a stacking context of its own a map would rise above the floating
+   panels (the AI assistant, the course), the sheets and the drawers. isolation keeps them inside the map, wherever it is drawn. */
+.leaflet-container { isolation: isolate; }
 .dm-map-view { flex: 1 1 auto; min-height: 320px; }
 .dm-map-preview { padding: 0; min-height: 420px; height: 520px; overflow: hidden; }
 .dm-map-preview .dm-map { height: 100%; border-radius: 0; }
