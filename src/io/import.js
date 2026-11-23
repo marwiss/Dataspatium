@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'io/importers/access', 'io/importers/documents', 'io/importers/images', 'io/importers/raster', 'io/importers/detaljplan', 'io/importers/graph', 'io/importers/model', 'data/plan', 'data/types', 'data/datasets', 'platform/tier'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, access, documents, images, raster, detaljplanImp, graphImp, modelImp, plan, types, datasets, tier) => {
+  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'io/importers/access', 'io/importers/documents', 'io/importers/images', 'io/importers/raster', 'io/importers/detaljplan', 'io/importers/graph', 'io/importers/model', 'io/importers/plan-delivery', 'data/plan-delivery', 'data/plan', 'data/types', 'data/datasets', 'platform/tier'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, access, documents, images, raster, detaljplanImp, graphImp, modelImp, deliveryImp, delivery, plan, types, datasets, tier) => {
     // Documents go before the table-in-document importer: a Word or Markdown file is a document unless "tables" is chosen.
     // A TIFF is a raster before it is a picture (the browsers cannot draw TIFF files).
     // The plan importer never detects by extension (resolveImporter sniffs JSON heads for it); it is listed for forced formats.
@@ -33,6 +33,8 @@
       if (!forced && /\.zip$/i.test(file.name) && await D.require('io/datapackage').sniff(file)) return D.require('io/datapackage');
       // An archive package of a plan (metadata/PREMIS.xml with the plan in content/), zipped as a whole.
       if (forced === 'planarchive' || (!forced && /\.zip$/i.test(file.name) && await D.require('io/importers/plan-archive').sniff(file))) return D.require('io/importers/plan-archive');
+      // A digital översiktsplan delivered as a ZIP: GeoPackages with their Word files, a manifest.xml or a metadata.xml.
+      if (forced === 'opdelivery' || (!forced && /\.zip$/i.test(file.name) && await deliveryImp.sniff(file))) return deliveryImp;
       const importer = importerFor(file, forced);
       if (forced || (importer !== json && importer !== xml && importer !== geo)) return importer;
       const head = await file.slice(0, 65536).text();
@@ -69,6 +71,8 @@
       // Icelandic stafrænt deiliskipulag) likewise.
       else if (importer === sqliteImp && p.gpkg && plan.isDpGeoPackage(p.tables)) p.planGpkg = 'detaljplan';
       else if (importer === sqliteImp && p.gpkg && plan.nordic.gpkgKind(p.tables)) p.planGpkg = plan.nordic.gpkgKind(p.tables);
+      // Any GeoPackage with several feature layers can also be imported whole, as one dataset of the kind layers.
+      if (importer === sqliteImp && p.gpkg) p.layerCount = (p.featureTables || []).length;
       // A coordinate system the app cannot convert: the places are kept as they are, but not drawn (Inhämta says so).
       const named = p.crs || (p.plan && p.plan.crs) || '';
       if (named && D.require('data/geo').crsUnknown(named)) p.crsUnknown = String(named);
@@ -132,8 +136,11 @@
     }
     /**
      * A mixed choice of files, sorted: pictures become one collection, documents another, and every other file a dataset of
-     * its own. What the app cannot read is listed, not guessed at.
-     * @param {File[]} files @returns {Promise<{groups: Array<{importer: string, collection: boolean, files: File[], name?: string}>, skipped: File[]}>}
+     * its own. What the app cannot read is listed, not guessed at. When the choice holds one or more GeoPackages with Word files,
+     * a manifest.xml or a metadata.xml, `delivery` offers all of them as one digital översiktsplan (data/plan-delivery); `op`
+     * says whether a GeoPackage follows the ÖP model, which makes it the choice by default.
+     * @param {File[]} files
+     * @returns {Promise<{groups: Array<{importer: string, collection: boolean, files: File[], name?: string}>, skipped: File[], delivery: {importer: string, collection: boolean, files: File[], op: boolean, name: string}|null}>}
      */
     async function sortFiles(files) {
       const collected = new Map(); const singles = []; const skipped = [];
@@ -158,7 +165,7 @@
       const groups = Array.from(collected.values());
       const folder = folderOf(files);
       for (const g of groups) g.name = groups.length === 1 && folder ? folder : D.t('import.collection.' + g.importer, { n: g.files.length });
-      return { groups: packages.concat(groups, singles), skipped };
+      return { groups: packages.concat(groups, singles), skipped, delivery: files.length > 1 ? await delivery.candidate(files) : null };
     }
     /**
      * Read the groups one at a time. A file that fails does not stop the others.
@@ -171,6 +178,7 @@
         if (progress) progress({ index: i, total: groups.length, file: group.files[0].name });
         try {
           const meta = group.importer === 'planarchive' ? await D.require('io/importers/plan-archive').importFiles(group.files, {})
+            : group.importer === 'opdelivery' ? await delivery.importDelivery(group.files, { folder: folderOf(group.files) })
             : group.collection ? await runFiles(group.files, { format: group.importer }, group.name) : await run(group.files[0], { format: group.importer }, null, group.name);
           out.push({ group, meta, error: null });
         } catch (err) { out.push({ group, meta: null, error: String((err && err.message) || err) }); }
@@ -208,8 +216,12 @@
       // A document or image keeps its kind and its files; the column step does not apply to it.
       if (importer.collection) return importer.importFiles([file], options, name, progress);
       // A digital plan becomes a plan dataset (rows per provision, the original kept); so does an ÖP-model GeoPackage when asked.
-      if (importer.id === 'detaljplan' || importer.id === 'planarchive' || importer.id === 'graph' || importer.id === 'model' || importer.id === 'datapackage' || importer.id === 'bcf') return importer.importFile(file, options, name, progress);
-      if (importer.id === 'sqlite' && options.plan) return detaljplanImp.importGeoPackage(file, options, name, progress);
+      if (importer.id === 'detaljplan' || importer.id === 'planarchive' || importer.id === 'opdelivery' || importer.id === 'graph' || importer.id === 'model' || importer.id === 'datapackage' || importer.id === 'bcf') return importer.importFile(file, options, name, progress);
+      // A plan GeoPackage whole: an ÖP-model one through data/plan-delivery (a delivery of one file, with its sections and
+      // links), the others as their plan (data/plan-delivery hands them to the plan importer).
+      if (importer.id === 'sqlite' && options.plan) return delivery.importDelivery([file], options, name, progress);
+      // Any GeoPackage whole: every feature layer in one dataset of the kind layers.
+      if (importer.id === 'sqlite' && options.layers) return delivery.importLayers(file, options, name, progress);
       if (importer.viaR) return importer.importViaR(file, name || baseName(file.name), options);
       if (importer.id === 'sqlite') {
         // A Dataspatium file is restored with its metadata, log and versions intact.
