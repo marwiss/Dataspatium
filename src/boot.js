@@ -446,6 +446,7 @@
       'src/ui/op-dialog.js',
       'src/ui/dialogs.js',
       'src/ui/viz/basemap-choice.js',
+      'src/ui/viz/basemap-memory.js',
       'src/ui/viz/tiles-dialog.js',
       'src/ui/analysis/graph-panel.js',
       'src/ui/bearbeta/document-view.js',
