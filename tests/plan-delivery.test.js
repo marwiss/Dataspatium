@@ -213,6 +213,11 @@
     assert.ok(!lev.varningar.includes(t('plan.delivery.warn.checksum', { list: 'manifest.xml', file: 'op-testkoping.gpkg' })));
     const linkRows = await rowsOf(meta.id, 'select count(*) from _section_links');
     assert.equal(linkRows[0][0], 6, 'a link per bookmark and object');
+    // Before the plan is shared, the review lists every file of the delivery as an original, whatever its role.
+    if (D.has('data/share-scan')) {
+      const originals = (await D.require('data/share-scan').inspect(meta.id)).parts.find((p) => p.id === 'originals');
+      assert.ok(originals && originals.count === 5, 'the files of the delivery are originals in the review: ' + JSON.stringify(originals));
+    }
     return 'ok';
   }, 60000);
 

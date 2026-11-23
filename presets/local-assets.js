@@ -699,7 +699,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/sakerhet.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 39612,
+  "size": 40469,
   "library": "dataspatium"
  },
  "docs/da/kom-igang.md": {
@@ -1713,7 +1713,7 @@ Dataspatium.assets.addEntries({
  "docs/en/sakerhet.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 39495,
+  "size": 40395,
   "library": "dataspatium"
  }
 });
