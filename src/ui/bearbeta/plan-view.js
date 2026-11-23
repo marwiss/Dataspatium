@@ -4,14 +4,15 @@
  * Plan view in Bearbeta for datasets of kind "plan": a detailed development plan drawn as a plan map (uses filled
  * with Boverket's colours, property and administrative provisions as outlines, designations as labels, the plan
  * boundary on top) or a comprehensive plan by theme, with zoom and pan, an optional background map after consent
- * (OpenStreetMap, an orthophoto in the grids its service offers, a WMS, or OGC API – Tiles in Web Mercator),
+ * (OpenStreetMap, an orthophoto in the grids its service offers, a WMS, or OGC API – Tiles in Web Mercator), remembered with
+ * the map's grid per plan (ui/viz/basemap-memory) so that they are there again when the person comes back to the plan,
  * the provisions listed in the inspector and the clicked provision explained from the embedded catalogue. The
  * dataset itself is always the table of plan objects; the table is one click away.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/plan-view', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'data/geo', 'viz/leaflet', 'viz/charts', 'viz/data', 'platform/files', 'ui/viz/basemap-choice', 'ui/viz/tiles-dialog', 'platform/tier'], (base, datasets, plan, catalog, geo, leaflet, charts, vizData, files, basemapChoice, tilesDialog, tier) => {
+  D.define('ui/bearbeta/plan-view', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'data/geo', 'viz/leaflet', 'viz/charts', 'viz/data', 'platform/files', 'ui/viz/basemap-choice', 'ui/viz/basemap-memory', 'ui/viz/tiles-dialog', 'platform/tier'], (base, datasets, plan, catalog, geo, leaflet, charts, vizData, files, basemapChoice, memory, tilesDialog, tier) => {
     const { h, t, i18n, replace } = base;
     const MAX_ROWS = 20000;
     const OUTLINE_STYLES = {
@@ -24,7 +25,7 @@
 
     /**
      * @param {any} ctx shell context (ui, services, store, shell)
-     * @param {{onTable: () => void}} options
+     * @param {{onTable: () => void, tileFactory?: Function}} options tileFactory for tests (no tiles are fetched)
      */
     function create(ctx, options) {
       const { ui, shell, store } = ctx;
@@ -32,6 +33,10 @@
       let ds = null; let slots = null; let mapEl = null; let handle = null; let seq = 0; let groups = []; let labelLayer = null; let L = null;
       /** Sweden's orthophoto: read on the next drawing, because the person chose it (for the plan's extent, at most a square kilometre). */
       let orthoLoad = false;
+      /** A background map remembered for the plan, checked against the choices once they are known. */
+      let restored = false;
+      /** The plan's background map, its WMS or tiles and the map's grid, remembered for the plan when the person changes them. */
+      const keep = () => memory.remember('plan', s.id, { basemap: s.basemap, projection: s.projection, wms: s.basemap === 'wms' ? s.wms : null, tiles: s.basemap === 'tiles' ? s.tiles : null });
       async function loadOrtho(hd, load) {
         const status = await basemapChoice.drawView(hd, { load, redraw: () => { orthoLoad = true; draw(); } });
         if (status === 'idle') ui.toast.show(t('ortho.se.idle'), { kind: 'info', timeout: 9000 });
@@ -43,7 +48,18 @@
         ds = dataset;
         s.info = dataset.plan || {};
         s.slag = s.info.slag === 'oversiktsplan' ? 'oversiktsplan' : 'detaljplan';
-        if (s.id !== dataset.id) { s.id = dataset.id; s.selected = null; s.hidden = new Set(); s.basemap = 'none'; }
+        if (s.id !== dataset.id) {
+          s.id = dataset.id; s.selected = null; s.hidden = new Set(); s.basemap = 'none'; restored = false;
+          // Another plan starts with the background map and grid it had last (ui/viz/basemap-memory asks nothing); a plan
+          // without one keeps the grid shown, as before.
+          const kept = await memory.recall('plan', dataset.id);
+          if (kept && s.id === dataset.id) {
+            s.basemap = kept.basemap; restored = true;
+            if (kept.projection === 'web' || kept.projection === 'plan') s.projection = kept.projection;
+            if (kept.wms && typeof kept.wms === 'object') s.wms = kept.wms;
+            if (kept.tiles && typeof kept.tiles === 'object') s.tiles = kept.tiles;
+          }
+        }
         if (s.updatedAt === dataset.updatedAt && s.rows.length) return;
         const columns = await datasets.columns(dataset.id);
         const data = await vizData.fetchRows(dataset.id, { fields: columns.map((c) => c.name), limit: MAX_ROWS });
@@ -91,6 +107,12 @@
         // The orthophotos whose service offers the map's grid (Web Mercator or the plan's own).
         const orthos = await basemapChoice.options({ grid: s.projection === 'plan' ? grid : 0 });
         if (my !== seq || !slots) return;
+        const choices = [{ value: 'none', label: t('map.basemap.none') }].concat(s.projection === 'web' ? [{ value: 'osm', label: t('map.basemap.osm') }] : [], orthos, [{ value: 'wms', label: t('map.basemap.wms') }], s.projection === 'web' ? [{ value: 'tiles', label: t('map.basemap.tiles') }] : []);
+        // A remembered background map that the map no longer offers, or whose service is not entered, is not drawn.
+        if (restored) {
+          restored = false;
+          s.basemap = memory.within(s.basemap, choices.filter((c) => (c.value !== 'wms' || (s.wms && s.wms.url && s.wms.layers)) && (c.value !== 'tiles' || (s.tiles && s.tiles.template))));
+        }
         if (s.basemap.startsWith('ortho-') && !orthos.some((o) => o.value === s.basemap)) { ui.toast.show(t('map.projection.ortho', { name: t('map.basemap.' + s.basemap), crs: geo.crsLabel(grid) }), { kind: 'info', timeout: 9000 }); s.basemap = 'none'; }
         const projectionSel = /** @type {any} */ (h('dm-select', { 'aria-label': t('map.projection'), inline: true, 'data-plan-projection': '' }));
         projectionSel.options = [{ value: 'web', label: t('map.projection.web') }, { value: 'plan', label: geo.crsLabel(grid) }];
@@ -98,12 +120,13 @@
         projectionSel.addEventListener('change', () => {
           s.projection = projectionSel.value;
           if (s.projection === 'plan' && (s.basemap === 'osm' || s.basemap === 'tiles')) { ui.toast.show(t(s.basemap === 'osm' ? 'map.projection.osm' : 'map.projection.tiles', { crs: geo.crsLabel(grid) }), { kind: 'info', timeout: 9000 }); s.basemap = 'none'; }
+          keep();
           render(dataset, target);
         });
         // OpenStreetMap and OGC API – Tiles exist in Web Mercator only; an orthophoto in the grids its service offers; a WMS can be asked
         // for in either system.
         const basemapSel = /** @type {any} */ (h('dm-select', { 'aria-label': t('map.basemap'), inline: true, 'data-plan-basemap': '' }));
-        basemapSel.options = [{ value: 'none', label: t('map.basemap.none') }].concat(s.projection === 'web' ? [{ value: 'osm', label: t('map.basemap.osm') }] : [], orthos, [{ value: 'wms', label: t('map.basemap.wms') }], s.projection === 'web' ? [{ value: 'tiles', label: t('map.basemap.tiles') }] : []);
+        basemapSel.options = choices;
         basemapSel.value = s.basemap;
         basemapSel.addEventListener('change', async () => {
           if (!(await basemapChoice.ensure(basemapSel.value))) { basemapSel.value = s.basemap; return; }
@@ -118,13 +141,14 @@
             s.tiles = picked;
           }
           s.basemap = basemapSel.value;
+          keep();
           orthoLoad = basemapChoice.isView(s.basemap);
           render(dataset, target);
         });
         // Sweden's orthophoto covers the view it was read for; after a move the person reads it for the new view.
         const orthoBtn = basemapChoice.isView(s.basemap) ? ui.button({ label: t('ortho.se.load'), icon: 'image', 'icon-only': true, title: t('ortho.se.load.hint'), 'data-map-ortho-load': '', onClick: () => { if (handle) loadOrtho(handle, true); } }) : null;
-        const wmsEdit = s.basemap === 'wms' ? ui.button({ label: t('map.wms.edit'), icon: 'pencil', 'icon-only': true, title: t('map.wms.edit.hint'), 'data-plan-wms-edit': '', onClick: async () => { const w = await wmsDialog(); if (w) { s.wms = w; draw(); } } }) : null;
-        const tilesEdit = s.basemap === 'tiles' ? ui.button({ label: t('map.tiles.edit'), icon: 'pencil', 'icon-only': true, title: t('map.tiles.edit.hint'), 'data-plan-tiles-edit': '', onClick: async () => { const picked = await tilesDialog.open(s.tiles); if (picked) { s.tiles = picked; draw(); } } }) : null;
+        const wmsEdit = s.basemap === 'wms' ? ui.button({ label: t('map.wms.edit'), icon: 'pencil', 'icon-only': true, title: t('map.wms.edit.hint'), 'data-plan-wms-edit': '', onClick: async () => { const w = await wmsDialog(); if (w) { s.wms = w; keep(); draw(); } } }) : null;
+        const tilesEdit = s.basemap === 'tiles' ? ui.button({ label: t('map.tiles.edit'), icon: 'pencil', 'icon-only': true, title: t('map.tiles.edit.hint'), 'data-plan-tiles-edit': '', onClick: async () => { const picked = await tilesDialog.open(s.tiles); if (picked) { s.tiles = picked; keep(); draw(); } } }) : null;
         const labels = /** @type {any} */ (h('dm-switch', { label: t('plan.labels') }));
         labels.checked = s.labels;
         labels.addEventListener('change', () => { s.labels = labels.checked; updateLabels(); });

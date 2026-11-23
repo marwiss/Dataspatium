@@ -3,7 +3,8 @@
 /**
  * Map view in Bearbeta for tables with a geometry column or coordinate columns: the dataset drawn with Leaflet
  * (zoom and pan, click on a feature shows its attributes in the inspector), an optional background map after
- * consent (OpenStreetMap or an orthophoto, ui/viz/basemap-choice; Sweden's orthophoto shown can be kept as a raster), and buttons
+ * consent (OpenStreetMap or an orthophoto, ui/viz/basemap-choice; Sweden's orthophoto shown can be kept as a raster), remembered
+ * per dataset (ui/viz/basemap-memory) so that it is there again when the person comes back to the dataset, and buttons
  * to save the map as a chart for Visualisera and to switch to the table. The dataset itself
  * is always the table; what is done there (filter, correct, remove rows) shows here too.
  * It is also a raster's own view (the kind raster): the previews of its files under their outlines, with the raster's facts,
@@ -12,14 +13,14 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/map-view', ['ui/base', 'data/datasets', 'viz/leaflet', 'viz/charts', 'data/kinds', 'ui/viz/basemap-choice', 'platform/tier'], (base, datasets, leaflet, charts, kinds, basemapChoice, tier) => {
+  D.define('ui/bearbeta/map-view', ['ui/base', 'data/datasets', 'viz/leaflet', 'viz/charts', 'data/kinds', 'ui/viz/basemap-choice', 'ui/viz/basemap-memory', 'platform/tier'], (base, datasets, leaflet, charts, kinds, basemapChoice, memory, tier) => {
     /** More marks than this say nothing that the list of rows does not say better. */
     const MAX_MARKS = 5000;
     const { h, t, i18n, replace } = base;
 
     /**
      * @param {any} ctx shell context (ui, services, store, shell)
-     * @param {{onTable: () => void}} options
+     * @param {{onTable: () => void, onOwnView?: () => void, tileFactory?: Function}} options tileFactory for tests (no tiles are fetched)
      */
     function create(ctx, options) {
       const { ui, shell, store } = ctx;
@@ -41,9 +42,11 @@
 
       async function load(dataset) {
         ds = dataset;
-        columns = await datasets.columns(dataset.id);
+        // Another dataset starts with the background map it had last, or none (ui/viz/basemap-memory asks nothing).
+        const [cols, kept] = await Promise.all([datasets.columns(dataset.id), memory.recall('map', dataset.id)]);
+        columns = cols;
         if (s.id !== dataset.id || !s.chart) {
-          s.id = dataset.id; s.selected = null; s.basemap = 'none';
+          s.id = dataset.id; s.selected = null; s.basemap = kept ? kept.basemap : 'none';
           s.chart = { kind: 'map', name: dataset.name, datasetId: dataset.id, datasetName: dataset.name, datasetShort: dataset.shortName || '', map: leaflet.defaultMap(columns, dataset), options: {} };
         } else {
           // The dataset changed (an edit): the layer keeps its settings, the features are read again.
@@ -64,12 +67,16 @@
         const orthos = await basemapChoice.options();
         if (my !== seq || !slots) return;
         const basemapSel = /** @type {any} */ (h('dm-select', { 'aria-label': t('map.basemap'), inline: true, 'data-map-basemap': '' }));
-        basemapSel.options = [{ value: 'none', label: t('map.basemap.none') }, { value: 'osm', label: t('map.basemap.osm') }].concat(orthos);
+        const choices = [{ value: 'none', label: t('map.basemap.none') }, { value: 'osm', label: t('map.basemap.osm') }].concat(orthos);
+        basemapSel.options = choices;
+        // A remembered background map that the choice no longer has is not drawn.
+        s.basemap = memory.within(s.basemap, choices); s.chart.map.basemap = s.basemap;
         basemapSel.value = s.basemap;
         basemapSel.addEventListener('change', async () => {
           // An orthophoto that needs a key asks for it before anything is drawn; a cancelled key keeps the map as it was.
           if (!(await basemapChoice.ensure(basemapSel.value))) { basemapSel.value = s.basemap; return; }
           s.basemap = basemapSel.value; s.chart.map.basemap = s.basemap;
+          memory.remember('map', s.id, { basemap: s.basemap });
           // Sweden's orthophoto is read for the view because the person chose it.
           orthoLoad = basemapChoice.isView(s.basemap);
           draw();
@@ -101,7 +108,7 @@
         mapEl.replaceChildren();
         try {
           // A raster can be a drone's image of a few metres: its map may come as close as the background maps go.
-          const hd = await leaflet.render(mapEl, s.chart, Object.assign({ onSelect: (sel) => { s.selected = sel; renderInspector(); } }, isRaster() ? { fitMaxZoom: 19 } : {}));
+          const hd = await leaflet.render(mapEl, s.chart, Object.assign({ onSelect: (sel) => { s.selected = sel; renderInspector(); }, tileFactory: options.tileFactory }, isRaster() ? { fitMaxZoom: 19 } : {}));
           if (my !== seq) { hd.finalize(); return; }
           handle = hd;
           if (orthoBtn) orthoBtn.hidden = !hd.info.basemapView;

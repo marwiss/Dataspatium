@@ -8,12 +8,13 @@
  * the choice is Lantmäteriet's orthophoto, read once for the place and SITE_SIDE metres around it (ui/viz/basemap-choice
  * `drawView`, after the consent for API fetches and with the key of the connector lantmateriet-stac); the image shown can be kept
  * as a raster (*Spara ortofotot*). A raster of the workspace that covers the place (a saved orthophoto, a drone's picture) is a
- * background of its own, drawn from its own pictures without the net: nothing is asked or fetched.
+ * background of its own, drawn from its own pictures without the net: nothing is asked or fetched. The background chosen for a
+ * place is remembered for its dataset (ui/viz/basemap-memory) and is there again when the person comes back to it.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/site-map', ['ui/base', 'viz/leaflet', 'data/datasets', 'ui/viz/basemap-choice', 'ui/overlays'], (base, leaflet, datasets, basemapChoice, overlays) => {
+  D.define('ui/bearbeta/site-map', ['ui/base', 'viz/leaflet', 'data/datasets', 'ui/viz/basemap-choice', 'ui/viz/basemap-memory', 'ui/overlays'], (base, leaflet, datasets, basemapChoice, memory, overlays) => {
     const { h, t, replace } = base;
     /** Close enough to see a house on an orthophoto. */
     const FIT_ZOOM = 19;
@@ -41,6 +42,12 @@
       const mapEl = h('div', { 'aria-label': t('map.site'), 'data-site-map-view': '' });
       el.append(head, h('div', { class: 'dm-stack-xs' }, h('p', { class: 'dm-help dm-xs', text: t('map.site.hint') }), bar, mapEl, noteEl));
       let handle = null; let seq = 0;
+      /**
+       * The background map remembered for the place, read when the dataset is set and awaited by the drawing; `picks` counts the
+       * datasets set and the choices made, so that one read late does not undo a choice. `restored`: checked against the
+       * choices that cover the place once they are known.
+       */
+      let restoring = null; let picks = 0; let restored = false;
       el.addEventListener('toggle', () => { if (el.open && !s.drawn) draw(); });
       /** A saved raster opens in Bearbeta, when the panel lives in the app. */
       const onOpen = ctx && ctx.store && ctx.shell ? (meta) => { ctx.store.set({ selectedId: meta.id }); ctx.shell.activate('bearbeta'); } : undefined;
@@ -59,7 +66,9 @@
       async function choose(id) {
         // A raster of the workspace needs no key and no consent: its pictures are in its own file.
         if (!String(id).startsWith(basemapChoice.RASTER) && !(await basemapChoice.ensure(id))) return false;
+        picks++; restored = false;
         s.basemap = id;
+        memory.remember('site', s.datasetId, { basemap: id });
         // Sweden's orthophoto is read because the person chose it.
         s.load = basemapChoice.isView(id);
         await draw();
@@ -80,6 +89,7 @@
         mapEl.replaceChildren();
         s.note = '';
         try {
+          if (restoring) await restoring;
           const meta = s.datasetId ? await datasets.get(s.datasetId) : null;
           const layer = meta ? leaflet.layerFor(await datasets.columns(meta.id), meta, 0) : null;
           const raster = layer ? await backgroundRaster() : null;
@@ -98,6 +108,11 @@
           s.orthos = await basemapChoice.options({ box });
           s.rasters = await basemapChoice.rasterChoices(box);
           if (my !== seq) return;
+          // A remembered background that does not cover the place (or is gone) gives way to none.
+          if (restored) {
+            restored = false;
+            if (memory.within(s.basemap, [{ value: 'osm' }].concat(s.orthos, s.rasters)) !== s.basemap) { s.basemap = 'none'; return draw(); }
+          }
           s.image = '';
           if (hd.info.basemapView) {
             const load = s.load; s.load = false;
@@ -119,10 +134,15 @@
           overlays.toast.show(s.note, { kind: 'error' });
         }
       }
-      /** The dataset whose place is shown; a new place starts without a background map, and is drawn when the map is open. @param {string} id */
+      /**
+       * The dataset whose place is shown, drawn when the map is open; a place starts with the background map it had last, or
+       * none (ui/viz/basemap-memory asks nothing). @param {string} id
+       */
       function setDataset(id) {
         if ((id || '') === s.datasetId) return;
-        s.datasetId = id || ''; s.drawn = false; s.basemap = 'none'; s.image = '';
+        s.datasetId = id || ''; s.drawn = false; s.basemap = 'none'; s.image = ''; restored = false;
+        const mine = ++picks; const datasetId = s.datasetId;
+        restoring = datasetId ? memory.recall('site', datasetId).then((kept) => { if (kept && mine === picks) { s.basemap = kept.basemap; restored = kept.basemap !== 'none'; } }).catch((err) => D.log('basemaps', err)) : null;
         if (el.open) draw();
       }
       /** After the panel around it was drawn again: the map measures its box anew. */

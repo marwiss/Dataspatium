@@ -32,6 +32,11 @@ har bakgrundskarta (ingen, OpenStreetMap eller ett [ortofoto](#ortofoton)), *Zoo
 aktuell vy som ett diagram i Visualisera) och *Visa som tabell*. Allt du gör i tabellen (filtrera, rätta, ta bort
 rader) syns på kartan.
 
+Kartan minns bakgrundskartan för varje datamängd, liksom plankartan (med WMS-tjänsten och koordinatsystemet) och kartan över
+platsen för en ny byggnad: byter du datamängd och kommer tillbaka är samma bakgrundskarta vald igen, också efter en omladdning.
+Efter en omladdning visas en bakgrundskarta från nätet bara om du har gett samtycket till bakgrundskartor för gott, och ett
+ortofoto med nyckel bara när nyckeln redan är upplåst; annars börjar kartan utan bakgrundskarta och frågar ingenting.
+
 Stora datamängder ritas med canvas; 10 000 polygoner panoreras utan hack. Fler än 50 000 objekt per lager ritas
 inte (gränsen kan höjas per lager i kartvyn).
 
