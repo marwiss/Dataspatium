@@ -114,7 +114,9 @@
         const pictures = tables.includes(FILES) ? number(await engine.exec(`select count(distinct name) from ${FILES}`)) : 0;
         if (pictures) parts.push({ id: 'pictures', kind: 'pictures', count: pictures, choices: ['keep', 'remove'], start: 'keep' });
       } else if (tables.includes(FILES) && !ifc) {
-        const r = await engine.exec(`select distinct name from ${FILES} where kind = 'original'`);
+        // The originals in every role a plan delivery gives them (data/dataset-files ORIGINAL_KINDS), not only 'original'.
+        const kindsIn = D.require('data/dataset-files').ORIGINAL_KINDS.map((k) => `'${k}'`).join(', ');
+        const r = await engine.exec(`select distinct name from ${FILES} where kind in (${kindsIn})`);
         const names = r[0] ? r[0].values.map((row) => String(row[0])) : [];
         // A raster's TIFF files can carry tags that name a person (data/raster keeps only which tags they are): those files are
         // named first, with their tags.

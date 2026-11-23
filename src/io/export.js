@@ -112,6 +112,17 @@
       if (!Object.keys(out).length) throw new Error(D.t('export.err.nofiles'));
       return D.require('platform/storage/zip').createZip(out, { level: 0 });
     }
+    /** A plan's own files, whatever their role (a delivery keeps the plan map, the text document … as their kind), in one ZIP. */
+    async function toPlanFiles(id) {
+      const dsFiles = D.require('data/dataset-files');
+      const out = {};
+      for (const f of (await dsFiles.list(id)).filter((x) => dsFiles.ORIGINAL_KINDS.includes(x.kind))) {
+        const got = await dsFiles.read(id, f.name, f.kind);
+        if (got) out[f.name] = got.bytes;
+      }
+      if (!Object.keys(out).length) throw new Error(D.t('export.err.nofiles'));
+      return D.require('platform/storage/zip').createZip(out, { level: 0 });
+    }
     /** The text of a document collection, one heading per document. */
     async function toDocumentText(id) {
       const cols = await datasets.columns(id);
@@ -316,7 +327,8 @@
       }
       if (fmt.kind === 'raster') return toRaster(id, fmt, meta, options);
       if (fmt.id === 'graph-csv') blob = await toGraphCsv(id, options);
-      else if (fmt.id === 'document-originals' || fmt.id === 'plan-original') blob = await toFilesZip(id, 'original');
+      else if (fmt.id === 'document-originals') blob = await toFilesZip(id, 'original');
+      else if (fmt.id === 'plan-original') blob = await toPlanFiles(id);
       else if (fmt.id === 'images-zip') blob = await toFilesZip(id, 'preview');
       else if (fmt.id === 'document-text') blob = await toDocumentText(id);
       else if (fmt.kind === 'graph') blob = await toGraph(id, fmt.id);

@@ -11,11 +11,11 @@
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
-    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'raster', 'detaljplan', 'planarchive', 'graph', 'model', 'bcf', 'datapackage', 'r', 'documents', 'images'];
+    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'raster', 'detaljplan', 'planarchive', 'opdelivery', 'graph', 'model', 'bcf', 'datapackage', 'r', 'documents', 'images'];
     /** Formats without a header-row switch (structure carries the names). */
-    const NO_HEADER = ['json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'raster', 'detaljplan', 'planarchive', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
+    const NO_HEADER = ['json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'raster', 'detaljplan', 'planarchive', 'opdelivery', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
     /** Formats whose values are already typed (no decimal-separator choice). */
-    const TYPED = ['sqlite', 'access', 'shapefile', 'raster', 'detaljplan', 'planarchive', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
+    const TYPED = ['sqlite', 'access', 'shapefile', 'raster', 'detaljplan', 'planarchive', 'opdelivery', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
     /** Formats with fixed columns where one or many files become one dataset (no column step): documents, rasters and pictures. */
     const COLLECTIONS = ['documents', 'raster', 'images'];
     /** What the file picker offers: every extension an importer reads by the file's name (tests/io.test.js keeps them together). */
@@ -563,12 +563,15 @@
         const projectFile = list.find((f) => qgis.detect(f));
         if (projectFile && !tier.shows('import:qgis')) { wiz.error = ''; wiz.hidden = 'import:qgis'; render(); return; }
         if (projectFile) { await openProject(projectFile, list.filter((f) => f !== projectFile)); return; }
+        // A ZIP with a digital översiktsplan (GeoPackages with Word files, manifest.xml or metadata.xml) is sorted like a folder.
+        const deliveryImp = D.require('io/importers/plan-delivery');
+        if (list.length === 1 && /\.zip$/i.test(list[0].name) && await deliveryImp.sniff(list[0])) { await sortChosen(await deliveryImp.filesOfZip(list[0])); return; }
         const collection = services.importer.collectionFor(list);
         if (list.length > 1 && !collection) { await sortChosen(list); return; }
         wiz.answers = {}; wiz.sorted = null; wiz.results = null;
         wiz.files = collection && list.length > 1 ? list : [];
         wiz.file = list[0]; wiz.handle = null; wiz.text = ''; wiz.name = '';
-        wiz.options.format = wiz.files.length ? collection.id : ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; wiz.options.plan = undefined; wiz.nameFromPlan = false;
+        wiz.options.format = wiz.files.length ? collection.id : ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; wiz.options.plan = undefined; wiz.options.layers = undefined; wiz.nameFromPlan = false;
         if (wiz.files.length) wiz.name = services.importer.folderOf(list) || t('import.collection.' + collection.id, { n: list.length });
         await runPreview();
       }
@@ -577,14 +580,21 @@
         wiz.busy = true; wiz.error = ''; render();
         const sorted = await services.importer.sortFiles(list);
         wiz.busy = false;
-        const only = sorted.groups.length === 1 && !sorted.skipped.length ? sorted.groups[0] : null;
+        const only = sorted.groups.length === 1 && !sorted.skipped.length && !sorted.delivery ? sorted.groups[0] : null;
         if (only) { await chooseFiles(only.files); return; }
-        if (!sorted.groups.length) { wiz.error = t('import.sort.none'); render(); return; }
+        if (!sorted.groups.length && !sorted.delivery) { wiz.error = t('import.sort.none'); render(); return; }
         sorted.groups.forEach((g) => { g.include = true; });
+        // A digital översiktsplan in several files: one plan by default when a GeoPackage follows the ÖP model.
+        if (sorted.delivery) sorted.delivery.include = !!sorted.delivery.op;
         wiz.sorted = sorted; wiz.results = null; wiz.step = 'sort';
         render();
       }
-      const KIND_OF_IMPORTER = { images: 'images', documents: 'document', raster: 'raster', detaljplan: 'plan', graph: 'graph', model: 'model' };
+      const KIND_OF_IMPORTER = { images: 'images', documents: 'document', raster: 'raster', detaljplan: 'plan', planarchive: 'plan', opdelivery: 'plan', graph: 'graph', model: 'model' };
+      /** The groups a sorted choice imports: the delivery as one plan when it is chosen, else the groups that are on. */
+      function sortedChoice() {
+        const d = wiz.sorted.delivery;
+        return d && d.include ? [d] : wiz.sorted.groups.filter((g) => g.include);
+      }
       function stepSort() {
         const { groups, skipped } = wiz.sorted;
         const row = (g) => {
@@ -598,11 +608,22 @@
               h('span', { class: 'dm-list-sub dm-truncate', text: g.collection ? g.files.map((f) => f.name).slice(0, 6).join(', ') : t('import.format.' + g.importer) })),
             sw);
         };
-        const chosen = groups.filter((g) => g.include);
+        const chosen = sortedChoice();
+        // A delivery (data/plan-delivery): every file as one digital översiktsplan, or each file on its own as before.
+        const delivery = wiz.sorted.delivery;
+        let whole = null;
+        if (delivery) {
+          const sw = /** @type {any} */ (h('dm-switch', { label: t('plan.delivery.switch'), 'data-import-delivery': '' }));
+          sw.checked = !!delivery.include;
+          sw.addEventListener('change', () => { delivery.include = sw.checked; render(); });
+          whole = h('div', { class: 'dm-stack-xs' }, sw, h('p', { class: 'dm-help dm-small', text: t(delivery.op ? 'plan.delivery.switch.hint.op' : 'plan.delivery.switch.hint') }));
+        }
+        const one = !!(delivery && delivery.include);
         return h('div', { class: 'dm-stack' },
           h('p', { class: 'dm-help', text: t('import.sort.help', { n: i18n.formatNumber(chosen.reduce((sum, g) => sum + g.files.length, 0)) }) }),
-          groups.map(row),
-          skipped.length ? h('p', { class: 'dm-help dm-small', text: t('import.sort.skipped', { list: skipped.map((f) => f.name).slice(0, 8).join(', ') }) }) : null,
+          whole,
+          one ? row(delivery) : groups.map(row),
+          skipped.length && !one ? h('p', { class: 'dm-help dm-small', text: t('import.sort.skipped', { list: skipped.map((f) => f.name).slice(0, 8).join(', ') }) }) : null,
           wiz.busy ? progressNode() : null,
           h('div', { class: 'dm-row' },
             ui.button({ label: t('common.back'), icon: 'chevron-left', disabled: wiz.busy, onClick: restart }),
@@ -611,7 +632,7 @@
       async function runSortedChoice() {
         if (wiz.busy) return;
         wiz.busy = true; wiz.progress = null; render();
-        const results = await services.importer.runSorted(wiz.sorted.groups.filter((g) => g.include), (p) => { wiz.progress = p; render(); });
+        const results = await services.importer.runSorted(sortedChoice(), (p) => { wiz.progress = p; render(); });
         for (const r of results) {
           if (r.meta) { shell.log(doneText(r.meta), 'ok'); for (const line of leftOut(r.meta)) shell.log(line, 'warn'); }
           else shell.log(t('import.error', { message: `${r.group.files[0].name}: ${r.error}` }), 'error');
@@ -725,7 +746,7 @@
       async function pickLinked() {
         try {
           const { handle, file } = await linked.pick();
-          wiz.file = file; wiz.files = []; wiz.handle = handle; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; wiz.options.plan = undefined; wiz.nameFromPlan = false;
+          wiz.file = file; wiz.files = []; wiz.handle = handle; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; wiz.options.plan = undefined; wiz.options.layers = undefined; wiz.nameFromPlan = false;
           await runPreview();
         } catch (err) { if (!err || err.name !== 'AbortError') { wiz.error = (err && err.message) || String(err); render(); } }
       }
@@ -855,11 +876,19 @@
               left.appendChild(sw);
               left.appendChild(h('p', { class: 'dm-help dm-small', text: op ? t('plan.import.op.hint') : t('plan.import.whole.hint', { format: t('plan.gpkg.' + p.planGpkg) }) }));
             }
-            if (!wiz.options.plan && p.tables && p.tables.length) left.appendChild(select(t('import.table'), p.tables.map((s) => ({ value: s, label: s })), wiz.options.table || p.table, (v) => { wiz.options.table = v; schedulePreview(); }));
+            // Any GeoPackage with several layers: all of them as one dataset (kind layers), the layers chosen for display afterwards.
+            if (p.gpkg && !wiz.options.plan && (p.layerCount || 0) > 1) {
+              const sw = /** @type {any} */ (h('dm-switch', { label: t('layers.import.whole'), 'data-import-layers': '' }));
+              sw.checked = !!wiz.options.layers;
+              sw.addEventListener('change', () => { wiz.options.layers = sw.checked; render(); });
+              left.appendChild(sw);
+              left.appendChild(h('p', { class: 'dm-help dm-small', text: t('layers.import.whole.hint', { n: i18n.formatNumber(p.layerCount) }) }));
+            }
+            if (!wiz.options.plan && !wiz.options.layers && p.tables && p.tables.length) left.appendChild(select(t('import.table'), p.tables.map((s) => ({ value: s, label: s })), wiz.options.table || p.table, (v) => { wiz.options.table = v; schedulePreview(); }));
           }
         }
         // A plan file or an archive package (a ZIP with metadata/PREMIS.xml): the plan's facts and Import without the column step.
-        const planFile = !!(p && p.kind === 'plan' && (wiz.options.format === 'detaljplan' || wiz.options.format === 'planarchive'));
+        const planFile = !!(p && p.kind === 'plan' && (wiz.options.format === 'detaljplan' || wiz.options.format === 'planarchive' || wiz.options.format === 'opdelivery'));
         if (planFile) {
           const info = p.plan || {};
           const kv = /** @type {any} */ (h('dm-kv'));
@@ -873,11 +902,16 @@
             { label: t('plan.field.format'), value: t('plan.format.' + (p.planFormat || 'detaljplan')) },
             info.crs ? { label: t('plan.field.crs'), value: D.require('data/geo').crsText(info.crs) } : null,
             info.arkivpaket ? { label: t('plan.archive.title'), value: info.arkivpaket.andrade.length + info.arkivpaket.saknas.length ? t('plan.archive.bad', { n: info.arkivpaket.andrade.length + info.arkivpaket.saknas.length }) : t('plan.archive.ok', { n: info.arkivpaket.stammer }) } : null,
+            info.leverans ? { label: t('plan.delivery.files'), value: info.leverans.filer.map((f) => `${f.namn} (${t('plan.files.role.' + f.roll)})`).join(', ') } : null,
+            info.leverans && p.sections ? { label: t('plan.delivery.sections'), value: t('plan.delivery.sections.n', { n: i18n.formatNumber(p.sections), links: i18n.formatNumber(p.links || 0) }) } : null,
           ].filter(Boolean);
           left.appendChild(h('div', { class: 'dm-card', 'data-plan-preview': '' }, kv));
+          // What a delivery's check found (a bookmark missing in the text document, a checksum that does not match), as text.
+          const warnings = info.leverans && Array.isArray(info.leverans.varningar) ? info.leverans.varningar : [];
+          if (warnings.length) left.appendChild(h('div', { class: 'dm-stack-xs', 'data-plan-warnings': '' }, warnings.slice(0, 8).map((w) => h('p', { class: 'dm-warn dm-small', text: String(w) }))));
           left.appendChild(h('p', { class: 'dm-help dm-small', text: t('plan.import.hint') }));
         }
-        const opPlan = !!(wiz.options.format === 'sqlite' && p && p.planGpkg && wiz.options.plan);
+        const opPlan = !!(wiz.options.format === 'sqlite' && p && ((p.planGpkg && wiz.options.plan) || (p.gpkg && wiz.options.layers && !wiz.options.plan)));
         // A graph file: the graph's facts (nodes, edges, labels, types) and one Import button; the nodes are the preview table.
         const graphFile = !!(p && p.kind === 'graph' && wiz.options.format === 'graph');
         if (graphFile) {

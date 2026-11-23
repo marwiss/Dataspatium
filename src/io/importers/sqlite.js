@@ -97,17 +97,20 @@
       let gpkg = false;
       if (tables.includes('gpkg_contents') && tables.includes('gpkg_geometry_columns')) {
         gpkg = true;
-        const feats = await engine.exec("select c.table_name, g.column_name, s.srs_name from gpkg_contents c left join gpkg_geometry_columns g on g.table_name = c.table_name left join gpkg_spatial_ref_sys s on s.srs_id = g.srs_id where c.data_type in ('features', 'attributes') order by c.table_name");
+        const feats = await engine.exec("select c.table_name, g.column_name, s.srs_name, c.data_type from gpkg_contents c left join gpkg_geometry_columns g on g.table_name = c.table_name left join gpkg_spatial_ref_sys s on s.srs_id = g.srs_id where c.data_type in ('features', 'attributes') order by c.table_name");
         const names = [];
-        for (const [table, column, srs] of (feats[0] ? feats[0].values : [])) {
+        // The map layers; value lists and link tables are 'attributes'.
+        const features = [];
+        for (const [table, column, srs, type] of (feats[0] ? feats[0].values : [])) {
           if (!tables.includes(String(table))) continue;
           names.push(String(table));
+          if (type === 'features') features.push(String(table));
           if (column) geometryColumns.set(String(table), String(column));
           if (srs) crs.set(String(table), String(srs));
         }
-        return { tables: names, dataspatium: false, gpkg, geometryColumns, crs };
+        return { tables: names, features, dataspatium: false, gpkg, geometryColumns, crs };
       }
-      return { tables: tables.filter((n) => !n.startsWith('_') || !dataspatium), dataspatium, gpkg, geometryColumns, crs };
+      return { tables: tables.filter((n) => !n.startsWith('_') || !dataspatium), features: [], dataspatium, gpkg, geometryColumns, crs };
     }
     async function tableColumns(engine, table) {
       const info = await engine.exec(`pragma table_info(${q(table)})`);
@@ -118,7 +121,7 @@
     async function preview(file, options = {}) {
       const { engine } = await openFile(file);
       try {
-        const { tables, dataspatium, gpkg, geometryColumns, crs } = await describe(engine);
+        const { tables, features, dataspatium, gpkg, geometryColumns, crs } = await describe(engine);
         let name = '';
         if (dataspatium) { const m = await engine.exec("select value from _meta where key = 'name'"); name = m[0] && m[0].values[0] ? String(m[0].values[0][0]) : ''; }
         const table = dataspatium ? 'data' : (options.table && tables.includes(options.table) ? options.table : tables[0]);
@@ -128,7 +131,7 @@
         const count = await engine.exec(`select count(*) from ${q(table)}`);
         const res = await engine.exec(`select * from ${q(table)} limit ${Math.max(1, options.previewRows || 100)}`);
         const rows = (res[0] ? res[0].values : []).map((r) => r.map((v, i) => (geomCol && cols[i] && cols[i].name === geomCol ? gpbToGeoJson(v) : cell(v))));
-        return { kind: 'sqlite', columns: cols.map((c) => c.name), dataRows: rows, totalRows: Number(count[0].values[0][0]), header: true, tables, table, dataspatium, datasetName: name, declaredTypes: cols.map((c) => (geomCol && c.name === geomCol ? 'text' : c.type)), gpkg, geometryColumn: geomCol || null, crs: gpkg ? crs.get(table) || '' : '' };
+        return { kind: 'sqlite', columns: cols.map((c) => c.name), dataRows: rows, totalRows: Number(count[0].values[0][0]), header: true, tables, featureTables: features, table, dataspatium, datasetName: name, declaredTypes: cols.map((c) => (geomCol && c.name === geomCol ? 'text' : c.type)), gpkg, geometryColumn: geomCol || null, crs: gpkg ? crs.get(table) || '' : '' };
       } finally { engine.terminate(); }
     }
     /** @param {File} file @param {{table?: string}} options */
@@ -145,6 +148,69 @@
         return { columns: cols.map((c) => c.name), rows, meta: { format: gpkg ? 'geopackage' : 'sqlite', table, declaredTypes: cols.map((c) => (geomCol && c.name === geomCol ? 'text' : c.type)), geometryColumn: geomCol || null, crs: gpkg ? crs.get(table) || '' : '' } };
       } finally { engine.terminate(); }
     }
-    return { id: 'sqlite', detect, preview, parse, openFile, describe, gpbToGeoJson };
+    /** A pause for the main thread between batches (messages from the worker and the person's input get their turn). */
+    const breathe = () => new Promise((resolve) => setTimeout(resolve, 0));
+    /**
+     * Every row of a table, read from the worker in batches so that the main thread decodes one batch at a time and pauses between
+     * them: `onRows(rows, done)` gets each batch (values in column order, a GeoPackage geometry decoded to GeoJSON text when
+     * `geometryColumn` names it, other blobs as null unless `blobs`). Batches go by rowid, or by offset for a table without one.
+     * @param {any} engine @param {string} table
+     * @param {{columns?: string[], geometryColumn?: string|null, batch?: number, blobs?: boolean, onRows: (rows: any[][], done: number) => any}} options
+     * @returns {Promise<{columns: string[], count: number}>}
+     */
+    async function readRows(engine, table, options) {
+      const columns = options.columns || (await tableColumns(engine, table)).map((c) => c.name);
+      const batch = Math.max(1, options.batch || 2000);
+      const gi = options.geometryColumn ? columns.indexOf(options.geometryColumn) : -1;
+      const list = columns.map(q).join(', ') || '*';
+      const decode = (r) => r.map((v, i) => (i === gi ? gpbToGeoJson(v) : (v instanceof Uint8Array || ArrayBuffer.isView(v)) && !options.blobs ? null : v));
+      let done = 0;
+      let byRowid = true;
+      let last = -Infinity;
+      for (;;) {
+        let res;
+        if (byRowid) {
+          try { res = await engine.exec(`select rowid, ${list} from ${q(table)} where rowid > ? order by rowid limit ${batch}`, [last === -Infinity ? -9e15 : last]); } catch (_err) { byRowid = false; }
+        }
+        if (!byRowid) res = await engine.exec(`select ${list} from ${q(table)} limit ${batch} offset ${done}`);
+        const values = res && res[0] ? res[0].values : [];
+        if (!values.length) break;
+        const rows = byRowid ? values.map((r) => { last = Number(r[0]); return decode(r.slice(1)); }) : values.map(decode);
+        done += rows.length;
+        await options.onRows(rows, done);
+        if (values.length < batch) break;
+        await breathe();
+      }
+      return { columns, count: done };
+    }
+    /**
+     * The feature layers of a GeoPackage (gpkg_contents with data_type 'features'; value lists and link tables are 'attributes'):
+     * table, its name for people (identifier, else the table), geometry column and type, coordinate system ('EPSG:<n>' when the
+     * file says so, else the system's name), the feature id column and the number of features.
+     * @param {any} engine
+     * @returns {Promise<Array<{table: string, title: string, geometryColumn: string|null, geometryType: string, crs: string, idColumn: string|null, count: number}>>}
+     */
+    async function featureLayers(engine) {
+      const names = await engine.exec("select name from sqlite_master where type in ('table', 'view') and name in ('gpkg_contents', 'gpkg_geometry_columns', 'gpkg_spatial_ref_sys')");
+      if (!names[0] || names[0].values.length < 2) return [];
+      const hasSrs = names[0].values.some((r) => r[0] === 'gpkg_spatial_ref_sys');
+      const res = await engine.exec(`select c.table_name, c.identifier, g.column_name, g.geometry_type_name, ${hasSrs ? 's.srs_name, s.organization, s.organization_coordsys_id' : 'null, null, null'}, coalesce(g.srs_id, c.srs_id)
+        from gpkg_contents c left join gpkg_geometry_columns g on g.table_name = c.table_name ${hasSrs ? 'left join gpkg_spatial_ref_sys s on s.srs_id = coalesce(g.srs_id, c.srs_id)' : ''}
+        where lower(c.data_type) = 'features' order by c.table_name`);
+      const out = [];
+      for (const [table, identifier, column, type, srsName, org, orgId, srsId] of (res[0] ? res[0].values : [])) {
+        const name = String(table);
+        let cols;
+        try { cols = await engine.exec(`pragma table_info(${q(name)})`); } catch (_err) { continue; }
+        const info = cols[0] ? cols[0].values : [];
+        if (!info.length) continue;
+        const pk = info.find((r) => Number(r[5]) === 1);
+        const count = await engine.exec(`select count(*) from ${q(name)}`);
+        const epsg = org && /^epsg$/i.test(String(org)) && Number(orgId) > 0 ? 'EPSG:' + Number(orgId) : '';
+        out.push({ table: name, title: String(identifier || '').trim() || name, geometryColumn: column ? String(column) : null, geometryType: String(type || ''), crs: epsg || (Number(srsId) > 0 && srsName ? String(srsName) : ''), idColumn: pk ? String(pk[1]) : null, count: Number(count[0].values[0][0]) || 0 });
+      }
+      return out;
+    }
+    return { id: 'sqlite', detect, preview, parse, openFile, describe, gpbToGeoJson, readRows, featureLayers, tableColumns };
   });
 })();

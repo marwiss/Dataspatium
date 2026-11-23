@@ -30,11 +30,15 @@
       { name: 'underkant', type: 'number' }, { name: 'overkant', type: 'number' },
       { name: 'farg', type: 'text' }, { name: 'status', type: 'text' }, { name: 'etikett', type: 'text' }, { name: 'egenskaper', type: 'text' }, { name: 'ordning', type: 'integer' }, { name: 'geometri', type: 'text' },
     ];
-    /** Columns of an översiktsplan dataset (`egenskaper` as in DP_COLUMNS). */
+    /**
+     * Columns of an översiktsplan dataset (`egenskaper` as in DP_COLUMNS). `lager` is the table or layer a row was read from and
+     * `fil` the file it came in (a delivery of several GeoPackages, data/plan-delivery); both are empty for a GeoJSON plan.
+     */
     const OP_COLUMNS = [
       { name: 'objektid', type: 'text' }, { name: 'tema', type: 'text' }, { name: 'innehallstyp', type: 'text' }, { name: 'namn', type: 'text' }, { name: 'precisering', type: 'text' },
       { name: 'anvandningsstatus', type: 'text' }, { name: 'kompletterande', type: 'text' }, { name: 'utbyggnadsordning', type: 'text' }, { name: 'planhandelse', type: 'text' },
-      { name: 'planhandelse_datum', type: 'text' }, { name: 'beslut', type: 'text' }, { name: 'geometrityp', type: 'text' }, { name: 'egenskaper', type: 'text' }, { name: 'farg', type: 'text' }, { name: 'ordning', type: 'integer' }, { name: 'geometri', type: 'text' },
+      { name: 'planhandelse_datum', type: 'text' }, { name: 'beslut', type: 'text' }, { name: 'geometrityp', type: 'text' }, { name: 'egenskaper', type: 'text' },
+      { name: 'lager', type: 'text' }, { name: 'fil', type: 'text' }, { name: 'farg', type: 'text' }, { name: 'ordning', type: 'integer' }, { name: 'geometri', type: 'text' },
     ];
     /**
      * The categories of Boverket's ÖP catalogue by the table key of the GIS database model (innehall_op_<key>_…): the exchange
@@ -60,7 +64,7 @@
       markochvattenanvandning: null, utvecklingsinriktning: '#d7733a', riksintressen: '#9b59b6', riksintressenop: '#8e44ad', lis: '#2e86c1', klimatrelateradrisk: '#c0392b',
       miljokvalitetsnormer: '#16a085', bostadsforsorjning: '#e67e22', mellankommunalaochregionalaintressen: '#7f8c8d', konsekvenser: '#95a5a6', malplanprogram: '#2c3e50',
       lansstyrelsensinvandning: '#b03a2e', avvikelsefranregionplan: '#6c3483', ovrigaforhallandeavvasentligbetydelse: '#5d6d7e', sarskiltvardefullabyggnadsverkallmannaplatserochbebyggelseomraden: '#a04000',
-      omrade: '#34495e', plangeometri: '#111111',
+      omrade: '#34495e', plangeometri: '#111111', underlag: '#839192',
     };
     /** Colours of the land and water use types in Boverket's ÖP model (the app's shades). */
     const OP_USE_COLORS = {
@@ -573,55 +577,138 @@
     }
     /** A GeoPackage truth value (0/1, 'true'/'false', 'ja'/'nej') as a boolean, or undefined when empty. */
     const truth = (v) => (v === null || v === undefined || v === '' ? undefined : v === true || v === 1 || /^(1|true|ja|yes)$/i.test(String(v)));
+    const UUID = /^\{?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\}?$/i;
+    /**
+     * An object id as the plan's rows and links keep it: a UUID in lower case without braces (the GeoPackage writes 38 characters,
+     * GeoJSON 36), any other id trimmed and otherwise as it is.
+     * @param {any} v @returns {string}
+     */
+    function normId(v) { const s = str(v).trim(); const m = UUID.exec(s); return m ? m[1].toLowerCase() : s; }
+    /** The geometry suffixes of the GIS database model's layers: the template's English ones and the Swedish ones Boverket's page writes. */
+    const OP_SUFFIX = '(polygon|line|point|linje|punkt)';
     /** Whether a table of the GIS database model holds content: a theme with its geometry suffix, or the plan geometry and areas. */
-    const isContentTable = (name) => /^innehall_op_.+_(polygon|line|point)$/i.test(name) || /^innehall_op_(plangeometri|omrade)$/i.test(name);
+    const isContentTable = (name) => new RegExp(`^innehall_op_.+_${OP_SUFFIX}$`, 'i').test(name) || /^innehall_op_(plangeometri|omrade)$/i.test(name);
+    /** The section types of the ÖP catalogue 2.3 (avsnittstyp), and the one whose id the catalogue gives (Ställningstagande). */
+    const SECTION_TYPES = ['Beskrivning', 'Framtagandeprocess', 'Kommentar på länsstyrelsens invändning', 'Konsekvens', 'Länsstyrelsens invändning', 'Sammanfattning', 'Ställningstagande', 'Översiktsplanens syfte', 'Övrig information'];
+    const SECTION_TYPE_IDS = { '56d85084-b9d9-43c4-8243-1fbd3b6d3205': 'Ställningstagande' };
+    /** The ids of a value list (`avsnittstyp_varde_lookup`) → their words: a cell that holds a UUID and the first that holds words. */
+    function lookupWords(table) {
+      const out = new Map();
+      for (const r of recordsOf(table)) {
+        const cells = Object.values(r).map((v) => str(v).trim()).filter(Boolean);
+        const words = cells.find((c) => !UUID.test(c) && !/^\d+$/.test(c));
+        if (!words) continue;
+        for (const c of cells) if (UUID.test(c)) out.set(normId(c), words);
+        out.set(fold(words), words);
+      }
+      return out;
+    }
+    /**
+     * A section's type in the catalogue's words: by its id first (the catalogue's, then the GeoPackage's value list), then by its
+     * name in any case ("ställningstagande"); a value the app does not know is kept as it is.
+     * @param {any} value @param {Map<string, string>} [lookup] @returns {string}
+     */
+    function sectionType(value, lookup) {
+      const s = str(value).trim();
+      if (!s) return '';
+      const id = normId(s);
+      if (SECTION_TYPE_IDS[id]) return SECTION_TYPE_IDS[id];
+      const listed = lookup && (lookup.get(id) || lookup.get(fold(s)));
+      const words = listed || s;
+      return SECTION_TYPES.find((x) => fold(x) === fold(words)) || words;
+    }
     function fromOpTables(tables, options = {}) {
       const rows = [];
       let order = 0;
       const byName = (n) => tables.find((t) => lower(t.name) === n);
-      // Links (model 0.4): content that touches other content, and the planhandling's sections about an object.
+      const planRecord = recordsOf(byName('oversiktsplan'))[0];
+      const planId = planRecord ? normId(planRecord.objektidentitet) : '';
+      // The documents the plan names (dokumentreferens_op has no key of its own; dokumentreferens_id is what the links use).
+      const documents = recordsOf(byName('dokumentreferens_op')).map((d) => ({ id: str(d.dokumentreferens_id || d.referens_id).trim(), namn: str(d.namn).trim(), kortnamn: str(d.kortnamn).trim(), lank: str(d.lank).trim(), identitet: str(d.identitet).trim() }));
+      const docName = (id) => { const k = str(id).trim(); const d = documents.find((x) => x.id && x.id === k); return d ? d.namn || d.lank || d.id : k; };
+      // Links (model 0.4): content that touches other content, a riksintresse's documents, and the plan document's sections.
       const touches = new Map();
-      for (const r of recordsOf(byName('innehall_op_beror_annat_innehall'))) { const k = str(r.objektidentitet); if (k) touches.set(k, (touches.get(k) || []).concat(str(r.beror_objektidentitet))); }
-      const bookmarks = new Map(recordsOf(byName('avsnittsbokmärke') || byName('avsnittsbokmarke')).map((r) => [str(r.avsnittsbokmarke_id), str(r.avsnittsbokmarke_text || r.avsnittsbokmarke_id)]));
+      for (const r of recordsOf(byName('innehall_op_beror_annat_innehall'))) { const k = normId(r.objektidentitet); if (k) touches.set(k, (touches.get(k) || []).concat(normId(r.beror_objektidentitet))); }
+      const extern = new Map();
+      for (const r of recordsOf(byName('innehall_op_extern_referens_ri'))) { const k = normId(r.objektidentitet); const d = docName(r.dokumentreferens_id); if (k && d) extern.set(k, (extern.get(k) || []).concat(d)); }
+      const bookmarkRows = recordsOf(byName('avsnittsbokmärke') || byName('avsnittsbokmarke'));
+      const bookmarks = new Map(bookmarkRows.map((r) => [str(r.avsnittsbokmarke_id), str(r.avsnittsbokmarke_text || r.avsnittsbokmarke_id)]));
+      const headings = new Map(bookmarkRows.map((r) => [str(r.avsnittsbokmarke_id).trim(), str(r.avsnittsbokmarke_text).trim()]));
+      const content = [];
+      for (const table of tables) if (isContentTable(table.name)) content.push({ table, records: recordsOf(table) });
+      const contentIds = new Set();
+      // Model 0.3 linked a content object to its sections through dokument_id instead of objektidentitet.
+      const byDocumentId = new Map();
+      for (const { records } of content) {
+        for (const r of records) {
+          const id = normId(r.objektidentitet);
+          if (id) contentIds.add(id);
+          const d = normId(r.dokument_id);
+          if (id && d) byDocumentId.set(d, (byDocumentId.get(d) || []).concat(id));
+        }
+      }
+      // A link per bookmark and object; '' is the whole plan (the plan's own id, or no object at all).
+      const types = lookupWords(byName('avsnittstyp_varde_lookup'));
+      const links = [];
+      for (const r of recordsOf(byName('dokumentavsnitt'))) {
+        const bokmarke = str(r.avsnittsbokmarke_id).trim();
+        if (!bokmarke) continue;
+        let targets = [normId(r.objektidentitet)];
+        if (!targets[0]) {
+          const d = normId(r.dokument_id);
+          targets = d && (contentIds.has(d) || d === planId) ? [d] : d && byDocumentId.has(d) ? byDocumentId.get(d) : [''];
+        }
+        for (const target of targets) {
+          const whole = !target || target === planId;
+          links.push({ bokmarke, rubrik: headings.get(bokmarke) || '', objektid: whole ? '' : target, known: whole || contentIds.has(target), dokumentreferens: str(r.dokumentreferens_id).trim(), typ: sectionType(r.avsnittstyp_varde, types) });
+        }
+      }
       const sections = new Map();
-      for (const r of recordsOf(byName('dokumentavsnitt'))) { const k = str(r.objektidentitet); const text = bookmarks.get(str(r.avsnittsbokmarke_id)) || str(r.avsnittsbokmarke_id); if (k && text) sections.set(k, (sections.get(k) || []).concat(text)); }
-      for (const table of tables) {
-        if (!isContentTable(table.name)) continue;
-        const m = /^innehall_op_(.+?)(?:_(polygon|line|point))?$/i.exec(table.name);
+      for (const l of links) { const text = bookmarks.get(l.bokmarke) || l.bokmarke; if (l.objektid) sections.set(l.objektid, (sections.get(l.objektid) || []).concat(text)); }
+      for (const { table, records } of content) {
+        const m = new RegExp(`^innehall_op_(.+?)(?:_${OP_SUFFIX})?$`, 'i').exec(table.name);
         const tema = themeKey(m[1]);
         const gi = table.columns.findIndex((c) => /^(geom|shape|geometri|geometry)$/i.test(c));
-        const records = recordsOf(table);
         records.forEach((r, i) => {
           const geomText = gi >= 0 ? table.rows[i][gi] : null;
           const geometry = geomText ? geo.parseGeometry(geomText) : null;
-          const id = str(r.objektidentitet);
+          const id = normId(r.objektidentitet);
           const extras = {
             sambandsniva: r.sambandsniva_varde, underErsattning: truth(r.under_ersattning), illustrativaGranser: truth(r.illustrativa_granser), vertikalAvgransning: r.vertikal_avgransning,
-            presentationsskala: r.presentationsskala, datumPaborjat: r.datum_paborjat, berorAnnatInnehall: touches.get(id), riksintresse: r.objektidentitet_ri, dokument: sections.get(id), versionGiltigFran: r.versiongiltigfran,
+            presentationsskala: r.presentationsskala, datumPaborjat: r.datum_paborjat, berorAnnatInnehall: touches.get(id), riksintresse: r.objektidentitet_ri, externReferens: extern.get(id), dokument: sections.get(id), versionGiltigFran: r.versiongiltigfran,
           };
           rows.push({
             objektid: id, tema, innehallstyp: str(r.innehallstyp_varde) || (tema === 'omrade' ? 'Område' : tema === 'plangeometri' ? 'Plangeometri' : ''), namn: str(r.namn), precisering: str(r.precisering),
             anvandningsstatus: str(r.anvandningsstatus), kompletterande: str(r.kompletterandeinnehallstyp), utbyggnadsordning: str(r.utbyggnadsordning), planhandelse: str(r.planhandelse_varde), planhandelse_datum: str(r.planhandelse_datum), beslut: str(r.beslut),
-            geometrityp: geometry ? geometry.type : '', egenskaper: extrasOf(extras, Object.keys(extras)), ordning: order++, geometri: geometryText(geometry, options.crs || table.crs || null),
+            geometrityp: geometry ? geometry.type : '', egenskaper: extrasOf(extras, Object.keys(extras)), lager: table.name, fil: str(options.fileName), ordning: order++, geometri: geometryText(geometry, options.crs || table.crs || null),
           });
         });
       }
       let plan = { slag: 'oversiktsplan', objektid: '', namn: '', kommun: '', kommunkod: '', status: '', format: 'oversiktsplan-gpkg', crs: String(options.crs || ((tables || []).find((t) => t && t.crs) || {}).crs || '') };
-      const r = recordsOf(byName('oversiktsplan'))[0];
+      const r = planRecord;
       if (r) {
-        plan = Object.assign(plan, { objektid: str(r.objektidentitet), namn: str(r.planens_titel), kommun: str(r.kommunnamn), kommunkod: str(r.kommunkod), status: str(r.planhandelse_varde), datumPlanhandelse: str(r.planhandelse_datum), datumPaborjat: str(r.datum_paborjat) });
+        plan = Object.assign(plan, { objektid: planId, namn: str(r.planens_titel), kommun: str(r.kommunnamn), kommunkod: str(r.kommunkod), status: str(r.planhandelse_varde), datumPlanhandelse: str(r.planhandelse_datum), datumPaborjat: str(r.datum_paborjat) });
         const digital = truth(r.digitalt_ursprung);
         if (digital !== undefined) plan.digitaltUrsprung = digital;
       }
       // Decisions (model 0.4): beslut_op with its events in beslut_op_handelse; the plan's own decision first.
       const events = new Map();
-      for (const e of recordsOf(byName('beslut_op_handelse'))) { const k = str(e.beslut_op_id); events.set(k, (events.get(k) || []).concat({ handelsetyp: str(e.handelsetyp), datum: str(e.datum) })); }
-      const decisions = recordsOf(byName('beslut_op')).map((d) => ({ id: str(d.objektidentitet), diarienummer: str(d.diarienummer), handelse: events.get(str(d.objektidentitet)) || [] }));
+      for (const e of recordsOf(byName('beslut_op_handelse'))) { const k = normId(e.beslut_op_id); events.set(k, (events.get(k) || []).concat({ handelsetyp: str(e.handelsetyp), datum: str(e.datum) })); }
+      const decisions = recordsOf(byName('beslut_op')).map((d) => ({ id: normId(d.objektidentitet), diarienummer: str(d.diarienummer), handelse: events.get(normId(d.objektidentitet)) || [] }));
       if (decisions.length) {
-        const own = decisions.filter((d) => r && d.id && d.id === str(r.beslut));
+        const own = decisions.filter((d) => r && d.id && d.id === normId(r.beslut));
         Object.assign(plan, decisionDates(own.length ? own : decisions), { beslut: decisions.length });
       }
-      return finish(plan, rows);
+      // The decisions' documents and the plan's underlag (planeringsunderlag with their documents), by the documents' names.
+      const decisionDocs = recordsOf(byName('beslut_op_dokumentreferens')).map((d) => ({ beslut: normId(d.beslut_op_id || d.beslut_id || d.objektidentitet), dokument: docName(d.dokumentreferens_id) })).filter((d) => d.dokument);
+      if (decisionDocs.length) plan.beslutsdokument = decisionDocs;
+      const underlagDocs = new Map();
+      for (const u of recordsOf(byName('oversiktsplan_underlag_underlag'))) { const k = str(u.underlag_id).trim(); const d = docName(u.dokumentreferens_id); if (k && d) underlagDocs.set(k, (underlagDocs.get(k) || []).concat(d)); }
+      const underlag = recordsOf(byName('oversiktsplan_underlag')).map((u) => ({ typ: str(u.underlagstyp_varde), dokument: underlagDocs.get(str(u.underlag_id).trim()) || [] })).filter((u) => u.typ || u.dokument.length);
+      if (underlag.length) plan.underlag = underlag;
+      if (documents.length) plan.dokument = documents.map((d) => d.namn || d.lank || d.id).filter(Boolean);
+      // Besides the plan and its rows: the links between the plan document's bookmarks and the objects, and the documents named.
+      return Object.assign(finish(plan, rows), { links, documents });
     }
     /** True when a GeoPackage's table names follow Boverket's ÖP model. */
     function isOpGeoPackage(tableNames) { return (tableNames || []).some((n) => /^innehall_op_/i.test(String(n))); }
@@ -758,6 +845,6 @@
       return lines.join('\n');
     }
 
-    return { DP_COLUMNS, OP_COLUMNS, OP_CATEGORIES, OBJECT_TYPES, USE_LETTERS, OP_THEME_COLORS, OP_USE_COLORS, nordic, detect, detectTable, tableFormat, featureType, objectType, colorNameForDesignation, fillOf, strokeOf, opFillOf, geometryOf, geometryText, crsOf, heightsOf, footprint, filledFormulation, fromNgp, fromReferenceTable, fromDetaljplan, fromDpTables, isDpGeoPackage, fromOversiktsplanGeoJson, fromOpTables, isOpGeoPackage, isContentTable, opTheme, decorate, toRows, fromRows, legend, grouped, areaM2, areasByUse, checkCatalog, templateMatches, provisionsMarkdown, themeKey };
+    return { DP_COLUMNS, OP_COLUMNS, OP_CATEGORIES, OBJECT_TYPES, USE_LETTERS, OP_THEME_COLORS, OP_USE_COLORS, nordic, detect, detectTable, tableFormat, featureType, objectType, colorNameForDesignation, fillOf, strokeOf, opFillOf, geometryOf, geometryText, crsOf, heightsOf, footprint, filledFormulation, fromNgp, fromReferenceTable, fromDetaljplan, fromDpTables, isDpGeoPackage, fromOversiktsplanGeoJson, fromOpTables, isOpGeoPackage, isContentTable, normId, sectionType, SECTION_TYPES, opTheme, decorate, toRows, fromRows, legend, grouped, areaM2, areasByUse, checkCatalog, templateMatches, provisionsMarkdown, themeKey };
   });
 })();
