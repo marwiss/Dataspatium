@@ -32,6 +32,12 @@ toolbar has the background map (none, OpenStreetMap or an [orthophoto](#orthopho
 layers and current view as a chart in Visualise) and *Show as table*. Everything you do in the table (filter,
 correct, remove rows) shows on the map.
 
+The map remembers the background map for each dataset, as do the plan map (with its WMS service and coordinate system) and
+the map of the place of a new building: switch to another dataset and back, and the same background map is chosen again, also
+after a reload. After a reload a background map from the net is shown only if you gave the consent to background maps for
+good, and an orthophoto with a key only when its key is already unlocked; otherwise the map starts without a background map
+and asks nothing.
+
 Large datasets are drawn on a canvas; 10 000 polygons pan smoothly. More than 50 000 features per layer are not
 drawn (the limit can be raised per layer in the map view).
 
