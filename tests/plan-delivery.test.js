@@ -303,7 +303,10 @@
     const sections = await delivery.sectionsOf(whole.id);
     assert.ok(sections.find((s) => s.avsnitt === 'op_stall_bostader' && s.rubrik === 'Ställningstaganden för bostäder' && s.text === ''));
     assert.equal((await delivery.objectsForSection(whole.id, 'op_stall_bostader')).length, 3);
-    assert.deepEqual(whole.plan.leverans.varningar, [t('plan.delivery.warn.doc.missing', { file: 'Planbeskrivning_Testkoping.docx' })]);
+    // The missing document is the only problem; the other lines say how many links were read and what has none.
+    const lev = whole.plan.leverans;
+    assert.deepEqual(lev.varningar, [t('plan.links.warn.read', { n: 6, sources: t('plan.links.source.modell', { n: 6, name: 'dokumentavsnitt' }) }), t('plan.links.warn.without', { areas: 2, of: 5, statements: 0, all: 1 }), t('plan.delivery.warn.doc.missing', { file: 'Planbeskrivning_Testkoping.docx' })], lev.varningar.join(' | '));
+    assert.deepEqual([lev.kopplingar.antal, lev.kopplingar.omradenUtan, lev.kopplingar.stallningstagandenUtan], [6, 2, 0]);
     return 'ok';
   }, 60000);
 

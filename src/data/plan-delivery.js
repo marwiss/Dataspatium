@@ -19,14 +19,17 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/plan-delivery', ['data/plan', 'data/geo', 'data/datasets', 'data/dataset-files', 'io/importers/sqlite', 'io/importers/detaljplan', 'platform/storage/zip'], (plan, geo, datasets, dsFiles, sqliteImp, dpImp, zip) => {
+  D.define('data/plan-delivery', ['data/plan', 'data/plan-links', 'data/geo', 'data/datasets', 'data/dataset-files', 'io/importers/sqlite', 'io/importers/detaljplan', 'platform/storage/zip'], (plan, planLinks, geo, datasets, dsFiles, sqliteImp, dpImp, zip) => {
     const t = (key, params) => D.t(key, params);
     const SECTIONS = '_sections';
     const LINKS = '_section_links';
     /** `_sections`: one row per bookmark of a Word file (or named by the GeoPackage and missing in the files). */
     const SECTION_COLUMNS = [{ name: 'avsnitt', type: 'text' }, { name: 'dokument', type: 'text' }, { name: 'rubrik', type: 'text' }, { name: 'text', type: 'text' }, { name: 'typ', type: 'text' }, { name: 'ordning', type: 'integer' }];
-    /** `_section_links`: one row per bookmark and object; objektid '' is the whole plan. */
-    const LINK_COLUMNS = [{ name: 'avsnitt', type: 'text' }, { name: 'objektid', type: 'text' }, { name: 'dokument', type: 'text' }, { name: 'typ', type: 'text' }];
+    /**
+     * `_section_links`: one row per bookmark and object; objektid '' is the whole plan. `kalla` says where the link was read
+     * (data/plan-links: modell, tabell, attribut, or text for an area the text only names); plans read before it have no such column.
+     */
+    const LINK_COLUMNS = [{ name: 'avsnitt', type: 'text' }, { name: 'objektid', type: 'text' }, { name: 'dokument', type: 'text' }, { name: 'typ', type: 'text' }, { name: 'kalla', type: 'text' }];
     /** The columns of a dataset of the kind `layers`: one feature per row, its attributes as JSON, geometry as GeoJSON in WGS 84. */
     const LAYER_COLUMNS = [{ name: 'lager', type: 'text' }, { name: 'fil', type: 'text' }, { name: 'objektid', type: 'text' }, { name: 'geometrityp', type: 'text' }, { name: 'geometri', type: 'text' }, { name: 'egenskaper', type: 'text' }, { name: 'ordning', type: 'integer' }];
     /** The bookmark names the exchange model allows (OP-JSON-003); others are read and only warned about. */
@@ -356,21 +359,32 @@
       const res = await sqliteImp.readRows(engine, name, { columns, onRows: (batch) => { for (const r of batch) rows.push(r); } });
       return { name, columns: res.columns, rows };
     }
-    /** The tables the links are read from, and the ids of the content (enough for fromOpTables' links and documents). */
-    async function readLinkTables(engine, names) {
+    /** SQLite's and GeoPackage's own tables, never read for links. */
+    const SYSTEM_TABLE = /^(gpkg_|gpkgext_|rtree_|sqlite_)/i;
+    /**
+     * The tables the links are read from: the model's link tables and any other table that holds links, statements, aliases of
+     * objects or the plan's facts (data/plan-links tableRole), and of the content (the ÖP model's content tables, else the feature
+     * layers) the columns that identify, name or refer, with the feature id.
+     */
+    async function readLinkTables(engine, names, op, layers) {
       const tables = [];
       for (const n of names) {
-        if (LINK_TABLES.includes(n.toLowerCase())) tables.push(await readTable(engine, n));
-        else if (plan.isContentTable(n)) {
-          const cols = (await sqliteImp.tableColumns(engine, n)).map((c) => c.name).filter((c) => /^(objektidentitet|dokument_id)$/i.test(c));
-          if (cols.length) tables.push(await readTable(engine, n, cols));
-        }
+        if (SYSTEM_TABLE.test(n)) continue;
+        const layer = op ? null : layers.find((l) => l.table === n);
+        const cols = (await sqliteImp.tableColumns(engine, n)).map((c) => c.name);
+        if (op ? plan.isContentTable(n) : layer) {
+          const wanted = cols.filter((c) => planLinks.contentColumn(c) && c !== (layer && layer.geometryColumn));
+          if (layer && layer.idColumn && !wanted.includes(layer.idColumn)) wanted.push(layer.idColumn);
+          if (wanted.length) tables.push(Object.assign(await readTable(engine, n, wanted), { content: true, idColumn: layer ? layer.idColumn : null }));
+        } else if (LINK_TABLES.includes(n.toLowerCase()) || planLinks.linkTable(n, cols)) tables.push(await readTable(engine, n));
       }
       return tables;
     }
     /**
      * What a SQLite file holds: whether it is a GeoPackage, its feature layers, whether it follows the ÖP model (and which plan it
-     * is otherwise), and for an ÖP GeoPackage its title, links and the documents it names.
+     * is otherwise), its title and the documents it names, and what it says about the links between its objects and the text
+     * (data/plan-links read: the content's records, the links of each source, statements, aliases, the plan's facts); `linked` is
+     * true when a GeoPackage outside the ÖP model still links its objects to a text, so that it is read as a plan.
      * @param {File} file
      */
     async function describeGeoPackage(file) {
@@ -380,13 +394,50 @@
         const names = (all[0] ? all[0].values : []).map((r) => String(r[0]));
         const geopackage = names.includes('gpkg_contents');
         const op = geopackage && plan.isOpGeoPackage(names);
-        const out = { names, geopackage, op, kind: geopackage ? dpImp.gpkgKind(names) : null, layers: geopackage ? await sqliteImp.featureLayers(engine) : [], title: '', planId: '', links: [], documents: [] };
+        const layers = geopackage ? await sqliteImp.featureLayers(engine) : [];
+        const out = { names, geopackage, op, kind: geopackage ? dpImp.gpkgKind(names) : null, layers, title: '', planId: '', documents: [], records: [], candidates: [], statements: [], aliases: [], meta: {}, found: {}, linked: false };
+        if (!geopackage) return out;
+        const tables = await readLinkTables(engine, names, op, layers);
+        const read = planLinks.read(tables);
+        // The section types by the catalogue's words (a value list's id, or a name in any case).
+        const types = plan.lookupWords(tables.find((x) => x.name.toLowerCase() === 'avsnittstyp_varde_lookup'));
+        for (const c of read.candidates) if (c.typRaw) c.typ = plan.sectionType(c.typRaw, types) || c.typ;
+        Object.assign(out, { records: read.records, candidates: read.candidates, statements: read.statements, aliases: read.aliases, meta: read.meta, found: read.tables });
         if (op) {
-          const parsed = plan.fromOpTables(await readLinkTables(engine, names), {});
-          Object.assign(out, { title: parsed.plan.namn || '', planId: parsed.plan.objektid || '', links: parsed.links, documents: parsed.documents });
+          const parsed = plan.fromOpTables(tables, {});
+          Object.assign(out, { title: parsed.plan.namn || '', planId: parsed.plan.objektid || '', documents: parsed.documents });
         }
+        out.title = out.title || read.meta.namn || '';
+        out.planId = out.planId || read.meta.objektid || '';
+        out.linked = read.candidates.length > 0 || read.statements.some((s) => !s.headingOnly);
         return out;
       } finally { engine.terminate(); }
+    }
+    /**
+     * The links of a delivery's plan maps with their objects found among the objects of all its GeoPackages (data/plan-links):
+     * `links` for linkUp, the statements, the records of the plan maps, what each source gave and the ids no object has.
+     * `rowIds`, when given, are the ids the plan's rows have (a plan read before an id column was known): a record is then known by
+     * its `<layer>:<fid>` when its own id is not among them.
+     * @param {any[]} maps the plan maps' items (with gpkg) @param {any[]} all every GeoPackage item @param {Set<string>} [rowIds]
+     */
+    function linkInputs(maps, all, rowIds) {
+      const described = all.filter((c) => c.gpkg);
+      if (rowIds) {
+        for (const c of described) for (const r of c.gpkg.records) {
+          const place = `${r.lager}:${r.fid}`;
+          if (!rowIds.has(planLinks.key(r.objektid)) && rowIds.has(planLinks.key(place))) r.objektid = place;
+        }
+      }
+      const planId = (maps.find((c) => c.gpkg.planId) || { gpkg: { planId: '' } }).gpkg.planId;
+      const index = planLinks.objectIndex(described.flatMap((c) => c.gpkg.records), described.flatMap((c) => c.gpkg.aliases), planId);
+      const resolved = planLinks.resolveLinks(maps.flatMap((c) => c.gpkg.candidates), index);
+      const found = { model: [], links: [], statements: [], aliases: [], meta: [], columns: [] };
+      for (const c of maps) for (const [k, v] of Object.entries(c.gpkg.found || {})) found[k] = (found[k] || []).concat(v);
+      return {
+        links: resolved.links, used: resolved.used, unresolved: resolved.unresolved, index, planId,
+        documents: maps.flatMap((c) => c.gpkg.documents), statements: maps.flatMap((c) => c.gpkg.statements), records: maps.flatMap((c) => c.gpkg.records),
+        meta: Object.assign({}, ...maps.map((c) => c.gpkg.meta).reverse()), found,
+      };
     }
     /** GeoPackage geometry type names as GeoJSON writes them. */
     const GEOMETRY_TYPES = { point: 'Point', multipoint: 'MultiPoint', linestring: 'LineString', multilinestring: 'MultiLineString', polygon: 'Polygon', multipolygon: 'MultiPolygon' };
@@ -464,7 +515,8 @@
      */
     function assignRoles(items, links, documents) {
       const gpkgs = items.filter((c) => c.gpkg && c.gpkg.geopackage);
-      const maps = gpkgs.filter((c) => c.gpkg.op);
+      // The ÖP model's GeoPackages are the plan map; without one, a GeoPackage that links its objects to a text.
+      const maps = gpkgs.some((c) => c.gpkg.op) ? gpkgs.filter((c) => c.gpkg.op) : gpkgs.filter((c) => c.gpkg.linked);
       const features = (c) => c.gpkg.layers.reduce((s, l) => s + l.count, 0);
       const main = maps.length ? maps : gpkgs.length ? [gpkgs.find((c) => c.gpkg.kind) || gpkgs.slice().sort((a, b) => features(b) - features(a))[0]] : [];
       for (const c of gpkgs) c.role = main.includes(c) ? 'plankarta' : 'underlag';
@@ -473,6 +525,8 @@
       const named = (refs) => refs.map((ref) => matchDocument(ref, docx)).filter(Boolean);
       let text = named(documents.filter((d) => usedRefs.has(d.id)));
       if (!text.length) text = named(documents);
+      // A link that names its Word file by the file's name (a table of links, a column on the areas).
+      if (!text.length) text = Array.from(new Set(links.map((l) => (l.dokumentnamn ? matchDocument({ lank: l.dokumentnamn }, docx) : null)).filter(Boolean)));
       if (!text.length && docx.length) {
         const wanted = new Set(links.flatMap((l) => l.bokmarke.split(',').concat(l.rubrik ? l.rubrik.split(',') : []).map((s) => s.trim())));
         const score = (c) => (c.bookmarks || []).filter((b) => wanted.has(b.name)).length;
@@ -493,7 +547,7 @@
      * the GeoPackages' layers, the ÖP links and the documents they name, the manifest and the metadata. A ZIP that holds a
      * GeoPackage is unpacked into its files; Thumbs.db and the like are left out.
      * @param {File[]} files @param {{taken?: Set<string>}} [options]
-     * @returns {Promise<{items: any[], folder: string, op: boolean, title: string, planId: string, links: any[], documents: any[], manifest: any, metadata: any, warnings: string[]}>}
+     * @returns {Promise<{items: any[], folder: string, op: boolean, linked: boolean, title: string, planId: string, links: any[], documents: any[], inputs: any, manifest: any, metadata: any, warnings: string[]}>}
      */
     async function readDelivery(files, options = {}) {
       const items = [];
@@ -513,9 +567,10 @@
           if (c.macros) warnings.push(t('plan.delivery.warn.macros', { file: c.stored }));
         }
       }
-      const maps = items.filter((c) => c.gpkg && c.gpkg.op);
-      const links = maps.flatMap((c) => c.gpkg.links);
-      const documents = maps.flatMap((c) => c.gpkg.documents);
+      const gpkgItems = items.filter((c) => c.gpkg && c.gpkg.geopackage);
+      const maps = gpkgItems.some((c) => c.gpkg.op) ? gpkgItems.filter((c) => c.gpkg.op) : gpkgItems.filter((c) => c.gpkg.linked);
+      const inputs = linkInputs(maps, gpkgItems);
+      const { links, documents } = inputs;
       assignRoles(items, links, documents);
       let manifest = null; let metadata = null;
       for (const c of items) {
@@ -528,7 +583,7 @@
         } catch (err) { warnings.push(t('plan.delivery.warn.read', { file: c.stored, message: String((err && err.message) || err) })); }
       }
       const first = maps.find((c) => c.gpkg.title) || maps[0];
-      return { items, folder, op: maps.length > 0, title: first ? first.gpkg.title : '', planId: first ? first.gpkg.planId : '', links, documents, manifest, metadata, warnings };
+      return { items, folder, op: maps.some((c) => c.gpkg.op), linked: maps.length > 0, title: first ? first.gpkg.title : '', planId: inputs.planId, links, documents, inputs, manifest, metadata, warnings };
     }
 
     /**
@@ -551,7 +606,8 @@
       if (!gpkgs.length || !others) return null;
       let op = false; let title = '';
       for (const f of gpkgs) {
-        try { const d = await describeGeoPackage(f); if (d.op) { op = true; title = title || d.title; } } catch (_err) { /* read again, and reported, on import */ }
+        // On by default for the ÖP model, and for a GeoPackage that links its objects to a text in a shape of its own.
+        try { const d = await describeGeoPackage(f); if (d.op || d.linked) { op = true; title = title || d.title; } } catch (_err) { /* read again, and reported, on import */ }
       }
       const path = pathOf(kept[0]);
       const folder = kept.every((f) => pathOf(f).includes('/') && pathOf(f).split('/')[0] === path.split('/')[0]) ? path.split('/')[0] : '';
@@ -561,32 +617,37 @@
     // ---- sections and links ------------------------------------------------------------------------------------
     /**
      * The plan's sections and links: the Word files' bookmarks joined with the GeoPackage's links. A link's bookmark is found by
-     * its id, else by the bookmark table's text (either can hold Word's name, and an older form lists several separated by commas);
-     * its document is the one its dokumentreferens names, else the one that has the bookmark, else the text document. Sections are
-     * the visible bookmarks of every Word file (the text document first) and the links' bookmarks missing from them (with the
-     * GeoPackage's heading). What does not add up is said in `warnings`.
+     * its name (in any case, without a prefix, by its heading: data/plan-links bookmarkMatcher), else by the bookmark table's text
+     * (either can hold Word's name, and an older form lists several separated by commas), else through a table of statements;
+     * its document is the one its dokumentreferens or file name names, else the one that has the bookmark, else the text document.
+     * Sections are the visible bookmarks of every Word file (the text document first), the links' bookmarks missing from them
+     * (with the GeoPackage's heading, and the text of a table of statements when it has one) and the statements no link names.
+     * What does not add up is said in `warnings`.
      * @param {Array<{stored: string, role: string, bookmarks: any[]}>} docs Word files, text document first
-     * @param {any[]} links from data/plan fromOpTables @param {any[]} documents dokumentreferens_op
+     * @param {any[]} links data/plan-links resolveLinks @param {any[]} documents dokumentreferens_op
+     * @param {{statements?: any[]}} [extra] the statements of a table (data/plan-links read)
      * @returns {{sections: any[][], links: any[][], warnings: string[]}}
      */
-    function linkUp(docs, links, documents) {
+    function linkUp(docs, links, documents, extra = {}) {
       const warnings = [];
-      const where = new Map(); const lowered = new Map();
-      for (const d of docs) for (const bm of d.bookmarks || []) {
-        where.set(bm.name, (where.get(bm.name) || []).concat(d));
-        if (!lowered.has(bm.name.toLowerCase())) lowered.set(bm.name.toLowerCase(), bm.name);
-      }
-      const canonical = (name) => (where.has(name) ? name : lowered.get(name.toLowerCase()) || '');
+      const where = new Map(); const all = [];
+      for (const d of docs) for (const bm of d.bookmarks || []) { where.set(bm.name, (where.get(bm.name) || []).concat(d)); all.push(bm); }
+      const statements = extra.statements || [];
+      const findStatement = planLinks.statementFinder(statements);
+      const canonical = planLinks.bookmarkMatcher(all.filter((b) => !b.hidden).concat(all.filter((b) => b.hidden)), statements);
       const main = docs.find((d) => d.role === 'textdokument') || docs[0] || null;
       const missingDocs = new Map();
       const wanted = new Map();
       const rows = []; const seen = new Set(); const unknown = new Set(); const badNames = new Set(); const twice = new Set();
       for (const l of links) {
+        const st = findStatement(l.bokmarke);
+        const rubrik = l.rubrik || (st ? st.rubrik : '');
         const ids = l.bokmarke.split(',').map((s) => s.trim()).filter(Boolean);
-        const spare = (l.rubrik ? l.rubrik.split(',').map((s) => s.trim()) : []).map(canonical).filter(Boolean);
-        const names = ids.map((id) => canonical(id) || spare.shift() || id);
+        const spare = (rubrik ? rubrik.split(',').map((s) => s.trim()) : []).map(canonical).filter(Boolean);
+        const names = ids.map((id) => canonical(id) || spare.shift() || (findStatement(id) || { name: id }).name);
         const ref = l.dokumentreferens ? documents.find((d) => d.id && d.id === l.dokumentreferens) : null;
-        const refDoc = ref ? matchDocument(ref, docs) : null;
+        const named = l.dokumentnamn || (st ? st.dokument : '');
+        const refDoc = ref ? matchDocument(ref, docs) : named ? matchDocument({ lank: named }, docs) : null;
         for (const name of names) {
           const hits = where.get(name) || [];
           let dokument;
@@ -594,27 +655,31 @@
           else if (hits.length) dokument = (main && hits.includes(main) ? main : hits[0]).stored;
           else if (refDoc) dokument = refDoc.stored;
           else if (ref) { dokument = refLabel(ref); missingDocs.set(dokument, true); }
+          else if (named && fileLike(named)) { dokument = plainName(named); missingDocs.set(dokument, true); }
           else dokument = main ? main.stored : '';
           if (hits.length > 1) twice.add(name);
           if (!BOOKMARK_NAME.test(name)) badNames.add(name);
           const key = dokument + '\u0000' + name;
-          const w = wanted.get(key) || { name, dokument, rubrik: l.rubrik && l.rubrik !== name && !l.rubrik.includes(',') ? l.rubrik : '', typ: '', found: false };
+          const w = wanted.get(key) || { name, dokument, rubrik: rubrik && rubrik !== name && !rubrik.includes(',') ? rubrik : '', typ: '', found: false };
           if (!w.typ && l.typ) w.typ = l.typ;
           wanted.set(key, w);
           const linkKey = key + '\u0000' + l.objektid;
-          if (!seen.has(linkKey)) { seen.add(linkKey); rows.push([name, l.objektid, dokument, l.typ || '']); }
+          if (!seen.has(linkKey)) { seen.add(linkKey); rows.push([name, l.objektid, dokument, l.typ || '', l.kalla || 'modell']); }
           if (!l.known) unknown.add(l.objektid);
         }
       }
       const typeByName = new Map();
       for (const w of wanted.values()) if (w.typ && !typeByName.has(w.name)) typeByName.set(w.name, w.typ);
+      const typeOf = (name, w) => (w && w.typ) || typeByName.get(name) || (findStatement(name) || { typ: '' }).typ || '';
       const sections = []; let order = 0; const unlinked = [];
       const linkedNames = new Set(Array.from(wanted.values()).map((w) => w.name));
+      const named = new Set();
       for (const d of docs) {
         for (const bm of d.bookmarks || []) {
           const w = wanted.get(d.stored + '\u0000' + bm.name);
           if (bm.hidden && !w) continue;
-          sections.push([bm.name, d.stored, bm.rubrik || (w ? w.rubrik : ''), bm.text, (w && w.typ) || typeByName.get(bm.name) || '', order++]);
+          sections.push([bm.name, d.stored, bm.rubrik || (w ? w.rubrik : ''), bm.text, typeOf(bm.name, w), order++]);
+          named.add(bm.name);
           if (w) w.found = true;
           else if (links.length && !bm.hidden && !linkedNames.has(bm.name)) unlinked.push(bm.name);
         }
@@ -624,8 +689,17 @@
       const missing = [];
       for (const w of wanted.values()) {
         if (w.found || (where.get(w.name) || []).length) continue;
-        sections.push([w.name, w.dokument, w.rubrik, '', w.typ, order++]);
-        missing.push(w);
+        // A bookmark no Word file has: the text of a table of statements stands in for it, when there is one.
+        const st = findStatement(w.name);
+        sections.push([w.name, w.dokument, w.rubrik || (st ? st.rubrik : ''), st ? st.text : '', typeOf(w.name, w), order++]);
+        named.add(w.name);
+        if (!st || !st.text) missing.push(w);
+      }
+      // The statements of a table that no link names and no Word file has, with their own text.
+      for (const st of statements) {
+        if (st.headingOnly || named.has(st.name) || canonical(st.name)) continue;
+        sections.push([st.name, st.dokument ? plainName(st.dokument) : '', st.rubrik, st.text, st.typ, order++]);
+        named.add(st.name);
       }
       // A bookmark missing from a delivered Word file is named; those of a document that was not delivered are said with it.
       for (const [name] of missingDocs) warnings.push(t('plan.delivery.warn.doc.missing', { file: name }));
@@ -639,6 +713,38 @@
       if (unknown.size) warnings.push(t('plan.delivery.warn.object', { n: unknown.size, ids: listed(Array.from(unknown)) }));
       if (unlinked.length) warnings.push(t('plan.delivery.warn.unlinked', { n: unlinked.length, names: listed(unlinked) }));
       return { sections, links: rows, warnings };
+    }
+    /**
+     * The sections and links of a plan with the areas its text names (data/plan-links mentions, for the sections no other source
+     * links: inferred, kalla 'text'), and what the links add up to: `kopplingar` for the plan's facts and lines for its warnings
+     * that say how many links were read and from where, how many areas and ställningstaganden have none, and why none when none.
+     * @param {any[]} docs Word files, text document first @param {ReturnType<typeof linkInputs>} inputs
+     */
+    function joinLinks(docs, inputs) {
+      const joined = linkUp(docs, inputs.links, inputs.documents, { statements: inputs.statements });
+      // A section counts as linked when one of its links reaches an object of the map or the whole plan.
+      const linked = new Set(joined.links.filter((r) => !r[1] || inputs.index.has(r[1])).map((r) => r[0]));
+      const sections = joined.sections.map(([name, dokument, rubrik, text, typ]) => ({ name, dokument, rubrik, text, typ }));
+      const textRows = planLinks.mentions(sections, inputs.records, linked);
+      const rows = joined.links.concat(textRows);
+      const bookmarks = docs.reduce((n, d) => n + (d.bookmarks || []).filter((b) => !b.hidden).length, 0);
+      const kopplingar = planLinks.summary({ rows, sections: joined.sections, records: inputs.records, used: inputs.used, textRows: textRows.length, tables: inputs.found, bookmarks, unresolved: inputs.unresolved });
+      return { sections: joined.sections, links: rows, kopplingar, warnings: linkWarnings(kopplingar).concat(joined.warnings) };
+    }
+    /** Where links came from, as words: "23 ur tabellen objektreferens". */
+    const sourceText = (s) => t('plan.links.source.' + s.kalla, { n: s.antal, name: s.fran });
+    /**
+     * The lines the plan's warnings get about its links: how many and from where, how many areas and ställningstaganden have
+     * none, the links only the text gives, and, when there are none at all, why. @param {any} k data/plan-links summary
+     */
+    function linkWarnings(k) {
+      if (!k) return [];
+      const out = [];
+      if (!k.antal) out.push(t('plan.links.warn.none', { why: k.orsaker.map((r) => t('plan.links.why.' + r)).join(' ') }));
+      else out.push(t('plan.links.warn.read', { n: k.antal, sources: k.kallor.filter((s) => s.antal).map(sourceText).join(', ') }));
+      if (k.antal && (k.omradenUtan || k.stallningstagandenUtan)) out.push(t('plan.links.warn.without', { areas: k.omradenUtan, of: k.omraden, statements: k.stallningstagandenUtan, all: k.stallningstaganden }));
+      if (k.kallor.some((s) => s.kalla === 'text' && s.antal)) out.push(t('plan.links.warn.text'));
+      return out;
     }
     /** The Word files of a delivery in the order their sections take: the text document first, then the appendices by name. */
     const docsInOrder = (items) => items.filter((c) => c.bookmarks && (c.role === 'textdokument' || c.role === 'bilaga'))
@@ -677,7 +783,10 @@
     /** A row of the plan for a feature of a GeoPackage outside the ÖP model (underlag, or a plan map in another model). */
     function opRowOf(c, layer, f) {
       const p = f.props;
-      const id = plan.normId(p.objektidentitet || p.objektid || p.uuid || p.globalid || '');
+      // The same id data/plan-links gives the feature's record: its id column (objekt_id …), else <layer>:<fid>.
+      const own = { fid: f.id };
+      for (const [k, v] of Object.entries(p)) own[k.toLowerCase()] = v;
+      const id = plan.contentId(own, layer.table);
       return {
         objektid: id || `${layer.table}:${f.id}`, tema: c.role === 'underlag' ? 'underlag' : plan.themeKey(layer.title || layer.table) || 'omrade', innehallstyp: layer.title,
         namn: str(p.namn || p.name || p.benamning || p.titel || p.beteckning || ''), geometrityp: f.type, egenskaper: Object.keys(p).length ? f.egenskaper : '', lager: layer.table, fil: c.stored, geometri: f.geometri,
@@ -713,7 +822,7 @@
       if (progress) progress({ step: 'read', file: files[0] ? files[0].name : '' });
       const d = await readDelivery(files);
       const gpkgs = d.items.filter((c) => c.role === 'plankarta' || c.role === 'underlag');
-      if ((files || []).length === 1 && d.items.length <= 1 && !d.op) return dpImp.importGeoPackage(files[0], options, name, progress);
+      if ((files || []).length === 1 && d.items.length <= 1 && !d.op && !d.linked) return dpImp.importGeoPackage(files[0], options, name, progress);
       if (!gpkgs.length) throw new Error(t('plan.delivery.err.nogpkg'));
       const first = gpkgs[0];
       const datasetName = name || d.title || (d.metadata && d.metadata.titel) || options.folder || d.folder || stemOf(first.stored);
@@ -739,7 +848,9 @@
           lager.push(...await appendLayers(c, append));
         }
         if (!order) throw new Error(t('plan.err.empty'));
-        info = info || { slag: 'oversiktsplan', objektid: '', namn: d.title || (d.metadata && d.metadata.titel) || '', kommun: '', kommunkod: '', status: '', format: 'oversiktsplan-leverans', crs: (lager.find((l) => l.crs) || {}).crs || '' };
+        // Outside the ÖP model the plan's facts come from a key-value table (planmetadata) when there is one.
+        const facts = d.inputs.meta || {};
+        info = info || { slag: 'oversiktsplan', objektid: d.planId || '', namn: d.title || (d.metadata && d.metadata.titel) || '', kommun: facts.kommun || '', kommunkod: facts.kommunkod || '', status: facts.status || '', datumPlanhandelse: facts.datum || '', format: 'oversiktsplan-leverans', crs: (lager.find((l) => l.crs) || {}).crs || '' };
         info.antal = counts;
         info.lager = lager;
         // The files, one at a time (their bytes go to the dataset's file), with what the manifest asks to be checked.
@@ -759,11 +870,11 @@
           filer.push({ namn: c.stored, roll: c.role, storlek: c.size, sha256: sha });
           await breathe();
         }
-        const joined = linkUp(docsInOrder(d.items), d.links, d.documents);
+        const joined = joinLinks(docsInOrder(d.items), d.inputs);
         await dsFiles.writeTable(handle, { name: SECTIONS, columns: SECTION_COLUMNS, rows: joined.sections, index: ['avsnitt'] });
         await dsFiles.writeTable(handle, { name: LINKS, columns: LINK_COLUMNS, rows: joined.links, index: ['avsnitt', 'objektid'] });
         const listedWarnings = await checkListed([d.manifest, d.metadata], d.items, sumOf);
-        info.leverans = { filer, manifest: d.manifest, metadata: d.metadata, varningar: capped(d.warnings.concat(joined.warnings, listedWarnings)) };
+        info.leverans = { filer, manifest: d.manifest, metadata: d.metadata, kopplingar: joined.kopplingar, varningar: capped(d.warnings.concat(joined.warnings, listedWarnings)) };
         await setMeta(handle, 'plan', info);
         return await datasets.finishImport(handle, {});
       } catch (err) {
@@ -817,10 +928,11 @@
      * a manifest or metadata file, anything else; a GeoPackage comes in as underlag with its layers as rows. A file with the name of
      * one the plan holds replaces it (a corrected text document), unless either is a GeoPackage, which is added beside under a name
      * of its own. The sections, links and warnings are made anew from every file the plan holds. The change is logged and saved.
-     * @param {string} datasetId @param {File[]} files
-     * @returns {Promise<{added: Array<{namn: string, roll: string}>, sections: number, links: number, warnings: string[]}>}
+     * With no files the links are only read again (`relink`).
+     * @param {string} datasetId @param {File[]} files @param {{relink?: boolean}} [options]
+     * @returns {Promise<{added: Array<{namn: string, roll: string}>, sections: number, links: number, warnings: string[], kopplingar: any}>}
      */
-    async function addFiles(datasetId, files) {
+    async function addFiles(datasetId, files, options = {}) {
       const handle = await datasets.ensureOpen(datasetId);
       if (handle.meta.kind !== 'plan') throw new Error(t('plan.delivery.err.notplan'));
       const all0 = await dsFiles.list(datasetId);
@@ -851,7 +963,6 @@
       }
       const newGpkgs = d.items.filter((c) => c.role === 'plankarta' || c.role === 'underlag');
       for (const c of newGpkgs) c.role = 'underlag';
-      let links = d.links; let documents = d.documents;
       // A held GeoPackage that cannot be read again (damaged since, or not a database at all) must not stop the new files from
       // being added: they are kept, and the plan's sections and links stay as they were, with a warning.
       const unreadable = [];
@@ -863,13 +974,18 @@
             if (!c.role) c.role = 'underlag';
             continue;
           }
-          if (c.gpkg.op) { links = c.gpkg.links.concat(links); documents = c.gpkg.documents.concat(documents); if (!c.role) c.role = 'plankarta'; }
-          else if (!c.role) c.role = 'underlag';
+          if (!c.role) c.role = c.gpkg.op || c.gpkg.linked ? 'plankarta' : 'underlag';
         } else if (c.sort === 'docx') {
           try { c.bookmarks = await readDocx(new Uint8Array(await c.file.arrayBuffer())); } catch (_err) { c.bookmarks = []; }
           if (!c.role) c.role = 'textdokument';
         } else if (!c.role) c.role = c.sort === 'xml' ? xmlRole(c.stored, c.root || {}) || 'ovrigt' : c.sort === 'pdf' ? 'bilaga' : 'ovrigt';
       }
+      // The links of the plan maps it holds (and of new ones), found among the objects of every GeoPackage, by the ids its rows have.
+      const gpkgItems = held.concat(d.items).filter((c) => c.gpkg && c.gpkg.geopackage);
+      const maps = gpkgItems.some((c) => c.gpkg.op) ? gpkgItems.filter((c) => c.gpkg.op) : gpkgItems.filter((c) => c.gpkg.linked);
+      const ids = await handle.engine.exec('select distinct objektid from data');
+      const inputs = linkInputs(maps, gpkgItems, new Set((ids[0] ? ids[0].values : []).map((r) => planLinks.key(r[0]))));
+      const { links, documents } = inputs;
       // The new Word files: a text document when the plan's links name them or the plan has none, else appendices.
       const newDocs = d.items.filter((c) => c.sort === 'docx');
       if (newDocs.length) {
@@ -904,9 +1020,10 @@
         const count = async (name) => ((await tableIn(handle.engine, name)) ? Number(((await handle.engine.exec(`select count(*) from ${name}`))[0] || { values: [[0]] }).values[0][0]) : 0);
         joined = { sections: { length: await count(SECTIONS) }, links: { length: await count(LINKS) }, warnings: [t('plan.delivery.warn.kept', { files: unreadable.join(', ') })] };
       } else {
-        joined = linkUp(docsInOrder(all), links, documents);
+        joined = joinLinks(docsInOrder(all), inputs);
         await dsFiles.writeTable(handle, { name: SECTIONS, columns: SECTION_COLUMNS, rows: joined.sections, index: ['avsnitt'] });
         await dsFiles.writeTable(handle, { name: LINKS, columns: LINK_COLUMNS, rows: joined.links, index: ['avsnitt', 'objektid'] });
+        leverans.kopplingar = joined.kopplingar;
       }
       for (const c of d.items) {
         if ((c.role === 'manifest' && !leverans.manifest) || (c.role === 'metadata' && !leverans.metadata)) {
@@ -920,12 +1037,18 @@
       Object.assign(info, { leverans, lager, antal: counts });
       await setMeta(handle, 'plan', info);
       if (newGpkgs.length) await datasets.refreshCounts(handle);
-      await datasets.appendLog(handle, 'plan_add_files', { files: added, replaced: Array.from(replaced) });
+      if (options.relink) await datasets.appendLog(handle, 'plan_relink', { links: joined.links.length });
+      else await datasets.appendLog(handle, 'plan_add_files', { files: added, replaced: Array.from(replaced) });
       await datasets.save(datasetId);
       // A replaced file's address for the views is stale now (data/dataset-files drops them on 'changed').
       datasets.notify('changed', { id: datasetId });
-      return { added, sections: joined.sections.length, links: joined.links.length, warnings: leverans.varningar };
+      return { added, sections: joined.sections.length, links: joined.links.length, warnings: leverans.varningar, kopplingar: leverans.kopplingar || null };
     }
+    /**
+     * The plan's links read again from the files it holds, the way data/plan-links reads them now (a plan read before the app knew
+     * a shape of links). @param {string} datasetId
+     */
+    const relink = (datasetId) => addFiles(datasetId, [], { relink: true });
 
     // ---- reading the sections back ------------------------------------------------------------------------------
     async function tableIn(engine, name) {
@@ -933,37 +1056,72 @@
       return !!(r[0] && Number(r[0].values[0][0]));
     }
     const sectionOf = (r) => ({ avsnitt: str(r[0]), dokument: str(r[1]), rubrik: str(r[2]), text: str(r[3]), typ: str(r[4]), ordning: Number(r[5]) || 0 });
+    /** Whether a table has a column (`_section_links` of a plan read before `kalla`, or one a test made, has not). */
+    async function hasColumn(engine, table, column) {
+      const r = await engine.exec(`pragma table_info(${table})`);
+      return (r[0] ? r[0].values : []).some((v) => String(v[1]) === column);
+    }
     /**
-     * The plan's sections in document order, each with the objects it is linked to (`objekt`; the whole plan is `helaPlanen`, not an
-     * id); [] for a plan without sections.
+     * Every link of the plan: {avsnitt, objektid, dokument, typ, kalla} ('modell' for a plan read before the sources were kept).
+     * @param {any} engine @returns {Promise<Array<{avsnitt: string, objektid: string, dokument: string, typ: string, kalla: string}>>}
+     */
+    async function linksOf(engine) {
+      if (!(await tableIn(engine, LINKS))) return [];
+      const kalla = (await hasColumn(engine, LINKS, 'kalla')) ? "coalesce(nullif(kalla, ''), 'modell')" : "'modell'";
+      const res = await engine.exec(`select avsnitt, coalesce(objektid, ''), coalesce(dokument, ''), coalesce(typ, ''), ${kalla} from ${LINKS}`);
+      return (res[0] ? res[0].values : []).map((r) => ({ avsnitt: str(r[0]), objektid: str(r[1]), dokument: str(r[2]), typ: str(r[3]), kalla: str(r[4]) }));
+    }
+    /**
+     * A section's links: those in its document, and those whose document is empty or names no section of that bookmark (a link
+     * written by hand, or before the document was known), so that a link is never lost to a document name that differs.
+     */
+    function linksBySection(sections, links) {
+      const own = new Set(sections.map((s) => s.dokument + '\u0000' + s.avsnitt));
+      const by = new Map();
+      for (const l of links) {
+        const exact = own.has(l.dokument + '\u0000' + l.avsnitt);
+        for (const s of sections) {
+          if (s.avsnitt !== l.avsnitt || (exact ? s.dokument !== l.dokument : false)) continue;
+          const k = s.dokument + '\u0000' + s.avsnitt;
+          by.set(k, (by.get(k) || []).concat(l));
+          if (!exact) break;
+        }
+      }
+      return by;
+    }
+    /**
+     * The plan's sections in document order, each with the objects it is linked to (`objekt`, with where each link was read in
+     * `kallor`: modell, tabell, attribut or text; the whole plan is `helaPlanen`, not an id); [] for a plan without sections.
      * @param {string} datasetId
-     * @returns {Promise<Array<{avsnitt: string, dokument: string, rubrik: string, text: string, typ: string, ordning: number, objekt: string[], helaPlanen: boolean}>>}
+     * @returns {Promise<Array<{avsnitt: string, dokument: string, rubrik: string, text: string, typ: string, ordning: number, objekt: string[], kallor: string[], helaPlanen: boolean}>>}
      */
     async function sectionsOf(datasetId) {
       const { engine } = await datasets.ensureOpen(datasetId);
       if (!(await tableIn(engine, SECTIONS))) return [];
-      const res = await engine.exec(`select avsnitt, dokument, rubrik, text, typ, ordning from ${SECTIONS} order by ordning`);
-      const linked = new Map();
-      if (await tableIn(engine, LINKS)) {
-        const l = await engine.exec(`select avsnitt, dokument, objektid from ${LINKS}`);
-        for (const [a, doc, id] of (l[0] ? l[0].values : [])) { const k = str(doc) + '\u0000' + str(a); linked.set(k, (linked.get(k) || []).concat(str(id))); }
-      }
-      return (res[0] ? res[0].values : []).map((r) => {
-        const s = sectionOf(r);
-        const ids = linked.get(s.dokument + '\u0000' + s.avsnitt) || [];
-        return Object.assign(s, { objekt: ids.filter(Boolean), helaPlanen: ids.includes('') });
+      const res = await engine.exec(`select avsnitt, dokument, rubrik, text, typ, ordning from ${SECTIONS} order by ordning, rowid`);
+      const sections = (res[0] ? res[0].values : []).map(sectionOf);
+      const by = linksBySection(sections, await linksOf(engine));
+      return sections.map((s) => {
+        const list = (by.get(s.dokument + '\u0000' + s.avsnitt) || []).filter((l, i, all) => all.findIndex((x) => planLinks.key(x.objektid) === planLinks.key(l.objektid)) === i);
+        const objects = list.filter((l) => planLinks.key(l.objektid));
+        return Object.assign(s, { objekt: objects.map((l) => l.objektid), kallor: objects.map((l) => l.kalla), helaPlanen: list.some((l) => !planLinks.key(l.objektid)) });
       });
     }
     /**
-     * The sections linked to an object, in document order; objektid '' gives those linked to the whole plan.
+     * The sections linked to an object, in document order, each with where its link was read (`kalla`); objektid '' gives those
+     * linked to the whole plan. The object's id is compared trimmed, in lower case and without braces, on both sides.
      * @param {string} datasetId @param {string} objektid
      */
     async function sectionsForObject(datasetId, objektid) {
-      const id = plan.normId(objektid);
-      const { engine } = await datasets.ensureOpen(datasetId);
-      if (!(await tableIn(engine, SECTIONS)) || !(await tableIn(engine, LINKS))) return [];
-      const res = await engine.exec(`select s.avsnitt, s.dokument, s.rubrik, s.text, coalesce(nullif(l.typ, ''), s.typ), s.ordning from ${SECTIONS} s join (select distinct avsnitt, dokument, typ from ${LINKS} where objektid = ?) l on l.avsnitt = s.avsnitt and l.dokument = s.dokument order by s.ordning`, [id]);
-      return (res[0] ? res[0].values : []).map(sectionOf);
+      const id = planLinks.key(objektid);
+      const all = await sectionsOf(datasetId);
+      const out = [];
+      for (const s of all) {
+        const at = id ? s.objekt.findIndex((x) => planLinks.key(x) === id) : -1;
+        if (id ? at < 0 : !s.helaPlanen) continue;
+        out.push(Object.assign({}, s, { kalla: at >= 0 ? s.kallor[at] : 'modell' }));
+      }
+      return out;
     }
     /**
      * The objects a section is linked to (their objektid, as the plan's rows have it), '' for the whole plan as `_section_links`
@@ -984,10 +1142,11 @@
     async function previewDelivery(files, options = {}) {
       const d = await readDelivery(files);
       const map = d.items.find((c) => c.role === 'plankarta' && c.gpkg && c.gpkg.op);
-      const parsed = map ? (await dpImp.readGeoPackage(map.file, Object.assign({}, options, { plan: true, fileName: map.stored }))).parsed : { plan: { slag: 'oversiktsplan', namn: d.title, format: 'oversiktsplan-leverans' }, rows: [] };
-      const joined = linkUp(docsInOrder(d.items), d.links, d.documents);
+      const facts = d.inputs.meta || {};
+      const parsed = map ? (await dpImp.readGeoPackage(map.file, Object.assign({}, options, { plan: true, fileName: map.stored }))).parsed : { plan: { slag: 'oversiktsplan', objektid: d.planId || '', namn: d.title, kommun: facts.kommun || '', kommunkod: facts.kommunkod || '', status: facts.status || '', format: 'oversiktsplan-leverans' }, rows: [] };
+      const joined = joinLinks(docsInOrder(d.items), d.inputs);
       const columns = plan.OP_COLUMNS;
-      const leverans = { filer: d.items.map((c) => ({ namn: c.stored, roll: c.role, storlek: c.size })), manifest: d.manifest, metadata: d.metadata, varningar: capped(d.warnings.concat(joined.warnings)) };
+      const leverans = { filer: d.items.map((c) => ({ namn: c.stored, roll: c.role, storlek: c.size })), manifest: d.manifest, metadata: d.metadata, kopplingar: joined.kopplingar, varningar: capped(d.warnings.concat(joined.warnings)) };
       return { kind: 'plan', format: 'opdelivery', plan: Object.assign({}, parsed.plan, { leverans }), planFormat: parsed.plan.format || 'oversiktsplan-leverans', header: true,
         columns: columns.map((c) => c.name), declaredTypes: columns.map((c) => c.type), dataRows: plan.toRows(parsed.rows, columns).slice(0, options.previewRows || 100), totalRows: parsed.rows.length,
         sections: joined.sections.length, links: joined.links.length, datasetName: d.title || d.folder || (map ? stemOf(map.stored) : t('plan.delivery.name')) };
@@ -996,7 +1155,7 @@
     return {
       SECTIONS, LINKS, SECTION_COLUMNS, LINK_COLUMNS, LAYER_COLUMNS, BOOKMARK_NAME,
       sniffHead, rootOf, xmlRole, classify, xmlEvents, bookmarksOf, headingStylesOf, readDocx, fileEntries, readXmlInfo, describeGeoPackage,
-      filesOfZip, readDelivery, candidate, linkUp, importDelivery, importLayers, addFiles, previewDelivery, sectionsOf, sectionsForObject, objectsForSection,
+      filesOfZip, readDelivery, candidate, linkUp, joinLinks, linkWarnings, importDelivery, importLayers, addFiles, relink, previewDelivery, sectionsOf, sectionsForObject, objectsForSection,
     };
   });
 })();
