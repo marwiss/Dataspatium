@@ -66,6 +66,8 @@
   const PDF = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x37, 0x0a]);
   const A = 'op-testkoping.gpkg'; const B = 'riksintressen.gpkg';
   const lagerOf = (tema, geom) => `innehall_op_${tema}${geom ? '_' + geom : ''}`;
+  /** The plan's objektidentitet, which the GeoPackage writes in braces. */
+  const PLAN_ID = '6B1E1F2A-0C3D-4E5F-8A9B-1C2D3E4F5A6B';
 
   /**
    * A delivered comprehensive plan: six layers in two GeoPackages (land use with three uses, development in areas and lines,
@@ -92,7 +94,7 @@
       { name: 'manifest.xml', kind: 'manifest', type: 'application/xml', bytes: bytes('<manifest/>') },
     ];
     const leverans = { filer: files.map((f) => ({ namn: f.name, roll: f.kind, storlek: f.bytes.byteLength, sha256: '' })), manifest: { namn: 'manifest.xml', format: 'ODF' }, metadata: null, varningar: ['Bokmärket op_saknas finns inte i planbeskrivning.docx'] };
-    const meta = await dsFiles.createDataset({ name, kind: 'plan', columns, rows, files, meta: { plan: { slag: 'oversiktsplan', objektid: 'plan-1', namn: name, kommun: 'Testköping', kommunkod: '1880', status: 'Antagen', crs: 'EPSG:3006', leverans } } });
+    const meta = await dsFiles.createDataset({ name, kind: 'plan', columns, rows, files, meta: { plan: { slag: 'oversiktsplan', objektid: `{${PLAN_ID}}`, namn: name, kommun: 'Testköping', kommunkod: '1880', status: 'Antagen', datumPlanhandelse: '2025-06-10', crs: 'EPSG:3006', leverans } } });
     created.push(meta.id);
     const hd = await datasets.ensureOpen(meta.id);
     await hd.engine.run('create table _sections (avsnitt text, dokument text, rubrik text, text text, typ text, ordning integer)');
@@ -151,6 +153,10 @@
         assert.ok(right.querySelector(`[data-layer-key="${useLayer.key}"] svg.dm-layer-swatch[data-mark="polygon"]`) && right.querySelector('svg.dm-layer-swatch[data-mark="point"]') && right.querySelector('svg.dm-layer-swatch[data-mark="line"]'), 'swatches for areas, lines and points');
         assert.equal(legendKeys(right).length, 6, 'the legend lists all six');
         assert.ok(right.querySelectorAll('.dm-layer-legend-categories li').length === 3, 'land use by its three uses');
+        // The plan's own facts: its identity without braces and its planhändelse with the date (F90 a).
+        const about = right.querySelector('dm-kv').textContent;
+        assert.ok(about.includes(t('plan.field.objektid') + PLAN_ID) && !about.includes('{'), 'the plan\'s identity without braces: ' + about);
+        assert.ok(about.includes(t('plan.field.planhandelse') + 'Antagen 2025-06-10'), 'its planhändelse with its date');
         // Dölj alla, Visa alla, Visa bara detta.
         const map = pv.view.handle.map;
         const onMap = () => pv.view.state.layers.filter((l) => drawnFor(pv.view, l.rows[0].objektid).length).length;

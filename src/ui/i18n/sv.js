@@ -3377,6 +3377,7 @@
     'plan.field.kompletterande': 'Kompletterande innehållstyp',
     'plan.field.anvandningsstatus': 'Användningsstatus',
     'plan.field.planhandelse': 'Planhändelse',
+    'plan.field.objektid': 'Planens identitet',
     'plan.format.ngp': 'Referensobjekt (Lantmäteriets geodataplattform)',
     'plan.format.detaljplan': 'Nationell specifikation (GeoJSON)',
     'plan.format.oversiktsplan-geojson': 'Nationell specifikation översiktsplan (GeoJSON)',

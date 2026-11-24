@@ -107,6 +107,7 @@
     'map.add.tiles': 'Map tiles (OGC API – Tiles)',
     'map.add.tiles.hint': 'Adds map tiles from an OGC API – Tiles service as a layer under the features',
     'map.layer.tiles.note': 'Map tiles are drawn under the features in the web map, are not shown in the legend and are left out of exports to SVG, PNG and PDF.',
+    'plan.field.objektid': 'Plan identity',
     'flows.last.skipped': 'Not run at start {when}: {reason}.',
     'commands.err.attended': 'The command {name} may have to ask you, so a flow at start does not run it. Run the flow by hand.',
     'flows.block.packages': 'packages not fetched yet: {names}',

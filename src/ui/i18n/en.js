@@ -3355,6 +3355,7 @@
     'plan.field.kompletterande': 'Complementary content type',
     'plan.field.anvandningsstatus': 'Use status',
     'plan.field.planhandelse': 'Plan event',
+    'plan.field.objektid': 'Plan identity',
     'plan.format.ngp': 'Reference objects (Lantmäteriet\'s geodata platform)',
     'plan.format.detaljplan': 'National specification (GeoJSON)',
     'plan.format.oversiktsplan-geojson': 'National specification comprehensive plan (GeoJSON)',

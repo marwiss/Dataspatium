@@ -347,11 +347,15 @@
         const items = [];
         const info = s.info || {};
         const kv = /** @type {any} */ (h('dm-kv'));
+        // The plan's identity without braces, and a comprehensive plan's status as its planhändelse with its date (F90 a).
+        const identity = String(info.objektid || '').replace(/[{}]/g, '').trim();
+        const isOp = s.slag === 'oversiktsplan';
         kv.items = [
           info.beteckning ? { label: t('plan.field.beteckning'), value: info.beteckning } : null,
+          identity ? { label: t('plan.field.objektid'), value: identity } : null,
           info.kommun || info.kommunkod ? { label: t('plan.field.kommun'), value: [info.kommun, info.kommunkod].filter(Boolean).join(' ') } : null,
           info.typ ? { label: t('plan.field.typ'), value: info.typ } : null,
-          info.status ? { label: t('plan.field.status'), value: info.status } : null,
+          info.status ? { label: t(isOp ? 'plan.field.planhandelse' : 'plan.field.status'), value: isOp ? `${info.status} ${info.datumPlanhandelse || ''}`.trim() : info.status } : null,
           info.datumLagakraft ? { label: t('plan.field.lagakraft'), value: info.datumLagakraft } : null,
           info.datumAntagande ? { label: t('plan.field.antagande'), value: info.datumAntagande } : null,
           info.datumOverklagat ? { label: t('plan.field.overklagat'), value: info.datumOverklagat } : null,
