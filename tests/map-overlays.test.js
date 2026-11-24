@@ -171,7 +171,8 @@
         const img = /** @type {HTMLElement} */ (await waitFor(() => where.center.querySelector('.leaflet-tile-pane > img.dm-raster-image'), 5000, 'the raster'));
         assert.ok(Number(img.style.zIndex) >= 3, 'above a raster of the map\'s own: ' + img.style.zIndex);
         const z = (sel) => Number(getComputedStyle(/** @type {Element} */ (where.center.querySelector(sel))).zIndex);
-        assert.ok(where.center.querySelector('.leaflet-overlay-pane canvas') && z('.leaflet-overlay-pane') > z('.leaflet-tile-pane'), 'the features above the tile pane');
+        assert.ok(where.center.querySelector('.leaflet-overlay-pane canvas'), 'the features on the canvas');
+        await waitFor(() => z('.leaflet-overlay-pane') > z('.leaflet-tile-pane'), 3000, 'the features above the tile pane');
         // The map fits everything shown.
         const all = overlays.extend(view.handle.groups[0].group.getBounds());
         await waitFor(() => view.handle.map.getBounds().pad(0.02).contains(all), 5000, 'the map fitted to all');
