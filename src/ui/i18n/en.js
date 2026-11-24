@@ -1946,6 +1946,8 @@
     'log.validate': 'Rules checked: {passed} of {rules} met',
     'log.comment': '{author}: {text}',
     'log.shared': 'Shared in the bundle {name}',
+    'log.action.copy': 'Copy',
+    'log.copy': 'Copy of {name}',
     'log.received': 'Received from {name} ({author})',
     'bundle.changes.none': 'No changes since the dataset was last shared.',
     'comments.title': 'Comments',

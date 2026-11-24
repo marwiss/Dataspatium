@@ -1968,6 +1968,8 @@
     'log.validate': 'Regler kontrollerade: {passed} av {rules} uppfyllda',
     'log.comment': '{author}: {text}',
     'log.shared': 'Delad i paketet {name}',
+    'log.action.copy': 'Kopia',
+    'log.copy': 'Kopia av {name}',
     'log.received': 'Mottagen från {name} ({author})',
     'bundle.changes.none': 'Inga ändringar sedan datamängden senast delades.',
     'comments.title': 'Kommentarer',
