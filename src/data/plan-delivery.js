@@ -852,9 +852,17 @@
       const newGpkgs = d.items.filter((c) => c.role === 'plankarta' || c.role === 'underlag');
       for (const c of newGpkgs) c.role = 'underlag';
       let links = d.links; let documents = d.documents;
+      // A held GeoPackage that cannot be read again (damaged since, or not a database at all) must not stop the new files from
+      // being added: they are kept, and the plan's sections and links stay as they were, with a warning.
+      const unreadable = [];
       for (const c of held) {
         if (c.sort === 'sqlite') {
-          c.gpkg = await describeGeoPackage(c.file);
+          try { c.gpkg = await describeGeoPackage(c.file); } catch (err) {
+            D.log('plan-delivery', 'a held GeoPackage could not be read again', c.stored, err);
+            unreadable.push(c.stored);
+            if (!c.role) c.role = 'underlag';
+            continue;
+          }
           if (c.gpkg.op) { links = c.gpkg.links.concat(links); documents = c.gpkg.documents.concat(documents); if (!c.role) c.role = 'plankarta'; }
           else if (!c.role) c.role = 'underlag';
         } else if (c.sort === 'docx') {
@@ -891,9 +899,15 @@
       }
       for (const c of held) if (!leverans.filer.some((x) => x.namn === c.stored)) leverans.filer.push({ namn: c.stored, roll: c.role, storlek: c.size, sha256: '' });
       const all = held.concat(d.items);
-      const joined = linkUp(docsInOrder(all), links, documents);
-      await dsFiles.writeTable(handle, { name: SECTIONS, columns: SECTION_COLUMNS, rows: joined.sections, index: ['avsnitt'] });
-      await dsFiles.writeTable(handle, { name: LINKS, columns: LINK_COLUMNS, rows: joined.links, index: ['avsnitt', 'objektid'] });
+      let joined;
+      if (unreadable.length) {
+        const count = async (name) => ((await tableIn(handle.engine, name)) ? Number(((await handle.engine.exec(`select count(*) from ${name}`))[0] || { values: [[0]] }).values[0][0]) : 0);
+        joined = { sections: { length: await count(SECTIONS) }, links: { length: await count(LINKS) }, warnings: [t('plan.delivery.warn.kept', { files: unreadable.join(', ') })] };
+      } else {
+        joined = linkUp(docsInOrder(all), links, documents);
+        await dsFiles.writeTable(handle, { name: SECTIONS, columns: SECTION_COLUMNS, rows: joined.sections, index: ['avsnitt'] });
+        await dsFiles.writeTable(handle, { name: LINKS, columns: LINK_COLUMNS, rows: joined.links, index: ['avsnitt', 'objektid'] });
+      }
       for (const c of d.items) {
         if ((c.role === 'manifest' && !leverans.manifest) || (c.role === 'metadata' && !leverans.metadata)) {
           try { leverans[c.role] = Object.assign({ fil: c.stored }, readXmlInfo(await c.file.text(), c.role)); } catch (err) { d.warnings.push(t('plan.delivery.warn.read', { file: c.stored, message: String((err && err.message) || err) })); }

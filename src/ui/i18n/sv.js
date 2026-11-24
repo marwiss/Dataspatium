@@ -5143,6 +5143,7 @@
     'plan.delivery.warn.unchecked': 'Kontrollsumman för {file} i {list} ({algorithm}) kan inte kontrolleras i webbläsaren; bara SHA-1, SHA-256, SHA-384 och SHA-512 kan det.',
     'plan.delivery.warn.docx': '{file} kunde inte läsas som Word-dokument: {message}',
     'plan.delivery.warn.read': '{file} kunde inte läsas: {message}',
+    'plan.delivery.warn.kept': '{files} kunde inte läsas igen, så planens avsnitt och kopplingar behölls som de var; de nya filerna sparades',
     'plan.delivery.warn.macros': '{file} innehåller makron. De körs aldrig; bara texten läses.',
     'plan.delivery.warn.more': '… och {n} till.',
     'plan.delivery.err.nogpkg': 'Leveransen har ingen GeoPackage-fil med planens lager.',

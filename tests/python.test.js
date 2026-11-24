@@ -361,7 +361,8 @@
     const out = lastJson(res);
     const xhrText = D.t('python.net.blocked', { api: 'XMLHttpRequest' });
     for (const key of ['open_url', 'sync', 'async']) assert.ok(out[key] && out[key][1].includes(xhrText), key + ': ' + JSON.stringify(out[key]));
-    assert.ok(out.pyxhr && out.pyxhr[0] === 'XHRNetworkError' && out.pyxhr[2].includes(xhrText), 'pyxhr turns the refusal into its network error: ' + JSON.stringify(out.pyxhr));
+    // pyodide.http raises XHRError in Pyodide 0.29.5 (XHRNetworkError in some builds), carrying the refusal in its text.
+    assert.ok(out.pyxhr && /^XHR(Network)?Error$/.test(out.pyxhr[0]) && (String(out.pyxhr[1]) + String(out.pyxhr[2])).includes(xhrText), 'pyxhr turns the refusal into its network error: ' + JSON.stringify(out.pyxhr));
     assert.ok(out.importScripts && out.importScripts[1].includes(D.t('python.net.blocked', { api: 'importScripts' })), JSON.stringify(out.importScripts));
     assert.deepEqual(out.gone, [], 'no sockets, streams, notifications, caches, IndexedDB or BroadcastChannel for Python code');
     assert.equal(out.storage, true, 'no navigator.storage');

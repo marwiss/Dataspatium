@@ -17,9 +17,10 @@
 
   test('loading: the asset loader reports load and done for an asset not yet in memory', async (assert) => {
     const names = D.assets.names('').filter((n) => !D.assets.peek(n));
-    // The smallest asset still on disk whose wrapper is a file of its own (a bundle would load megabytes for a tiny asset): cheap
+    // The smallest asset still on disk whose wrapper is a file of its own (a bundle would load megabytes for a tiny asset; an asset
+    // another test provided in memory has no file and cannot be loaded again once taken): cheap
     // to load, and it proves the events.
-    const sizes = names.map((n) => ({ n, size: (D.assets.info(n) || {}).size || 0, file: (D.assets.info(n) || {}).file || '' })).filter((x) => x.size > 0 && !/\.bundle\.js$/.test(x.file)).sort((a, b) => a.size - b.size);
+    const sizes = names.map((n) => ({ n, size: (D.assets.info(n) || {}).size || 0, file: (D.assets.info(n) || {}).file || '' })).filter((x) => x.size > 0 && x.file && !(D.assets.info(x.n) || {}).provided && !/\.bundle\.js$/.test(x.file)).sort((a, b) => a.size - b.size);
     assert.ok(sizes.length >= 1, 'an asset not yet decoded');
     const pick = sizes[0].n;
     const events = [];

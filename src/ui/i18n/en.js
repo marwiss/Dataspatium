@@ -5121,6 +5121,7 @@
     'plan.delivery.warn.unchecked': 'The checksum for {file} in {list} ({algorithm}) cannot be checked in the browser; only SHA-1, SHA-256, SHA-384 and SHA-512 can.',
     'plan.delivery.warn.docx': '{file} could not be read as a Word document: {message}',
     'plan.delivery.warn.read': '{file} could not be read: {message}',
+    'plan.delivery.warn.kept': '{files} could not be read again, so the sections and links of the plan were kept as they were; the new files were saved',
     'plan.delivery.warn.macros': '{file} contains macros. They are never run; only the text is read.',
     'plan.delivery.warn.more': '… and {n} more.',
     'plan.delivery.err.nogpkg': 'The delivery has no GeoPackage with the plan\'s layers.',

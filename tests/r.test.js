@@ -128,8 +128,9 @@
       'cat(paste0(names(res), "=", gsub("[\\r\\n]+", " ", res), collapse = "\\n"))',
     ].join('\n'));
     const out = {};
-    for (const line of stdoutOf(res).split('\n')) { const i = line.indexOf('='); if (i > 0) out[line.slice(0, i)] = line.slice(i + 1); }
-    assert.ok(Object.keys(out).length === 10, JSON.stringify(res.entries.map((e) => e.kind + ':' + (e.text || '').slice(0, 200))));
+    // webR gives each line of output as an entry of its own, without its newline.
+    for (const line of res.entries.filter((e) => e.kind === 'stdout').map((e) => e.text).join('\n').split('\n')) { const i = line.indexOf('='); if (i > 0) out[line.slice(0, i)] = line.slice(i + 1); }
+    assert.ok(Object.keys(out).length === 10, JSON.stringify(Object.keys(out)) + ' ' + JSON.stringify(res.entries.map((e) => e.kind + ':' + (e.text || '').slice(0, 200))));
     for (const key of ['download', 'url', 'mount', 'socket', 'await']) assert.ok(/^error:/.test(out[key]), key + ' fails with an R error: ' + out[key]);
     assert.equal(out.types, Array(14).fill('undefined').join(' '), 'no sockets, streams, workers, notifications, caches, IndexedDB or BroadcastChannel, and no storage, storageBuckets, locks or serviceWorker on the navigator in R\'s worker');
     assert.ok(/^string true (true|false)$/.test(out.nav), 'the navigator is a frozen copy that keeps its userAgent: ' + out.nav);
