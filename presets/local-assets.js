@@ -537,13 +537,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/anvandarguide.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 23729,
+  "size": 24349,
   "library": "dataspatium"
  },
  "docs/sv/lagen.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 28141,
+  "size": 29954,
   "library": "dataspatium"
  },
  "docs/sv/soka.md": {
@@ -1551,13 +1551,13 @@ Dataspatium.assets.addEntries({
  "docs/en/anvandarguide.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 23449,
+  "size": 24017,
   "library": "dataspatium"
  },
  "docs/en/lagen.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 28060,
+  "size": 29756,
   "library": "dataspatium"
  },
  "docs/en/soka.md": {
