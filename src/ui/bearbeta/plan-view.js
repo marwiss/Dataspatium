@@ -22,7 +22,8 @@
 
     /**
      * @param {any} ctx shell context (ui, services, store, shell)
-     * @param {{onTable: () => void, tileFactory?: Function}} options tileFactory for tests (no tiles are fetched)
+     * @param {{onTable: () => void, tileFactory?: Function, overlays?: any}} options tileFactory for tests (no tiles are fetched);
+     *   overlays the other datasets drawn over the plan (ui/viz/map-overlays: attach, extend, block, detach)
      */
     function create(ctx, options) {
       const { ui, shell, store } = ctx;
@@ -180,6 +181,7 @@
           groups = layerList.draw(L, hd.map, s.layers, symbols, s.hidden, { rowAt: (i) => s.rows[i], geometryOf: (r) => geo.parseGeometry(r.geometri), onClick: (row, lyr) => { s.selected = row; renderInspector(); highlight(lyr); } });
           layerCtl = layerList.create({ layers: s.layers, symbols, hidden: s.hidden, onChange: onLayers });
           updateLabels();
+          if (options.overlays) { await options.overlays.attach(hd, ds, { hostLayers: s.layers, fit, refresh: renderInspector }); if (my !== seq) return; }
           fit();
           // A section's areas stay marked when the map is drawn again (another background map or grid).
           if (s.marked.length) markObjects(s.marked, { fit: true });
@@ -242,6 +244,7 @@
         if (!handle || !L) return;
         let bounds = null;
         for (const g of groups) { const b = g.group.getBounds(); if (b && b.isValid()) bounds = bounds ? bounds.extend(b) : L.latLngBounds(b.getSouthWest(), b.getNorthEast()); }
+        if (options.overlays) bounds = options.overlays.extend(bounds);
         if (bounds) handle.map.fitBounds(bounds, { padding: [16, 16], maxZoom: 18, animate: false });
       }
       /** The layer list changed what shows: the map and the labels follow, and the plan remembers it. */
@@ -384,6 +387,7 @@
         if (chosen) items.push(chosen);
         // Layers: shown and hidden per file and layer, with counts and symbols (ui/viz/layer-list).
         items.push(h('h4', { text: t('map.layers') }), h('div', { class: 'dm-stack-sm dm-plan-layers' }, layerCtl ? layerCtl.list() : null));
+        if (options.overlays) items.push(options.overlays.block());
         if (s.selected) {
           items.push(h('h4', { text: t('plan.selected') }), selectedDetails(s.selected));
           const block = D.require('ui/kinds/comment-block');
@@ -537,7 +541,7 @@
         return box;
       }
 
-      function destroy() { seq++; sections.destroy(); if (handle) { handle.finalize(); handle = null; } groups = []; labelLayer = null; marks = null; layerCtl = null; mapEl = null; slots = null; }
+      function destroy() { seq++; if (options.overlays) options.overlays.detach(); sections.destroy(); if (handle) { handle.finalize(); handle = null; } groups = []; labelLayer = null; marks = null; layerCtl = null; mapEl = null; slots = null; }
       return { render, destroy, state: s, sections, get handle() { return handle; }, get layers() { return layerCtl; }, get marks() { return marks; } };
     }
     return { create };
