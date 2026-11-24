@@ -621,7 +621,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kartor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 19106,
+  "size": 21538,
   "library": "dataspatium"
  },
  "docs/sv/raster.md": {
@@ -1635,7 +1635,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kartor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 19220,
+  "size": 21582,
   "library": "dataspatium"
  },
  "docs/en/raster.md": {
