@@ -636,6 +636,9 @@
         finalize: () => {
           try {
             map.stop();
+            // Leaflet 1.9 ends a zoom animation from a 250 ms timer that remove() does not clear; after remove() that timer moves a
+            // map whose panes are gone and throws (_leaflet_pos of undefined). End the animation now, while the panes still exist.
+            if (/** @type {any} */ (map)._animatingZoom) /** @type {any} */ (map)._onZoomTransitionEnd();
             const layers = []; map.eachLayer((l) => layers.push(l));
             for (const l of layers) map.removeLayer(l);
             map.remove();

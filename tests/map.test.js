@@ -304,6 +304,27 @@
     return 'ok';
   });
 
+  test('map: a map taken down in the middle of a zoom animation throws nothing afterwards', async (assert) => {
+    const meta = await datasets.create({ name: 'Mitt i zoomen', columns: [{ name: 'id', type: 'integer' }, { name: 'geometry', type: 'text' }], rows: [[1, JSON.stringify(square(17, 59, 1))]] });
+    created.push(meta.id);
+    const chart = charts.create('map', meta, 'Mitt i zoomen');
+    chart.map = leaflet.defaultMap(await datasets.columns(meta.id), meta);
+    const el = host(600, 400);
+    const errors = [];
+    const onError = (ev) => { errors.push(String((ev && (ev.message || (ev.error && ev.error.message))) || ev)); };
+    window.addEventListener('error', onError);
+    try {
+      const hd = await leaflet.render(el, chart, {});
+      // An animated zoom, as a fit in a narrow layout starts, and the map taken down before its 250 ms timer ends it.
+      hd.map.setZoom(hd.map.getZoom() + 1, { animate: true });
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      hd.finalize();
+      await wait(400);
+      assert.deepEqual(errors, [], 'nothing thrown after the map was taken down');
+    } finally { window.removeEventListener('error', onError); el.remove(); }
+    return 'ok';
+  });
+
   test('map: 10 000 polygons render in under 5 seconds and pan without errors', async (assert) => {
     const rows = [];
     for (let i = 0; i < 100; i++) for (let j = 0; j < 100; j++) rows.push([i * 100 + j, (i + j) % 7, JSON.stringify(square(11 + i * 0.1, 55 + j * 0.1, 0.09))]);
