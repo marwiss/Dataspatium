@@ -1201,6 +1201,25 @@
         }
       ]
     },
+    "leaflet-geoman": {
+      "version": "2.18.3",
+      "npm": "@geoman-io/leaflet-geoman-free",
+      "license": "MIT",
+      "homepage": "https://geoman.io/",
+      "notes": "Drawing and editing of areas, lines and points on a Leaflet 1.x map (L.PM, map.pm, layer.pm): the plan view's edit mode (ui/bearbeta/plan-edit) draws a new area into a theme, edits its vertices and moves it. The free edition only: a classic script (one IIFE) that needs the global L, loaded with its stylesheet on first use; its own toolbar is not shown, the app's buttons call it. The bundle holds parts of lodash, Turf and polyclip-ts, all MIT.",
+      "files": [
+        {
+          "path": "dist/leaflet-geoman.js",
+          "as": "leaflet-geoman.js",
+          "wrap": false
+        },
+        {
+          "path": "dist/leaflet-geoman.css",
+          "as": "leaflet-geoman.css",
+          "wrap": false
+        }
+      ]
+    },
     "proj4": {
       "version": "2.22.0",
       "npm": "proj4",

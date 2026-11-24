@@ -3021,6 +3021,17 @@ Dataspatium.assets.manifest({
    "assets": 2,
    "notes": "Leaflet 1.9 is the last series shipped as a classic script with the global L (2.0 is ES modules only). The map view (viz/leaflet) loads leaflet.js and leaflet.css as plain files; the text copies (leaflet-inline.*) are inlined into published HTML. Points are drawn as circle markers, so the default marker images are not needed."
   },
+  "leaflet-geoman": {
+   "version": "2.18.3",
+   "license": "MIT",
+   "homepage": "https://geoman.io/",
+   "direct": [
+    "leaflet-geoman.css",
+    "leaflet-geoman.js"
+   ],
+   "assets": 0,
+   "notes": "Drawing and editing of areas, lines and points on a Leaflet 1.x map (L.PM, map.pm, layer.pm): the plan view's edit mode (ui/bearbeta/plan-edit) draws a new area into a theme, edits its vertices and moves it. The free edition only: a classic script (one IIFE) that needs the global L, loaded with its stylesheet on first use; its own toolbar is not shown, the app's buttons call it. The bundle holds parts of lodash, Turf and polyclip-ts, all MIT."
+  },
   "proj4": {
    "version": "2.22.0",
    "license": "MIT",
