@@ -289,21 +289,22 @@ flowchart LR
     admin --> adminapi
 ```
 
-Dataspatium 3.0.0 fungerar med Dataregium 3.0.0. Samma nummer hör ihop. Snabbstarten [snabbstart.md](docs/sv/snabbstart.md) tar
+Dataspatium fungerar med Dataregium av samma nivå; numren behöver inte vara samma. Snabbstarten [snabbstart.md](docs/sv/snabbstart.md) tar
 paret från ingenting till ett ärende på tjugo minuter.
 
-### Utgåvorna 1, 2 och 3
+### Nivåerna och utgåvorna
 
-Det finns en utgåva per huvudnummer, och Dataspatium och Dataregium med samma nummer hör ihop:
+Utgåvorna är en serie från main, i beta från 0.1.0, och Dataspatium och Dataregium släpps samma dag. Serierna 1.0.0,
+2.0.0 och 3.0.0 finns inte längre. I stället väljer du en *nivå* i appen (eller den som driftsätter appen förinställer den), och
+det som hör till en högre nivå syns inte. En klient och en server av samma nivå fungerar ihop:
 
-| Dataspatium | Vad den har | Hör ihop med |
+| Nivå | Vad den har | Hör ihop med |
 |---|---|---|
-| 1.0.0 | Datainhämtning från filer och öppna API:er, bearbetning, R, SQL och reguljära uttryck, svenska planer, diagram och kartor i diagram, dashboards, dokument, export och delning. Mot en server bara Documents API: hämta dokument som datamängder och skicka tillbaka datamängder och filer. Inga ärenden, inga modeller och ingen Python | Dataregium 1.0.0 (bara Documents API) |
-| 2.0.0 | Allt i 1.0.0 och dessutom lägena Söka och Dela, Python och statistik utan kod, fler källor, kartvyer, nordiska planer, grafer, IFC-modeller i 3D med kontroll mot IDS, flöden, Dataspatium Mobil, ärenden med viewpoints (BCF API 3.0 och 2.1), serverns IFC-graf, kortet *Administration* och kortet *Projektets medlemmar*, navigering med vy-kub och snitt, fler geodatakällor | Dataregium 2.0.0 |
-| 3.0.0 | Allt i 2.0.0 och dessutom kortet *Validera modellen*, kollisionskontroll, Fråga AI och Ändra med AI, nya tomma modeller i valfritt schema, Jämför versioner, publicering med basversion och förhandskontroll, ändringsförslag som prövas och godkänns på servern med val vid krockar, och grafen i lättare form, och efter omsläppen AI-assistenten, kommandona, flöden med villkor och slingor, styrning utifrån via bryggan och Dataregiums team; därtill ny byggnad från en uppdragsbeskrivning, den digitala tvillingen, läget Kontrollera, topologin, rummen och rätt IFC-klass; vidare typer med materialskikt, egenskaper och svenska beteckningar, ändra element, fler byggdelar, klimatdeklaration, materialinventering, buildingSMART:s regler, BCF 3.0 och personuppgifter i IFC-modeller; och ortofoton för Sverige, Danmark, Finland och Island | Dataregium 3.0.0 |
+| Dokument | Datainhämtning från filer och öppna API:er, bearbetning, R, SQL och reguljära uttryck, svenska planer, diagram och kartor i diagram, dashboards, dokument, export och delning. Mot en server bara Documents API: hämta dokument som datamängder och skicka tillbaka datamängder och filer. Inga ärenden, inga modeller och ingen Python | Dataregium på nivån Dokument (bara Documents API) |
+| BIM och GIS | Allt i Dokument och dessutom lägena Söka och Dela, Python och statistik utan kod, fler källor, kartvyer, nordiska planer, grafer, IFC-modeller i 3D med kontroll mot IDS, flöden, Dataspatium Mobil, ärenden med viewpoints (BCF API 3.0 och 2.1), serverns IFC-graf, kortet *Administration* och kortet *Projektets medlemmar*, navigering med vy-kub och snitt, fler geodatakällor | Dataregium på nivån BIM och GIS |
+| Experimentell | Allt i BIM och GIS och dessutom kortet *Validera modellen*, kollisionskontroll, Fråga AI och Ändra med AI, nya tomma modeller i valfritt schema, Jämför versioner, publicering med basversion och förhandskontroll, ändringsförslag som prövas och godkänns på servern med val vid krockar, och grafen i lättare form, och efter omsläppen AI-assistenten, kommandona, flöden med villkor och slingor, styrning utifrån via bryggan och Dataregiums team; därtill ny byggnad från en uppdragsbeskrivning, den digitala tvillingen, läget Kontrollera, topologin, rummen och rätt IFC-klass; vidare typer med materialskikt, egenskaper och svenska beteckningar, ändra element, fler byggdelar, klimatdeklaration, materialinventering, buildingSMART:s regler, BCF 3.0 och personuppgifter i IFC-modeller; och ortofoton för Sverige, Danmark, Finland och Island | Dataregium på nivån Experimentell |
 
-En ny utgåva i samma huvudnummer ersätter den förra; bara den senaste i varje serie rättas. Appens uppdateringskontroll erbjuder
-nästa huvudnummer, och datamängder, listor, diagram, mallar och skript följer med när du öppnar den nya versionens `index.html`.
+Appens uppdateringskontroll säger till när det finns en nyare utgåva, och datamängder, listor, diagram, mallar och skript följer med när du öppnar den nya versionens `index.html`.
 
 ## Lär dig mer
 
@@ -376,9 +377,9 @@ svar verktygen hämtar ur modellen, efter samtycke för ändamålet AI, med din 
 till lokala modeller. Kommentarer och paket bär det namn du själv anger. Kontrollerna och proven som visar dem står i
 [docs/sv/sakerhet.md](docs/sv/sakerhet.md).
 
-## Nästa i 3-serien
+## Nästa
 
-3.0.0 är 3-seriens utgåva, gjord tillsammans med Dataregium 3.0.0, och ges ut igen när serien växer. Riktningen är att modeller ska
+0.1.0 är den första betan, gjord tillsammans med Dataregium 0.1.0, och följs av nya utgåvor när appen växer. Riktningen är att modeller ska
 kunna skapas och ändras genom att du beskriver vad du vill ha, medan en människa alltid granskar och godkänner och servern håller
 ordning på versionerna. Det här avsnittet säger vad som är beslutat, för den, människa eller AI-agent, som för en del av det vidare;
 serverns sida står i Dataregiums README under samma rubrik.

@@ -297,21 +297,22 @@ flowchart LR
     admin --> adminapi
 ```
 
-Dataspatium 3.0.0 works with Dataregium 3.0.0. The same number goes together. The quick start [snabbstart.md](snabbstart.md) takes the
+Dataspatium works with Dataregium of the same tier; the numbers need not be the same. The quick start [snabbstart.md](snabbstart.md) takes the
 pair from nothing to an issue in twenty minutes.
 
-### The releases 1, 2 and 3
+### The tiers and the releases
 
-There is one release per major number, and Dataspatium and Dataregium with the same number go together:
+The releases are one series from main, in beta from 0.1.0, and Dataspatium and Dataregium are released on the same day.
+The series 1.0.0, 2.0.0 and 3.0.0 are gone. Instead you choose a *tier* in the app (or whoever deploys the app presets it), and
+what belongs to a higher tier is not shown. A client and a server of the same tier work together:
 
-| Dataspatium | What it has | Goes with |
+| Tier | What it has | Goes with |
 |---|---|---|
-| 1.0.0 | Data from files and open APIs, processing, R, SQL and regular expressions, Swedish plans, charts and maps in charts, dashboards, documents, export and sharing. Against a server only Documents API: fetch documents as datasets and send datasets and files back. No issues, no models and no Python | Dataregium 1.0.0 (Documents API only) |
-| 2.0.0 | Everything in 1.0.0 and also the modes Search and Share, Python and statistics without code, more sources, map views, Nordic plans, graphs, IFC models in 3D with IDS checks, flows, Dataspatium Mobile, issues with viewpoints (BCF API 3.0 and 2.1), the server's IFC graph, the card *Administration* and the card *The project's members*, navigation with a view cube and sections, more geodata sources | Dataregium 2.0.0 |
-| 3.0.0 | Everything in 2.0.0 and also the card *Validate the model*, clash detection, Ask AI and Change with AI, new empty models in the schema of your choice, Compare versions, publishing with a base version and precheck, change proposals that are tried and approved on the server with a choice at conflicts, and the graph in a lighter form, and after the re-releases the AI assistant, the commands, flows with conditions and loops, control through the bridge and Dataregium's teams; also a new building from a brief, the digital twin, the Check mode, the topology, the rooms and the right IFC class; further layered types, properties and Swedish designations, editing elements, more building elements, a climate declaration, a material inventory, buildingSMART's rules, BCF 3.0 and personal data in IFC models; and orthophotos for Sweden, Denmark, Finland and Iceland | Dataregium 3.0.0 |
+| Documents | Data from files and open APIs, processing, R, SQL and regular expressions, Swedish plans, charts and maps in charts, dashboards, documents, export and sharing. Against a server only Documents API: fetch documents as datasets and send datasets and files back. No issues, no models and no Python | Dataregium at the tier Documents (Documents API only) |
+| BIM and GIS | Everything in Documents and also the modes Search and Share, Python and statistics without code, more sources, map views, Nordic plans, graphs, IFC models in 3D with IDS checks, flows, Dataspatium Mobile, issues with viewpoints (BCF API 3.0 and 2.1), the server's IFC graph, the card *Administration* and the card *The project's members*, navigation with a view cube and sections, more geodata sources | Dataregium at the tier BIM and GIS |
+| Experimental | Everything in BIM and GIS and also the card *Validate the model*, clash detection, Ask AI and Change with AI, new empty models in the schema of your choice, Compare versions, publishing with a base version and precheck, change proposals that are tried and approved on the server with a choice at conflicts, and the graph in a lighter form, and after the re-releases the AI assistant, the commands, flows with conditions and loops, control through the bridge and Dataregium's teams; also a new building from a brief, the digital twin, the Check mode, the topology, the rooms and the right IFC class; further layered types, properties and Swedish designations, editing elements, more building elements, a climate declaration, a material inventory, buildingSMART's rules, BCF 3.0 and personal data in IFC models; and orthophotos for Sweden, Denmark, Finland and Iceland | Dataregium at the tier Experimental |
 
-A new release in the same major number replaces the previous one; only the latest in each series is corrected. The app's update check
-offers the next major number, and datasets, lists, charts, templates and scripts come along when you open the new version's
+The app's update check says when there is a newer release, and datasets, lists, charts, templates and scripts come along when you open the new version's
 `index.html`.
 
 ## Learn more
@@ -384,9 +385,9 @@ tools fetch from the model are sent, after consent for the purpose AI, with your
 restrict to local models. Comments and bundles carry the name you give yourself. The controls and the tests that prove them are in
 [sakerhet.md](sakerhet.md) (Security).
 
-## Next in the 3 series
+## Next
 
-3.0.0 is the 3 series' release, made together with Dataregium 3.0.0, and is released again as the series grows. The direction is that
+0.1.0 is the first beta, made together with Dataregium 0.1.0, and new releases follow as the app grows. The direction is that
 models can be created and changed by describing what you want, while a human always reviews and approves and the server keeps the
 versions in order. This section says what is decided, for whoever, human or AI agent, carries part of it further; the server's side is
 in Dataregium's README under the same heading.
