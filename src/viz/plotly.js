@@ -133,7 +133,7 @@
     /** How plotly reads a link's address in a tag (lib/svg_text_utils HREFMATCH). */
     const HREF = /(^|[\s"'])href\s*=\s*("([^"]*)"|'([^']*)')/i;
     /** What may not be in a link's address: controls and white space, quotes, angle brackets, a backslash and a template field. */
-    const NOT_IN_LINK = /[\u0000- \u007f-\u009f"<>\\`]|%\{/;
+    const NOT_IN_LINK = /[\u0000-\u0020\u007f-\u009f"<>\\`]|%\{/;
     /**
      * A link's address when it may stay a link, as the URL constructor writes it: an absolute https URL with a host and without
      * a user or password, nothing in it that the tag, a template (`%{…}`) or plotly (which runs it through decodeURI) would
