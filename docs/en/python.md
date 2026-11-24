@@ -106,7 +106,12 @@ A plotly map (for example `px.scatter_geo`, `px.choropleth` and `px.scatter_map`
 before the map loads, and an image, GeoJSON or anything else the figure fetches from a web address asks for consent to
 web addresses; each purpose is asked once, naming the hosts. Without consent the chart is drawn without them, with a
 line below that says so. In published HTML they come along only when the consent is kept. Formatting in the chart's
-text (`<b>`, `<span>` and the others) keeps only a plain colour: styles, links and other attributes are removed.
+text (`<b>`, `<span>` and the others) keeps only a plain colour: styles and other attributes are removed. A link
+(`<a href>`) in the chart's text works only when its address is a full https address, and it keeps only the address;
+other addresses (javascript:, data:, http:, relative ones and other schemes) are shown as text. When you click a link
+the app never leaves the page directly: a dialog says that the link leads out of the app, to which host, and shows
+the whole address. Only when you choose *Open the link* does it open in a new tab, with no tie back to the app. In
+exported files and published HTML links are text, since there is no app there to ask.
 plotly's button for sharing the chart through Plotly's cloud is not there.
 
 ## Python charts in Visualise

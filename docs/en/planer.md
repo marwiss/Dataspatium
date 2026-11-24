@@ -35,11 +35,11 @@ catalogue says about the provision: code, type, validity and the catalogue's for
 off per type, a background map appears after consent, and the buttons give *Save as map view* (for Visualise,
 dashboards and Publish), *Plan provisions* (the list as Markdown) and *Show as table*.
 
-A comprehensive plan is drawn layer by layer: land and water use filled per content type in Boverket's colours and the
-other layers each in a colour of its own (see [The layers](#the-layers)). The legend in the inspector shows the area per
-land and water use.
+A comprehensive plan is drawn layer by layer: land and water use filled per content type in Boverket's colours, the other
+layers in Boverket's colours where the plan gives them and otherwise each in a colour of its own (see [The
+layers](#the-layers)). The legend in the inspector shows the area per land and water use.
 
-Lines (no-exit lines, fences, development directions) and points (for example the height of the ground) are drawn as they are. A provision limited in height is drawn by its footprint, and the inspector shows the height in the plan's height system (RH 2000 in plans to NGP): lower limit, upper limit or both. The inspector also shows the plan's decision (adopted, legal force, appealed, implementation period, case number, type of decision), the plan description's name and the documents, and for the chosen object other facts such as the period of validity, a secondary property boundary, which use provisions a property provision regulates, the level of connection, what the content touches and where in the plan document it is described. Content described only in text, without a place on the map, is listed under *objects without a place on the map* and can be chosen there.
+Lines (no-exit lines, fences, development directions) and points (for example the height of the ground) are drawn as they are. A provision limited in height is drawn by its footprint, and the inspector shows the height in the plan's height system (RH 2000 in plans to NGP): lower limit, upper limit or both. The inspector also shows the plan's identity (its objektidentitet, without braces), a comprehensive plan's planhändelse (plan event) with its date, the plan's decision (adopted, legal force, appealed, implementation period, case number, type of decision), the plan description's name and the documents, and for the chosen object other facts such as the period of validity, a secondary property boundary, which use provisions a property provision regulates, the level of connection, what the content touches and where in the plan document it is described. Content described only in text, without a place on the map, is listed under *objects without a place on the map* and can be chosen there.
 
 ## A digital comprehensive plan: layers, positions and files
 
@@ -61,12 +61,17 @@ source layers has one layer per theme. Each layer has a switch, its number of ob
 - A plan with more than twelve layers has a filter that narrows the list by the layer's or the file's name.
 - Which layers are hidden is kept per dataset and applies again when you come back to the plan, also after a reload.
 
-The symbols tell the layers apart. Land and water use keeps Boverket's colours per use, so that the land use map looks like
-Boverket's. The plan boundary is a dark outline and the areas a dashed one. The other layers each get a colour from the app's
-colour-blind safe palette: areas are filled with an outline, lines are drawn as lines (dashed when two line layers would
-otherwise share a colour) and points with a marker shape of their own (circle, square, triangle or diamond). The legend in the
-inspector lists only the layers that show, grouped as the list and with the same symbols, and land and water use with its uses
-and their area in hectares.
+The symbols tell the layers apart. Boverket's colours always come first, in new and older plans and for every theme and
+object type: land and water use keeps Boverket's colours per use, so that the land use map looks like Boverket's, and an
+object whose row gives a colour (the column `farg`, with the colour names of Planbestämmelsekatalogen) is drawn in it. When
+every object in a layer has a colour the layer is drawn object by object and the legend shows one line per category and
+colour; when only some have one they are drawn in their colour and the rest in the layer's own. Areas are filled with the
+colour, lines and outlines are drawn in it. A detailed plan is drawn as before: the uses in Boverket's colours and the other
+provisions as the plan map's outlines. The plan boundary is a dark outline and the areas a dashed one. The other layers each
+get a colour from the app's colour-blind safe palette: areas are filled with an outline, lines are drawn as lines (dashed
+when two line layers would otherwise share a colour) and points with a marker shape of their own (circle, square, triangle
+or diamond). The legend in the inspector lists only the layers that show, grouped as the list and with the same symbols, and
+land and water use with its uses and their area in hectares.
 
 ### Positions
 

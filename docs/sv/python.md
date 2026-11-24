@@ -105,7 +105,12 @@ En plotly-karta (till exempel `px.scatter_geo`, `px.choropleth` och `px.scatter_
 bakgrundskartor innan kartan laddas, och en bild, GeoJSON eller annat som figuren hämtar från en webbadress frågar om
 samtycke till webbadresser; varje ändamål frågas en gång, med värdarna i frågan. Utan samtycke ritas diagrammet utan
 dem, med en rad under som säger det. I publicerad HTML följer de med bara när samtycket är sparat. Formatering i
-diagrammets text (`<b>`, `<span>` och de andra) behåller bara en ren färg: stilar, länkar och andra attribut tas bort.
+diagrammets text (`<b>`, `<span>` och de andra) behåller bara en ren färg: stilar och andra attribut tas bort.
+En länk (`<a href>`) i diagrammets text fungerar bara när adressen är en fullständig https-adress, och den behåller
+bara adressen; andra adresser (javascript:, data:, http:, relativa och andra scheman) visas som text. Klickar du på
+en länk lämnar appen aldrig sidan direkt: en dialog säger att länken leder ut ur appen, till vilken värd, och visar
+hela adressen. Först när du väljer *Öppna länken* öppnas den i en ny flik, utan koppling tillbaka till appen. I
+exporterade filer och publicerad HTML är länkarna text, eftersom ingen app finns där som kan fråga.
 plotlys knapp för att dela diagrammet via Plotlys moln finns inte.
 
 ## Python-diagram i Visualisera

@@ -37,13 +37,14 @@ formulering. Lagren slås av och på per typ, bakgrundskarta visas efter samtyck
 kartvy* (för Visualisera, dashboards och Publicera), *Planbestämmelser* (bestämmelselistan som Markdown) och
 *Visa som tabell*.
 
-En översiktsplan ritas lager för lager: mark- och vattenanvändningen fylld per innehållstyp med Boverkets färger och
-övriga lager med var sin färg (se [Lagren](#lagren)). Teckenförklaringen i inspektören visar arean per mark- och
-vattenanvändning.
+En översiktsplan ritas lager för lager: mark- och vattenanvändningen fylld per innehållstyp med Boverkets färger, övriga
+lager i Boverkets färger där planen anger dem och annars med var sin färg (se [Lagren](#lagren)). Teckenförklaringen i
+inspektören visar arean per mark- och vattenanvändning.
 
 Linjer (utfartsförbud, stängsel, utvecklingsinriktningar) och punkter (till exempel markens höjd) ritas som de är. En
 bestämmelse som är begränsad i höjd ritas med sitt fotavtryck, och inspektören visar höjden i planens höjdsystem (RH 2000 i planer till NGP): underkant,
-överkant eller båda. Inspektören visar också planens beslut (antagen, laga kraft, överklagad, genomförandetid,
+överkant eller båda. Inspektören visar också planens identitet (objektidentiteten, utan klamrar), en översiktsplans
+planhändelse med datum, planens beslut (antagen, laga kraft, överklagad, genomförandetid,
 diarienummer, beslutstyp), planbeskrivningens namn och handlingarna, och för det valda objektet övriga uppgifter som
 giltighetstid, sekundär egenskapsgräns, vilka användningsbestämmelser en egenskap reglerar, sambandsnivå, vad
 innehållet berör och var i planhandlingen det beskrivs. Innehåll som bara beskrivs i text, utan läge i kartan, listas
@@ -68,12 +69,17 @@ källagret har ett lager per tema. Varje lager har en växel, sitt antal objekt 
 - Har planen fler än tolv lager finns ett filter som smalnar av listan på lagrets eller filens namn.
 - Vilka lager som är dolda sparas per datamängd och gäller igen när du kommer tillbaka till planen, också efter en omladdning.
 
-Symbolerna skiljer lagren åt. Mark- och vattenanvändningen behåller Boverkets färger per användning, så att markanvändningskartan
-ser ut som Boverkets. Planens gräns är en mörk kontur och områdena en streckad. Övriga lager får var sin färg ur appens
-färgblindsäkra palett: ytor fylls och har kontur, linjer ritas som linjer (streckade när två linjelager annars skulle få samma
-färg) och punkter med en egen markörform (cirkel, kvadrat, triangel eller romb). Teckenförklaringen i inspektören visar bara de
-lager som visas, grupperade som listan och med samma symboler, och mark- och vattenanvändningen med sina användningar och deras
-area i hektar.
+Symbolerna skiljer lagren åt. Boverkets färger går alltid först, i nya och äldre planer och för alla teman och objekttyper:
+mark- och vattenanvändningen behåller Boverkets färger per användning, så att markanvändningskartan ser ut som Boverkets,
+och ett objekt vars rad anger en färg (kolumnen `farg`, med Planbestämmelsekatalogens färgnamn) ritas i den. Har alla objekt
+i ett lager en färg ritas lagret objekt för objekt och teckenförklaringen visar en rad per kategori och färg; har bara några
+en färg ritas de i sin färg och resten i lagrets egen. Ytor fylls med färgen, linjer och konturer ritas i den. En detaljplan
+ritas som förut: användningarna i Boverkets färger och övriga bestämmelser som plankartans konturer. Planens gräns är en
+mörk kontur och områdena en streckad. Övriga lager får var sin färg ur appens färgblindsäkra palett: ytor fylls och har
+kontur, linjer ritas som linjer (streckade när två linjelager annars skulle få samma färg) och punkter med en egen
+markörform (cirkel, kvadrat, triangel eller romb). Teckenförklaringen i inspektören visar bara de lager som visas,
+grupperade som listan och med samma symboler, och mark- och vattenanvändningen med sina användningar och deras area i
+hektar.
 
 ### Ställningstaganden
 
