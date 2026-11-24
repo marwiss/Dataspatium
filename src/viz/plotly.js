@@ -11,6 +11,10 @@
  * in; its text is pseudo-HTML whose styles and links reach the page. Every drawing works on a copy built key by key: text
  * keeps only bare tags, and prepare() asks once per purpose for the hosts the figure names (background maps, web addresses),
  * leaves out what is refused or cannot be checked, and says so. Plotly's cloud is never offered.
+ *
+ * A link in a chart drawn in the app (render) stays a link only when its address is an absolute https URL, rebuilt with that
+ * address alone; a click on it never navigates: a dialog names the host and shows the address, and only a yes opens it in a new
+ * tab without opener or referrer (F107 a). Exports and published HTML, which have no app to ask, keep every link as text.
  */
 (function () {
   'use strict';
@@ -126,13 +130,33 @@
     /** A plain colour, the one style a tag keeps: no entity, escape, url() or second declaration fits. */
     const COLOR = /^\s*color\s*:\s*(#[0-9a-f]{3,8}|[a-z]{3,20}|rgba?\(\s*[\d.]{1,5}%?(\s*,\s*[\d.]{1,5}%?){2,3}\s*\))\s*$/i;
     const angles = (s) => s.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    /** How plotly reads a link's address in a tag (lib/svg_text_utils HREFMATCH). */
+    const HREF = /(^|[\s"'])href\s*=\s*("([^"]*)"|'([^']*)')/i;
+    /** What may not be in a link's address: controls and white space, quotes, angle brackets, a backslash and a template field. */
+    const NOT_IN_LINK = /[\u0000- \u007f-\u009f"<>\\`]|%\{/;
+    /**
+     * A link's address when it may stay a link, as the URL constructor writes it: an absolute https URL with a host and without
+     * a user or password, nothing in it that the tag, a template (`%{…}`) or plotly (which runs it through decodeURI) would
+     * read otherwise. Anything else (javascript:, data:, http:, relative and protocol-relative addresses, other schemes) is null.
+     * @param {any} value @returns {URL|null}
+     */
+    function linkUrl(value) {
+      if (typeof value !== 'string' || value.length > 2048 || !/^https:\/\//i.test(value) || NOT_IN_LINK.test(value)) return null;
+      let url;
+      try { url = new URL(value); } catch (_err) { return null; }
+      if (url.protocol !== 'https:' || !url.hostname || url.username || url.password || NOT_IN_LINK.test(url.href)) return null;
+      try { decodeURI(url.href); } catch (_err) { return null; }
+      return url;
+    }
     /**
      * Text plotly reads as pseudo-HTML, with every tag it knows rebuilt bare: `<b>`, `<span>` and the rest keep at most a plain
      * colour, `<br>` and `<extra>` stay, and every other `<` and `>` becomes an entity, which plotly shows as the character. So
-     * no style, link or address reaches the page, also not when a template fills in values (they are cleaned the same way).
-     * @param {string} s @returns {string}
+     * no style or address reaches the page, also not when a template fills in values (they are cleaned the same way). With
+     * `links` a link to an absolute https URL keeps that address, and only it: the URL as written by the URL constructor, which
+     * holds no quote or angle bracket, so it cannot leave the attribute (plotly reads the address as it stands, without entities).
+     * @param {string} s @param {boolean} [links] @returns {string}
      */
-    function cleanText(s) {
+    function cleanText(s, links) {
       if (s.indexOf('<') < 0 && s.indexOf('>') < 0) return s;
       return s.split(SPLIT_TAGS).map((part, i) => {
         const m = i % 2 ? ONE_TAG.exec(part) : null;
@@ -142,6 +166,11 @@
         if (name === 'extra') return m[1] ? '</extra>' : '<extra>';
         if (!TAGS.has(name)) return angles(part);
         if (m[1]) return `</${name}>`;
+        if (name === 'a' && links) {
+          const href = HREF.exec(m[4] || '');
+          const url = href ? linkUrl(href[3] !== undefined ? href[3] : href[4]) : null;
+          if (url) return `<a href="${url.href}">`;
+        }
         const style = STYLE.exec(m[4] || '');
         const color = style ? String(style[3] || style[4] || '').split(';').find((d) => COLOR.test(d)) : null;
         return color ? `<${name} style="${color.trim()}">` : `<${name}>`;
@@ -162,29 +191,30 @@
     }
     /**
      * A copy made key by key: own keys only and never those in DROP_KEYS, no deeper than MAX_DEPTH, and every string cleaned
-     * for where it is drawn.
+     * for where it is drawn (`links` as in cleanText).
      */
-    function cleanCopy(v, ctx, depth) {
-      if (typeof v === 'string') return ctx === 'map' ? cleanMapText(v) : ctx === 'source' ? v : cleanText(v);
+    function cleanCopy(v, ctx, depth, links) {
+      if (typeof v === 'string') return ctx === 'map' ? cleanMapText(v) : ctx === 'source' ? v : cleanText(v, links);
       if (!v || typeof v !== 'object') return v;
       if (depth > MAX_DEPTH) return null;
       // Only a source that is an address itself is left as it is; what an object or array under `source` holds is text.
       if (ctx === 'source') ctx = 'text';
-      if (Array.isArray(v)) return v.map((x) => cleanCopy(x, ctx, depth + 1));
+      if (Array.isArray(v)) return v.map((x) => cleanCopy(x, ctx, depth + 1, links));
       if (ArrayBuffer.isView(v)) return /** @type {any} */ (v).slice ? /** @type {any} */ (v).slice() : null;
       const out = {};
-      for (const k of Object.keys(v)) if (!DROP_KEYS.has(k)) out[k] = cleanCopy(v[k], contextOf(ctx, k), depth + 1);
+      for (const k of Object.keys(v)) if (!DROP_KEYS.has(k)) out[k] = cleanCopy(v[k], contextOf(ctx, k), depth + 1, links);
       return out;
     }
     /**
      * The figure's traces and layout as such a copy, with plotly's own template dropped (the app sets its own), Mapbox left out,
-     * and each geo and map trace's subplot written as plotly reads it, so the subplot analysed is the one drawn.
+     * and each geo and map trace's subplot written as plotly reads it, so the subplot analysed is the one drawn. With `links`
+     * the text keeps its links to https addresses (a chart drawn in the app, which asks before one is followed).
      */
-    function copyOf(fig) {
-      const layout = fig && isPlain(fig.layout) ? cleanCopy(fig.layout, 'text', 0) : {};
+    function copyOf(fig, links) {
+      const layout = fig && isPlain(fig.layout) ? cleanCopy(fig.layout, 'text', 0, links) : {};
       delete layout.template;
       for (const k of Object.keys(layout)) if (/^mapbox\d*$/.test(k)) delete layout[k];
-      const data = (fig && Array.isArray(fig.data) ? cleanCopy(fig.data, 'text', 0) : []).filter((tr) => !GONE_TYPES.has(typeOf(tr)));
+      const data = (fig && Array.isArray(fig.data) ? cleanCopy(fig.data, 'text', 0, links) : []).filter((tr) => !GONE_TYPES.has(typeOf(tr)));
       for (const tr of data) {
         if (!isPlain(tr)) continue;
         if (GEO_TYPES.has(typeOf(tr))) tr.geo = canon(tr.geo, 'geo');
@@ -361,8 +391,8 @@
     }
 
     const allows = (allowed, purpose, host) => { const a = allowed && allowed[purpose]; return a === true || !!(a && typeof a.has === 'function' && a.has(host)); };
-    /** A copy of the figure with its parts. */
-    function analyze(fig) { const figure = copyOf(fig); return { figure, parts: partsOf(figure) }; }
+    /** A copy of the figure with its parts (`links` as in copyOf). */
+    function analyze(fig, links) { const figure = copyOf(fig, links); return { figure, parts: partsOf(figure) }; }
 
     /** The questions for some parts: one per purpose (background maps, then web addresses) with every host it names. */
     function questionsOf(parts) {
@@ -406,13 +436,14 @@
     /**
      * A copy of the figure without what may not be fetched: a refused or missing consent removes the geo map's shapes (and the
      * traces placed by name or code), a map with its traces, an image, a trace with GeoJSON or a picture by address, or a
-     * button or slider step that would bring them in; what cannot be checked is removed always. Its text keeps only bare tags.
-     * Pure: nothing is asked or drawn.
+     * button or slider step that would bring them in; what cannot be checked is removed always. Its text keeps only bare tags
+     * (and, with `links`, links to absolute https addresses). Pure: nothing is asked or drawn.
      * @param {any} fig figure JSON ({data, layout})
      * @param {{basemaps?: true|Set<string>, url?: true|Set<string>}} [allowed] the hosts allowed per purpose (true for all)
+     * @param {{links?: boolean}} [options]
      * @returns {{figure: {data: any[], layout: any}, removed: {basemaps: boolean, url: boolean}, topojson: boolean}}
      */
-    function sanitize(fig, allowed = {}) { return apply(analyze(fig), allowed); }
+    function sanitize(fig, allowed = {}, options = {}) { return apply(analyze(fig, !!options.links), allowed); }
 
     /** The message for what a drawing left out, or ''. */
     function noticeFor(removed) {
@@ -428,12 +459,13 @@
      * A copy of the figure that may be drawn now: the consents it needs are asked first, at most one question per purpose
      * (background maps, then web addresses) naming its hosts, and what is refused is left out. Each question carries every
      * host (`hosts`), so a consent kept per host can answer it host by host. With `ask: false` nothing is asked and only a
-     * purpose that is allowed for good counts (published HTML, which is drawn later and elsewhere; a flow at start).
-     * @param {any} fig figure JSON ({data, layout}) @param {{ask?: boolean}} [options]
+     * purpose that is allowed for good counts (published HTML, which is drawn later and elsewhere; a flow at start). `links`
+     * keeps the links to https addresses in the text (only for a chart drawn in the app, whose clicks guardLinks() catches).
+     * @param {any} fig figure JSON ({data, layout}) @param {{ask?: boolean, links?: boolean}} [options]
      * @returns {Promise<{figure: {data: any[], layout: any}, removed: {basemaps: boolean, url: boolean}, topojson: boolean, notice: string}>}
      */
     async function prepare(fig, options = {}) {
-      const analysed = analyze(fig);
+      const analysed = analyze(fig, !!options.links);
       /** @type {{basemaps: true|Set<string>, url: true|Set<string>}} */
       const allowed = { basemaps: new Set(), url: new Set() };
       if (options.ask === false) {
@@ -463,15 +495,70 @@
       return config;
     }
 
+    // ---- links in a chart drawn in the app -------------------------------------------------------------------------
+    const XLINK = 'http://www.w3.org/1999/xlink';
+    /** A dialog about a link is open: plotly clicks an element again after its own drag ends, and that click asks nothing more. */
+    let asking = false;
+    /**
+     * Ask before a link leaves the app: the dialog names the host and shows the whole address as text, and only a yes opens it,
+     * in a new tab without opener or referrer. Resolves true when it was opened; nothing is opened while another such dialog is
+     * open, or where the page has no dialogs.
+     * @param {URL} url @returns {Promise<boolean>}
+     */
+    async function openLink(url) {
+      if (asking || !D.has('ui/overlays')) return false;
+      asking = true;
+      try {
+        const text = document.createElement('p');
+        text.textContent = D.t('plotly.link.body', { host: url.host });
+        const kv = /** @type {any} */ (document.createElement('dm-kv'));
+        kv.items = [{ label: D.t('plotly.link.address'), value: url.href }];
+        const body = document.createElement('div');
+        body.className = 'dm-stack-sm';
+        body.setAttribute('data-plotly-link', url.href);
+        body.append(text, kv);
+        const ok = await D.require('ui/overlays').dialog.open({ title: D.t('plotly.link.title'), body, help: 'python#seaborn-och-plotly', actions: [{ label: D.t('common.cancel'), value: false }, { label: D.t('plotly.link.open'), variant: 'primary', value: true, primary: true }] });
+        if (ok !== true) return false;
+        window.open(url.href, '_blank', 'noopener,noreferrer');
+        return true;
+      } finally { asking = false; }
+    }
+    /**
+     * Catch every activation of a link in a chart before plotly or the browser follows it: a click (also by keyboard) and a
+     * middle click on an element with an address (an SVG `<a>` plotly draws with xlink:href) are stopped in the capture phase on
+     * the chart's element and asked about with openLink() when the address is an absolute https URL; dragging a link out is
+     * stopped too. Returns the function that takes the listeners away.
+     * @param {HTMLElement} el @returns {() => void}
+     */
+    function guardLinks(el) {
+      const onEvent = (e) => {
+        const start = /** @type {any} */ (e.target);
+        const a = start && typeof start.closest === 'function' ? start.closest('a') : null;
+        if (!a || !el.contains(a) || !(a.hasAttribute('href') || a.hasAttributeNS(XLINK, 'href'))) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.type === 'dragstart' || (e.type === 'auxclick' && e.button !== 1)) return;
+        const url = linkUrl(a.getAttributeNS(XLINK, 'href') || a.getAttribute('href'));
+        if (url) openLink(url).catch((err) => console.error('[plotly] link', err));
+      };
+      const types = ['click', 'auxclick', 'dragstart'];
+      for (const type of types) el.addEventListener(type, onEvent, true);
+      return () => { for (const type of types) el.removeEventListener(type, onEvent, true); };
+    }
+
     /**
      * Draw a figure into an element. Returns a handle with finalize() that frees the plot; when something was left out
-     * without consent, `notice` says what, and a line under the element says it too.
+     * without consent, `notice` says what, and a line under the element says it too. Links to https addresses stay links, and a
+     * click on one asks first (guardLinks).
      * @param {HTMLElement} el @param {any} fig figure JSON ({data, layout}) @param {{width?: number, height?: number}} [options]
      */
     async function render(el, fig, options = {}) {
       const Plotly = await ensure();
-      const ready = await prepare(fig);
-      await Plotly.newPlot(el, ready.figure.data, layoutFor(ready.figure, options), configFor(ready, { responsive: !options.width, displaylogo: false, modeBarButtonsToRemove: ['sendChartToCloud', 'sendDataToCloud', 'lasso2d', 'select2d'] }));
+      const ready = await prepare(fig, { links: true });
+      const unguard = guardLinks(el);
+      try {
+        await Plotly.newPlot(el, ready.figure.data, layoutFor(ready.figure, options), configFor(ready, { responsive: !options.width, displaylogo: false, modeBarButtonsToRemove: ['sendChartToCloud', 'sendDataToCloud', 'lasso2d', 'select2d'] }));
+      } catch (err) { unguard(); throw err; }
       let note = null;
       if (ready.notice && el.parentNode) {
         note = document.createElement('p');
@@ -480,7 +567,7 @@
         note.textContent = ready.notice;
         el.after(note);
       }
-      return { notice: ready.notice, removed: ready.removed, finalize: () => { try { Plotly.purge(el); } catch (_err) { /* already gone */ } if (note) note.remove(); } };
+      return { notice: ready.notice, removed: ready.removed, finalize: () => { unguard(); try { Plotly.purge(el); } catch (_err) { /* already gone */ } if (note) note.remove(); } };
     }
 
     function dataUrlToBlob(url) {
@@ -499,7 +586,8 @@
 
     /**
      * Export a figure without showing it: svg, png or pdf at the given pixel size. With `ask: false` (a flow at start) nothing
-     * is asked: plotly.js and the figure's maps and addresses come only with a consent already kept, as in htmlFor().
+     * is asked: plotly.js and the figure's maps and addresses come only with a consent already kept, as in htmlFor(). Its links
+     * stay text, as in htmlFor(): a file has no app to ask before one is followed.
      * @param {any} fig @param {'svg'|'png'|'pdf'} format @param {{width?: number, height?: number, scale?: number, title?: string, ask?: boolean}} [options]
      */
     async function toBlob(fig, format, options = {}) {
@@ -526,7 +614,8 @@
 
     /**
      * Markup for one figure in standalone HTML; the page includes the library (source()) once before it. The page is read
-     * later and elsewhere, so nothing is asked: a map or an address comes along only when its consent is kept for good.
+     * later and elsewhere, so nothing is asked: a map or an address comes along only when its consent is kept for good. The page
+     * has no app to ask before a link is followed, so every link in its text stays text.
      */
     async function htmlFor(id, fig, options = {}) {
       const ready = await prepare(fig, { ask: false });
@@ -534,6 +623,6 @@
       return `<div id="${id}" class="dm-plotly"></div><script>Plotly.newPlot(${json(id)}, ${json(ready.figure.data)}, ${json(layoutFor(ready.figure, options))}, ${json(configFor(ready, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ['sendChartToCloud', 'sendDataToCloud'] }))});</script>`;
     }
 
-    return { VERSION, SPEC, TOPOJSON_HOST, NO_TOPOJSON, MAP_ICONS, available, ensure, source, template, layoutFor, requests, sanitize, prepare, render, toBlob, htmlFor, dataUrlToBlob };
+    return { VERSION, SPEC, TOPOJSON_HOST, NO_TOPOJSON, MAP_ICONS, available, ensure, source, template, layoutFor, requests, sanitize, prepare, linkUrl, openLink, guardLinks, render, toBlob, htmlFor, dataUrlToBlob };
   });
 })();

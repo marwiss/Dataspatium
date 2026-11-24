@@ -460,6 +460,106 @@
     return 'ok';
   });
 
+  test('plotly: a link stays a link only to an absolute https address, rebuilt with that address alone, and exports and published HTML keep every link as text', async (assert) => {
+    const plotly = D.require('viz/plotly');
+    const OK = 'https://docs.example.invalid/rapport?id=7&del=2#avsnitt';
+    // Every address that is no absolute https URL stays text, as do addresses with a user, a template field or a bad escape.
+    const text = ['javascript:alert(1)', 'JaVaScRiPt:alert(1)', 'data:text/html,<b>x</b>', 'http://docs.example.invalid/', '/rapport', 'rapport.html', '//docs.example.invalid/', 'ftp://docs.example.invalid/', 'mailto:a@example.invalid', 'vbscript:x', 'blob:https://docs.example.invalid/1', 'https:docs.example.invalid', 'https://user:pw@docs.example.invalid/', ' https://docs.example.invalid/', 'https://docs.example.invalid/%{customdata}', 'https://docs.example.invalid/%E0%A4%A', 'https:\\\\docs.example.invalid'];
+    for (const href of text) assert.equal(plotly.linkUrl(href), null, href);
+    assert.equal(plotly.linkUrl(OK).href, OK, 'an https address is kept as the URL constructor writes it');
+    assert.equal(plotly.linkUrl('https://exаmple.invalid/').host, 'xn--exmple-4nf.invalid', 'a look-alike host is shown as it is (punycode)');
+    const fig = { data: [{ type: 'bar', y: [1], name: `<a href="${OK}" target="_self" popup="width=1" onclick="x()" style="color:red">rapport</a> <a href='javascript:alert(1)'>js</a> <a href="//docs.example.invalid/">pr</a>` }], layout: { title: { text: '<a href="https://docs.example.invalid/%{y}">mall</a> <a href="http://docs.example.invalid/">http</a>' } } };
+    const linked = plotly.sanitize(fig, {}, { links: true }).figure;
+    assert.equal(linked.data[0].name, `<a href="${OK}">rapport</a> <a>js</a> <a>pr</a>`, 'only the https link keeps its address, and nothing else of its tag');
+    assert.equal(linked.layout.title.text, '<a>mall</a> <a>http</a>', 'a template in an address and http stay text');
+    assert.ok(!/href/.test(JSON.stringify(plotly.sanitize(fig, {}).figure)), 'without links (the default) every link is text');
+    // An export and published HTML have no app to ask before a link is followed.
+    const real = globalThis.Plotly;
+    const drawn = [];
+    globalThis.Plotly = { newPlot: async (_el, data, layout) => { drawn.push({ data, layout }); }, purge() {}, toImage: async () => 'data:image/png;base64,iVBORw0KGgo=' };
+    try {
+      await plotly.toBlob(fig, 'png', { width: 200, height: 100 });
+      assert.ok(!/href/.test(JSON.stringify(drawn[0])), 'an export keeps links as text');
+      const html = await plotly.htmlFor('p1', fig);
+      assert.ok(!/href/.test(html) && html.includes('\\u003ca>rapport'), 'published HTML keeps links as text');
+    } finally { if (real) globalThis.Plotly = real; else delete globalThis.Plotly; }
+    return 'ok';
+  });
+
+  test('plotly: a click on a link in a chart never navigates: a dialog names the host and shows the address, Avbryt opens nothing, and only Öppna länken opens it in a new tab without opener or referrer', async (assert) => {
+    const plotly = D.require('viz/plotly');
+    const SVG = 'http://www.w3.org/2000/svg'; const XLINK = 'http://www.w3.org/1999/xlink';
+    const HREF = 'https://docs.example.invalid/rapport?id=7#avsnitt';
+    const real = globalThis.Plotly; const realOpen = window.open;
+    const opened = []; const drawn = [];
+    // A stand-in draws the title's links as plotly 4 does: an SVG <a> with xlink:href, target _blank and xlink:show new.
+    const anchor = (svg, href) => { const a = document.createElementNS(SVG, 'a'); if (href) { a.setAttributeNS(XLINK, 'xlink:href', href); a.setAttribute('target', '_blank'); a.setAttributeNS(XLINK, 'xlink:show', 'new'); } const tx = document.createElementNS(SVG, 'tspan'); tx.textContent = 'länk'; a.appendChild(tx); svg.appendChild(a); return a; };
+    globalThis.Plotly = { newPlot: async (el, data, layout) => {
+      drawn.push(layout);
+      const svg = document.createElementNS(SVG, 'svg'); el.appendChild(svg);
+      for (const m of String(layout.title.text).matchAll(/<a(?: href="([^"]*)")?>/g)) anchor(svg, m[1]);
+      const button = document.createElement('button'); button.className = 'modebar-btn'; el.appendChild(button);
+    }, purge() {} };
+    window.open = /** @type {any} */ ((...args) => { opened.push(args); return null; });
+    const holder = document.createElement('div'); const el = document.createElement('div');
+    holder.appendChild(el); document.body.appendChild(holder);
+    // Should the guard ever fail, the link's own listener still stops the browser; the guard stops the click before it.
+    let reached = 0;
+    const net = (a) => { a.addEventListener('click', (e) => { reached++; e.preventDefault(); }); a.addEventListener('auxclick', (e) => { reached++; e.preventDefault(); }); return a; };
+    const click = (node, type = 'click', button = 0) => node.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, button }));
+    const dialog = () => { const body = document.querySelector('dialog.dm-dialog[open] [data-plotly-link]'); return body ? body.closest('dialog') : null; };
+    const press = (dlg, label) => /** @type {any} */ (Array.from(dlg.querySelectorAll('.dm-dialog-actions dm-button')).find((b) => b.textContent.trim() === label)).click();
+    const closed = async () => { await waitFor(() => !dialog(), 3000, 'the dialog closed'); await wait(30); };
+    let hd = null;
+    try {
+      hd = await plotly.render(el, { data: [{ type: 'bar', y: [1] }], layout: { title: { text: `<a href="${HREF}">rapport</a> <a href="javascript:alert(1)">js</a>` } } });
+      assert.equal(drawn[0].title.text, `<a href="${HREF}">rapport</a> <a>js</a>`, 'the https link is drawn as a link, the other as text');
+      const [link, bare] = Array.from(el.querySelectorAll('a'));
+      net(link);
+      assert.ok(link.getAttributeNS(XLINK, 'href') === HREF && !bare.hasAttributeNS(XLINK, 'href'));
+      // A click: stopped before plotly and the browser, and asked about.
+      assert.equal(click(link.firstChild), false, 'the click is cancelled');
+      assert.equal(reached, 0, 'and never reaches the link');
+      const dlg = await waitFor(dialog, 3000, 'the dialog');
+      assert.ok(dlg.textContent.includes(t('plotly.link.body', { host: 'docs.example.invalid' })), 'it says where the link leads');
+      assert.equal(dlg.querySelector('[data-plotly-link] dm-kv dd').textContent, HREF, 'and shows the whole address as text');
+      assert.ok(dlg.querySelector('.dm-dialog-help'), 'with the handbook a click away');
+      // plotly clicks the element again after its drag ends: no second dialog.
+      assert.equal(click(link), false);
+      assert.equal(document.querySelectorAll('dialog.dm-dialog[open] [data-plotly-link]').length, 1, 'one dialog');
+      press(dlg, t('common.cancel'));
+      await closed();
+      assert.equal(opened.length, 0, 'Avbryt opens nothing');
+      // A middle click asks too, and only a yes opens the link.
+      assert.equal(click(link, 'auxclick', 1), false, 'a middle click is cancelled');
+      press(await waitFor(dialog, 3000, 'the dialog again'), t('plotly.link.open'));
+      await waitFor(() => opened.length === 1, 3000, 'opened');
+      assert.deepEqual(opened[0], [HREF, '_blank', 'noopener,noreferrer'], 'in a new tab without opener or referrer');
+      await closed();
+      // A link plotly drew with any other address is stopped and asks nothing; plotly's buttons and a link without an address work.
+      const odd = net(anchor(el.querySelector('svg'), 'javascript:alert(1)'));
+      assert.equal(click(odd), false, 'another scheme is cancelled');
+      assert.equal(click(el.querySelector('.modebar-btn')), true, "plotly's buttons are left alone");
+      assert.equal(click(bare), true, 'a link without an address is left alone');
+      await wait(50);
+      assert.ok(!dialog() && opened.length === 1 && reached === 0, 'nothing asked or opened, and no click reached a link: ' + reached);
+      // Dragging a link out of the chart is stopped too.
+      assert.equal(link.dispatchEvent(new Event('dragstart', { bubbles: true, cancelable: true })), false, 'no drag');
+      // After finalize the chart's element listens no more.
+      hd.finalize(); hd = null;
+      reached = 0;
+      click(link);
+      assert.equal(reached, 1, 'the guard is gone with the chart');
+      return 'ok';
+    } finally {
+      if (hd) hd.finalize();
+      for (const d of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (d).close();
+      window.open = realOpen;
+      if (real) globalThis.Plotly = real; else delete globalThis.Plotly;
+      holder.remove();
+    }
+  });
+
   test("plotly: a chart offers no way to Plotly's cloud, on the page, in an export and in published HTML", async (assert) => {
     const plotly = D.require('viz/plotly');
     const real = globalThis.Plotly;
