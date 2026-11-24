@@ -3,9 +3,11 @@
 /**
  * The layers of a plan for its map and its list (ui/viz/layer-list): a comprehensive plan delivered as GeoPackages has one layer
  * per source layer, grouped per file (the rows' `lager` and `fil`); an older plan without them has one per theme, and a detailed
- * plan one per object type, in one group named after the dataset. Land use keeps Boverket's colours row by row (with its area
- * per use in the legend), the plan boundary and the areas are outlines, and every other layer gets its own colour from the
- * palette there.
+ * plan one per object type, in one group named after the dataset. Boverket's colours go first wherever it gives one (F108, by
+ * data/plan.boverketColor): a layer whose rows all have one is drawn row by row with a legend entry per category and colour (land
+ * use with its area per use), a layer where only some rows have one draws those in their colour and the rest as the layer, and a
+ * layer without any keeps its own symbol. The plan boundary and the areas are outlines, a detailed plan's object types are drawn
+ * as on the plan map (dpSymbol), and every other layer gets its own colour from the palette there.
  */
 (function () {
   'use strict';
@@ -15,6 +17,14 @@
     /** Between a file's name and its layer's name in a layer's key. */
     const SEP = '::';
     const USE = 'markochvattenanvandning';
+    /** The plan map's outlines of a detailed plan's object types other than use (as drawn before the layer list). */
+    const OUTLINE_STYLES = {
+      planomrade: { color: '#111111', weight: 3, dashArray: null, fillOpacity: 0 },
+      egenskap: { color: '#1f6fb2', weight: 1.5, dashArray: '6 4', fillOpacity: 0 },
+      administrativ: { color: '#8a3ffc', weight: 1.5, dashArray: '2 4', fillOpacity: 0 },
+      overgang: { color: '#777c84', weight: 1.2, dashArray: '1 4', fillOpacity: 0 },
+      annan: { color: '#4a4f57', weight: 1, dashArray: '4 4', fillOpacity: 0 },
+    };
 
     /**
      * The key of a row's layer: the file and the source layer for a comprehensive plan that names them, else its theme, or the
@@ -48,13 +58,61 @@
       if (tema === 'omrade') return { mark: 'polygon', color: tk.muted, weight: 1, dash: '6 4', fill: null, fillOpacity: 0 };
       return null;
     }
+    /**
+     * A detailed plan's object type drawn as on the plan map: uses filled with Boverket's colours, the rest as outlines, strokes
+     * at full opacity and points in their stroke's colour (`planMap`), as the plan map was drawn before the layer list.
+     * @param {string} key the object type
+     */
+    function dpSymbol(key) {
+      if (key === 'anvandning') return { mark: 'polygon', color: '#4a4f57', weight: 1, fill: null, fillOpacity: 0.6, planMap: true, byRow: (row) => plan.fillOf(row) || '#dadde1' };
+      const o = OUTLINE_STYLES[key] || OUTLINE_STYLES.annan;
+      return { color: o.color, weight: o.weight, dash: o.dashArray, fill: null, fillOpacity: o.fillOpacity, planMap: true };
+    }
     const RANK = { polygon: 0, line: 1, point: 2 };
+
+    /** The name a row's colour stands for in a legend: its type or designation and what it says, else the colour's name. */
+    function categoryOf(row, slag) {
+      const words = slag === 'oversiktsplan' ? row.innehallstyp || row.namn : [row.beteckning, row.formulering].filter(Boolean).join(' ');
+      return String(words || row.farg || '–');
+    }
+    /**
+     * Boverket's colours in a layer (F108): none leaves its symbol as it is; when all its rows have one it is drawn row by row
+     * (keeping a symbol it brings, or a quiet outline with fills for areas, colours for lines and points); when only some have one
+     * those rows are drawn in it and the rest as the layer (its outline, or its colour from the palette, which layer-list adds).
+     * A layer with any gets a legend entry per category and colour (land use keeps its area per use), and its swatch shows the
+     * first colours.
+     * @param {any} layer @param {string} slag
+     */
+    function boverket(layer, slag) {
+      const colored = [];
+      for (const r of layer.rows) { const c = plan.boverketColor(r); if (c) colored.push([r, c]); }
+      if (!colored.length) return;
+      const all = colored.length === layer.rows.length;
+      const colors = [];
+      for (const [, c] of colored) { if (!colors.includes(c)) colors.push(c); if (colors.length >= 3) break; }
+      const own = layer.symbol;
+      const byRow = (own && own.byRow) || ((r) => plan.boverketColor(r));
+      if (own) {
+        // A symbol that fills shows the colours in its swatch; an outline stays an outline, its stroke coloured per row.
+        layer.symbol = Object.assign({}, own, { byRow }, own.fillOpacity > 0 && layer.mark === 'polygon' ? { colors, fill: all ? colors[0] : own.fill } : {});
+      } else if (all) {
+        const tk = theme.tokens();
+        const mark = layer.mark;
+        layer.symbol = { mark, color: mark === 'line' ? colors[0] : tk.muted, weight: mark === 'line' ? 2.5 : 1, fill: mark === 'line' ? null : colors[0], fillOpacity: mark === 'polygon' ? 0.35 : 0.9, byRow, colors };
+      } else {
+        layer.symbol = { byRow, colors };
+      }
+      if (layer.categories) return;
+      const seen = new Map();
+      for (const [r, c] of colored) { const label = categoryOf(r, slag); const k = label + '\u0000' + c; if (!seen.has(k)) seen.set(k, { label, color: c }); }
+      layer.categories = Array.from(seen.values());
+    }
 
     /**
      * The plan's layers in drawing and list order, each with its rows (which carry `_i`, their place in `rows`), its count, its
-     * mark and the symbol it brings (`symbolFor(key)` for a detailed plan's object types).
+     * mark and its symbol, with Boverket's colours wherever the rows have them.
      * @param {any[]} rows the plan's rows
-     * @param {{slag: string, name: string, symbolFor?: (key: string) => any}} options
+     * @param {{slag: string, name: string}} options
      * @returns {any[]} the layers (ui/viz/layer-list's LayerInfo)
      */
     function of(rows, options) {
@@ -72,7 +130,7 @@
         const keys = plan.OBJECT_TYPES.filter((k) => byKey.has(k)).concat(Array.from(byKey.keys()).filter((k) => !plan.OBJECT_TYPES.includes(k)));
         layers = keys.map((k) => {
           const l = byKey.get(k);
-          return { key: k, group: '', groupLabel: options.name, label: i18n.has('plan.type.' + k) ? t('plan.type.' + k) : k, count: l.rows.length, mark: layerList.markOfRows(l.rows, geometryOf), rows: l.rows, symbol: options.symbolFor ? options.symbolFor(k) : undefined };
+          return { key: k, group: '', groupLabel: options.name, label: i18n.has('plan.type.' + k) ? t('plan.type.' + k) : k, count: l.rows.length, mark: layerList.markOfRows(l.rows, geometryOf), rows: l.rows, symbol: dpSymbol(k) };
         });
       } else {
         layers = Array.from(byKey.values()).map((l) => {
@@ -89,16 +147,10 @@
         const files = Array.from(new Set(layers.map((l) => l.group)));
         layers.sort((a, b) => files.indexOf(a.group) - files.indexOf(b.group) || (a.tema === USE ? -1 : 0) - (b.tema === USE ? -1 : 0) || RANK[a.mark] - RANK[b.mark] || a.label.localeCompare(b.label, 'sv'));
       }
-      // A layer coloured row by row shows its first colours in its swatch.
-      for (const l of layers) {
-        if (!l.symbol || !l.symbol.byRow || l.symbol.colors) continue;
-        const colors = [];
-        for (const r of l.rows) { const c = l.symbol.byRow(r); if (c && !colors.includes(c)) colors.push(c); if (colors.length >= 3) break; }
-        l.symbol = Object.assign({}, l.symbol, { colors, fill: colors[0] || null });
-      }
+      for (const l of layers) boverket(l, slag);
       return layers;
     }
 
-    return { SEP, keyOf, themeLabel, of };
+    return { SEP, keyOf, themeLabel, dpSymbol, of };
   });
 })();

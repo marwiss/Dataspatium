@@ -19,13 +19,6 @@
   D.define('ui/bearbeta/plan-view', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'data/geo', 'viz/leaflet', 'viz/charts', 'viz/data', 'platform/files', 'ui/viz/basemap-choice', 'ui/viz/basemap-memory', 'ui/viz/tiles-dialog', 'platform/tier', 'ui/viz/layer-list', 'ui/bearbeta/plan-layers', 'ui/bearbeta/plan-sections'], (base, datasets, plan, catalog, geo, leaflet, charts, vizData, files, basemapChoice, memory, tilesDialog, tier, layerList, planLayers, planSections) => {
     const { h, t, i18n, replace } = base;
     const MAX_ROWS = 20000;
-    const OUTLINE_STYLES = {
-      planomrade: { color: '#111111', weight: 3, dashArray: null, fillOpacity: 0 },
-      egenskap: { color: '#1f6fb2', weight: 1.5, dashArray: '6 4', fillOpacity: 0 },
-      administrativ: { color: '#8a3ffc', weight: 1.5, dashArray: '2 4', fillOpacity: 0 },
-      overgang: { color: '#777c84', weight: 1.2, dashArray: '1 4', fillOpacity: 0 },
-      annan: { color: '#4a4f57', weight: 1, dashArray: '4 4', fillOpacity: 0 },
-    };
 
     /**
      * @param {any} ctx shell context (ui, services, store, shell)
@@ -76,7 +69,7 @@
         const columns = await datasets.columns(dataset.id);
         const data = await vizData.fetchRows(dataset.id, { fields: columns.map((c) => c.name), limit: MAX_ROWS });
         s.rows = data.rows.map((r, i) => Object.assign({ _i: i }, r));
-        s.layers = planLayers.of(s.rows, { slag: s.slag, name: dataset.name, symbolFor: dpSymbol });
+        s.layers = planLayers.of(s.rows, { slag: s.slag, name: dataset.name });
         s.updatedAt = dataset.updatedAt;
       }
       /** The grid the plan map can be drawn in: the plan's own system when the app reads it, else the country's usual one. */
@@ -84,12 +77,6 @@
         const own = geo.crsCode((s.info || {}).crs);
         if (own && geo.proj4Def(own)) return own;
         return { DK: 25832, NO: 25833, FI: 3067, IS: 3057 }[(s.info || {}).land] || 3006;
-      }
-      /** A detailed plan's object type drawn as on the plan map: uses filled with Boverket's colours, the rest as outlines. */
-      function dpSymbol(key) {
-        if (key === 'anvandning') return { mark: 'polygon', color: '#4a4f57', weight: 1, fill: null, fillOpacity: 0.6, byRow: (row) => plan.fillOf(row) || '#dadde1' };
-        const o = OUTLINE_STYLES[key] || OUTLINE_STYLES.annan;
-        return { color: o.color, weight: o.weight, dash: o.dashArray, fill: null, fillOpacity: o.fillOpacity };
       }
       const labelText = (row) => (s.slag === 'oversiktsplan' ? (row.tema === 'markochvattenanvandning' ? row.innehallstyp : row.namn) : row.beteckning);
 

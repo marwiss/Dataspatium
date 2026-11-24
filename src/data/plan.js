@@ -156,6 +156,18 @@
       if (tema === 'markochvattenanvandning') return OP_USE_COLORS[lower(row.innehallstyp)] || OP_USE_COLORS['annan mark- och vattenanvändning'];
       return OP_THEME_COLORS[tema] || '#7f8c8d';
     }
+    /**
+     * The colour Boverket gives a plan row, as the app's shade, or null when it gives none (F108): a detailed plan's use by its
+     * colour name or designation (fillOf), an översiktsplan's land and water use by its colour name or type (opFillOf), and any
+     * other row, of any theme or object type, by the colour name it carries (`farg`, the names of Planbestämmelsekatalogen).
+     * @param {any} row @returns {string|null}
+     */
+    function boverketColor(row) {
+      if (!row) return null;
+      if (row.objekttyp === 'anvandning') return fillOf(row);
+      if (lower(row.tema) === 'markochvattenanvandning') return opFillOf(row);
+      return catalog.colorFor(row.farg);
+    }
 
     // ---- geometry --------------------------------------------------------------------------------------------
     /** CRS named in exchange-model geometry metadata ("koordinatsystemPlan": "EPSG:3007"), or null. */
@@ -845,6 +857,6 @@
       return lines.join('\n');
     }
 
-    return { DP_COLUMNS, OP_COLUMNS, OP_CATEGORIES, OBJECT_TYPES, USE_LETTERS, OP_THEME_COLORS, OP_USE_COLORS, nordic, detect, detectTable, tableFormat, featureType, objectType, colorNameForDesignation, fillOf, strokeOf, opFillOf, geometryOf, geometryText, crsOf, heightsOf, footprint, filledFormulation, fromNgp, fromReferenceTable, fromDetaljplan, fromDpTables, isDpGeoPackage, fromOversiktsplanGeoJson, fromOpTables, isOpGeoPackage, isContentTable, normId, sectionType, SECTION_TYPES, opTheme, decorate, toRows, fromRows, legend, grouped, areaM2, areasByUse, checkCatalog, templateMatches, provisionsMarkdown, themeKey };
+    return { DP_COLUMNS, OP_COLUMNS, OP_CATEGORIES, OBJECT_TYPES, USE_LETTERS, OP_THEME_COLORS, OP_USE_COLORS, nordic, detect, detectTable, tableFormat, featureType, objectType, colorNameForDesignation, fillOf, strokeOf, opFillOf, boverketColor, geometryOf, geometryText, crsOf, heightsOf, footprint, filledFormulation, fromNgp, fromReferenceTable, fromDetaljplan, fromDpTables, isDpGeoPackage, fromOversiktsplanGeoJson, fromOpTables, isOpGeoPackage, isContentTable, normId, sectionType, SECTION_TYPES, opTheme, decorate, toRows, fromRows, legend, grouped, areaM2, areasByUse, checkCatalog, templateMatches, provisionsMarkdown, themeKey };
   });
 })();

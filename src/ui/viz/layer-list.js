@@ -6,8 +6,8 @@
  * marker shape where two layers would otherwise look alike), the layers drawn on a Leaflet map, the list that shows and hides
  * them (per file and per layer, with Visa alla, Dölj alla and Visa bara detta, and a filter above twelve layers) and the legend
  * of the layers that show. What the person hid is remembered per dataset, in the session and in the setting that keeps the
- * background maps (ui/viz/basemap-memory). Colours come from the tokens (viz/theme); a layer may bring its own symbol (Boverket's
- * colours of land use, the plan map's outlines).
+ * background maps (ui/viz/basemap-memory). Colours come from the tokens (viz/theme); a layer may bring its own symbol (the plan
+ * map's outlines) and colours per row (Boverket's colours, ui/bearbeta/plan-layers), which then go before the layer's own colour.
  */
 (function () {
   'use strict';
@@ -26,8 +26,9 @@
 
     /**
      * @typedef {'polygon'|'line'|'point'} Mark
+     * `planMap` draws as a detailed plan's map always has: strokes at full opacity, and points in the stroke's colour and weight.
      * @typedef {{mark: Mark, color: string, fill: string|null, dash: string|null, shape: string, weight: number, fillOpacity: number,
-     *   colors?: string[], byRow?: (row: any) => (string|null)}} LayerSymbol
+     *   colors?: string[], byRow?: (row: any) => (string|null), planMap?: boolean}} LayerSymbol
      * @typedef {{key: string, group: string, groupLabel: string, label: string, count: number, mark: Mark, title?: string,
      *   symbol?: Partial<LayerSymbol>, categories?: Array<{label: string, color: string}>, rows?: any[]}} LayerInfo
      */
@@ -63,7 +64,8 @@
     /**
      * A symbol for every layer: its own colour from the data palette in the layers' order, the mark of its geometry, a dash
      * pattern for a line or outline and a marker shape for points so that no two layers look alike while the variants last. A
-     * layer that brings a symbol (`symbol` with a colour, or `byRow` for colours per row) keeps it.
+     * layer that brings a symbol with a colour keeps it; one that brings only colours per row (`byRow`, for some of its rows)
+     * gets its palette colour for the other rows, and its swatch shows that colour beside the first of the rows' colours.
      * @param {LayerInfo[]} layers @returns {Map<string, LayerSymbol>}
      */
     function symbols(layers) {
@@ -75,18 +77,20 @@
       for (const layer of layers || []) {
         const mark = layer.mark || 'polygon';
         const preset = layer.symbol;
-        if (preset && (preset.color || preset.byRow)) {
+        if (preset && preset.color) {
           const own = Object.assign({ mark, color: tk.text, fill: null, dash: null, shape: 'circle', weight: 1.5, fillOpacity: 0.4 }, preset);
           out.set(layer.key, own); seen.add(signature(own));
           continue;
         }
         const color = palette[n % palette.length]; n++;
+        /** @type {LayerSymbol} */
         const sym = { mark, color, fill: mark === 'line' ? null : color, dash: null, shape: 'circle', weight: mark === 'line' ? 2.5 : 1.5, fillOpacity: mark === 'polygon' ? 0.3 : 0.9 };
         const start = mark === 'point' ? points++ : 0;
         if (mark === 'point') sym.shape = layer.count > MAX_SHAPED ? 'circle' : SHAPES[start % SHAPES.length];
         for (let v = 1; seen.has(signature(sym)) && v < DASHES.length * SHAPES.length; v++) {
           if (mark === 'point') { if (layer.count > MAX_SHAPED) break; sym.shape = SHAPES[(start + v) % SHAPES.length]; } else sym.dash = DASHES[v % DASHES.length];
         }
+        if (preset && preset.byRow) { sym.byRow = preset.byRow; sym.colors = [color].concat((preset.colors || []).filter((c) => c !== color).slice(0, 2)); }
         seen.add(signature(sym));
         out.set(layer.key, sym);
       }
@@ -94,13 +98,17 @@
     }
 
     /**
-     * The Leaflet path style of a feature of a layer: the symbol's colour, weight and dash, and its fill (a colour of its own per
-     * row when the symbol has `byRow`). An outline is clicked inside it too, unless the symbol says `edgeOnly` (a plan's boundary,
-     * which lies over everything). @param {LayerSymbol & {edgeOnly?: boolean}} sym @param {any} [row] @returns {any}
+     * The Leaflet path style of a feature of a layer: the symbol's colour, weight and dash, and its fill. A row's own colour
+     * (`byRow`) fills an area, and colours the stroke of a line and of an outline (a symbol without fill); a row without one is
+     * drawn as the layer. An outline is clicked inside it too, unless the symbol says `edgeOnly` (a plan's boundary, which lies
+     * over everything). @param {LayerSymbol & {edgeOnly?: boolean}} sym @param {any} [row] @returns {any}
      */
     function styleOf(sym, row) {
-      const fill = sym.byRow && row ? sym.byRow(row) || sym.fill : sym.fill;
-      return { color: sym.color, weight: sym.weight, opacity: 0.95, dashArray: sym.dash || null, fill: sym.mark !== 'line' && (!!fill || !sym.edgeOnly), fillColor: fill || sym.color, fillOpacity: fill ? sym.fillOpacity : 0 };
+      const own = sym.byRow && row ? sym.byRow(row) : null;
+      const outline = sym.mark === 'line' || !(sym.fillOpacity > 0);
+      const color = own && outline ? own : sym.color;
+      const fill = own && !outline ? own : sym.fill;
+      return { color, weight: sym.weight, opacity: sym.planMap ? 1 : 0.95, dashArray: sym.dash || null, fill: sym.mark !== 'line' && (!!fill || !sym.edgeOnly), fillColor: fill || color, fillOpacity: fill ? sym.fillOpacity : 0 };
     }
 
     const svg = (tag, attrs) => { const el = document.createElementNS(SVG, tag); for (const [k, v] of Object.entries(attrs)) if (v !== null && v !== undefined) el.setAttribute(k, String(v)); return el; };
@@ -139,13 +147,16 @@
     }
 
     /**
-     * A point drawn with its layer's symbol: a circle on the canvas, or the marker shape (a small SVG) for the other shapes.
-     * @param {any} L @param {LayerSymbol} sym @param {any} latlng
+     * A point drawn with its layer's symbol: a circle on the canvas, or the marker shape (a small SVG) for the other shapes, in
+     * the row's own colour when the symbol has `byRow` and the row has one.
+     * @param {any} L @param {LayerSymbol} sym @param {any} latlng @param {any} [row]
      */
-    function pointOf(L, sym, latlng) {
+    function pointOf(L, sym, latlng, row) {
       const tk = theme.tokens();
-      if (sym.mark !== 'point' || sym.shape === 'circle') return L.circleMarker(latlng, { radius: 6, color: sym.mark === 'point' ? tk.background : sym.color, weight: 1, fillColor: sym.fill || sym.color, fillOpacity: 0.9 });
-      return L.marker(latlng, { icon: L.divIcon({ className: 'dm-layer-marker', html: swatch(sym, 14), iconSize: [14, 14], iconAnchor: [7, 7] }), keyboard: false });
+      const own = sym.byRow && row ? sym.byRow(row) : null;
+      if (sym.planMap) return L.circleMarker(latlng, { radius: 6, color: sym.color, weight: sym.weight, fillColor: own || sym.fill || sym.color, fillOpacity: Math.max(0.7, sym.fillOpacity) });
+      if (sym.mark !== 'point' || sym.shape === 'circle') return L.circleMarker(latlng, { radius: 6, color: sym.mark === 'point' ? tk.background : sym.color, weight: 1, fillColor: own || sym.fill || sym.color, fillOpacity: 0.9 });
+      return L.marker(latlng, { icon: L.divIcon({ className: 'dm-layer-marker', html: swatch(own ? Object.assign({}, sym, { fill: own }) : sym, 14), iconSize: [14, 14], iconAnchor: [7, 7] }), keyboard: false });
     }
 
     /**
@@ -170,7 +181,7 @@
         const rowOf = (f) => options.rowAt(f.properties._i);
         const group = L.geoJSON({ type: 'FeatureCollection', features }, {
           style: (f) => styleOf(sym, rowOf(f)),
-          pointToLayer: (f, latlng) => pointOf(L, sym, latlng),
+          pointToLayer: (f, latlng) => pointOf(L, sym, latlng, rowOf(f)),
           onEachFeature: (f, lyr) => { lyr.on('click', () => { if (options.onClick) options.onClick(rowOf(f), lyr); }); },
         });
         if (!hidden.has(info.key)) group.addTo(map);

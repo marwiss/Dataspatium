@@ -401,6 +401,68 @@
     return 'ok';
   }, 60000);
 
+  test('op view: Boverket\'s colours go first in every layer: a theme whose rows all carry one is drawn row by row with a legend per colour, a layer without keeps its palette colour, a mixed layer draws both, and a detailed plan looks as before', (assert) => {
+    const planLayers = D.require('ui/bearbeta/plan-layers');
+    const catalog = D.require('data/plan-catalog');
+    const C = catalog.COLORS;
+    let n = 0;
+    const op = (o) => Object.assign({ _i: n++, innehallstyp: '', namn: '', farg: '', lager: '', fil: '' }, o);
+    const rows = [
+      op({ objektid: 'u-1', tema: 'markochvattenanvandning', innehallstyp: 'Bostadsbebyggelse', geometrityp: 'Polygon', geometri: square(15.2, 59.27) }),
+      op({ objektid: 'r-1', tema: 'riksintressen', innehallstyp: 'Kulturmiljövården', farg: 'Gul', geometrityp: 'Polygon', geometri: square(15.24, 59.27) }),
+      op({ objektid: 'r-2', tema: 'riksintressen', innehallstyp: 'Naturvården', farg: 'Ljusgrön', geometrityp: 'Polygon', geometri: square(15.26, 59.27) }),
+      op({ objektid: 'l-1', tema: 'lis', innehallstyp: 'LIS-område', geometrityp: 'Polygon', geometri: square(15.28, 59.27) }),
+      op({ objektid: 'v-1', tema: 'utvecklingsinriktning', innehallstyp: 'Stråk', farg: 'Blå', geometrityp: 'LineString', geometri: line(15.2, 59.29) }),
+      op({ objektid: 'v-2', tema: 'utvecklingsinriktning', innehallstyp: 'Led', geometrityp: 'LineString', geometri: line(15.22, 59.29) }),
+      op({ objektid: 'm-1', tema: 'miljokvalitetsnormer', innehallstyp: 'Vatten', farg: 'Röd', geometrityp: 'Point', geometri: point(15.2, 59.3) }),
+      op({ objektid: 'm-2', tema: 'miljokvalitetsnormer', innehallstyp: 'Luft', farg: 'Ofärgad', geometrityp: 'Point', geometri: point(15.21, 59.3) }),
+    ];
+    const layers = planLayers.of(rows, { slag: 'oversiktsplan', name: 'Färgprov' });
+    const syms = layerList.symbols(layers);
+    const layer = (k) => layers.find((l) => l.key === k);
+    const row = (id) => rows.find((r) => r.objektid === id);
+    const style = (k, id) => layerList.styleOf(syms.get(k), row(id));
+    const fromPalette = (c) => D.require('viz/theme').tokens().palette.includes(c);
+    // A theme other than land use whose rows all carry a colour name: each row in its colour, a legend entry per colour.
+    assert.deepEqual([style('riksintressen', 'r-1').fillColor, style('riksintressen', 'r-2').fillColor], [C.gul, C.ljusgrön], 'national interests in Boverket\'s colours');
+    assert.ok(!fromPalette(syms.get('riksintressen').color), 'not a palette colour');
+    assert.deepEqual(layer('riksintressen').categories, [{ label: 'Kulturmiljövården', color: C.gul }, { label: 'Naturvården', color: C.ljusgrön }], 'a legend per colour');
+    // Land use as before; a layer without colours keeps its palette colour and has no categories.
+    assert.equal(style('markochvattenanvandning', 'u-1').fillColor, plan.OP_USE_COLORS.bostadsbebyggelse);
+    assert.ok(fromPalette(syms.get('lis').color) && style('lis', 'l-1').fillColor === syms.get('lis').color && !layer('lis').categories, 'LIS in its palette colour');
+    // Mixed layers: the row with a colour in it, the rest in the layer's palette colour (lines by stroke, points by fill).
+    const lines = syms.get('utvecklingsinriktning');
+    assert.ok(fromPalette(lines.color), 'the line layer has a palette colour');
+    assert.deepEqual([style('utvecklingsinriktning', 'v-1').color, style('utvecklingsinriktning', 'v-2').color], [C.blå, lines.color], 'a line in Boverket\'s colour, the other in the palette\'s');
+    assert.deepEqual(layer('utvecklingsinriktning').categories, [{ label: 'Stråk', color: C.blå }], 'the legend names the colour drawn');
+    const L = { circleMarker: (_at, o) => o, marker: (_at, o) => o, divIcon: (o) => o };
+    const pts = syms.get('miljokvalitetsnormer');
+    const fill = (id) => { const p = layerList.pointOf(L, pts, [59.3, 15.2], row(id)); return p.fillColor || p.icon.html.querySelector('[fill]').getAttribute('fill'); };
+    assert.deepEqual([fill('m-1'), fill('m-2')], [C.röd, pts.fill], 'a point in its colour; "Ofärgad" is no colour, so the palette\'s');
+    // The legend shows the categories under their layers.
+    const legend = layerList.create({ layers, symbols: syms, hidden: new Set(), onChange() {} }).legend();
+    assert.equal(legend.querySelectorAll('li[data-layer-key="riksintressen"] .dm-layer-legend-categories li').length, 2, 'two colours in the legend');
+    assert.equal(legend.querySelectorAll('li[data-layer-key="lis"] .dm-layer-legend-categories').length, 0, 'none for LIS');
+    // A detailed plan is drawn as before the layer list: uses in Boverket's colours, outlines in the plan map's, strokes at full opacity.
+    const dp = [
+      { _i: 0, objektid: 'a', objekttyp: 'planomrade', farg: '', geometrityp: 'Polygon', geometri: square(16, 58, 0.05) },
+      { _i: 1, objektid: 'b', objekttyp: 'anvandning', beteckning: 'B', farg: 'Gul', geometrityp: 'Polygon', geometri: square(16.01, 58.01) },
+      { _i: 2, objektid: 'c', objekttyp: 'anvandning', beteckning: 'GATA', farg: '', geometrityp: 'Polygon', geometri: square(16.02, 58.01) },
+      { _i: 3, objektid: 'd', objekttyp: 'egenskap', beteckning: 'e1', farg: '', geometrityp: 'Polygon', geometri: square(16.03, 58.01) },
+      { _i: 4, objektid: 'e', objekttyp: 'egenskap', beteckning: '', farg: '', geometrityp: 'Point', geometri: point(16.03, 58.02) },
+    ];
+    const dpLayers = planLayers.of(dp, { slag: 'detaljplan', name: 'DP' });
+    const dpSyms = layerList.symbols(dpLayers);
+    const pick = (s) => [s.color, s.weight, s.dashArray, s.fillColor, s.fillOpacity, s.opacity];
+    assert.deepEqual(pick(layerList.styleOf(dpSyms.get('anvandning'), dp[1])), ['#4a4f57', 1, null, C.gul, 0.6, 1], 'B yellow');
+    assert.deepEqual(pick(layerList.styleOf(dpSyms.get('anvandning'), dp[2])), ['#4a4f57', 1, null, C.ljusgrå, 0.6, 1], 'GATA light grey');
+    assert.deepEqual(pick(layerList.styleOf(dpSyms.get('egenskap'), dp[3])), ['#1f6fb2', 1.5, '6 4', '#1f6fb2', 0, 1], 'a property provision as a blue dashed outline');
+    assert.deepEqual(pick(layerList.styleOf(dpSyms.get('planomrade'), dp[0])), ['#111111', 3, null, '#111111', 0, 1], 'the plan boundary in black');
+    const dpPoint = layerList.pointOf(L, dpSyms.get('egenskap'), [58.02, 16.03], dp[4]);
+    assert.deepEqual([dpPoint.color, dpPoint.weight, dpPoint.fillColor, dpPoint.fillOpacity], ['#1f6fb2', 1.5, '#1f6fb2', 0.7], 'a point in its stroke\'s colour');
+    return 'ok';
+  });
+
   test('op view: cleanup', async (assert) => {
     for (const id of created) await datasets.remove(id).catch(() => {});
     assert.ok(true);
