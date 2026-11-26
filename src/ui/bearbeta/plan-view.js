@@ -276,8 +276,19 @@
        */
       function selectBox(bounds, add) {
         const box = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()];
-        const shown = new Set(s.layers.filter((l) => !s.hidden.has(l.key)).flatMap((l) => (l.rows || []).map((r) => r._i)));
-        const hits = s.rows.filter((r) => r.geometri && shown.has(r._i) && !isBoundary(r) && planLinks.boxHits(geo.parseGeometry(r.geometri), box));
+        // The drawn layers that show: their bounds first, then their features' geometry, already read.
+        const found = new Set();
+        for (const g of groups) {
+          if (s.hidden.has(g.key)) continue;
+          g.group.eachLayer((lyr) => {
+            const f = lyr.feature; const row = f && s.rows[f.properties._i];
+            if (!row || isBoundary(row)) return;
+            const at = lyr.getBounds ? lyr.getBounds() : lyr.getLatLng ? L.latLngBounds(lyr.getLatLng(), lyr.getLatLng()) : null;
+            if (at && at.isValid() && !bounds.intersects(at)) return;
+            if (planLinks.boxHits(f.geometry, box)) found.add(row);
+          });
+        }
+        const hits = s.rows.filter((r) => found.has(r));
         pick(hits, { add });
         return hits;
       }

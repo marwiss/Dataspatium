@@ -296,6 +296,7 @@
     /** Words that name no area of their own. */
     const GENERIC = new Set(['omrade', 'omraden', 'plangeometri', 'planomrade', 'planen', 'kommunen', 'hela', 'alla']);
     const CODE = /^[\p{Lu}]{1,4}[-_ ]?\d{1,4}[\p{Ll}]?$/u;
+    const WORDS = /[^\p{L}\p{N}]+/u;
     const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+').replace(/[-‐‑‒–—]/g, '[-‐‑‒–—]');
     /** Lines that list a section's areas ("Kopplade områden: …", "gäller områdena A2 och A3"); the whole text when none does. */
     const LIST_LINE = /\b(kopplade|ber[öo]rda|ber[öo]r|g[äa]ller|omfattar|avser|aktuella)\b[^\n]{0,40}\bomr[åa]d/i;
@@ -319,7 +320,7 @@
         }
       }
       const list = Array.from(labels.values()).sort((a, b) => b.label.length - a.label.length)
-        .map((e) => Object.assign(e, { re: new RegExp(`(?<![\\p{L}\\p{N}])${escape(e.label)}(?![\\p{L}\\p{N}])`, e.code ? 'gu' : 'giu') }));
+        .map((e) => Object.assign(e, { first: e.label.toLowerCase().split(WORDS).filter(Boolean)[0] || '', re: new RegExp(`(?<![\\p{L}\\p{N}])${escape(e.label)}(?![\\p{L}\\p{N}])`, e.code ? 'gu' : 'giu') }));
       const rows = [];
       if (!list.length) return rows;
       for (const s of sections || []) {
@@ -331,7 +332,10 @@
         const taken = [];
         const free = (a, b) => taken.every(([x, y]) => b <= x || a >= y);
         const ids = new Set();
+        // Only the names whose first word the text has are searched for, so that a large plan stays quick.
+        const words = new Set(text.toLowerCase().split(WORDS));
         for (const e of list) {
+          if (!words.has(e.first)) continue;
           e.re.lastIndex = 0;
           let m;
           while ((m = e.re.exec(text))) {
