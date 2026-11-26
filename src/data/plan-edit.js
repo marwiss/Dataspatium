@@ -16,13 +16,15 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/plan-edit', ['data/operations', 'data/datasets', 'data/plan', 'data/geo'], (ops, datasets, plan, geo) => {
+  D.define('data/plan-edit', ['data/operations', 'data/datasets', 'data/plan', 'data/geo', 'data/plan-links'], (ops, datasets, plan, geo, planLinks) => {
     const t = (key, params) => D.t(key, params);
     /** The side tables, as data/plan-delivery writes them. */
     const SECTIONS = '_sections';
     const LINKS = '_section_links';
     const SECTION_SQL = 'avsnitt text, dokument text, rubrik text, text text, typ text, ordning integer';
-    const LINK_SQL = 'avsnitt text, objektid text, dokument text, typ text';
+    const LINK_SQL = 'avsnitt text, objektid text, dokument text, typ text, kalla text';
+    /** Where a link made or changed here was read (`_section_links.kalla`, beside data/plan-links' modell, tabell, attribut, text). */
+    const EDITED = 'redigerad';
     /** The bookmark names the exchange model allows (OP-JSON-003). */
     const BOOKMARK_NAME = /^[A-Za-z][A-Za-z0-9_]{0,39}$/;
     const MAX_BOOKMARK = 40;
@@ -40,7 +42,12 @@
 
     const str = (v) => (v === null || v === undefined ? '' : String(v));
     const q = (s) => '"' + String(s).replace(/"/g, '""') + '"';
-    const idOf = (v) => plan.normId(v);
+    /** An id as stored: trimmed, as the plan's rows have it. */
+    const idOf = (v) => str(v).trim();
+    /** An id as compared (data/plan-links): without braces and quotes, in lower case. */
+    const keyOf = (v) => planLinks.key(v);
+    /** The same comparison in SQL, for a column. */
+    const KEY = (col) => `lower(trim(replace(replace(replace(coalesce(${col}, ''), '{', ''), '}', ''), '"', '')))`;
     const parse = (v) => { if (typeof v !== 'string') return v; const s = v.trim(); if (!/^[[{]/.test(s)) return v; try { return JSON.parse(s); } catch (_e) { return v; } };
     const list = (v) => { const p = parse(v); return Array.isArray(p) ? p.map(str) : str(v).split(/[\n,;]+/).map((x) => x.trim()).filter(Boolean); };
     const rowsOf = (r) => (r[0] ? r[0].values : []);
@@ -68,7 +75,7 @@
       return spansHeading(s) && head ? [head, text].filter(Boolean).join('\n') : text;
     }
     /** True for a section of the type Ställningstagande (by name in any case, or by the catalogue's id). */
-    const isStatement = (s) => /ställningstagande/i.test(str(s && s.typ)) || str(s && s.typ).toLowerCase().includes(STATEMENT_UUID);
+    const isStatement = (s) => planLinks.isStatement(s && s.typ);
 
     // ---- names and ids -------------------------------------------------------------------------------------
     /** Whether a bookmark name follows the exchange model's rule. @param {any} name @returns {boolean} */
@@ -81,7 +88,7 @@
     function bookmarkName(heading, taken) {
       const used = new Set(Array.from(taken || [], (x) => str(x).toLowerCase()));
       const words = str(heading).toLowerCase().replace(/æ/g, 'ae').replace(/[øö]/g, 'o').replace(/ð/g, 'd').replace(/þ/g, 'th').replace(/ß/g, 'ss')
-        .normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
       const base = ('op_' + (words || 'avsnitt')).slice(0, MAX_BOOKMARK).replace(/_+$/, '');
       if (!used.has(base.toLowerCase())) return base;
       for (let n = 2; ; n++) {
@@ -105,6 +112,9 @@
     async function ensureTables(engine) {
       await engine.run(`create table if not exists ${SECTIONS} (${SECTION_SQL})`);
       await engine.run(`create table if not exists ${LINKS} (${LINK_SQL})`);
+      // A plan read before the links' sources were kept has four columns; the fifth is added (empty is 'modell').
+      const cols = rowsOf(await engine.exec(`pragma table_info(${LINKS})`)).map((r) => str(r[1]));
+      if (!cols.includes('kalla')) await engine.run(`alter table ${LINKS} add column kalla text`);
       await engine.run(`create index if not exists ${q(SECTIONS + '_avsnitt')} on ${SECTIONS} (avsnitt)`);
       await engine.run(`create index if not exists ${q(LINKS + '_avsnitt')} on ${LINKS} (avsnitt)`);
       await engine.run(`create index if not exists ${q(LINKS + '_objektid')} on ${LINKS} (objektid)`);
@@ -120,11 +130,13 @@
       if (!s) throw new Error(t('plan.edit.err.section', { name: str(avsnitt) }));
       return s;
     }
-    /** The links of a section: [{objektid, typ}]. */
+    /** The links of a section: [{objektid, typ, kalla}]. */
     async function linksOf(engine, avsnitt, dokument) {
-      const r = await engine.exec(`select coalesce(objektid, ''), coalesce(typ, '') from ${LINKS} where avsnitt = ? and coalesce(dokument, '') = ? order by rowid`, [str(avsnitt), str(dokument)]);
-      return rowsOf(r).map((x) => ({ objektid: str(x[0]), typ: str(x[1]) }));
+      const r = await engine.exec(`select coalesce(objektid, ''), coalesce(typ, ''), coalesce(kalla, '') from ${LINKS} where avsnitt = ? and coalesce(dokument, '') = ? order by rowid`, [str(avsnitt), str(dokument)]);
+      return rowsOf(r).map((x) => ({ objektid: str(x[0]), typ: str(x[1]), kalla: str(x[2]) }));
     }
+    /** A link written with named columns; one made here has the source 'redigerad', one put back by an undo its own. */
+    const insertLink = (engine, l) => engine.run(`insert into ${LINKS} (avsnitt, objektid, dokument, typ, kalla) values (?, ?, ?, ?, ?)`, [str(l.avsnitt), idOf(l.objektid), str(l.dokument), str(l.typ), str(l.kalla) || EDITED]);
     /** The text document a new section goes to: the plan's text document, else the one its sections use most, else a new one. */
     async function defaultDocument(engine) {
       const files = await engine.exec("select count(*) from sqlite_master where type = 'table' and name = '_files'");
@@ -139,9 +151,8 @@
     function requireArea(ctx) { if (!hasColumn(ctx, 'tema') || !hasColumn(ctx, 'innehallstyp') || !hasColumn(ctx, 'objektid')) throw new Error(t('plan.edit.err.notop')); }
     /** A plan row as an object, by its objektid in any form. */
     async function areaOf(ctx, objektid) {
-      const want = idOf(objektid);
       const names = ctx.columns.map((c) => c.name);
-      const r = await ctx.engine.exec(`select ${names.map(q).join(', ')} from data where objektid = ? or lower(replace(replace(trim(objektid), '{', ''), '}', '')) = ? limit 1`, [str(objektid), want.toLowerCase()]);
+      const r = await ctx.engine.exec(`select ${names.map(q).join(', ')} from data where objektid = ? or ${KEY('objektid')} = ? limit 1`, [idOf(objektid), keyOf(objektid)]);
       const row = rowsOf(r)[0];
       if (!row) return null;
       const out = {};
@@ -230,9 +241,9 @@
      */
     async function refreshAreaDocs(ctx, ids) {
       if (!hasColumn(ctx, 'egenskaper')) return;
-      for (const id of Array.from(new Set(ids.filter(Boolean)))) {
-        const heads = rowsOf(await ctx.engine.exec(`select coalesce(nullif(s.rubrik, ''), s.avsnitt) from ${SECTIONS} s join (select distinct avsnitt, coalesce(dokument, '') as dokument from ${LINKS} where objektid = ?) l on l.avsnitt = s.avsnitt and l.dokument = coalesce(s.dokument, '') order by s.ordning`, [id])).map((r) => str(r[0]));
-        const r = rowsOf(await ctx.engine.exec('select rowid, egenskaper from data where objektid = ?', [id]));
+      for (const id of Array.from(new Set(ids.map(keyOf).filter(Boolean)))) {
+        const heads = rowsOf(await ctx.engine.exec(`select coalesce(nullif(s.rubrik, ''), s.avsnitt) from ${SECTIONS} s join (select distinct avsnitt, coalesce(dokument, '') as dokument from ${LINKS} where ${KEY('objektid')} = ?) l on l.avsnitt = s.avsnitt and l.dokument = coalesce(s.dokument, '') order by s.ordning`, [id])).map((r) => str(r[0]));
+        const r = rowsOf(await ctx.engine.exec(`select rowid, egenskaper from data where ${KEY('objektid')} = ?`, [id]));
         for (const [rowid, text] of r) {
           let e = {};
           try { e = text ? JSON.parse(text) : {}; } catch (_e) { e = {}; }
@@ -246,8 +257,8 @@
     async function factsOf(ctx, ids) {
       const out = {};
       if (!hasColumn(ctx, 'egenskaper')) return JSON.stringify(out);
-      for (const id of Array.from(new Set(ids.filter(Boolean)))) {
-        const r = rowsOf(await ctx.engine.exec('select egenskaper from data where objektid = ? limit 1', [id]))[0];
+      for (const id of Array.from(new Set(ids.map(keyOf).filter(Boolean)))) {
+        const r = rowsOf(await ctx.engine.exec(`select egenskaper from data where ${KEY('objektid')} = ? limit 1`, [id]))[0];
         if (r) out[id] = r[0] === undefined ? null : r[0];
       }
       return JSON.stringify(out);
@@ -257,7 +268,7 @@
       const given = parse(p && p.egenskaper);
       if (!given || typeof given !== 'object' || Array.isArray(given)) return refreshAreaDocs(ctx, ids);
       if (!hasColumn(ctx, 'egenskaper')) return undefined;
-      for (const [id, text] of Object.entries(given)) await ctx.engine.run('update data set egenskaper = ? where objektid = ?', [text === undefined ? null : text, id]);
+      for (const [id, text] of Object.entries(given)) await ctx.engine.run(`update data set egenskaper = ? where ${KEY('objektid')} = ?`, [text === undefined ? null : text, keyOf(id)]);
       return undefined;
     }
 
@@ -313,8 +324,8 @@
         }
         const typ = cleanLine(p.typ);
         await ctx.engine.run(`insert into ${SECTIONS} (avsnitt, dokument, rubrik, text, typ, ordning) values (?, ?, ?, ?, ?, ?)`, [avsnitt, dokument, cleanLine(p.rubrik), cleanText(p.text), typ, ordning]);
-        const links = (Array.isArray(parse(p.links)) ? parse(p.links) : []).map((l) => (l && typeof l === 'object' ? { objektid: idOf(l.objektid), typ: str(l.typ) || typ } : { objektid: idOf(l), typ }));
-        for (const l of links) await ctx.engine.run(`insert into ${LINKS} (avsnitt, objektid, dokument, typ) values (?, ?, ?, ?)`, [avsnitt, l.objektid, dokument, l.typ]);
+        const links = (Array.isArray(parse(p.links)) ? parse(p.links) : []).map((l) => (l && typeof l === 'object' ? { objektid: idOf(l.objektid), typ: str(l.typ) || typ, kalla: str(l.kalla) } : { objektid: idOf(l), typ, kalla: '' }));
+        for (const l of links) await insertLink(ctx.engine, Object.assign({ avsnitt, dokument }, l));
         await areaFacts(ctx, links.map((l) => l.objektid), p);
         return { rows: 1, links: links.length, avsnitt, dokument };
       },
@@ -348,19 +359,19 @@
       params: [{ name: 'avsnitt', type: 'text', required: true }, { name: 'dokument', type: 'text' }, { name: 'objekt', type: 'lines' }, { name: 'typ', type: 'text' }, { name: 'links', type: 'lines' }, { name: 'egenskaper', type: 'lines' }],
       async inverse(ctx, p) {
         await ensureTables(ctx.engine);
-        const had = new Set((await linksOf(ctx.engine, p.avsnitt, p.dokument)).map((l) => l.objektid));
-        const wanted = Array.from(new Set(linkRows(p, '').map((l) => l.objektid).filter((id) => !had.has(id))));
+        const had = new Set((await linksOf(ctx.engine, p.avsnitt, p.dokument)).map((l) => keyOf(l.objektid)));
+        const wanted = Array.from(new Set(linkRows(p, '').map((l) => l.objektid).filter((id) => !had.has(keyOf(id)))));
         return { op: 'plan_unlink', params: { avsnitt: str(p.avsnitt), dokument: str(p.dokument), objekt: JSON.stringify(wanted), egenskaper: await factsOf(ctx, wanted) } };
       },
       async apply(ctx, p) {
         await ensureTables(ctx.engine);
         const s = await sectionOrFail(ctx.engine, p.avsnitt, p.dokument);
-        const had = new Set((await linksOf(ctx.engine, s.avsnitt, s.dokument)).map((l) => l.objektid));
+        const had = new Set((await linksOf(ctx.engine, s.avsnitt, s.dokument)).map((l) => keyOf(l.objektid)));
         let added = 0; const ids = [];
         for (const l of linkRows(p, s.typ)) {
-          if (had.has(l.objektid)) continue;
-          had.add(l.objektid); ids.push(l.objektid);
-          await ctx.engine.run(`insert into ${LINKS} (avsnitt, objektid, dokument, typ) values (?, ?, ?, ?)`, [s.avsnitt, l.objektid, s.dokument, l.typ]);
+          if (had.has(keyOf(l.objektid))) continue;
+          had.add(keyOf(l.objektid)); ids.push(l.objektid);
+          await insertLink(ctx.engine, { avsnitt: s.avsnitt, objektid: l.objektid, dokument: s.dokument, typ: l.typ, kalla: l.kalla });
           added++;
         }
         await areaFacts(ctx, ids, p);
@@ -371,8 +382,8 @@
     /** The links an operation names: `links` [{objektid, typ}] as they were, else `objekt` (ids) with the type given or the section's. */
     function linkRows(p, typ) {
       const given = parse(p.links);
-      if (Array.isArray(given) && given.length) return given.map((l) => (l && typeof l === 'object' ? { objektid: idOf(l.objektid), typ: str(l.typ) || str(p.typ) || typ } : { objektid: idOf(l), typ: str(p.typ) || typ }));
-      return objektList(p.objekt).map((x) => ({ objektid: x, typ: str(p.typ) || typ }));
+      if (Array.isArray(given) && given.length) return given.map((l) => (l && typeof l === 'object' ? { objektid: idOf(l.objektid), typ: str(l.typ) || str(p.typ) || typ, kalla: str(l.kalla) } : { objektid: idOf(l), typ: str(p.typ) || typ, kalla: '' }));
+      return objektList(p.objekt).map((x) => ({ objektid: x, typ: str(p.typ) || typ, kalla: '' }));
     }
 
     ops.define({
@@ -380,8 +391,8 @@
       params: [{ name: 'avsnitt', type: 'text', required: true }, { name: 'dokument', type: 'text' }, { name: 'objekt', type: 'lines' }, { name: 'egenskaper', type: 'lines' }],
       async inverse(ctx, p) {
         await ensureTables(ctx.engine);
-        const wanted = new Set(objektList(p.objekt));
-        const removed = (await linksOf(ctx.engine, p.avsnitt, p.dokument)).filter((l) => wanted.has(l.objektid));
+        const wanted = new Set(objektList(p.objekt).map(keyOf));
+        const removed = (await linksOf(ctx.engine, p.avsnitt, p.dokument)).filter((l) => wanted.has(keyOf(l.objektid)));
         return { op: 'plan_link', params: { avsnitt: str(p.avsnitt), dokument: str(p.dokument), links: JSON.stringify(removed), egenskaper: await factsOf(ctx, removed.map((l) => l.objektid)) } };
       },
       async apply(ctx, p) {
@@ -389,7 +400,7 @@
         const s = await sectionOrFail(ctx.engine, p.avsnitt, p.dokument);
         const ids = objektList(p.objekt);
         let removed = 0;
-        for (const id of ids) removed += await ctx.engine.run(`delete from ${LINKS} where avsnitt = ? and coalesce(dokument, '') = ? and coalesce(objektid, '') = ?`, [s.avsnitt, s.dokument, id]);
+        for (const id of ids) removed += await ctx.engine.run(`delete from ${LINKS} where avsnitt = ? and coalesce(dokument, '') = ? and ${KEY('objektid')} = ?`, [s.avsnitt, s.dokument, keyOf(id)]);
         await areaFacts(ctx, ids, p);
         return { rows: removed };
       },
@@ -424,7 +435,7 @@
         const names = ctx.columns.map((c) => c.name);
         await ctx.engine.run(`insert into data (${names.map(q).join(', ')}) values (${names.map(() => '?').join(', ')})`, names.map((n) => (row[n] === undefined || row[n] === '' ? null : row[n])));
         const links = Array.isArray(parse(p.links)) ? parse(p.links) : [];
-        for (const l of links) await ctx.engine.run(`insert into ${LINKS} (avsnitt, objektid, dokument, typ) values (?, ?, ?, ?)`, [str(l.avsnitt), id, str(l.dokument), str(l.typ)]);
+        for (const l of links) await insertLink(ctx.engine, Object.assign({}, l, { objektid: l.objektid || id }));
         if (links.length) await areaFacts(ctx, [id], p);
         await refreshMeta(ctx);
         return { rows: 1, objektid: id };
@@ -481,14 +492,14 @@
         requireArea(ctx);
         await ensureTables(ctx.engine);
         const a = await areaOrFail(ctx, p.objektid);
-        const links = rowsOf(await ctx.engine.exec(`select avsnitt, coalesce(dokument, ''), coalesce(typ, '') from ${LINKS} where objektid = ? order by rowid`, [idOf(a.objektid)])).map((r) => ({ avsnitt: str(r[0]), dokument: str(r[1]), typ: str(r[2]) }));
+        const links = rowsOf(await ctx.engine.exec(`select avsnitt, coalesce(dokument, ''), coalesce(typ, ''), coalesce(kalla, ''), objektid from ${LINKS} where ${KEY('objektid')} = ? order by rowid`, [keyOf(a.objektid)])).map((r) => ({ avsnitt: str(r[0]), dokument: str(r[1]), typ: str(r[2]), kalla: str(r[3]), objektid: str(r[4]) }));
         return { op: 'plan_area_add', params: { row: JSON.stringify(a), links: JSON.stringify(links), egenskaper: await factsOf(ctx, [idOf(a.objektid)]) } };
       },
       async apply(ctx, p) {
         requireArea(ctx);
         await ensureTables(ctx.engine);
         const a = await areaOrFail(ctx, p.objektid);
-        const links = await ctx.engine.run(`delete from ${LINKS} where objektid = ?`, [idOf(a.objektid)]);
+        const links = await ctx.engine.run(`delete from ${LINKS} where ${KEY('objektid')} = ?`, [keyOf(a.objektid)]);
         await ctx.engine.run('delete from data where objektid = ?', [a.objektid]);
         await refreshMeta(ctx);
         return { rows: 1, links };
@@ -620,7 +631,7 @@
     }
 
     return {
-      SECTIONS, LINKS, BOOKMARK_NAME, STATEMENT, STATEMENT_UUID, DEFAULT_DOCUMENT, AREA_FIELDS,
+      SECTIONS, LINKS, BOOKMARK_NAME, STATEMENT, STATEMENT_UUID, DEFAULT_DOCUMENT, AREA_FIELDS, EDITED,
       validBookmark, bookmarkName, newId, cleanLine, cleanText, bodyOf, composeText, spansHeading, isStatement, checkGeometry, layerFamily, familyOf, tableFor,
       editSection, addSection, deleteSection, link, unlink, addArea, editArea, setGeometry, deleteArea, undo, catalogue,
     };
