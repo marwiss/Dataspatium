@@ -1,21 +1,23 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * A digital comprehensive plan's text and files beside its map in the plan view (ui/bearbeta/plan-view): the tabs Karta,
- * Ställningstaganden and Filer above the centre (only those that have something to show, so a plan without them looks as
- * before), the sections of the plan's text documents with the ställningstaganden first and those that concern the whole plan at
- * the top (headings and text as text only), a section's areas marked on the map, the sections that concern a chosen area in the
- * inspector, and the delivery's files with their roles and sizes, opened under the safe rule of data/dataset-files.tabType (only
- * a PDF or a picture opens in a tab; every other file is downloaded) and with the warnings the delivery was read with.
+ * A digital comprehensive plan's text and files beside its map in the plan view (ui/bearbeta/plan-view): the map and the plan
+ * description side by side in the centre, with a splitter (dm-splitter for="pane") whose width is kept, stacked in the narrow
+ * layouts; the description has the sections of the plan's text documents, those about the whole plan at the top and the
+ * ställningstaganden first (headings and text as text only), and Filer, a tab beside it, has the delivery's files with their
+ * roles and sizes (opened under the safe rule of data/dataset-files.tabType: only a PDF or a picture opens in a tab; every
+ * other file is downloaded), how its links between map and text were read and the warnings it was read with. A plan with
+ * neither sections nor files keeps its map alone.
  *
- * The sections and the files come through `delivery`, which has the names data/plan-delivery exports (sectionsOf,
- * sectionsForObject, objectsForSection, addFiles): `delivery` is that module. `ownDelivery` reads the side tables `_sections`
- * and `_section_links` directly, the same way, and stays for the tests that build a plan's tables by hand.
+ * Choosing a section marks all its areas on the map; choosing areas (one, or several with Shift or a rectangle) lists in the
+ * inspector the union of the sections that concern them, each with the areas it covers and the way to its text. A link only
+ * the text gives (data/plan-links, kalla 'text') is shown as Nämnd i texten. The sections and links come from data/plan-delivery
+ * once per drawing and are looked up in memory, by ids compared without case and braces.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/plan-sections', ['ui/base', 'ui/basic', 'ui/icons', 'data/datasets', 'data/dataset-files', 'platform/files', 'data/plan-delivery'], (base, basic, icons, datasets, dsFiles, files, planDelivery) => {
+  D.define('ui/bearbeta/plan-sections', ['ui/base', 'ui/basic', 'ui/icons', 'data/dataset-files', 'platform/files', 'platform/storage/idb', 'data/plan-delivery', 'data/plan-links'], (base, basic, icons, dsFiles, files, idb, planDelivery, planLinks) => {
     const { h, t, i18n, replace } = base;
     /** The section type Ställningstagande in Boverket's ÖP catalogue. */
     const STATEMENT_UUID = '56d85084-b9d9-43c4-8243-1fbd3b6d3205';
@@ -25,86 +27,17 @@
     const DERIVED = new Set(['preview', 'thumb']);
     /** Shown of a section's text in the inspector. */
     const EXCERPT = 280;
-
-    // ---- the side tables (stands in for data/plan-delivery until it is merged) ---------------------------------------------
-    const str = (v) => (v === null || v === undefined ? '' : String(v));
-    /** An object's identity as compared: trimmed, lower case, without braces. */
-    const idOf = (v) => str(v).trim().toLowerCase().replace(/[{}]/g, '');
-    const SECTION_FIELDS = 'avsnitt, dokument, rubrik, text, typ, ordning';
-    async function tableIn(engine, name) {
-      const r = await engine.exec('select 1 from sqlite_master where type = \'table\' and name = ?', [name]);
-      return !!(r[0] && r[0].values.length);
-    }
-    const sectionRows = (r) => (r[0] ? r[0].values : []).map((v) => ({ avsnitt: str(v[0]), dokument: str(v[1]), rubrik: str(v[2]), text: str(v[3]), typ: str(v[4]), ordning: Number(v[5]) || 0 }));
-    /** The role a file added by hand gets from its name. */
-    function roleOf(name) {
-      const n = str(name).toLowerCase();
-      if (/(^|\/)manifest\.xml$/.test(n)) return 'manifest';
-      if (/(^|\/)metadata\.xml$|premis\.xml$/.test(n)) return 'metadata';
-      if (/\.gpkg$/.test(n)) return 'plankarta';
-      if (/\.docx$/.test(n)) return 'textdokument';
-      if (/\.(pdf|png|jpe?g)$/.test(n)) return 'bilaga';
-      return 'ovrigt';
-    }
-    async function sha256(bytes) {
-      const subtle = globalThis.crypto && globalThis.crypto.subtle;
-      if (!subtle) return '';
-      try { return Array.from(new Uint8Array(await subtle.digest('SHA-256', bytes)), (b) => b.toString(16).padStart(2, '0')).join(''); } catch (_e) { return ''; }
-    }
-    const ownDelivery = {
-      /** The sections of the plan's text documents in their order. @param {string} id @returns {Promise<any[]>} */
-      async sectionsOf(id) {
-        const hd = await datasets.ensureOpen(id);
-        if (!(await tableIn(hd.engine, '_sections'))) return [];
-        return sectionRows(await hd.engine.exec(`select ${SECTION_FIELDS} from _sections order by ordning, rowid`));
-      },
-      /** The sections that concern an object ('' for the whole plan). @param {string} id @param {string} objektid @returns {Promise<any[]>} */
-      async sectionsForObject(id, objektid) {
-        const hd = await datasets.ensureOpen(id);
-        if (!(await tableIn(hd.engine, '_sections')) || !(await tableIn(hd.engine, '_section_links'))) return [];
-        const r = await hd.engine.exec(`select ${SECTION_FIELDS.split(', ').map((c) => 's.' + c).join(', ')} from _sections s where exists (select 1 from _section_links l where l.avsnitt = s.avsnitt`
-          + ' and replace(replace(lower(trim(coalesce(l.objektid, \'\'))), \'{\', \'\'), \'}\', \'\') = ?'
-          + ' and (coalesce(l.dokument, \'\') = \'\' or coalesce(s.dokument, \'\') = \'\' or l.dokument = s.dokument)) order by s.ordning, s.rowid', [idOf(objektid)]);
-        return sectionRows(r);
-      },
-      /** The objects a section concerns, '' for the whole plan. @param {string} id @param {string} avsnitt @returns {Promise<string[]>} */
-      async objectsForSection(id, avsnitt) {
-        const hd = await datasets.ensureOpen(id);
-        if (!(await tableIn(hd.engine, '_section_links'))) return [];
-        const r = await hd.engine.exec('select distinct coalesce(objektid, \'\') from _section_links where avsnitt = ?', [str(avsnitt)]);
-        return (r[0] ? r[0].values : []).map((v) => str(v[0]));
-      },
-      /**
-       * Add files to the plan's delivery: kept in `_files` with a role from the name (a file of the same name and role replaced)
-       * and listed in `_meta.plan.leverans.filer` with size and SHA-256. Unlike data/plan-delivery it reads nothing out of them.
-       * @param {string} id @param {File[]} list @returns {Promise<Array<{name: string, role: string}>>}
-       */
-      async addFiles(id, list) {
-        const hd = await datasets.ensureOpen(id);
-        const made = [];
-        for (const f of list || []) made.push({ name: f.name, kind: roleOf(f.name), type: f.type || 'application/octet-stream', bytes: new Uint8Array(await f.arrayBuffer()) });
-        if (!made.length) return [];
-        await dsFiles.ensureTable(hd.engine);
-        for (const f of made) await hd.engine.run('delete from _files where name = ? and kind = ?', [f.name, f.kind]);
-        await dsFiles.put(hd, made);
-        const info = Object.assign({}, hd.meta.plan || {});
-        const leverans = Object.assign({ filer: [], varningar: [] }, info.leverans || {});
-        const listed = (Array.isArray(leverans.filer) ? leverans.filer : []).filter((x) => !made.some((f) => x && x.namn === f.name));
-        for (const f of made) listed.push({ namn: f.name, roll: f.kind, storlek: f.bytes.byteLength, sha256: await sha256(f.bytes) });
-        info.leverans = Object.assign(leverans, { filer: listed });
-        hd.meta.plan = info;
-        await hd.engine.run('insert or replace into _meta (key, value) values (?, ?)', ['plan', JSON.stringify(info)]);
-        await datasets.save(id);
-        datasets.notify('changed', { id });
-        return made.map((f) => ({ name: f.name, role: f.kind }));
-      },
-    };
-    /** Where the view reads a delivery's sections and adds its files: data/plan-delivery. */
+    /** The width of the plan description beside the map, kept for every plan. */
+    const SPLIT_SETTING = 'ui.plan.text';
+    /** Areas named in a section's line in the inspector, at most. */
+    const NAMED = 6;
+    /** Where the view reads a delivery's sections and adds its files. */
     const delivery = planDelivery;
 
-    // ---- the view -------------------------------------------------------------------------------------------------------
+    const str = (v) => (v === null || v === undefined ? '' : String(v));
+    const key = planLinks.key;
     /** True for a section of the type Ställningstagande (by name or by the catalogue's id). */
-    const isStatement = (s) => /ställningstagande/i.test(str(s.typ)) || str(s.typ).toLowerCase().includes(STATEMENT_UUID);
+    const isStatement = (s) => planLinks.isStatement(s.typ);
     const typeLabel = (s) => (str(s.typ).toLowerCase().includes(STATEMENT_UUID) ? t('plan.sections.statement') : str(s.typ));
     const headingOf = (s) => s.rubrik || s.avsnitt || '–';
     const excerpt = (text) => (text.length > EXCERPT ? text.slice(0, EXCERPT).replace(/\s+\S*$/, '') + ' …' : text);
@@ -112,6 +45,8 @@
     const listedFile = (f) => !DERIVED.has(f.kind);
     /** A file's role as words. */
     const roleLabel = (role) => (i18n.has('plan.files.role.' + role) ? t('plan.files.role.' + role) : role);
+    /** The badge of a link the text only gives. */
+    const textBadge = () => h('dm-badge', { kind: 'warn', text: t('plan.link.text'), title: t('plan.link.text.hint'), 'data-plan-link-text': '' });
 
     /**
      * Open a dataset's file: in a tab only when it is a PDF or a picture whose first bytes agree (with the type chosen here, never
@@ -132,133 +67,208 @@
     /**
      * The plan view's text and files.
      * @param {any} ctx shell context
-     * @param {{mark: (ids: string[], section: any|null) => void, shown: () => void, changed: () => void}} options `mark` marks the
-     *   objects on the map and fits the view to them, `shown` tells that the map shows again, `changed` that the plan changed
+     * @param {{mark: (ids: string[], section: any|null) => void, shown: () => void, changed: () => void, nameOf?: (id: string) => string}} options
+     *   `mark` marks the objects on the map and fits the view to them, `shown` tells that the map's size changed, `changed` that
+     *   the plan changed, `nameOf` an object's name for the lists
      */
     function create(ctx, options) {
       const { ui } = ctx;
-      const st = { id: null, tab: 'map', sections: [], objects: new Map(), whole: [], files: [], plan: {}, chosen: null, current: null, filesShown: false };
-      let tabs = null; let panes = null; let seq = 0;
+      const st = { id: null, tab: 'text', sections: [], objects: new Map(), byObject: new Map(), whole: [], files: [], plan: {}, chosen: null, current: null, filesShown: false, links: 0 };
+      let tabs = null; let panes = null; let split = null; let seq = 0;
+      const nameOf = (id) => (options.nameOf ? options.nameOf(id) : '') || id;
 
       /**
-       * The centre below the page's head: the map alone when the plan has neither sections nor a delivery's files, else the tabs
-       * with the map, the sections and the files. @param {any} ds @param {HTMLElement} mapEl @returns {Promise<HTMLElement>}
+       * The centre below the page's head: the map alone when the plan has neither sections nor a delivery's files, else the map
+       * and the plan description side by side. @param {any} ds @param {HTMLElement} mapEl @returns {Promise<HTMLElement>}
        */
       async function mount(ds, mapEl) {
         const my = ++seq;
-        if (st.id !== ds.id) Object.assign(st, { id: ds.id, tab: 'map', chosen: null, current: null });
+        if (st.id !== ds.id) Object.assign(st, { id: ds.id, tab: 'text', chosen: null, current: null });
         st.plan = ds.plan || {};
-        const [sections, list] = await Promise.all([delivery.sectionsOf(ds.id).catch(() => []), dsFiles.list(ds.id).catch(() => [])]);
-        const names = Array.from(new Set(sections.map((s) => s.avsnitt)));
-        const found = await Promise.all(names.map((a) => delivery.objectsForSection(ds.id, a).catch(() => [])));
-        const objects = new Map(names.map((a, i) => [a, found[i]]));
+        const [sections, list, width] = await Promise.all([delivery.sectionsOf(ds.id).catch(() => []), dsFiles.list(ds.id).catch(() => []), idb.getSetting(SPLIT_SETTING, null).catch(() => null)]);
         if (my !== seq) return mapEl;
-        const planId = idOf(st.plan.objektid);
-        const wholePlan = (ids) => ids.some((x) => !idOf(x) || (planId && idOf(x) === planId));
-        st.sections = sections; st.objects = objects;
-        st.whole = sections.filter((s) => wholePlan(objects.get(s.avsnitt) || []));
+        index(sections);
         st.files = list.filter(listedFile);
         st.filesShown = !!st.plan.leverans || list.some((f) => ROLES.includes(f.kind));
-        const ids = ['map'].concat(sections.length ? ['text'] : [], st.filesShown ? ['files'] : []);
-        if (!ids.includes(st.tab)) st.tab = 'map';
-        if (ids.length === 1) { tabs = null; panes = null; return mapEl; }
-        tabs = /** @type {any} */ (h('dm-tabs', { 'data-plan-tabs': '' }));
-        const ICONS = { map: 'map', text: 'book-open', files: 'folder-open' };
-        tabs.tabs = ids.map((id) => ({ id, label: id === 'text' ? t('plan.tab.text') : id === 'files' ? t('plan.tab.files') : t('plan.tab.map'), icon: ICONS[id] }));
-        tabs.active = st.tab;
-        tabs.addEventListener('dm-change', (e) => showTab(/** @type {any} */ (e).detail.id));
-        panes = { map: mapEl, text: textPane(), files: filesPane() };
-        const body = h('div', { class: 'dm-center-fill dm-plan-body' }, tabs, mapEl, panes.text, panes.files);
+        const ids = (sections.length ? ['text'] : []).concat(st.filesShown ? ['files'] : []);
+        if (!ids.includes(st.tab)) st.tab = ids[0] || 'text';
+        if (!ids.length) { tabs = null; panes = null; split = null; return mapEl; }
+        tabs = null;
+        if (ids.length > 1) {
+          tabs = /** @type {any} */ (h('dm-tabs', { 'data-plan-tabs': '' }));
+          const ICONS = { text: 'book-open', files: 'folder-open' };
+          tabs.tabs = ids.map((id) => ({ id, label: t(id === 'text' ? 'plan.tab.text' : 'plan.tab.files'), icon: ICONS[id] }));
+          tabs.active = st.tab;
+          tabs.addEventListener('dm-change', (e) => showTab(/** @type {any} */ (e).detail.id));
+        }
+        panes = { text: sections.length ? textPane() : null, files: st.filesShown ? filesPane() : null };
+        const splitter = h('dm-splitter', { for: 'pane', 'aria-label': t('plan.split') });
+        split = h('div', { class: 'dm-plan-split', 'data-plan-split': '' }, mapEl, splitter,
+          h('section', { class: 'dm-plan-side', 'aria-label': t('plan.text.pane'), 'data-plan-side': '' }, tabs, panes.text, panes.files));
+        if (typeof width === 'number' && width > 0) split.style.setProperty('--dm-split-w', width + 'px');
+        // The width is kept for every plan; the map is told that its size changed.
+        split.addEventListener('dm-resize', (e) => {
+          const d = /** @type {CustomEvent} */ (e).detail;
+          if (!d || d.side !== 'pane') return;
+          (d.width === null ? idb.deleteSetting(SPLIT_SETTING) : idb.setSetting(SPLIT_SETTING, d.width)).catch((err) => D.log('plan-sections', 'width', err));
+          options.shown();
+        });
         showPanes();
-        return body;
+        return h('div', { class: 'dm-center-fill dm-plan-body' }, split);
+      }
+      /** The sections, and per object the sections that concern it with where each link was read. */
+      function index(sections) {
+        const planId = key(st.plan.objektid);
+        st.sections = sections;
+        st.objects = new Map(); st.byObject = new Map(); st.links = 0;
+        for (const s of sections) {
+          const objekt = (s.objekt || []).filter((x) => key(x) && key(x) !== planId);
+          const kallor = (s.kallor || []).filter((_k, i) => key((s.objekt || [])[i]) && key((s.objekt || [])[i]) !== planId);
+          st.objects.set(s.avsnitt, (st.objects.get(s.avsnitt) || []).concat(objekt));
+          objekt.forEach((id, i) => { const k = key(id); st.byObject.set(k, (st.byObject.get(k) || []).concat({ s, kalla: kallor[i] || 'modell' })); });
+          st.links += objekt.length + (s.helaPlanen ? 1 : 0);
+        }
+        st.whole = sections.filter((s) => s.helaPlanen || (s.objekt || []).some((x) => planId && key(x) === planId));
       }
       function showPanes() {
         if (!panes) return;
         for (const [id, el] of Object.entries(panes)) if (el) el.hidden = id !== st.tab;
       }
-      /** Show a tab ('map', 'text' or 'files'). @param {string} id */
+      /** Show the side's tab ('text' or 'files'); 'map' is always shown and only kept for callers of the tabbed view. @param {string} id */
       function showTab(id) {
+        if (id === 'map') { options.shown(); return; }
         if (!panes || !panes[id]) return;
-        const was = st.tab;
         st.tab = id;
         if (tabs && tabs.active !== id) tabs.active = id;
         showPanes();
-        if (id === 'map' && was !== 'map') options.shown();
       }
 
       /** One section: its heading, type and document, its text as text, and the button that marks its areas. */
       function article(s) {
-        const ids = (st.objects.get(s.avsnitt) || []).filter((x) => idOf(x) && idOf(x) !== idOf(st.plan.objektid));
+        const ids = st.objects.get(s.avsnitt) || [];
+        const kallor = new Set((s.kallor || []).filter(Boolean));
         const head = h('h4', { tabindex: '-1', text: headingOf(s) });
         return h('article', { class: 'dm-plan-section' + (st.current === s.avsnitt ? ' dm-plan-section-current' : ''), 'data-plan-section': s.avsnitt },
-          h('div', { class: 'dm-plan-section-head' }, head, s.typ ? h('dm-badge', { kind: isStatement(s) ? 'accent' : null, text: typeLabel(s) }) : null),
+          h('div', { class: 'dm-plan-section-head' }, head, s.typ ? h('dm-badge', { kind: isStatement(s) ? 'accent' : null, text: typeLabel(s) }) : null, kallor.size === 1 && kallor.has('text') ? textBadge() : null),
           s.dokument ? h('p', { class: 'dm-help dm-small', text: s.dokument }) : null,
           s.text ? h('p', { class: 'dm-plan-section-text', text: s.text }) : h('p', { class: 'dm-help dm-small', text: t('plan.sections.notext') }),
           ids.length ? h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('plan.sections.map', { n: ids.length }), icon: 'map', size: 'sm', title: t('plan.sections.map.hint'), 'data-plan-section-map': s.avsnitt, onClick: () => choose(s) })) : null);
       }
-      /** The sections: those about the whole plan at the top, then the ställningstaganden, then the others. */
+      /**
+       * The plan description: the sections about the whole plan at the top, then the ställningstaganden, then the others.
+       * Builds the text pane anew from the sections read (a hook for views that change them).
+       */
       function textPane() {
         const whole = new Set(st.whole.map((s) => s.avsnitt));
         const rest = st.sections.filter((s) => !whole.has(s.avsnitt));
         const statements = rest.filter(isStatement);
         const others = rest.filter((s) => !isStatement(s));
-        const block = (key, list, attrs) => (list.length ? h('section', Object.assign({ class: 'dm-stack-sm dm-plan-sections-block' }, attrs), h('h3', { text: `${t(key)} (${i18n.formatNumber(list.length)})` }), list.map(article)) : null);
+        const block = (k, list, attrs) => (list.length ? h('section', Object.assign({ class: 'dm-stack-sm dm-plan-sections-block' }, attrs), h('h3', { text: `${t(k)} (${i18n.formatNumber(list.length)})` }), list.map(article)) : null);
         return h('div', { class: 'dm-plan-text', 'data-plan-text': '' },
           st.whole.length ? h('section', { class: 'dm-card dm-stack-sm', 'data-plan-whole': '' }, h('h3', { text: t('plan.sections.whole') }), st.whole.map(article)) : null,
           block('plan.sections.statements', statements, { 'data-plan-statements': '' }),
           block('plan.sections.others', others, { 'data-plan-others': '' }));
       }
-      /** A section chosen: its areas marked on the map, which shows and fits them. */
-      function choose(s) {
-        st.chosen = s; st.current = s.avsnitt;
-        showTab('map');
-        options.mark((st.objects.get(s.avsnitt) || []).filter((x) => idOf(x)), s);
-      }
-      /** The tab Ställningstaganden at a section, which is marked and gets the focus. @param {string} avsnitt */
-      function reveal(avsnitt) {
+      /** Mark a section as the current one in the text. */
+      function markCurrent(avsnitt) {
         st.current = avsnitt;
-        showTab('text');
-        if (!panes || !panes.text) return;
+        if (!panes || !panes.text) return null;
         let found = null;
         for (const el of Array.from(panes.text.querySelectorAll('[data-plan-section]'))) {
           const on = el.getAttribute('data-plan-section') === avsnitt;
           el.classList.toggle('dm-plan-section-current', on);
           if (on && !found) found = el;
         }
+        return found;
+      }
+      /** A section chosen: all its areas marked on the map, which fits them, and the section marked in the text. */
+      function choose(s) {
+        st.chosen = s;
+        markCurrent(s.avsnitt);
+        options.mark((st.objects.get(s.avsnitt) || []).filter((x) => key(x)), s);
+      }
+      /** The plan description at a section, which is marked and gets the focus. @param {string} avsnitt */
+      function reveal(avsnitt) {
+        showTab('text');
+        const found = markCurrent(avsnitt);
         if (found) { if (found.scrollIntoView) found.scrollIntoView({ block: 'start' }); const head = /** @type {HTMLElement|null} */ (found.querySelector('h4')); if (head) head.focus({ preventScroll: true }); }
       }
 
-      /** The sections that concern an object, for the inspector, filled in when read. @param {string} objektid @returns {HTMLElement|null} */
-      function forObject(objektid) {
-        if (!st.sections.length || !st.id) return null;
-        const id = st.id;
-        const box = h('div', { class: 'dm-stack-sm', 'data-plan-object-sections': '' }, h('h4', { text: t('plan.sections.object') }), h('p', { class: 'dm-help dm-small', text: t('common.loading') }));
-        delivery.sectionsForObject(id, str(objektid)).then((list) => {
-          if (st.id !== id) return;
-          const statements = list.filter(isStatement); const others = list.filter((s) => !isStatement(s));
-          const ordered = statements.concat(others);
-          replace(box, h('h4', { text: t('plan.sections.object') }), ordered.length ? h('ul', { class: 'dm-plan-object-sections' }, ordered.map((s) => h('li', { 'data-plan-object-section': s.avsnitt },
-            h('div', { class: 'dm-row-wrap' }, s.typ ? h('dm-badge', { kind: isStatement(s) ? 'accent' : null, text: typeLabel(s) }) : null, h('strong', { text: headingOf(s) })),
+      /** Names in a line, at most NAMED, with how many more. */
+      const namesLine = (list) => list.slice(0, NAMED).join(', ') + (list.length > NAMED ? ' ' + t('plan.select.more', { n: list.length - NAMED }) : '');
+      /**
+       * The sections that concern the chosen areas, for the inspector: their union, ställningstaganden first and in document
+       * order, each with the chosen areas it covers (when several are chosen), the badge Nämnd i texten for a link the text only
+       * gives, and the way to its text. Says why when nothing can be listed: an area without identity, a plan without links.
+       * @param {any[]} rows the chosen rows @returns {HTMLElement|null}
+       */
+      function forObjects(rows) {
+        if (!st.id || !rows || !rows.length) return null;
+        const many = rows.length > 1;
+        const box = h('div', { class: 'dm-stack-sm', 'data-plan-object-sections': '' }, h('h4', { text: t(many ? 'plan.select.statements' : 'plan.sections.object') }));
+        const note = (k) => { box.appendChild(h('p', { class: 'dm-help dm-small', 'data-plan-object-note': k, text: t(k) })); return box; };
+        const withId = rows.filter((r) => key(r.objektid));
+        if (!withId.length) return note('plan.sections.object.noid');
+        if (!st.links) return st.sections.length || st.filesShown ? note('plan.sections.object.nolinks') : null;
+        const by = new Map();
+        for (const r of withId) {
+          for (const e of st.byObject.get(key(r.objektid)) || []) {
+            const k = e.s.dokument + '\u0000' + e.s.avsnitt;
+            const item = by.get(k) || { s: e.s, areas: [] };
+            if (!item.areas.some((a) => a.row === r)) item.areas.push({ row: r, kalla: e.kalla });
+            by.set(k, item);
+          }
+        }
+        const items = Array.from(by.values()).sort((a, b) => (isStatement(b.s) - isStatement(a.s)) || (a.s.ordning - b.s.ordning));
+        if (!items.length) return note(many ? 'plan.select.none' : 'plan.sections.object.none');
+        const label = (r) => r.namn || r.innehallstyp || nameOf(String(r.objektid));
+        box.appendChild(h('ul', { class: 'dm-plan-object-sections' }, items.map(({ s, areas }) => {
+          const inferred = areas.every((a) => a.kalla === 'text');
+          return h('li', { 'data-plan-object-section': s.avsnitt },
+            h('div', { class: 'dm-row-wrap' }, s.typ ? h('dm-badge', { kind: isStatement(s) ? 'accent' : null, text: typeLabel(s) }) : null, h('strong', { text: headingOf(s) }), inferred ? textBadge() : null),
+            many ? h('p', { class: 'dm-small', 'data-plan-covers': '', text: t('plan.select.covers', { areas: namesLine(areas.map((a) => label(a.row) + (a.kalla === 'text' && !inferred ? ` (${t('plan.link.text').toLowerCase()})` : ''))) }) }) : null,
             s.text ? h('p', { class: 'dm-small dm-plan-section-text', text: excerpt(s.text) }) : null,
-            basic.button({ label: t('plan.sections.reveal'), icon: 'book-open', size: 'sm', title: t('plan.sections.reveal.hint'), 'data-plan-reveal': s.avsnitt, onClick: () => reveal(s.avsnitt) })))) : h('p', { class: 'dm-help dm-small', text: t('plan.sections.object.none') }));
-        }).catch((err) => { replace(box, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) })); });
+            basic.button({ label: t('plan.sections.reveal'), icon: 'book-open', size: 'sm', title: t('plan.sections.reveal.hint'), 'data-plan-reveal': s.avsnitt, onClick: () => reveal(s.avsnitt) }));
+        })));
         return box;
       }
-      /** The section whose areas are marked, for the inspector, with the way back to its text and to clear the marking. */
+      /** The sections that concern one object (kept for callers of one id). @param {string} objektid */
+      const forObject = (objektid) => forObjects([{ objektid }]);
+      /** The section whose areas are marked, for the inspector, with its areas, the way back to its text and to clear the marking. */
       function chosenBlock() {
         const s = st.chosen;
         if (!s) return null;
+        const ids = st.objects.get(s.avsnitt) || [];
         return h('div', { class: 'dm-stack-sm', 'data-plan-chosen': s.avsnitt }, h('h4', { text: t('plan.sections.chosen') }),
           h('div', { class: 'dm-row-wrap' }, s.typ ? h('dm-badge', { kind: isStatement(s) ? 'accent' : null, text: typeLabel(s) }) : null, h('strong', { text: headingOf(s) })),
+          ids.length ? h('p', { class: 'dm-small', 'data-plan-chosen-areas': '', text: t('plan.sections.areas', { areas: namesLine(ids.map((id) => nameOf(id))) }) }) : null,
           s.text ? h('p', { class: 'dm-small dm-plan-section-text', text: excerpt(s.text) }) : null,
           h('div', { class: 'dm-row-wrap' },
             basic.button({ label: t('plan.sections.reveal'), icon: 'book-open', size: 'sm', title: t('plan.sections.reveal.hint'), onClick: () => reveal(s.avsnitt) }),
             basic.button({ label: t('plan.sections.clear'), icon: 'x', size: 'sm', variant: 'ghost', title: t('plan.sections.clear.hint'), 'data-plan-clear': '', onClick: () => clear() })));
       }
       /** No section chosen, nothing marked. */
-      function clear() { st.chosen = null; options.mark([], null); }
+      function clear() { st.chosen = null; markCurrent(null); options.mark([], null); }
 
-      /** The delivery's files with role and size, the warnings it was read with and the button that adds a file. */
+      /** How the plan's links between map and text were read: how many and from where, what has none, and the way to read them again. */
+      function linksBlock(lev) {
+        const k = lev.kopplingar && typeof lev.kopplingar === 'object' ? lev.kopplingar : null;
+        const relink = basic.button({ label: t('plan.files.links.relink'), icon: 'refresh-cw', size: 'sm', title: t('plan.files.links.relink.hint'), 'data-plan-relink': '', onClick: () => relinkPlan().catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) });
+        const kv = /** @type {any} */ (h('dm-kv'));
+        if (k) {
+          const sources = (Array.isArray(k.kallor) ? k.kallor : []).filter((x) => x && x.antal).map((x) => t('plan.links.source.' + x.kalla, { n: x.antal, name: x.fran || '' })).join(', ');
+          kv.items = [
+            { label: t('plan.files.links.count'), value: [i18n.formatNumber(Number(k.antal) || 0), sources].filter(Boolean).join(': ') },
+            k.omraden ? { label: t('plan.files.links.areas'), value: t('plan.files.links.of', { n: i18n.formatNumber(k.omradenUtan || 0), of: i18n.formatNumber(k.omraden) }) } : null,
+            k.stallningstaganden ? { label: t('plan.files.links.statements'), value: t('plan.files.links.of', { n: i18n.formatNumber(k.stallningstagandenUtan || 0), of: i18n.formatNumber(k.stallningstaganden) }) } : null,
+          ].filter(Boolean);
+        }
+        return h('div', { class: 'dm-stack-sm', 'data-plan-links': k ? String(k.antal || 0) : '' }, h('h4', { text: t('plan.files.links') }),
+          k ? kv : h('p', { class: 'dm-help dm-small', text: t('plan.files.links.unknown') }),
+          k && !k.antal && Array.isArray(k.orsaker) && k.orsaker.length ? h('p', { class: 'dm-small dm-warn', 'data-plan-links-why': '', text: k.orsaker.map((r) => t('plan.links.why.' + r)).join(' ') }) : null,
+          h('div', { class: 'dm-row-wrap' }, relink));
+      }
+      /** The delivery's files with role and size, its links, the warnings it was read with and the button that adds a file. */
       function filesPane() {
         const lev = st.plan.leverans && typeof st.plan.leverans === 'object' ? st.plan.leverans : {};
         const warnings = (Array.isArray(lev.varningar) ? lev.varningar : []).map((w) => (typeof w === 'string' ? w : w && typeof w === 'object' ? [w.fil, w.text || w.meddelande || w.message || w.kod].filter(Boolean).join(': ') : '')).filter(Boolean);
@@ -278,6 +288,7 @@
         };
         const add = basic.button({ label: t('plan.files.add'), icon: 'plus', title: t('plan.files.add.hint'), 'data-plan-add-file': '', onClick: () => addFromDisk().catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) });
         return h('div', { class: 'dm-plan-files dm-stack', 'data-plan-files': '' },
+          st.plan.leverans ? linksBlock(lev) : null,
           warnings.length ? h('div', { class: 'dm-stack-sm', 'data-plan-warnings': '' }, h('h4', { class: 'dm-warn', text: t('plan.files.warnings', { n: warnings.length }) }), h('ul', { class: 'dm-plan-warnings' }, warnings.map((w) => h('li', { class: 'dm-small', text: w })))) : null,
           facts.items.length ? facts : null,
           st.files.length ? h('ul', { class: 'dm-plan-filelist' }, st.files.map(row)) : h('p', { class: 'dm-help', text: t('plan.files.none') }),
@@ -299,11 +310,19 @@
         st.tab = 'files';
         options.changed();
       }
+      /** The plan's links read again from its files (data/plan-delivery's relink), then the plan drawn again. */
+      async function relinkPlan() {
+        if (!st.id) return;
+        const res = await delivery.relink(String(st.id));
+        ui.toast.show(t('plan.files.links.relinked', { n: res.links }), { kind: 'ok' });
+        st.tab = 'files';
+        options.changed();
+      }
 
-      function destroy() { seq++; tabs = null; panes = null; }
-      return { mount, showTab, reveal, choose, clear, forObject, chosenBlock, add, destroy, state: st, get tab() { return st.tab; } };
+      function destroy() { seq++; tabs = null; panes = null; split = null; }
+      return { mount, showTab, reveal, choose, clear, forObject, forObjects, chosenBlock, textPane, add, relink: relinkPlan, destroy, state: st, get tab() { return st.tab; }, get split() { return split; } };
     }
 
-    return { STATEMENT_UUID, ROLES, delivery, ownDelivery, isStatement, roleOf, openFile, create };
+    return { STATEMENT_UUID, ROLES, SPLIT_SETTING, delivery, isStatement, openFile, create };
   });
 })();

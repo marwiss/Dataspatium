@@ -162,9 +162,9 @@
     /**
      * Draw the layers on a map: one L.geoJSON per layer with features, with its symbol; a hidden layer is made but not added.
      * `rowAt(i)` gives the row a feature came from (`row._i`), `geometryOf(row)` its GeoJSON geometry in WGS 84, and `onClick`
-     * is told the row and the Leaflet layer clicked.
+     * is told the row, the Leaflet layer clicked and Leaflet's event (its originalEvent says whether Shift was held).
      * @param {any} L @param {any} map @param {LayerInfo[]} layers @param {Map<string, LayerSymbol>} syms @param {Set<string>} hidden
-     * @param {{rowAt: (i: number) => any, geometryOf: (row: any) => any, onClick?: (row: any, lyr: any) => void}} options
+     * @param {{rowAt: (i: number) => any, geometryOf: (row: any) => any, onClick?: (row: any, lyr: any, e?: any) => void}} options
      * @returns {Array<{key: string, group: any, count: number}>}
      */
     function draw(L, map, layers, syms, hidden, options) {
@@ -182,7 +182,7 @@
         const group = L.geoJSON({ type: 'FeatureCollection', features }, {
           style: (f) => styleOf(sym, rowOf(f)),
           pointToLayer: (f, latlng) => pointOf(L, sym, latlng, rowOf(f)),
-          onEachFeature: (f, lyr) => { lyr.on('click', () => { if (options.onClick) options.onClick(rowOf(f), lyr); }); },
+          onEachFeature: (f, lyr) => { lyr.on('click', (e) => { if (options.onClick) options.onClick(rowOf(f), lyr, e); }); },
         });
         if (!hidden.has(info.key)) group.addTo(map);
         out.push({ key: info.key, group, count: features.length });

@@ -142,6 +142,8 @@ dm-badge[kind="error"] { background: var(--dm-error-soft); color: var(--dm-error
 .dm-chip { display: inline-flex; align-items: center; padding: 1px var(--dm-s-2); border: 1px solid var(--dm-border); border-radius: 999px; background: var(--dm-surface); color: var(--dm-text-muted); font: inherit; font-size: var(--dm-text-xs); font-weight: var(--dm-weight-medium); line-height: 1.5; cursor: pointer; transition: background var(--dm-transition), color var(--dm-transition); }
 .dm-chip:hover { border-color: var(--dm-border-strong); color: var(--dm-text); }
 .dm-chip[aria-pressed="true"] { background: var(--dm-accent-soft); color: var(--dm-accent); border-color: transparent; }
+/* A dm-button that toggles a mode (Markera område in the plan view) shows that it is on through aria-pressed */
+dm-button > button[aria-pressed="true"] { background: var(--dm-accent-soft); color: var(--dm-accent); border-color: var(--dm-accent); }
 .dm-chip:focus-visible { outline: 2px solid var(--dm-accent); outline-offset: 1px; }
 
 /* Progress */

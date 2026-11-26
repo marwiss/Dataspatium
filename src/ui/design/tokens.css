@@ -114,6 +114,9 @@
   --dm-sheet-w: 360px;
   --dm-panel-min-w: 200px;
   --dm-panel-max-w: 560px;
+  /* A split work area (the plan's map and text): the second pane's width and the least either pane keeps. */
+  --dm-split-w: 380px;
+  --dm-split-min-w: 260px;
   --dm-z-sheet: 40;
   --dm-floating-max-h: 640px;
   --dm-z-drawer: 10;
