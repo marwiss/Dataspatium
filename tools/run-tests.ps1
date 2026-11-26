@@ -225,7 +225,7 @@ function Get-Messages($j) {
 # The lock of the whole machine's browser runs (the matrix holds it too). Created atomically, so two runs never both take it; a
 # lock left by a run of this script whose process is gone is taken over.
 $lockFile = Join-Path $env:TEMP "dm-matrix.lock"
-$lockText = "run-tests pid $PID $(Get-Date -Format s) $root"
+$lockText = ""
 function Test-Busy {
   $b = @(Get-CimInstance Win32_Process -Filter "Name='msedge.exe' OR Name='firefox.exe'" | Where-Object { $_.CommandLine -match 'headless' }).Count
   $c = 0
@@ -244,6 +244,7 @@ function Enter-Lock {
     if (-not $busy) {
       try {
         $fs = [System.IO.File]::Open($lockFile, 'CreateNew', 'Write', 'None')
+        $script:lockText = "run-tests pid $PID $(Get-Date -Format s) $root"
         $bytes = [Text.Encoding]::UTF8.GetBytes($lockText); $fs.Write($bytes, 0, $bytes.Length); $fs.Dispose()
         return $true
       } catch { $busy = "lock taken" }

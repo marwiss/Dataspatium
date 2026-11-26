@@ -356,7 +356,7 @@ def write_weights(outputs):
     sums = {}
     for out in outputs:
         raw = pathlib.Path(out).read_bytes()
-        text = raw.decode("utf-16") if raw[:2] in (b"\xff\xfe", b"\xfe\xff") else raw.decode("utf-8", "replace")
+        text = raw.decode("utf-16") if raw[:2] in (b"\xff\xfe", b"\xfe\xff") else raw.decode("utf-8-sig", "replace")
         browser = ""
         for line in text.splitlines():
             if line.startswith("====="):
