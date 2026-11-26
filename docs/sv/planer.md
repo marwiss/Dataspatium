@@ -81,25 +81,47 @@ markörform (cirkel, kvadrat, triangel eller romb). Teckenförklaringen i inspek
 grupperade som listan och med samma symboler, och mark- och vattenanvändningen med sina användningar och deras area i
 hektar.
 
-### Ställningstaganden
+### Planbeskrivningen bredvid kartan
 
-När planen har planbeskrivningens avsnitt eller leveransens filer finns flikarna *Karta*, *Ställningstaganden* och *Filer* över
-kartan. Kartan är huvudvyn, och panelerna runt den är desamma som förut. Fliken *Ställningstaganden* visar planbeskrivningens
-avsnitt med rubrik och text:
+När planen har planbeskrivningens avsnitt eller leveransens filer delar kartan och planbeskrivningen på arbetsytan: kartan till
+vänster och texten till höger, med en avdelare emellan. Dra i avdelaren, eller använd piltangenterna när den har fokus, för att
+ändra bredden. Bredden sparas och gäller för alla planer, och ett dubbelklick återställer den. Under 1 100 px ligger texten under
+kartan. Planbeskrivningen och *Filer* är flikar ovanför texten. Panelerna runt arbetsytan är desamma som förut.
+
+Planbeskrivningen visar avsnitten med rubrik och text:
 
 - *Gäller hela planen* överst: avsnitt som är kopplade till planen som helhet.
 - Därefter ställningstagandena (avsnittstypen Ställningstagande) och sist övriga avsnitt, som beskrivningar och konsekvenser.
 - Texten visas alltid som text, aldrig som HTML.
-- *Visa 3 områden i kartan* (med avsnittets antal) markerar alla områden som avsnittet pekar på, i accentfärgen och även om
-  deras lager är dolda, och zoomar kartan till dem. Inspektören visar det markerade avsnittet med *Visa i planbeskrivningen* och *Avmarkera*.
+- *Visa 3 områden i kartan* (med avsnittets antal) markerar alla områden som avsnittet gäller, i accentfärgen och även om
+  deras lager är dolda, och zoomar kartan till dem. Avsnittet markeras i texten, och inspektören visar det med sina områden,
+  *Visa i planbeskrivningen* och *Avmarkera*.
 
-Klicka på ett område i kartan så listar inspektören under *I planbeskrivningen* de ställningstaganden och andra avsnitt som pekar
-på området, ställningstagandena först. *Visa i planbeskrivningen* öppnar fliken *Ställningstaganden* vid avsnittet.
+### Områden och deras ställningstaganden
+
+Klicka på ett område i kartan så listar inspektören överst under *I planbeskrivningen* de ställningstaganden och andra avsnitt
+som gäller området, ställningstagandena först. Flera områden väljs på två sätt:
+
+- **Skift-klick** lägger till ett område eller tar bort det igen.
+- **Markera område** i verktygsraden: dra sedan en rektangel i kartan, så väljs alla områden som visas och som rektangeln rör.
+  Planens gräns räknas inte. Skift och dra gör detsamma utan knappen och lägger till områdena till dem som redan är valda.
+  Esc avbryter.
+
+Med flera områden valda listar inspektören dem under *Valda områden* och därunder alla ställningstaganden och avsnitt som gäller
+något av dem, ett avsnitt i taget med de valda områden det gäller (*Gäller Trossö, Lyckeby*). *Visa i planbeskrivningen*
+bläddrar fram avsnittet i texten bredvid kartan och markerar det. *Avmarkera områdena* tömmer valet.
+
+En koppling som bara finns i texten, för att texten nämner områdets namn men filerna inte kopplar dem, visas som *Nämnd i
+texten* (se [Hur kopplingarna läses](#hur-kopplingarna-läses)). Kan inspektören inte lista något säger den varför: området
+saknar objektidentitet, inget avsnitt gäller området, eller planen har inga kopplingar alls mellan kartan och texten.
 
 ### Filer
 
-Fliken *Filer* listar leveransens filer med roll (plankarta, underlag, textdokument, bilaga, manifest, metadata eller övrigt) och
-storlek, och de varningar som leveransen lästes med. Filer som leveransen nämner men som inte sparades står för sig.
+Fliken *Filer* visar först hur planens kopplingar mellan karta och text lästes: hur många och varifrån, hur många områden och
+ställningstaganden som saknar koppling och, när det inte finns någon, varför. *Läs kopplingarna igen* läser dem på nytt ur
+planens filer, på alla sätt appen känner till nu, till exempel för en plan som importerades med en äldre version. Därefter listas
+leveransens filer med roll (plankarta, underlag, textdokument, bilaga, manifest, metadata eller övrigt) och storlek, och de
+varningar som leveransen lästes med. Filer som leveransen nämner men som inte sparades står för sig.
 
 - Bara en PDF eller en bild (PNG eller JPEG) vars innehåll stämmer med filändelsen öppnas i en ny flik. Alla andra filer laddas
   ned, så att en fil som utger sig för att vara något annat aldrig visas i appen.
@@ -149,34 +171,67 @@ kontrolleras inte och läses aldrig. En vanlig mapp med planens GeoPackage-fil o
 En digital översiktsplan levereras ofta som en mapp, en ZIP-fil eller några filer: en eller flera GeoPackage-filer
 (plankartan i Boverkets ÖP-modell och kanske underlag), en eller flera Word-filer (textdokumentet och bilagor) och ibland
 en `manifest.xml` och en `metadata.xml`. Släpp mappen, ZIP-filen eller filerna i Inhämta. Steget som sorterar filerna har då
-valet **Digital översiktsplan (alla filer som en plan)**. Det är påslaget när en GeoPackage-fil följer ÖP-modellen; avslaget
-importeras varje fil för sig som förut.
+valet **Digital översiktsplan (alla filer som en plan)**. Det är påslaget när en GeoPackage-fil följer ÖP-modellen eller på
+annat sätt kopplar sina objekt till texten (se [Hur kopplingarna läses](#hur-kopplingarna-läses)); avslaget importeras varje fil
+för sig som förut.
 
 Påslaget blir alla filer en datamängd av slaget plan:
 
 - **Filerna känns igen på innehållet**, inte på namnet: en GeoPackage-fil på sitt SQLite-huvud och sina tabeller, en
   Word-fil på sina delar i ZIP-filen och en manifest- eller metadatafil på sitt rotelement. Varje fil sparas i planen med
-  sin roll: *plankarta* (GeoPackage-filen i ÖP-modellen), *underlag* (andra GeoPackage-filer), *textdokument* (Word-filen
-  som GeoPackage-filen hänvisar till, annars den enda eller den med flest av planens bokmärken), *bilaga* (andra Word-filer
+  sin roll: *plankarta* (GeoPackage-filen i ÖP-modellen, annars den som kopplar sina objekt till texten), *underlag* (andra
+  GeoPackage-filer), *textdokument* (Word-filen som GeoPackage-filen hänvisar till med namn eller länk, annars den enda eller
+  den med flest av planens bokmärken), *bilaga* (andra Word-filer
   och PDF-filer), *manifest*, *metadata* och *övrigt*.
 - **Alla lager med objekt** blir rader i planen. Kolumnen `lager` säger vilken tabell i GeoPackage-filen raden kommer från
   och `fil` vilken fil. Lagren känns igen på `gpkg_contents` (värdelistor och kopplingstabeller är inga lager), med sina
   namn därifrån. Tomma lager tas inte med. Lager med ändelserna `_point`, `_line` och `_polygon` läses liksom `_punkt` och
   `_linje`.
 - **Textdokumentets avsnitt**: varje bokmärke i Word-filerna blir ett avsnitt med sin text, även när bokmärket går över
-  flera stycken, och den närmaste rubriken före det. Tabellen `dokumentavsnitt` i GeoPackage-filen kopplar bokmärkena till
-  objekten i kartan. Ett ställningstagande kan gälla flera områden, och ett område kan ha flera avsnitt. Ett avsnitt kan
-  också gälla hela planen. Avsnittstypen (till exempel *Ställningstagande*) läses ur GeoPackage-filen, på ÖP-katalogens id
-  eller på namnet. Id:n jämförs utan klamrar och oberoende av versaler.
+  flera stycken, och den närmaste rubriken före det. GeoPackage-filen kopplar bokmärkena till objekten i kartan, se
+  [Hur kopplingarna läses](#hur-kopplingarna-läses). Ett ställningstagande kan gälla flera områden, och ett område kan ha
+  flera avsnitt. Ett avsnitt kan också gälla hela planen. Avsnittstypen (till exempel *Ställningstagande*) läses ur
+  GeoPackage-filen, på ÖP-katalogens id eller på namnet.
 - **Manifest och metadata** har ingen formell roll i en ÖP-leverans. De läses när de finns och krävs aldrig. Planens
   uppgifter läses alltid ur GeoPackage-filen. Kontrollsummor i filerna (SHA-1, SHA-256, SHA-384 och SHA-512) jämförs med
   filerna; andra algoritmer, till exempel MD5, sägs inte kontrollerade.
 - **Varningar** sparas med planen och visas i Inhämta före importen. Det gäller till exempel ett bokmärke som GeoPackage-filen
   nämner men textdokumentet saknar, ett textdokument som GeoPackage-filen hänvisar till men som inte levererades, en
   kontrollsumma som inte stämmer och bokmärken vars namn inte följer utbytesmodellens regel. Ett sådant bokmärke läses ändå.
+  Varningarna säger också hur många kopplingar som lästes, se nedan.
 
-Avsnitten ligger i tabellen `_sections` (avsnitt, dokument, rubrik, text, typ, ordning) och kopplingarna i
-`_section_links` (avsnitt, objektid, dokument, typ; ett tomt objektid är hela planen). Båda kan läsas med SQL i Analysera.
+### Hur kopplingarna läses
+
+Boverkets modell kopplar ett objekt till ett bokmärke i tabellen `dokumentavsnitt`. Filer från andra verktyg, eller skrivna
+för hand eller av en AI, gör det på andra sätt. Appen läser kopplingarna i den här ordningen, och en svagare källa lägger bara
+till kopplingar för objekt som ingen starkare källa har kopplat:
+
+1. **ÖP-modellens `dokumentavsnitt`**, även när kolumnerna heter något annat, till exempel `objekt_id`, `omrade_id` eller
+   `objektidentitet_omrade` för objektet och `bokmarke` för bokmärket.
+2. **En annan tabell med kopplingar**: en tabell med en kolumn för objektets id och en för bokmärket eller avsnittet, till
+   exempel `objektreferens` med `objekt_id` och `identitet_i_dokument`.
+3. **Kolumner på områdena** som namnger deras bokmärken eller ställningstaganden, till exempel `bokmarke`, `stallning_id`,
+   `stallningstaganden` eller `avsnitt`, med ett eller flera värden åtskilda med komma eller semikolon.
+4. **Texten**: områden som ett avsnitt nämner vid namn, som "Kopplade områden: Trossö, Lyckeby" eller "gäller områdena A2 och
+   A3". Bara avsnitt som ingen annan källa kopplar läses så. Kopplingarna är tolkade och visas som *Nämnd i texten*, aldrig som
+   kopplingar ur filerna.
+
+Id:n jämförs utan klamrar, citattecken och blanksteg och oberoende av versaler. Ett objekt hittas på sitt id, sina andra
+id-kolumner, `<lager>:<fid>` eller en tabell som anger lager och objekt för varje id (som `kartobjekt`). Ett objekt utan
+objektidentitet får `<lager>:<fid>` som id. Ett bokmärke hittas på sitt namn, oberoende av versaler, utan ett prefix som `op_`
+eller på sin rubrik. En tabell med ställningstagandenas text (som `stallningstagande` med bokmärke och text) gör avsnitten till
+ställningstaganden och ger texten när Word-filen saknas, och en tabell med nycklar och värden (som `planmetadata`) ger planens
+id, kommun och status.
+
+Planens varningar och fliken *Filer* säger hur många kopplingar som lästes och varifrån, hur många områden och
+ställningstaganden som saknar koppling och, när planen inte har någon koppling, varför: inget textdokument, ingen tabell med
+kopplingar, inga kolumner på områdena, inga namn i texten eller id:n som inget område har.
+
+### Tabellerna och filer som läggs till
+
+Avsnitten ligger i tabellen `_sections` (avsnitt, dokument, rubrik, text, typ, ordning) och kopplingarna i `_section_links`
+(avsnitt, objektid, dokument, typ, kalla). Ett tomt objektid är hela planen, och kalla säger varifrån kopplingen lästes: modell,
+tabell, attribut eller text. Båda kan läsas med SQL i Analysera.
 En GeoPackage-fil i ÖP-modellen som importeras ensam med *Hela översiktsplanen som plan* får samma tabeller, med rubrikerna
 ur GeoPackage-filen, och en varning om att textdokumentet saknas. Ett textdokument som läggs till i planen i efterhand läses
 på samma sätt, och avsnitten och kopplingarna görs om; ett med samma namn som ett i planen ersätter det.
