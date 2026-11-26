@@ -67,7 +67,7 @@
     assert.ok(ms < 3000, 'stopped after ' + Math.round(ms) + ' ms');
     assert.deepEqual(await regex.run({ op: 'test', pattern: 'b', flags: '', values: ['abc'] }), [1], 'a new worker answers');
     return Math.round(ms) + ' ms';
-  });
+  }, 20000, { serial: true });
 
   test('regex: library patterns, groups, shapes and the R form of patterns and replacements', async (assert) => {
     for (const item of regex.LIBRARY) {

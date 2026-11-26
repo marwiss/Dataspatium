@@ -348,7 +348,7 @@
       hd.finalize();
       return `render ${Math.round(ms)} ms, pan ${Math.round(pan)} ms`;
     } finally { el.remove(); }
-  }, 60000);
+  }, 60000, { serial: true });
 
   test('geo: measures, points in polygons, nearest, buffer, overlay, dissolve and simplify with Turf', async (assert) => {
     const areas = await makeAreas(); const points = await makePoints();
