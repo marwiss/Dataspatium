@@ -142,6 +142,12 @@ What works in one version also works in the next. Each version goes with the sam
   browser (see [R](r-guide.md) and [Regular expressions](regex.md)).
 - **Plans**: Swedish detailed and comprehensive plans as plan maps with the National Board of Housing's colours and symbols, in the
   plan's own coordinate system (see [Plans](planer.md)).
+- **Digital comprehensive plans**: a delivery with a GeoPackage, the plan description (DOCX), manifest.xml and metadata.xml becomes
+  one plan that keeps its files together. The plan description is shown beside the plan map: choose a position and all its areas
+  are marked, and click an area, or select several, and every position concerning them is listed. The links are read from
+  Boverket's ÖP model, and also from deliveries that do not follow it (link tables, columns on the areas and areas named in the
+  text). Each layer can be shown or hidden, several at once, with its own symbol in the legend and Boverket's colours where they
+  exist (see [Plans](planer.md#a-digital-comprehensive-plan-layers-positions-and-files)).
 - **Charts, maps and documents**: charts and maps with Vega-Lite, D3 or R, dashboards and reports from templates as HTML, Word, PDF,
   PowerPoint, Markdown or LaTeX (see [Visualise](visualisera.md)).
 - **Save and share**: data in some ten formats, sharing bundles, comments, backup, sync with GitHub and a portable folder.
@@ -158,7 +164,8 @@ What works in one version also works in the next. Each version goes with the sam
 - **More sources**: Access files, databases, open geodata, background maps, documents and pictures as collections and text from scanned
   pages (see [Sources](kallor.md)). *Technically:* a local bridge to SQL Server and ODBC, PostgREST, OData, GraphQL, SPARQL and more over
   HTTP, WFS, OGC API Features, ArcGIS and Neo4j over Bolt.
-- **Maps, plans and graphs**: maps with layers and geo tools, plans from all the Nordic countries and graphs that are drawn, queried and
+- **Maps, plans and graphs**: maps with layers and geo tools, several datasets on one map at once (*Show on the map* in the left
+  column), a GeoPackage with all its layers as one dataset, plans from all the Nordic countries and graphs that are drawn, queried and
   edited (see [Maps](kartor.md) and [Graphs](grafer.md)).
 - **Building models**: IFC models in 3D with tables, properties and quantities, checks against the schema and against IDS, and DXF
   drawings (see [CAD and BIM](cad-bim.md)). *Technically:* web-ifc and three.js for the view, IfcOpenShell and ifctester in the app's

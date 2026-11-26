@@ -138,6 +138,12 @@ Det som går i en version går också i nästa. Varje version hör ihop med samm
   helt i webbläsaren (se [R](docs/sv/r-guide.md) och [Reguljära uttryck](docs/sv/regex.md)).
 - **Planer**: svenska detaljplaner och översiktsplaner som plankartor med Boverkets färger och beteckningar, i planens eget
   koordinatsystem (se [Planer](docs/sv/planer.md)).
+- **Digitala översiktsplaner**: en leverans med GeoPackage, planbeskrivning (DOCX), manifest.xml och metadata.xml blir en plan där
+  filerna hålls ihop. Planbeskrivningen visas bredvid plankartan: välj ett ställningstagande så markeras alla dess områden, och
+  klicka på ett område, eller markera flera, så visas alla ställningstaganden som berör dem. Kopplingarna läses ur Boverkets
+  ÖP-modell, och också ur leveranser som inte följer den (kopplingstabeller, kolumner på områdena och områden som nämns i texten).
+  Varje lager kan visas eller döljas, flera samtidigt, med egen symbol i teckenförklaringen och Boverkets färger där de finns (se
+  [Planer](docs/sv/planer.md#en-digital-översiktsplan-lager-ställningstaganden-och-filer)).
 - **Diagram, kartor och dokument**: diagram och kartor med Vega-Lite, D3 eller R, dashboards och rapporter ur mallar som HTML, Word,
   PDF, PowerPoint, Markdown eller LaTeX (se [Visualisera](docs/sv/visualisera.md)).
 - **Spara och dela**: data i ett tiotal format, delningspaket, kommentarer, säkerhetskopia, synk med GitHub och en portabel mapp.
@@ -154,7 +160,8 @@ Det som går i en version går också i nästa. Varje version hör ihop med samm
 - **Fler källor**: Access-filer, databaser, öppna geodata, bakgrundskartor, dokument och bilder som samlingar och text ur skannade
   sidor (se [Källor](docs/sv/kallor.md)). *Tekniskt:* en lokal brygga till SQL Server och ODBC, PostgREST, OData, GraphQL, SPARQL med
   flera över HTTP, WFS, OGC API Features, ArcGIS och Neo4j över Bolt.
-- **Kartor, planer och grafer**: kartor med lager och geoverktyg, planer från hela Norden och grafer som ritas, frågas och redigeras
+- **Kartor, planer och grafer**: kartor med lager och geoverktyg, flera datamängder samtidigt i kartan (*Visa i kartan* i
+  vänsterkolumnen), en GeoPackage med alla sina lager som en datamängd, planer från hela Norden och grafer som ritas, frågas och redigeras
   (se [Kartor](docs/sv/kartor.md) och [Grafer](docs/sv/grafer.md)).
 - **Byggnadsmodeller**: IFC-modeller i 3D med tabeller, egenskaper och mängder, kontroll mot schemat och mot IDS, och DXF-ritningar
   (se [CAD och BIM](docs/sv/cad-bim.md)). *Tekniskt:* web-ifc och three.js för visningen, IfcOpenShell och ifctester i appens Python.
