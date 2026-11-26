@@ -73,27 +73,47 @@ when two line layers would otherwise share a colour) and points with a marker sh
 or diamond). The legend in the inspector lists only the layers that show, grouped as the list and with the same symbols, and
 land and water use with its uses and their area in hectares.
 
-### Positions
+### The plan description beside the map
 
-When the plan has the plan description's sections or the delivery's files, the tabs *Map*, *Positions* and *Files* are above the
-map. The map is the main view, and the panels around it stay as they were. The *Positions* tab shows the plan description's
-sections with heading and text:
+When the plan has the plan description's sections or the delivery's files, the map and the plan description share the work
+area: the map on the left and the text on the right, with a divider between them. Drag the divider, or use the arrow keys when
+it has the focus, to change the width. The width is kept for every plan, and a double click resets it. Below 1,100 px the text
+is below the map. The plan description and *Files* are tabs above the text. The panels around the work area stay as they were.
+
+The plan description shows the sections with heading and text:
 
 - *Applies to the whole plan* at the top: sections linked to the plan as a whole.
 - Then the positions (the section type Ställningstagande) and last the other sections, such as descriptions and consequences.
 - The text always shows as text, never as HTML.
-- *Show 3 areas on the map* (with the section's number) marks every area the section points to, in the accent colour and even when
-  their layers are hidden, and zooms the map to them. The inspector shows the marked section with *Show in the plan description*
-  and *Unmark*.
+- *Show 3 areas on the map* (with the section's number) marks every area the section concerns, in the accent colour and even
+  when their layers are hidden, and zooms the map to them. The section is marked in the text, and the inspector shows it with its
+  areas, *Show in the plan description* and *Unmark*.
 
-Click an area on the map and the inspector lists under *In the plan description* the positions and other sections that point to
-the area, the positions first. *Show in the plan description* opens the *Positions* tab at the section.
+### Areas and their positions
+
+Click an area on the map and the inspector lists at the top, under *In the plan description*, the positions and other sections
+that concern the area, the positions first. Several areas are chosen in two ways:
+
+- **Shift-click** adds an area, or removes it again.
+- **Select area** in the toolbar: then drag a rectangle on the map, and every shown area the rectangle touches is chosen. The
+  plan boundary does not count. Shift and drag does the same without the button and adds the areas to those already chosen.
+  Esc cancels.
+
+With several areas chosen the inspector lists them under *Chosen areas* and below them every position and section that concerns
+any of them, one section at a time with the chosen areas it concerns (*Applies to Trossö, Lyckeby*). *Show in the plan
+description* scrolls the text beside the map to the section and marks it. *Clear the areas* empties the choice.
+
+A link found only in the text, because the text names the area but the files do not link them, is shown as *Named in the text*
+(see [How the links are read](#how-the-links-are-read)). When the inspector cannot list anything it says why: the area has no
+object identity, no section concerns the area, or the plan has no links at all between the map and the text.
 
 ### Files
 
-The *Files* tab lists the delivery's files with their role (plan map, background material, text document, appendix, manifest,
-metadata or other) and size, and the warnings the delivery was read with. Files the delivery names but that were not kept are
-listed apart.
+The *Files* tab first shows how the plan's links between map and text were read: how many and from where, how many areas and
+positions have no link and, when there is none, why. *Read the links again* reads them anew from the plan's files, in every way
+the app knows now, for example for a plan imported with an older version. Then it lists the delivery's files with their role
+(plan map, background material, text document, appendix, manifest, metadata or other) and size, and the warnings the delivery
+was read with. Files the delivery names but that were not kept are listed apart.
 
 - Only a PDF or a picture (PNG or JPEG) whose contents agree with its file extension opens in a new tab. Every other file is
   downloaded, so that a file that claims to be something else is never shown in the app.
@@ -140,35 +160,66 @@ A digital comprehensive plan is often delivered as a folder, a ZIP file or a few
 map in Boverket's ÖP model and perhaps planning data), one or more Word files (the text document and appendices) and
 sometimes a `manifest.xml` and a `metadata.xml`. Drop the folder, the ZIP file or the files in Import. The step that sorts
 the files then has the choice **Digital comprehensive plan (all files as one plan)**. It is on when a GeoPackage follows
-the ÖP model; off, each file is imported on its own as before.
+the ÖP model or links its objects to the text in another way (see [How the links are read](#how-the-links-are-read)); off, each
+file is imported on its own as before.
 
 On, all the files become one dataset of the kind plan:
 
 - **The files are recognised by their contents**, not their names: a GeoPackage by its SQLite header and its tables, a
   Word file by its parts in the ZIP file and a manifest or metadata file by its root element. Each file is kept in the plan
-  with its role: *plan map* (the GeoPackage in the ÖP model), *planning data* (other GeoPackages), *text document* (the Word
-  file the GeoPackage refers to, else the only one or the one with most of the plan's bookmarks), *appendix* (other Word
+  with its role: *plan map* (the GeoPackage in the ÖP model, else the one that links its objects to the text), *planning data*
+  (other GeoPackages), *text document* (the Word file the GeoPackage refers to by name or link, else the only one or the one
+  with most of the plan's bookmarks), *appendix* (other Word
   files and PDF files), *manifest*, *metadata* and *other*.
 - **Every layer with objects** becomes rows of the plan. The column `lager` says which table of the GeoPackage the row
   comes from and `fil` which file. The layers are recognised by `gpkg_contents` (value lists and link tables are no layers),
   with their names from there. Empty layers are left out. Layers with the endings `_point`, `_line` and `_polygon` are read,
   and so are `_punkt` and `_linje`.
 - **The text document's sections**: every bookmark in the Word files becomes a section with its text, also when the
-  bookmark spans several paragraphs, and the nearest heading before it. The table `dokumentavsnitt` in the GeoPackage links
-  the bookmarks to the objects on the map. A ställningstagande (the municipality's position) can concern several areas,
-  and an area can have several sections. A section can also concern the whole plan. The section type (for example
-  *Ställningstagande*) is read from the GeoPackage, by the ÖP catalogue's id or by its name. Ids are compared without
-  braces and regardless of case.
+  bookmark spans several paragraphs, and the nearest heading before it. The GeoPackage links the bookmarks to the objects on
+  the map, see [How the links are read](#how-the-links-are-read). A ställningstagande (the municipality's position) can
+  concern several areas, and an area can have several sections. A section can also concern the whole plan. The section type
+  (for example *Ställningstagande*) is read from the GeoPackage, by the ÖP catalogue's id or by its name.
 - **Manifest and metadata** have no formal role in an ÖP delivery. They are read when present and never required. The
   plan's facts are always read from the GeoPackage. Checksums in the files (SHA-1, SHA-256, SHA-384 and SHA-512) are
   compared with the files; other algorithms, such as MD5, are said not to be checked.
 - **Warnings** are kept with the plan and shown in Import before the import. Examples are a bookmark the GeoPackage names
   but the text document lacks, a text document the GeoPackage refers to but that was not delivered, a checksum that does
-  not match and bookmarks whose names do not follow the exchange model's rule. Such a bookmark is read all the same.
+  not match and bookmarks whose names do not follow the exchange model's rule. Such a bookmark is read all the same. The
+  warnings also say how many links were read, see below.
 
-The sections are in the table `_sections` (avsnitt, dokument, rubrik, text, typ, ordning) and the links in
-`_section_links` (avsnitt, objektid, dokument, typ; an empty objektid is the whole plan). Both can be read with SQL in
-Analyse. A GeoPackage in the ÖP model imported on its own with *The whole comprehensive plan as a plan* gets the same tables,
+### How the links are read
+
+Boverket's model links an object to a bookmark in the table `dokumentavsnitt`. Files from other tools, or written by hand or by
+an AI, do it in other ways. The app reads the links in this order, and a weaker source only adds links for objects that no
+stronger source has linked:
+
+1. **The ÖP model's `dokumentavsnitt`**, also when its columns have other names, for example `objekt_id`, `omrade_id` or
+   `objektidentitet_omrade` for the object and `bokmarke` for the bookmark.
+2. **Another table of links**: a table with a column for the object's id and one for the bookmark or section, for example
+   `objektreferens` with `objekt_id` and `identitet_i_dokument`.
+3. **Columns on the areas** that name their bookmarks or positions, for example `bokmarke`, `stallning_id`,
+   `stallningstaganden` or `avsnitt`, with one or more values separated by commas or semicolons.
+4. **The text**: areas a section names, such as "Kopplade områden: Trossö, Lyckeby" or "gäller områdena A2 och A3". Only
+   sections that no other source links are read this way. These links are inferred and shown as *Named in the text*, never as
+   links from the files.
+
+Ids are compared without braces, quotes and spaces and regardless of case. An object is found by its id, its other id columns,
+`<layer>:<fid>` or a table that gives the layer and feature of each id (such as `kartobjekt`). An object without an object
+identity gets `<layer>:<fid>` as its id. A bookmark is found by its name, regardless of case, without a prefix such as `op_`, or
+by its heading. A table of the positions' text (such as `stallningstagande` with bookmark and text) makes the sections positions
+and gives their text when the Word file is missing, and a table of keys and values (such as `planmetadata`) gives the plan's id,
+municipality and status.
+
+The plan's warnings and the *Files* tab say how many links were read and from where, how many areas and positions have no link
+and, when the plan has none, why: no text document, no table of links, no columns on the areas, no names in the text, or ids
+that no area has.
+
+### The tables and files added later
+
+The sections are in the table `_sections` (avsnitt, dokument, rubrik, text, typ, ordning) and the links in `_section_links`
+(avsnitt, objektid, dokument, typ, kalla). An empty objektid is the whole plan, and kalla says where the link was read: modell,
+tabell, attribut or text. Both can be read with SQL in Analyse. A GeoPackage in the ÖP model imported on its own with *The whole comprehensive plan as a plan* gets the same tables,
 with the headings from the GeoPackage, and a warning that the text document is missing. A text document added to the plan
 later is read the same way, and the sections and links are made anew; one with the name of a document in the plan replaces it.
 

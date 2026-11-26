@@ -10,15 +10,23 @@
  * dataset itself is always the table of plan objects; the table is one click away.
  * The layers (per GeoPackage and source layer of a delivered comprehensive plan, else per theme or object type) are shown and
  * hidden with ui/viz/layer-list, each with its own symbol and in the legend (ui/bearbeta/plan-layers); a delivery's text and
- * files are the tabs Ställningstaganden and Filer beside the map, and a chosen area's sections are in the inspector
- * (ui/bearbeta/plan-sections).
+ * files are beside the map, the plan description with the tab Filer (ui/bearbeta/plan-sections). Choosing a section marks its
+ * areas; clicking an area chooses it, Shift-click adds or removes one, and Markera område or Shift and drag chooses every shown
+ * area a rectangle meets, with the union of their sections in the inspector.
+ *
+ * The view is built by three functions that other modules can hook into: `toolbar` (the page head's tools), the text pane
+ * (plan-sections' `textPane`) and `renderInspector`.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/plan-view', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'data/geo', 'viz/leaflet', 'viz/charts', 'viz/data', 'platform/files', 'ui/viz/basemap-choice', 'ui/viz/basemap-memory', 'ui/viz/tiles-dialog', 'platform/tier', 'ui/viz/layer-list', 'ui/bearbeta/plan-layers', 'ui/bearbeta/plan-sections'], (base, datasets, plan, catalog, geo, leaflet, charts, vizData, files, basemapChoice, memory, tilesDialog, tier, layerList, planLayers, planSections) => {
+  D.define('ui/bearbeta/plan-view', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'data/geo', 'data/plan-links', 'viz/leaflet', 'viz/charts', 'viz/data', 'viz/theme', 'platform/files', 'ui/viz/basemap-choice', 'ui/viz/basemap-memory', 'ui/viz/tiles-dialog', 'platform/tier', 'ui/viz/layer-list', 'ui/bearbeta/plan-layers', 'ui/bearbeta/plan-sections'], (base, datasets, plan, catalog, geo, planLinks, leaflet, charts, vizData, theme, files, basemapChoice, memory, tilesDialog, tier, layerList, planLayers, planSections) => {
     const { h, t, i18n, replace } = base;
     const MAX_ROWS = 20000;
+    /** A drag shorter than this (in pixels) is a click, not a rectangle. */
+    const MIN_BOX = 4;
+    /** The plan boundary, which a rectangle always meets, is never chosen by one. */
+    const isBoundary = (r) => r.objekttyp === 'planomrade' || r.tema === 'plangeometri';
 
     /**
      * @param {any} ctx shell context (ui, services, store, shell)
@@ -27,12 +35,16 @@
      */
     function create(ctx, options) {
       const { ui, shell, store } = ctx;
-      const s = { id: null, basemap: 'none', wms: null, tiles: null, projection: 'web', labels: true, hidden: new Set(), selected: null, rows: [], info: null, slag: 'detaljplan', updatedAt: null, layers: [], marked: [] };
+      // `selected` is the area chosen last, `picked` every area chosen (Shift-click, a rectangle), `boxMode` true after Markera område.
+      const s = { id: null, basemap: 'none', wms: null, tiles: null, projection: 'web', labels: true, hidden: new Set(), selected: null, picked: [], boxMode: false, rows: [], byId: new Map(), info: null, slag: 'detaljplan', updatedAt: null, layers: [], marked: [] };
       let ds = null; let slots = null; let mapEl = null; let handle = null; let seq = 0; let groups = []; let labelLayer = null; let L = null;
       /** The layer list and legend of the plan drawn (ui/viz/layer-list), the layers' symbols, and the areas marked for a section. */
       let layerCtl = null; let symbols = new Map(); let marks = null;
+      /** The toolbar's button Markera område, a layer click to ignore after a rectangle, and the rectangle's handlers on the map. */
+      let boxBtn = null; let noClickUntil = 0; let unhook = null;
+      const nameOf = (id) => { const r = s.byId.get(planLinks.key(id)); return r ? (s.slag === 'oversiktsplan' ? r.namn || r.innehallstyp : r.beteckning || r.formulering) || '' : ''; };
       /** The plan's text and files beside the map. */
-      const sections = planSections.create(ctx, { mark: (ids) => markObjects(ids), shown: () => { if (handle) { handle.map.invalidateSize(); if (marks) fitMarks(); else fit(); } }, changed: () => { s.updatedAt = null; if (ds && slots) render(ds, slots); } });
+      const sections = planSections.create(ctx, { mark: (ids) => markObjects(ids), nameOf, shown: () => { if (handle) { handle.map.invalidateSize(); if (marks) fitMarks(); } }, changed: () => { s.updatedAt = null; if (ds && slots) render(ds, slots); } });
       /** Sweden's orthophoto: read on the next drawing, because the person chose it (for the plan's extent, at most a square kilometre). */
       let orthoLoad = false;
       /** A background map remembered for the plan, checked against the choices once they are known. */
@@ -51,7 +63,7 @@
         s.info = dataset.plan || {};
         s.slag = s.info.slag === 'oversiktsplan' ? 'oversiktsplan' : 'detaljplan';
         if (s.id !== dataset.id) {
-          s.id = dataset.id; s.selected = null; s.hidden = new Set(); s.basemap = 'none'; restored = false;
+          s.id = dataset.id; s.selected = null; s.picked = []; s.boxMode = false; s.hidden = new Set(); s.basemap = 'none'; restored = false;
           // Another plan starts with the background map and grid it had last (ui/viz/basemap-memory asks nothing); a plan
           // without one keeps the grid shown, as before.
           const kept = await memory.recall('plan', dataset.id);
@@ -70,6 +82,10 @@
         const columns = await datasets.columns(dataset.id);
         const data = await vizData.fetchRows(dataset.id, { fields: columns.map((c) => c.name), limit: MAX_ROWS });
         s.rows = data.rows.map((r, i) => Object.assign({ _i: i }, r));
+        s.byId = new Map(s.rows.filter((r) => planLinks.key(r.objektid)).map((r) => [planLinks.key(r.objektid), r]));
+        // The areas chosen before are the same objects in the rows read again.
+        s.picked = s.picked.map((r) => s.byId.get(planLinks.key(r.objektid))).filter(Boolean);
+        s.selected = s.picked[s.picked.length - 1] || null;
         s.layers = planLayers.of(s.rows, { slag: s.slag, name: dataset.name });
         s.updatedAt = dataset.updatedAt;
       }
@@ -89,11 +105,32 @@
         const my = ++seq;
         try { await load(dataset); } catch (err) { replace(target.center, h('p', { class: 'dm-error', text: String((err && err.message) || err) })); return; }
         if (my !== seq || !slots) return;
+        const bar = await toolbar(dataset, target);
+        if (my !== seq || !slots) return;
+        mapEl = h('div', { class: 'dm-map-view dm-plan-view dm-center-fill', 'aria-label': t('plan.view') });
+        // The map alone, or beside the plan description and Filer of a delivered plan (ui/bearbeta/plan-sections).
+        const body = await sections.mount(dataset, mapEl);
+        if (my !== seq || !slots) return;
+        const info = s.info || {};
+        replace(slots.center,
+          h('div', { class: 'dm-page-head' },
+            h('h1', null, ui.icon('layers', 20), dataset.name, ' ', h('dm-badge', { text: t('plan.slag.' + s.slag) }), info.land && info.land !== 'SE' ? h('dm-badge', { text: t('plan.land.' + info.land) }) : null, info.status ? h('dm-badge', { kind: /laga kraft|antagen|vedtaget|í gildi|voimassa|^13$/i.test(info.status) ? 'ok' : 'accent', text: info.status }) : null),
+            bar),
+          body);
+        syncBox();
+        await draw();
+        renderInspector();
+      }
+      /**
+       * The page head's tools: the map's grid, the background map and its service, the labels, fitting, Markera område for a
+       * comprehensive plan, saving as a chart, the provisions and the table. Built anew on each drawing (a hook for other views).
+       * @param {any} dataset @param {{center: HTMLElement, right: HTMLElement}} target @returns {Promise<HTMLElement>}
+       */
+      async function toolbar(dataset, target) {
         // The map in Web Mercator (as web maps are) or in the plan's own grid (SWEREF 99 TM or its zone), with north up as on the plan map.
         const grid = planGrid();
         // The orthophotos whose service offers the map's grid (Web Mercator or the plan's own).
         const orthos = await basemapChoice.options({ grid: s.projection === 'plan' ? grid : 0 });
-        if (my !== seq || !slots) return;
         const choices = [{ value: 'none', label: t('map.basemap.none') }].concat(s.projection === 'web' ? [{ value: 'osm', label: t('map.basemap.osm') }] : [], orthos, [{ value: 'wms', label: t('map.basemap.wms') }], s.projection === 'web' ? [{ value: 'tiles', label: t('map.basemap.tiles') }] : []);
         // A remembered background map that the map no longer offers, or whose service is not entered, is not drawn.
         if (restored) {
@@ -139,30 +176,22 @@
         const labels = /** @type {any} */ (h('dm-switch', { label: t('plan.labels') }));
         labels.checked = s.labels;
         labels.addEventListener('change', () => { s.labels = labels.checked; updateLabels(); });
-        mapEl = h('div', { class: 'dm-map-view dm-plan-view dm-center-fill', 'aria-label': t('plan.view') });
-        // The map alone, or with the tabs Ställningstaganden and Filer of a delivered plan (ui/bearbeta/plan-sections).
-        const body = await sections.mount(dataset, mapEl);
-        if (my !== seq || !slots) return;
-        const info = s.info || {};
-        replace(slots.center,
-          h('div', { class: 'dm-page-head' },
-            h('h1', null, ui.icon('layers', 20), dataset.name, ' ', h('dm-badge', { text: t('plan.slag.' + s.slag) }), info.land && info.land !== 'SE' ? h('dm-badge', { text: t('plan.land.' + info.land) }) : null, info.status ? h('dm-badge', { kind: /laga kraft|antagen|vedtaget|í gildi|voimassa|^13$/i.test(info.status) ? 'ok' : 'accent', text: info.status }) : null),
-            // The background maps from services belong to the tier BIM och GIS (platform/tier); the plan itself stays in Dokument.
-            h('div', { class: 'dm-toolbar' }, projectionSel, ...(tier.shows('map.basemap') ? [basemapSel, wmsEdit, tilesEdit, orthoBtn] : []), labels,
-              ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: fit }),
-              tier.shows('chart:map') ? ui.button({ label: t('map.save.chart'), icon: 'save', title: t('plan.save.chart.hint'), onClick: saveChart }) : null,
-              s.slag === 'detaljplan' ? ui.button({ label: t('plan.provisions.export'), icon: 'file-text', title: t('plan.provisions.export.hint'), onClick: exportProvisions }) : null,
-              ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('bearbeta.view.table.hint'), onClick: options.onTable }))),
-          body);
-        await draw();
-        renderInspector();
+        // Markera område: the next drag on the map draws a rectangle that chooses every shown area it meets (Shift and drag does too).
+        boxBtn = s.slag === 'oversiktsplan' ? ui.button({ label: t('plan.select.box'), icon: 'square', title: t('plan.select.box.hint'), 'data-plan-box': '', onClick: () => setBoxMode(!s.boxMode) }) : null;
+        // The background maps from services belong to the tier BIM och GIS (platform/tier); the plan itself stays in Dokument.
+        return h('div', { class: 'dm-toolbar' }, projectionSel, ...(tier.shows('map.basemap') ? [basemapSel, wmsEdit, tilesEdit, orthoBtn] : []), labels,
+          ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: fit }), boxBtn,
+          tier.shows('chart:map') ? ui.button({ label: t('map.save.chart'), icon: 'save', title: t('plan.save.chart.hint'), onClick: saveChart }) : null,
+          s.slag === 'detaljplan' ? ui.button({ label: t('plan.provisions.export'), icon: 'file-text', title: t('plan.provisions.export.hint'), onClick: exportProvisions }) : null,
+          ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('bearbeta.view.table.hint'), onClick: options.onTable }));
       }
 
       async function draw() {
         if (!mapEl || !ds) return;
         const my = ++seq;
+        if (unhook) { unhook(); unhook = null; }
         if (handle) { handle.finalize(); handle = null; }
-        groups = []; labelLayer = null; marks = null;
+        groups = []; labelLayer = null; marks = null; highlighted = [];
         mapEl.replaceChildren();
         try {
           L = await leaflet.ensure();
@@ -178,13 +207,22 @@
           if (hd.info.basemapProjection) ui.toast.show(t('map.projection.osm', { crs: geo.crsLabel(planGrid()) }), { kind: 'info', timeout: 9000 });
           // One layer per source layer, theme or object type, each with its symbol (ui/viz/layer-list); the hidden ones are not added.
           symbols = layerList.symbols(s.layers);
-          groups = layerList.draw(L, hd.map, s.layers, symbols, s.hidden, { rowAt: (i) => s.rows[i], geometryOf: (r) => geo.parseGeometry(r.geometri), onClick: (row, lyr) => { s.selected = row; renderInspector(); highlight(lyr); } });
+          // A click chooses the area; with Shift (or Ctrl or Cmd) it adds or removes it among those chosen.
+          groups = layerList.draw(L, hd.map, s.layers, symbols, s.hidden, { rowAt: (i) => s.rows[i], geometryOf: (r) => geo.parseGeometry(r.geometri), onClick: (row, _lyr, e) => {
+            if (Date.now() < noClickUntil) return;
+            const ev = e && e.originalEvent;
+            pick([row], { toggle: !!(ev && (ev.shiftKey || ev.ctrlKey || ev.metaKey)) });
+          } });
           layerCtl = layerList.create({ layers: s.layers, symbols, hidden: s.hidden, onChange: onLayers });
+          // Shift and drag chooses with a rectangle here, not Leaflet's zoom to a box.
+          if (hd.map.boxZoom) hd.map.boxZoom.disable();
+          unhook = boxHandlers(hd.map);
           updateLabels();
           if (options.overlays) { await options.overlays.attach(hd, ds, { hostLayers: s.layers, fit, refresh: renderInspector }); if (my !== seq) return; }
           fit();
-          // A section's areas stay marked when the map is drawn again (another background map or grid).
+          // A section's areas stay marked, and the chosen areas chosen, when the map is drawn again (another background map or grid).
           if (s.marked.length) markObjects(s.marked, { fit: true });
+          highlightPicked();
           mapEl.setAttribute('data-plan-layers-drawn', String(groups.length));
           openPending();
           renderInspector();
@@ -196,28 +234,145 @@
           shell.log(String((err && err.message) || err), 'error');
         }
       }
-      let highlighted = null;
-      function highlight(lyr) {
-        if (highlighted && highlighted.setStyle && highlighted._dmStyle) highlighted.setStyle(highlighted._dmStyle);
-        if (lyr && lyr.setStyle) { lyr._dmStyle = Object.assign({}, lyr.options); lyr.setStyle({ weight: 4, color: '#e63946' }); highlighted = lyr; if (lyr.bringToFront) lyr.bringToFront(); }
+      /** The Leaflet layers drawn as chosen, with the style they had. */
+      let highlighted = [];
+      /** The Leaflet layers of rows. @param {Set<number>} wanted rows' `_i` */
+      function layersOf(wanted) {
+        const out = [];
+        for (const g of groups) g.group.eachLayer((lyr) => { if (lyr.feature && wanted.has(lyr.feature.properties._i)) out.push(lyr); });
+        return out;
+      }
+      /** The chosen areas drawn with a heavy edge in the error colour, above the others; the ones no longer chosen as they were. */
+      function highlightPicked() {
+        for (const lyr of highlighted) if (lyr.setStyle && lyr._dmStyle) lyr.setStyle(lyr._dmStyle);
+        highlighted = [];
+        if (!handle || !s.picked.length) { if (mapEl) mapEl.setAttribute('data-plan-picked', '0'); return; }
+        const color = theme.tokens().error;
+        for (const lyr of layersOf(new Set(s.picked.map((r) => r._i)))) {
+          if (!lyr.setStyle) continue;
+          lyr._dmStyle = Object.assign({}, lyr.options);
+          lyr.setStyle({ weight: 4, color });
+          if (lyr.bringToFront) lyr.bringToFront();
+          highlighted.push(lyr);
+        }
+        if (mapEl) mapEl.setAttribute('data-plan-picked', String(s.picked.length));
+      }
+      /**
+       * Choose areas: `toggle` adds or removes each (Shift-click), `add` adds them (Shift and a rectangle), else they are the only
+       * ones chosen; none clears the choice. The inspector lists them and the sections that concern them.
+       * @param {any[]} rows @param {{toggle?: boolean, add?: boolean}} [opts]
+       */
+      function pick(rows, opts = {}) {
+        let next;
+        if (opts.toggle) { next = s.picked.slice(); for (const r of rows) { const i = next.indexOf(r); if (i >= 0) next.splice(i, 1); else next.push(r); } }
+        else if (opts.add) next = s.picked.concat(rows.filter((r) => !s.picked.includes(r)));
+        else next = rows.slice();
+        s.picked = next;
+        s.selected = next[next.length - 1] || null;
+        highlightPicked();
+        renderInspector();
+      }
+      /**
+       * Choose every shown area that a rectangle meets (data/plan-links boxHits), the plan boundary aside.
+       * @param {any} bounds a Leaflet LatLngBounds @param {boolean} [add] add them to the areas chosen
+       */
+      function selectBox(bounds, add) {
+        const box = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()];
+        // The drawn layers that show: their bounds first, then their features' geometry, already read.
+        const found = new Set();
+        for (const g of groups) {
+          if (s.hidden.has(g.key)) continue;
+          g.group.eachLayer((lyr) => {
+            const f = lyr.feature; const row = f && s.rows[f.properties._i];
+            if (!row || isBoundary(row)) return;
+            const at = lyr.getBounds ? lyr.getBounds() : lyr.getLatLng ? L.latLngBounds(lyr.getLatLng(), lyr.getLatLng()) : null;
+            if (at && at.isValid() && !bounds.intersects(at)) return;
+            if (planLinks.boxHits(f.geometry, box)) found.add(row);
+          });
+        }
+        const hits = s.rows.filter((r) => found.has(r));
+        pick(hits, { add });
+        return hits;
+      }
+      /** Markera område on or off: the next drag draws a rectangle; Esc turns it off. @param {boolean} on */
+      function setBoxMode(on) {
+        s.boxMode = !!on;
+        syncBox();
+        if (s.boxMode) ui.toast.show(t('plan.select.box.on'), { kind: 'info' });
+      }
+      /** The button and the map show whether Markera område is on. */
+      function syncBox() {
+        const inner = boxBtn && boxBtn.querySelector('button');
+        if (inner) inner.setAttribute('aria-pressed', String(s.boxMode));
+        if (mapEl) mapEl.toggleAttribute('data-plan-box-mode', s.boxMode);
+      }
+      /**
+       * The rectangle on the map: a drag with Shift held, or any drag after Markera område, draws it in the accent colour and
+       * chooses what it meets when let go (with Shift added to the areas chosen). Returns the function that removes the handlers.
+       */
+      function boxHandlers(map) {
+        const el = map.getContainer();
+        let start = null; let at = null; let rect = null; let shiftAtStart = false; let dragging = false;
+        const point = (e) => map.mouseEventToContainerPoint(e);
+        const down = (e) => {
+          if (e.button !== 0 || !(e.shiftKey || s.boxMode)) return;
+          // After Markera område the drag is the rectangle's alone; with Shift a click must still reach the area (Shift-click),
+          // so the map only stops panning.
+          if (s.boxMode) { e.preventDefault(); e.stopPropagation(); }
+          start = point(e); at = start; shiftAtStart = e.shiftKey; dragging = false;
+          if (map.dragging) map.dragging.disable();
+        };
+        const move = (e) => {
+          if (!start) return;
+          at = point(e);
+          // A drag once the pointer has moved: only then is the pointer captured (before, a Shift-click keeps its area as target).
+          if (!dragging) {
+            if (Math.abs(at.x - start.x) < MIN_BOX && Math.abs(at.y - start.y) < MIN_BOX) return;
+            dragging = true;
+            try { el.setPointerCapture(e.pointerId); } catch (_err) { /* the drag still works over the map */ }
+            if (L.DomUtil && L.DomUtil.disableTextSelection) L.DomUtil.disableTextSelection();
+          }
+          const b = L.latLngBounds(map.containerPointToLatLng(start), map.containerPointToLatLng(at));
+          if (rect) rect.setBounds(b);
+          else rect = L.rectangle(b, { interactive: false, color: theme.tokens().accent, weight: 1, dashArray: '4 4', fillOpacity: 0.08 }).addTo(map);
+        };
+        const up = (e) => {
+          if (!start) return;
+          at = point(e);
+          const moved = Math.abs(at.x - start.x) >= MIN_BOX || Math.abs(at.y - start.y) >= MIN_BOX;
+          const b = L.latLngBounds(map.containerPointToLatLng(start), map.containerPointToLatLng(at));
+          start = null;
+          if (rect) { map.removeLayer(rect); rect = null; }
+          if (map.dragging) map.dragging.enable();
+          if (dragging && L.DomUtil && L.DomUtil.enableTextSelection) L.DomUtil.enableTextSelection();
+          dragging = false;
+          if (!moved) return;
+          // The click Leaflet sends after the drag is not a choice of its own.
+          noClickUntil = Date.now() + 400;
+          setBoxMode(false);
+          selectBox(b, shiftAtStart || e.shiftKey);
+        };
+        const key = (e) => { if (e.key === 'Escape' && s.boxMode) setBoxMode(false); };
+        // Let go anywhere (outside the map too, when the pointer could not be captured) ends the rectangle.
+        el.addEventListener('pointerdown', down, true);
+        el.addEventListener('pointermove', move);
+        document.addEventListener('pointerup', up);
+        document.addEventListener('pointercancel', up);
+        document.addEventListener('keydown', key);
+        return () => { el.removeEventListener('pointerdown', down, true); el.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); document.removeEventListener('pointercancel', up); document.removeEventListener('keydown', key); };
       }
       /** A search hit: the plan object chosen and in view. */
       function openPending() {
         const pending = ctx.store.get().openPlanObject;
         if (!pending || !s.id || pending.datasetId !== s.id) return;
         ctx.store.set({ openPlanObject: null });
-        const row = s.rows.find((r) => String(r.objektid) === String(pending.objektid));
+        const row = s.byId.get(planLinks.key(pending.objektid)) || s.rows.find((r) => String(r.objektid) === String(pending.objektid));
         if (!row) return;
-        s.selected = row;
-        for (const g of groups) {
-          g.group.eachLayer((lyr) => {
-            if (!lyr.feature || lyr.feature.properties._i !== row._i) return;
-            highlight(lyr);
-            if (handle && lyr.getBounds) handle.map.fitBounds(lyr.getBounds(), { maxZoom: 16 });
-            else if (handle && lyr.getLatLng) handle.map.setView(lyr.getLatLng(), 16);
-          });
+        pick([row]);
+        for (const lyr of layersOf(new Set([row._i]))) {
+          if (handle && lyr.getBounds) handle.map.fitBounds(lyr.getBounds(), { maxZoom: 16 });
+          else if (handle && lyr.getLatLng) handle.map.setView(lyr.getLatLng(), 16);
         }
-        renderInspector();
       }
       /** Designation labels at the centre of every visible object (the plan boundary excluded). */
       function updateLabels() {
@@ -261,8 +416,8 @@
         if (marks && handle) handle.map.removeLayer(marks);
         marks = null;
         s.marked = (ids || []).slice();
-        const wanted = new Set(s.marked.map((x) => String(x).trim().toLowerCase().replace(/[{}]/g, '')));
-        const shapes = wanted.size ? s.rows.filter((r) => r.geometri && wanted.has(String(r.objektid || '').trim().toLowerCase().replace(/[{}]/g, ''))).map((r) => geo.parseGeometry(r.geometri)) : [];
+        const wanted = new Set(s.marked.map(planLinks.key));
+        const shapes = wanted.size ? s.rows.filter((r) => r.geometri && wanted.has(planLinks.key(r.objektid))).map((r) => geo.parseGeometry(r.geometri)) : [];
         if (handle && L) marks = layerList.mark(L, handle.map, shapes);
         if (mapEl) mapEl.setAttribute('data-plan-marked', String(marks ? marks.getLayers().length : 0));
         if (marks && opts.fit) fitMarks();
@@ -382,27 +537,37 @@
         items.push(h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('plan.status.edit'), icon: 'pencil', size: 'sm', title: t('plan.status.edit.hint'), onClick: () => editStatus().catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) })));
         const archive = archiveBlock(info);
         if (archive) items.push(archive);
-        // The section whose areas are marked on the map (ui/bearbeta/plan-sections).
+        // What the person chose comes first: the section whose areas are marked (ui/bearbeta/plan-sections) and the areas chosen
+        // on the map with the sections that concern them.
+        const focus = [];
         const chosen = s.marked.length ? sections.chosenBlock() : null;
-        if (chosen) items.push(chosen);
+        if (chosen) focus.push(chosen);
+        if (s.picked.length > 1) focus.push(pickedBlock());
+        else if (s.selected) {
+          focus.push(h('h4', { text: t('plan.selected') }), selectedDetails(s.selected));
+          if (s.slag === 'oversiktsplan') focus.push(h('p', { class: 'dm-help dm-small', text: t('plan.select.hint') }));
+        }
+        // The ställningstaganden and other sections that concern the areas, each with the way to its text.
+        const about = s.picked.length ? sections.forObjects(s.picked) : null;
+        if (about) focus.push(about);
+        if (s.picked.length === 1 && s.selected && s.selected.objektid) {
+          const block = D.require('ui/kinds/comment-block');
+          const objekt = s.selected.objektid;
+          focus.push(block.create(ctx, ds, block.targetOf(ds, `plan:${objekt}`, s.selected.namn || String(objekt), () => objekt)));
+        }
+        if (focus.length) items.unshift(h('div', { class: 'dm-stack-sm', 'data-plan-focus': '' }, focus));
         // Layers: shown and hidden per file and layer, with counts and symbols (ui/viz/layer-list).
         items.push(h('h4', { text: t('map.layers') }), h('div', { class: 'dm-stack-sm dm-plan-layers' }, layerCtl ? layerCtl.list() : null));
         if (options.overlays) items.push(options.overlays.block());
         if (s.selected) {
-          items.push(h('h4', { text: t('plan.selected') }), selectedDetails(s.selected));
-          const block = D.require('ui/kinds/comment-block');
-          const objekt = s.selected.objektid;
-          // The ställningstaganden and other sections that concern the area, each with the way to its text.
-          const about = objekt ? sections.forObject(objekt) : null;
-          if (about) items.push(about);
-          if (objekt) items.push(block.create(ctx, ds, block.targetOf(ds, `plan:${objekt}`, s.selected.namn || String(objekt), () => objekt)));
+          // Nothing more: what is chosen is at the top.
         } else if (s.slag === 'detaljplan') {
           const legend = plan.legend(s.rows);
           if (legend.length) items.push(h('h4', { text: t('map.legend') }), h('ul', { class: 'dm-map-legend-list dm-plan-legend' }, legend.map((e) => h('li', null, h('span', { class: 'dm-map-legend-swatch', style: { background: e.color || 'transparent' } }), h('span', { class: 'dm-plan-legend-text' }, h('strong', { text: e.beteckning + ' ' }), h('span', { class: 'dm-truncate', text: e.formulering || '' }))))));
           for (const g of plan.grouped(s.rows)) {
             if (g.typ === 'anvandning') continue;
             items.push(h('details', { class: 'dm-more', open: g.rows.length <= 12 ? true : null }, h('summary', { text: `${t('plan.type.' + g.typ)} (${i18n.formatNumber(g.rows.length)})` }),
-              h('ul', { class: 'dm-plan-provisions' }, g.rows.slice(0, 200).map((r) => h('li', { onclick: () => { s.selected = r; renderInspector(); } }, h('strong', { text: (r.beteckning || '–') + ' ' }), h('span', { text: r.formulering || '' }))))));
+              h('ul', { class: 'dm-plan-provisions' }, g.rows.slice(0, 200).map((r) => h('li', { onclick: () => pick([r]) }, h('strong', { text: (r.beteckning || '–') + ' ' }), h('span', { text: r.formulering || '' }))))));
           }
         } else {
           // The legend of the layers that show, land use with Boverket's colours and its area per use.
@@ -411,6 +576,15 @@
         }
         if (!s.selected) { const unplaced = withoutPlace(); if (unplaced) items.push(unplaced); }
         replace(slots.right, items);
+      }
+      /** Several areas chosen: their names (each chooses that one alone) and the way to clear the choice. */
+      function pickedBlock() {
+        const text = (r) => (s.slag === 'oversiktsplan' ? r.namn || r.innehallstyp : [r.beteckning, r.formulering].filter(Boolean).join(' ')) || String(r.objektid || '–');
+        return h('div', { class: 'dm-stack-sm', 'data-plan-picked': String(s.picked.length) },
+          h('h4', { text: t('plan.select.title', { n: s.picked.length }) }),
+          h('ul', { class: 'dm-plan-provisions' }, s.picked.slice(0, 200).map((r) => h('li', { 'data-plan-picked-area': String(r.objektid || ''), onclick: () => pick([r]) }, h('span', { text: text(r) })))),
+          h('p', { class: 'dm-help dm-small', text: t('plan.select.hint') }),
+          h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('plan.select.clear'), icon: 'x', size: 'sm', variant: 'ghost', title: t('plan.select.clear.hint'), 'data-plan-picked-clear': '', onClick: () => pick([]) })));
       }
       /** What is known about the plan's standing, kept with the dataset: its status, when it gained legal force, and a note. */
       async function editStatus() {
@@ -505,7 +679,7 @@
         if (!rows.length) return null;
         const text = (r) => (s.slag === 'oversiktsplan' ? [r.innehallstyp, r.namn].filter(Boolean).join(' – ') : [r.beteckning, r.formulering].filter(Boolean).join(' ')) || r.objektid || '–';
         return h('details', { class: 'dm-more', 'data-plan-unplaced': '' }, h('summary', { text: t('plan.unplaced', { n: rows.length }) }),
-          h('ul', { class: 'dm-plan-provisions' }, rows.slice(0, 200).map((r) => h('li', { onclick: () => { s.selected = r; renderInspector(); } }, h('span', { text: text(r) })))));
+          h('ul', { class: 'dm-plan-provisions' }, rows.slice(0, 200).map((r) => h('li', { onclick: () => pick([r]) }, h('span', { text: text(r) })))));
       }
       /** The clicked object: its facts, and the catalogue's facts about the provision it refers to. */
       function selectedDetails(row) {
@@ -537,12 +711,12 @@
         box.appendChild(h('div', { class: 'dm-row-wrap' },
           ui.button({ label: t('plan.copy.text'), icon: 'copy', size: 'sm', onClick: async () => { try { await navigator.clipboard.writeText(isOp ? [row.innehallstyp, row.namn, row.precisering].filter(Boolean).join(' – ') : `${row.beteckning ? row.beteckning + ' ' : ''}${row.formulering || ''}`); ui.toast.show(t('plan.copied'), { kind: 'ok' }); } catch (_e) { /* clipboard unavailable */ } } }),
           ui.button({ label: t('map.edit.table'), icon: 'table', size: 'sm', title: t('map.edit.table.hint'), onClick: options.onTable }),
-          ui.button({ label: t('common.close'), icon: 'x', size: 'sm', variant: 'ghost', onClick: () => { s.selected = null; highlight(null); renderInspector(); } })));
+          ui.button({ label: t('common.close'), icon: 'x', size: 'sm', variant: 'ghost', onClick: () => pick([]) })));
         return box;
       }
 
-      function destroy() { seq++; if (options.overlays) options.overlays.detach(); sections.destroy(); if (handle) { handle.finalize(); handle = null; } groups = []; labelLayer = null; marks = null; layerCtl = null; mapEl = null; slots = null; }
-      return { render, destroy, state: s, sections, get handle() { return handle; }, get layers() { return layerCtl; }, get marks() { return marks; } };
+      function destroy() { seq++; if (options.overlays) options.overlays.detach(); sections.destroy(); if (unhook) { unhook(); unhook = null; } if (handle) { handle.finalize(); handle = null; } groups = []; labelLayer = null; marks = null; layerCtl = null; mapEl = null; slots = null; highlighted = []; boxBtn = null; }
+      return { render, destroy, pick, selectBox, setBoxMode, toolbar, renderInspector, state: s, sections, get handle() { return handle; }, get layers() { return layerCtl; }, get marks() { return marks; } };
     }
     return { create };
   });

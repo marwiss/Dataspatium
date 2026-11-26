@@ -233,6 +233,7 @@
     'src/io/importers/raster.js',
     'src/io/importers/detaljplan.js',
     'src/io/importers/plan-archive.js',
+    'src/data/plan-links.js',
     'src/data/plan-delivery.js',
     'src/io/importers/plan-delivery.js',
     'src/io/importers/graph.js',

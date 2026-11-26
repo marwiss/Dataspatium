@@ -199,18 +199,16 @@
     return 'ok';
   }, 60000);
 
-  test('op view: the ställningstaganden first and the whole plan at the top; one section marks its three areas and fits the map to them', async (assert) => {
+  test('op view: the map and the plan description side by side, the ställningstaganden first and the whole plan at the top; one section marks its three areas and fits the map to them', async (assert) => {
     const ds = await deliveredPlan('ÖP ställningstaganden');
     await withApp(async (shell) => {
       const pv = await planView(shell, ds, tiles().factory);
       try {
         const { center, right } = pv.where;
         const tabs = await waitFor(() => center.querySelector('[data-plan-tabs]'), 5000, 'the tabs');
-        assert.deepEqual(Array.from(tabs.querySelectorAll('[role="tab"]')).map((b) => b.textContent.trim()), [t('plan.tab.map'), t('plan.tab.text'), t('plan.tab.files')]);
+        assert.deepEqual(Array.from(tabs.querySelectorAll('[role="tab"]')).map((b) => b.textContent.trim()), [t('plan.tab.text'), t('plan.tab.files')], 'the description and Filer; the map is no tab');
         const text = /** @type {HTMLElement} */ (center.querySelector('[data-plan-text]'));
-        assert.ok(text.hidden && !(/** @type {HTMLElement} */ (center.querySelector('.dm-plan-view'))).hidden, 'the map is the main view');
-        tab(pv.where, t('plan.tab.text')).click();
-        assert.ok(!text.hidden && center.querySelector('.dm-plan-view').hidden, 'the sections shown');
+        assert.ok(!text.hidden && !(/** @type {HTMLElement} */ (center.querySelector('.dm-plan-view'))).hidden, 'the map and the sections at the same time');
         const ids = (sel) => Array.from(text.querySelectorAll(sel + ' [data-plan-section]')).map((a) => a.getAttribute('data-plan-section'));
         assert.deepEqual(ids('[data-plan-whole]'), ['op_h1'], 'Gäller hela planen');
         assert.ok(text.firstElementChild && text.firstElementChild.hasAttribute('data-plan-whole'), 'at the top');
@@ -230,7 +228,8 @@
         mark.click();
         const mapEl = /** @type {HTMLElement} */ (center.querySelector('.dm-plan-view'));
         await waitFor(() => mapEl.getAttribute('data-plan-marked') === '3', 5000, 'three areas marked');
-        assert.ok(!mapEl.hidden && text.hidden, 'the map again');
+        assert.ok(!mapEl.hidden && !text.hidden, 'the text stays beside the map');
+        assert.ok(text.querySelector('[data-plan-section="op_s1"]').classList.contains('dm-plan-section-current'), 'the section marked in the text');
         const marks = pv.view.marks;
         assert.equal(marks.getLayers().length, 3, 'three marked');
         const want = ['o-1', 'o-3', 'u-1'].map((id) => drawnFor(pv.view, id)[0].getBounds());
@@ -240,7 +239,6 @@
         assert.ok(!view.contains(drawnFor(pv.view, 'p-0')[0].getBounds()), 'fitted to them, not to the whole plan');
         await waitFor(() => right.querySelector('[data-plan-chosen="op_s1"]'), 3000, 'the chosen section in the inspector');
         // Another section marks its own; Avmarkera clears.
-        tab(pv.where, t('plan.tab.text')).click();
         /** @type {any} */ (text.querySelector('[data-plan-section-map="op_s2"]')).click();
         await waitFor(() => mapEl.getAttribute('data-plan-marked') === '1', 5000, 'one area');
         /** @type {any} */ (right.querySelector('[data-plan-clear]')).click();
@@ -267,7 +265,6 @@
         const at = /** @type {HTMLElement} */ (text.querySelector('[data-plan-section="op_b1"]'));
         assert.ok(at.classList.contains('dm-plan-section-current') && document.activeElement === at.querySelector('h4'), 'at the section, with the focus');
         // An area no section points to says so.
-        tab(pv.where, t('plan.tab.map')).click();
         drawnFor(pv.view, 'r-1')[0].fire('click');
         await waitFor(() => { const b = right.querySelector('[data-plan-object-sections]'); return b && b.textContent.includes(t('plan.sections.object.none')); }, 5000, 'no section');
       } finally { pv.close(); }
@@ -340,7 +337,7 @@
     await withApp(async (shell) => {
       const pv = await planView(shell, await datasets.get(meta.id), tiles().factory);
       try {
-        assert.equal(pv.where.center.querySelector('[data-plan-tabs]'), null, 'no tabs');
+        assert.ok(!pv.where.center.querySelector('[data-plan-tabs]') && !pv.where.center.querySelector('[data-plan-split]'), 'no tabs and no description beside the map');
         assert.deepEqual(switchesIn(pv.where.right).map((s) => s.getAttribute('data-layer-switch')), ['markochvattenanvandning', 'lis'], 'a layer per theme');
         assert.equal(pv.where.right.querySelectorAll('[data-layer-group-show]').length, 0, 'one group, named after the dataset');
       } finally { pv.close(); }
@@ -468,6 +465,154 @@
     assert.deepEqual([dpPoint.color, dpPoint.weight, dpPoint.fillColor, dpPoint.fillOpacity], ['#1f6fb2', 1.5, '#1f6fb2', 0.7], 'a point in its stroke\'s colour');
     return 'ok';
   });
+
+  test('op view: the map and the plan description beside it in a wide window, one above the other below 1100 px; the splitter\'s width is kept', async (assert) => {
+    const ds = await deliveredPlan('ÖP bredvid');
+    const SPLIT = D.require('ui/bearbeta/plan-sections').SPLIT_SETTING;
+    const kept = await idb.getSetting(SPLIT, null);
+    await idb.deleteSetting(SPLIT);
+    try {
+      await withApp(async (shell) => {
+        let pv = await planView(shell, ds, tiles().factory);
+        try {
+          const box = (sel) => pv.where.center.querySelector(sel).getBoundingClientRect();
+          await waitFor(() => pv.where.center.querySelector('[data-plan-split] [data-plan-side]'), 5000, 'the description beside the map');
+          const map = box('.dm-plan-view'); const side = box('[data-plan-side]');
+          assert.ok(map.width > 100 && map.height > 100 && side.width > 100 && side.height > 100, 'both show: ' + JSON.stringify([map.width, map.height, side.width, side.height]));
+          // The window decides (tools/run-tests.ps1 at 1400 and at -Width 768): side by side, or the text below the map.
+          if (matchMedia('(max-width: 1099px)').matches) {
+            assert.ok(side.top >= map.bottom - 1 && Math.abs(side.left - map.left) < 2, 'stacked below 1100 px: ' + JSON.stringify([map.bottom, side.top]));
+            assert.equal(getComputedStyle(pv.where.center.querySelector('dm-splitter[for="pane"]')).display, 'none', 'no splitter when stacked');
+          } else {
+            assert.ok(side.left >= map.right - 1 && Math.abs(side.top - map.top) < 2, 'side by side: ' + JSON.stringify([map.right, side.left]));
+            const splitter = /** @type {HTMLElement} */ (pv.where.center.querySelector('dm-splitter[for="pane"]'));
+            assert.equal(splitter.getAttribute('role'), 'separator');
+            splitter.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+            const wider = box('[data-plan-side]').width;
+            assert.ok(Math.abs(wider - side.width - 16) < 2, 'ArrowLeft widens the description: ' + [side.width, wider]);
+            const saved = await waitFor(async () => { const v = await idb.getSetting(SPLIT, null); return typeof v === 'number' ? v : null; }, 3000, 'the width kept');
+            assert.ok(Math.abs(saved - wider) < 2, 'kept as ' + saved);
+            pv.close();
+            pv = await planView(shell, ds, tiles().factory);
+            await waitFor(() => pv.where.center.querySelector('[data-plan-side]'), 5000, 'drawn again');
+            assert.ok(Math.abs(box('[data-plan-side]').width - wider) < 2, 'the same width the next time');
+          }
+        } finally { pv.close(); }
+      });
+    } finally { if (kept === null) await idb.deleteSetting(SPLIT); else await idb.setSetting(SPLIT, kept); }
+    return 'ok';
+  }, 60000);
+
+  test('op view: Shift-click and a rectangle choose several areas; the inspector lists the union of their sections with the areas each covers, and Visa i planbeskrivningen goes to the text', async (assert) => {
+    const ds = await deliveredPlan('ÖP urval');
+    await withApp(async (shell) => {
+      const pv = await planView(shell, ds, tiles().factory);
+      try {
+        const { center, right } = pv.where;
+        const mapEl = /** @type {HTMLElement} */ (center.querySelector('.dm-plan-view'));
+        const click = (id, shift) => drawnFor(pv.view, id)[0].fire('click', { originalEvent: { shiftKey: !!shift } });
+        const listed = () => Array.from(right.querySelectorAll('[data-plan-object-sections] [data-plan-object-section]')).map((li) => li.getAttribute('data-plan-object-section'));
+        click('o-1');
+        await waitFor(() => listed().join() === 'op_s1,op_b1', 3000, 'one area');
+        click('o-2', true);
+        await waitFor(() => right.querySelector('[data-plan-picked="2"]'), 3000, 'two chosen');
+        assert.deepEqual(listed(), ['op_s1', 'op_s2', 'op_b1'], 'the union, ställningstaganden first');
+        const covers = (a) => right.querySelector(`[data-plan-object-section="${a}"] [data-plan-covers]`).textContent;
+        assert.ok(covers('op_s1').includes('Bostadsbebyggelse') && !covers('op_s1').includes('Grönområde'), 'op_s1 covers the first: ' + covers('op_s1'));
+        assert.ok(covers('op_s2').includes('Grönområde'), 'op_s2 covers the second');
+        assert.equal(mapEl.getAttribute('data-plan-picked'), '2', 'both drawn as chosen');
+        assert.ok(right.firstElementChild.hasAttribute('data-plan-focus'), 'what is chosen is at the top of the inspector');
+        click('o-2', true);
+        await waitFor(() => !right.querySelector('[data-plan-picked]') && listed().join() === 'op_s1,op_b1', 3000, 'Shift-click again removes it');
+        // A rectangle over the first two uses; the plan boundary, which it also meets, is never chosen.
+        const L = /** @type {any} */ (globalThis).L;
+        const hits = pv.view.selectBox(L.latLngBounds([59.2705, 15.205], [59.275, 15.225]));
+        assert.deepEqual(hits.map((r) => r.objektid).sort(), ['o-1', 'o-2'], 'the areas the rectangle meets');
+        await waitFor(() => right.querySelector('[data-plan-picked="2"]'), 3000, 'two by the rectangle');
+        // Shift and drag on the map itself adds the third.
+        const map = pv.view.handle.map; const el = map.getContainer();
+        const at = (lat, lon) => { const r = el.getBoundingClientRect(); const p = map.latLngToContainerPoint([lat, lon]); return { clientX: r.left + p.x, clientY: r.top + p.y }; };
+        const drag = (from, to, shiftKey) => {
+          const ev = (type, pt) => new PointerEvent(type, Object.assign({ bubbles: true, cancelable: true, button: 0, pointerId: 7, pointerType: 'mouse', shiftKey }, pt));
+          el.dispatchEvent(ev('pointerdown', at(...from))); el.dispatchEvent(ev('pointermove', at(...to))); el.dispatchEvent(ev('pointerup', at(...to)));
+        };
+        drag([59.2705, 15.2405], [59.275, 15.245], true);
+        await waitFor(() => right.querySelector('[data-plan-picked="3"]'), 3000, 'the third added by Shift and drag');
+        // Markera område: the next drag, without Shift, chooses only what it meets, and the mode ends.
+        const boxBtn = /** @type {HTMLElement} */ (center.querySelector('[data-plan-box] button'));
+        boxBtn.click();
+        assert.ok(boxBtn.getAttribute('aria-pressed') === 'true' && mapEl.hasAttribute('data-plan-box-mode'), 'Markera område on');
+        drag([59.2705, 15.2605], [59.275, 15.265], false);
+        await waitFor(() => listed().join() === 'op_s1' && !right.querySelector('[data-plan-picked]'), 3000, 'only the development area');
+        assert.ok(boxBtn.getAttribute('aria-pressed') === 'false' && !mapEl.hasAttribute('data-plan-box-mode'), 'and the mode ends');
+        // Visa i planbeskrivningen scrolls the text beside the map to the section and marks it.
+        /** @type {any} */ (right.querySelector('[data-plan-reveal="op_s1"]')).click();
+        const s1 = /** @type {HTMLElement} */ (center.querySelector('[data-plan-text] [data-plan-section="op_s1"]'));
+        assert.ok(s1.classList.contains('dm-plan-section-current') && document.activeElement === s1.querySelector('h4'), 'at the section in the text');
+        assert.ok(!mapEl.hidden, 'the map stays');
+      } finally { pv.close(); }
+    });
+    return 'ok';
+  }, 60000);
+
+  test('op view: the inspector finds an area\'s sections whatever the case, braces or document of its links, marks a link the text only gives as Nämnd i texten, and says why when it cannot: an area without identity, a plan without links', async (assert) => {
+    const columns = plan.OP_COLUMNS.concat([{ name: 'lager', type: 'text' }, { name: 'fil', type: 'text' }]);
+    const row = (o) => columns.map((c) => (o[c.name] === undefined ? (c.name === 'ordning' ? 0 : '') : o[c.name]));
+    const area = (id, namn, x) => row({ objektid: id, tema: 'omrade', innehallstyp: 'Område', namn, geometrityp: 'Polygon', geometri: square(x, 58.5), lager: 'omraden', fil: 'plan.gpkg' });
+    /** A plan with the side tables as given, `kalla` included or not. */
+    async function made(name, links, withSource) {
+      const meta = await dsFiles.createDataset({ name, kind: 'plan', columns, rows: [area('{AB12-UPPER}', 'Hamnen', 16.0), area('b2', 'Torget', 16.02), area('', 'Utan id', 16.04)], files: [{ name: 'plan.gpkg', kind: 'plankarta', bytes: bytes('SQLite format 3\u0000') }], meta: { plan: { slag: 'oversiktsplan', namn: name, leverans: { filer: [], varningar: [], kopplingar: links.length ? undefined : { antal: 0, kallor: [], omraden: 3, omradenUtan: 3, avsnitt: 2, avsnittUtan: 2, stallningstaganden: 2, stallningstagandenUtan: 2, orsaker: ['notable', 'nocolumn', 'nomention'] } } } } });
+      created.push(meta.id);
+      const hd = await datasets.ensureOpen(meta.id);
+      await hd.engine.run('create table _sections (avsnitt text, dokument text, rubrik text, text text, typ text, ordning integer)');
+      await hd.engine.run(`create table _section_links (avsnitt text, objektid text, dokument text, typ text${withSource ? ', kalla text' : ''})`);
+      await hd.engine.run('insert into _sections values (?, ?, ?, ?, ?, ?)', ['st_1', 'text.docx', 'Hamnen utvecklas', 'Hamnen blir en stadsdel.', 'Ställningstagande', 1]);
+      await hd.engine.run('insert into _sections values (?, ?, ?, ?, ?, ?)', ['st_2', 'text.docx', 'Torget', 'Torget behålls.', 'Ställningstagande', 2]);
+      for (const l of links) await hd.engine.run(`insert into _section_links values (?, ?, ?, ?${withSource ? ', ?' : ''})`, withSource ? l : l.slice(0, 4));
+      await datasets.save(meta.id);
+      return datasets.get(meta.id);
+    }
+    // The row keeps '{AB12-UPPER}'; its link says 'ab12-upper' and has no document; the other link is one the text only gives.
+    const linked = await made('ÖP id-former', [['st_1', 'ab12-upper', '', 'Ställningstagande', 'modell'], ['st_2', 'B2', 'text.docx', 'Ställningstagande', 'text']], true);
+    const bare = await made('ÖP utan kopplingar', [], false);
+    await withApp(async (shell) => {
+      let pv = await planView(shell, linked, tiles().factory);
+      try {
+        const { right, center } = pv.where;
+        const sectionsOf = () => Array.from(right.querySelectorAll('[data-plan-object-sections] [data-plan-object-section]')).map((li) => li.getAttribute('data-plan-object-section'));
+        drawnFor(pv.view, '{AB12-UPPER}')[0].fire('click');
+        await waitFor(() => sectionsOf().join() === 'st_1', 3000, 'found in spite of case, braces and an empty document');
+        assert.ok(!right.querySelector('[data-plan-object-section="st_1"] [data-plan-link-text]'), 'a link of the model is no inferred one');
+        drawnFor(pv.view, 'b2')[0].fire('click');
+        await waitFor(() => sectionsOf().join() === 'st_2', 3000, 'by its id in other case');
+        assert.ok(right.querySelector('[data-plan-object-section="st_2"] [data-plan-link-text]').textContent === t('plan.link.text'), 'Nämnd i texten');
+        assert.ok(center.querySelector('[data-plan-section="st_2"] [data-plan-link-text]'), 'and in the text beside the map');
+        drawnFor(pv.view, '')[0].fire('click');
+        await waitFor(() => right.querySelector('[data-plan-object-note="plan.sections.object.noid"]'), 3000, 'an area without identity says so');
+        pv.close();
+        pv = await planView(shell, bare, tiles().factory);
+        drawnFor(pv.view, 'b2')[0].fire('click');
+        await waitFor(() => pv.where.right.querySelector('[data-plan-object-note="plan.sections.object.nolinks"]'), 3000, 'a plan without links says so');
+        tab(pv.where, t('plan.tab.files')).click();
+        const links = /** @type {HTMLElement} */ (pv.where.center.querySelector('[data-plan-files] [data-plan-links]'));
+        assert.equal(links.getAttribute('data-plan-links'), '0', 'Filer counts no links');
+        assert.ok(links.querySelector('[data-plan-links-why]').textContent.includes(t('plan.links.why.notable')), 'and says why');
+        assert.ok(links.querySelector('[data-plan-relink]'), 'with Läs kopplingarna igen');
+        // A rectangle over all three chooses them; the union is still nothing, and that is said.
+        const L = /** @type {any} */ (globalThis).L;
+        pv.view.selectBox(L.latLngBounds([58.49, 15.99], [58.52, 16.06]));
+        await waitFor(() => pv.where.right.querySelector('[data-plan-picked="3"]') && pv.where.right.querySelector('[data-plan-object-note="plan.sections.object.nolinks"]'), 3000, 'three chosen, no links');
+      } finally { pv.close(); }
+    });
+    // The box test itself: inside, over a corner, across, around, a hole, a line through, a point outside.
+    const pl = D.require('data/plan-links');
+    const sq = { type: 'Polygon', coordinates: [[[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]]] };
+    const holed = { type: 'Polygon', coordinates: sq.coordinates.concat([[[2, 2], [8, 2], [8, 8], [2, 8], [2, 2]]]) };
+    assert.ok(pl.boxHits(sq, [2, 2, 3, 3]) && pl.boxHits(sq, [-1, -1, 1, 1]) && pl.boxHits(sq, [-5, 4, 15, 5]) && pl.boxHits(sq, [-1, -1, 11, 11]) && !pl.boxHits(sq, [11, 11, 12, 12]));
+    assert.ok(!pl.boxHits(holed, [4, 4, 5, 5]) && pl.boxHits(holed, [1, 1, 3, 3]), 'a box in a hole meets nothing');
+    assert.ok(pl.boxHits({ type: 'LineString', coordinates: [[-5, 5], [15, 5]] }, [4, 4, 6, 6]) && !pl.boxHits({ type: 'Point', coordinates: [1, 1] }, [2, 2, 3, 3]));
+    return 'ok';
+  }, 60000);
 
   test('op view: cleanup', async (assert) => {
     for (const id of created) await datasets.remove(id).catch(() => {});

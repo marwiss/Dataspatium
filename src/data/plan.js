@@ -596,6 +596,22 @@
      * @param {any} v @returns {string}
      */
     function normId(v) { const s = str(v).trim(); const m = UUID.exec(s); return m ? m[1].toLowerCase() : s; }
+    /** The columns that can hold a content object's identity, the model's first; `id` counts only when it is not a number. */
+    const ID_COLUMNS = ['objektidentitet', 'objekt_id', 'objektid', 'uuid', 'globalid'];
+    /**
+     * A content object's identity from its record (keys in lower case): the first identity column with a value, else
+     * `<table>:<fid>` by its feature id (fid or OBJECTID), so that a row without objektidentitet can still be chosen and linked.
+     * data/plan-delivery reads the same records again for the links and gets the same ids this way.
+     * @param {Record<string, any>} record @param {string} table @returns {string}
+     */
+    function contentId(record, table) {
+      const r = record || {};
+      for (const c of ID_COLUMNS) { const v = normId(r[c]); if (v) return v; }
+      const own = normId(r.id);
+      if (own && !/^\d+$/.test(own)) return own;
+      const fid = [r.fid, r.objectid, r.id].find((v) => v !== null && v !== undefined && str(v).trim() !== '');
+      return fid === undefined ? '' : `${table}:${str(fid).trim()}`;
+    }
     /** The geometry suffixes of the GIS database model's layers: the template's English ones and the Swedish ones Boverket's page writes. */
     const OP_SUFFIX = '(polygon|line|point|linje|punkt)';
     /** Whether a table of the GIS database model holds content: a theme with its geometry suffix, or the plan geometry and areas. */
@@ -651,9 +667,9 @@
       const contentIds = new Set();
       // Model 0.3 linked a content object to its sections through dokument_id instead of objektidentitet.
       const byDocumentId = new Map();
-      for (const { records } of content) {
+      for (const { table, records } of content) {
         for (const r of records) {
-          const id = normId(r.objektidentitet);
+          const id = contentId(r, table.name);
           if (id) contentIds.add(id);
           const d = normId(r.dokument_id);
           if (id && d) byDocumentId.set(d, (byDocumentId.get(d) || []).concat(id));
@@ -684,7 +700,7 @@
         records.forEach((r, i) => {
           const geomText = gi >= 0 ? table.rows[i][gi] : null;
           const geometry = geomText ? geo.parseGeometry(geomText) : null;
-          const id = normId(r.objektidentitet);
+          const id = contentId(r, table.name);
           const extras = {
             sambandsniva: r.sambandsniva_varde, underErsattning: truth(r.under_ersattning), illustrativaGranser: truth(r.illustrativa_granser), vertikalAvgransning: r.vertikal_avgransning,
             presentationsskala: r.presentationsskala, datumPaborjat: r.datum_paborjat, berorAnnatInnehall: touches.get(id), riksintresse: r.objektidentitet_ri, externReferens: extern.get(id), dokument: sections.get(id), versionGiltigFran: r.versiongiltigfran,
@@ -857,6 +873,6 @@
       return lines.join('\n');
     }
 
-    return { DP_COLUMNS, OP_COLUMNS, OP_CATEGORIES, OBJECT_TYPES, USE_LETTERS, OP_THEME_COLORS, OP_USE_COLORS, nordic, detect, detectTable, tableFormat, featureType, objectType, colorNameForDesignation, fillOf, strokeOf, opFillOf, boverketColor, geometryOf, geometryText, crsOf, heightsOf, footprint, filledFormulation, fromNgp, fromReferenceTable, fromDetaljplan, fromDpTables, isDpGeoPackage, fromOversiktsplanGeoJson, fromOpTables, isOpGeoPackage, isContentTable, normId, sectionType, SECTION_TYPES, opTheme, decorate, toRows, fromRows, legend, grouped, areaM2, areasByUse, checkCatalog, templateMatches, provisionsMarkdown, themeKey };
+    return { DP_COLUMNS, OP_COLUMNS, OP_CATEGORIES, OBJECT_TYPES, USE_LETTERS, OP_THEME_COLORS, OP_USE_COLORS, nordic, detect, detectTable, tableFormat, featureType, objectType, colorNameForDesignation, fillOf, strokeOf, opFillOf, boverketColor, geometryOf, geometryText, crsOf, heightsOf, footprint, filledFormulation, fromNgp, fromReferenceTable, fromDetaljplan, fromDpTables, isDpGeoPackage, fromOversiktsplanGeoJson, fromOpTables, isOpGeoPackage, isContentTable, normId, contentId, sectionType, lookupWords, SECTION_TYPES, opTheme, decorate, toRows, fromRows, legend, grouped, areaM2, areasByUse, checkCatalog, templateMatches, provisionsMarkdown, themeKey };
   });
 })();
