@@ -45,7 +45,7 @@
   }
   /**
    * A GeoPackage with the given tables: {name, title?, geometry?: 'POLYGON'|'LINESTRING'|'POINT', columns: [[name, type]], rows: [[...]]},
-   * a feature layer when it has a geometry (its column `geom` first), an attribute table otherwise.
+   * a feature layer when it has a geometry (its column `geom` first), an attribute table otherwise (with no fid of its own when `plain`).
    */
   async function geoPackage(tables) {
     const engine = new sqlite.SqliteEngine();
@@ -54,7 +54,7 @@
       await engine.run('pragma application_id = 1196444487');
       await engine.exec("create table gpkg_spatial_ref_sys (srs_name text, srs_id integer primary key, organization text, organization_coordsys_id integer, definition text); insert into gpkg_spatial_ref_sys values ('SWEREF99 TM', 3006, 'EPSG', 3006, ''); create table gpkg_contents (table_name text primary key, data_type text, identifier text, srs_id integer); create table gpkg_geometry_columns (table_name text, column_name text, geometry_type_name text, srs_id integer, z integer, m integer);");
       for (const tb of tables) {
-        const cols = (tb.geometry ? [['fid', 'integer primary key'], ['geom', 'blob']] : [['fid', 'integer primary key']]).concat(tb.columns);
+        const cols = (tb.geometry ? [['fid', 'integer primary key'], ['geom', 'blob']] : tb.plain ? [] : [['fid', 'integer primary key']]).concat(tb.columns);
         await engine.run(`create table "${tb.name}" (${cols.map(([n, ty]) => `"${n}" ${ty}`).join(', ')})`);
         await engine.run('insert into gpkg_contents values (?, ?, ?, ?)', [tb.name, tb.geometry ? 'features' : 'attributes', tb.title || null, tb.geometry ? 3006 : null]);
         if (tb.geometry) await engine.run("insert into gpkg_geometry_columns values (?, 'geom', ?, 3006, 0, 0)", [tb.name, tb.geometry]);
@@ -368,6 +368,205 @@
       for (const el of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (el).close();
       root.remove();
     }
+    return 'ok';
+  }, 60000);
+
+  // ---- links in the shapes other tools and AI-made files take (data/plan-links) --------------------------------------
+  /**
+   * A test plan in the shape an AI wrote for Karlskrona (no ÖP model): ten feature layers whose areas carry objekt_id, plan_id,
+   * stallning_id, stallning_uuid, namn, kategori, status, textfil, bokmarke and kalla; a table stallningstagande with each
+   * statement's text; planmetadata as keys and values; kartobjekt mapping each area to its layer and feature; and objektreferens
+   * with 23 links many to many from areas to the Word file's bookmarks ST_01–ST_10. The names and ids are the fictitious ones of
+   * that test plan; the geometries are made up here.
+   */
+  const KK_DOC = 'Karlskrona_stallningstaganden.docx';
+  const KK_PLAN = '8564f678-51c8-4c01-b726-e4e405a1cda6';
+  /** The statements: bookmark, uuid, the layer whose areas carry it, its heading after the id, its text. */
+  const KK_ST = [
+    ['ST_01', '7fc8a3b9-842f-46b9-83cd-d8545653b1c8', 'utvecklingsinriktning', 'Utvecklingsinriktning', 'Koncentrera utveckling till befintliga serviceorter och kollektivtrafiknära lägen.'],
+    ['ST_02', '89c18937-d657-4d7d-9f9e-fbadcdec497b', 'mangfunktionell_bebyggelse', 'Mångfunktionell bebyggelse', 'Prioritera blandade stadsmiljöer, gång och cykel samt tillgång till service.'],
+    ['ST_03', 'b05fd8d7-a5eb-462d-8ea5-d9903575e6fa', 'sammanhangande_bostadsbebyggelse', 'Sammanhängande bostadsbebyggelse', 'Komplettera bostäder nära befintlig infrastruktur.'],
+    ['ST_04', '295ea17e-4509-4a2b-9f90-5bf0a1546456', 'verksamheter', 'Verksamheter', 'Pröva verksamhetsmark nära befintliga transportstråk.'],
+    ['ST_05', '329a86c1-2941-486b-b206-ea799a369c86', 'landsbygd', 'Landsbygd', 'Stärk lokal service och bevara brukningsvärd jordbruksmark.'],
+    ['ST_06', '76f74dfc-dd41-4c20-8992-171b96985e96', 'natur_friluftsliv', 'Natur och friluftsliv', 'Bevara gröna samband och tillgänglighet till natur.'],
+    ['ST_07', '0b092442-3909-45af-8a3b-01b99ba7930e', 'vatten', 'Vatten', 'Prioritera god vattenmiljö.'],
+    ['ST_08', 'ca3725d3-9a61-40c3-9a5b-5e0a5ac179d5', 'transport', 'Transportinfrastruktur', 'Utred säkra gång- och cykelförbindelser.'],
+    ['ST_09', '017e1065-023e-49d9-bdf1-5a4c90db0a16', 'riksintresse', 'Riksintressen och hänsyn', 'Pröva påverkan på kulturmiljön.'],
+    ['ST_10', 'e9d024e2-4c76-4d05-ab6f-92803a107693', 'risk_klimat', 'Klimatrisk och miljökvalitet', 'Utred översvämning, erosion och skyfall.'],
+  ];
+  /** The areas: layer, objekt_id, namn. */
+  const KK_AREAS = [
+    ['utvecklingsinriktning', '296cfcda-5eb9-410b-846a-bfc588332294', 'Karlskrona centrum'], ['utvecklingsinriktning', 'c33b2457-e009-4da9-bc6f-d718ff2bd433', 'Rödeby'],
+    ['mangfunktionell_bebyggelse', 'f11c3dbd-281a-41e1-bc08-db0e786cc033', 'Trossö'], ['mangfunktionell_bebyggelse', '680d89a5-aaf3-47e4-8c10-c3bdadb36df5', 'Lyckeby'],
+    ['sammanhangande_bostadsbebyggelse', 'a814a366-1ded-499f-832a-20b6ba6395d4', 'Nättraby'], ['sammanhangande_bostadsbebyggelse', 'e17cbb74-8411-4885-b0d5-037022e1c6a3', 'Jämjö'],
+    ['verksamheter', '41e4eb0d-e8e7-4001-9e3c-cfbc7f484d7c', 'Karlskrona norra'],
+    ['landsbygd', '33b16b3e-ca75-43c1-ba82-3490568dd186', 'Holmsjö'], ['landsbygd', '6898e640-2a7e-4920-b2ee-90f99ff925fc', 'Fridlevstad'],
+    ['natur_friluftsliv', '3df8815e-0ad8-4590-8f6b-cc0e9148fd40', 'Skärva'], ['natur_friluftsliv', '9e91983e-cee4-4cbf-8f19-64acc57464fa', 'Torhamn'],
+    ['vatten', '35e634c2-a3bd-4bff-8520-dbcda485ecfb', 'Östra fjärden'], ['vatten', 'c49acc83-7ca9-45a3-916a-0fc99b950549', 'Yttre skärgården'],
+    ['transport', '1b82d6d4-3944-47e5-82b2-a38a4d794fbb', 'Lyckeby–Jämjö'],
+    ['riksintresse', 'c6bc73bd-039d-4cd3-a494-fc5c8e1bd585', 'Trossö kulturmiljö'],
+    ['risk_klimat', 'cdbaf789-fae1-41ad-bdbd-a7bcc091c046', 'Kustnära Karlskrona'], ['risk_klimat', '3889b413-85cd-4f74-9881-2d2b8f40c7b2', 'Nättrabyån'],
+  ];
+  /** objektreferens: an area (by name) and a bookmark, many to many, in the file's order. */
+  const KK_REFS = [['Karlskrona centrum', 'ST_01'], ['Karlskrona centrum', 'ST_02'], ['Rödeby', 'ST_01'], ['Trossö', 'ST_02'], ['Trossö', 'ST_09'], ['Trossö', 'ST_10'],
+    ['Lyckeby', 'ST_02'], ['Lyckeby', 'ST_08'], ['Nättraby', 'ST_03'], ['Nättraby', 'ST_10'], ['Jämjö', 'ST_03'], ['Jämjö', 'ST_08'], ['Karlskrona norra', 'ST_04'],
+    ['Holmsjö', 'ST_05'], ['Fridlevstad', 'ST_05'], ['Skärva', 'ST_06'], ['Torhamn', 'ST_06'], ['Östra fjärden', 'ST_07'], ['Yttre skärgården', 'ST_07'],
+    ['Lyckeby–Jämjö', 'ST_08'], ['Trossö kulturmiljö', 'ST_09'], ['Kustnära Karlskrona', 'ST_10'], ['Nättrabyån', 'ST_10']];
+  const kkId = (namn) => KK_AREAS.find((a) => a[2] === namn)[1];
+  function karlskronaGeoPackage() {
+    const cols = ['objekt_id', 'plan_id', 'stallning_id', 'stallning_uuid', 'namn', 'kategori', 'status', 'textfil', 'bokmarke', 'kalla'].map((c) => [c, 'text']);
+    const layers = KK_ST.map(([st, uuid, layer, kategori]) => ({ name: layer, title: layer, geometry: 'POLYGON', columns: cols, rows: KK_AREAS.filter((a) => a[0] === layer).map(([, id, namn]) => {
+      const k = KK_AREAS.findIndex((a) => a[1] === id);
+      return [gpb('Polygon', square(532000 + k * 1200, 6215000 + (k % 5) * 3000, 900, 900)), id, KK_PLAN, st, uuid, namn, kategori, 'FIKTIVT', KK_DOC, st, 'Syntetisk demogeometri; ej myndighetsdata'];
+    }) }));
+    const fidOf = (id) => { const a = KK_AREAS.find((x) => x[1] === id); return KK_AREAS.filter((x) => x[0] === a[0]).indexOf(a) + 1; };
+    return geoPackage(layers.concat([
+      { name: 'stallningstagande', plain: true, columns: [['stallning_id', 'text'], ['uuid', 'text'], ['text', 'text'], ['bokmarke', 'text'], ['textfil', 'text']], rows: KK_ST.map(([st, uuid, , , text]) => [st, uuid, text, st, KK_DOC]) },
+      { name: 'planmetadata', plain: true, columns: [['nyckel', 'text'], ['varde', 'text']], rows: [['plan_id', KK_PLAN], ['kommunkod', '1080'], ['kommun', 'Karlskrona'], ['status', 'Fiktiv demonstration; ej antagen'], ['referenssystem', 'EPSG:3006'], ['modell', 'Lokal demonstrationsmodell; ej validerad mot Test 5'], ['datum', '2026-11-24']] },
+      { name: 'kartobjekt', plain: true, columns: [['objekt_id', 'text'], ['lager', 'text'], ['objekt_fid', 'integer'], ['namn', 'text']], rows: KK_AREAS.map(([layer, id, namn]) => [id, layer, fidOf(id), namn]) },
+      { name: 'objektreferens', plain: true, columns: [['id', 'integer primary key'], ['objekt_id', 'text'], ['identitet_i_dokument', 'text'], ['dokument', 'text']], rows: KK_REFS.map(([namn, st], i) => [i + 1, kkId(namn), st, KK_DOC]) },
+    ]));
+  }
+  /** The Word file: a title, two paragraphs, and per statement a bookmark over its heading, its text and the line Kopplade områden. */
+  const KK_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="${W}"><w:body>`
+    + `<w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr>${run('Karlskrona 2050')}</w:p><w:p>${run('Digital översiktsplan • demonstrationsversion 2. Fiktiva ställningstaganden och syntetiska områden.')}</w:p>`
+    + `<w:p>${run('Bokmärken omfattar respektive ställningstagande. Kopplade områden redovisas nedan.')}</w:p>`
+    + KK_ST.map(([st, , , heading, text], i) => `<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:bookmarkStart w:id="${i}" w:name="${st}"/>${run(`${st} – ${heading}`)}</w:p>`
+      + `<w:p>${run(text)}</w:p><w:p>${run('Kopplade områden: ' + KK_REFS.filter((r) => r[1] === st).map((r) => r[0]).join(', '))}<w:bookmarkEnd w:id="${i}"/></w:p>`).join('')
+    + '</w:body></w:document>';
+
+  test('plan delivery: a GeoPackage outside the ÖP model that links its areas to the Word file in tables of its own (an AI-made test plan) becomes a plan: Karlskrona centrum has ST_01 and ST_02, and ST_02 covers Karlskrona centrum, Trossö and Lyckeby', async (assert) => {
+    const gpkg = await karlskronaGeoPackage();
+    const files = [fileOf(gpkg, 'Karlskrona_demo.gpkg', 'Karlskrona'), fileOf(await docx(KK_XML), KK_DOC, 'Karlskrona')];
+    const offered = await delivery.candidate(files);
+    assert.ok(offered && offered.op, 'offered as one plan, on by default');
+    const meta = keep(await delivery.importDelivery(files, {}));
+    assert.deepEqual([meta.kind, meta.plan.slag, meta.rowCount], ['plan', 'oversiktsplan', 17]);
+    assert.deepEqual([meta.plan.objektid, meta.plan.kommunkod, meta.plan.kommun], [KK_PLAN, '1080', 'Karlskrona'], 'the plan\'s facts from planmetadata');
+    const rows = await rowsOf(meta.id, 'select objektid, namn from data');
+    assert.ok(rows.length === 17 && rows.every(([id, namn]) => id === kkId(namn)), 'each area\'s objektid is its objekt_id');
+    assert.deepEqual((await dsFiles.list(meta.id)).map((f) => [f.name, f.kind]).sort(), [[KK_DOC, 'textdokument'], ['Karlskrona_demo.gpkg', 'plankarta']].sort());
+    const sections = await delivery.sectionsOf(meta.id);
+    assert.deepEqual(sections.map((s) => s.avsnitt), KK_ST.map((s) => s[0]), 'a section per bookmark');
+    assert.ok(sections.every((s) => s.typ === 'Ställningstagande' && s.dokument === KK_DOC), 'ställningstaganden, as the table stallningstagande says');
+    assert.ok(sections[1].rubrik === 'ST_02 – Mångfunktionell bebyggelse' && /Prioritera blandade stadsmiljöer/.test(sections[1].text), JSON.stringify(sections[1]));
+    assert.deepEqual((await delivery.sectionsForObject(meta.id, kkId('Karlskrona centrum'))).map((s) => [s.avsnitt, s.kalla]), [['ST_01', 'tabell'], ['ST_02', 'tabell']], 'Karlskrona centrum: ST_01 and ST_02, from objektreferens');
+    assert.deepEqual((await delivery.objectsForSection(meta.id, 'ST_02')).sort(), ['Karlskrona centrum', 'Trossö', 'Lyckeby'].map(kkId).sort(), 'ST_02: three areas');
+    const k = meta.plan.leverans.kopplingar;
+    assert.deepEqual([k.antal, k.omradenUtan, k.stallningstagandenUtan], [23, 0, 0], JSON.stringify(k));
+    assert.deepEqual(k.kallor.filter((x) => x.antal).map((x) => [x.kalla, x.fran, x.antal]), [['tabell', 'objektreferens', 23]], 'all from the table of links; the areas\' own columns add nothing to it');
+    assert.ok(meta.plan.leverans.varningar.includes(t('plan.links.warn.read', { n: 23, sources: t('plan.links.source.tabell', { n: 23, name: 'objektreferens' }) })), meta.plan.leverans.varningar.join(' | '));
+    // Without the Word file the table stallningstagande's text stands in, and the missing file is named.
+    const alone = keep(await delivery.importDelivery([fileOf(gpkg, 'Karlskrona_demo.gpkg')], {}));
+    assert.equal(alone.kind, 'plan');
+    const st02 = (await delivery.sectionsOf(alone.id)).find((s) => s.avsnitt === 'ST_02');
+    assert.ok(st02 && /Prioritera blandade stadsmiljöer/.test(st02.text) && st02.typ === 'Ställningstagande' && st02.objekt.length === 3, JSON.stringify(st02));
+    assert.ok(alone.plan.leverans.varningar.includes(t('plan.delivery.warn.doc.missing', { file: KK_DOC })), alone.plan.leverans.varningar.join(' | '));
+    return 'ok';
+  }, 60000);
+
+  test('plan delivery: in the plan view, clicking Karlskrona centrum lists ST_01 and ST_02, and choosing ST_02 marks Karlskrona centrum, Trossö and Lyckeby', async (assert) => {
+    if (typeof document === 'undefined') return 'ok';
+    const meta = keep(await delivery.importDelivery([fileOf(await karlskronaGeoPackage(), 'Karlskrona_demo.gpkg'), fileOf(await docx(KK_XML), KK_DOC)], {}));
+    const consent = D.require('platform/consent');
+    const idb = D.require('platform/storage/idb');
+    const memory = D.require('ui/viz/basemap-memory');
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const waitFor = async (fn, ms, label) => { const t0 = performance.now(); for (;;) { const v = fn(); if (v) return v; if (performance.now() - t0 > ms) throw new Error('timeout waiting for ' + label); await wait(30); } };
+    const root = document.createElement('div');
+    root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
+    document.body.appendChild(root);
+    const host = document.createElement('div');
+    host.style.cssText = 'position:absolute; left:-10000px; top:0; width:1000px; height:800px; display:flex;';
+    const center = document.createElement('div'); center.style.cssText = 'width:680px; height:700px; display:flex; flex-direction:column;';
+    const right = document.createElement('div'); right.style.cssText = 'width:320px;';
+    host.append(center, right);
+    document.body.appendChild(host);
+    const keptMemory = await idb.getSetting(memory.SETTING, null);
+    consent.setAsker(async () => ({ allow: false, remember: false }));
+    let view = null;
+    try {
+      history.replaceState(null, '', location.pathname + location.search);
+      const shell = await D.require('app').start(root);
+      view = D.require('ui/bearbeta/plan-view').create(shell.ctx, { onTable() {}, tileFactory: () => /** @type {any} */ (globalThis).L.layerGroup() });
+      await view.render(await datasets.get(meta.id), { center, right });
+      await waitFor(() => view.handle && center.querySelector('.dm-plan-view[data-plan-layers-drawn]'), 10000, 'the plan map');
+      assert.ok(center.querySelector('[data-plan-split] [data-plan-text]'), 'the text beside the map');
+      const layerOf = (namn) => { let hit = null; view.handle.map.eachLayer((l) => { const p = l.feature && l.feature.properties; if (p && p._i !== undefined && view.state.rows[p._i].objektid === kkId(namn)) hit = l; }); return hit; };
+      layerOf('Karlskrona centrum').fire('click');
+      const listed = await waitFor(() => { const l = Array.from(right.querySelectorAll('[data-plan-object-sections] [data-plan-object-section]')); return l.length ? l : null; }, 5000, 'the statements of the area');
+      assert.deepEqual(listed.map((li) => li.getAttribute('data-plan-object-section')), ['ST_01', 'ST_02'], 'ST_01 and ST_02');
+      assert.ok(listed.every((li) => li.querySelector('dm-badge').textContent === 'Ställningstagande' && !li.querySelector('[data-plan-link-text]')), 'ställningstaganden, linked by the file');
+      /** @type {any} */ (center.querySelector('[data-plan-section-map="ST_02"]')).click();
+      await waitFor(() => center.querySelector('.dm-plan-view').getAttribute('data-plan-marked') === '3', 5000, 'three areas marked');
+      assert.deepEqual(view.state.marked.slice().sort(), ['Karlskrona centrum', 'Trossö', 'Lyckeby'].map(kkId).sort(), 'Karlskrona centrum, Trossö and Lyckeby');
+      const chosen = await waitFor(() => right.querySelector('[data-plan-chosen="ST_02"] [data-plan-chosen-areas]'), 3000, 'the chosen statement\'s areas');
+      assert.ok(['Karlskrona centrum', 'Trossö', 'Lyckeby'].every((n) => chosen.textContent.includes(n)), chosen.textContent);
+      // Shift-click Trossö too: the union, and what covers which.
+      layerOf('Trossö').fire('click', { originalEvent: { shiftKey: true } });
+      await waitFor(() => right.querySelector('[data-plan-picked="2"]'), 3000, 'two areas');
+      const union = Array.from(right.querySelectorAll('[data-plan-object-section]')).map((li) => li.getAttribute('data-plan-object-section'));
+      assert.deepEqual(union, ['ST_01', 'ST_02', 'ST_09', 'ST_10'], 'the union of their statements');
+      assert.ok(right.querySelector('[data-plan-object-section="ST_02"] [data-plan-covers]').textContent.includes('Trossö'), 'ST_02 covers both');
+    } finally {
+      if (view) view.destroy();
+      consent.setAsker(null);
+      if (keptMemory === null) await idb.deleteSetting(memory.SETTING); else await idb.setSetting(memory.SETTING, keptMemory);
+      memory.reset();
+      for (const el of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (el).close();
+      host.remove(); root.remove();
+    }
+    return 'ok';
+  }, 60000);
+
+  test('plan delivery: links in other shapes are read: ids in other case and braces, id and bookmark columns of other names, a heading for a bookmark, bookmarks named in a column on the areas, and a row without objektidentitet', async (assert) => {
+    const A = 'AAAAAAAA-0000-4000-8000-0000000000A1';
+    const gpkg = await geoPackage([
+      { name: 'innehall_op_omrade', title: 'Område', geometry: 'POLYGON', columns: [['objekt_id', 'text'], ['namn', 'text'], ['stallningstaganden', 'text']], rows: [
+        [gpb('Polygon', square(512000, 6571000, 500, 500)), A.toLowerCase(), 'Hamnen', null],
+        [gpb('Polygon', square(513000, 6571000, 500, 500)), 'area-b', 'Torget', ''],
+        [gpb('Polygon', square(514000, 6571000, 500, 500)), null, 'Ängen', 'st_3; OP_ST_1']] },
+      { name: 'dokumentavsnitt', columns: [['avsnittstyp_varde', 'text'], ['bokmarke', 'text'], ['omrade_id', 'text']], rows: [['Ställningstagande', 'OP_ST_1', `{${A}}`], ['Ställningstagande', 'Bostäder i norr', ' AREA-B ']] },
+    ]);
+    const section = (id, name, heading, text) => `<w:p><w:pPr><w:pStyle w:val="Rubrik1"/></w:pPr><w:bookmarkStart w:id="${id}" w:name="${name}"/>${run(heading)}</w:p><w:p>${run(text)}<w:bookmarkEnd w:id="${id}"/></w:p>`;
+    const xml = `<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="${W}"><w:body>${section(0, 'op_st_1', 'Hamnen', 'Hamnen blir en stadsdel.')}${section(1, 'op_st_2', 'Bostäder i norr', 'Torget får fler bostäder.')}${section(2, 'op_st_3', 'Grönt', 'Ängen sparas.')}</w:body></w:document>`;
+    const meta = keep(await delivery.importDelivery([fileOf(gpkg, 'op.gpkg'), fileOf(await docx(xml), 'text.docx')], {}));
+    const of = async (id) => (await delivery.sectionsForObject(meta.id, id)).map((s) => [s.avsnitt, s.kalla]);
+    assert.deepEqual(await of(A), [['op_st_1', 'modell']], 'an id in braces and upper case; a bookmark in other case');
+    assert.deepEqual(await of('AREA-B'), [['op_st_2', 'modell']], 'the heading in place of the bookmark');
+    const rows = await rowsOf(meta.id, 'select objektid from data order by ordning');
+    assert.deepEqual(rows.map((r) => r[0]), [A.toLowerCase(), 'area-b', 'innehall_op_omrade:3'], 'a row without an id is <layer>:<fid>');
+    assert.deepEqual(await of('innehall_op_omrade:3'), [['op_st_1', 'attribut'], ['op_st_3', 'attribut']], 'its column names two bookmarks, one without its prefix');
+    const k = meta.plan.leverans.kopplingar;
+    assert.deepEqual(k.kallor.filter((x) => x.antal).map((x) => [x.kalla, x.fran, x.antal]), [['modell', 'dokumentavsnitt', 2], ['attribut', 'stallningstaganden', 2]], JSON.stringify(k.kallor));
+    assert.ok((await delivery.sectionsOf(meta.id)).every((s) => s.typ === 'Ställningstagande'), 'every section a ställningstagande');
+    return 'ok';
+  }, 60000);
+
+  test('plan delivery: with no link in the GeoPackage, the areas the text names are linked as inferred (kalla text); with no names either, the plan says why it has no links', async (assert) => {
+    const gpkg = await geoPackage([{ name: 'omraden', title: 'Områden', geometry: 'POLYGON', columns: [['objekt_id', 'text'], ['namn', 'text']],
+      rows: [['o-b1', 'B1'], ['o-a2', 'A2'], ['o-a3', 'A3'], ['o-hamn', 'Hamnen'], ['o-ovr', 'Övrigt område']].map(([id, namn], i) => [gpb('Polygon', square(512000 + i * 1000, 6571000, 500, 500)), id, namn]) }]);
+    const para = (i, name, text) => `<w:p><w:bookmarkStart w:id="${i}" w:name="${name}"/>${run(text)}<w:bookmarkEnd w:id="${i}"/></w:p>`;
+    const body = (parts) => `<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="${W}"><w:body>${parts}</w:body></w:document>`;
+    const xml = body(para(0, 'avsnitt_1', 'Område B1 ska utvecklas.') + para(1, 'avsnitt_2', 'Ställningstagandet gäller områdena A2 och A3.') + para(2, 'avsnitt_3', 'Hamnen behålls som den är.') + para(3, 'avsnitt_4', 'Inget särskilt område nämns här.'));
+    const meta = keep(await delivery.importDelivery([fileOf(gpkg, 'omraden.gpkg'), fileOf(await docx(xml), 'beskrivning.docx')], {}));
+    assert.equal(meta.kind, 'plan');
+    const of = async (id) => (await delivery.sectionsForObject(meta.id, id)).map((s) => [s.avsnitt, s.kalla]);
+    assert.deepEqual(await of('o-b1'), [['avsnitt_1', 'text']], '"Område B1"');
+    assert.deepEqual([await of('o-a2'), await of('o-a3')], [[['avsnitt_2', 'text']], [['avsnitt_2', 'text']]], '"gäller områdena A2 och A3"');
+    assert.deepEqual(await of('o-hamn'), [['avsnitt_3', 'text']], 'an area\'s name');
+    assert.deepEqual(await of('o-ovr'), [], 'a name the text lacks');
+    const lev = meta.plan.leverans;
+    assert.deepEqual([lev.kopplingar.antal, lev.kopplingar.omradenUtan, lev.kopplingar.kallor.map((x) => x.kalla).join()], [4, 1, 'text']);
+    assert.ok(lev.varningar.includes(t('plan.links.warn.text')), 'the warnings say they are inferred');
+    // The same map with a text that names none of its areas: no links, and why.
+    const none = keep(await delivery.importDelivery([fileOf(gpkg, 'omraden.gpkg'), fileOf(await docx(body(para(0, 'avsnitt_4', 'Inget särskilt område nämns här.'))), 'beskrivning.docx')], {}));
+    const k = none.plan.leverans.kopplingar;
+    assert.deepEqual([k.antal, k.orsaker], [0, ['notable', 'nocolumn', 'nomention']]);
+    assert.ok(none.plan.leverans.varningar.includes(t('plan.links.warn.none', { why: ['notable', 'nocolumn', 'nomention'].map((r) => t('plan.links.why.' + r)).join(' ') })), none.plan.leverans.varningar.join(' | '));
+    // Read again (Läs kopplingarna igen), the plan stays as it was and says the same.
+    const again = await delivery.relink(none.id);
+    assert.deepEqual([again.links, again.kopplingar.antal], [0, 0]);
     return 'ok';
   }, 60000);
 
