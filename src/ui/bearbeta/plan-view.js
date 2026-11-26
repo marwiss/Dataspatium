@@ -11,12 +11,13 @@
  * The layers (per GeoPackage and source layer of a delivered comprehensive plan, else per theme or object type) are shown and
  * hidden with ui/viz/layer-list, each with its own symbol and in the legend (ui/bearbeta/plan-layers); a delivery's text and
  * files are the tabs Ställningstaganden and Filer beside the map, and a chosen area's sections are in the inspector
- * (ui/bearbeta/plan-sections).
+ * (ui/bearbeta/plan-sections). A comprehensive plan can be edited here (ui/bearbeta/plan-edit): its areas, its plan description's
+ * sections and the links between them, and exported as a delivery.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/plan-view', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'data/geo', 'viz/leaflet', 'viz/charts', 'viz/data', 'platform/files', 'ui/viz/basemap-choice', 'ui/viz/basemap-memory', 'ui/viz/tiles-dialog', 'platform/tier', 'ui/viz/layer-list', 'ui/bearbeta/plan-layers', 'ui/bearbeta/plan-sections'], (base, datasets, plan, catalog, geo, leaflet, charts, vizData, files, basemapChoice, memory, tilesDialog, tier, layerList, planLayers, planSections) => {
+  D.define('ui/bearbeta/plan-view', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'data/geo', 'viz/leaflet', 'viz/charts', 'viz/data', 'platform/files', 'ui/viz/basemap-choice', 'ui/viz/basemap-memory', 'ui/viz/tiles-dialog', 'platform/tier', 'ui/viz/layer-list', 'ui/bearbeta/plan-layers', 'ui/bearbeta/plan-sections', 'ui/bearbeta/plan-edit'], (base, datasets, plan, catalog, geo, leaflet, charts, vizData, files, basemapChoice, memory, tilesDialog, tier, layerList, planLayers, planSections, planEdit) => {
     const { h, t, i18n, replace } = base;
     const MAX_ROWS = 20000;
 
@@ -30,8 +31,10 @@
       let ds = null; let slots = null; let mapEl = null; let handle = null; let seq = 0; let groups = []; let labelLayer = null; let L = null;
       /** The layer list and legend of the plan drawn (ui/viz/layer-list), the layers' symbols, and the areas marked for a section. */
       let layerCtl = null; let symbols = new Map(); let marks = null;
+      /** Editing a comprehensive plan (ui/bearbeta/plan-edit): its buttons, its bar, the map's clicks and the inspector's fields. */
+      const editor = planEdit.create(ctx, { state: () => s, dataset: () => ds, select: (row) => { s.selected = row; highlight(null); renderInspector(); }, changed: () => { s.updatedAt = null; if (ds && slots) render(ds, slots); }, inspector: () => renderInspector() });
       /** The plan's text and files beside the map. */
-      const sections = planSections.create(ctx, { mark: (ids) => markObjects(ids), shown: () => { if (handle) { handle.map.invalidateSize(); if (marks) fitMarks(); else fit(); } }, changed: () => { s.updatedAt = null; if (ds && slots) render(ds, slots); } });
+      const sections = planSections.create(ctx, { mark: (ids) => markObjects(ids), shown: () => { if (handle) { handle.map.invalidateSize(); if (marks) fitMarks(); else fit(); } }, changed: () => { s.updatedAt = null; if (ds && slots) render(ds, slots); }, editor });
       /** Sweden's orthophoto: read on the next drawing, because the person chose it (for the plan's extent, at most a square kilometre). */
       let orthoLoad = false;
       /** A background map remembered for the plan, checked against the choices once they are known. */
@@ -69,6 +72,8 @@
         const columns = await datasets.columns(dataset.id);
         const data = await vizData.fetchRows(dataset.id, { fields: columns.map((c) => c.name), limit: MAX_ROWS });
         s.rows = data.rows.map((r, i) => Object.assign({ _i: i }, r));
+        // The object chosen stays chosen when the plan is read again (after an edit), if it is still there.
+        if (s.selected) { const was = String(s.selected.objektid || ''); s.selected = was ? s.rows.find((r) => String(r.objektid || '') === was) || null : null; }
         s.layers = planLayers.of(s.rows, { slag: s.slag, name: dataset.name });
         s.updatedAt = dataset.updatedAt;
       }
@@ -151,7 +156,9 @@
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: fit }),
               tier.shows('chart:map') ? ui.button({ label: t('map.save.chart'), icon: 'save', title: t('plan.save.chart.hint'), onClick: saveChart }) : null,
               s.slag === 'detaljplan' ? ui.button({ label: t('plan.provisions.export'), icon: 'file-text', title: t('plan.provisions.export.hint'), onClick: exportProvisions }) : null,
+              ...editor.buttons(),
               ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('bearbeta.view.table.hint'), onClick: options.onTable }))),
+          editor.bar(),
           body);
         await draw();
         renderInspector();
@@ -179,6 +186,7 @@
           symbols = layerList.symbols(s.layers);
           groups = layerList.draw(L, hd.map, s.layers, symbols, s.hidden, { rowAt: (i) => s.rows[i], geometryOf: (r) => geo.parseGeometry(r.geometri), onClick: (row, lyr) => { s.selected = row; renderInspector(); highlight(lyr); } });
           layerCtl = layerList.create({ layers: s.layers, symbols, hidden: s.hidden, onChange: onLayers });
+          editor.mapDrawn(hd.map, L, groups);
           updateLabels();
           fit();
           // A section's areas stay marked when the map is drawn again (another background map or grid).
@@ -379,13 +387,16 @@
         items.push(h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('plan.status.edit'), icon: 'pencil', size: 'sm', title: t('plan.status.edit.hint'), onClick: () => editStatus().catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) })));
         const archive = archiveBlock(info);
         if (archive) items.push(archive);
+        // The areas selected for editing (ui/bearbeta/plan-edit).
+        const editing = editor.selection();
+        if (editing) items.push(editing);
         // The section whose areas are marked on the map (ui/bearbeta/plan-sections).
         const chosen = s.marked.length ? sections.chosenBlock() : null;
         if (chosen) items.push(chosen);
         // Layers: shown and hidden per file and layer, with counts and symbols (ui/viz/layer-list).
         items.push(h('h4', { text: t('map.layers') }), h('div', { class: 'dm-stack-sm dm-plan-layers' }, layerCtl ? layerCtl.list() : null));
         if (s.selected) {
-          items.push(h('h4', { text: t('plan.selected') }), selectedDetails(s.selected));
+          items.push(h('h4', { text: t('plan.selected') }), editor.inspector(s.selected) || selectedDetails(s.selected));
           const block = D.require('ui/kinds/comment-block');
           const objekt = s.selected.objektid;
           // The ställningstaganden and other sections that concern the area, each with the way to its text.
@@ -537,8 +548,8 @@
         return box;
       }
 
-      function destroy() { seq++; sections.destroy(); if (handle) { handle.finalize(); handle = null; } groups = []; labelLayer = null; marks = null; layerCtl = null; mapEl = null; slots = null; }
-      return { render, destroy, state: s, sections, get handle() { return handle; }, get layers() { return layerCtl; }, get marks() { return marks; } };
+      function destroy() { seq++; editor.destroy(); sections.destroy(); if (handle) { handle.finalize(); handle = null; } groups = []; labelLayer = null; marks = null; layerCtl = null; mapEl = null; slots = null; }
+      return { render, destroy, state: s, sections, editor, get handle() { return handle; }, get layers() { return layerCtl; }, get marks() { return marks; } };
     }
     return { create };
   });

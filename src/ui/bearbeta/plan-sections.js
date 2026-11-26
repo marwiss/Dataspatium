@@ -132,11 +132,14 @@
     /**
      * The plan view's text and files.
      * @param {any} ctx shell context
-     * @param {{mark: (ids: string[], section: any|null) => void, shown: () => void, changed: () => void}} options `mark` marks the
-     *   objects on the map and fits the view to them, `shown` tells that the map shows again, `changed` that the plan changed
+     * @param {{mark: (ids: string[], section: any|null) => void, shown: () => void, changed: () => void, editor?: any}} options `mark` marks
+     *   the objects on the map and fits the view to them, `shown` tells that the map shows again, `changed` that the plan changed;
+     *   `editor` (ui/bearbeta/plan-edit) adds its buttons to the sections and keeps the tab when the plan has none yet
      */
     function create(ctx, options) {
       const { ui } = ctx;
+      /** The plan's editor (ui/bearbeta/plan-edit), when the view has one: its buttons go with the sections in edit mode. */
+      const editor = options.editor || null;
       const st = { id: null, tab: 'map', sections: [], objects: new Map(), whole: [], files: [], plan: {}, chosen: null, current: null, filesShown: false };
       let tabs = null; let panes = null; let seq = 0;
 
@@ -159,7 +162,7 @@
         st.whole = sections.filter((s) => wholePlan(objects.get(s.avsnitt) || []));
         st.files = list.filter(listedFile);
         st.filesShown = !!st.plan.leverans || list.some((f) => ROLES.includes(f.kind));
-        const ids = ['map'].concat(sections.length ? ['text'] : [], st.filesShown ? ['files'] : []);
+        const ids = ['map'].concat(sections.length || (editor && editor.editing) ? ['text'] : [], st.filesShown ? ['files'] : []);
         if (!ids.includes(st.tab)) st.tab = 'map';
         if (ids.length === 1) { tabs = null; panes = null; return mapEl; }
         tabs = /** @type {any} */ (h('dm-tabs', { 'data-plan-tabs': '' }));
@@ -194,7 +197,8 @@
           h('div', { class: 'dm-plan-section-head' }, head, s.typ ? h('dm-badge', { kind: isStatement(s) ? 'accent' : null, text: typeLabel(s) }) : null),
           s.dokument ? h('p', { class: 'dm-help dm-small', text: s.dokument }) : null,
           s.text ? h('p', { class: 'dm-plan-section-text', text: s.text }) : h('p', { class: 'dm-help dm-small', text: t('plan.sections.notext') }),
-          ids.length ? h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('plan.sections.map', { n: ids.length }), icon: 'map', size: 'sm', title: t('plan.sections.map.hint'), 'data-plan-section-map': s.avsnitt, onClick: () => choose(s) })) : null);
+          ids.length ? h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('plan.sections.map', { n: ids.length }), icon: 'map', size: 'sm', title: t('plan.sections.map.hint'), 'data-plan-section-map': s.avsnitt, onClick: () => choose(s) })) : null,
+          editor ? editor.sectionTools(s) : null);
       }
       /** The sections: those about the whole plan at the top, then the ställningstaganden, then the others. */
       function textPane() {
@@ -204,6 +208,8 @@
         const others = rest.filter((s) => !isStatement(s));
         const block = (key, list, attrs) => (list.length ? h('section', Object.assign({ class: 'dm-stack-sm dm-plan-sections-block' }, attrs), h('h3', { text: `${t(key)} (${i18n.formatNumber(list.length)})` }), list.map(article)) : null);
         return h('div', { class: 'dm-plan-text', 'data-plan-text': '' },
+          editor ? editor.textHead() : null,
+          !st.sections.length ? h('p', { class: 'dm-help', text: t('plan.edit.section.empty') }) : null,
           st.whole.length ? h('section', { class: 'dm-card dm-stack-sm', 'data-plan-whole': '' }, h('h3', { text: t('plan.sections.whole') }), st.whole.map(article)) : null,
           block('plan.sections.statements', statements, { 'data-plan-statements': '' }),
           block('plan.sections.others', others, { 'data-plan-others': '' }));
@@ -240,7 +246,7 @@
           replace(box, h('h4', { text: t('plan.sections.object') }), ordered.length ? h('ul', { class: 'dm-plan-object-sections' }, ordered.map((s) => h('li', { 'data-plan-object-section': s.avsnitt },
             h('div', { class: 'dm-row-wrap' }, s.typ ? h('dm-badge', { kind: isStatement(s) ? 'accent' : null, text: typeLabel(s) }) : null, h('strong', { text: headingOf(s) })),
             s.text ? h('p', { class: 'dm-small dm-plan-section-text', text: excerpt(s.text) }) : null,
-            basic.button({ label: t('plan.sections.reveal'), icon: 'book-open', size: 'sm', title: t('plan.sections.reveal.hint'), 'data-plan-reveal': s.avsnitt, onClick: () => reveal(s.avsnitt) })))) : h('p', { class: 'dm-help dm-small', text: t('plan.sections.object.none') }));
+            h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('plan.sections.reveal'), icon: 'book-open', size: 'sm', title: t('plan.sections.reveal.hint'), 'data-plan-reveal': s.avsnitt, onClick: () => reveal(s.avsnitt) }), editor ? editor.objectSectionTools(s, objektid) : null)))) : h('p', { class: 'dm-help dm-small', text: t('plan.sections.object.none') }));
         }).catch((err) => { replace(box, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) })); });
         return box;
       }
