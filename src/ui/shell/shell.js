@@ -58,6 +58,7 @@
           // Internet access is asked for per purpose the first time it is needed (platform/consent).
           D.require('platform/consent').setAsker((purpose, info) => this.askConsent(purpose, info));
           this.build();
+          this.wasOnPage = this.root.isConnected;
           this.store.subscribe((state, changed) => this.onState(state, changed));
           datasets.subscribe((type, payload) => this.onDatasets(type, payload));
           document.addEventListener('keydown', (e) => this.onKey(e));
@@ -604,7 +605,15 @@
           if (this.active && this.active.update && !changed.includes('mode')) this.active.update(state, changed);
         }
 
+        /** Whether the shell's root was on the page and has left it since (an app that a test started and ended). */
+        leftPage() {
+          if (this.root.isConnected) this.wasOnPage = true;
+          return this.wasOnPage && !this.root.isConnected;
+        }
+
         async onDatasets(type, payload) {
+          // A shell that has left the page no longer follows the datasets: each one read the whole list again at every change (LD-65).
+          if (this.leftPage()) return;
           if (type === 'protected-lost') {
             this.ctx.ui.toast.show(t('protected.lost', { columns: payload.columns.join(', ') }), { kind: 'warn', timeout: 15000, action: { label: t('common.undo'), onClick: () => { D.require('data/recipes').undo(payload.id).catch((err) => this.log(String((err && err.message) || err), 'error')); } } });
             return;
