@@ -7,7 +7,7 @@
  * updates `store.selectedId`, which every mode reacts to.
  *
  *   datasetList.render(container, {datasets, selectedId, onSelect, extra?, emptyHint?,
- *                                  multi?, selectedIds?, onToggle?(ids), onMove?(ids, folder), tools?})
+ *                                  multi?, selectedIds?, onToggle?(ids), onMove?(ids, folder), tools?, itemTrailing?(d)})
  */
 (function () {
   'use strict';
@@ -63,7 +63,8 @@
     /**
      * @param {HTMLElement} container
      * @param {{datasets: any[], selectedId: string|null, onSelect: (id: string) => void, extra?: Array<{id: string, label: string, icon: string, sub?: string}>, emptyHint?: string,
-     *   multi?: boolean, selectedIds?: string[], onToggle?: (ids: string[]) => void, onMove?: (ids: string[], folder: string) => void, tools?: Node[]}} options
+     *   multi?: boolean, selectedIds?: string[], onToggle?: (ids: string[]) => void, onMove?: (ids: string[], folder: string) => void, tools?: Node[],
+     *   itemTrailing?: (d: any) => (Node|null)}} options `itemTrailing(d)` is a control after a dataset's row (Bearbeta's map: Visa i kartan), or null
      */
     function render(container, options) {
       const state = panelState.get(container) || { filter: '', sort: 'updated', last: null };
@@ -143,10 +144,11 @@
             e.dataTransfer.effectAllowed = 'move';
           });
         }
-        if (!multi) { btn.style.setProperty('--dm-depth', String(depth)); return btn; }
-        const box = h('input', { type: 'checkbox', 'aria-label': t('datasets.select', { name: ds.name }), checked: selectedIds.has(ds.id) ? true : null });
-        box.addEventListener('click', (e) => { toggle(ds.id, e.shiftKey); });
-        const row = h('div', { class: 'dm-tree-row', 'data-id': ds.id }, box, btn);
+        const trailing = options.itemTrailing ? options.itemTrailing(ds) : null;
+        if (!multi && !trailing) { btn.style.setProperty('--dm-depth', String(depth)); return btn; }
+        const box = multi ? h('input', { type: 'checkbox', 'aria-label': t('datasets.select', { name: ds.name }), checked: selectedIds.has(ds.id) ? true : null }) : null;
+        if (box) box.addEventListener('click', (e) => { toggle(ds.id, e.shiftKey); });
+        const row = h('div', { class: multi ? 'dm-tree-row' : 'dm-tree-row dm-tree-row-trailing', 'data-id': ds.id }, box, btn, trailing);
         row.style.setProperty('--dm-depth', String(depth));
         return row;
       }

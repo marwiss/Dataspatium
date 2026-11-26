@@ -54,7 +54,8 @@
 
     /**
      * @param {any} ctx shell context (ui, services, store, shell)
-     * @param {{onTable: () => void, tileFactory?: Function}} options tileFactory for tests (no tiles are fetched)
+     * @param {{onTable: () => void, tileFactory?: Function, overlays?: any}} options tileFactory for tests (no tiles are fetched);
+     *   overlays the other datasets drawn over the layers (ui/viz/map-overlays: attach, extend, block, detach)
      */
     function create(ctx, options) {
       const { ui, shell, store } = ctx;
@@ -131,6 +132,7 @@
           const syms = layerList.symbols(s.layers);
           groups = layerList.draw(L, hd.map, s.layers, syms, s.hidden, { rowAt: (i) => s.rows[i], geometryOf, onClick: (row, lyr) => select(row, lyr) });
           ctl = layerList.create({ layers: s.layers, symbols: syms, hidden: s.hidden, onChange: (hidden) => { if (handle) layerList.apply(handle.map, groups, hidden); layerList.remember(s.id, hidden); } });
+          if (options.overlays) { await options.overlays.attach(hd, ds, { hostLayers: s.layers, fit, refresh: renderInspector }); if (my !== seq) return; }
           mapEl.setAttribute('data-layers-drawn', String(groups.length));
           fit();
           showPending();
@@ -146,6 +148,7 @@
         if (!handle || !L) return;
         let bounds = null;
         for (const g of groups) { const b = g.group.getBounds(); if (b && b.isValid()) bounds = bounds ? bounds.extend(b) : L.latLngBounds(b.getSouthWest(), b.getNorthEast()); }
+        if (options.overlays) bounds = options.overlays.extend(bounds);
         if (bounds) handle.map.fitBounds(bounds, { padding: [16, 16], maxZoom: 18, animate: false });
       }
       /** A feature chosen: marked in the accent colour, its attributes in the inspector. */
@@ -187,6 +190,7 @@
         const items = [h('h4', { text: t('datasets.kind.layers') }), facts];
         if (s.truncated) items.push(h('p', { class: 'dm-help dm-small', 'data-layers-truncated': '', text: t('layers.truncated', { n: i18n.formatNumber(s.rows.length) }) }));
         items.push(h('h4', { text: t('map.layers') }), ctl ? ctl.list() : null);
+        if (options.overlays) items.push(options.overlays.block());
         if (s.selected) {
           const row = s.selected;
           const kv = /** @type {any} */ (h('dm-kv', { 'data-layers-selected': '' }));
@@ -205,7 +209,7 @@
         replace(slots.right, items);
       }
 
-      function destroy() { seq++; if (handle) { handle.finalize(); handle = null; } groups = []; ctl = null; mapEl = null; slots = null; }
+      function destroy() { seq++; if (options.overlays) options.overlays.detach(); if (handle) { handle.finalize(); handle = null; } groups = []; ctl = null; mapEl = null; slots = null; }
       return { render, destroy, state: s, get handle() { return handle; }, get layers() { return ctl; } };
     }
     return { create, layersOf, attributesOf };

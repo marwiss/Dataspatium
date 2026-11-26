@@ -4,8 +4,8 @@
  * Basic components: dm-button, dm-badge, dm-progress.
  *
  * <dm-button variant="primary|default|ghost|danger" size="sm" icon="save" icon-only label="Spara"
- *            loading disabled block active>Spara</dm-button>
- * Clicks bubble as normal `click` events from the inner <button>.
+ *            loading disabled block active pressed="true|false">Spara</dm-button>
+ * Clicks bubble as normal `click` events from the inner <button>. `pressed` makes it a toggle (aria-pressed on the button).
  */
 (function () {
   'use strict';
@@ -14,7 +14,7 @@
     const { h, DmElement, define } = base;
 
     class DmButton extends DmElement {
-      static get observedAttributes() { return ['disabled', 'loading', 'icon', 'label', 'icon-only', 'type', 'title']; }
+      static get observedAttributes() { return ['disabled', 'loading', 'icon', 'label', 'icon-only', 'type', 'title', 'pressed']; }
       connectedCallback() {
         if (!this.btn) {
           this.labelEl = h('span', { class: 'dm-btn-label' });
@@ -30,6 +30,7 @@
         const loading = this.hasFlag('loading');
         this.btn.disabled = this.hasFlag('disabled') || loading;
         this.btn.type = this.attr('type', 'button');
+        if (this.hasAttribute('pressed')) this.btn.setAttribute('aria-pressed', this.getAttribute('pressed') === 'true' ? 'true' : 'false'); else this.btn.removeAttribute('aria-pressed');
         const iconName = loading ? 'loader-circle' : this.getAttribute('icon');
         if (iconName) {
           if (!this.iconEl) { this.iconEl = icons.icon(iconName); this.btn.insertBefore(this.iconEl, this.labelEl); }

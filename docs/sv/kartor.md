@@ -42,6 +42,39 @@ inte (gränsen kan höjas per lager i kartvyn).
 
 Bildsamlingar med position har knappen *Visa på kartan*. Klicka på en plats så visar inspektören bilden. En tabell vars rader namnger bilder visar dem på samma sätt. *Använd det som syns* gör det kartan visar just nu till ett urval som följer med till de andra lägena. I en kartvy i Visualisera kan bildsamlingar, planer och raster (georefererade bilder, se [raster.md](raster.md)) vara lager.
 
+### Flera datamängder i kartan
+
+En digital översiktsplan kan visas tillsammans med andra geodata: Shapefile-filer, lager ur en GeoPackage, KML, ortofoton och
+andra raster, tabeller med koordinater och andra planer. Medan Bearbeta visar en karta (en tabells karta, en plankarta eller ett
+kartlager) har varje annan datamängd i listan till vänster som kan ritas på en karta ett öga, *Visa i kartan*. Klicka på ögat så
+ritas datamängden ovanpå kartan, och klicka igen så tas den bort; datamängden själv ändras inte. Flera datamängder kan visas
+samtidigt.
+
+Ögat finns bredvid
+
+- tabeller med en geometrikolumn eller koordinater (importerade GeoJSON-, Shapefile-, GeoPackage-, KML- och GPX-filer med
+  flera), när värdena är platser;
+- planer, kartlager och raster med en plats, till exempel ett ortofoto som har sparats som raster.
+
+Kartans egen datamängd och datamängder utan platser har inget öga, och när tabellen visas finns inga ögon.
+
+Så här visas de:
+
+- Raster och ortofoton ligger under alla objekt och ovanpå bakgrundskartan.
+- Varje datamängd är en egen grupp under *Fler datamängder i kartan* i inspektören, med egen färg ur appens palett och egna
+  symboler, och har sina lager i teckenförklaringen. Lagren visas och döljs som i planvyn (*Visa alla*, *Dölj alla*, *Visa bara
+  detta*). På en tabells karta är kartans egen datamängd den första gruppen.
+- En plan behåller Boverkets färger där planen anger dem.
+- Kartan zoomar till allt som visas, och *Zooma till allt* gör detsamma.
+- Klicka på ett objekt så visar inspektören dess attribut under *Markerat objekt i* och datamängdens namn. *Öppna datamängden*
+  visar den i Bearbeta.
+
+Kartan minns vilka datamängder som visas över den, för varje datamängd vars karta det är, också efter en omladdning. Det som
+visas är arbetsytans egna datamängder, så inget hämtas från nätet och inget frågas när kartan öppnas igen eller när en länk
+öppnas vid start. Tas en datamängd bort försvinner den från kartan, och ändras den ritas den om. Stora datamängder läses och
+ritas i omgångar, så att appen svarar under tiden; högst 50 000 objekt ritas per tabell och 20 000 per plan eller kartlager.
+En karta med flera lager som ska sparas, för dashboards och publicering, gör du som en kartvy i Visualisera.
+
 ## Kartvyer i Visualisera
 
 *Nytt diagram → Karta* skapar en kartvy med den valda datamängden som första lager. Inställningarna till vänster:
@@ -209,6 +242,7 @@ eget system (se [planer.md](planer.md#koordinatsystem-och-höjder)).
 - Koordinatsystem: de som står under [Koordinatsystem](#koordinatsystem). Andra måste räknas om före import (till exempel i QGIS);
   appen säger till och ritar dem inte.
 - Exporten ritar lagren, inte bakgrundskartan, WMS-lager eller kartrutor.
+- Raster över en plankarta i planens eget koordinatsystem visas inte; de ritas bara i Web Mercator.
 - Kartrutor från OGC API – Tiles visas bara som bilder i Web Mercator; vektorrutor kräver ett bibliotek som appen inte har.
 - Buffertar och överlagringar är planära beräkningar på WGS 84-koordinater via Turf; för kilometerskala i Norden är
   felet litet, för mycket stora ytor märkbart.

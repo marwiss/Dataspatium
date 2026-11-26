@@ -459,6 +459,7 @@
       'src/ui/bearbeta/plan-sections.js',
       'src/ui/bearbeta/plan-view.js',
       'src/ui/bearbeta/layers-view.js',
+      'src/ui/viz/map-overlays.js',
       'src/ui/bearbeta/graph-view.js',
       'src/ui/bearbeta/model-compare.js',
       'src/ui/bearbeta/model-view.js',

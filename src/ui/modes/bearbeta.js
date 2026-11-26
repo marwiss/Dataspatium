@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes', 'ui/bearbeta/document-view', 'ui/bearbeta/gallery-view', 'ui/bearbeta/map-view', 'ui/bearbeta/plan-view', 'ui/bearbeta/graph-view', 'ui/bearbeta/model-view', 'ui/bearbeta/layers-view', 'viz/leaflet', 'data/kinds', 'platform/tier', 'ui/settings/tier'], (base, dialogs, recipes, documentViewModule, galleryViewModule, mapViewModule, planViewModule, graphViewModule, modelViewModule, layersViewModule, leaflet, kinds, tier, tierUi) => {
+  D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes', 'ui/bearbeta/document-view', 'ui/bearbeta/gallery-view', 'ui/bearbeta/map-view', 'ui/bearbeta/plan-view', 'ui/bearbeta/graph-view', 'ui/bearbeta/model-view', 'ui/bearbeta/layers-view', 'viz/leaflet', 'data/kinds', 'platform/tier', 'ui/settings/tier', 'ui/viz/map-overlays'], (base, dialogs, recipes, documentViewModule, galleryViewModule, mapViewModule, planViewModule, graphViewModule, modelViewModule, layersViewModule, leaflet, kinds, tier, tierUi, mapOverlays) => {
     const { h, t, i18n, replace } = base;
     /**
      * Views of their own: document collections, image collections and (for tables with geometry) the map; the table
@@ -32,6 +32,8 @@
       let undoBtn = null; let selectedColumn = null;
       /** Table or kind view for the current dataset; the kind view is created once per view id. */
       let showTable = true; let kindView = null; let kindViewFor = null; let lastUpdated = null; let viewId = null;
+      /** Other datasets over the map shown (the map, a plan's map, kartlager): the list has a toggle Visa i kartan while one shows. */
+      const overlays = mapOverlays.create(ctx, { onHost: () => renderList() });
       /**
        * The view a dataset opens in by default: its kind's view, the map for tables with geometry or longitude/latitude, else null;
        * each only where the tier in effect shows it (platform/tier), else the table.
@@ -47,14 +49,20 @@
         unsubscribe = store.subscribe((state, changed) => { if (changed.includes('datasets') || changed.includes('selectedId')) render(); });
         render();
       }
-      function deactivate() { slots = null; table = null; currentId = null; if (unsubscribe) unsubscribe(); if (kindView) { kindView.destroy(); kindView = null; kindViewFor = null; } }
+      function deactivate() { slots = null; table = null; currentId = null; if (unsubscribe) unsubscribe(); if (kindView) { kindView.destroy(); kindView = null; kindViewFor = null; } overlays.detach(); }
 
       function current() { const state = store.get(); return state.datasets.find((d) => d.id === state.selectedId) || null; }
 
+      /** The datasets in the object panel, with Visa i kartan beside those that can be drawn over the map shown. */
+      function renderList() {
+        if (!slots) return;
+        const state = store.get();
+        ui.datasetList.render(slots.left, { datasets: state.datasets, selectedId: state.selectedId, onSelect: (id) => store.set({ selectedId: id }), itemTrailing: overlays.itemTrailing });
+      }
       function render() {
         if (!slots) return;
         const state = store.get();
-        ui.datasetList.render(slots.left, { datasets: state.datasets, selectedId: state.selectedId, onSelect: (id) => store.set({ selectedId: id }) });
+        renderList();
         const ds = current();
         if (!ds) {
           currentId = null;
@@ -76,11 +84,12 @@
       function renderMain(ds) {
         if (viewId === 'map' && !tier.shows('view:map')) { viewId = kinds.ownView(ds); showTable = !viewId; }
         const mod = viewId ? KIND_VIEWS[viewId] : null;
-        if (showTable || !mod) { drawTable(ds); renderInspector(ds); return; }
+        if (showTable || !mod) { overlays.detach(); drawTable(ds); renderInspector(ds); return; }
         table = null;
         if (kindView && kindViewFor !== viewId) { kindView.destroy(); kindView = null; }
         if (!kindView) {
           kindView = mod.create(ctx, {
+            overlays,
             onTable: () => { showTable = true; const d = current(); if (d) renderMain(d); },
             onActions: async () => { const d = current(); if (d) await dialogs.palette(dialogCtx(d, await services.datasets.columns(d.id))); },
             onChanged: () => updateUndo(),
