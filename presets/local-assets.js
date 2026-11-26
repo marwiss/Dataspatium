@@ -633,7 +633,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/planer.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 26670,
+  "size": 31794,
   "library": "dataspatium"
  },
  "docs/sv/grafer.md": {
@@ -693,13 +693,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/licenser.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 10318,
+  "size": 10453,
   "library": "dataspatium"
  },
  "docs/sv/sakerhet.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 42328,
+  "size": 43283,
   "library": "dataspatium"
  },
  "docs/da/kom-igang.md": {
@@ -1647,7 +1647,7 @@ Dataspatium.assets.addEntries({
  "docs/en/planer.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 26933,
+  "size": 31941,
   "library": "dataspatium"
  },
  "docs/en/grafer.md": {
@@ -1707,13 +1707,13 @@ Dataspatium.assets.addEntries({
  "docs/en/licenser.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 10603,
+  "size": 10745,
   "library": "dataspatium"
  },
  "docs/en/sakerhet.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 42258,
+  "size": 43221,
   "library": "dataspatium"
  }
 });

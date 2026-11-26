@@ -285,7 +285,7 @@
       define({
         name: 'list_operations', writes: false,
         description: 'The operations of Bearbeta that apply_operation can run: id, group, what kind of dataset they are for, and their title. group null lists all.',
-        parameters: S.obj({ group: S.strOrNull('only this group (column, values, rows, structure, calc, timeseries, regex, geo, graph, model, code)') }),
+        parameters: S.obj({ group: S.strOrNull('only this group (column, values, rows, structure, calc, timeseries, regex, geo, graph, model, plan, code)') }),
         async run(a) {
           return { operations: ops.list().filter((op) => (!a.group || op.group === a.group) && tier.shows('op:' + op.id)).map((op) => ({ id: op.id, group: op.group || null, for: forKind(op), title: title(op.id) })) };
         },
@@ -324,7 +324,7 @@
         return op;
       }
       function title(id) { const s = t('op.' + id); return s === 'op.' + id ? id : s; }
-      const forKind = (op) => (op.group === 'graph' ? 'graph' : op.group === 'model' ? 'model' : 'table');
+      const forKind = (op) => (op.group === 'graph' ? 'graph' : op.group === 'model' ? 'model' : op.group === 'plan' ? 'plan' : 'table');
       const PARAM_TYPES = { column: { type: 'string', description: 'column name' }, columns: { type: 'array', items: { type: 'string' }, description: 'column names' }, number: { type: 'number' }, switch: { type: 'boolean' } };
       /** An operation's parameters as JSON Schema. */
       function operationSchema(op) {

@@ -2227,6 +2227,36 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
+## leaflet-geoman 2.18.3
+
+- Licens: MIT
+- Webbplats: https://geoman.io/
+- Not: Drawing and editing of areas, lines and points on a Leaflet 1.x map (L.PM, map.pm, layer.pm): the plan view's edit mode (ui/bearbeta/plan-edit) draws a new area into a theme, edits its vertices and moves it. The free edition only: a classic script (one IIFE) that needs the global L, loaded with its stylesheet on first use; its own toolbar is not shown, the app's buttons call it. The bundle holds parts of lodash, Turf and polyclip-ts, all MIT.
+
+```text
+MIT License
+
+Copyright (c) 2017 Sumit Kumar
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
 ## proj4 2.22.0
 
 - Licens: MIT

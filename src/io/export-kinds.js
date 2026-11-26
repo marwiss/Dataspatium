@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * Exports that follow what a dataset is: places as KML, GPX and GeoPackage, pictures as a contact sheet, a plan as a sheet
- * and its provisions as a document, a model's quantities in Excel, its geometry as glTF, a drawing as PDF. Everything is
+ * and its provisions as a document, a comprehensive plan as a delivery (a GeoPackage of several tables, writeGeoPackage), a model's quantities in Excel, its geometry as glTF, a drawing as PDF. Everything is
  * made here in the browser. Geometries are written in WGS 84.
  */
 (function () {
@@ -126,41 +126,72 @@
       for (const p of parts) { out.set(p, at); at += p.length; }
       return out;
     }
-    /** GeoPackage's own header in front of the WKB: magic, version, little-endian without an envelope, and the coordinate system. */
-    function geoPackageBlob(g) {
+    /**
+     * GeoPackage's own header in front of the WKB: magic, version, little-endian without an envelope, and the coordinate system
+     * (WGS 84 unless another is given). @param {any} g @param {number} [srs]
+     */
+    function geoPackageBlob(g, srs = 4326) {
       const body = wkb(g);
       const out = new Uint8Array(8 + body.length);
       out.set([0x47, 0x50, 0, 1]);
-      new DataView(out.buffer).setInt32(4, 4326, true);
+      new DataView(out.buffer).setInt32(4, srs, true);
       out.set(body, 8);
       return out;
     }
     const SQL_TYPE = (type) => (type === 'integer' || type === 'boolean' ? 'INTEGER' : type === 'number' ? 'REAL' : 'TEXT');
-    /** @param {string} id @returns {Promise<Blob>} */
-    async function toGeoPackage(id) {
-      const { name, columns, features } = await placesOf(id);
-      const table = 'objekt';
-      const bounds = geo.bounds(features.map((f) => f.geometry));
+    /** The coordinate systems a GeoPackage written here can name: GeoPackage's two undefined ones, WGS 84 and SWEREF 99 TM. */
+    const SRS = {
+      4326: ['WGS 84', 4326, 'EPSG', 4326, 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]', null],
+      3006: ['SWEREF99 TM', 3006, 'EPSG', 3006, 'PROJCS["SWEREF99 TM",GEOGCS["SWEREF99",DATUM["SWEREF99",SPHEROID["GRS 1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",15],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1],AUTHORITY["EPSG","3006"]]', null],
+    };
+    /**
+     * A GeoPackage of several tables, written in the browser: feature tables (a `fid` key, the geometry `geom` and their columns,
+     * each geometry given in degrees and written in the system `srs`: WGS 84 or SWEREF 99 TM) and attribute tables (their own key,
+     * or none), each listed in gpkg_contents. A geometry type per feature table ('GEOMETRY' takes any); a geometry may be null.
+     * @param {{srs?: number, userVersion?: number, features?: Array<{table: string, identifier?: string, geometryType?: string, columns: Array<{name: string, type?: string}>, rows: Array<{geometry: any, values: any[]}>}>, attributes?: Array<{table: string, identifier?: string, key?: string|null, columns: Array<{name: string, type?: string}>, rows: any[][]}>}} spec
+     * @returns {Promise<Uint8Array>}
+     */
+    async function writeGeoPackage(spec) {
+      const srs = spec.srs === 3006 ? 3006 : 4326;
+      const place = srs === 3006 ? (g) => geo.mapCoordinates(g, (c) => geo.wgs84ToSweref(c[0], c[1])) : (g) => g;
       const engine = new sqlite.SqliteEngine();
       await engine.start();
       try {
         await engine.open();
         await engine.run('pragma application_id = 1196444487');
-        await engine.run('pragma user_version = 10300');
+        await engine.run(`pragma user_version = ${Number(spec.userVersion) || 10300}`);
         await engine.run('create table gpkg_spatial_ref_sys (srs_name text not null, srs_id integer primary key, organization text not null, organization_coordsys_id integer not null, definition text not null, description text)');
-        await engine.run("insert into gpkg_spatial_ref_sys values ('Undefined Cartesian', -1, 'NONE', -1, 'undefined', null), ('Undefined geographic', 0, 'NONE', 0, 'undefined', null), ('WGS 84', 4326, 'EPSG', 4326, 'GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]', null)");
+        await engine.run("insert into gpkg_spatial_ref_sys values ('Undefined Cartesian', -1, 'NONE', -1, 'undefined', null), ('Undefined geographic', 0, 'NONE', 0, 'undefined', null)");
+        for (const code of srs === 4326 ? [4326] : [4326, srs]) await engine.run('insert into gpkg_spatial_ref_sys values (?, ?, ?, ?, ?, ?)', SRS[code]);
         await engine.run("create table gpkg_contents (table_name text primary key, data_type text not null, identifier text unique, description text default '', last_change datetime not null default (strftime('%Y-%m-%dT%H:%M:%fZ','now')), min_x double, min_y double, max_x double, max_y double, srs_id integer)");
         await engine.run('create table gpkg_geometry_columns (table_name text not null, column_name text not null, geometry_type_name text not null, srs_id integer not null, z tinyint not null, m tinyint not null, primary key (table_name, column_name))');
-        await engine.run('insert into gpkg_contents (table_name, data_type, identifier, min_x, min_y, max_x, max_y, srs_id) values (?, ?, ?, ?, ?, ?, ?, ?)', [table, 'features', name, bounds.minX, bounds.minY, bounds.maxX, bounds.maxY, 4326]);
-        await engine.run("insert into gpkg_geometry_columns values (?, 'geom', 'GEOMETRY', 4326, 0, 0)", [table]);
-        await engine.run(`create table ${q(table)} (fid integer primary key autoincrement, geom blob${columns.map((c) => `, ${q(c.name)} ${SQL_TYPE(c.type)}`).join('')})`);
-        const names = ['geom'].concat(columns.map((c) => c.name));
-        for (let i = 0; i < features.length; i += 500) {
-          await engine.insertRows(table, names, features.slice(i, i + 500).map((f) => [geoPackageBlob(f.geometry)].concat(f.values)));
-          await breathe();
+        for (const table of spec.features || []) {
+          const shapes = table.rows.map((r) => (r.geometry && r.geometry.type ? place(r.geometry) : null));
+          const bounds = geo.bounds(shapes.filter(Boolean)) || { minX: null, minY: null, maxX: null, maxY: null };
+          await engine.run('insert into gpkg_contents (table_name, data_type, identifier, min_x, min_y, max_x, max_y, srs_id) values (?, ?, ?, ?, ?, ?, ?, ?)', [table.table, 'features', table.identifier || table.table, bounds.minX, bounds.minY, bounds.maxX, bounds.maxY, srs]);
+          await engine.run("insert into gpkg_geometry_columns values (?, 'geom', ?, ?, 0, 0)", [table.table, table.geometryType || 'GEOMETRY', srs]);
+          await engine.run(`create table ${q(table.table)} (fid integer primary key autoincrement, geom blob${table.columns.map((c) => `, ${q(c.name)} ${SQL_TYPE(c.type)}`).join('')})`);
+          const names = ['geom'].concat(table.columns.map((c) => c.name));
+          for (let i = 0; i < table.rows.length; i += 500) {
+            await engine.insertRows(table.table, names, table.rows.slice(i, i + 500).map((r, k) => [shapes[i + k] ? geoPackageBlob(shapes[i + k], srs) : null].concat(r.values)));
+            await breathe();
+          }
         }
-        return new Blob([await engine.export()], { type: 'application/geopackage+sqlite3' });
+        for (const table of spec.attributes || []) {
+          await engine.run('insert into gpkg_contents (table_name, data_type, identifier) values (?, ?, ?)', [table.table, 'attributes', table.identifier || table.table]);
+          const key = table.key === undefined ? 'fid' : table.key;
+          const cols = table.columns.map((c) => `${q(c.name)} ${SQL_TYPE(c.type)}`);
+          await engine.run(`create table ${q(table.table)} (${(key ? [`${q(key)} integer primary key autoincrement`] : []).concat(cols).join(', ')})`);
+          if (table.rows.length) await engine.insertRows(table.table, table.columns.map((c) => c.name), table.rows);
+        }
+        return new Uint8Array(await engine.export());
       } finally { engine.terminate(); }
+    }
+    /** @param {string} id @returns {Promise<Blob>} */
+    async function toGeoPackage(id) {
+      const { name, columns, features } = await placesOf(id);
+      const bytes = await writeGeoPackage({ features: [{ table: 'objekt', identifier: name, columns, rows: features.map((f) => ({ geometry: f.geometry, values: f.values })) }] });
+      return new Blob([bytes], { type: 'application/geopackage+sqlite3' });
     }
 
     // ---- pictures ---------------------------------------------------------------------------------------------------------
@@ -304,12 +335,14 @@
     const toPackage = (id) => D.require('io/datapackage').toZip(id);
     const toDescription = async (id) => new Blob([D.require('data/dcat').toRdf(await datasets.get(id))], { type: 'application/rdf+xml' });
     const toQuality = (id) => D.require('docgen/quality').toDocx(id);
-    const MAKERS = { datapackage: toPackage, dcat: toDescription, quality: toQuality, kml: toKml, gpx: toGpx, gpkg: toGeoPackage, 'images-sheet': toContactSheet, 'plan-provisions': toProvisions, 'plan-sheet': toPlanSheet, 'model-quantities-xlsx': toQuantities, 'model-glb': toGlb, 'model-pdf': toDrawingPdf };
+    /** A comprehensive plan as a delivery (io/exporters/plan-delivery): its GeoPackage in Boverket's ÖP model, its plan description and its other files. */
+    const toPlanDelivery = (id) => D.require('io/exporters/plan-delivery').toZip(id);
+    const MAKERS = { datapackage: toPackage, dcat: toDescription, quality: toQuality, kml: toKml, gpx: toGpx, gpkg: toGeoPackage, 'images-sheet': toContactSheet, 'plan-provisions': toProvisions, 'plan-sheet': toPlanSheet, 'plan-delivery': toPlanDelivery, 'model-quantities-xlsx': toQuantities, 'model-glb': toGlb, 'model-pdf': toDrawingPdf };
     /** @param {string} format @returns {boolean} */
     const handles = (format) => Object.prototype.hasOwnProperty.call(MAKERS, format);
     /** @param {string} id @param {string} format @returns {Promise<Blob>} */
     const make = (id, format) => MAKERS[format](id);
 
-    return { handles, make, wkb, geoPackageBlob };
+    return { handles, make, wkb, geoPackageBlob, writeGeoPackage };
   });
 })();

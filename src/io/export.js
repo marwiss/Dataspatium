@@ -40,6 +40,8 @@
       { id: 'plan-sheet', key: 'export.format.plan-sheet', ext: 'pdf', kind: 'plan' },
       { id: 'plan-provisions', key: 'export.format.plan-provisions', ext: 'docx', kind: 'plan' },
       { id: 'plan-original', key: 'export.format.plan-original', ext: 'zip', kind: 'plan' },
+      // A comprehensive plan as a delivery: its GeoPackage in Boverket's ÖP model, its plan description with bookmarks and its other files.
+      { id: 'plan-delivery', key: 'export.format.plan-delivery', ext: 'zip', kind: 'plan', planSlag: 'oversiktsplan' },
       // Model datasets: the original file, the long tables of an IFC model, the drawing of a DXF file. `original` marks the format
       // that carries the file as it came, which is offered also where the tier shows the kind as a table.
       { id: 'model-original', key: 'export.format.model-original', ext: 'ifc', kind: 'model', original: true },
@@ -72,7 +74,7 @@
     function formatsFor(meta, facts = {}) {
       const dxf = !!(meta && meta.model && meta.model.format === 'dxf');
       const own = kinds.shown(meta);
-      return FORMATS.filter((f) => !f.kind || (meta && meta.kind === f.kind && (!f.modelFormat || f.modelFormat === (dxf ? 'dxf' : 'ifc')) && (own || f.original)))
+      return FORMATS.filter((f) => !f.kind || (meta && meta.kind === f.kind && (!f.modelFormat || f.modelFormat === (dxf ? 'dxf' : 'ifc')) && (!f.planSlag || (meta.plan && meta.plan.slag === f.planSlag)) && (own || f.original)))
         .map((f) => (f.id === 'model-original' && dxf ? Object.assign({}, f, { ext: 'dxf' }) : f))
         .map((f) => rasterFormat(f, meta))
         // A format that cannot work stays visible and says what it needs.

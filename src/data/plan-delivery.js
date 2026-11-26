@@ -1029,6 +1029,7 @@
         joined = { sections: { length: await count(SECTIONS) }, links: { length: await count(LINKS) }, warnings: [t('plan.delivery.warn.kept', { files: unreadable.join(', ') })] };
       } else {
         joined = joinLinks(docsInOrder(all), inputs);
+        await keepEdits(handle.engine, joined);
         await dsFiles.writeTable(handle, { name: SECTIONS, columns: SECTION_COLUMNS, rows: joined.sections, index: ['avsnitt'] });
         await dsFiles.writeTable(handle, { name: LINKS, columns: LINK_COLUMNS, rows: joined.links, index: ['avsnitt', 'objektid'] });
         leverans.kopplingar = joined.kopplingar;
@@ -1051,6 +1052,20 @@
       // A replaced file's address for the views is stale now (data/dataset-files drops them on 'changed').
       datasets.notify('changed', { id: datasetId });
       return { added, sections: joined.sections.length, links: joined.links.length, warnings: leverans.varningar, kopplingar: leverans.kopplingar || null };
+    }
+    /**
+     * What was made in the app (data/plan-edit) stays when the sections and links are read again from the files: the sections no
+     * file has (added by hand), after the others, and the links made by hand (kalla 'redigerad') that the files do not give.
+     * @param {any} engine @param {{sections: any[][], links: any[][]}} joined changed in place
+     */
+    async function keepEdits(engine, joined) {
+      if (!(await tableIn(engine, SECTIONS))) return;
+      const names = new Set(joined.sections.map((r) => str(r[0]).toLowerCase()));
+      let order = joined.sections.reduce((n, r) => Math.max(n, (Number(r[5]) || 0) + 1), 0);
+      const res = await engine.exec(`select avsnitt, coalesce(dokument, ''), coalesce(rubrik, ''), coalesce(text, ''), coalesce(typ, '') from ${SECTIONS} order by ordning, rowid`);
+      for (const r of (res[0] ? res[0].values : [])) if (!names.has(str(r[0]).toLowerCase())) joined.sections.push([str(r[0]), str(r[1]), str(r[2]), str(r[3]), str(r[4]), order++]);
+      const given = new Set(joined.links.map((r) => str(r[0]) + '\u0000' + planLinks.key(r[1])));
+      for (const l of await linksOf(engine)) if (l.kalla === 'redigerad' && !given.has(l.avsnitt + '\u0000' + planLinks.key(l.objektid))) joined.links.push([l.avsnitt, l.objektid, l.dokument, l.typ, l.kalla]);
     }
     /**
      * The plan's links read again from the files it holds, the way data/plan-links reads them now (a plan read before the app knew
