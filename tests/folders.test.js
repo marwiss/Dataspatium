@@ -298,6 +298,8 @@
       await svc.updateMeta(b.id, { folder: 'Provmapp/Under' });
       shell.store.set({ selectedIds: [] });
       shell.activate('hantera');
+      // The moves reach the store and the tree a moment later: wait for the subfolder, not only the folder (LD-69).
+      await waitFor(() => root.querySelector('.dm-left [data-folder-row="Provmapp/Under"]'), 5000, 'the subfolder row');
       const box = /** @type {HTMLInputElement} */ (await waitFor(() => root.querySelector('.dm-left [data-folder-row="Provmapp"] input[type="checkbox"]'), 5000, 'the folder row'));
       box.click();
       assert.deepEqual(shell.store.get().selectedIds.slice().sort(), [a.id, b.id].sort(), 'the folder chooses both');
