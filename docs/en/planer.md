@@ -122,6 +122,71 @@ was read with. Files the delivery names but that were not kept are listed apart.
 A GeoPackage with many layers that is not a plan can be one dataset in the same way, see
 [Map layers](kartor.md#map-layers-a-geopackage-with-many-layers).
 
+## Edit the plan
+
+A digital comprehensive plan can be edited in the plan view: the plan description's sections, the areas on the plan map and
+the links between them. Choose *Edit the plan* in the toolbar; *Done* leaves editing. Each change is saved at once as a step in
+the dataset's log and can be undone with *Undo* in the edit bar, one change at a time. Versions work as for other datasets.
+
+### Sections and positions
+
+In edit mode each section of the plan description has the buttons *Edit*, *Link the selected areas*, *Unlink the selected
+areas* and *Delete*.
+
+- *Edit* makes the heading, the text and the section type editable where the section stands. The text is plain text: each line
+  is a paragraph, empty lines and double spaces are removed, and no formatting or HTML is kept.
+- *New position* and *New section* at the top add a section at the end of the text document. It gets a bookmark made from its
+  heading, for example `op_verksamheter_vid_hamnen`, which follows the exchange model's rule: a letter, then at most 39 letters
+  (a–z), digits or underscores. The bookmark can be changed under *More options* and must be unique in the plan. When areas are
+  chosen, the new section can be linked to them at once.
+- *Delete* removes the section and all its links, after a question.
+
+### Areas
+
+The edit bar above the map chooses where new objects go: a layer of the plan or a theme of the ÖP model. *Draw an area*, *Draw
+a line* and *Draw a point* draw on the map with Leaflet-Geoman: click the corners and finish on the first corner, or with
+*Finish the shape*. A layer takes only its own kind of geometry, and the themes Area and Plan geometry only areas. The new area
+gets a new objektidentitet (UUID) and goes into the theme's table in the plan map's GeoPackage file, for example
+`innehall_op_lis_point`, when the plan has no such layer yet.
+
+Click an area and the inspector can change it:
+
+- the content type from the list (the ÖP catalogue's values from the plan's GeoPackage file, Boverket's land uses and the types
+  the plan already has) or another one under *More options*, the name and the precision; *Save* saves them;
+- *Edit the shape* shows the corners, which can be dragged, added and removed, and *Move* drags the whole shape; *Save the
+  shape* saves and *Cancel* drops the change;
+- *Remove the area* removes the area and its links, after a question.
+
+The plan's counts of objects per theme and per layer are kept up to date.
+
+### Links
+
+Areas are chosen as elsewhere in the plan view: a click, Shift-click, *Select area* or Shift and drag. With areas chosen in edit
+mode the inspector has *Link to a position*, which links them to the position or section chosen in the list. From the section's
+side *Link the selected areas* does the same, and *Unlink the selected areas* removes the chosen areas' links to the section.
+In the inspector's list of the sections that concern the chosen areas, *Remove the link* removes the link.
+
+A link made here is kept in `_section_links` with the section's type and the source `redigerad`. *Read the links again* and *Add
+a file to the plan* keep the links and sections made here, but text changed in a section that a Word file has is read from the
+file again. Export the plan as a delivery first when the changes are to be in the files.
+
+### Export as a delivery
+
+*Export as a delivery* in the toolbar, and the format *Delivery: GeoPackage and plan description (ZIP)* in Export, download a
+ZIP file with:
+
+- the plan map as a GeoPackage file in Boverket's ÖP model 0.4: a content table per theme and geometry
+  (`innehall_op_<tema>_polygon`, `_line` or `_point`, the area and the plan geometry in tables of their own) with Boverket's
+  column names in SWEREF 99 TM, and the tables `oversiktsplan` (with the decision when it is known), `dokumentavsnitt` (a row
+  per bookmark and object; a link to the whole plan points to the plan's objektidentitet), `avsnittsbokmärke`,
+  `dokumentreferens_op` and `innehall_op_beror_annat_innehall`. Every link is written, whatever its source;
+- the plan description as a Word file, one per document the sections are in: each section is a heading and its paragraphs
+  inside a Word bookmark with the section's name;
+- the plan's other files as they came, for example appendices, background material and metadata. The GeoPackage file the plan
+  was read from is replaced, and the manifest is left out, since its checksums no longer hold.
+
+The delivery can be imported again in Import and gives the same areas, sections and links.
+
 ## Coordinate and height systems
 
 Detailed development plans to NGP are made in SWEREF 99 TM or in the municipality's local SWEREF 99 zone with heights in
@@ -273,3 +338,8 @@ provisions as codes and numbers, not as text.
   the plan's metadata; the documents are not fetched.
 - Areas are planar computations in SWEREF 99 TM; for plans in local zones the error is negligible.
 - Lantmäteriet's detailed-plan API requires a key; the app is tested against the documented model with its own test data.
+- A section without a link gets no section type in an exported GeoPackage file, since the ÖP model keeps the type on the link;
+  its heading and text are in the Word file.
+- The export writes the sections one after another; sections whose bookmarks overlapped in the original document then repeat text.
+- Decision documents, background material and external references in the original GeoPackage file are not exported, only the
+  decision's diary number and dates.

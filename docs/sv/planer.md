@@ -130,6 +130,73 @@ varningar som leveransen lästes med. Filer som leveransen nämner men som inte 
 En GeoPackage med många lager som inte är en plan kan på samma sätt bli en enda datamängd, se
 [Kartlager](kartor.md#kartlager-en-geopackage-med-många-lager).
 
+## Redigera planen
+
+En digital översiktsplan kan redigeras i planvyn: planbeskrivningens avsnitt, områdena i plankartan och kopplingarna mellan
+dem. Välj *Redigera planen* i verktygsraden; *Klar* lämnar redigeringen. Varje ändring sparas direkt som ett steg i
+datamängdens logg och kan ångras med *Ångra* i redigeringsraden, en ändring i taget. Versioner fungerar som för andra
+datamängder.
+
+### Avsnitt och ställningstaganden
+
+I redigeringsläget har varje avsnitt i planbeskrivningen knapparna *Ändra*, *Koppla markerade områden*, *Ta bort kopplingen
+till markerade* och *Ta bort*.
+
+- *Ändra* gör rubriken, texten och avsnittstypen redigerbara där avsnittet står. Texten är vanlig text: varje rad blir ett
+  stycke, tomma rader och dubbla blanksteg tas bort, och ingen formatering eller HTML sparas.
+- *Nytt ställningstagande* och *Nytt avsnitt* överst lägger till ett avsnitt sist i textdokumentet. Det får ett bokmärke som
+  byggs av rubriken, till exempel `op_verksamheter_vid_hamnen`, och som följer utbytesmodellens regel: en bokstav och sedan
+  högst 39 bokstäver (a–z), siffror eller understreck. Bokmärket kan ändras under *Fler alternativ* och måste vara unikt i
+  planen. Är områden valda kan det nya avsnittet kopplas till dem direkt.
+- *Ta bort* tar bort avsnittet och alla dess kopplingar, efter en fråga.
+
+### Områden
+
+Redigeringsraden ovanför kartan väljer var nya objekt hamnar: ett lager i planen eller ett tema ur ÖP-modellen. *Rita yta*,
+*Rita linje* och *Rita punkt* ritar i kartan med Leaflet-Geoman: klicka ut hörnen och avsluta på det första hörnet, eller med
+*Avsluta formen*. Ett lager tar bara sin sorts geometri, och temana Område och Plangeometri bara ytor. Det nya området får en
+ny objektidentitet (UUID) och hamnar i temats tabell i plankartans GeoPackage-fil, till exempel `innehall_op_lis_point`, när
+planen inte redan har ett sådant lager.
+
+Klicka på ett område så kan inspektören ändra det:
+
+- innehållstypen ur listan (ÖP-katalogens värden ur planens GeoPackage-fil, Boverkets markanvändningar och de typer planen
+  redan har) eller en annan under *Fler alternativ*, namnet och preciseringen; *Spara* sparar dem;
+- *Redigera formen* visar hörnen, som kan dras, läggas till och tas bort, och *Flytta* drar hela formen; *Spara formen* sparar
+  och *Avbryt* släpper ändringen;
+- *Ta bort området* tar bort området och dess kopplingar, efter en fråga.
+
+Planens antal objekt per tema och per lager hålls aktuella.
+
+### Kopplingar
+
+Områden väljs som annars i planvyn: klick, Skift-klick, *Markera område* eller Skift och dra. Med områden valda i
+redigeringsläget finns *Koppla till ställningstagande* i inspektören, som kopplar dem till det ställningstagande eller avsnitt
+som väljs i listan. Från avsnittets sida gör *Koppla markerade områden* detsamma, och *Ta bort kopplingen till markerade* tar
+bort de valda områdenas kopplingar till avsnittet. I inspektörens lista över avsnitten som gäller de valda områdena tar *Ta
+bort koppling* bort kopplingen.
+
+En koppling som görs här sparas i `_section_links` med avsnittets typ och källan `redigerad`. *Läs kopplingarna igen* och
+*Lägg till fil i planen* behåller de kopplingar och avsnitt som har gjorts här, men text som har ändrats i ett avsnitt som finns
+i en Word-fil läses om ur filen. Exportera planen som leverans först om ändringarna ska finnas i filerna.
+
+### Exportera som leverans
+
+*Exportera som leverans* i verktygsraden, och formatet *Leverans: GeoPackage och planbeskrivning (ZIP)* i Exportera, laddar ned
+en ZIP-fil med:
+
+- plankartan som GeoPackage-fil i Boverkets ÖP-modell 0.4: en innehållstabell per tema och geometri
+  (`innehall_op_<tema>_polygon`, `_line` eller `_point`, området och plangeometrin i egna tabeller) med Boverkets kolumnnamn i
+  SWEREF 99 TM, och tabellerna `oversiktsplan` (med beslutet när det är känt), `dokumentavsnitt` (en rad per bokmärke och
+  objekt; en koppling till hela planen pekar på planens objektidentitet), `avsnittsbokmärke`, `dokumentreferens_op` och
+  `innehall_op_beror_annat_innehall`. Alla kopplingar skrivs, vilken källa de än har;
+- planbeskrivningen som Word-fil, en per dokument som avsnitten finns i: varje avsnitt är en rubrik och dess stycken inom ett
+  Word-bokmärke med avsnittets namn;
+- planens övriga filer som de kom, till exempel bilagor, underlag och metadata. GeoPackage-filen som planen lästes från ersätts,
+  och manifestet följer inte med, eftersom dess kontrollsummor inte längre stämmer.
+
+Leveransen kan importeras igen i Inhämta och ger samma områden, avsnitt och kopplingar.
+
 ## Koordinatsystem och höjder
 
 Detaljplaner till NGP görs i SWEREF 99 TM eller i kommunens lokala SWEREF 99-zon med höjder i RH 2000, och filen anger
@@ -286,3 +353,8 @@ Plandata lagrar bestämmelser som koder och tal, inte som löptext.
   som uppgifter i planens metadata; dokumenten hämtas inte.
 - Areor är planära beräkningar i SWEREF 99 TM; för planer i lokala zoner är felet försumbart.
 - Lantmäteriets detaljplans-API kräver nyckel; appen är testad mot den dokumenterade modellen med egna testdata.
+- Ett avsnitt utan koppling får ingen avsnittstyp i en exporterad GeoPackage-fil, eftersom ÖP-modellen har typen på kopplingen;
+  rubriken och texten följer med i Word-filen.
+- Exporten skriver avsnitten efter varandra; avsnitt vars bokmärken överlappade i det ursprungliga dokumentet upprepar då text.
+- Beslutshandlingar, underlag och externa referenser i den ursprungliga GeoPackage-filen följer inte med i exporten, bara
+  beslutets diarienummer och datum.
