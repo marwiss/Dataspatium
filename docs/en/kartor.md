@@ -43,6 +43,39 @@ drawn (the limit can be raised per layer in the map view).
 
 Picture collections with positions have the button *Show on the map*. Click a place and the inspector shows the picture. A table whose rows name pictures shows them the same way. *Use what shows* turns what the map shows right now into a selection that follows to the other modes. In a map view in Visualise, picture collections, plans and rasters (georeferenced images, see [raster.md](raster.md)) can be layers.
 
+### Several datasets on the map
+
+A digital comprehensive plan can be shown together with other geodata: shapefiles, layers from a GeoPackage, KML,
+orthophotos and other rasters, tables with coordinates and other plans. While Process shows a map (a table's map, a plan map
+or map layers), every other dataset in the list on the left that can be drawn on a map has an eye, *Show on the map*. Click
+the eye and the dataset is drawn over the map, and click again to take it off; the dataset itself does not change. Several
+datasets can be shown at once.
+
+The eye is beside
+
+- tables with a geometry column or coordinates (imported GeoJSON, shapefile, GeoPackage, KML and GPX files and more), when
+  the values are places;
+- plans, map layers and rasters with a place, such as an orthophoto saved as a raster.
+
+The map's own dataset and datasets without places have no eye, and there are no eyes while the table shows.
+
+How they show:
+
+- Rasters and orthophotos lie under every feature and above the background map.
+- Each dataset is a group of its own under *More datasets on the map* in the inspector, with its own colour from the app's
+  palette and its own symbols, and has its layers in the legend. The layers are shown and hidden as in the plan view (*Show
+  all*, *Hide all*, *Show only this*). On a table's map, the map's own dataset is the first group.
+- A plan keeps Boverket's colours where the plan gives them.
+- The map zooms to everything shown, and *Zoom to all* does the same.
+- Click a feature and the inspector shows its attributes under *Selected feature in* and the dataset's name. *Open the
+  dataset* shows it in Process.
+
+The map remembers which datasets are shown over it, for each dataset whose map it is, also after a reload. What is shown are
+the workspace's own datasets, so nothing is fetched from the net and nothing is asked when the map opens again or a link is
+opened at start. A dataset that is removed leaves the map, and one that changes is drawn again. Large datasets are read and
+drawn in rounds, so that the app responds meanwhile; at most 50 000 features are drawn per table and 20 000 per plan or map
+layers. A map with several layers to keep, for dashboards and publishing, is made as a map view in Visualise.
+
 ## Map views in Visualise
 
 *New chart → Map* creates a map view with the selected dataset as its first layer. The settings on the left:
@@ -215,6 +248,7 @@ also be shown in its own system (see [planer.md](planer.md#coordinate-and-height
 - Coordinate systems: those listed under [Coordinate systems](#coordinate-systems). Others must be converted before import (in QGIS, for
   example); the app says so and does not draw them.
 - Exports draw the layers, not the background map, WMS layers or map tiles.
+- Rasters over a plan map in the plan's own coordinate system are not shown; they are drawn in Web Mercator only.
 - Map tiles from OGC API – Tiles are shown only as images in Web Mercator; vector tiles need a library the app does not have.
 - Buffers and overlays are planar computations on WGS 84 coordinates through Turf; at kilometre scale in the Nordic
   countries the error is small, for very large areas noticeable.

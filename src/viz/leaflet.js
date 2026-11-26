@@ -478,12 +478,14 @@
     /**
      * The pictures of a definition's visible raster layers as image overlays, not yet on the map: every file of the dataset's
      * `_meta.raster` that its table still lists and that has a place, its preview read from the dataset's own file (an object URL;
-     * nothing is fetched and no consent is asked). The `i`-th raster layer of the list lies at z-index 2 + i in the tile pane, above the background maps and the
-     * service layers (all at 1). Files without a place are named in `info.rasterUnplaced`; a map in a grid of its own draws none
+     * nothing is fetched and no consent is asked). The `i`-th raster layer of the list lies at z-index `zBase` + i in the tile pane (2
+     * by default), above the background maps and the service layers (all at 1); a raster drawn over another dataset's map
+     * (ui/viz/map-overlays) starts higher. Files without a place are named in `info.rasterUnplaced`; a map in a grid of its own draws none
      * (`info.rasterProjection`), and neither does a tier below BIM och GIS (platform/tier, `kind:raster`).
+     * @param {any} L @param {any} def @param {any} info @param {boolean} grid @param {number} [zBase]
      * @returns {Promise<Array<{layer: any, images: any[]}>>}
      */
-    async function rasterImages(L, def, info, grid) {
+    async function rasterImages(L, def, info, grid, zBase = 2) {
       const out = [];
       const layers = (def.layers || []).filter((l) => l.kind === 'raster');
       if (!layers.some((l) => l.visible !== false)) return out;
@@ -506,7 +508,7 @@
           if (!bounds) { if (file && file.name) unplaced.add(String(file.name)); continue; }
           const url = await dsFiles.url(meta.id, file.name, 'preview').catch(() => null);
           if (!url) continue;
-          images.push(L.imageOverlay(url, L.latLngBounds(bounds[0], bounds[1]), { pane: 'tilePane', zIndex: 2 + i, opacity, interactive: false, alt: String(file.name), className: 'dm-raster-image', attribution }));
+          images.push(L.imageOverlay(url, L.latLngBounds(bounds[0], bounds[1]), { pane: 'tilePane', zIndex: zBase + i, opacity, interactive: false, alt: String(file.name), className: 'dm-raster-image', attribution }));
         }
         out.push({ layer, images });
       }
@@ -550,7 +552,7 @@
      * EPSG code or name of a projected system the app reads) draws the map in that grid instead of Web Mercator, with a WMS or
      * orthophoto background in the same grid (and without rasters, which are in Web Mercator). Returns a handle with the Leaflet
      * map, legend, info (`rasters` is the number of raster pictures drawn), the rasters' pictures per layer with
-     * setRasterOpacity(), the map's EPSG code, export functions and finalize().
+     * setRasterOpacity(), the map's EPSG code, fit(more) (to its own place and other bounds), export functions and finalize().
      */
     async function render(el, chart, options = {}) {
       const def = chart.map || {};
@@ -601,15 +603,19 @@
         for (const r of rasters) for (const image of r.images) { const b = image.getBounds(); box = box ? box.extend(b) : L.latLngBounds(b.getSouthWest(), b.getNorthEast()); }
         return box;
       };
-      const fit = () => {
+      /** The map's own place: its features' bounds, else its rasters' (the features decide), or null. */
+      const ownBounds = () => { const b = prepared.bounds; return b ? L.latLngBounds([b.minY, b.minX], [b.maxY, b.maxX]) : rasterBounds(); };
+      /**
+       * Fit the map to its own place and to `more` (other datasets drawn over it, ui/viz/map-overlays), when that is Leaflet bounds.
+       * @param {any} [more]
+       */
+      const fit = (more) => {
         // A saved view is in Web Mercator's zoom levels; a map in a grid of its own fits its features instead.
         if (!grid && def.view && def.view.center && def.view.zoom) { map.setView(def.view.center, def.view.zoom); return; }
-        const b = prepared.bounds;
         const maxZoom = options.fitMaxZoom || (grid ? 12 : 14);
-        // The features decide; the rasters' places only when there are none.
-        const rb = b ? null : rasterBounds();
-        if (b) map.fitBounds([[b.minY, b.minX], [b.maxY, b.maxX]], { padding: [16, 16], maxZoom });
-        else if (rb) map.fitBounds(rb, { padding: [16, 16], maxZoom });
+        let box = ownBounds();
+        if (more && typeof more.isValid === 'function' && more.isValid()) box = box ? box.extend(more) : L.latLngBounds(more.getSouthWest(), more.getNorthEast());
+        if (box) map.fitBounds(box, { padding: [16, 16], maxZoom });
         else map.setView(DEFAULT_VIEW.center, grid ? 2 : DEFAULT_VIEW.zoom);
       };
       fit();
@@ -858,6 +864,6 @@
       return nums.some((c) => /^(lon|long|lng|longitude|longitud|lon_wgs84|longitude_wgs84)$/i.test(c.name)) && nums.some((c) => /^(lat|latitude|latitud|lat_wgs84|latitude_wgs84)$/i.test(c.name));
     }
 
-    return { BASEMAPS, OSM, VENDOR, MAX_ROWS, GRID_RESOLUTIONS, available, ensure, ensureProj, gridCrs, source, geometryColumn, coordinateColumns, mappable, mapDefault, drawable, drawableByValues, layerFor, boundaryLayer, wmsLayer, wmsSource, wmsLayers, tilesLayer, tilesSource, rasterLayer, rasterAttribution, defaultMap, styling, swatchColor, featuresOf, prepare, tileSource, render, toBlob, thumbnail, drawSvg, tableSvg, htmlFor, htmlCss, project };
+    return { BASEMAPS, OSM, VENDOR, MAX_ROWS, GRID_RESOLUTIONS, available, ensure, ensureProj, gridCrs, source, geometryColumn, coordinateColumns, mappable, mapDefault, drawable, drawableByValues, layerFor, boundaryLayer, wmsLayer, wmsSource, wmsLayers, tilesLayer, tilesSource, rasterLayer, rasterAttribution, rasterImages, defaultMap, styling, swatchColor, featuresOf, prepare, tileSource, render, toBlob, thumbnail, drawSvg, tableSvg, htmlFor, htmlCss, project };
   });
 })();

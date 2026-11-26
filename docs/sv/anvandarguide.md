@@ -170,11 +170,16 @@ beständig lagring, tar säkerhetskopia som ZIP och återställer. Appen påminn
 valda antalet dagar sedan senaste säkerhetskopian (30 dagar som standard; ändras eller stängs av i samma kort). I
 Edge och Chrome kan arbetsytan dessutom speglas till en portabel mapp på disk, automatiskt vid varje ändring.
 
-Objektpanelen i Hantera är ett träd. *Ordna* ger en datamängd en mapp (med undermappar, som `Ekonomi/2026`) och
-taggar; mappar kan fällas ihop, och en datamängd kan dras till en annan mapp. Filterfältet söker på namn, kortnamn,
-tagg och mapp, och listan kan sorteras på ändrad, namn eller rader. Kryssrutorna väljer flera datamängder (Skift
-väljer ett spann), och knappen *Åtgärder (n)* gör samma sak med alla på en gång: ordna, paketera, exportera som ZIP
-med CSV-filer, hämta igen från API, köra ett recept eller ta bort. Mapp och taggar sparas i datamängdens fil och
+Objektpanelen i Hantera, och i de andra lägena utom Inhämta, är ett träd med mappar (med undermappar, som
+`Ekonomi/2026`). Filterfältet söker på namn, kortnamn, tagg och mapp, och listan kan sorteras på ändrad, namn eller
+rader. Kryssrutorna markerar datamängder (Skift markerar ett spann), och kryssrutan för en mapp, eller ett klick på
+mappen, markerar allt i den och dess undermappar. Direkt ovanför trädet ligger verktygen *Ny mapp*, *Byt namn*, *Klipp
+ut*, *Kopiera*, *Klistra in*, *Flytta* och *Ta bort*, och i trädet gäller tangenterna Delete, Ctrl+C, Ctrl+X, Ctrl+V och
+F2. *Ta bort* på en mapp tar bort den med allt i den efter en enda fråga som säger hur mycket det är; *Kopiera* och
+*Klistra in* gör kopior av datamängderna med allt i dem, och *Klipp ut* och *Klistra in* flyttar. Namn skrivs direkt
+i trädet. Datamängder och mappar kan också dras till en annan mapp. *Ordna* ger en datamängd en mapp och taggar, och
+knappen *Åtgärder (n)* gör samma sak med alla markerade på en gång: ordna, paketera, exportera som ZIP med CSV-filer,
+hämta igen från API, köra ett recept eller ta bort. Se [lagen.md](lagen.md#hantera). Mapp och taggar sparas i datamängdens fil och
 följer med i paket, säkerhetskopior och GitHub; i R visar `dm_list()` mappen och `dm_read("Mapp/Namn")` läser en
 datamängd i en mapp.
 

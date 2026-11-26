@@ -726,7 +726,10 @@
 
     /**
      * Add a dataset from an existing SQLite file (restore from backup or import of a .sqlite file).
-     * A new id is assigned when the file's id already exists.
+     * A new id is assigned when the file's id already exists. `write` keeps the overrides in the file's _meta too, and `log`
+     * adds an entry to its _log ({action, details}).
+     * @param {ArrayBuffer|Uint8Array} bytes @param {Record<string, any>} [overrides]
+     * @param {{quiet?: boolean, write?: boolean, log?: {action: string, details?: any}}} [options]
      */
     async function importBytes(bytes, overrides = {}, options = {}) {
       const engine = await newEngine(bytes.slice(0));
@@ -739,6 +742,9 @@
       await engine.run('insert or replace into _meta (key, value) values (?, ?)', ['id', meta.id]);
       meta.shortName = await uniqueShortName(meta.shortName || meta.name, meta.id);
       await engine.run('insert or replace into _meta (key, value) values (?, ?)', ['shortName', meta.shortName]);
+      if (options.write) {
+        for (const row of metaToRows(overrides)) if (row[0] !== 'id' && row[0] !== 'shortName') await engine.run('insert or replace into _meta (key, value) values (?, ?)', row);
+      }
       const cols = await readColumns(engine);
       const countRes = await engine.exec('select count(*) from data');
       meta.rowCount = Number(countRes[0].values[0][0]);
@@ -746,6 +752,7 @@
       meta.updatedAt = meta.updatedAt || new Date().toISOString();
       meta.createdAt = meta.createdAt || meta.updatedAt;
       const handle = { engine, meta, columns: cols };
+      if (options.log) await appendLog(handle, options.log.action, options.log.details);
       openHandles.set(meta.id, handle);
       await persist(handle);
       if (!options.quiet) {
@@ -755,6 +762,24 @@
       return handle.meta;
     }
 
+    /**
+     * A copy of a dataset under a new id and short name: the whole file (rows, columns, its files and side tables, the kind's
+     * metadata, tags and log), with the name and folder given and a log entry that says what it was copied from. Edits not yet
+     * saved come along; the versions stay with the original.
+     * @param {string} id @param {{name?: string, folder?: string}} [overrides] @returns {Promise<any>} the copy's metadata
+     */
+    async function duplicate(id, overrides = {}) {
+      const record = await get(id);
+      if (!record) throw new Error('Dataset not found: ' + id);
+      const bytes = await bytesOf(id);
+      const now = new Date().toISOString();
+      const meta = {
+        name: String(overrides.name || record.name), folder: normalizeFolder(overrides.folder === undefined ? record.folder : overrides.folder),
+        tags: record.tags || [], createdAt: now, updatedAt: now,
+      };
+      return importBytes(bytes, meta, { write: true, log: { action: 'copy', details: { from: id, name: record.name } } });
+    }
+
     function close(id) { const h = openHandles.get(id); if (h) { h.engine.terminate(); openHandles.delete(id); } }
 
     return {
@@ -762,7 +787,7 @@
       replaceBytes, rebuild, snapshot, listVersions, restoreVersion, deleteVersion, compareVersion, createFromQuery, copyInto, appendRows,
       createEmpty, appendImportRows, finishImport, abortImport,
       shortNameFrom, uniqueShortName, validateShortName, ensureShortNames, bytesOf, version, normalizeFolder, normalizeTags, folderPaths, KINDS,
-      updateMeta, remove, exportBytes, exportBytesTransformed, allRows, columns, importBytes, close, subscribe, quoteIdent: q, ensureIndex, dropIndexes, indexing, valueLabelsText,
+      updateMeta, remove, exportBytes, exportBytesTransformed, allRows, columns, importBytes, duplicate, close, subscribe, quoteIdent: q, ensureIndex, dropIndexes, indexing, valueLabelsText,
     };
   });
 })();

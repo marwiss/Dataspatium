@@ -142,6 +142,8 @@
      * steps), Home and End change the panel's width through the shell's CSS variable (`--dm-panel-w` or
      * `--dm-inspector-w`) within --dm-panel-min-w and --dm-panel-max-w; a double click resets it. Emits
      * `dm-resize` {side, width} when a change is done (width null after a reset), so the shell can persist it.
+     * `for="pane"` sits between two panes of a work area instead (the plan's map and text): it sets `--dm-split-w`, the second
+     * pane's width, on its parent, keeping at least --dm-split-min-w for either pane, and the view persists it.
      */
     class DmSplitter extends DmElement {
       connectedCallback() {
@@ -155,11 +157,19 @@
         this.addEventListener('keydown', (e) => this.onKey(e));
         this.addEventListener('dblclick', () => this.apply(null));
       }
-      get side() { const f = this.getAttribute('for'); return f === 'right' || f === 'drawer' ? f : 'left'; }
+      get side() { const f = this.getAttribute('for'); return f === 'right' || f === 'drawer' || f === 'pane' ? f : 'left'; }
       get isDrawer() { return this.side === 'drawer'; }
-      get varName() { return this.isDrawer ? '--dm-drawer-h' : this.side === 'right' ? '--dm-inspector-w' : '--dm-panel-w'; }
-      shell() { return /** @type {HTMLElement|null} */ (this.closest('.dm-shell')); }
+      get isPane() { return this.side === 'pane'; }
+      get varName() { return this.isPane ? '--dm-split-w' : this.isDrawer ? '--dm-drawer-h' : this.side === 'right' ? '--dm-inspector-w' : '--dm-panel-w'; }
+      /** Where the width lives: the work area for a pane, else the shell. */
+      shell() { return /** @type {HTMLElement|null} */ (this.isPane ? this.parentElement : this.closest('.dm-shell')); }
       limits() {
+        if (this.isPane) {
+          const host = this.shell();
+          const min = parseFloat(getComputedStyle(host || document.documentElement).getPropertyValue('--dm-split-min-w')) || 260;
+          const width = host ? host.getBoundingClientRect().width : 0;
+          return { min, max: Math.max(min, width - min) };
+        }
         const cs = getComputedStyle(this.shell() || document.documentElement);
         if (this.isDrawer) {
           // The drawer never takes more than part of the window, whatever the token says.
@@ -180,7 +190,7 @@
       /** The size a pointer position asks for: from the far edge of a column, or from the bottom of the log upwards. */
       sizeAt(ev) {
         const shell = this.shell();
-        if (!this.isDrawer) { const rect = shell.getBoundingClientRect(); return this.side === 'left' ? ev.clientX - rect.left : rect.right - ev.clientX; }
+        if (!this.isDrawer) { const rect = shell.getBoundingClientRect(); return this.side === 'left' ? ev.clientX - rect.left : rect.right - ev.clientX - (this.isPane ? this.getBoundingClientRect().width / 2 : 0); }
         const drawer = this.parentElement.getBoundingClientRect();
         const log = shell.querySelector('.dm-drawer .dm-log').getBoundingClientRect();
         return log.bottom - ev.clientY - (log.top - drawer.top);
@@ -203,7 +213,7 @@
       }
       onKey(e) {
         const step = e.shiftKey ? 64 : 16;
-        const dir = this.side === 'right' ? -1 : 1;
+        const dir = this.side === 'right' || this.isPane ? -1 : 1;
         let next;
         if (this.isDrawer && e.key === 'ArrowUp') next = this.current() + step;
         else if (this.isDrawer && e.key === 'ArrowDown') next = this.current() - step;

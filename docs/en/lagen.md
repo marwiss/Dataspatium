@@ -91,12 +91,34 @@ All sources in the list look the same, with a mark for their type and a line und
 
 ## Manage
 
-The datasets' home. The object panel is a tree: datasets can live in folders with subfolders (`Economy/2026`) and
-have tags; a filter field searches name, short name, tag and folder, and the list can be sorted by changed, name or
-rows. Folders collapse and expand, and datasets can be dragged to a folder. The checkboxes select several datasets
-(Shift selects a range) and the button *Actions (n)* opens the batch actions: organise (folder and tags), bundle,
-export as ZIP with CSV files, re-fetch from API, run a recipe and delete. Folder and tags travel with the dataset in
-its file, in bundles and in backups.
+The datasets' home. The object panel is a tree, and the same tree is in every mode but Import: datasets can live in
+folders with subfolders (`Economy/2026`) and have tags; a filter field searches name, short name, tag and folder, and
+the list can be sorted by changed, name or rows. The arrow in front of a folder collapses and expands it.
+
+**Selecting.** The checkboxes select datasets (Shift selects a range). A folder's checkbox, or a click on the folder,
+selects everything in the folder and its subfolders; a folder of which only a part is selected shows a dash in its box.
+
+**The tools right above the tree**: *New folder*, *Rename*, *Cut*, *Copy*, *Paste*, *Move* and *Delete*. They act on
+what is selected, or on the current dataset when nothing is selected, and they are on when they can be used.
+
+- *Delete* on a folder deletes the folder with all its subfolders and datasets at once, after one question that says how
+  many subfolders and datasets it concerns.
+- *Copy* and then *Paste* make copies of the datasets with everything in them (rows, columns, files, details and
+  history); a copy in the same folder is called *(copy)*, and a copied folder takes its subfolders along. *Cut* and then
+  *Paste* move instead. What is cut is shown faded until it is pasted.
+- *Paste* puts things in the selected folder, beside the selected datasets, and otherwise in the root; the button's tip
+  says where. A folder pasted while it is itself selected lands beside itself.
+- *Move* shows a list of folders right below the tools; choose one and click *Move here*.
+- *New folder* and *Rename* take the name right in the tree: Enter saves and Esc cancels. A new folder stays, empty,
+  until something is put in it.
+
+**Keys in the tree**: Delete deletes, Ctrl+C copies, Ctrl+X cuts, Ctrl+V pastes into the folder where the cursor is (or
+beside the dataset), F2 renames, arrow up and down move between the rows and arrow right and left expand and collapse.
+Datasets and folders can also be dragged to a folder, or to the heading for the root.
+
+The button *Actions (n)* in Manage opens the batch actions for the selected: organise (folder and tags), bundle, export
+as ZIP with CSV files, re-fetch from API, run a recipe and delete. Folder and tags travel with the dataset in its file,
+in bundles and in backups.
 
 The overview of a dataset shows metadata, the column list, comments, a history of what has been done with the
 dataset and versions, and here you rename and change the short name (the short name is used in SQL, R and chart

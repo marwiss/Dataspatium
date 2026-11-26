@@ -31,6 +31,7 @@
         case 'validate': return d.summary ? D.t('log.validate', { passed: d.summary.passed, rules: d.summary.rules }) : D.t('log.action.validate');
         case 'comment': return D.t('log.comment', { author: d.author || D.t('comments.anonymous'), text: d.text || '' });
         case 'shared': return D.t('log.shared', { name: d.name || '' });
+        case 'copy': return D.t('log.copy', { name: d.name || '' });
         case 'received': return D.t('log.received', { name: d.name || '', author: d.author || D.t('comments.anonymous') });
         default: return typeof entry.details === 'string' ? entry.details : (d.description || entry.action);
       }

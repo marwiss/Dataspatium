@@ -1,19 +1,175 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Actions on one or several datasets (Hantera): organise (folder and tags), move by drag and drop, and the
- * batch dialog for the selected datasets: what they can do together (one map, one table, one collection), organise,
- * delete, export each in its own form, bundle, refresh from the API and run another dataset's recipe on them.
+ * Actions on one or several datasets: organise (folder and tags), move by drag and drop, the tools of the dataset tree in
+ * every mode (delete folders and datasets, cut, copy and paste, rename; ui/dataset-list) and, in Hantera, the batch dialog for
+ * the selected datasets: what they can do together (one map, one table, one collection), organise, delete, export each in
+ * its own form, bundle, refresh from the API and run another dataset's recipe on them.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/batch-actions', ['ui/base', 'ui/share/bundle'], (base, share) => {
+  D.define('ui/batch-actions', ['ui/base', 'ui/share/bundle', 'ui/dataset-list'], (base, share, tree) => {
     const { h, t, i18n } = base;
 
     const chosenOf = (ctx, ids) => { const set = new Set(ids); return ctx.store.get().datasets.filter((d) => set.has(d.id)); };
     const fail = (ctx, err) => { ctx.shell.log(String((err && err.message) || err), 'error'); ctx.ui.toast.show(String((err && err.message) || err), { kind: 'error' }); };
     const done = (ctx, text) => { ctx.shell.log(text, 'ok'); ctx.ui.toast.show(text, { kind: 'ok' }); };
+
+    // ---- the tools of the dataset tree: folders are paths, so a folder goes with its datasets ----
+    const within = (path, folder) => path === folder || path.startsWith(folder + '/');
+    const parentOf = (path) => (path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '');
+    const leafOf = (path) => path.slice(path.lastIndexOf('/') + 1);
+    const joinPath = (a, b) => (a ? a + '/' + b : b);
+    /** Every folder in use: the datasets' paths with their parents, and the empty folders. */
+    const takenFolders = (ctx, list) => ctx.services.datasets.folderPaths(list.concat(tree.folders.list().map((folder) => ({ folder }))));
+    /** "2 mappar och 3 datamängder", leaving out what there is none of. */
+    function amount(parts) {
+      const said = parts.filter(([, n]) => n > 0).map(([key, n]) => t('datasets.tree.n.' + key, { n: i18n.formatNumber(n) }));
+      return said.length > 1 ? t('datasets.tree.and', { a: said.slice(0, -1).join(', '), b: said[said.length - 1] }) : said[0] || '';
+    }
+    /** The name of a copy: "Namn (kopia)", "Namn (kopia 2)" … */
+    const copyName = (name, n) => (n > 1 ? t('datasets.tree.copy.name.n', { name, n }) : t('datasets.tree.copy.name', { name }));
+
+    /**
+     * What a paste does, before anything changes: where each dataset goes (with a copy's name when it lands beside its
+     * original), which folders are copied or moved where, and the folders refused because they would go into themselves.
+     * A folder copied where its name is taken gets a copy's name; a folder moved there joins the one that is there.
+     * @param {any[]} list all datasets @param {{mode: 'copy'|'cut', ids: string[], folders: string[]}} clip @param {string} target
+     * @param {string[]} taken every folder path in use @param {(name: string, n: number) => string} nameOf
+     * @returns {{jobs: Array<{id: string, folder: string, name: string|null}>, folders: Array<{from: string, to: string}>, refused: string[]}}
+     */
+    function pastePlan(list, clip, target, taken, nameOf) {
+      const jobs = []; const moved = []; const refused = [];
+      const used = new Set(taken);
+      const seen = new Set();
+      for (const from of clip.folders) {
+        if (clip.mode === 'cut' && within(target, from)) { refused.push(from); continue; }
+        let to = joinPath(target, leafOf(from));
+        if (clip.mode === 'copy') for (let n = 1; used.has(to); n++) to = joinPath(target, nameOf(leafOf(from), n));
+        if (clip.mode === 'cut' && to === from) continue;
+        used.add(to);
+        moved.push({ from, to });
+        for (const d of list) {
+          const f = d.folder || '';
+          if (within(f, from) && !seen.has(d.id)) { seen.add(d.id); jobs.push({ id: d.id, folder: to + f.slice(from.length), name: null }); }
+        }
+      }
+      for (const id of clip.ids) {
+        const d = list.find((x) => x.id === id);
+        if (!d || seen.has(id)) continue;
+        seen.add(id);
+        const beside = (d.folder || '') === target;
+        if (clip.mode === 'cut' && beside) continue;
+        jobs.push({ id, folder: target, name: clip.mode === 'copy' && beside ? nameOf(d.name, 1) : null });
+      }
+      return { jobs, folders: moved, refused };
+    }
+
+    /**
+     * Delete folders with everything in them and datasets, after one question that says how many folders and datasets go.
+     * Each dataset is deleted the usual way (data/datasets.remove), so the store, the log and other tabs follow.
+     * @param {any} ctx @param {{ids: string[], folders: string[]}} units @returns {Promise<boolean>} whether anything was deleted
+     */
+    async function removeUnits(ctx, units) {
+      const { ui, services, store } = ctx;
+      const list = store.get().datasets;
+      const ids = new Set(units.ids);
+      for (const d of list) if (units.folders.some((f) => within(d.folder || '', f))) ids.add(d.id);
+      const chosen = list.filter((d) => ids.has(d.id));
+      const gone = takenFolders(ctx, list).filter((p) => units.folders.some((f) => within(p, f)));
+      if (!chosen.length && !gone.length) return false;
+      let question;
+      if (units.folders.length === 1 && !units.ids.length) {
+        const what = amount([['subfolders', gone.length - 1], ['datasets', chosen.length]]);
+        question = what ? t('datasets.tree.delete.folder', { name: units.folders[0], what }) : t('datasets.tree.delete.folder.empty', { name: units.folders[0] });
+      } else if (!units.folders.length && chosen.length === 1) question = t('datasets.delete.confirm', { name: chosen[0].name });
+      else question = t('datasets.tree.delete.confirm', { what: amount([['folders', gone.length], ['datasets', chosen.length]]) });
+      if (!(await ui.dialog.confirm(question, { okLabel: t('common.delete'), danger: true }))) return false;
+      let n = 0;
+      for (const d of chosen) {
+        try { await services.datasets.remove(d.id); n++; } catch (err) { fail(ctx, err); }
+      }
+      for (const f of units.folders) tree.folders.removeUnder(f);
+      store.set({ selectedIds: (store.get().selectedIds || []).filter((id) => !ids.has(id)) });
+      done(ctx, t('datasets.tree.deleted', { what: amount([['folders', gone.length], ['datasets', n]]) }));
+      return true;
+    }
+
+    /**
+     * Paste what was cut (moved) or copied (each dataset duplicated with its file) into a folder ('' is the root).
+     * @param {any} ctx @param {{mode: 'copy'|'cut', ids: string[], folders: string[]}} clip @param {string} target
+     * @returns {Promise<string[]>} the ids of the datasets pasted (the copies when copying)
+     */
+    async function paste(ctx, clip, target) {
+      const { services, store, ui } = ctx;
+      const list = store.get().datasets;
+      const into = services.datasets.normalizeFolder(target);
+      const plan = pastePlan(list, clip, into, takenFolders(ctx, list), copyName);
+      for (const f of plan.refused) ui.toast.show(t('datasets.tree.into.itself', { name: f }), { kind: 'warn' });
+      const out = [];
+      try {
+        for (const job of plan.jobs) {
+          if (clip.mode === 'cut') { await services.datasets.updateMeta(job.id, { folder: job.folder }); out.push(job.id); }
+          else {
+            const d = list.find((x) => x.id === job.id);
+            const copy = await services.datasets.duplicate(job.id, { folder: job.folder, name: job.name || d.name });
+            out.push(copy.id);
+          }
+        }
+      } catch (err) { fail(ctx, err); }
+      for (const f of plan.folders) { if (clip.mode === 'cut') tree.folders.move(f.from, f.to); else tree.folders.copy(f.from, f.to); }
+      if (out.length || plan.folders.length) {
+        const what = amount([['folders', plan.folders.length], ['datasets', out.length]]);
+        done(ctx, t(clip.mode === 'cut' ? 'datasets.tree.moved' : 'datasets.tree.copied', { what, folder: into || t('datasets.tree.root') }));
+      }
+      return out;
+    }
+
+    /**
+     * A new name for one dataset or one folder (the folder's last part; its datasets and subfolders follow).
+     * @param {any} ctx @param {{ids: string[], folders: string[]}} unit @param {string} name @returns {Promise<boolean>}
+     */
+    async function renameUnit(ctx, unit, name) {
+      const { services, store, ui } = ctx;
+      const value = String(name || '').trim().replace(/\s+/g, ' ');
+      if (!value) return false;
+      const list = store.get().datasets;
+      try {
+        if (unit.ids.length) {
+          const d = list.find((x) => x.id === unit.ids[0]);
+          if (!d || d.name === value) return false;
+          await services.datasets.updateMeta(d.id, { name: value });
+          ctx.shell.log(t('datasets.renamed'), 'ok');
+          return true;
+        }
+        const from = unit.folders[0];
+        const to = services.datasets.normalizeFolder(joinPath(parentOf(from), value.replace(/\//g, ' ')));
+        if (!to || to === from) return false;
+        if (takenFolders(ctx, list).includes(to)) { ui.toast.show(t('datasets.tree.folder.exists', { name: to }), { kind: 'warn' }); return false; }
+        for (const d of list) {
+          const f = d.folder || '';
+          if (within(f, from)) await services.datasets.updateMeta(d.id, { folder: to + f.slice(from.length) });
+        }
+        tree.folders.move(from, to);
+        done(ctx, t('datasets.tree.folder.renamed', { from, to }));
+        return true;
+      } catch (err) { fail(ctx, err); return false; }
+    }
+
+    const actionsOf = new WeakMap();
+    /** The work behind the tree's tools for this context (ui/dataset-list `actions`). */
+    function treeActions(ctx) {
+      if (!actionsOf.has(ctx)) actionsOf.set(ctx, { remove: (units) => removeUnits(ctx, units), paste: (clip, target) => paste(ctx, clip, target), rename: (unit, name) => renameUnit(ctx, unit, name) });
+      return actionsOf.get(ctx);
+    }
+    /** The tree every mode shows (the shell's defaults for ui/dataset-list): check boxes on the store's selection, tools and moves. */
+    function treeOptions(ctx) {
+      return {
+        multi: true, selectedIds: ctx.store.get().selectedIds || [], onToggle: (ids) => ctx.store.set({ selectedIds: ids }),
+        onMove: (ids, path) => move(ctx, ids, path), actions: treeActions(ctx),
+      };
+    }
 
     /** Asking more datasets than this what they can do takes longer than it is worth. */
     const MAX_ASKED = 12;
@@ -122,7 +278,7 @@
       const { ui, services } = ctx;
       const chosen = chosenOf(ctx, ids);
       if (!chosen.length) return false;
-      const folders = services.datasets.folderPaths(ctx.store.get().datasets);
+      const folders = takenFolders(ctx, ctx.store.get().datasets);
       const sameFolder = new Set(chosen.map((d) => d.folder || '')).size === 1 ? (chosen[0].folder || '') : null;
       const folderSel = /** @type {any} */ (h('dm-select', { label: t('datasets.folder'), help: sameFolder === null ? t('datasets.folder.mixed') : undefined }));
       folderSel.options = [{ value: '', label: t('datasets.folder.root') }].concat(folders.map((f) => ({ value: f, label: f })));
@@ -243,6 +399,6 @@
       done(ctx, t('datasets.batch.recipe.done', { ok: good, n: targets.length }));
     }
 
-    return { abilities, open, organize, move };
+    return { abilities, open, organize, move, removeUnits, paste, renameUnit, pastePlan, treeActions, treeOptions };
   });
 })();

@@ -101,10 +101,32 @@ Alla källor i listan ser likadana ut, med en symbol för sin typ och en rad und
 
 ## Hantera
 
-Datamängdernas hem. Objektpanelen är ett träd: datamängder kan ligga i mappar med undermappar (`Ekonomi/2026`)
-och ha taggar; ett filterfält söker på namn, kortnamn, tagg och mapp, och listan kan sorteras på ändrad, namn eller
-rader. Mappar fälls ihop och ut, och datamängder kan dras till en mapp. Kryssrutorna väljer flera datamängder
-(Skift väljer ett spann) och knappen *Åtgärder (n)* öppnar batchåtgärderna: ordna (mapp och taggar), paketera,
+Datamängdernas hem. Objektpanelen är ett träd, och samma träd finns i alla lägen utom Inhämta: datamängder kan ligga
+i mappar med undermappar (`Ekonomi/2026`) och ha taggar; ett filterfält söker på namn, kortnamn, tagg och mapp, och
+listan kan sorteras på ändrad, namn eller rader. Pilen framför en mapp fäller ihop och ut den.
+
+**Markera.** Kryssrutorna markerar datamängder (Skift markerar ett spann). Kryssrutan för en mapp, eller ett klick på
+mappen, markerar allt i mappen och dess undermappar; en mapp där bara en del är markerad visar ett streck i rutan.
+
+**Verktygen direkt ovanför trädet**: *Ny mapp*, *Byt namn*, *Klipp ut*, *Kopiera*, *Klistra in*, *Flytta* och *Ta bort*.
+De gäller det som är markerat, eller den valda datamängden när inget är markerat, och är tända när de går att använda.
+
+- *Ta bort* på en mapp tar bort mappen med alla dess undermappar och datamängder på en gång, efter en enda fråga som
+  säger hur många undermappar och datamängder det gäller.
+- *Kopiera* och sedan *Klistra in* gör kopior av datamängderna med allt i dem (rader, kolumner, filer, uppgifter och
+  historik); en kopia i samma mapp heter *(kopia)*, och en kopierad mapp får sina undermappar med sig. *Klipp ut* och
+  sedan *Klistra in* flyttar i stället. Det som är urklippt visas blekt tills det klistras in.
+- *Klistra in* lägger i den markerade mappen, bredvid de markerade datamängderna, och annars i roten; tipset på knappen
+  säger vart. En mapp som klistras in medan den själv är markerad hamnar bredvid sig själv.
+- *Flytta* visar en lista med mappar direkt under verktygen; välj en och klicka på *Flytta hit*.
+- *Ny mapp* och *Byt namn* skriver namnet direkt i trädet: Enter sparar och Esc avbryter. En ny mapp finns kvar, tom,
+  tills något läggs i den.
+
+**Tangenter i trädet**: Delete tar bort, Ctrl+C kopierar, Ctrl+X klipper ut, Ctrl+V klistrar in i mappen där markören
+står (eller bredvid datamängden), F2 byter namn, pil upp och ned går mellan raderna och pil höger och vänster fäller ut
+och ihop. Datamängder och mappar kan också dras till en mapp, eller till rubriken för roten.
+
+Knappen *Åtgärder (n)* i Hantera öppnar batchåtgärderna för de markerade: ordna (mapp och taggar), paketera,
 exportera som ZIP med CSV-filer, hämta igen från API, köra ett recept och ta bort. Mapp och taggar följer
 datamängden i dess fil, i paket och i säkerhetskopior.
 

@@ -9,6 +9,8 @@
  * is always the table; what is done there (filter, correct, remove rows) shows here too.
  * It is also a raster's own view (the kind raster): the previews of its files under their outlines, with the raster's facts,
  * the opacity of its pictures and the files that have no place in the inspector; a hit in Söka (`openRaster`) goes to its file.
+ * Other datasets toggled on in Bearbeta's list are drawn over it (`options.overlays`, ui/viz/map-overlays), each a group in the
+ * inspector's layer list and legend beside this dataset's own, and the map fits them all.
  */
 (function () {
   'use strict';
@@ -20,10 +22,14 @@
 
     /**
      * @param {any} ctx shell context (ui, services, store, shell)
-     * @param {{onTable: () => void, onOwnView?: () => void, tileFactory?: Function}} options tileFactory for tests (no tiles are fetched)
+     * @param {{onTable: () => void, onOwnView?: () => void, tileFactory?: Function, overlays?: any}} options tileFactory for tests (no tiles
+     *   are fetched); overlays the other datasets drawn over the map (ui/viz/map-overlays)
      */
     function create(ctx, options) {
       const { ui, shell, store } = ctx;
+      const overlays = options.overlays || null;
+      /** The map fitted to its own place and the other datasets shown over it. */
+      const fitAll = () => { if (handle) handle.fit(overlays ? overlays.bounds() : null); };
       const s = { id: null, basemap: 'none', selected: null, chart: null };
       let ds = null; let columns = []; let slots = null; let mapEl = null; let handle = null; let seq = 0;
       /**
@@ -92,7 +98,7 @@
             // A collection counts itself in its own units (files and resolution for a raster), a table in rows.
             h('h1', null, ui.icon('map', 20), dataset.name, ' ', h('dm-badge', { text: kinds.isCollection(dataset) ? kinds.summary(dataset) : t('common.rows', { n: i18n.formatNumber(dataset.rowCount || 0) }) })),
             h('div', { class: 'dm-toolbar' }, basemapSel, orthoBtn, orthoSave,
-              ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: () => { if (handle) handle.fit(); } }),
+              ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: fitAll }),
               tier.shows('chart:map') ? ui.button({ label: t('map.save.chart'), icon: 'save', title: t('map.save.chart.hint'), onClick: saveChart }) : null,
               ui.button({ label: t('selection.use.map'), icon: 'list-checks', title: t('selection.use.map.hint'), onClick: () => useWhatShows().catch((err) => shell.log(String((err && err.message) || err), 'error')) }),
               options.onOwnView ? ui.button({ label: t('bearbeta.view.' + dataset.kind), icon: 'chevron-left', title: t('bearbeta.view.' + dataset.kind + '.hint'), onClick: options.onOwnView }) : null,
@@ -108,9 +114,15 @@
         mapEl.replaceChildren();
         try {
           // A raster can be a drone's image of a few metres: its map may come as close as the background maps go.
-          const hd = await leaflet.render(mapEl, s.chart, Object.assign({ onSelect: (sel) => { s.selected = sel; renderInspector(); }, tileFactory: options.tileFactory }, isRaster() ? { fitMaxZoom: 19 } : {}));
+          const hd = await leaflet.render(mapEl, s.chart, Object.assign({ onSelect: (sel) => { s.selected = sel; if (overlays) overlays.clear(); renderInspector(); }, tileFactory: options.tileFactory }, isRaster() ? { fitMaxZoom: 19 } : {}));
           if (my !== seq) { hd.finalize(); return; }
           handle = hd;
+          // The other datasets shown over this one, before the map fits them all (and before Sweden's orthophoto is read for the view).
+          if (overlays) {
+            await overlays.attach(hd, ds, { listHost: true, fit: fitAll, refresh: renderInspector, onSelect: () => { s.selected = null; } });
+            if (my !== seq) return;
+            fitAll();
+          }
           if (orthoBtn) orthoBtn.hidden = !hd.info.basemapView;
           if (orthoSave) orthoSave.hidden = !hd.info.basemapView;
           if (hd.info.basemapDenied) ui.toast.show(t('map.basemap.denied'), { kind: 'warn' });
@@ -204,7 +216,9 @@
             const label = Object.values(props).find((v) => typeof v === 'string' && v) || String(props._rowid);
             items.push(block.create(ctx, ds, block.placeTarget(ds, props._rowid, String(label))));
           }
-        } else items.push(h('p', { class: 'dm-help', text: t('map.help') }));
+        } else if (!(overlays && overlays.selected)) items.push(h('p', { class: 'dm-help', text: t('map.help') }));
+        // The other datasets on the map: a feature chosen on one of them, their layers and legend with this one's.
+        if (overlays) items.push(overlays.block());
         replace(slots.right, items);
       }
 
@@ -285,7 +299,7 @@
         if (bounds.isValid()) handle.map.fitBounds(bounds.pad(file ? 0.1 : 0.5), { maxZoom: file ? 19 : 15 });
       }
 
-      function destroy() { seq++; if (handle) { handle.finalize(); handle = null; } mapEl = null; slots = null; }
+      function destroy() { seq++; if (overlays) overlays.detach(); if (handle) { handle.finalize(); handle = null; } mapEl = null; slots = null; }
       return { render, destroy, state: s, get handle() { return handle; }, get marks() { return marks; } };
     }
     return { create };

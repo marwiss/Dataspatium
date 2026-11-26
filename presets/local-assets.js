@@ -537,13 +537,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/anvandarguide.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 23729,
+  "size": 24349,
   "library": "dataspatium"
  },
  "docs/sv/lagen.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 28141,
+  "size": 29954,
   "library": "dataspatium"
  },
  "docs/sv/soka.md": {
@@ -621,7 +621,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kartor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 19106,
+  "size": 21538,
   "library": "dataspatium"
  },
  "docs/sv/raster.md": {
@@ -633,7 +633,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/planer.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 22231,
+  "size": 26670,
   "library": "dataspatium"
  },
  "docs/sv/grafer.md": {
@@ -1551,13 +1551,13 @@ Dataspatium.assets.addEntries({
  "docs/en/anvandarguide.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 23449,
+  "size": 24017,
   "library": "dataspatium"
  },
  "docs/en/lagen.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 28060,
+  "size": 29756,
   "library": "dataspatium"
  },
  "docs/en/soka.md": {
@@ -1635,7 +1635,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kartor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 19220,
+  "size": 21582,
   "library": "dataspatium"
  },
  "docs/en/raster.md": {
@@ -1647,7 +1647,7 @@ Dataspatium.assets.addEntries({
  "docs/en/planer.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 22795,
+  "size": 26933,
   "library": "dataspatium"
  },
  "docs/en/grafer.md": {
