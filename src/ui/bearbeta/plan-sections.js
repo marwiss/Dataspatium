@@ -67,15 +67,19 @@
     /**
      * The plan view's text and files.
      * @param {any} ctx shell context
-     * @param {{mark: (ids: string[], section: any|null) => void, shown: () => void, changed: () => void, nameOf?: (id: string) => string}} options
+     * @param {{mark: (ids: string[], section: any|null) => void, shown: () => void, changed: () => void, nameOf?: (id: string) => string, editor?: any}} options
      *   `mark` marks the objects on the map and fits the view to them, `shown` tells that the map's size changed, `changed` that
-     *   the plan changed, `nameOf` an object's name for the lists
+     *   the plan changed, `nameOf` an object's name for the lists; `editor` (ui/bearbeta/plan-edit) adds its buttons to the
+     *   sections in edit mode and keeps the plan description when the plan has no sections yet
      */
     function create(ctx, options) {
       const { ui } = ctx;
       const st = { id: null, tab: 'text', sections: [], objects: new Map(), byObject: new Map(), whole: [], files: [], plan: {}, chosen: null, current: null, filesShown: false, links: 0 };
       let tabs = null; let panes = null; let split = null; let seq = 0;
       const nameOf = (id) => (options.nameOf ? options.nameOf(id) : '') || id;
+      /** The plan's editor (ui/bearbeta/plan-edit), when the view has one. */
+      const editor = options.editor || null;
+      const editing = () => !!(editor && editor.editing);
 
       /**
        * The centre below the page's head: the map alone when the plan has neither sections nor a delivery's files, else the map
@@ -90,7 +94,7 @@
         index(sections);
         st.files = list.filter(listedFile);
         st.filesShown = !!st.plan.leverans || list.some((f) => ROLES.includes(f.kind));
-        const ids = (sections.length ? ['text'] : []).concat(st.filesShown ? ['files'] : []);
+        const ids = (sections.length || editing() ? ['text'] : []).concat(st.filesShown ? ['files'] : []);
         if (!ids.includes(st.tab)) st.tab = ids[0] || 'text';
         if (!ids.length) { tabs = null; panes = null; split = null; return mapEl; }
         tabs = null;
@@ -101,7 +105,7 @@
           tabs.active = st.tab;
           tabs.addEventListener('dm-change', (e) => showTab(/** @type {any} */ (e).detail.id));
         }
-        panes = { text: sections.length ? textPane() : null, files: st.filesShown ? filesPane() : null };
+        panes = { text: sections.length || editing() ? textPane() : null, files: st.filesShown ? filesPane() : null };
         const splitter = h('dm-splitter', { for: 'pane', 'aria-label': t('plan.split') });
         split = h('div', { class: 'dm-plan-split', 'data-plan-split': '' }, mapEl, splitter,
           h('section', { class: 'dm-plan-side', 'aria-label': t('plan.text.pane'), 'data-plan-side': '' }, tabs, panes.text, panes.files));
@@ -152,7 +156,8 @@
           h('div', { class: 'dm-plan-section-head' }, head, s.typ ? h('dm-badge', { kind: isStatement(s) ? 'accent' : null, text: typeLabel(s) }) : null, kallor.size === 1 && kallor.has('text') ? textBadge() : null),
           s.dokument ? h('p', { class: 'dm-help dm-small', text: s.dokument }) : null,
           s.text ? h('p', { class: 'dm-plan-section-text', text: s.text }) : h('p', { class: 'dm-help dm-small', text: t('plan.sections.notext') }),
-          ids.length ? h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('plan.sections.map', { n: ids.length }), icon: 'map', size: 'sm', title: t('plan.sections.map.hint'), 'data-plan-section-map': s.avsnitt, onClick: () => choose(s) })) : null);
+          ids.length ? h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('plan.sections.map', { n: ids.length }), icon: 'map', size: 'sm', title: t('plan.sections.map.hint'), 'data-plan-section-map': s.avsnitt, onClick: () => choose(s) })) : null,
+          editor ? editor.sectionTools(s) : null);
       }
       /**
        * The plan description: the sections about the whole plan at the top, then the ställningstaganden, then the others.
@@ -165,6 +170,8 @@
         const others = rest.filter((s) => !isStatement(s));
         const block = (k, list, attrs) => (list.length ? h('section', Object.assign({ class: 'dm-stack-sm dm-plan-sections-block' }, attrs), h('h3', { text: `${t(k)} (${i18n.formatNumber(list.length)})` }), list.map(article)) : null);
         return h('div', { class: 'dm-plan-text', 'data-plan-text': '' },
+          editor ? editor.textHead() : null,
+          !st.sections.length ? h('p', { class: 'dm-help', text: t('plan.edit.section.empty') }) : null,
           st.whole.length ? h('section', { class: 'dm-card dm-stack-sm', 'data-plan-whole': '' }, h('h3', { text: t('plan.sections.whole') }), st.whole.map(article)) : null,
           block('plan.sections.statements', statements, { 'data-plan-statements': '' }),
           block('plan.sections.others', others, { 'data-plan-others': '' }));
@@ -209,7 +216,7 @@
         const note = (k) => { box.appendChild(h('p', { class: 'dm-help dm-small', 'data-plan-object-note': k, text: t(k) })); return box; };
         const withId = rows.filter((r) => key(r.objektid));
         if (!withId.length) return note('plan.sections.object.noid');
-        if (!st.links) return st.sections.length || st.filesShown ? note('plan.sections.object.nolinks') : null;
+        if (!st.links && !editing()) return st.sections.length || st.filesShown ? note('plan.sections.object.nolinks') : null;
         const by = new Map();
         for (const r of withId) {
           for (const e of st.byObject.get(key(r.objektid)) || []) {
@@ -228,7 +235,8 @@
             h('div', { class: 'dm-row-wrap' }, s.typ ? h('dm-badge', { kind: isStatement(s) ? 'accent' : null, text: typeLabel(s) }) : null, h('strong', { text: headingOf(s) }), inferred ? textBadge() : null),
             many ? h('p', { class: 'dm-small', 'data-plan-covers': '', text: t('plan.select.covers', { areas: namesLine(areas.map((a) => label(a.row) + (a.kalla === 'text' && !inferred ? ` (${t('plan.link.text').toLowerCase()})` : ''))) }) }) : null,
             s.text ? h('p', { class: 'dm-small dm-plan-section-text', text: excerpt(s.text) }) : null,
-            basic.button({ label: t('plan.sections.reveal'), icon: 'book-open', size: 'sm', title: t('plan.sections.reveal.hint'), 'data-plan-reveal': s.avsnitt, onClick: () => reveal(s.avsnitt) }));
+            h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('plan.sections.reveal'), icon: 'book-open', size: 'sm', title: t('plan.sections.reveal.hint'), 'data-plan-reveal': s.avsnitt, onClick: () => reveal(s.avsnitt) }),
+              editor ? editor.objectSectionTools(s, areas.map((a) => a.row)) : null));
         })));
         return box;
       }

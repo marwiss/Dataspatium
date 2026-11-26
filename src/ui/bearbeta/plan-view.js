@@ -15,12 +15,13 @@
  * area a rectangle meets, with the union of their sections in the inspector.
  *
  * The view is built by three functions that other modules can hook into: `toolbar` (the page head's tools), the text pane
- * (plan-sections' `textPane`) and `renderInspector`.
+ * (plan-sections' `textPane`) and `renderInspector`. A comprehensive plan is edited through them (ui/bearbeta/plan-edit): its
+ * areas, its plan description's sections and the links between them, and exported as a delivery.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/plan-view', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'data/geo', 'data/plan-links', 'viz/leaflet', 'viz/charts', 'viz/data', 'viz/theme', 'platform/files', 'ui/viz/basemap-choice', 'ui/viz/basemap-memory', 'ui/viz/tiles-dialog', 'platform/tier', 'ui/viz/layer-list', 'ui/bearbeta/plan-layers', 'ui/bearbeta/plan-sections'], (base, datasets, plan, catalog, geo, planLinks, leaflet, charts, vizData, theme, files, basemapChoice, memory, tilesDialog, tier, layerList, planLayers, planSections) => {
+  D.define('ui/bearbeta/plan-view', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'data/geo', 'data/plan-links', 'viz/leaflet', 'viz/charts', 'viz/data', 'viz/theme', 'platform/files', 'ui/viz/basemap-choice', 'ui/viz/basemap-memory', 'ui/viz/tiles-dialog', 'platform/tier', 'ui/viz/layer-list', 'ui/bearbeta/plan-layers', 'ui/bearbeta/plan-sections', 'ui/bearbeta/plan-edit'], (base, datasets, plan, catalog, geo, planLinks, leaflet, charts, vizData, theme, files, basemapChoice, memory, tilesDialog, tier, layerList, planLayers, planSections, planEdit) => {
     const { h, t, i18n, replace } = base;
     const MAX_ROWS = 20000;
     /** A drag shorter than this (in pixels) is a click, not a rectangle. */
@@ -43,8 +44,10 @@
       /** The toolbar's button Markera område, a layer click to ignore after a rectangle, and the rectangle's handlers on the map. */
       let boxBtn = null; let noClickUntil = 0; let unhook = null;
       const nameOf = (id) => { const r = s.byId.get(planLinks.key(id)); return r ? (s.slag === 'oversiktsplan' ? r.namn || r.innehallstyp : r.beteckning || r.formulering) || '' : ''; };
+      /** Editing a comprehensive plan (ui/bearbeta/plan-edit): its buttons and bar, the map's drawing and the inspector's fields. */
+      const editor = planEdit.create(ctx, { state: () => s, dataset: () => ds, pick: (rows) => pick(rows), changed: () => { s.updatedAt = null; if (ds && slots) render(ds, slots); }, inspector: () => renderInspector() });
       /** The plan's text and files beside the map. */
-      const sections = planSections.create(ctx, { mark: (ids) => markObjects(ids), nameOf, shown: () => { if (handle) { handle.map.invalidateSize(); if (marks) fitMarks(); } }, changed: () => { s.updatedAt = null; if (ds && slots) render(ds, slots); } });
+      const sections = planSections.create(ctx, { mark: (ids) => markObjects(ids), nameOf, shown: () => { if (handle) { handle.map.invalidateSize(); if (marks) fitMarks(); } }, changed: () => { s.updatedAt = null; if (ds && slots) render(ds, slots); }, editor });
       /** Sweden's orthophoto: read on the next drawing, because the person chose it (for the plan's extent, at most a square kilometre). */
       let orthoLoad = false;
       /** A background map remembered for the plan, checked against the choices once they are known. */
@@ -116,6 +119,7 @@
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon('layers', 20), dataset.name, ' ', h('dm-badge', { text: t('plan.slag.' + s.slag) }), info.land && info.land !== 'SE' ? h('dm-badge', { text: t('plan.land.' + info.land) }) : null, info.status ? h('dm-badge', { kind: /laga kraft|antagen|vedtaget|í gildi|voimassa|^13$/i.test(info.status) ? 'ok' : 'accent', text: info.status }) : null),
             bar),
+          editor.bar(),
           body);
         syncBox();
         await draw();
@@ -183,6 +187,7 @@
           ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: fit }), boxBtn,
           tier.shows('chart:map') ? ui.button({ label: t('map.save.chart'), icon: 'save', title: t('plan.save.chart.hint'), onClick: saveChart }) : null,
           s.slag === 'detaljplan' ? ui.button({ label: t('plan.provisions.export'), icon: 'file-text', title: t('plan.provisions.export.hint'), onClick: exportProvisions }) : null,
+          ...editor.buttons(),
           ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('bearbeta.view.table.hint'), onClick: options.onTable }));
       }
 
@@ -217,6 +222,7 @@
           // Shift and drag chooses with a rectangle here, not Leaflet's zoom to a box.
           if (hd.map.boxZoom) hd.map.boxZoom.disable();
           unhook = boxHandlers(hd.map);
+          editor.mapDrawn(hd.map, L, groups);
           updateLabels();
           if (options.overlays) { await options.overlays.attach(hd, ds, { hostLayers: s.layers, fit, refresh: renderInspector }); if (my !== seq) return; }
           fit();
@@ -544,9 +550,12 @@
         if (chosen) focus.push(chosen);
         if (s.picked.length > 1) focus.push(pickedBlock());
         else if (s.selected) {
-          focus.push(h('h4', { text: t('plan.selected') }), selectedDetails(s.selected));
+          focus.push(h('h4', { text: t('plan.selected') }), editor.inspector(s.selected) || selectedDetails(s.selected));
           if (s.slag === 'oversiktsplan') focus.push(h('p', { class: 'dm-help dm-small', text: t('plan.select.hint') }));
         }
+        // In edit mode the areas chosen can be linked to a ställningstagande (ui/bearbeta/plan-edit).
+        const linking = editor.selection();
+        if (linking) focus.push(linking);
         // The ställningstaganden and other sections that concern the areas, each with the way to its text.
         const about = s.picked.length ? sections.forObjects(s.picked) : null;
         if (about) focus.push(about);
@@ -715,8 +724,8 @@
         return box;
       }
 
-      function destroy() { seq++; if (options.overlays) options.overlays.detach(); sections.destroy(); if (unhook) { unhook(); unhook = null; } if (handle) { handle.finalize(); handle = null; } groups = []; labelLayer = null; marks = null; layerCtl = null; mapEl = null; slots = null; highlighted = []; boxBtn = null; }
-      return { render, destroy, pick, selectBox, setBoxMode, toolbar, renderInspector, state: s, sections, get handle() { return handle; }, get layers() { return layerCtl; }, get marks() { return marks; } };
+      function destroy() { seq++; if (options.overlays) options.overlays.detach(); editor.destroy(); sections.destroy(); if (unhook) { unhook(); unhook = null; } if (handle) { handle.finalize(); handle = null; } groups = []; labelLayer = null; marks = null; layerCtl = null; mapEl = null; slots = null; highlighted = []; boxBtn = null; }
+      return { render, destroy, pick, selectBox, setBoxMode, toolbar, renderInspector, state: s, sections, editor, get handle() { return handle; }, get layers() { return layerCtl; }, get marks() { return marks; } };
     }
     return { create };
   });

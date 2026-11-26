@@ -3,20 +3,20 @@
 /**
  * Editing a digital comprehensive plan in the plan view (ui/bearbeta/plan-view, F65): the buttons *Redigera planen* (and *Klar*)
  * and *Exportera som leverans*, and in edit mode a bar to draw a new area, line or point into a layer or theme (Leaflet-Geoman,
- * vendored, loaded on first use), the areas' attributes, shape and position in the inspector, their sections with *Ta bort
- * koppling*, several areas selected (shift-click or *Markera flera*) and linked to a ställningstagande, and the plan description's
- * sections edited in place, added and removed in the tab Ställningstaganden (ui/bearbeta/plan-sections). Every change goes through
- * data/plan-edit, so it is logged and undone with the app's undo (*Ångra* in the bar); the view draws the plan again afterwards.
- * Texts are plain text and reach the page only as text.
+ * vendored, loaded on first use), the area's attributes, shape and position in the inspector, the sections of the areas chosen
+ * with *Ta bort koppling*, the areas chosen (a click, Shift-click, *Markera område* or Shift and drag: the plan view's own choice)
+ * linked to a ställningstagande, and the plan description's sections edited in place, added and removed beside the map
+ * (ui/bearbeta/plan-sections). Every change goes through data/plan-edit, so it is logged and undone with the app's undo (*Ångra*
+ * in the bar); the view draws the plan again afterwards. Texts are plain text and reach the page only as text.
  *
- * The plan view hands over what it knows (`api`): its state (rows, the area chosen, the layers), the dataset, how to choose an
- * area, draw the plan again and draw the inspector again. The view calls `buttons`, `bar`, `mapDrawn`, `inspector` and
- * `selection`; the text pane calls `textHead`, `sectionTools` and `objectSectionTools`.
+ * The plan view hands over what it knows (`api`): its state (rows, `picked`, the area chosen last, the layers), the dataset, how to
+ * choose areas, draw the plan again and draw the inspector again. The view calls `buttons`, `bar`, `mapDrawn`, `inspector` and
+ * `selection`; the plan description calls `textHead`, `sectionTools` and `objectSectionTools`.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/plan-edit', ['ui/base', 'ui/basic', 'data/plan', 'data/plan-edit', 'data/plan-delivery', 'data/recipes', 'data/geo', 'viz/leaflet', 'viz/theme', 'platform/files', 'ui/bearbeta/plan-layers'], (base, basic, plan, planEdit, delivery, recipes, geo, leaflet, theme, files, planLayers) => {
+  D.define('ui/bearbeta/plan-edit', ['ui/base', 'ui/basic', 'data/plan', 'data/plan-edit', 'data/plan-delivery', 'data/plan-links', 'data/recipes', 'data/geo', 'viz/leaflet', 'viz/theme', 'platform/files', 'ui/bearbeta/plan-layers'], (base, basic, plan, planEdit, delivery, planLinks, recipes, geo, leaflet, theme, files, planLayers) => {
     const { h, t, i18n, replace } = base;
     const GEOMAN = 'vendor/leaflet-geoman/';
     /** Geoman's names of the shapes drawn, by the kind of geometry. */
@@ -26,7 +26,8 @@
     /** @type {Promise<any>|null} */ let loading = null;
     let cssLinked = false;
     const str = (v) => (v === null || v === undefined ? '' : String(v));
-    const idOf = (v) => plan.normId(v);
+    /** An id as compared (data/plan-links): without braces, in lower case. */
+    const idOf = (v) => planLinks.key(v);
 
     /** Load Leaflet-Geoman (vendored classic script) and its stylesheet after Leaflet, on first use. @returns {Promise<any>} L */
     function ensureLibrary() {
@@ -56,16 +57,19 @@
     /**
      * The plan view's editor.
      * @param {any} ctx shell context
-     * @param {{state: () => any, dataset: () => any, select: (row: any) => void, changed: () => void, inspector: () => void}} api
+     * @param {{state: () => any, dataset: () => any, pick: (rows: any[]) => void, changed: () => void, inspector: () => void}} api
      */
     function create(ctx, api) {
       const { ui, shell } = ctx;
-      const st = { editing: false, sel: /** @type {string[]} */ ([]), multi: false, target: '', drawing: '', shape: /** @type {any} */ (null), pending: '', catalogue: /** @type {Map<string, string[]>|null} */ (null), catalogueFor: '' };
-      let map = null; let L = null; let groups = []; let selLayer = null; let copy = null; let barEl = null;
+      const st = { editing: false, target: '', drawing: '', shape: /** @type {any} */ (null), pending: '', catalogue: /** @type {Map<string, string[]>|null} */ (null), catalogueFor: '' };
+      let map = null; let L = null; let groups = []; let copy = null; let barEl = null;
       const ds = () => api.dataset();
       const view = () => api.state();
       const available = () => { const d = ds(); return !!(d && d.kind === 'plan' && view().slag === 'oversiktsplan'); };
-      const rowOf = (id) => view().rows.find((r) => idOf(r.objektid) === id) || null;
+      const rowOf = (id) => view().rows.find((r) => idOf(r.objektid) === idOf(id)) || null;
+      /** The areas chosen on the map (the plan view's `picked`) and their ids. */
+      const picked = () => (view().picked || []).filter(Boolean);
+      const pickedIds = () => picked().map((r) => str(r.objektid)).filter((x) => idOf(x));
       /** An action from a button: its error as a toast, the details in the log. */
       const guard = (fn) => async (...args) => {
         try { await fn(...args); } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error', timeout: 9000 }); shell.log(String((err && err.message) || err), 'error'); }
@@ -81,7 +85,7 @@
       }
       async function start() {
         await ensureLibrary();
-        st.editing = true; st.sel = []; st.target = '';
+        st.editing = true; st.target = '';
         const id = ds().id;
         if (st.catalogueFor !== id) {
           st.catalogue = null; st.catalogueFor = id;
@@ -91,8 +95,7 @@
       }
       async function stop() {
         stopDrawing(); dropShape();
-        st.editing = false; st.sel = []; st.shape = null;
-        drawSelection();
+        st.editing = false; st.shape = null;
         api.changed();
       }
       /** The plan as a delivery (io/exporters/plan-delivery), downloaded. */
@@ -157,64 +160,29 @@
           basic.button({ label: t('plan.edit.draw.finish'), icon: 'check', size: 'sm', title: t('plan.edit.draw.finish.hint'), 'data-plan-draw-finish': '', onClick: () => finishDraw() }),
           basic.button({ label: t('common.cancel'), icon: 'x', size: 'sm', variant: 'ghost', title: t('plan.edit.draw.cancel.hint'), 'data-plan-draw-cancel': '', onClick: () => stopDrawing() }),
         ] : [];
-        const multi = /** @type {any} */ (h('dm-switch', { label: t('plan.edit.multi'), 'data-plan-edit-multi': '' }));
-        multi.checked = st.multi;
-        multi.addEventListener('change', () => { st.multi = !!multi.checked; });
         const id = ds().id;
         const can = recipes.canUndo(id);
         const undoBtn = basic.button({ label: t('common.undo'), icon: 'history', size: 'sm', disabled: can && !busy ? null : true, title: can ? t('bearbeta.undo.title', { label: recipes.undoLabel(id) }) : t('bearbeta.undo.none'), 'data-plan-edit-undo': '', onClick: guard(undo) });
         replace(barEl,
-          h('div', { class: 'dm-toolbar' }, sel, draw('polygon'), draw('line'), draw('point'), ...drawing, multi, undoBtn),
+          h('div', { class: 'dm-toolbar' }, sel, draw('polygon'), draw('line'), draw('point'), ...drawing, undoBtn),
           h('p', { class: 'dm-help dm-small', text: t(st.drawing ? 'plan.edit.drawing.hint' : st.shape ? 'plan.edit.shape.hint' : 'plan.edit.hint') }));
       }
 
       // ---- the map -----------------------------------------------------------------------------------------------
       /**
-       * The plan's map is drawn (again): in edit mode, clicks on the areas select them, a shape drawn becomes an area, and what was
-       * selected, chosen or being edited before stays so. @param {any} m the Leaflet map @param {any} Lib L @param {any[]} drawn its layer groups
+       * The plan's map is drawn (again): in edit mode a shape drawn becomes an area, a new area is chosen, and a shape being edited
+       * stays so. @param {any} m the Leaflet map @param {any} Lib L @param {any[]} drawn its layer groups
        */
       function mapDrawn(m, Lib, drawn) {
-        map = m; L = Lib; groups = drawn || []; selLayer = null; copy = null;
+        map = m; L = Lib; groups = drawn || []; copy = null;
         if (!st.editing || !available() || !map) return;
         if (L.PM && !map.pm) L.PM.reInitLayer(map);
         if (map.pm) map.pm.setGlobalOptions({ snappable: true, snapDistance: 15, tooltips: false });
         map.on('pm:create', (e) => { onCreate(e).catch((err) => { ui.toast.show(String((err && err.message) || err), { kind: 'error', timeout: 9000 }); }); });
-        for (const g of groups) g.group.eachLayer((lyr) => lyr.on('click', onLayerClick));
         const s = view();
-        if (st.pending) { const row = rowOf(st.pending); st.pending = ''; if (row) { s.selected = row; st.sel = [idOf(row.objektid)]; } }
-        st.sel = st.sel.filter((id) => rowOf(id));
-        drawSelection();
+        // A new area is the one chosen (the view draws it as chosen and lists it in the inspector).
+        if (st.pending) { const row = rowOf(st.pending); st.pending = ''; if (row) { s.picked = [row]; s.selected = row; } }
         if (st.shape) setupShape();
-      }
-      /** A click on an area in edit mode: it alone is selected, or (shift, ctrl or *Markera flera*) it is added or taken away. */
-      function onLayerClick(e) {
-        if (!st.editing || st.drawing || st.shape) return;
-        const s = view();
-        const p = e.target && e.target.feature && e.target.feature.properties;
-        const row = p ? s.rows[p._i] : null;
-        const id = row ? idOf(row.objektid) : '';
-        if (!id) return;
-        const oe = e.originalEvent || {};
-        if (st.multi || oe.shiftKey || oe.ctrlKey || oe.metaKey) {
-          if (st.sel.includes(id)) {
-            st.sel = st.sel.filter((x) => x !== id);
-            if (s.selected === row) { const last = st.sel[st.sel.length - 1]; api.select(last ? rowOf(last) : null); }
-          } else st.sel = st.sel.concat(id);
-        } else st.sel = [id];
-        drawSelection();
-        api.inspector();
-      }
-      /** The selected areas outlined on the map, in the accent colour (not clickable). */
-      function drawSelection() {
-        if (selLayer && map) map.removeLayer(selLayer);
-        selLayer = null;
-        if (!map || !L) return;
-        const color = theme.tokens().accent;
-        const features = st.sel.map(rowOf).filter((r) => r && r.geometri).map((r) => ({ type: 'Feature', properties: {}, geometry: geo.parseGeometry(r.geometri) })).filter((f) => f.geometry);
-        if (features.length) {
-          selLayer = L.geoJSON({ type: 'FeatureCollection', features }, { interactive: false, pmIgnore: true, snapIgnore: true, style: () => ({ color, weight: 3, dashArray: '6 4', fillColor: color, fillOpacity: 0.25 }), pointToLayer: (_f, at) => L.circleMarker(at, { radius: 10, color, weight: 3, fillOpacity: 0.25, interactive: false, pmIgnore: true }) }).addTo(map);
-        }
-        map.getContainer().setAttribute('data-plan-edit-selected', String(st.sel.length));
       }
       /** The plan's areas answer clicks, or not while a shape is drawn or edited (a click must reach the map then). */
       function setInteractive(on) {
@@ -263,7 +231,7 @@
         const area = { tema, geometry: g, innehallstyp: same ? same.innehallstyp : types[0] || plan.OP_CATEGORIES[tema] || '' };
         if (target) Object.assign(area, { lager: target.lager, fil: target.fil || '' });
         const objektid = await planEdit.addArea(ds().id, area);
-        st.pending = objektid; st.sel = [objektid];
+        st.pending = objektid;
         shell.log(t('plan.edit.area.added', { layer: target ? target.label : planLayers.themeLabel(tema) }), 'ok');
         api.changed();
       }
@@ -312,14 +280,12 @@
       }
 
       // ---- the inspector ----------------------------------------------------------------------------------------
-      /** The selected areas: how many, *Koppla till ställningstagande* and *Avmarkera alla*; null outside edit mode or with none. */
+      /** The areas chosen, in edit mode: *Koppla till ställningstagande*; null outside edit mode or with none chosen. */
       function selection() {
-        if (!st.editing || !st.sel.length) return null;
-        return h('div', { class: 'dm-stack-sm', 'data-plan-edit-selection': String(st.sel.length) },
-          h('p', { class: 'dm-small', text: t('plan.edit.selected', { n: st.sel.length }) }),
-          h('div', { class: 'dm-row-wrap' },
-            basic.button({ label: t('plan.edit.link'), icon: 'link', size: 'sm', title: t('plan.edit.link.hint'), 'data-plan-link': '', onClick: guard(linkDialog) }),
-            basic.button({ label: t('plan.edit.unselect'), icon: 'x', size: 'sm', variant: 'ghost', 'data-plan-edit-unselect': '', onClick: () => { st.sel = []; drawSelection(); api.select(null); } })));
+        const n = pickedIds().length;
+        if (!st.editing || !available() || !n) return null;
+        return h('div', { class: 'dm-row-wrap', 'data-plan-edit-selection': String(n) },
+          basic.button({ label: t('plan.edit.link'), icon: 'link', size: 'sm', title: t('plan.edit.link.hint'), 'data-plan-link': '', onClick: guard(linkDialog) }));
       }
       /**
        * The chosen area's attributes to change, its shape and position, and *Ta bort området*; null outside edit mode (the view
@@ -328,7 +294,7 @@
       function inspector(row) {
         if (!st.editing || !row || !available()) return null;
         const id = ds().id;
-        const objektid = idOf(row.objektid);
+        const objektid = str(row.objektid).trim();
         const kv = /** @type {any} */ (h('dm-kv'));
         kv.items = [{ label: t('plan.field.tema'), value: planLayers.themeLabel(row.tema) }, row.lager ? { label: t('plan.edit.layer'), value: row.lager } : null, { label: t('plan.field.objektid'), value: objektid }].filter(Boolean);
         const values = ((st.catalogue && st.catalogue.get(str(row.tema))) || []).slice();
@@ -346,7 +312,7 @@
           ui.toast.show(t('plan.edit.area.saved'), { kind: 'ok' });
           api.changed();
         }) });
-        const mine = st.shape && st.shape.objektid === objektid;
+        const mine = st.shape && st.shape.objektid === idOf(objektid);
         const shapeButtons = mine
           ? [basic.button({ label: t('plan.edit.shape.save'), icon: 'check', size: 'sm', 'data-plan-shape-save': '', onClick: guard(saveShape) }),
             basic.button({ label: t('common.cancel'), icon: 'x', size: 'sm', variant: 'ghost', 'data-plan-shape-cancel': '', onClick: () => { dropShape(); fillBar(); api.inspector(); } })]
@@ -355,9 +321,8 @@
         const remove = basic.button({ label: t('plan.edit.area.delete'), icon: 'trash-2', size: 'sm', variant: 'danger', title: t('plan.edit.area.delete.hint'), 'data-plan-area-delete': '', onClick: guard(async () => {
           if (!(await ui.dialog.confirm(t('plan.edit.area.delete.confirm', { name: row.namn || row.innehallstyp || objektid }), { okLabel: t('common.delete'), danger: true }))) return;
           await planEdit.deleteArea(id, objektid);
-          st.sel = st.sel.filter((x) => x !== objektid);
-          if (st.shape && st.shape.objektid === objektid) dropShape();
-          api.select(null);
+          if (st.shape && st.shape.objektid === idOf(objektid)) dropShape();
+          api.pick([]);
           ui.toast.show(t('plan.edit.area.deleted'), { kind: 'ok' });
           api.changed();
         }) });
@@ -365,12 +330,17 @@
           h('details', { class: 'dm-more' }, h('summary', { text: t('common.more') }), other),
           name, prec, h('div', { class: 'dm-row-wrap' }, save), h('div', { class: 'dm-row-wrap' }, ...shapeButtons, remove));
       }
-      /** *Ta bort koppling* beside a section that concerns the chosen area. @param {any} section @param {string} objektid */
-      function objectSectionTools(section, objektid) {
-        if (!st.editing) return null;
+      /**
+       * *Ta bort koppling* beside a section that concerns the areas chosen: the links of those areas to the section go.
+       * @param {any} section @param {any[]} rows the chosen areas the section covers
+       */
+      function objectSectionTools(section, rows) {
+        if (!st.editing || !available()) return null;
+        const ids = (rows || []).map((r) => str(r && r.objektid)).filter((x) => idOf(x));
+        if (!ids.length) return null;
         return basic.button({ label: t('plan.edit.unlink'), icon: 'x', size: 'sm', variant: 'ghost', title: t('plan.edit.unlink.hint'), 'data-plan-unlink': section.avsnitt, onClick: guard(async () => {
-          await planEdit.unlink(ds().id, section, [idOf(objektid)]);
-          ui.toast.show(t('plan.edit.unlinked', { n: 1 }), { kind: 'ok' });
+          const res = await planEdit.unlink(ds().id, section, ids);
+          ui.toast.show(t('plan.edit.unlinked', { n: res.rows || 0 }), { kind: 'ok' });
           api.changed();
         }) });
       }
@@ -388,12 +358,12 @@
         pick.value = keyOf(statements[0] || sections[0]);
         const ok = await ui.dialog.open({
           title: t('plan.edit.link'), help: 'planer#redigera-planen',
-          body: h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help', text: t('plan.edit.selected', { n: st.sel.length }) }), pick),
+          body: h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help', text: t('plan.edit.selected', { n: pickedIds().length }) }), pick),
           actions: [{ label: t('common.cancel'), value: false }, { label: t('plan.edit.link.ok'), variant: 'primary', value: true, primary: true }],
         });
         if (!ok) return;
         const [avsnitt, dokument] = JSON.parse(pick.value);
-        const res = await planEdit.link(id, { avsnitt, dokument }, st.sel);
+        const res = await planEdit.link(id, { avsnitt, dokument }, pickedIds());
         ui.toast.show(t('plan.edit.linked', { n: res.rows || 0 }), { kind: 'ok' });
         api.changed();
       }
@@ -427,7 +397,8 @@
         mark.addEventListener('input', () => { typed = true; });
         head.addEventListener('input', () => { if (!typed) mark.value = planEdit.bookmarkName(head.value, taken); });
         mark.value = planEdit.bookmarkName('', taken);
-        const linkSel = st.sel.length ? /** @type {any} */ (h('dm-switch', { label: t('plan.edit.section.link', { n: st.sel.length }), 'data-plan-new-link': '' })) : null;
+        const chosen = pickedIds();
+        const linkSel = chosen.length ? /** @type {any} */ (h('dm-switch', { label: t('plan.edit.section.link', { n: chosen.length }), 'data-plan-new-link': '' })) : null;
         if (linkSel) linkSel.checked = true;
         let done = null;
         const add = basic.button({ label: t('common.add'), icon: 'plus', variant: 'primary', 'data-plan-new-add': '', onClick: () => {
@@ -443,7 +414,7 @@
           actions: [{ label: t('common.cancel'), value: null }],
         });
         if (!values || typeof values !== 'object') return;
-        const made = await planEdit.addSection(id, { avsnitt: values.avsnitt, rubrik: values.rubrik, text: values.text, typ: values.typ, dokument: values.dokument, objekt: values.link ? st.sel : [] });
+        const made = await planEdit.addSection(id, { avsnitt: values.avsnitt, rubrik: values.rubrik, text: values.text, typ: values.typ, dokument: values.dokument, objekt: values.link ? chosen : [] });
         ui.toast.show(t('plan.edit.section.added', { name: values.rubrik || made.avsnitt }), { kind: 'ok' });
         api.changed();
       }
@@ -484,8 +455,9 @@
       }
       /** The selected areas linked to a section, or unlinked from it. */
       async function linkSelected(section, on) {
-        if (!st.sel.length) { ui.toast.show(t('plan.edit.select.first'), { kind: 'info' }); return; }
-        const res = await (on ? planEdit.link(ds().id, section, st.sel) : planEdit.unlink(ds().id, section, st.sel));
+        const ids = pickedIds();
+        if (!ids.length) { ui.toast.show(t('plan.edit.select.first'), { kind: 'info' }); return; }
+        const res = await (on ? planEdit.link(ds().id, section, ids) : planEdit.unlink(ds().id, section, ids));
         ui.toast.show(t(on ? 'plan.edit.linked' : 'plan.edit.unlinked', { n: res.rows || 0 }), { kind: 'ok' });
         api.changed();
       }
@@ -496,7 +468,7 @@
         api.changed();
       }
 
-      function destroy() { stopDrawing(); removeCopy(); if (selLayer && map) map.removeLayer(selLayer); selLayer = null; map = null; groups = []; barEl = null; }
+      function destroy() { stopDrawing(); removeCopy(); map = null; groups = []; barEl = null; }
       return { buttons, bar, mapDrawn, selection, inspector, objectSectionTools, textHead, sectionTools, destroy, start, stop, state: st, get editing() { return st.editing && available(); } };
     }
     return { create, ensureLibrary, combine };
