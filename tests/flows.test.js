@@ -154,8 +154,10 @@
       for (const key of ['bearbeta.profile', 'bearbeta.rules', 'bearbeta.versions', 'bearbeta.recipe']) await dialog(key, () => press(toolbar(root, t(key))));
       // Hantera: rename in the dataset view, then the workspace view with the share bundle.
       shell.activate('hantera');
-      await waitFor(() => toolbar(root, t('common.rename')), 5000, 'hantera');
-      await dialog('common.rename', () => press(toolbar(root, t('common.rename'))));
+      // The dataset view's rename (a dialog), not the tree's own above the list (an inline edit).
+      const center = () => /** @type {HTMLElement} */ (root.querySelector('.dm-center'));
+      await waitFor(() => center() && toolbar(center(), t('common.rename')), 5000, 'hantera');
+      await dialog('common.rename', () => press(toolbar(center(), t('common.rename'))));
       // The comments tab with its form.
       /** @type {HTMLElement} */ (Array.from(root.querySelectorAll('.dm-center dm-tabs [role="tab"]')).find((b) => b.textContent.includes(t('comments.title')))).click();
       await waitFor(() => toolbar(root, t('comments.add')), 5000, 'comments tab');

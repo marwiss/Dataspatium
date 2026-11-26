@@ -168,7 +168,8 @@
       box: (sel) => /** @type {HTMLInputElement} */ (container.querySelector(sel + ' input[type="checkbox"]')),
       main: (sel) => /** @type {HTMLElement} */ (container.querySelector(sel + ' [data-part="main"]')),
       tool: (id) => /** @type {HTMLButtonElement} */ (container.querySelector(`[data-tool="${id}"] button`)),
-      done: () => { list.clip.set(null); container.remove(); },
+      // Focus left inside a tree would come back with every redraw and steal the focus (and its tooltip) from later tests.
+      done: () => { if (container.contains(document.activeElement)) /** @type {any} */ (document.activeElement).blur(); list.clip.set(null); container.remove(); },
     };
   }
   const key = (el, k, extra) => el.dispatchEvent(new KeyboardEvent('keydown', Object.assign({ key: k, bubbles: true, cancelable: true }, extra || {})));

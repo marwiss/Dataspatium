@@ -15,6 +15,8 @@
   const out = (el) => el.dispatchEvent(new PointerEvent('pointerout', { bubbles: true, pointerType: 'mouse', relatedTarget: document.body }));
 
   test('tooltips: an icon-only button shows its label after a hover delay, at once on focus, and hides on pointer out and Escape', async (assert) => {
+    // A focus left by an earlier test would show its own tooltip on every redraw.
+    if (document.activeElement && document.activeElement !== document.body) /** @type {any} */ (document.activeElement).blur();
     const host = h('div', null);
     document.body.appendChild(host);
     try {

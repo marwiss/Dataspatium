@@ -481,7 +481,7 @@
       await plotly.toBlob(fig, 'png', { width: 200, height: 100 });
       assert.ok(!/href/.test(JSON.stringify(drawn[0])), 'an export keeps links as text');
       const html = await plotly.htmlFor('p1', fig);
-      assert.ok(!/href/.test(html) && html.includes('\\u003ca>rapport'), 'published HTML keeps links as text');
+      assert.ok(!/href/.test(html) && html.includes('\\u003ca>rapport'), 'published HTML keeps links as text: ' + html.slice(0, 400));
     } finally { if (real) globalThis.Plotly = real; else delete globalThis.Plotly; }
     return 'ok';
   });
