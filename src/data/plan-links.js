@@ -78,6 +78,8 @@
       const n = str(name).toLowerCase();
       const has = (re) => pick(columns, re) >= 0;
       if (/^dokument_?avsnitt/.test(n)) return 'model';
+      // The model's bookmark table names bookmarks only; its key OBJECTID (as Boverket's template has it) is no object's id.
+      if (/^avsnittsbokm/.test(n)) return has(COLUMNS.ref) && (has(COLUMNS.text) || has(COLUMNS.heading)) ? 'statements' : '';
       if (has(COLUMNS.object) && has(COLUMNS.ref)) return 'links';
       if (has(COLUMNS.object) && has(COLUMNS.layer) && pick(columns, /^(objekt_fid|feature_fid|lager_fid|fid)$/) >= 0) return 'aliases';
       if (has(COLUMNS.ref) && (has(COLUMNS.text) || has(COLUMNS.heading))) return 'statements';
