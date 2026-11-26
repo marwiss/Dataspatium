@@ -129,8 +129,9 @@ class Graph:
             self.test_uses[f] = uses
         # Every string in the code, and the head of each template string, with the files that hold it.
         self.literals = {}
-        for owner, text in [("src", (rel, t)) for rel, t in self.sources.items() if not rel.startswith("src/ui/i18n/")] +                 [("test", (f, t)) for f, t in self.test_text.items()]:
-            name, body = text
+        owners = [("src", rel, t) for rel, t in self.sources.items() if not rel.startswith("src/ui/i18n/")]
+        owners += [("test", f, t) for f, t in self.test_text.items()]
+        for owner, name, body in owners:
             for lit in {m.group(2) for m in LITERAL.finditer(body)} | set(TEMPLATE_HEAD.findall(body)):
                 self.literals.setdefault(lit, set()).add((owner, name))
         self._dist = {}
@@ -401,7 +402,7 @@ def main():
     if args.json:
         print(json.dumps(result, indent=2, ensure_ascii=False))
     else:
-        print(f"{len(change.paths)} changed files in {args.range}" + ("" if args.committed else " and the working tree"))
+        print(f"{len(change.paths)} changed files in {args.range}" + (" and the working tree" if change.worktree else ""))
         report(result, graph, args.why)
 
 
