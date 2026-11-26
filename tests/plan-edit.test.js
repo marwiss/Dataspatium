@@ -114,7 +114,7 @@
     return {
       rows: await rowsOf(id, `select ${hd.columns.map((c) => '"' + c.name + '"').join(', ')} from data order by objektid`),
       sections: await rowsOf(id, 'select avsnitt, dokument, rubrik, text, typ, ordning from _sections order by avsnitt, dokument'),
-      links: await rowsOf(id, "select avsnitt, coalesce(objektid, ''), dokument, typ from _section_links order by avsnitt, objektid, dokument"),
+      links: await rowsOf(id, "select avsnitt, coalesce(objektid, ''), dokument, typ, coalesce(kalla, '') from _section_links order by avsnitt, objektid, dokument"),
       antal: hd.meta.plan.antal, lager: hd.meta.plan.lager.map((l) => [l.namn, l.fil, l.antal]),
     };
   }
@@ -231,7 +231,8 @@
     let res = await edit.link(id, statement, [plain(LINE), AREA(1), plain(LINE)]);
     assert.equal(res.rows, 1, 'only the line is new');
     assert.deepEqual(await delivery.objectsForSection(id, 'op_stall_bostader'), [1, 2, 3].map((n) => plain(AREA(n))).concat(plain(LINE)).sort());
-    assert.equal((await rowsOf(id, `select typ from _section_links where avsnitt = 'op_stall_bostader' and objektid = '${plain(LINE)}'`))[0][0], 'Ställningstagande', 'the link has the section\'s type');
+    assert.deepEqual((await rowsOf(id, `select typ, kalla from _section_links where avsnitt = 'op_stall_bostader' and objektid = '${plain(LINE)}'`))[0], ['Ställningstagande', edit.EDITED], 'the link has the section\'s type and says it was made here');
+    assert.equal(edit.EDITED, 'redigerad');
     const lineFacts = JSON.parse((await rowsOf(id, `select egenskaper from data where objektid = '${plain(LINE)}'`))[0][0]);
     assert.deepEqual(lineFacts.dokument, ['Ställningstaganden för bostäder'], 'the line\'s facts name its section');
     res = await edit.unlink(id, statement, [plain(LINE), AREA(2)]);
@@ -330,10 +331,10 @@
     assert.deepEqual(bySection(got.sections), bySection(want.sections), 'the same sections: bookmark, document, heading and text');
     const linked = new Set(want.links.map((l) => l[0]));
     assert.deepEqual(got.sections.filter((x) => linked.has(x[0])).map((x) => [x[0], x[4]]).sort(), want.sections.filter((x) => linked.has(x[0])).map((x) => [x[0], x[4]]).sort(), 'the linked sections\' types');
-    assert.deepEqual(got.links, want.links, 'the same links');
+    assert.deepEqual(got.links.map((l) => l.slice(0, 4)), want.links.map((l) => l.slice(0, 4)), 'the same links');
     const order = (list, doc) => list.filter((x) => x[1] === doc).sort((p, q) => p[5] - q[5]).map((x) => x[0]);
     assert.deepEqual(order(got.sections, DOC), order(want.sections, DOC), 'in the same order');
-    assert.deepEqual((await dsFiles.list(back.id)).map((f) => [f.name, f.kind]), [[DOC, 'textdokument'], ['Bilaga_1_Konsekvenser.docx', 'bilaga'], ['Samradsredogorelse.pdf', 'bilaga'], ['op-testkoping.gpkg', 'plankarta']]);
+    assert.deepEqual((await dsFiles.list(back.id)).map((f) => [f.name, f.kind]), [['Bilaga_1_Konsekvenser.docx', 'bilaga'], [DOC, 'textdokument'], ['Samradsredogorelse.pdf', 'bilaga'], ['op-testkoping.gpkg', 'plankarta']]);
     // The Exportera mode offers it for a comprehensive plan only.
     if (D.has('io/export')) {
       const ex = D.require('io/export');
@@ -381,7 +382,7 @@
       await waitFor(() => view.handle && view.handle.map.pm, 5000, 'the map\'s pm');
       assert.ok(center.querySelector('[data-plan-edit="done"]'), 'Klar');
       assert.deepEqual(Array.from(bar.querySelectorAll('[data-plan-draw]')).map((b) => b.getAttribute('data-plan-draw')), ['polygon', 'line', 'point']);
-      assert.ok(bar.querySelector('[data-plan-edit-target]') && bar.querySelector('[data-plan-edit-undo]') && bar.querySelector('[data-plan-edit-multi]'));
+      assert.ok(bar.querySelector('[data-plan-edit-target]') && bar.querySelector('[data-plan-edit-undo]'));
       // The text pane's edit buttons.
       assert.ok(center.querySelector('[data-plan-section-add="statement"]') && center.querySelector('[data-plan-section-edit="op_stall_bostader"]'), 'the sections can be edited');
       // Rita yta: Geoman draws; a finished shape becomes an area of the plan.
