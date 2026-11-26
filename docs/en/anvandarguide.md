@@ -172,11 +172,16 @@ backup as ZIP and restore. The app reminds you at start when more than the chose
 the last backup (30 days by default; changed or switched off in the same card). In Edge and Chrome the workspace can
 also be mirrored to a portable folder on disk, automatically on every change.
 
-The object panel in Manage is a tree. *Organise* gives a dataset a folder (with subfolders, such as `Economy/2026`)
-and tags; folders can be collapsed, and a dataset can be dragged to another folder. The filter field searches name,
-short name, tag and folder, and the list can be sorted by changed, name or rows. The checkboxes select several
-datasets (Shift selects a range), and the button *Actions (n)* does the same thing with all of them at once:
-organise, bundle, export as ZIP with CSV files, re-fetch from API, run a recipe or delete. Folder and tags are stored
+The object panel in Manage, and in the other modes but Import, is a tree with folders (with subfolders, such as
+`Economy/2026`). The filter field searches name, short name, tag and folder, and the list can be sorted by changed,
+name or rows. The checkboxes select datasets (Shift selects a range), and a folder's checkbox, or a click on the
+folder, selects everything in it and its subfolders. Right above the tree are the tools *New folder*, *Rename*, *Cut*,
+*Copy*, *Paste*, *Move* and *Delete*, and in the tree the keys Delete, Ctrl+C, Ctrl+X, Ctrl+V and F2 work. *Delete* on
+a folder deletes it with everything in it after one question that says how much it is; *Copy* and *Paste* make copies
+of the datasets with everything in them, and *Cut* and *Paste* move. Names are typed right in the tree. Datasets and
+folders can also be dragged to another folder. *Organise* gives a dataset a folder and tags, and the button
+*Actions (n)* does the same thing with all the selected at once: organise, bundle, export as ZIP with CSV files,
+re-fetch from API, run a recipe or delete. See [lagen.md](lagen.md#manage). Folder and tags are stored
 in the dataset's file and travel in bundles, backups and GitHub; in R, `dm_list()` shows the folder and
 `dm_read("Folder/Name")` reads a dataset in a folder.
 

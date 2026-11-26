@@ -11,7 +11,7 @@
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   async function waitFor(fn, timeoutMs = 5000, label = 'condition') {
     const t0 = performance.now();
-    for (;;) { const v = fn(); if (v) return v; if (performance.now() - t0 > timeoutMs) throw new Error('timeout waiting for ' + label); await wait(40); }
+    for (;;) { const v = await fn(); if (v) return v; if (performance.now() - t0 > timeoutMs) throw new Error('timeout waiting for ' + label); await wait(40); }
   }
   const csv = (name) => new File([`namn;varde\n${name};1\n`], name + '.csv', { type: 'text/csv' });
 
@@ -55,10 +55,11 @@
       assert.ok(container.querySelector('.dm-tree-row[data-id="a"] input[type="checkbox"]').checked, 'a is checked');
       /** @type {HTMLElement} */ (container.querySelector('.dm-tree-row[data-id="b"] input[type="checkbox"]')).click();
       assert.deepEqual(toggled.sort(), ['a', 'b'], 'toggle adds b');
-      /** @type {HTMLElement} */ (folders[0]).click();
+      // The chevron opens and closes a folder; with check boxes a click on the folder itself chooses it (the tree tests below).
+      /** @type {HTMLElement} */ (container.querySelector('[data-folder-row="X"] .dm-tree-toggle')).click();
       assert.equal(container.querySelectorAll('.dm-tree-row').length, 1, 'collapsing X hides a and b');
-      assert.equal(container.querySelector('.dm-tree-folder').getAttribute('aria-expanded'), 'false');
-      /** @type {HTMLElement} */ (container.querySelector('.dm-tree-folder')).click();
+      assert.equal(container.querySelector('[data-folder-row="X"] .dm-tree-toggle').getAttribute('aria-expanded'), 'false');
+      /** @type {HTMLElement} */ (container.querySelector('[data-folder-row="X"] .dm-tree-toggle')).click();
       assert.equal(container.querySelectorAll('.dm-tree-row').length, 3, 'expanded again');
       const filter = /** @type {any} */ (container.querySelector('.dm-list-filter'));
       filter.value = 'viktig';
@@ -111,4 +112,272 @@
       await shell.ctx.services.datasets.remove(a.id); await shell.ctx.services.datasets.remove(b.id); root.remove();
     }
   });
+
+  test('datasets: duplicate copies the whole file under a new id and short name, with the name and folder given, and says where it came from', async (assert) => {
+    const dsFiles = D.require('data/dataset-files');
+    const a = await dsFiles.createDataset({ name: 'Original', columns: [{ name: 'namn', type: 'text' }, { name: 'tal', type: 'integer' }], rows: [['a', 1], ['b', 2]], files: [{ name: 'bilaga.txt', kind: 'original', type: 'text/plain', bytes: new TextEncoder().encode('hej') }] });
+    let copy = null; let back = null;
+    try {
+      await datasets.updateMeta(a.id, { folder: 'Original/Mapp', tags: 'en, två' });
+      copy = await datasets.duplicate(a.id, { name: 'Original (kopia)', folder: 'Kopior' });
+      assert.ok(copy.id !== a.id, 'a new id');
+      assert.ok(copy.shortName && copy.shortName !== (await datasets.get(a.id)).shortName, 'a short name of its own: ' + copy.shortName);
+      assert.equal(copy.name, 'Original (kopia)');
+      assert.equal(copy.folder, 'Kopior');
+      assert.deepEqual(copy.tags, ['en', 'två'], 'the tags come along');
+      assert.deepEqual(await datasets.query(copy.id), await datasets.query(a.id), 'the same rows');
+      assert.deepEqual((await dsFiles.list(copy.id)).map((f) => f.name), ['bilaga.txt'], 'the files come along');
+      const log = await datasets.log(copy.id);
+      assert.equal(log[log.length - 1].action, 'copy');
+      assert.equal(log[log.length - 1].details.from, a.id);
+      assert.equal(D.require('data/changelog').describe(log[log.length - 1]), t('log.copy', { name: 'Original' }));
+      assert.equal((await datasets.get(a.id)).folder, 'Original/Mapp', 'the original stays where it was');
+      // The name and folder are in the copy's file too, so a backup or bundle carries them.
+      back = await datasets.importBytes(await datasets.exportBytes(copy.id), {}, { quiet: true });
+      assert.equal(back.name, 'Original (kopia)');
+      assert.equal(back.folder, 'Kopior');
+      return 'ok';
+    } finally {
+      for (const d of [back, copy, a]) if (d) await datasets.remove(d.id).catch(() => {});
+    }
+  });
+
+  /** A tree with stand-in tools for the tests below: X holds ta, X/Y holds tb, and tc is at the root. */
+  function treeFixture(extra) {
+    const list = D.require('ui/dataset-list');
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const calls = { toggled: [], removed: [], pasted: [], renamed: [] };
+    const ds = [
+      { id: 'ta', name: 'Alfa', shortName: 'alfa', folder: 'X', rowCount: 1, columnCount: 1, updatedAt: '2026-01-03' },
+      { id: 'tb', name: 'Beta', shortName: 'beta', folder: 'X/Y', rowCount: 2, columnCount: 1, updatedAt: '2026-01-02' },
+      { id: 'tc', name: 'Gamma', shortName: 'gamma', folder: '', rowCount: 3, columnCount: 1, updatedAt: '2026-01-01' },
+    ];
+    const opts = Object.assign({
+      datasets: ds, selectedId: null, onSelect: () => {}, multi: true, selectedIds: [], onToggle: (ids) => { calls.toggled.push(ids.slice().sort()); },
+      actions: {
+        remove: async (u) => { calls.removed.push(u); return true; },
+        paste: async (clip, target) => { calls.pasted.push({ clip, target }); return []; },
+        rename: async (u, name) => { calls.renamed.push({ u, name }); return true; },
+      },
+    }, extra || {});
+    list.render(container, opts);
+    return {
+      list, container, calls,
+      again: (patch) => list.render(container, Object.assign(opts, patch)),
+      box: (sel) => /** @type {HTMLInputElement} */ (container.querySelector(sel + ' input[type="checkbox"]')),
+      main: (sel) => /** @type {HTMLElement} */ (container.querySelector(sel + ' [data-part="main"]')),
+      tool: (id) => /** @type {HTMLButtonElement} */ (container.querySelector(`[data-tool="${id}"] button`)),
+      done: () => { list.clip.set(null); container.remove(); },
+    };
+  }
+  const key = (el, k, extra) => el.dispatchEvent(new KeyboardEvent('keydown', Object.assign({ key: k, bubbles: true, cancelable: true }, extra || {})));
+
+  test('dataset tree: a folder\'s check box chooses everything in it and below, a part shows as mixed, and a click on the folder does the same', async (assert) => {
+    const f = treeFixture();
+    try {
+      // What a mode adds to the panel below the tree (Visualisera's charts) stays when the tree draws itself again.
+      const after = document.createElement('p');
+      after.className = 'dm-test-after';
+      f.container.appendChild(after);
+      f.box('[data-folder-row="X"]').click();
+      assert.ok(after.parentNode === f.container, 'the mode\'s part of the panel stays');
+      assert.deepEqual(f.calls.toggled.pop(), ['ta', 'tb'], 'X with its subfolder');
+      assert.ok(f.box('[data-folder-row="X"]').checked && f.box('[data-folder-row="X/Y"]').checked, 'both folders checked');
+      f.box('.dm-tree-row[data-id="tb"]').click();
+      assert.deepEqual(f.calls.toggled.pop(), ['ta']);
+      assert.ok(!f.box('[data-folder-row="X"]').checked && f.box('[data-folder-row="X"]').indeterminate, 'X is partly chosen');
+      assert.ok(!f.box('[data-folder-row="X/Y"]').checked && !f.box('[data-folder-row="X/Y"]').indeterminate, 'X/Y is not chosen');
+      // The mode draws again with its own selection: the subfolder alone.
+      f.again({ selectedIds: ['tb'] });
+      assert.ok(f.box('[data-folder-row="X/Y"]').checked, 'X/Y chosen through its dataset');
+      assert.ok(f.box('[data-folder-row="X"]').indeterminate, 'X mixed');
+      f.main('[data-folder-row="X"]').click();
+      assert.deepEqual(f.calls.toggled.pop(), ['ta', 'tb'], 'a click on a partly chosen folder chooses all of it');
+      f.main('[data-folder-row="X"]').click();
+      assert.deepEqual(f.calls.toggled.pop(), [], 'and again clears it');
+      return 'ok';
+    } finally { f.done(); }
+  });
+
+  test('dataset tree: the tools stand right above the tree with labels and tips and are on when they apply, and itemTrailing ends a dataset\'s row', async (assert) => {
+    const { h } = D.require('ui/base');
+    const f = treeFixture({ itemTrailing: (d) => (d.id === 'tc' ? null : h('span', { class: 'dm-test-trail', text: d.id })) });
+    try {
+      const bar = f.container.querySelector('.dm-tree-toolbar');
+      assert.ok(bar && bar.nextElementSibling && bar.nextElementSibling.classList.contains('dm-tree'), 'right above the tree');
+      assert.equal(bar.getAttribute('aria-label'), t('datasets.tree.tools'));
+      const ids = Array.from(bar.querySelectorAll('dm-button')).map((b) => b.getAttribute('data-tool'));
+      assert.deepEqual(ids, ['newfolder', 'rename', 'cut', 'copy', 'paste', 'move', 'delete']);
+      for (const b of Array.from(bar.querySelectorAll('dm-button'))) {
+        const inner = b.querySelector('button');
+        assert.ok(inner.textContent.trim() && inner.getAttribute('data-tip'), 'a label and a tip on ' + b.getAttribute('data-tool'));
+      }
+      assert.equal(bar.querySelector('[data-tool="delete"]').getAttribute('variant'), 'danger');
+      const on = () => ids.filter((id) => !f.tool(id).disabled);
+      assert.deepEqual(on(), ['newfolder'], 'nothing chosen: only Ny mapp');
+      f.again({ selectedIds: ['ta', 'tb'] });
+      assert.deepEqual(on(), ['newfolder', 'rename', 'cut', 'copy', 'move', 'delete'], 'one folder chosen whole');
+      f.again({ selectedIds: ['ta', 'tc'] });
+      assert.deepEqual(on(), ['newfolder', 'cut', 'copy', 'move', 'delete'], 'two items: no rename');
+      f.again({ selectedIds: [], selectedId: 'tc' });
+      assert.deepEqual(on(), ['newfolder', 'rename', 'cut', 'copy', 'move', 'delete'], 'nothing checked: the current dataset');
+      const rowA = f.container.querySelector('.dm-tree-row[data-id="ta"]');
+      assert.ok(rowA.lastElementChild.classList.contains('dm-test-trail'), 'the trailing node ends the row');
+      assert.ok(!f.container.querySelector('.dm-tree-row[data-id="tc"] .dm-test-trail'), 'null adds nothing');
+      return 'ok';
+    } finally { f.done(); }
+  });
+
+  test('dataset tree: Delete, Ctrl+C, Ctrl+X, Ctrl+V and F2 on the tree, and the arrows between the rows', async (assert) => {
+    const f = treeFixture();
+    try {
+      // Nothing checked: a key acts on the row it is pressed on.
+      key(f.main('.dm-tree-row[data-id="tc"]'), 'Delete');
+      await waitFor(() => f.calls.removed.length, 2000, 'Delete');
+      assert.deepEqual(f.calls.removed.pop(), { ids: ['tc'], folders: [] });
+      f.again({ selectedIds: ['tb'] });
+      key(f.main('[data-folder-row="X/Y"]'), 'c', { ctrlKey: true });
+      assert.deepEqual(f.list.clip.get(), { mode: 'copy', ids: [], folders: ['X/Y'] }, 'Ctrl+C takes the folder chosen whole');
+      assert.ok(f.container.querySelector('[data-clip="copy"]'), 'the head says what is copied');
+      assert.ok(!f.tool('paste').disabled, 'Klistra in is on');
+      f.again({ selectedIds: [] });
+      key(f.main('.dm-tree-row[data-id="tc"]'), 'v', { ctrlKey: true });
+      await waitFor(() => f.calls.pasted.length, 2000, 'Ctrl+V');
+      assert.deepEqual(f.calls.pasted.pop(), { clip: { mode: 'copy', ids: [], folders: ['X/Y'] }, target: '' }, 'beside the dataset the key is pressed on');
+      assert.ok(f.list.clip.get(), 'a copy can be pasted again');
+      key(f.main('.dm-tree-row[data-id="tc"]'), 'x', { ctrlKey: true });
+      assert.equal(f.list.clip.get().mode, 'cut');
+      assert.ok(f.container.querySelector('.dm-tree-row[data-id="tc"]').classList.contains('dm-tree-cut'), 'what is cut is faded');
+      key(f.main('[data-folder-row="X/Y"]'), 'v', { ctrlKey: true });
+      await waitFor(() => f.calls.pasted.length, 2000, 'Ctrl+V after Ctrl+X');
+      assert.deepEqual(f.calls.pasted.pop(), { clip: { mode: 'cut', ids: ['tc'], folders: [] }, target: 'X/Y' }, 'into the folder the key is pressed on');
+      assert.equal(f.list.clip.get(), null, 'a cut is pasted once');
+      // F2: the name in place, Escape leaves it, Enter saves it.
+      const a = f.main('.dm-tree-row[data-id="ta"]');
+      a.focus();
+      key(a, 'F2');
+      let field = /** @type {any} */ (await waitFor(() => f.container.querySelector('.dm-tree-row[data-id="ta"] dm-input'), 2000, 'the name field'));
+      assert.equal(field.value, 'Alfa');
+      assert.equal(document.activeElement, field.control, 'the field has the focus');
+      key(field.control, 'Escape');
+      assert.ok(!f.container.querySelector('dm-input.dm-tree-edit'), 'Escape leaves it');
+      assert.equal(document.activeElement, f.main('.dm-tree-row[data-id="ta"]'), 'the focus is back on the row');
+      key(f.main('.dm-tree-row[data-id="ta"]'), 'F2');
+      field = f.container.querySelector('.dm-tree-row[data-id="ta"] dm-input');
+      field.value = 'Alfa ny';
+      field.control.dispatchEvent(new Event('input', { bubbles: true }));
+      key(field.control, 'Enter');
+      await waitFor(() => f.calls.renamed.length, 2000, 'rename');
+      assert.deepEqual(f.calls.renamed.pop(), { u: { ids: ['ta'], folders: [] }, name: 'Alfa ny' });
+      // The arrows go from row to row, Left to the folder above.
+      const mains = Array.from(f.container.querySelectorAll('.dm-tree [data-part="main"]'));
+      mains[0].focus();
+      key(mains[0], 'ArrowDown');
+      assert.equal(document.activeElement, mains[1]);
+      const b = f.main('.dm-tree-row[data-id="tb"]');
+      b.focus();
+      key(b, 'ArrowLeft');
+      assert.equal(document.activeElement, f.main('[data-folder-row="X/Y"]'));
+      return 'ok';
+    } finally { f.done(); }
+  });
+
+  test('hantera: a folder chosen whole is deleted with its subfolders and datasets after one question that says how many', async (assert) => {
+    const root = document.createElement('div');
+    root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
+    document.body.appendChild(root);
+    history.replaceState(null, '', location.pathname + location.search);
+    const shell = await D.require('app').start(root);
+    const svc = shell.ctx.services.datasets;
+    const a = await shell.ctx.services.importer.run(csv('Radmapp A'), {}, null, 'Radmapp A');
+    const b = await shell.ctx.services.importer.run(csv('Radmapp B'), {}, null, 'Radmapp B');
+    const c = await shell.ctx.services.importer.run(csv('Radmapp C'), {}, null, 'Radmapp C');
+    try {
+      await svc.updateMeta(a.id, { folder: 'Provmapp' });
+      await svc.updateMeta(b.id, { folder: 'Provmapp/Under' });
+      shell.store.set({ selectedIds: [] });
+      shell.activate('hantera');
+      const box = /** @type {HTMLInputElement} */ (await waitFor(() => root.querySelector('.dm-left [data-folder-row="Provmapp"] input[type="checkbox"]'), 5000, 'the folder row'));
+      box.click();
+      assert.deepEqual(shell.store.get().selectedIds.slice().sort(), [a.id, b.id].sort(), 'the folder chooses both');
+      /** @type {HTMLElement} */ (root.querySelector('.dm-left [data-tool="delete"] button')).click();
+      const dlg = await waitFor(() => document.querySelector('dialog[open]'), 3000, 'the question');
+      const what = t('datasets.tree.and', { a: t('datasets.tree.n.subfolders', { n: '1' }), b: t('datasets.tree.n.datasets', { n: '2' }) });
+      assert.equal(dlg.querySelector('.dm-dialog-body').textContent, t('datasets.tree.delete.folder', { name: 'Provmapp', what }));
+      /** @type {HTMLElement} */ (dlg.querySelector('.dm-dialog-actions dm-button[variant="danger"] button')).click();
+      await waitFor(() => !shell.store.get().datasets.some((d) => d.id === a.id || d.id === b.id), 5000, 'both gone');
+      assert.ok(!(await svc.get(a.id)) && !(await svc.get(b.id)), 'deleted from storage');
+      assert.ok(await svc.get(c.id), 'the dataset outside the folder stays');
+      await waitFor(() => !root.querySelector('.dm-left [data-folder-row="Provmapp"]'), 3000, 'the folder leaves the tree');
+      assert.ok(!document.querySelector('dialog[open]'), 'one question only');
+      return 'ok';
+    } finally {
+      for (const d of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (d).close();
+      for (const d of [a, b, c]) await svc.remove(d.id).catch(() => {});
+      shell.store.set({ selectedIds: [] });
+      root.remove();
+    }
+  }, 30000);
+
+  test('hantera: copy and paste make a copy of a folder with its datasets, cut and paste moves it, and Ny mapp and Byt namn work in place', async (assert) => {
+    const list = D.require('ui/dataset-list');
+    const root = document.createElement('div');
+    root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
+    document.body.appendChild(root);
+    history.replaceState(null, '', location.pathname + location.search);
+    const shell = await D.require('app').start(root);
+    const svc = shell.ctx.services.datasets;
+    const store = shell.store;
+    const a = await shell.ctx.services.importer.run(csv('Kopiedata'), {}, null, 'Kopiedata');
+    const made = [a.id];
+    const tool = (id) => /** @type {HTMLElement} */ (root.querySelector(`.dm-left [data-tool="${id}"] button`));
+    const field = () => /** @type {any} */ (root.querySelector('.dm-left dm-input.dm-tree-edit'));
+    const type = (el, value) => { el.value = value; el.control.dispatchEvent(new Event('input', { bubbles: true })); key(el.control, 'Enter'); };
+    try {
+      await svc.updateMeta(a.id, { folder: 'Kopiemapp' });
+      store.set({ selectedIds: [], selectedId: null });
+      shell.activate('hantera');
+      (await waitFor(() => root.querySelector('.dm-left [data-folder-row="Kopiemapp"] input[type="checkbox"]'), 5000, 'the folder')).click();
+      tool('copy').click();
+      tool('paste').click();
+      // The folder still chosen: the copy goes beside it, under a copy's name.
+      const copy = await waitFor(() => store.get().datasets.find((d) => d.folder === t('datasets.tree.copy.name', { name: 'Kopiemapp' })), 8000, 'the copy');
+      made.push(copy.id);
+      assert.ok(copy.id !== a.id && copy.name === a.name, 'a dataset of its own with the same name');
+      assert.deepEqual(await svc.query(copy.id), await svc.query(a.id), 'the same rows');
+      assert.equal((await svc.get(a.id)).folder, 'Kopiemapp', 'the original stays');
+      // Cut the copy's folder and paste it into the original folder.
+      store.set({ selectedIds: [copy.id] });
+      await waitFor(() => !/** @type {any} */ (tool('cut')).disabled, 3000, 'Klipp ut on');
+      tool('cut').click();
+      assert.deepEqual(list.clip.get(), { mode: 'cut', ids: [], folders: [copy.folder] });
+      store.set({ selectedIds: [a.id] });
+      await waitFor(() => !/** @type {any} */ (tool('paste')).disabled, 3000, 'Klistra in on');
+      tool('paste').click();
+      await waitFor(async () => (await svc.get(copy.id)).folder === 'Kopiemapp/' + copy.folder, 8000, 'moved into the original');
+      await waitFor(() => list.clip.get() === null, 3000, 'the clipboard is empty after a cut is pasted');
+      // Ny mapp at the root, named in place.
+      store.set({ selectedIds: [], selectedId: null });
+      await waitFor(() => !/** @type {any} */ (tool('newfolder')).disabled, 3000, 'Ny mapp on');
+      tool('newfolder').click();
+      type(await waitFor(field, 3000, 'the name field'), 'Provtom');
+      await waitFor(() => root.querySelector('.dm-left [data-folder-row="Provtom"]'), 3000, 'the new folder');
+      assert.ok(list.folders.list().includes('Provtom'), 'an empty folder is kept');
+      // Byt namn on the folder: its datasets and subfolders follow.
+      store.set({ selectedIds: [a.id, copy.id] });
+      await waitFor(() => !/** @type {any} */ (tool('rename')).disabled, 3000, 'Byt namn on');
+      tool('rename').click();
+      type(await waitFor(field, 3000, 'the name field'), 'Kopiemapp 2');
+      await waitFor(async () => (await svc.get(a.id)).folder === 'Kopiemapp 2' && (await svc.get(copy.id)).folder === 'Kopiemapp 2/' + copy.folder, 8000, 'renamed');
+      return 'ok';
+    } finally {
+      for (const d of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (d).close();
+      for (const id of made) await svc.remove(id).catch(() => {});
+      list.folders.removeUnder('Provtom');
+      list.clip.set(null);
+      store.set({ selectedIds: [] });
+      root.remove();
+    }
+  }, 40000);
 })();

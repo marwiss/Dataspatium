@@ -40,6 +40,9 @@
             services: { datasets, workspace, importer, exporter, files, idb },
             ui: Object.assign({ h, t, i18n, replace, icon: icons.icon, button: basic.button, datasetList }, overlays),
           };
+          // Every mode's dataset tree is the same: check boxes on the store's selection, the tools above it and drag and drop
+          // (ui/batch-actions, which the start loads after the shell).
+          this.ctx.ui.datasetList = datasetList.withDefaults(() => (D.has('ui/batch-actions') ? D.require('ui/batch-actions').treeOptions(this.ctx) : {}));
           // Command palette (Ctrl+K): modes register their own commands through ctx.palette.register().
           this.palette = paletteMod.create(this);
           this.ctx.palette = this.palette;
