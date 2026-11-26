@@ -420,6 +420,14 @@
      * its `<layer>:<fid>` when its own id is not among them.
      * @param {any[]} maps the plan maps' items (with gpkg) @param {any[]} all every GeoPackage item @param {Set<string>} [rowIds]
      */
+    /**
+     * The GeoPackages whose links and areas make the plan's links: those in the ÖP model, else those that link their objects to a
+     * text in a shape of their own, else the plan maps by their role, else all of them (the text may still name their areas).
+     */
+    function planMaps(items) {
+      for (const test of [(c) => c.gpkg.op, (c) => c.gpkg.linked, (c) => c.role === 'plankarta']) if (items.some(test)) return items.filter(test);
+      return items;
+    }
     function linkInputs(maps, all, rowIds) {
       const described = all.filter((c) => c.gpkg);
       if (rowIds) {
@@ -568,7 +576,7 @@
         }
       }
       const gpkgItems = items.filter((c) => c.gpkg && c.gpkg.geopackage);
-      const maps = gpkgItems.some((c) => c.gpkg.op) ? gpkgItems.filter((c) => c.gpkg.op) : gpkgItems.filter((c) => c.gpkg.linked);
+      const maps = planMaps(gpkgItems);
       const inputs = linkInputs(maps, gpkgItems);
       const { links, documents } = inputs;
       assignRoles(items, links, documents);
@@ -583,7 +591,7 @@
         } catch (err) { warnings.push(t('plan.delivery.warn.read', { file: c.stored, message: String((err && err.message) || err) })); }
       }
       const first = maps.find((c) => c.gpkg.title) || maps[0];
-      return { items, folder, op: maps.some((c) => c.gpkg.op), linked: maps.length > 0, title: first ? first.gpkg.title : '', planId: inputs.planId, links, documents, inputs, manifest, metadata, warnings };
+      return { items, folder, op: maps.some((c) => c.gpkg.op), linked: maps.some((c) => c.gpkg.linked), title: first ? first.gpkg.title : '', planId: inputs.planId, links, documents, inputs, manifest, metadata, warnings };
     }
 
     /**
@@ -982,7 +990,7 @@
       }
       // The links of the plan maps it holds (and of new ones), found among the objects of every GeoPackage, by the ids its rows have.
       const gpkgItems = held.concat(d.items).filter((c) => c.gpkg && c.gpkg.geopackage);
-      const maps = gpkgItems.some((c) => c.gpkg.op) ? gpkgItems.filter((c) => c.gpkg.op) : gpkgItems.filter((c) => c.gpkg.linked);
+      const maps = planMaps(gpkgItems);
       const ids = await handle.engine.exec('select distinct objektid from data');
       const inputs = linkInputs(maps, gpkgItems, new Set((ids[0] ? ids[0].values : []).map((r) => planLinks.key(r[0]))));
       const { links, documents } = inputs;
