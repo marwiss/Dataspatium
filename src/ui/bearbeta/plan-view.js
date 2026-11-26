@@ -299,18 +299,26 @@
        */
       function boxHandlers(map) {
         const el = map.getContainer();
-        let start = null; let at = null; let rect = null; let shiftAtStart = false;
+        let start = null; let at = null; let rect = null; let shiftAtStart = false; let dragging = false;
         const point = (e) => map.mouseEventToContainerPoint(e);
         const down = (e) => {
           if (e.button !== 0 || !(e.shiftKey || s.boxMode)) return;
-          e.preventDefault(); e.stopPropagation();
-          start = point(e); at = start; shiftAtStart = e.shiftKey;
+          // After Markera område the drag is the rectangle's alone; with Shift a click must still reach the area (Shift-click),
+          // so the map only stops panning.
+          if (s.boxMode) { e.preventDefault(); e.stopPropagation(); }
+          start = point(e); at = start; shiftAtStart = e.shiftKey; dragging = false;
           if (map.dragging) map.dragging.disable();
-          try { el.setPointerCapture(e.pointerId); } catch (_err) { /* the drag still works over the map */ }
         };
         const move = (e) => {
           if (!start) return;
           at = point(e);
+          // A drag once the pointer has moved: only then is the pointer captured (before, a Shift-click keeps its area as target).
+          if (!dragging) {
+            if (Math.abs(at.x - start.x) < MIN_BOX && Math.abs(at.y - start.y) < MIN_BOX) return;
+            dragging = true;
+            try { el.setPointerCapture(e.pointerId); } catch (_err) { /* the drag still works over the map */ }
+            if (L.DomUtil && L.DomUtil.disableTextSelection) L.DomUtil.disableTextSelection();
+          }
           const b = L.latLngBounds(map.containerPointToLatLng(start), map.containerPointToLatLng(at));
           if (rect) rect.setBounds(b);
           else rect = L.rectangle(b, { interactive: false, color: theme.tokens().accent, weight: 1, dashArray: '4 4', fillOpacity: 0.08 }).addTo(map);
@@ -323,6 +331,8 @@
           start = null;
           if (rect) { map.removeLayer(rect); rect = null; }
           if (map.dragging) map.dragging.enable();
+          if (dragging && L.DomUtil && L.DomUtil.enableTextSelection) L.DomUtil.enableTextSelection();
+          dragging = false;
           if (!moved) return;
           // The click Leaflet sends after the drag is not a choice of its own.
           noClickUntil = Date.now() + 400;
@@ -330,11 +340,13 @@
           selectBox(b, shiftAtStart || e.shiftKey);
         };
         const key = (e) => { if (e.key === 'Escape' && s.boxMode) setBoxMode(false); };
+        // Let go anywhere (outside the map too, when the pointer could not be captured) ends the rectangle.
         el.addEventListener('pointerdown', down, true);
         el.addEventListener('pointermove', move);
-        el.addEventListener('pointerup', up);
+        document.addEventListener('pointerup', up);
+        document.addEventListener('pointercancel', up);
         document.addEventListener('keydown', key);
-        return () => { el.removeEventListener('pointerdown', down, true); el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); document.removeEventListener('keydown', key); };
+        return () => { el.removeEventListener('pointerdown', down, true); el.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); document.removeEventListener('pointercancel', up); document.removeEventListener('keydown', key); };
       }
       /** A search hit: the plan object chosen and in view. */
       function openPending() {
