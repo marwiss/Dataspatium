@@ -249,7 +249,8 @@
         const text = await saved[0].file.text();
         assert.ok(!text.includes(MAIL) && text.includes('Umeå'), 'the shared file is the reviewed one: ' + text.slice(0, 80));
         await waitFor(() => shell.store.get().selectedId === meta.id, 3000, 'the selection back');
-        assert.ok(!shell.store.get().datasets.some((d) => d.name === 'Delningsmeny' && d.id !== meta.id), 'the temporary copy is gone');
+        // The copy is removed after the selection is back, and the list learns of it a moment later (LD-69).
+        await waitFor(() => !shell.store.get().datasets.some((d) => d.name === 'Delningsmeny' && d.id !== meta.id), 3000, 'the temporary copy gone');
       } finally {
         platformFiles.download = realDownload;
         /** @type {any} */ (navigator).share = realShare;
