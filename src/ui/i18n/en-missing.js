@@ -185,6 +185,8 @@
     'flows.block.packages': 'packages not fetched yet: {names}',
     'flows.block.attended': 'the command {name} runs only by hand',
     'flows.block.cde': 'a source from an OpenCDE server is refreshed only by hand',
+    'flows.block.linked': 'the linked file of {name} needs your permission again',
+    'flows.start.ahead': 'At the next start the flow will be skipped: {reason}.',
     'flows.block.error': 'could not be checked beforehand: {message}',
     'flows.start.hint': 'Run the flow by hand once, or allow what is missing under Manage, Workspace, Internet access.',
     'review.part.attribution': 'The raster\'s attribution holds personal data: {names}',

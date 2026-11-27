@@ -4517,6 +4517,8 @@
     'flows.block.packages': 'paket som inte har hämtats än: {names}',
     'flows.block.attended': 'kommandot {name} körs bara för hand',
     'flows.block.cde': 'en källa från en OpenCDE-server uppdateras bara för hand',
+    'flows.block.linked': 'den länkade filen till {name} behöver din tillåtelse igen',
+    'flows.start.ahead': 'Vid nästa start hoppas flödet över: {reason}.',
     'flows.block.error': 'kunde inte prövas i förväg: {message}',
     'flows.done.refresh': '{name}: {rows} rader',
     'flows.done.refresh.all': '{n} datamängder uppdaterade',

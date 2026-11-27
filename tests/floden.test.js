@@ -334,6 +334,17 @@
     assert.equal(changed.summary.added, 1);
     handle.queryPermission = async () => 'prompt';
     assert.equal((await watches.check(meta.id)).state, 'unknown', 'no permission: no question at this point');
+    // A refresh nobody watches never asks the browser for the file: it fails with the reason, and a flow at start is skipped first.
+    let requested = 0;
+    /** @type {any} */ (handle).requestPermission = async () => { requested++; return 'granted'; };
+    let denied = null;
+    try { await runner.refreshDataset(meta.id, { ask: false }); } catch (e) { denied = e; }
+    assert.ok(denied && denied.message === t('linked.err.denied'), 'refused: ' + (denied && denied.message));
+    assert.equal(requested, 0, 'the permission is not asked for');
+    const refresh = { steps: [{ type: 'refresh', params: { datasetId: meta.id } }] };
+    assert.deepEqual(await flows.blockers(refresh), [t('flows.block.linked', { name: linkedMeta.name })]);
+    handle.queryPermission = async () => 'granted';
+    assert.deepEqual(await flows.blockers(refresh), [], 'with the permission still held it may run at start');
     await watches.setWatched(meta.id, false);
     await linked.unlink(meta.id);
     return 'ok';
@@ -395,6 +406,14 @@
       // The result can be there a moment before the end of the flow is told.
       await waitFor(() => root.querySelector('.dm-log').textContent.includes(t('flows.finished.ok', { name: 'Sidflöde' })), 3000, 'the log saying it is done');
       await waitFor(() => root.querySelector('.dm-right').textContent.includes(t('flows.step.export')), 3000, 'the run in the inspector');
+      // A flow that runs at start says beforehand what will make the start skip it, and offers to run it by hand.
+      const asking = await saved({ name: 'Frågar vid start', onStart: true, steps: [{ type: 'ask', params: { question: 'Vilken?', options: 'A\nB' } }] });
+      const askCard = await waitFor(() => root.querySelector(`[data-flow="${asking.id}"]`), 5000, 'its card');
+      Array.from(askCard.querySelectorAll('dm-button')).find((b) => b.textContent.trim() === t('flows.last.never')).click();
+      const ahead = await waitFor(() => root.querySelector(`.dm-right [data-flow-ahead="${asking.id}"]`), 5000, 'the forecast in the inspector');
+      assert.ok(ahead.textContent.includes(t('flows.start.ahead', { reason: t('flows.block.ask') })), ahead.textContent);
+      assert.ok(Array.from(ahead.querySelectorAll('dm-button')).some((b) => b.textContent.trim() === t('flows.run')), 'with a button to run it by hand');
+      await flows.save(Object.assign(await flows.get(asking.id), { onStart: false }));
       // The status bar shows a running flow while it runs.
       const flowBar = root.querySelector('.dm-sb-flow');
       assert.ok(flowBar.hidden, 'nothing while idle');

@@ -296,12 +296,24 @@
         if (!flow) return [h('h4', { text: t('flows.tab.flows') }), h('p', { class: 'dm-help', text: t('flows.inspector') })];
         const parts = [h('h4', { text: flow.name })];
         const last = flow.lastRun;
+        // A flow that runs at start says beforehand what will make the next start skip it (the same check the start makes, which
+        // asks and fetches nothing), and offers to run it by hand.
+        if (flow.onStart) {
+          let ahead = [];
+          try { ahead = await flows.blockers(flow); } catch (err) { ahead = [t('flows.block.error', { message: String((err && err.message) || err) })]; }
+          if (ahead.length) {
+            const running = flows.current();
+            parts.push(h('div', { class: 'dm-stack-sm', 'data-flow-ahead': flow.id },
+              h('p', { class: 'dm-help dm-warn', text: t('flows.start.ahead', { reason: ahead.join('; ') }) + ' ' + t('flows.start.hint') }),
+              ui.button({ label: t('flows.run'), icon: 'play', size: 'sm', title: t('flows.run.hint'), disabled: !!running || !flow.steps.length, onClick: () => runFlow(flow) })));
+          }
+        }
         // A start that skipped the flow after its last run says why, and what to do about it.
         const skip = flow.lastSkip && (!last || String(flow.lastSkip.at) > String(last.endedAt)) ? flow.lastSkip : null;
         if (skip) parts.push(h('p', { class: 'dm-help dm-error', text: t('flows.last.skipped', { when: i18n.formatDateTime(skip.at), reason: (skip.reasons || []).join('; ') }) + ' ' + t('flows.start.hint') }));
         if (!last) { parts.push(h('p', { class: 'dm-help', text: t('flows.last.never') })); return parts; }
         parts.push(h('p', { class: 'dm-help', text: i18n.formatDateTime(last.endedAt) }));
-        parts.push(h('ul', { class: 'dm-stack-sm dm-flow-log' }, last.steps.map((x) => h('li', { class: x.ok ? '' : 'dm-error' },
+        parts.push(h('ul', { class: 'dm-stack-sm dm-flow-log' }, last.steps.map((x) => h('li', { class: x.ok ? (x.warn ? 'dm-warn' : '') : 'dm-error' },
           h('strong', { text: (x.path ? x.path + ' ' : '') + t('flows.step.' + x.type) + ': ' }), h('span', { text: x.message })))));
         if (last.cut) parts.push(h('p', { class: 'dm-help dm-small', text: t('flows.log.cut', { n: i18n.formatNumber(last.cut) }) }));
         if (last.stopped) parts.push(h('p', { class: 'dm-help', text: last.stopped }));

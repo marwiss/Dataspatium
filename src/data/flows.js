@@ -131,7 +131,8 @@
           fields: [{ name: 'datasetId', type: 'refreshable', optional: true }],
           /**
            * Which consents the step needs when it runs without anyone at the keyboard, its replayed recipes included. The database
-           * bridge and OpenCDE sources (their sign-in and their own questions) are refreshed only by hand.
+           * bridge and OpenCDE sources (their sign-in and their own questions) are refreshed only by hand, and a linked file only
+           * while the browser still lets the app read it. The run carries `ask: false` down to all of them as well.
            */
           async blockers(p) {
             const list = p.datasetId ? [await datasets.get(p.datasetId)] : (await datasets.list()).filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge'));
@@ -139,6 +140,12 @@
             const api = list.filter((d) => d && d.source && d.source.kind === 'api');
             if (api.length && !(await kept('api'))) out.push(noConsent('api'));
             if (list.some((d) => d && d.source && d.source.kind === 'bridge')) out.push(t('flows.block.bridge'));
+            for (const d of list) {
+              if (!d || !d.source || d.source.kind !== 'file' || !d.source.linked) continue;
+              const linked = D.require('data/linked');
+              const handle = await linked.handleFor(d.id);
+              if (!handle || (await linked.permission(handle, false)) !== 'granted') out.push(t('flows.block.linked', { name: d.name }));
+            }
             for (const d of api) {
               const connector = d.source.connectorId ? await D.require('api/connectors').get(d.source.connectorId).catch(() => null) : null;
               if (d.source.family === 'opencde' || (connector && connector.auth && connector.auth.type === 'oauth2_pkce')) { out.push(t('flows.block.cde')); break; }
