@@ -43,6 +43,8 @@
       let layerCtl = null; let symbols = new Map(); let marks = null;
       /** The toolbar's button Markera område, a layer click to ignore after a rectangle, and the rectangle's handlers on the map. */
       let boxBtn = null; let noClickUntil = 0; let unhook = null;
+      /** The plan's AI panel (ui/bearbeta/plan-ai, the group of scripts ai), in the inspector while it is open. */
+      let ai = null;
       const nameOf = (id) => { const r = s.byId.get(planLinks.key(id)); return r ? (s.slag === 'oversiktsplan' ? r.namn || r.innehallstyp : r.beteckning || r.formulering) || '' : ''; };
       /** Editing a comprehensive plan (ui/bearbeta/plan-edit): its buttons and bar, the map's drawing and the inspector's fields. */
       const editor = planEdit.create(ctx, { state: () => s, dataset: () => ds, pick: (rows) => pick(rows), changed: () => { s.updatedAt = null; if (ds && slots) render(ds, slots); }, inspector: () => renderInspector() });
@@ -67,6 +69,7 @@
         s.slag = s.info.slag === 'oversiktsplan' ? 'oversiktsplan' : 'detaljplan';
         if (s.id !== dataset.id) {
           s.id = dataset.id; s.selected = null; s.picked = []; s.boxMode = false; s.hidden = new Set(); s.basemap = 'none'; restored = false;
+          if (ai) { ai.destroy(); ai = null; }
           // Another plan starts with the background map and grid it had last (ui/viz/basemap-memory asks nothing); a plan
           // without one keeps the grid shown, as before.
           const kept = await memory.recall('plan', dataset.id);
@@ -108,6 +111,9 @@
         const my = ++seq;
         try { await load(dataset); } catch (err) { replace(target.center, h('p', { class: 'dm-error', text: String((err && err.message) || err) })); return; }
         if (my !== seq || !slots) return;
+        // Inhämta hands over a new plan with its description (B-78): the AI panel opens in the mode Bygg från beskrivning with it.
+        const askedAi = ctx.store.get().openPlanAi;
+        if (askedAi && askedAi.datasetId === dataset.id) { ctx.store.set({ openPlanAi: null }); if (aiShown()) openAi({ mode: askedAi.mode || 'build', brief: askedAi.brief || '' }); }
         const bar = await toolbar(dataset, target);
         if (my !== seq || !slots) return;
         mapEl = h('div', { class: 'dm-map-view dm-plan-view dm-center-fill', 'aria-label': t('plan.view') });
@@ -188,6 +194,7 @@
           tier.shows('chart:map') ? ui.button({ label: t('map.save.chart'), icon: 'save', title: t('plan.save.chart.hint'), onClick: saveChart }) : null,
           s.slag === 'detaljplan' ? ui.button({ label: t('plan.provisions.export'), icon: 'file-text', title: t('plan.provisions.export.hint'), onClick: exportProvisions }) : null,
           ...editor.buttons(),
+          aiShown() ? ui.button({ label: t('plan.ai.button'), icon: 'cpu', title: t('plan.ai.button.hint'), pressed: ai ? 'true' : 'false', 'data-plan-ai-toggle': '', onClick: () => { if (ai) { ai.destroy(); ai = null; renderInspector(); syncAi(); } else openAi({}); } }) : null,
           ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('bearbeta.view.table.hint'), onClick: options.onTable }));
       }
 
@@ -229,6 +236,7 @@
           // A section's areas stay marked, and the chosen areas chosen, when the map is drawn again (another background map or grid).
           if (s.marked.length) markObjects(s.marked, { fit: true });
           highlightPicked();
+          if (ai) ai.mapDrawn();
           mapEl.setAttribute('data-plan-layers-drawn', String(groups.length));
           openPending();
           renderInspector();
@@ -565,6 +573,7 @@
           focus.push(block.create(ctx, ds, block.targetOf(ds, `plan:${objekt}`, s.selected.namn || String(objekt), () => objekt)));
         }
         if (focus.length) items.unshift(h('div', { class: 'dm-stack-sm', 'data-plan-focus': '' }, focus));
+        if (ai) items.unshift(ai.el);
         // Layers: shown and hidden per file and layer, with counts and symbols (ui/viz/layer-list).
         items.push(h('h4', { text: t('map.layers') }), h('div', { class: 'dm-stack-sm dm-plan-layers' }, layerCtl ? layerCtl.list() : null));
         if (options.overlays) items.push(options.overlays.block());
@@ -724,8 +733,39 @@
         return box;
       }
 
-      function destroy() { seq++; if (options.overlays) options.overlays.detach(); editor.destroy(); sections.destroy(); if (unhook) { unhook(); unhook = null; } if (handle) { handle.finalize(); handle = null; } groups = []; labelLayer = null; marks = null; layerCtl = null; mapEl = null; slots = null; highlighted = []; boxBtn = null; }
-      return { render, destroy, pick, selectBox, setBoxMode, toolbar, renderInspector, state: s, sections, editor, get handle() { return handle; }, get layers() { return layerCtl; }, get marks() { return marks; } };
+      // ---- the AI panel (B-78) ----
+      /** The AI panel is offered for a comprehensive plan in the tier BIM och GIS (platform/tier ai.panel). */
+      const aiShown = () => s.slag === 'oversiktsplan' && tier.shows('ai.panel');
+      /** The toolbar's toggle follows the panel. */
+      function syncAi() { const b = slots && slots.center ? slots.center.querySelector('[data-plan-ai-toggle]') : null; if (b) b.setAttribute('pressed', ai ? 'true' : 'false'); }
+      /** The other datasets shown on the map, as the AI's tools read them (ui/viz/map-overlays). */
+      const overlaySources = () => (options.overlays && options.overlays.features ? options.overlays.shown.map((id) => options.overlays.features(id)).filter(Boolean) : []);
+      /** The feature of another dataset clicked on the map, with its ref for copying its shape. */
+      function overlayFeature() {
+        const sel = options.overlays ? options.overlays.selected : null;
+        return sel && sel.row && sel.entry ? { ref: `${sel.entry.id}#${sel.row._rowid}`, dataset: sel.entry.name, label: sel.entry.label ? sel.row[sel.entry.label] : null } : null;
+      }
+      /**
+       * Open the AI panel (its group of scripts loaded first), in a mode and with a brief when given.
+       * @param {{mode?: string, brief?: string}} opts
+       */
+      function openAi(opts) {
+        D.ensure(['ai'], () => {
+          if (!slots || !ds) return;
+          if (ai) ai.destroy();
+          ai = D.require('ui/bearbeta/plan-ai').create(ctx, {
+            datasetId: ds.id, mode: opts.mode, brief: opts.brief, rows: () => s.rows, sources: overlaySources,
+            view: () => ({ picked: s.picked, marked: s.marked, feature: overlayFeature() }),
+            map: () => (handle && L ? { map: handle.map, L } : null),
+            pick: (ids) => pick(ids.map((id) => s.byId.get(planLinks.key(id))).filter(Boolean)),
+            onApproved: () => { s.updatedAt = null; if (ds && slots) render(ds, slots); },
+          });
+          renderInspector(); syncAi();
+        }).catch((err) => ctx.shell.partFailed(err));
+      }
+
+      function destroy() { seq++; if (ai) { ai.destroy(); ai = null; } if (options.overlays) options.overlays.detach(); editor.destroy(); sections.destroy(); if (unhook) { unhook(); unhook = null; } if (handle) { handle.finalize(); handle = null; } groups = []; labelLayer = null; marks = null; layerCtl = null; mapEl = null; slots = null; highlighted = []; boxBtn = null; }
+      return { render, destroy, pick, selectBox, setBoxMode, toolbar, renderInspector, state: s, sections, editor, openAi, get ai() { return ai; }, get handle() { return handle; }, get layers() { return layerCtl; }, get marks() { return marks; } };
     }
     return { create };
   });

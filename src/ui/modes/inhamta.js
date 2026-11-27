@@ -118,7 +118,8 @@
             sourceItem('file', 'folder-open', t('import.sources.files'), t('import.sources.files.hint')),
             sourceItem('paste', 'clipboard-paste', t('import.sources.paste'), t('import.sources.paste.hint')),
             sourceItem('url', 'link', t('import.sources.url'), t('import.sources.url.hint')),
-            tier.shows('source:newmodel') ? sourceItem('newmodel', 'box', t('import.sources.newmodel'), t('import.sources.newmodel.hint')) : null]),
+            tier.shows('source:newmodel') ? sourceItem('newmodel', 'box', t('import.sources.newmodel'), t('import.sources.newmodel.hint')) : null,
+            sourceItem('newplan', 'layers', t('import.sources.newplan'), t('import.sources.newplan.hint'))]),
           group('import.sources.addgroup', [
             sourceItem('bridge', 'database', t('bridge.title'), t('bridge.hint')),
             sourceItem('catalog', 'globe', t('api.sources'), t('api.catalog.hint')),
@@ -267,6 +268,7 @@
         if (source === 'field') { renderField(); return; }
         if (source === 'guides') { renderGuides(); return; }
         if (source === 'newmodel') { renderNewModel(); return; }
+        if (source === 'newplan') { renderNewPlan(); return; }
         if (fieldUi) { fieldUi.destroy(); fieldUi = null; }
         const stepper = /** @type {any} */ (h('dm-stepper'));
         stepper.steps = STEPS; stepper.active = wiz.step === 'sort' ? 'options' : wiz.step;
@@ -460,6 +462,63 @@
               h('div', { class: 'dm-row' },
                 String(newModel.values.brief || '').trim() ? ui.button({ label: t('newmodel.build'), icon: 'cpu', variant: 'primary', title: t('newmodel.build.hint'), 'data-newmodel-build': '', onClick: () => { store.set({ selectedId: done.id, openModelAi: { datasetId: done.id, mode: 'build', brief: String(newModel.values.brief || '').trim() } }); shell.activate('bearbeta'); } }) : null,
                 ui.button({ label: t('newmodel.open'), icon: 'pencil', title: t('newmodel.open.hint'), onClick: () => { store.set({ selectedId: done.id }); shell.activate('bearbeta'); } }))) : null));
+      }
+
+      // ---- a new, empty digital comprehensive plan (B-78) ----
+      const newPlan = { values: { crs: 'EPSG:3006', boundary: true }, municipalities: /** @type {any[]|null} */ (null), busy: false, error: '', result: null };
+      function renderNewPlan() {
+        const planNew = D.require('data/plan-new');
+        const geo = D.require('data/geo');
+        // The municipalities ship with the app (data/boundaries); they are read once, then the form is drawn again.
+        if (!newPlan.municipalities) {
+          newPlan.municipalities = [];
+          planNew.municipalities().then((list) => { newPlan.municipalities = list; if (source === 'newplan' && slots) renderNewPlan(); }).catch((err) => D.log('inhamta', 'municipalities', err));
+        }
+        const v = newPlan.values;
+        const name = /** @type {any} */ (h('dm-input', { label: t('newplan.name'), placeholder: v.kommun ? t('newplan.default.name.kommun', { kommun: v.kommun }) : t('newplan.default.name'), 'data-newplan': 'name' }));
+        name.value = v.name || '';
+        name.addEventListener('input', () => { v.name = name.value; });
+        const kommun = /** @type {any} */ (h('dm-select', { label: t('newplan.kommun'), help: t('newplan.kommun.help'), 'data-newplan': 'kommun' }));
+        kommun.options = [{ value: '', label: t('newplan.kommun.none') }].concat(newPlan.municipalities.map((m) => ({ value: m.code, label: `${m.name} (${m.code})` })));
+        kommun.value = v.kommunkod || '';
+        kommun.addEventListener('change', () => { const m = newPlan.municipalities.find((x) => x.code === kommun.value); v.kommunkod = m ? m.code : ''; v.kommun = m ? m.name : ''; renderNewPlan(); });
+        const boundary = /** @type {any} */ (h('dm-switch', { label: t('newplan.boundary'), title: t('newplan.boundary.hint'), 'data-newplan': 'boundary' }));
+        boundary.checked = v.boundary !== false;
+        boundary.addEventListener('change', () => { v.boundary = !!boundary.checked; });
+        const crs = /** @type {any} */ (h('dm-select', { label: t('newplan.crs'), help: t('newplan.crs.help'), 'data-newplan': 'crs' }));
+        crs.options = planNew.CRS.map((code) => ({ value: 'EPSG:' + code, label: geo.crsText(code) }));
+        crs.value = v.crs || 'EPSG:3006';
+        crs.addEventListener('change', () => { v.crs = crs.value; });
+        const description = /** @type {any} */ (h('dm-input', { label: t('newplan.description.label'), rows: '5', placeholder: t('newplan.description.placeholder'), help: t('newplan.description.help'), 'data-newplan': 'description' }));
+        description.value = v.description || '';
+        description.addEventListener('input', () => { v.description = description.value; });
+        const create = async () => {
+          if (newPlan.busy) return;
+          newPlan.busy = true; newPlan.error = ''; newPlan.result = null; renderNewPlan();
+          try {
+            newPlan.result = await planNew.create(Object.assign({}, v));
+            const msg = t('newplan.done', { name: newPlan.result.name });
+            shell.log(msg, 'ok'); ui.toast.show(msg, { kind: 'ok' });
+          } catch (err) {
+            newPlan.error = (err && err.message) || String(err);
+            shell.log(t('newplan.error', { message: newPlan.error }), 'error');
+          }
+          newPlan.busy = false; renderNewPlan();
+        };
+        const done = newPlan.result;
+        const brief = String(v.description || '').trim();
+        replace(slots.center,
+          h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('layers', 20), t('newplan.title'))),
+          h('div', { class: 'dm-stack', 'data-newplan-form': '' },
+            h('p', { class: 'dm-help', text: t('newplan.lead') }),
+            name, kommun, v.kommunkod ? boundary : null, crs, description,
+            newPlan.error ? h('p', { class: 'dm-error dm-small', 'data-newplan-error': '', text: newPlan.error }) : null,
+            h('div', { class: 'dm-row' }, ui.button({ label: newPlan.busy ? t('newplan.creating') : t('newplan.create'), icon: 'layers', variant: 'primary', loading: newPlan.busy, title: t('newplan.create.hint'), 'data-newplan-create': '', onClick: create })),
+            done ? h('div', { class: 'dm-success dm-stack', 'data-newplan-done': '' },
+              h('p', { text: t('newplan.done', { name: done.name }) }),
+              h('div', { class: 'dm-row' },
+                tier.shows('ai.panel') ? ui.button({ label: t('newplan.build'), icon: 'cpu', title: t('newplan.build.hint'), 'data-newplan-build': '', onClick: () => { store.set({ selectedId: done.id, openPlanAi: { datasetId: done.id, mode: 'build', brief } }); shell.activate('bearbeta'); } }) : null,
+                ui.button({ label: t('newplan.open'), icon: 'pencil', title: t('newplan.open.hint'), 'data-newplan-open': '', onClick: () => { store.set({ selectedId: done.id }); shell.activate('bearbeta'); } }))) : null));
       }
 
       function renderGuides() {
@@ -1199,6 +1258,7 @@
         if (source === 'field') return;
         if (source === 'guides') { replace(slots.right, h('h4', { text: t('guides.title') }), h('p', { class: 'dm-help', text: t('guides.right') })); return; }
         if (source === 'newmodel') { replace(slots.right, h('h4', { text: t('newmodel.title') }), h('p', { class: 'dm-help', text: t('newmodel.right') })); return; }
+        if (source === 'newplan') { replace(slots.right, h('h4', { text: t('newplan.title') }), h('p', { class: 'dm-help', text: t('newplan.right') })); return; }
         if (source.startsWith('api:')) { if (apiUi) apiUi.renderRight(slots.right); else replace(slots.right); return; }
         if (source === 'saved') { replace(slots.right, h('h4', { text: t('api.saved.title') }), h('p', { class: 'dm-help', text: t('api.saved.help') })); return; }
         if (source === 'catalog') { replace(slots.right, h('h4', { text: t('api.sources') }), h('p', { class: 'dm-help', text: t('api.catalog.hint') })); return; }

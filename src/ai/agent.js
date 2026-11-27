@@ -17,6 +17,7 @@
  * In check mode (decision F44 a) the loop tries an existing building's model against photos and a field form's measurements: the read
  * tools find the element each photo shows, record_finding (ai/check-tools) fills the panel's list of findings, and set_properties on
  * Pset_Condition, the only write it is offered, puts each element's condition into the change set that the person approves.
+ * With a kit (B-78: ai/plan-tools for a digital comprehensive plan) the same loop runs another dataset's system prompt and tools.
  */
 (function () {
   'use strict';
@@ -197,30 +198,33 @@
         return { error: String((err && err.message) || err) };
       }
     }
-    /** A tool's answer as the message the provider gets: JSON, clipped, and marked as data. */
-    function resultText(result) {
+    /** A tool's answer as the message the provider gets: JSON, clipped, and marked as data (`source` says whose: the model's, the plan's). */
+    function resultText(result, source = 'the model') {
       let text = '';
       try { text = JSON.stringify(result); } catch (_e) { text = String(result); }
       const clipped = text.length > MAX_RESULT_CHARS;
-      return `[data from the model${clipped ? ', cut' : ''}] ` + (clipped ? text.slice(0, MAX_RESULT_CHARS) : text);
+      return `[data from ${source}${clipped ? ', cut' : ''}] ` + (clipped ? text.slice(0, MAX_RESULT_CHARS) : text);
     }
     /**
-     * Ask a question about a model.
-     * @param {{provider: any, datasetId: string, question: string, history?: any[], changeset?: any, build?: boolean, check?: boolean, findings?: {datasetId?: string|null, findings: any[]}, images?: Array<{mediaType: string, data: string, caption?: string, name?: string, where?: any, when?: string}>, ask?: Function, ids?: {name: string, text: string}|null, budget?: {turns?: number, tokens?: number}, timeoutMs?: number, signal?: AbortSignal, onEvent?: (ev: any) => void}} input
-     * @returns {Promise<{answer: string, steps: Array<{name: string, args: any, count: number|null, error: string|null, ms: number}>, elements: number[], usage: {input: number, output: number}, messages: any[], stopped: string, findings?: {findings: any[]}}>}
+     * Ask a question about a model, or about another dataset through `kit`: its own system prompt, tools and calls (ai/plan-tools
+     * for a comprehensive plan), with the same loop, budget, cancelling, questions to the person and results marked as data.
+     * @typedef {{system: string, tools: any[], call: (name: string, args: any) => Promise<any>, idsOf?: (result: any) => Array<string|number>, changes?: () => number, source?: string, budget?: {turns?: number, tokens?: number}, maxTokens?: number, timeoutMs?: number}} Kit
+     * @param {{provider: any, datasetId: string, question: string, history?: any[], changeset?: any, build?: boolean, check?: boolean, findings?: {datasetId?: string|null, findings: any[]}, images?: Array<{mediaType: string, data: string, caption?: string, name?: string, where?: any, when?: string}>, ask?: Function, ids?: {name: string, text: string}|null, kit?: Kit, budget?: {turns?: number, tokens?: number}, timeoutMs?: number, signal?: AbortSignal, onEvent?: (ev: any) => void}} input
+     * @returns {Promise<{answer: string, steps: Array<{name: string, args: any, count: number|null, error: string|null, ms: number}>, elements: Array<string|number>, usage: {input: number, output: number}, messages: any[], stopped: string, findings?: {findings: any[]}}>}
      */
     async function ask(input) {
-      const changing = !!input.changeset;
+      const kit = input.kit || null;
+      const changing = !kit && !!input.changeset;
       const building = changing && !!input.build;
       const checking = changing && !!input.check && !building;
-      const budget = Object.assign({ turns: building ? 60 : checking ? 24 : changing ? 12 : 8, tokens: building ? 400000 : 120000 }, input.budget || {});
+      const budget = Object.assign(kit ? { turns: 12, tokens: 120000 } : { turns: building ? 60 : checking ? 24 : changing ? 12 : 8, tokens: building ? 400000 : 120000 }, (kit && kit.budget) || {}, input.budget || {});
       const maxPreviews = building ? MAX_PREVIEWS_BUILD : MAX_PREVIEWS;
       const askTools = input.ask ? [ASK_TOOL] : [];
       // A check fills the panel's list of findings; a photo's number is the picture's place among the images of the question.
       const findings = checking ? input.findings || checkTools.create(input.datasetId) : null;
       const emit = (ev) => { if (input.onEvent) { try { input.onEvent(ev); } catch (err) { console.error(err); } } };
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), input.timeoutMs || (building ? 900000 : checking ? 600000 : 180000));
+      const timer = setTimeout(() => controller.abort(), input.timeoutMs || (kit && kit.timeoutMs) || (building ? 900000 : checking ? 600000 : 180000));
       if (input.signal) input.signal.addEventListener('abort', () => controller.abort(), { once: true });
       // Pictures and drawings go with the first message as image blocks (the providers put them in their own form).
       const images = Array.isArray(input.images) ? input.images.filter((im) => im && im.data) : [];
@@ -236,10 +240,10 @@
         for (let turn = 0; turn < budget.turns; turn++) {
           if (controller.signal.aborted) { stopped = 'cancelled'; break; }
           emit({ type: 'thinking', turn });
-          const system = building ? SYSTEM_BUILD : checking ? `${SYSTEM_CHECK} Today is ${checkTools.today()}.` : changing ? SYSTEM_CHANGE : SYSTEM;
-          const own = tools.offered();
-          const offered = checking ? own.concat(checkTools.TOOLS, checkTools.WRITES, [PREVIEW_TOOL]) : changing ? own.concat(writeTools.TOOLS, [PREVIEW_TOOL]) : own;
-          const res = await providers.chat(input.provider, { system, messages, tools: offered.concat(askTools), maxTokens: building || checking ? 4000 : 1500, signal: controller.signal, timeoutMs: input.timeoutMs || 180000 });
+          const system = kit ? kit.system : building ? SYSTEM_BUILD : checking ? `${SYSTEM_CHECK} Today is ${checkTools.today()}.` : changing ? SYSTEM_CHANGE : SYSTEM;
+          const own = kit ? kit.tools : tools.offered();
+          const offered = kit ? own : checking ? own.concat(checkTools.TOOLS, checkTools.WRITES, [PREVIEW_TOOL]) : changing ? own.concat(writeTools.TOOLS, [PREVIEW_TOOL]) : own;
+          const res = await providers.chat(input.provider, { system, messages, tools: offered.concat(askTools), maxTokens: kit ? kit.maxTokens || 1500 : building || checking ? 4000 : 1500, signal: controller.signal, timeoutMs: input.timeoutMs || 180000 });
           usage.input += res.usage.input; usage.output += res.usage.output;
           messages.push({ role: 'assistant', content: res.content.length ? res.content : [{ type: 'text', text: res.text }] });
           if (!res.toolCalls.length) { answer = res.text; break; }
@@ -248,6 +252,7 @@
             const t0 = performance.now();
             const result = input.ask && call.name === ASK_TOOL.name
               ? await askPerson(input.ask, call.args, controller.signal)
+              : kit ? await kitCall(kit, call)
               : checking && checkTools.has(call.name)
               ? await checkTools.call(findings, call.args, { datasetId: input.datasetId, photos: images })
               : changing && call.name === PREVIEW_TOOL.name
@@ -255,11 +260,11 @@
               : checking && writeTools.has(call.name) ? checkTools.write(input.changeset, call.name, call.args)
               : changing && writeTools.has(call.name) ? writeTools.call(input.changeset, call.name, call.args) : await tools.call(input.datasetId, call.name, call.args);
             const ms = Math.round(performance.now() - t0);
-            for (const id of tools.idsOf(result)) elements.add(id);
+            for (const id of kit ? (kit.idsOf ? kit.idsOf(result) : []) : tools.idsOf(result)) elements.add(id);
             const step = { name: call.name, args: call.args, count: result && typeof result.count === 'number' ? result.count : (result && Array.isArray(result.elements) ? result.elements.length : null), error: result && result.error ? String(result.error) : null, ms };
             steps.push(step);
             emit({ type: 'tool', step });
-            results.push({ id: call.id, name: call.name, content: resultText(result) });
+            results.push({ id: call.id, name: call.name, content: resultText(result, kit && kit.source ? kit.source : undefined) });
           }
           messages.push({ role: 'tool', results });
           if (usage.input + usage.output > budget.tokens) { stopped = 'budget'; break; }
@@ -272,7 +277,12 @@
       if (!answer && stopped === 'budget') answer = t('ai.answer.budget');
       if (!answer && stopped === 'timeout') answer = t('ai.answer.timeout');
       if (!answer && stopped === 'cancelled') answer = t('ai.answer.cancelled');
-      return Object.assign({ answer, steps, elements: Array.from(elements), usage, messages, stopped, changes: changing ? input.changeset.ops.length : 0 }, checking ? { findings } : {});
+      return Object.assign({ answer, steps, elements: Array.from(elements), usage, messages, stopped, changes: kit ? (kit.changes ? kit.changes() : 0) : changing ? input.changeset.ops.length : 0 }, checking ? { findings } : {});
+    }
+    /** A kit's tool call; a tool that throws is an error the AI can read, and an unknown tool is refused. */
+    async function kitCall(kit, call) {
+      if (!kit.tools.some((tool) => tool.name === call.name)) return { error: 'no such tool: ' + String(call.name).slice(0, 60) };
+      try { return await kit.call(call.name, call.args || {}); } catch (err) { return { error: String((err && err.message) || err) }; }
     }
     /** A question to the person through the panel's asker; a closed question is an answer the AI can read. */
     async function askPerson(ask, args, signal) {

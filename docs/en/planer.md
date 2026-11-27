@@ -122,6 +122,23 @@ was read with. Files the delivery names but that were not kept are listed apart.
 A GeoPackage with many layers that is not a plan can be one dataset in the same way, see
 [Map layers](kartor.md#map-layers-a-geopackage-with-many-layers).
 
+## A new comprehensive plan
+
+*New comprehensive plan* among the sources in Import makes an empty digital comprehensive plan to build with AI or by hand, the way
+*New building model* does for buildings. The form has:
+
+- the plan's name (else *Comprehensive plan* and the municipality's name);
+- the municipality, from the municipal boundaries that ship with the app. With *The whole municipality as the plan area* the
+  municipal boundary becomes the plan's plan geometry, so that the map shows the plan area from the start;
+- the coordinate system: SWEREF 99 TM unless another is chosen, or one of the local SWEREF 99 zones. It is the system the AI reads
+  and writes coordinates in; the delivery is always written in SWEREF 99 TM;
+- a description for the AI, which is kept with the plan.
+
+*Create the plan* makes a plan in Boverket's ÖP model with a new objektidentitet, empty tables for the plan description and the
+links and, with a municipality chosen, the plan geometry. Nothing is fetched from the net. The plan opens in the plan view as a
+delivered plan does: it can be edited, built with AI and exported as a delivery. *Build the plan with AI* opens it with the AI
+panel in the mode *Build from brief* and the description filled in.
+
 ## Edit the plan
 
 A digital comprehensive plan can be edited in the plan view: the plan description's sections, the areas on the plan map and
@@ -169,6 +186,35 @@ In the inspector's list of the sections that concern the chosen areas, *Remove t
 A link made here is kept in `_section_links` with the section's type and the source `redigerad`. *Read the links again* and *Add
 a file to the plan* keep the links and sections made here, but text changed in a section that a Word file has is read from the
 file again. Export the plan as a delivery first when the changes are to be in the files.
+
+### With AI
+
+*Ask AI* in the plan view's toolbar opens the AI panel in the inspector, with the same providers and policy as for building models
+(see [Ask AI about the model](cad-bim.md#ask-ai-about-the-model)). The panel has three modes:
+
+- *Ask*: the AI reads the plan with tools and answers. It reads the plan's facts, the plan description's sections in order, the
+  areas with their theme, content type, name and place, the links, what you have chosen on the map and the features of other
+  datasets shown on the map. *Choose n areas on the map* chooses the areas the answer rests on. The AI cannot change anything.
+- *Change*: the AI proposes changes to the sections, the areas and the links.
+- *Build from brief*: the AI plans and builds the plan from the description, with sections such as the plan's purpose and
+  positions, areas on the plan map and the links between them. When something essential is missing it asks in the panel.
+
+The AI never changes the plan itself. In the modes *Change* and *Build from brief* it fills a change set of the plan's own edits,
+the same as above. The panel lists the steps, with the text of the new and changed sections under *Show the text*.
+
+- *Preview* tries the changes on a copy of the plan and draws the areas on the map: new green, changed yellow and removed red and
+  dashed. A step that cannot be made is shown with its error, and the change set cannot then be approved.
+- *Approve* makes the changes one step of the dataset's log, with the provider, the model and the questions. *Undo* in the edit
+  bar, or in the message shown, removes them at once.
+- *Reject* drops the change set without touching the plan.
+
+A change set that removes areas or sections is confirmed once more, and the AI may only remove something when you have asked for
+it. The areas' shapes are given in the plan's coordinate system. The AI can also copy the shape of a feature of another dataset
+shown on the map (the eye in the list of datasets), for example a detailed plan or a map layer, or of another area of the plan.
+The shapes the AI draws itself are drafts: adjust them with *Edit the shape* and *Move*.
+
+What goes to the AI provider is the plan's facts, texts, names and places and the features of other datasets shown on the map that
+the AI reads, after consent for the provider's host. The AI panel belongs to the tier BIM and GIS.
 
 ### Export as a delivery
 

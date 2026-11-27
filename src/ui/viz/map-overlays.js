@@ -615,6 +615,15 @@
         get shown() { return st.shown.slice(); },
         /** The feature chosen on an overlay, or null. */
         get selected() { return st.selected; },
+        /**
+         * What a dataset shown over the map brought, as it was read for drawing: its name, the field of its label and its rows
+         * (`_rowid`, `_g` the geometry in WGS 84); null when it is not shown, not read yet or a raster (the plan's AI, B-78).
+         * @param {string} id @returns {{id: string, name: string, label: string|null, rows: any[]}|null}
+         */
+        features(id) {
+          const e = st.shown.includes(id) ? cache.get(id) : null;
+          return e && !e.raster ? { id: e.id, name: e.name, label: e.label, rows: e.rows } : null;
+        },
         /** The map's dataset id, or null. */
         get hostId() { return host ? host.dataset.id : null; },
         /** The groups drawn per dataset shown (for the tests). @param {string} id */

@@ -12,11 +12,15 @@
  * reads a Word file's bookmarks, so that what is exported comes back the same. A new section gets a bookmark name by the exchange
  * model's rule (OP-JSON-003: a letter, then at most 39 letters, digits or underscores), unique in the plan; a new area gets a new
  * objektidentitet (a UUID).
+ *
+ * A change set (B-78: the edits the plan's AI proposes) is a list of those edits that is tried on a copy of the plan first
+ * (`tryChanges`) and, once approved, applied as the one step plan_changeset (`applyChanges`): one entry in the log with its
+ * provenance, and one undo, whose inverse is every step's own, taken in turn on a copy and run backwards.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/plan-edit', ['data/operations', 'data/datasets', 'data/plan', 'data/geo', 'data/plan-links'], (ops, datasets, plan, geo, planLinks) => {
+  D.define('data/plan-edit', ['data/operations', 'data/datasets', 'data/plan', 'data/geo', 'data/plan-links', 'engines/sqlite'], (ops, datasets, plan, geo, planLinks, sqlite) => {
     const t = (key, params) => D.t(key, params);
     /** The side tables, as data/plan-delivery writes them. */
     const SECTIONS = '_sections';
@@ -507,6 +511,68 @@
       toSQL: comment('plan_area_delete'), toR: rComment('plan_area_delete'),
     });
 
+    // ---- a change set: several edits as one step (the plan's AI panel, ui/bearbeta/plan-ai) ------------------------------
+    /** The edits a change set may hold, and nothing else. */
+    const STEPS = ['plan_section_set', 'plan_section_add', 'plan_section_delete', 'plan_link', 'plan_unlink', 'plan_area_add', 'plan_area_set', 'plan_area_geometry', 'plan_area_delete'];
+    /** A change set's steps [{op, params}] from JSON, each one of STEPS. @param {any} v @returns {Array<{op: string, params: Record<string, any>}>} */
+    function stepsOf(v) {
+      const list = parse(v);
+      if (!Array.isArray(list)) throw new Error(t('plan.edit.err.steps'));
+      return list.map((s, i) => {
+        if (!s || typeof s !== 'object' || !STEPS.includes(s.op) || !s.params || typeof s.params !== 'object') throw new Error(t('plan.edit.err.step', { n: i + 1 }));
+        return { op: s.op, params: Object.assign({}, s.params) };
+      });
+    }
+    /**
+     * Run steps on a copy of the plan, as recipes.apply would run them one by one: each step's inverse taken just before it runs,
+     * then what it gave, or the error that stopped it (a step that fails is left out and the next tried). The plan is not touched.
+     * @param {any} engine the plan's @param {any[]} columns @param {Array<{op: string, params: any}>} steps
+     * @returns {Promise<Array<{op: string, ok: boolean, inverse?: any, result?: any, error?: string}>>}
+     */
+    async function trial(engine, columns, steps) {
+      const copy = new sqlite.SqliteEngine();
+      await copy.start();
+      try {
+        await copy.open(await engine.export());
+        // Without a dataset id the steps keep `_meta.plan` of the copy only (refreshMeta).
+        const ctx = ops.makeContext(copy, columns);
+        const out = [];
+        for (const s of steps) {
+          const op = ops.get(s.op);
+          try {
+            await copy.run('savepoint dm_trial');
+            const inverse = await op.inverse(ctx, s.params);
+            const result = await op.apply(ctx, s.params);
+            await copy.run('release dm_trial');
+            out.push({ op: s.op, ok: true, inverse, result });
+          } catch (err) {
+            try { await copy.run('rollback to dm_trial'); await copy.run('release dm_trial'); } catch (_e) { /* already closed */ }
+            out.push({ op: s.op, ok: false, error: String((err && err.message) || err) });
+          }
+        }
+        return out;
+      } finally { copy.terminate(); }
+    }
+    ops.define({
+      id: 'plan_changeset', group: 'plan', manualPreview: true,
+      params: [{ name: 'steps', type: 'lines', required: true }, { name: 'provenance', type: 'lines' }],
+      // The inverse of the whole: every step's own, taken on a copy in turn and run backwards; a step that fails stops it all.
+      async inverse(ctx, p) {
+        const done = await trial(ctx.engine, ctx.columns, stepsOf(p.steps));
+        const bad = done.find((d) => !d.ok);
+        if (bad) throw new Error(bad.error);
+        return { op: 'plan_changeset', params: { steps: JSON.stringify(done.map((d) => d.inverse).reverse()) } };
+      },
+      async apply(ctx, p) {
+        const steps = stepsOf(p.steps);
+        let rows = 0;
+        for (const s of steps) { const r = await ops.get(s.op).apply(ctx, s.params); rows += Number(r && r.rows) || 0; }
+        return { rows, steps: steps.length };
+      },
+      toSQL: (p) => [`-- ${t('op.plan_changeset')}: ${stepsOf(p.steps).map((s) => noteOf(s.op, s.params)).join('; ')}`],
+      toR: (p) => `# ${t('op.plan_changeset')}: ${stepsOf(p.steps).map((s) => noteOf(s.op, s.params)).join('; ')}`,
+    });
+
     // ---- the edits, as the view and the tests make them ---------------------------------------------------------
     /** Apply an edit as a recipe step and save the plan at once (the view draws it again from the saved plan). */
     async function run(id, op, params) {
@@ -555,14 +621,27 @@
      * @returns {Promise<string>} the new objektidentitet
      */
     async function addArea(id, area) {
+      const row = await areaRow(id, area);
+      await run(id, 'plan_area_add', { row: JSON.stringify(row) });
+      return row.objektid;
+    }
+    /**
+     * The row a new area becomes (addArea's, without adding it): its objektidentitet, theme, layer and file, texts and geometry.
+     * @param {string} id @param {Parameters<typeof addArea>[1]} area @returns {Promise<Record<string, any>>}
+     */
+    async function areaRow(id, area) {
       const handle = await datasets.ensureOpen(id);
       const g = checkGeometry(area.geometry);
       const tema = plan.themeKey(area.tema) || 'omrade';
       const place = area.lager !== undefined ? { lager: str(area.lager), fil: str(area.fil) } : await placeFor(handle, tema, familyOf(g));
       const objektid = area.objektid ? idOf(area.objektid) : newId();
-      const row = { objektid, tema, innehallstyp: cleanLine(area.innehallstyp !== undefined ? area.innehallstyp : plan.OP_CATEGORIES[tema] || ''), namn: cleanLine(area.namn), precisering: cleanText(area.precisering), geometri: JSON.stringify(g), geometrityp: g.type, lager: place.lager, fil: place.fil };
-      await run(id, 'plan_area_add', { row: JSON.stringify(row) });
-      return objektid;
+      return { objektid, tema, innehallstyp: cleanLine(area.innehallstyp !== undefined ? area.innehallstyp : plan.OP_CATEGORIES[tema] || ''), namn: cleanLine(area.namn), precisering: cleanText(area.precisering), geometri: JSON.stringify(g), geometrityp: g.type, lager: place.lager, fil: place.fil };
+    }
+    /** The text document a new section of the plan goes to (the plan's, else the one its sections use most, else a new one). @param {string} id */
+    async function documentFor(id) {
+      const { engine } = await datasets.ensureOpen(id);
+      // A plan without the side tables (read from GeoJSON) gets them with its first section; nothing is written here.
+      try { return await defaultDocument(engine); } catch (_err) { return DEFAULT_DOCUMENT; }
     }
     /**
      * Where a new area of a theme goes in a plan: the layer of the plan map that already holds that theme and kind of geometry,
@@ -587,6 +666,20 @@
     const setGeometry = (id, objektid, geometry) => run(id, 'plan_area_geometry', { objektid, geometri: JSON.stringify(checkGeometry(geometry)) });
     /** Remove an area with its links. @param {string} id @param {string} objektid */
     const deleteArea = (id, objektid) => run(id, 'plan_area_delete', { objektid });
+    /**
+     * A change set tried on a copy of the plan: per step whether it would run and the error when not. The plan is not touched.
+     * @param {string} id @param {Array<{op: string, params: any}>} steps
+     * @returns {Promise<Array<{op: string, ok: boolean, error?: string, result?: any}>>}
+     */
+    async function tryChanges(id, steps) {
+      const handle = await datasets.ensureOpen(id);
+      return (await trial(handle.engine, handle.columns, stepsOf(steps))).map((d) => (d.ok ? { op: d.op, ok: true, result: d.result } : { op: d.op, ok: false, error: d.error }));
+    }
+    /**
+     * A change set made one step of the plan's log (plan_changeset), with where it came from, undone at once with the app's undo.
+     * @param {string} id @param {Array<{op: string, params: any}>} steps @param {Record<string, any>} [provenance]
+     */
+    const applyChanges = (id, steps, provenance) => run(id, 'plan_changeset', { steps: JSON.stringify(stepsOf(steps)), provenance: JSON.stringify(provenance || {}) });
 
     /**
      * The content types to choose from per theme: the value lists of the plan's GeoPackage in Boverket's model (the ÖP catalogue,
@@ -634,6 +727,7 @@
       SECTIONS, LINKS, BOOKMARK_NAME, STATEMENT, STATEMENT_UUID, DEFAULT_DOCUMENT, AREA_FIELDS, EDITED,
       validBookmark, bookmarkName, newId, cleanLine, cleanText, bodyOf, composeText, spansHeading, isStatement, checkGeometry, layerFamily, familyOf, tableFor,
       editSection, addSection, deleteSection, link, unlink, addArea, editArea, setGeometry, deleteArea, undo, catalogue,
+      STEPS, areaRow, documentFor, tryChanges, applyChanges,
     };
   });
 })();

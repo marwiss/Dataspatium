@@ -237,6 +237,7 @@
     'src/data/plan-links.js',
     'src/data/plan-delivery.js',
     'src/io/importers/plan-delivery.js',
+    'src/data/plan-new.js',
     'src/io/importers/graph.js',
     'src/io/importers/model.js',
     'src/io/importers/bcf.js',
@@ -485,6 +486,8 @@
       'src/ui/bearbeta/site-map.js',
       'src/ui/bearbeta/ai-check.js',
       'src/ui/bearbeta/ai-panel.js',
+      'src/ai/plan-tools.js',
+      'src/ui/bearbeta/plan-ai.js',
     ] },
     { name: 'kontrollera', needs: ['bearbeta'], scripts: [
       'src/ui/modes/kontrollera.js',
