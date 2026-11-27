@@ -774,8 +774,10 @@ IFC-versioner, och deras rapporter står som väntande under tiden.
 
 Anger servern värdena per krock visar panelen för varje krock värdet i basen, det som kom emellan och ditt förslag, och du väljer
 per krock att behålla ditt förslag eller ta det som kom emellan. *Föreslå igen med mina val* skickar förslaget mot den senaste
-versionen, med de behållna ändringarna och utan de strukna, och servern prövar det på nytt innan det kan godkännas. Sammanfogningen
-sker på servern; webbläsaren hanterar bara själva krockarna.
+versionen, med de behållna ändringarna och utan de strukna, och servern prövar det på nytt innan det kan godkännas. Är ett element
+borttaget eller har bytt klass i den senaste versionen gäller krocken hela elementet: tar du det som kom emellan stryks alla dina
+ändringar av det, och annars prövas de igen på den senaste versionen. Sammanfogningen sker på servern; webbläsaren hanterar bara
+själva krockarna.
 
 ## Rätt IFC-klass
 

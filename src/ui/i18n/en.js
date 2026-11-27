@@ -7039,6 +7039,7 @@
     'ai.change.conflict.choice': 'Choose',
     'ai.change.conflict.ours': 'Keep my proposal',
     'ai.change.conflict.theirs': 'Take what came between',
+    'ai.change.conflict.whole': 'The element is deleted or has changed class in the latest version. If you take what came between, your changes of it are struck; otherwise they are tried again on the latest version.',
     'ai.change.conflict.resend': 'Propose again with my choices',
     'ai.change.conflict.resend.hint': 'Sends the proposal again against the latest version: where you keep your proposal it overwrites, the other changes leave the proposal. The server tries it anew before it can be approved.',
     'ai.change.conflict.resent': 'The proposal was sent again against version {n}: {kept} kept, {dropped} dropped. The server tries it anew.',

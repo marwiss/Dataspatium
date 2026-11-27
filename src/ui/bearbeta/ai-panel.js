@@ -545,21 +545,11 @@
             if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
             const versions = await opencde.documentVersions(connector, [cde.documentId]);
             const latest = versions.filter((v) => !v.document_id || v.document_id === cde.documentId).reduce((n, v) => Math.max(n, Number(v.version_index) || 0), 0);
-            const same = (c, d) => (c.guid || null) === (d.guid || null) && (c.path || null) === (d.path || null) && (c.step_id || null) === (d.step_id || null) && c.attribute === d.attribute && (!d.op || c.op === d.op);
-            let kept = 0; let dropped = 0;
-            const changes = [];
-            for (const c of mine.changeSet.changes) {
-              const i = mine.details.findIndex((d) => same(c, d));
-              if (i < 0) { changes.push(c); continue; }
-              if (picks[i] === 'theirs') { dropped++; continue; }
-              kept++;
-              changes.push(c.op === 'set' ? Object.assign({}, c, { old: mine.details[i].theirs === undefined ? null : mine.details[i].theirs }) : c);
-            }
+            const { changes, keepTheirs, kept, dropped } = decideConflicts(mine.changeSet, mine.details, picks);
             const hasOps = Array.isArray(mine.changeSet.ops) && mine.changeSet.ops.length > 0;
             if (!changes.length && !hasOps) throw new Error(t('ai.change.conflict.empty'));
-            const theirs = mine.details.filter((d, i) => picks[i] === 'theirs').map((d) => String(d.key || (d.guid ? `${d.guid}${d.path ? '/' + d.path : ''}.${d.attribute}` : `#${d.step_id}.${d.attribute}`)));
             const changeSet = Object.assign({}, mine.changeSet, { base: Object.assign({}, mine.changeSet.base, { version_index: latest || mine.changeSet.base.version_index }), changes },
-              hasOps ? { keep_theirs: Array.from(new Set((mine.changeSet.keep_theirs || []).concat(theirs))) } : {});
+              hasOps ? { keep_theirs: Array.from(new Set((mine.changeSet.keep_theirs || []).concat(keepTheirs))) } : {});
             await opencde.putChangeSet(connector, cde.projectId, mine.guid, mine.schemaUrl, changeSet);
             mine.changeSet = changeSet; mine.details = null; mine.picks = []; mine.conflicts = null;
             log(t('ai.change.conflict.resent', { n: String(changeSet.base.version_index), kept: i18n.formatNumber(kept), dropped: i18n.formatNumber(dropped) }), 'ok');
@@ -589,7 +579,8 @@
               pick.value = mine.picks[i] || 'ours';
               pick.addEventListener('change', () => { mine.picks[i] = pick.value === 'theirs' ? 'theirs' : 'ours'; });
               return h('div', { class: 'dm-row-wrap', 'data-ai-conflict': String(i) },
-                h('span', { class: 'dm-small dm-grow', text: t('ai.change.conflict.line', { key: String(d.key || ''), base: conflictValue(d.base), theirs: conflictValue(d.theirs), ours: conflictValue(d.ours), n: String(d.version_index || '–') }) }), pick);
+                h('span', { class: 'dm-small dm-grow', text: t('ai.change.conflict.line', { key: String(d.key || ''), base: conflictValue(d.base), theirs: conflictValue(d.theirs), ours: conflictValue(d.ours), n: String(d.version_index || '–') }) }), pick,
+                wholeConflict(d) ? h('span', { class: 'dm-help dm-xs', 'data-ai-conflict-whole': String(i), text: t('ai.change.conflict.whole') }) : null);
             }),
             h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('ai.change.conflict.resend'), icon: 'refresh-cw', size: 'sm', loading: s.approvingServer, disabled: s.busy, title: t('ai.change.conflict.resend.hint'), 'data-ai-conflict-resend': '', onClick: () => resolveNow() })));
         }
@@ -796,6 +787,54 @@
           } catch (err) { error = String((err && err.message) || err); }
         }
       }
-      return { create, manage, edit, controls, questionBox };
+      /**
+       * A collision on a whole instance (Dataregium's `#<step>` without an attribute): it was deleted or changed class in the latest
+       * version, so it cannot be given up with keep_theirs; the change set goes again on the latest version.
+       * @param {any} d an entry of conflict_details
+       */
+      function wholeConflict(d) {
+        return !d.attribute && !String(d.key || '').includes('.');
+      }
+      /**
+       * The person's choices on the collisions applied to the change set. Each collision finds its change by its place in `changes`
+       * (Dataregium's change_index), else by the change's address: the STEP id when both have one, else the GlobalId and path, else
+       * the instance's own GlobalId. A change kept takes the latest version's value as its old one, a change given up leaves the
+       * proposal (for a whole instance every change of it), and the keys given up that are not whole instances go to keep_theirs for
+       * the operations.
+       * @param {{changes: any[]}} changeSet @param {any[]} details conflict_details @param {string[]} picks 'ours' or 'theirs' per detail
+       * @returns {{changes: any[], keepTheirs: string[], kept: number, dropped: number}}
+       */
+      function decideConflicts(changeSet, details, picks) {
+        const list = changeSet.changes || [];
+        const address = (c) => JSON.stringify([c.guid || null, c.path || null, c.step_id === undefined || c.step_id === null ? null : Number(c.step_id)]);
+        const same = (c, d) => c.attribute === d.attribute && (!d.op || c.op === d.op) && (
+          c.step_id !== undefined && c.step_id !== null && d.step_id !== undefined && d.step_id !== null ? Number(c.step_id) === Number(d.step_id)
+            : c.path ? !!c.guid && c.guid === d.guid && c.path === d.path
+              : !!c.guid && c.guid === d.guid && !d.path);
+        const changeOf = (d) => (Number.isInteger(d.change_index) && d.change_index >= 0 && d.change_index < list.length ? d.change_index : list.findIndex((c) => same(c, d)));
+        /** @type {Map<number, number>} */ const decided = new Map();
+        const gone = new Set();
+        details.forEach((d, i) => {
+          const at = changeOf(d);
+          if (at < 0) return;
+          decided.set(at, i);
+          if (wholeConflict(d) && picks[i] === 'theirs') gone.add(address(list[at]));
+        });
+        let kept = 0; let dropped = 0;
+        const changes = [];
+        list.forEach((c, at) => {
+          if (gone.has(address(c))) { dropped++; return; }
+          const i = decided.has(at) ? /** @type {number} */ (decided.get(at)) : -1;
+          if (i < 0) { changes.push(c); return; }
+          if (picks[i] === 'theirs') { dropped++; return; }
+          kept++;
+          const d = details[i];
+          changes.push(c.op === 'set' && !wholeConflict(d) ? Object.assign({}, c, { old: d.theirs === undefined ? null : d.theirs }) : c);
+        });
+        const keepTheirs = details.filter((d, i) => picks[i] === 'theirs' && !wholeConflict(d))
+          .map((d) => String(d.key || (d.guid ? `${d.guid}${d.path ? '/' + d.path : ''}.${d.attribute}` : `#${d.step_id}.${d.attribute}`)));
+        return { changes, keepTheirs, kept, dropped };
+      }
+      return { create, manage, edit, controls, questionBox, decideConflicts };
     });
 })();

@@ -7061,6 +7061,7 @@
     'ai.change.conflict.choice': 'Välj',
     'ai.change.conflict.ours': 'Behåll mitt förslag',
     'ai.change.conflict.theirs': 'Ta det som kom emellan',
+    'ai.change.conflict.whole': 'Elementet är borttaget eller har bytt klass i den senaste versionen. Väljer du det som kom emellan stryks dina ändringar av det; annars prövas de igen på den senaste versionen.',
     'ai.change.conflict.resend': 'Föreslå igen med mina val',
     'ai.change.conflict.resend.hint': 'Skickar förslaget igen mot den senaste versionen: där du behåller ditt förslag skrivs det över, de andra ändringarna stryks ur förslaget. Servern prövar det på nytt innan det kan godkännas.',
     'ai.change.conflict.resent': 'Förslaget skickades igen mot version {n}: {kept} behållna, {dropped} strukna. Servern prövar det på nytt.',

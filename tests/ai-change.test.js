@@ -449,4 +449,40 @@
     if (ds) await datasets.remove(ds.id);
     return 'ok';
   });
+
+  test('ai change: the collisions find their changes by change_index, else by the address of the change, and a whole instance never goes to keep_theirs', async (assert) => {
+    const { decideConflicts } = D.require('ui/bearbeta/ai-panel');
+    const L = (v) => ({ type: 'IfcLabel', value: v });
+    const changeSet = { changes: [
+      { guid: '2O2Fr$t4X7Zf8NOew3FLOH', attribute: 'Name', op: 'set', old: L('Vägg'), new: L('Vägg A') },
+      { guid: '2O2Fr$t4X7Zf8NOew3FLOH', path: 'IsDefinedBy[0].RelatingPropertyDefinition.HasProperties[1]', attribute: 'NominalValue', op: 'set', old: L('EI60'), new: L('EI90') },
+      { step_id: 170, attribute: 'Description', op: 'set', old: null, new: L('Ny') },
+      { step_id: 170, attribute: 'Name', op: 'set', old: L('X'), new: L('Y') },
+      { step_id: 88, attribute: 'Name', op: 'set', old: L('Dörr'), new: L('Dörr B') },
+    ] };
+    // Dataregium 5.4: the key and step_id in the base's numbering, guid where the instance has one, change_index into changes.
+    const details = [
+      { key: '#12.Name', guid: '2O2Fr$t4X7Zf8NOew3FLOH', step_id: 12, attribute: 'Name', op: 'set', base: L('Vägg'), theirs: L('Vägg B'), ours: L('Vägg A'), version_index: 4, change_index: 0 },
+      { key: '#301.NominalValue', step_id: 301, attribute: 'NominalValue', op: 'set', base: L('EI60'), theirs: L('EI120'), ours: L('EI90'), version_index: 4, change_index: 1 },
+      { key: '#170', step_id: 170, base: null, theirs: null, ours: null, version_index: 4, change_index: 2 },
+      { key: '#40.RelatedElements', step_id: 40, attribute: 'RelatedElements', op: 'remove', version_index: 4, change_index: null },
+    ];
+    const got = decideConflicts(changeSet, details, ['ours', 'ours', 'theirs', 'theirs']);
+    assert.deepEqual(got.changes.map((c) => [c.guid || c.step_id, c.attribute, c.old]), [
+      ['2O2Fr$t4X7Zf8NOew3FLOH', 'Name', L('Vägg B')], ['2O2Fr$t4X7Zf8NOew3FLOH', 'NominalValue', L('EI120')], [88, 'Name', L('Dörr')]],
+      'kept with what came between as the old value; every change of the whole instance struck; the rest untouched');
+    assert.deepEqual([got.kept, got.dropped], [2, 2]);
+    assert.deepEqual(got.keepTheirs, ['#40.RelatedElements'], 'the collision of the operations given up; the whole instance is not');
+    // Without change_index (an older server, an upload's report): the STEP id when both have one, else the GlobalId and path.
+    const older = [
+      { key: '2O2Fr$t4X7Zf8NOew3FLOH/IsDefinedBy[0].RelatingPropertyDefinition.HasProperties[1].NominalValue', guid: '2O2Fr$t4X7Zf8NOew3FLOH', path: 'IsDefinedBy[0].RelatingPropertyDefinition.HasProperties[1]', attribute: 'NominalValue', op: 'set', theirs: L('EI120') },
+      { key: '#170.Name', step_id: 170, attribute: 'Name', op: 'set', theirs: L('Z') },
+      { key: '#12.Name', guid: '2O2Fr$t4X7Zf8NOew3FLOH', step_id: 12, attribute: 'Name', op: 'set', theirs: L('Vägg B') },
+    ];
+    const byAddress = decideConflicts(changeSet, older, ['theirs', 'ours', 'theirs']);
+    assert.deepEqual(byAddress.changes.map((c) => [c.guid || c.step_id, c.attribute, c.old]), [[170, 'Description', null], [170, 'Name', L('Z')], [88, 'Name', L('Dörr')]],
+      'the change by path and the change by GlobalId found and struck, the one by STEP id kept with the latest value');
+    assert.equal(t('ai.change.conflict.whole') !== 'ai.change.conflict.whole', true, 'the whole instance has its words');
+    return 'ok';
+  });
 })();

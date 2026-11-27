@@ -471,6 +471,7 @@
     'cde.send.conflict.hint': 'Both changed the same thing since the base version. Fetch version {latest} with Check for a new version, redo your changes there and send again.',
     'cde.stored.log': 'Version {version} as the server stored it, with {n} ids moved',
     'cde.stored.log.one': 'Version {version} as the server stored it, with one id moved',
+    'ai.change.conflict.whole': 'The element is deleted or has changed class in the latest version. If you take what came between, your changes of it are struck; otherwise they are tried again on the latest version.',
     'compare.by.step': 'The server compared instance by instance: the STEP ids belong together in both versions.',
     'compare.by.guid': 'The server compared by GlobalId: one version is a re-export or another document, so the STEP ids do not belong together.',
     'compare.steps.there': 'Instances added or changed in the other version: {ids}',
