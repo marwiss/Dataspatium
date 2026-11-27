@@ -249,8 +249,8 @@ sidor har formen `index.html#/inhamta/opencde?server=https://…` och öppnar di
 Dialogen för *Geodatakälla* under *Lägg till källor* börjar med en lista över **färdiga geodatakällor**: öppna WFS-, OGC API Features-
 och ArcGIS-tjänster från nordiska myndigheter och kommuner (SCB, SGU, Naturvårdsverket, SLU Artdatabanken, Riksantikvarieämbetet,
 Skogsstyrelsen, Sundsvalls kommun, Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsingfors, Väylävirasto,
-Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med flera), alla kontrollerade att
-fungera från webbläsaren. En förinställd källa öppnas, övriga läggs till med ett klick och lagren läses från
+Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med flera), alla prövade från webbläsaren
+hela vägen till ett hämtat objekt. Kartverkets WFS-tjänster ger bara GML och kan inte läsas ännu. En förinställd källa öppnas, övriga läggs till med ett klick och lagren läses från
 tjänsten; filtrera på namn, land eller innehåll. Listan ligger i `presets/geodata/services.json`. Under listan finns
 
 Tre källor hämtar planer: *Plandata.dk (WFS)* och *Skipulagsstofnun skipulagsgögn (ArcGIS)* har knappen **Hämta plan**
@@ -268,13 +268,18 @@ till den sparade datamängden.
 
 | Familj | Upptäckt | Hämtning | Nyckel |
 |---|---|---|---|
-| WFS 2.0 (GeoServer, MapServer, Deegree) | GetCapabilities | GetFeature med `outputFormat=application/json` och `srsName=EPSG:4326`; område (bbox), CQL-filter, kolumner; sidor med `startIndex`/`count` | Bearer (valfritt) |
+| WFS 2.0 (GeoServer, MapServer, ArcGIS Server, Deegree) | GetCapabilities | GetFeature med det GeoJSON-format som kapabiliteterna anger (`application/json`, `GEOJSON` med flera) och `srsName=EPSG:4326`; område (bbox), CQL-filter, kolumner; sidor med `startIndex`/`count`, aldrig större än tjänsten skickar (`CountDefault`) | Bearer (valfritt) |
 | OGC API Features | `/collections` | `/collections/{id}/items` med bbox, datetime och filter; next-länkar följs | Bearer (valfritt; krävs av Lantmäteriets geodataplattform) |
-| ArcGIS REST (FeatureServer, MapServer) | Tjänstens beskrivning eller hela katalogen | `/{lager}/query` med where, område, `f=geojson` och `outSR=4326`; sidor med `resultOffset` | Token (valfritt) |
+| ArcGIS REST (FeatureServer, MapServer) | Tjänstens beskrivning eller hela katalogen med mapparna, och varje tjänsts lager utom grupp- och rasterlager | `/{lager}/query` med where, område, `f=geojson` och `outSR=4326`; sidor med `resultOffset`, aldrig större än `maxRecordCount` | Token (valfritt) |
 
-Förinställda geodatakällor utan nyckel (CORS verifierat): SCB öppna geodata, SGU, Havs- och vattenmyndigheten,
-Riksantikvarieämbetets fornlämningar, Skogsstyrelsen, Kartverkets administrativa enheter och fastighetskarta (Norge)
-samt Statistikcentralen och SYKE (Finland). Lagren läses från tjänsten första gången källan öppnas och kan läsas om med
+Fel som tjänsten själv rapporterar visas med tjänstens text och felkod, till exempel *Service WFS is disabled
+(ServiceUnavailable)* från en avstängd WFS eller ett ArcGIS-fel, och en WFS som inte ger GeoJSON säger vilka format den
+ger. Appen läser inte GML än; välj då en annan tjänst för samma data, till exempel en OGC API Features-tjänst.
+
+Förinställda geodatakällor utan nyckel (CORS verifierat): SCB öppna geodata, SGU:s jordarter (berggrund, brunnar och
+grundvattenmagasin finns i listan), Havs- och vattenmyndigheten, Riksantikvarieämbetets fornlämningar, Skogsstyrelsen,
+Kartverkets administrativa enheter och fastighetskarta (Norge; bara GML, kan inte läsas än) samt Statistikcentralen och
+SYKE:s skyddade områden (Finland). Lagren läses från tjänsten första gången källan öppnas och kan läsas om med
 *Läs om lagren*; listan sparas i din kopia av källan. Lantmäteriets geodataplattform (detaljplaner, byggnader, strandskydd, kulturhistoriska lämningar och gränsen för fjällnära skog) finns som nivå 2 med
 Bearer-nyckel från en ansluten organisation. Boverkets digitala planer får egna funktioner i en kommande version.
 

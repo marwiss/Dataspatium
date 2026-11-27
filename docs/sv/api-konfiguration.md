@@ -73,9 +73,9 @@ CORS; opingogn.is har inget sök-API längre. Egna konfigurationer för sådana 
 proxy eller nyckel enligt nedan.
 
 Geodatakällor (familjen `geodata` med `kind` `wfs`, `ogcapi` eller `arcgis`) levereras utan ändpunkter: lagren läses från
-tjänsten när källan öppnas och sparas i din kopia av konfigurationen. Förinställda: SCB öppna geodata, SGU, Havs- och
-vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen (ArcGIS), Kartverket (administrativa enheter, fastighetskarta),
-Statistikcentralen, SYKE (ArcGIS) och, med nyckel, Lantmäteriets geodataplattform (detaljplaner). Källan *Geodataportalen
+tjänsten när källan öppnas och sparas i din kopia av konfigurationen. Förinställda: SCB öppna geodata, SGU (OGC API Features), Havs- och
+vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen (ArcGIS), Kartverket (administrativa enheter, fastighetskarta;
+bara GML), Statistikcentralen, SYKE (WFS) och, med nyckel, Lantmäteriets geodataplattform (detaljplaner). Källan *Geodataportalen
 (sök geodata)* (familjen `geoportal`, svarsformatet `geonetwork`) söker i den nationella katalogen. Se
 [kallor.md](kallor.md#öppna-geodata).
 
