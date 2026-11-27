@@ -25,7 +25,7 @@
         { "name": "request", "in": "query", "type": "string", "default": "GetFeature", "hidden": true },
         { "name": "outputFormat", "in": "query", "type": "string", "default": "GEOJSON", "hidden": true }
       ],
-      "pagination": { "type": "offset", "param": "startIndex", "sizeParam": "count", "size": 1000, "start": 0, "maxPages": 20 },
+      "pagination": { "type": "offset", "param": "startIndex", "sizeParam": "count", "size": 500, "start": 0, "maxPages": 40 },
       "response": { "format": "geojson" },
       "dataset": { "name": "Naturvårdsregistret" }
     }

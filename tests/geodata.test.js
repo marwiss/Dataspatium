@@ -285,6 +285,14 @@
       assert.ok(s.key && s.kind === 'ogcapi' && /\/sokning\/v1\/[a-z]+\/v1$/.test(s.url), s.id + ': ' + s.url);
     }
     assert.equal(new Set(list.map((s) => s.id)).size, list.length, 'the ids are unique');
+    // The review of 2026-11-27: SCB's workspace, SGU's and Riksantikvaren's OGC APIs, SYKE's GeoServer.
+    assert.equal(byId.get('scb-geodata').url, 'https://geodata.scb.se/geoserver/stat/wfs');
+    for (const id of ['sgu-geodata', 'sgu-berggrund', 'sgu-brunnar', 'sgu-grundvatten']) assert.ok(byId.get(id) && byId.get(id).kind === 'ogcapi' && /^https:\/\/api\.sgu\.se\/oppnadata\/[a-z0-9-]+\/ogc\/features\/v1$/.test(byId.get(id).url), id);
+    assert.ok(!list.some((s) => /maps3\.sgu\.se|kart\.ra\.no|paikkatieto\.ymparisto\.fi\/arcgis/.test(s.url)), 'no switched-off or closed addresses');
+    assert.equal(byId.get('riksantikvaren-kulturminner').url, 'https://api.ra.no/LokaliteterEnkeltminnerOgSikringssoner');
+    for (const s of list) assert.ok(s.about && s.about.sv && s.about.en, s.id + ': a description in Swedish and English');
+    const sgu = JSON.parse(await D.assets.loadText('presets/api/sgu-geodata.api.json'));
+    assert.deepEqual([sgu.family.kind, sgu.baseUrl], ['ogcapi', byId.get('sgu-geodata').url], 'the SGU preset follows the list');
     const stac = JSON.parse(await D.assets.loadText('presets/api/lantmateriet-geodata.api.json'));
     assert.equal(stac.license.name, 'CC BY 4.0', 'the licence the STAC catalogue states');
     return list.length + ' services';
