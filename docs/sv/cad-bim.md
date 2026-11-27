@@ -734,7 +734,10 @@ själv sitt ändringsset innan du ser det och rättar det som hjulet hittar, hö
 
 En modell hämtad från Dataregium publiceras som ny version i Dela med dokumentets basversion, den version du hämtade. Har dokumentet
 fått en nyare version under tiden avvisar servern publiceringen (412 version_conflict); hämta då den nyaste versionen, gör om
-ändringarna och publicera igen. Svaret avgörs av serverns felkod också när en lång kontroll svarar med status 200. Har filen
+ändringarna och publicera igen. Har servern ifcmerge (Dataregium från fas 5.3) sammanfogar den i stället versionen med det som
+kommit under tiden, och den sparade versionen hämtas och blir modellen här; ändrade båda samma sak listar Dela krockarna (basen,
+din och den senaste versionens värde) och säger vad du gör. Svaret avgörs av serverns felkod också när en lång kontroll svarar
+med status 200. Har filen
 återanvänt id som en tidigare version av dokumentet hade, flyttar Dataregium dem över historiken när versionen sparas och anger
 dem i versionens metadata (`ifc_renumbered`); appen hämtar då den sparade versionen och gör den till modellen, som ett steg i
 historiken som kan ångras men inte ingår i receptet, så att nästa ändring bygger på serverns id. Går den inte att hämta pekar

@@ -24,7 +24,7 @@
      */
     function create(ctx, hooks) {
       const { ui, shell, services } = ctx;
-      const s = { connectors: [], connector: null, projects: null, projectId: '', what: 'dataset', format: '', how: 'documents', busy: '', error: '', progress: null, done: '', message: '', messageMax: opencde.MESSAGE_MAX };
+      const s = { connectors: [], connector: null, projects: null, projectId: '', what: 'dataset', format: '', how: 'documents', busy: '', error: '', progress: null, done: '', message: '', messageMax: opencde.MESSAGE_MAX, conflict: null };
       const el = h('div', { class: 'dm-stack' });
       const fail = (err) => { s.error = String((err && err.message) || err); shell.log(s.error, 'error'); };
       const ds = () => hooks.dataset();
@@ -108,7 +108,7 @@
         if (!d || !s.connector || s.busy || (bcfDocument && !s.projectId)) return;
         // A BCF document belongs to the BCF API, BIM och GIS (platform/tier), also capped by the server's own tier.
         if (bcfDocument && !tier.shows('cde.bcf', { server: s.connector.id })) return;
-        s.busy = 'send'; s.error = ''; s.done = ''; s.progress = null; render();
+        s.busy = 'send'; s.error = ''; s.done = ''; s.progress = null; s.conflict = null; render();
         try {
           const file = await fileToSend(d);
           if (!file) { s.busy = ''; render(); return; }
@@ -129,16 +129,22 @@
               // The server moved ids the file reused (Dataregium's safety net): the stored version becomes the model, so that the next
               // change builds on the ids the server keeps. Otherwise the dataset that went back now points at that version.
               let adopted = false;
-              if (same && version.renumbered) {
+              // Merged by the server's ifcmerge with what came between its base and the latest (Dataregium's phase 5.3): the stored
+              // version holds both sides and the server's ids, so it becomes the model as well.
+              if (same && (version.renumbered || version.merged)) {
                 try {
                   await opencde.adoptStored(s.connector, d.id, version);
                   adopted = true;
-                  s.done += ' ' + t('cde.send.renumbered', { n: version.renumbered.count });
-                } catch (err) { D.log('cde', err); s.error = t('cde.send.renumbered.failed', { n: version.renumbered.count, detail: String((err && err.message) || err) }); }
+                  if (version.merged) s.done += ' ' + t('cde.send.merged', { other: String(version.merged.withVersion) });
+                  if (version.renumbered) s.done += ' ' + t('cde.send.renumbered', { n: version.renumbered.count });
+                } catch (err) {
+                  D.log('cde', err);
+                  s.error = version.merged ? t('cde.send.merged.failed', { other: String(version.merged.withVersion), detail: String((err && err.message) || err) }) : t('cde.send.renumbered.failed', { n: version.renumbered.count, detail: String((err && err.message) || err) });
+                }
               }
               // When the stored version could not be fetched, the dataset keeps pointing at the version it came from, so that the server
               // refuses the next version (version_conflict) and Sök ny version offers the stored one.
-              if (same && !adopted && !version.renumbered) {
+              if (same && !adopted && !version.renumbered && !version.merged) {
                 const cde = Object.assign({}, d.source.cde, { versionIndex: Number(version.version_index), reference: version.links && version.links.document_version_download ? version.links.document_version_download.url : d.source.cde.reference, fetchedAt: new Date().toISOString() });
                 await datasets.updateMeta(d.id, { source: Object.assign({}, d.source, { cde }) });
               }
@@ -151,7 +157,12 @@
           }
         } catch (err) {
           if (isCancelled(err)) s.done = t('cde.send.cancelled');
-          else { fail(err); if (err && err.code === 'ifc_validation_failed' && err.report) refusedReport(String(err.report)).catch((e) => D.log('cde', e)); }
+          else {
+            fail(err);
+            if (err && err.code === 'ifc_validation_failed' && err.report) refusedReport(String(err.report)).catch((e) => D.log('cde', e));
+            // The server's ifcmerge found changes on both sides of the same thing (Dataregium's phase 5.3): the panel lists them.
+            if (err && err.code === 'version_conflict' && Array.isArray(err.conflicts)) s.conflict = { keys: err.conflicts, details: Array.isArray(err.conflictDetails) ? err.conflictDetails : [], merge: err.merge || null };
+          }
         }
         s.busy = ''; s.progress = null; render();
       }
@@ -248,9 +259,27 @@
           }
         }
         if (s.error) nodes.push(h('p', { class: 'dm-error', text: s.error }));
+        if (s.conflict) nodes.push(conflictReport(s.conflict));
         if (s.done) nodes.push(h('p', { class: 'dm-success', 'data-cde-done': '', text: s.done }));
         replace(el, h('div', { class: 'dm-card dm-stack' }, nodes));
         renderProgress();
+      }
+      /** A value of the server's conflict in brief: a typed value, a reference, a list or STEP text (Dataregium's conflict_details). */
+      function brief(v) {
+        if (v === null || v === undefined || v === '') return '–';
+        if (typeof v === 'object') { const s = JSON.stringify(v); return s.length > 80 ? s.slice(0, 77) + '…' : s; }
+        const s = String(v); return s.length > 80 ? s.slice(0, 77) + '…' : s;
+      }
+      /** The conflicts ifcmerge found against the latest version, with what to do. */
+      function conflictReport(c) {
+        const latest = c.merge && c.merge.latestVersionIndex ? String(c.merge.latestVersionIndex) : '?';
+        const whole = c.keys.length === 1 && c.keys[0] === '*';
+        const shown = c.details.slice(0, 20);
+        return h('div', { class: 'dm-card dm-stack-sm', 'data-cde-conflicts': String(whole ? 0 : c.keys.length) },
+          h('h4', { text: whole ? t('cde.send.conflict.whole', { latest }) : t('cde.send.conflict.title', { n: c.keys.length, latest }) }),
+          whole ? null : h('ul', { class: 'dm-list dm-xs' }, shown.map((x) => h('li', { class: 'dm-small', text: t('cde.send.conflict.row', { key: String(x.key || ''), op: String(x.op || 'set'), base: brief(x.base), ours: brief(x.ours), theirs: brief(x.theirs) }) }))),
+          !whole && c.keys.length > shown.length ? h('p', { class: 'dm-help dm-xs', text: t('compare.more', { n: i18n.formatNumber(c.keys.length - shown.length) }) }) : null,
+          h('p', { class: 'dm-help dm-small', text: t('cde.send.conflict.hint', { latest }) }));
       }
       function destroy() { progressEl = null; }
 

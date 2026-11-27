@@ -124,6 +124,7 @@
       return Promise.resolve(json({ documents_to_upload: [{ session_file_id: 'f1', upload_file_parts: [{ url: BASE + '/upload-part/1', http_method: 'PUT', content_range_start: 0, content_range_end: half - 1, include_authorization: true }, { url: BASE + '/upload-part/2', http_method: 'PUT', content_range_start: half, content_range_end: size - 1, additional_headers: { values: [{ name: 'X-Part', value: '2' }] } }], upload_completion: { url: BASE + '/documents/1.0/upload-sessions/s1/files/0/complete' }, upload_cancellation: { url: BASE + '/cancel' } }] }));
     }
     if (path.startsWith('/upload-part/')) { world.parts.push({ url: path, size: req.body && req.body.byteLength !== undefined ? req.body.byteLength : (req.body && req.body.size) || 0, headers: req.headers }); return Promise.resolve(text('')); }
+    if (path === '/documents/1.0/upload-sessions/s1/files/0/complete' && world.conflict) return Promise.resolve(json(world.conflict));
     if (path === '/documents/1.0/upload-sessions/s1/files/0/complete') return Promise.resolve(json({ document_id: world.lastDocumentId || 'doc-new', version_index: world.lastDocumentId ? 2 : 1, version_number: world.lastDocumentId ? '2' : '1', title: 'Skickad', links: { document_version_download: { url: BASE + '/documents/1.0/documents/doc-new/versions/1/download' } } }));
     return Promise.resolve({ kind: 'text', data: JSON.stringify({ message: 'Not Found' }), status: 404 });
   });
@@ -361,6 +362,20 @@
         assert.equal(again.files[0].document_id, 'doc-old', 'a new version of the same document');
         assert.equal(again.files[0].message, 'Två nya kommuner', 'with its message');
         assert.equal(/** @type {any} */ (root.querySelector('[data-cde-message]')).value, '', 'and the field is empty again');
+        // The server's ifcmerge found a conflict with the latest version (Dataregium's phase 5.3, here at 200 after the keep-alive):
+        // the panel lists it with what to do.
+        world.conflict = { message: 'Conflict', code: 'version_conflict', conflicts: ['#5.Name'], conflict_details: [{ key: '#5.Name', guid: null, path: null, step_id: 5, attribute: 'Name', op: 'set', base: 'Vägg', theirs: 'Vägg B', ours: 'Vägg C', version_index: 3 }], merge: { base_version_index: 2, latest_version_index: 3 } };
+        root.querySelector('[data-cde-send-version]').click();
+        const report = await waitFor(() => root.querySelector('[data-cde-conflicts]'), 20000, 'the conflict report');
+        assert.equal(report.getAttribute('data-cde-conflicts'), '1');
+        assert.ok(report.textContent.includes(t('cde.send.conflict.title', { n: 1, latest: '3' })) && report.textContent.includes('#5.Name') && report.textContent.includes('Vägg C') && report.textContent.includes('Vägg B'), 'the conflict in words: ' + report.textContent);
+        assert.equal((await datasets.get(table.id)).source.cde.versionIndex, 2, 'the dataset still points at the version it came from');
+        // Files that cannot be merged as text: one key, '*'.
+        world.conflict = { message: 'Conflict', code: 'version_conflict', conflicts: ['*'], conflict_details: [], merge: { base_version_index: 2, latest_version_index: 3 } };
+        root.querySelector('[data-cde-send-version]').click();
+        const whole = await waitFor(() => { const el = root.querySelector('[data-cde-conflicts]'); return el && el.textContent.includes(t('cde.send.conflict.whole', { latest: '3' })) ? el : null; }, 20000, 'the whole-file conflict');
+        assert.equal(whole.getAttribute('data-cde-conflicts'), '0');
+        world.conflict = null;
         assert.equal((await datasets.get(table.id)).source.cde.versionIndex, 2, 'the dataset now points at version 2');
         world.lastDocumentId = null;
         // And as a BCF document, with the name in Content-Disposition.

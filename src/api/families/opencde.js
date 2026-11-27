@@ -463,7 +463,7 @@
     /** The error a body describes (`code`, `message`, `report`, `conflicts`), as the status says it or as the body came at 200. */
     function bodyError(connector, data, status, url) {
       const { code, message, text } = describeError(data);
-      return new http.ApiError(`${connector.name}: ${http.describeStatus(status)}${text ? ' ' + text : ''}`, { kind: 'http', status, url, detail: message, code, report: data && typeof data.report === 'string' ? data.report : undefined, conflicts: data && Array.isArray(data.conflicts) ? data.conflicts.map(String) : undefined, conflictDetails: data && Array.isArray(data.conflict_details) ? data.conflict_details : undefined });
+      return new http.ApiError(`${connector.name}: ${http.describeStatus(status)}${text ? ' ' + text : ''}`, { kind: 'http', status, url, detail: message, code, report: data && typeof data.report === 'string' ? data.report : undefined, conflicts: data && Array.isArray(data.conflicts) ? data.conflicts.map(String) : undefined, conflictDetails: data && Array.isArray(data.conflict_details) ? data.conflict_details : undefined, merge: data && data.merge && typeof data.merge === 'object' ? { baseVersionIndex: Number(data.merge.base_version_index) || null, latestVersionIndex: Number(data.merge.latest_version_index) || null } : undefined });
     }
     /** The status of Dataregium's error codes (its opencde/errors.py), for a refusal that comes as 200 after the keep-alive. */
     const CODE_STATUS = { validation_error: 400, invalid_token: 401, unauthenticated: 401, forbidden: 403, insufficient_scope: 403, not_found: 404, conflict: 409, version_conflict: 412, payload_too_large: 413, upload_too_large: 413, ifc_validation_failed: 422, rate_limited: 429, internal_error: 500, unavailable: 503 };
@@ -1010,10 +1010,15 @@
       if (finished && typeof finished.code === 'string' && finished.code && finished.version_index === undefined) {
         throw bodyError(connector, finished, CODE_STATUS[finished.code] || 400, todo.upload_completion.url);
       }
-      // Dataregium's safety net (its phase 5.0) may move ids the file reused from the document's history above it; the version's
-      // metadata then says which, and the stored file is not the one that went up.
+      // Dataregium's safety net (its phase 5.0) may move ids the file reused from the document's history above it, and from its
+      // phase 5.3 an upload built on an older version is merged with the latest by ifcmerge; the version's metadata then says so
+      // (ifc_renumbered, merged_with_version_index), and the stored file is not the one that went up.
       if (finished && entry.document_id && /\.ifc$/i.test(file.name) && finished.document_id && finished.version_index !== undefined) {
-        try { finished.renumbered = await renumbered(connector, String(finished.document_id), Number(finished.version_index)); } catch (err) { D.log('opencde', 'version metadata after the upload not read', err); }
+        try {
+          const metadata = await versionMetadata(connector, String(finished.document_id), Number(finished.version_index));
+          finished.renumbered = renumberedOf(metadata);
+          finished.merged = mergedOf(metadata);
+        } catch (err) { D.log('opencde', 'version metadata after the upload not read', err); }
       }
       return finished;
     }
@@ -1056,8 +1061,9 @@
      * @param {any} connector @param {string} documentId @param {number} versionIndex
      * @returns {Promise<{pairs: string[], count: number}|null>}
      */
-    async function renumbered(connector, documentId, versionIndex) {
-      const metadata = await versionMetadata(connector, documentId, versionIndex);
+    async function renumbered(connector, documentId, versionIndex) { return renumberedOf(await versionMetadata(connector, documentId, versionIndex)); }
+    /** The moved ids in a version's metadata (see renumbered). @param {any[]} metadata @returns {{pairs: string[], count: number}|null} */
+    function renumberedOf(metadata) {
       const entry = metadata.find((x) => x && x.name === 'ifc_renumbered');
       const pairs = entry ? (Array.isArray(entry.value) ? entry.value : [entry.value]).map(String).filter((p) => /^\d+>\d+$/.test(p)) : [];
       if (!pairs.length) return null;
@@ -1066,7 +1072,17 @@
       return { pairs, count: Number.isFinite(n) && n > pairs.length ? Math.floor(n) : pairs.length };
     }
     /**
-     * The stored version of a model that went up as a new version and came back renumbered: its file becomes the dataset's model,
+     * The version an upload was merged with, when Dataregium's ifcmerge took in what came between its base and the latest (version
+     * metadata `merged_with_version_index`, its phase 5.3); null when it was not merged. @param {any[]} metadata
+     * @returns {{withVersion: number}|null}
+     */
+    function mergedOf(metadata) {
+      const entry = (metadata || []).find((x) => x && x.name === 'merged_with_version_index');
+      const n = entry ? Number(Array.isArray(entry.value) ? entry.value[0] : entry.value) : NaN;
+      return Number.isInteger(n) && n > 0 ? { withVersion: n } : null;
+    }
+    /**
+     * The stored version of a model that went up as a new version and came back renumbered or merged: its file becomes the dataset's model,
      * as an undoable step (data/ifc-ops `ifc_stored`) in the history but not in the recipe, so that the next change and the next
      * version build on the ids the server keeps; the dataset then points at that version, and its facts take the version's highest id.
      * @param {any} connector @param {string} datasetId @param {any} version the DocumentVersion with `renumbered`
@@ -1083,8 +1099,10 @@
       const fileName = (version.file_description && version.file_description.name) || (meta.model && meta.model.file) || 'model.ifc';
       const file = await downloadFile(connector, { reference, filename: fileName });
       const count = version.renumbered ? version.renumbered.count : 0;
+      const label = String(version.version_number || version.version_index);
+      const description = version.merged ? t('cde.stored.merged.log', { version: label, other: String(version.merged.withVersion) }) : t('cde.stored.log', { n: count, version: label });
       D.require('data/ifc-ops').hold(datasetId, new Uint8Array(await file.arrayBuffer()), fileName);
-      await D.require('data/recipes').apply(datasetId, 'ifc_stored', { version: Number(version.version_index), renumbered: count }, { logAction: 'refresh', description: t('cde.stored.log', { n: count, version: String(version.version_number || version.version_index) }) });
+      await D.require('data/recipes').apply(datasetId, 'ifc_stored', { version: Number(version.version_index), renumbered: count }, { logAction: 'refresh', description });
       const next = Object.assign({}, cde, { documentId: String(version.document_id), versionIndex: Number(version.version_index), reference, fetchedAt: new Date().toISOString() });
       await datasets.updateMeta(datasetId, { source: Object.assign({}, meta.source, { cde: next }) });
       await seedStepIds(connector, datasetId, String(version.document_id), Number(version.version_index));
@@ -1345,7 +1363,7 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { addDeployed, ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, hasBcf, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, seedStepIds, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, versionMessage, MESSAGE_MAX, messageMax, gitCommit, renumbered, adoptStored, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
+    return { addDeployed, ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, hasBcf, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, seedStepIds, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, versionMessage, MESSAGE_MAX, messageMax, gitCommit, renumbered, mergedOf, adoptStored, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
       topicMay, projectMay, topicFiles, filesBody, setTopicFiles, modelFile, linkTopic, attachDocument, identity };
   });
 })();

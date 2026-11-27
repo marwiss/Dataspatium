@@ -141,6 +141,33 @@
     return 'ok';
   }, 60000);
 
+  test('cde versions: an upload the server merged with the latest version comes back as the model, and a conflict carries its merge facts (phase 5.3)', async (assert) => {
+    await signedIn();
+    const local = fixtures.ifcText({ walls: 2 });
+    const meta = await importer.run(new File([local], 'hus.ifc', { type: 'application/x-step' }), { format: 'model' }, null, 'Sammanfogad');
+    created.push(meta.id);
+    await datasets.updateMeta(meta.id, { source: Object.assign({}, meta.source || { kind: 'file' }, { cde: { connectorId: connector.id, connectorName: connector.name, host: 'tests', projectId: PROJECT, kind: 'document', documentId: 'doc-r', versionIndex: 1, reference: BASE + '/x' } }) });
+    world.stored = fixtures.ifcText({ walls: 3 });
+    world.metadata = [{ name: 'base_version_index', value: ['1'], data_type: 'integer32' }, { name: 'merged_with_version_index', value: ['1'], data_type: 'integer32' }, { name: 'git_commit', value: ['3f2a9c1d0e8b'], data_type: 'string' }];
+    world.completion = version2();
+    const version = await upload(new File([local], 'hus.ifc'), { documentId: 'doc-r', baseVersionIndex: 1 });
+    assert.deepEqual(version.merged, { withVersion: 1 }, 'the merge is read from the version metadata');
+    assert.equal(version.renumbered, null, 'and nothing was renumbered');
+    await opencde.adoptStored(connector, meta.id, version);
+    assert.equal(new TextDecoder().decode((await model.original(meta.id)).bytes), world.stored, 'the merged version is the model');
+    const entry = (await datasets.log(meta.id)).find((e) => e.action === 'refresh');
+    assert.ok(entry && String(entry.details.description) === t('cde.stored.merged.log', { version: '2', other: '1' }), 'in the history in words: ' + JSON.stringify(entry));
+    assert.equal((await datasets.get(meta.id)).source.cde.versionIndex, 2);
+    // A conflict: the keys, the details and the versions merged against.
+    world.completion = { message: 'Conflict', code: 'version_conflict', conflicts: ['#1012.Name'], conflict_details: [{ key: '#1012.Name', guid: null, path: null, step_id: 1012, attribute: 'Name', op: 'set', base: 'A', theirs: 'B', ours: 'C', version_index: 3 }], merge: { base_version_index: 1, latest_version_index: 3 } };
+    const err = await upload(new File([local], 'hus.ifc'), { documentId: 'doc-r', baseVersionIndex: 1 }).catch((e) => e);
+    assert.ok(err instanceof Error && err.status === 412 && err.code === 'version_conflict', 'refused as a conflict');
+    assert.deepEqual(err.merge, { baseVersionIndex: 1, latestVersionIndex: 3 }, 'with the versions merged against');
+    assert.equal(err.conflictDetails.length, 1);
+    assert.equal(err.conflictDetails[0].ours, 'C');
+    return 'ok';
+  }, 60000);
+
   test('cde versions: a version without the entry is not fetched, and the assistant is not offered the step', async (assert) => {
     await signedIn();
     world.metadata = [{ name: 'file_name', value: ['hus.ifc'], data_type: 'string' }];
