@@ -7,13 +7,47 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'io/importers/access', 'io/importers/documents', 'io/importers/images', 'io/importers/raster', 'io/importers/detaljplan', 'io/importers/graph', 'io/importers/model', 'io/importers/plan-delivery', 'data/plan-delivery', 'data/plan', 'data/types', 'data/datasets', 'platform/tier'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, access, documents, images, raster, detaljplanImp, graphImp, modelImp, deliveryImp, delivery, plan, types, datasets, tier) => {
+  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'io/importers/access', 'io/importers/documents', 'io/importers/images', 'io/importers/raster', 'io/importers/detaljplan', 'io/importers/graph', 'io/importers/model', 'io/importers/plan-delivery', 'io/sniff', 'data/plan-delivery', 'data/plan', 'data/types', 'data/datasets', 'platform/tier'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, access, documents, images, raster, detaljplanImp, graphImp, modelImp, deliveryImp, sniffer, delivery, plan, types, datasets, tier) => {
     // Documents go before the table-in-document importer: a Word or Markdown file is a document unless "tables" is chosen.
     // A TIFF is a raster before it is a picture (the browsers cannot draw TIFF files).
     // The plan importer never detects by extension (resolveImporter sniffs JSON heads for it); it is listed for forced formats.
     const importers = [excel, documents, raster, images, tables, geo, json, xml, sqliteImp, access, shapefile, rFormats, fixedWidth, csv, detaljplanImp, graphImp, modelImp];
     /** Importers that turn one or several files into one dataset of their own kind (documents, rasters, images). */
     const collections = [documents, raster, images];
+
+    /** Whether an importer (or the BCF or QGIS reader) knows the extension of a name; the file's type is not looked at. */
+    function knownName(name) {
+      const bare = { name: String(name || ''), type: '' };
+      return /\.(bcf|bcfzip|qgs|qgz)$/i.test(bare.name) || importers.some((i) => i.detect(bare));
+    }
+    /** Files renamed by their contents, with what they were recognised as; and the recognitions under way. */
+    const recognised = new WeakMap();
+    const pending = new WeakMap();
+    /**
+     * The file as the importers see it (decision F83 a). A name with an extension an importer knows decides, as before.
+     * Otherwise the start of the file is read (io/sniff), and a sure signature gives the file the extension and type of what it
+     * is: the same file under its own name with the extension added (a nameless one under the default name). An unsure one is
+     * returned as it is, and keeps today's way (the person's choice, CSV by default).
+     * @param {File} file @returns {Promise<File>}
+     */
+    function recognise(file) {
+      if (!file || typeof file.slice !== 'function' || recognised.has(file) || knownName(file.name)) return Promise.resolve(file);
+      if (!pending.has(file)) {
+        pending.set(file, (async () => {
+          let found = null;
+          try { found = await sniffer.sniff(file); } catch (err) { D.log('import', err); }
+          if (!found) return file;
+          const renamed = new File([file], `${file.name || D.t('datasets.default.name')}.${found.ext}`, { type: found.type || file.type, lastModified: file.lastModified });
+          const path = /** @type {any} */ (file).webkitRelativePath || /** @type {any} */ (file).dmPath;
+          if (path) /** @type {any} */ (renamed).dmPath = `${path}.${found.ext}`;
+          recognised.set(renamed, found);
+          return renamed;
+        })());
+      }
+      return pending.get(file);
+    }
+    /** What a file's contents were recognised as ({ext, format, type}), or null when its name decided. @param {File} file */
+    function recognisedAs(file) { return recognised.get(file) || null; }
 
     /** @param {File} file @param {string} [forced] importer id */
     function importerFor(file, forced) {
@@ -49,6 +83,7 @@
 
     /** Parse a file to a raw table with the importer its options name (a linked file read again keeps its options). */
     async function parse(file, options = {}) {
+      file = await recognise(file);
       const importer = await resolveImporter(file, options.format);
       if (importer.viaR) throw new Error(D.t('linked.err.viar'));
       return importer.parse(file, options);
@@ -61,6 +96,7 @@
      * @param {Record<string, any>} [options] format, encoding, delimiter, header, sheet, path, decimal
      */
     async function preview(file, options = {}) {
+      file = await recognise(file);
       const importer = await resolveImporter(file, options.format);
       // A file that only a feature of a higher tier reads (platform/tier, `import:<id>`: BCF files) is refused before it is read.
       tier.guard('import:' + importer.id);
@@ -80,6 +116,9 @@
       const inferred = types.inferColumns(columns, p.dataRows, { decimal: options.decimal });
       // Declared types (SQLite schemas) win over inference for empty or ambiguous columns.
       if (p.declaredTypes) inferred.forEach((c, i) => { if (p.declaredTypes[i] && (p.declaredTypes[i] !== 'text' || c.type === 'text')) c.type = p.declaredTypes[i]; });
+      // A file recognised by its contents says so in the preview, with the format it was recognised as.
+      const found = recognisedAs(file);
+      if (found) p.recognised = found.format;
       return Object.assign(p, { importer: importer.id, columns, inferred: inferred.map((c, i) => Object.assign({ include: true, label: columns[i], sourceName: p.columns[i] }, c)) });
     }
 
@@ -143,6 +182,7 @@
      * @returns {Promise<{groups: Array<{importer: string, collection: boolean, files: File[], name?: string}>, skipped: File[], delivery: {importer: string, collection: boolean, files: File[], op: boolean, name: string}|null}>}
      */
     async function sortFiles(files) {
+      files = Array.from(files);
       const collected = new Map(); const singles = []; const skipped = [];
       // An archive package of a plan (a folder with metadata/PREMIS.xml) is read whole: its files are one plan, not a mix.
       const packages = [];
@@ -153,6 +193,8 @@
         packages.push({ importer: 'planarchive', collection: false, files: Array.from(inPackage), name: root });
         files = files.filter((f) => !inPackage.has(f));
       }
+      // The other files by their contents where their names say nothing; a package keeps its paths for its checksums.
+      files = await Promise.all(files.map(recognise));
       for (const file of files) {
         if (JUNK.test(file.name)) continue;
         if (!importers.some((i) => i.detect(file)) && !(await D.require('io/datapackage').sniff(file))) { skipped.push(file); continue; }
@@ -205,12 +247,14 @@
      * @param {File[]} files @param {any} options @param {string} [name] @param {Function} [progress]
      */
     async function runFiles(files, options = {}, name, progress) {
+      files = await Promise.all(Array.from(files || []).map(recognise));
       const importer = collectionFor(files, options.format);
       if (!importer) throw new Error(D.t('import.err.collection'));
       return importer.importFiles(files, options, name, progress);
     }
 
     async function run(file, options, specs, name, progress) {
+      file = await recognise(file);
       const importer = await resolveImporter(file, options.format);
       tier.guard('import:' + importer.id);
       // A document or image keeps its kind and its files; the column step does not apply to it.
@@ -319,6 +363,6 @@
       return { kind: 'text', columns, dataRows: table.rows.slice(0, 100), header: table.meta.header, delimiter: table.meta.delimiter, totalRows: table.rows.length, importer: 'csv', inferred: inferred.map((c, i) => Object.assign({ include: true, label: columns[i], sourceName: table.columns[i] }, c)) };
     }
 
-    return { importers, importerFor, preview, parse, run, runText, runFiles, collectionFor, sortFiles, runSorted, folderOf, runPreset, previewText, materialize, baseName };
+    return { importers, importerFor, recognise, recognisedAs, preview, parse, run, runText, runFiles, collectionFor, sortFiles, runSorted, folderOf, runPreset, previewText, materialize, baseName };
   });
 })();

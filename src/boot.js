@@ -242,6 +242,7 @@
     'src/io/importers/model.js',
     'src/io/importers/bcf.js',
     'src/io/importers/qgis.js',
+    'src/io/sniff.js',
     'src/io/import.js',
     'src/data/linked-files.js',
     'src/io/export.js',

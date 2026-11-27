@@ -615,6 +615,9 @@
        */
       async function chooseFiles(list) {
         if (!list || !list.length) return;
+        // A file whose name has no extension the app knows is recognised by its contents first (io/import recognise, F83 a);
+        // the files of an archive package keep their paths, which its checksums name (io/import sortFiles reads the rest).
+        if (!D.require('io/importers/plan-archive').isPackage(list)) list = await Promise.all(Array.from(list).map((f) => services.importer.recognise(f)));
         // A form or rows from the field are not a table to read: they go where bundles go.
         if (list.length === 1 && /\.(insamling|formular)\.zip$/i.test(list[0].name)) { await D.require('ui/share/bundle').receiveFile(ctx, list[0]); return; }
         // A QGIS project (with or without its data files) becomes a map view, not a dataset; the map view belongs to BIM och GIS.
@@ -805,7 +808,7 @@
       async function pickLinked() {
         try {
           const { handle, file } = await linked.pick();
-          wiz.file = file; wiz.files = []; wiz.handle = handle; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; wiz.options.plan = undefined; wiz.options.layers = undefined; wiz.nameFromPlan = false;
+          wiz.file = await services.importer.recognise(file); wiz.files = []; wiz.handle = handle; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; wiz.options.plan = undefined; wiz.options.layers = undefined; wiz.nameFromPlan = false;
           await runPreview();
         } catch (err) { if (!err || err.name !== 'AbortError') { wiz.error = (err && err.message) || String(err); render(); } }
       }
@@ -888,6 +891,8 @@
         const p = wiz.preview;
         const left = h('div', { class: 'dm-stack' });
         if (wiz.file) left.appendChild(h('p', { class: 'dm-help', text: t('import.file', { name: wiz.file.name, size: i18n.formatBytes(wiz.file.size) }) }));
+        // A file recognised by its contents, since its name has no extension the app knows (F83 a).
+        if (wiz.file && p && p.recognised) left.appendChild(h('p', { class: 'dm-help dm-small', 'data-import-recognised': '', text: t('import.recognised', { format: p.recognised }) }));
         const sense = p ? senseCard(p) : null;
         if (sense) left.appendChild(sense);
         // A coordinate system the app cannot convert: said before the import (the places would otherwise land in the wrong place).

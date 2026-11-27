@@ -5079,6 +5079,7 @@
     'import.sense.table': 'This is a table. Columns: {n}.',
     'import.sense.where': 'The places are around {name}.',
     'import.sense.where.none': 'The middle of the places is outside the municipal boundaries that come with the app.',
+    'import.recognised': 'Recognised by its contents as {format}, since the name has no file extension the app knows.',
     'import.q.swap': 'Swap {a} and {b}',
     'import.q.swap.hint': 'The values look as if they have changed places: in the Nordic countries the latitude is larger than the longitude. The map shows what the choice does.',
     'import.q.swap.hint.projected': '{a} looks like north, which is common in Swedish coordinates. The map shows what the choice does.',

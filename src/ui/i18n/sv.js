@@ -5101,6 +5101,7 @@
     'import.sense.table': 'Det här är en tabell. Kolumner: {n}.',
     'import.sense.where': 'Platserna ligger runt {name}.',
     'import.sense.where.none': 'Platsernas mitt ligger utanför de kommungränser som följer med appen.',
+    'import.recognised': 'Känd igen på innehållet som {format}, eftersom namnet saknar en filändelse som appen känner till.',
     'import.q.swap': 'Byt plats på {a} och {b}',
     'import.q.swap.hint': 'Värdena ser ut att ha bytt plats: i Norden är latituden större än longituden. Kartan visar vad valet gör.',
     'import.q.swap.hint.projected': '{a} ser ut att vara norr, som är vanligt i svenska koordinater. Kartan visar vad valet gör.',

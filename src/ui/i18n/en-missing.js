@@ -190,6 +190,7 @@
     'flows.block.error': 'could not be checked beforehand: {message}',
     'flows.start.hint': 'Run the flow by hand once, or allow what is missing under Manage, Workspace, Internet access.',
     'review.part.attribution': 'The raster\'s attribution holds personal data: {names}',
+    'import.recognised': 'Recognised by its contents as {format}, since the name has no file extension the app knows.',
     'plan.archive.download.hint': 'Downloads the file; only PDF files and pictures open in a new tab',
     'import.format.opdelivery': 'Digital comprehensive plan (GeoPackage with text document, ZIP)',
     'plan.format.oversiktsplan-leverans': 'Digital comprehensive plan (GeoPackage and text document)',
