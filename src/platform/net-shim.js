@@ -57,7 +57,7 @@
   }
   /**
    * Record one request: counted while in flight, with url, method, status and duration in the log. The returned function ends it
-   * once, with the HTTP status (anything else counts as an error).
+   * once, with the HTTP status, or 'redirect' for a redirect that was not followed (anything else counts as an error).
    * @param {string} url @param {string} [method] @returns {(status: any) => void}
    */
   function record(url, method) {
@@ -72,7 +72,7 @@
       open = false;
       activity.active--;
       entry.ms = Date.now() - entry.at;
-      entry.status = typeof status === 'number' ? status : 'error';
+      entry.status = typeof status === 'number' ? status : status === 'redirect' ? 'redirect' : 'error';
       notify();
     };
   }

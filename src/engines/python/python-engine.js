@@ -12,10 +12,12 @@
  *
  * Python code in this worker reaches the internet only through the worker's fetch, after the user's consent. The worker shim runs
  * with net 'fetch' (platform/worker-shim): a fetch to anything but an asset, a blob or a data URL asks this thread first (the
- * provider's `net`, allowNet below) and sends the very Request it asked about once the answer allows that address; the browser
- * then follows the server's redirects. pyodide.http.pyfetch, micropip and js.fetch go that way, and so do requests and urllib3 in
- * code run through runPythonAsync (the console, notebooks, charts) where the browser has JSPI (Edge, Chrome), since urllib3 then
- * uses fetch. Sockets and XMLHttpRequest are refused with a message that points to pyfetch: socket, urllib.request and
+ * provider's `net`, allowNet below) and sends the very Request it asked about once the answer allows that address's host (F102 a:
+ * Python code reaching the internet, per host; components only for Pyodide's and PyPI's pinned addresses). A redirect is not
+ * followed, since the browser hides where it leads until it has gone there: the code gets an error that names the address and can
+ * ask for the final one, whose host is then asked about. pyodide.http.pyfetch, micropip and js.fetch go that way, and so do
+ * requests and urllib3 in code run through runPythonAsync (the console, notebooks, charts) where the browser has JSPI (Edge,
+ * Chrome), since urllib3 then uses fetch. Sockets and XMLHttpRequest are refused with a message that points to pyfetch: socket, urllib.request and
  * http.client over http://, pyodide.http.open_url and pyxhr, js.XMLHttpRequest, importScripts with an address, and requests
  * without JSPI or in recipe and model steps, which run synchronously through runPython (urllib3 then falls back to
  * XMLHttpRequest). With https://, urllib.request stops at "unknown url type: https" and http.client has no HTTPSConnection, as
@@ -253,7 +255,7 @@
           net: (url, options) => this.allowNet(url, options),
         });
         this.netRefused = false;
-        this.worker = D.workers.create({ namespace: 'pyodide', source: D.workers.functionSource(dataspatiumPythonWorker), name: 'python', net: 'fetch', netText: D.t('python.net.blocked') });
+        this.worker = D.workers.create({ namespace: 'pyodide', source: D.workers.functionSource(dataspatiumPythonWorker), name: 'python', net: 'fetch', netText: D.t('python.net.blocked'), redirectText: D.t('python.net.redirect') });
         this.worker.onmessage = (ev) => this.onMessage(ev.data);
         this.worker.onerror = (ev) => this.fail(new Error('Python worker: ' + ((ev && ev.message) || 'error')));
         this.interruptible = !!(D.capabilities && D.capabilities.sharedArrayBuffer);
@@ -281,8 +283,9 @@
       }
 
       /**
-       * Python code wants to fetch `url` (pyfetch, micropip, js.fetch, requests through fetch): allowed with the user's consent.
-       * The worker then sends the very Request it asked about (the browser follows the server's redirects); the call shows in the
+       * Python code wants to fetch `url` (pyfetch, micropip, js.fetch, requests through fetch): allowed with the user's consent,
+       * for its host. The worker then sends the very Request it asked about without following a redirect, since the browser would
+       * not show where one leads before going there (platform/worker-shim); the call shows in the
        * network log (platform/workers), with the end and status the worker reports. After a refusal the worker's further questions
        * are refused unasked until the next command (see netRefused); `wanted()` drops a question whose worker has ended. While a
        * command nobody watches is the last one (unattended), nothing is asked: only a consent already kept lets it through.
@@ -290,8 +293,9 @@
        */
       async allowNet(url, options = {}) {
         if (this.netRefused) { D.log('python', 'internet access refused, as earlier in this command', url); return false; }
-        // The one place that says which consent covers Python's internet.
-        const purpose = 'components';
+        // The one place that says which consent covers Python's internet (F102 a): components for the pinned addresses only, and
+        // otherwise Python code reaching the internet, asked and remembered per host.
+        const purpose = catalog.pinnedNet(url) ? 'components' : 'python';
         try { await consent.require(purpose, { host: consent.hostOf(url), label: String(url), wanted: options.wanted, ask: this.unattended ? false : undefined }); return true; }
         catch (err) {
           if (err && err.name === 'ConsentError') this.netRefused = true;

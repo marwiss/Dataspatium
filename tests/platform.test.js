@@ -311,6 +311,45 @@
     return 'asked ' + asked.length + ', logged ' + logged.length;
   }, 30000);
 
+  /** Fetches the address it is sent three ways (following, with redirect 'manual', and the final address) and reports each. */
+  function dataspatiumRedirectProbeWorker() {
+    self.onmessage = function (ev) {
+      var url = ev.data;
+      var out = {};
+      fetch(url).then(function (r) { out.follow = 'read ' + r.status; }, function (e) { out.follow = e.message; })
+        .then(function () { return fetch(url, { redirect: 'manual' }).then(function (r) { out.manual = r.type; }, function (e) { out.manual = e.message; }); })
+        .then(function () { return fetch(url + '/').then(function (r) { out.final = r.status; }, function (e) { out.final = e.message; }); })
+        .then(function () { self.postMessage(out); });
+    };
+  }
+
+  test('worker shim: with net fetch, an allowed call that the server redirects is not followed: it fails with a message naming the address, the network log says redirect, and the final address is a question of its own', async (assert) => {
+    // A redirect needs a web server: the test server answers a folder without its slash with one (from file:// it cannot be made).
+    if (!/^https?:$/.test(location.protocol)) return 'skipped: needs the page from a web server, whose folder redirect is the only one the suite can make';
+    const folder = new URL('.', location.href).href.replace(/\/$/, '');
+    const asked = [];
+    const t0 = Date.now();
+    D.workers.provider('tests-redirect', { initial: async () => [], net: async (url) => { asked.push(url); return true; } });
+    const worker = D.workers.create({ namespace: 'tests-redirect', source: D.workers.functionSource(dataspatiumRedirectProbeWorker), net: 'fetch', netText: 'Ingen internet ({api}).', redirectText: 'Omdirigerad: {url}' });
+    let out;
+    try {
+      out = await new Promise((resolve, reject) => {
+        worker.onmessage = (ev) => resolve(ev.data);
+        worker.onerror = (ev) => reject(new Error('worker error: ' + ev.message));
+        worker.postMessage(folder);
+        setTimeout(() => reject(new Error('worker timeout')), 15000);
+      });
+    } finally { worker.terminate(); }
+    assert.equal(out.follow, 'Omdirigerad: ' + folder, 'the redirect is not followed, and the message names the address');
+    assert.equal(out.manual, 'opaqueredirect', 'code that asks for redirect manual gets the opaque redirect, which reaches no other address');
+    assert.equal(out.final, 200, 'the final address goes out');
+    assert.deepEqual(asked, [folder, folder, folder + '/'], 'and was asked about as its own address');
+    const logged = D.net.log().filter((e) => e.at >= t0 && e.url.startsWith(folder));
+    assert.equal(logged.length, 3, 'all three are in the network log');
+    assert.equal(logged[0].status, 'redirect', 'the one not followed says so: ' + JSON.stringify(logged.map((e) => e.status)));
+    return 'ok';
+  }, 30000);
+
   // ================================================================================================================================
   // REVIEWED WORKER GLOBALS: every name a restricted worker (net 'none' or 'fetch') may show on self and its prototype chain, and as
   // navigator.<name> on its navigator. A name is reviewed when it reaches neither the network nor the app's storage or tabs, or when

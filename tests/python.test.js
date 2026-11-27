@@ -28,16 +28,26 @@
     localStorage.removeItem('dataspatium.consent');
     try { return await fn(); } finally { if (saved !== null) localStorage.setItem('dataspatium.consent', saved); }
   }
-  /** With the override off and components not yet answered, every question goes to `asker`; all is put back afterwards. */
+  /**
+   * With the override off and components and Python code reaching the internet not yet answered (no host kept either), every
+   * question goes to `asker`; all is put back afterwards.
+   */
   async function withAsker(asker, fn) {
     const consent = D.require('platform/consent');
     return withoutOverride(async () => {
-      const before = await consent.state('components');
+      const before = { components: await consent.state('components'), python: await consent.state('python') };
+      const hosts = await consent.hosts('python');
       try {
-        await consent.set('components', null);
+        for (const p of Object.keys(before)) await consent.set(p, null);
+        for (const x of hosts) await consent.setHost('python', x.host, null);
         consent.setAsker(asker);
         return await fn();
-      } finally { consent.setAsker(null); await consent.set('components', before); }
+      } finally {
+        consent.setAsker(null);
+        for (const [p, v] of Object.entries(before)) await consent.set(p, v);
+        for (const x of await consent.hosts('python')) await consent.setHost('python', x.host, null);
+        for (const x of hosts) await consent.setHost('python', x.host, x.state);
+      }
     });
   }
   let real = false;
@@ -432,7 +442,37 @@
     return (out.isolated ? 'isolated' : 'not isolated') + ', ' + (out.jspi ? 'JSPI: fetch' : 'no JSPI: XMLHttpRequest') + '; step: XMLHttpRequest';
   }, 300000);
 
-  test('python: pyfetch to the internet asks for consent for components with the host, is refused when the person says no, and shows in the network log when allowed', async (assert) => {
+  test('python: Python code reaches the internet under its own consent, asked per host, and components cover only the pinned addresses of Pyodide on jsDelivr and of PyPI', async (assert) => {
+    // No Pyodide: the engine's choice of consent, with a worker that only takes the requests.
+    const { PythonEngine } = D.require('engines/python');
+    const consent = D.require('platform/consent');
+    const engine = new PythonEngine();
+    engine.worker = { postMessage() {}, terminate() {} };
+    const asked = [];
+    const out = await withAsker(async (purpose, info) => { asked.push([purpose, info.host]); return { allow: true, remember: purpose === 'python' }; }, async () => {
+      const urls = [
+        catalog.BASE + 'pyodide-lock.json', 'https://pypi.org/simple/requests/', 'https://pypi.org/pypi/requests/json',
+        'https://files.pythonhosted.org/packages/aa/bb/x-1.0-py3-none-any.whl',
+        'https://data.example.invalid/a.csv', 'https://data.example.invalid/b.csv', 'https://other.example.invalid/c.json',
+        'https://cdn.jsdelivr.net/npm/anything@1/x.js', catalog.BASE + '../../npm/x/y.js', 'http://pypi.org/simple/requests/',
+        'https://user:pw@pypi.org/simple/requests/', 'https://pypi.org.example.invalid/simple/requests/',
+      ];
+      const seen = [];
+      for (const u of urls) seen.push(await engine.allowNet(u));
+      return { seen, kept: await consent.hosts('python') };
+    });
+    engine.worker = null;
+    assert.ok(out.seen.every((x) => x === true), 'all allowed by the stub: ' + JSON.stringify(out.seen));
+    assert.deepEqual(asked.filter((a) => a[0] === 'components').map((a) => a[1]), ['cdn.jsdelivr.net', 'pypi.org', 'pypi.org', 'files.pythonhosted.org'],
+      'components covers the pinned addresses (each asked, since the stub keeps no yes for components): ' + JSON.stringify(asked));
+    assert.deepEqual(asked.filter((a) => a[0] === 'python').map((a) => a[1]), ['data.example.invalid', 'other.example.invalid', 'cdn.jsdelivr.net', 'pypi.org', 'pypi.org.example.invalid'],
+      'every other address is Python code reaching the internet, asked once per host, also jsDelivr outside Pyodide, PyPI over http or with a password, and a look-alike host');
+    assert.deepEqual(out.kept.map((x) => x.host + ' ' + x.state), ['cdn.jsdelivr.net granted', 'data.example.invalid granted', 'other.example.invalid granted', 'pypi.org granted', 'pypi.org.example.invalid granted'], 'and kept per host');
+    assert.equal(catalog.pinnedNet('https://cdn.jsdelivr.net/pyodide/v0.0.1/full/x'), false, 'another Pyodide version is not pinned');
+    return 'ok';
+  });
+
+  test('python: pyfetch to the internet asks for consent for Python code reaching the internet with the host, is refused when the person says no, and shows in the network log when allowed', async (assert) => {
     if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them from jsDelivr)';
     await bridge.start();
     // Port 9 on this computer, which browsers refuse anyway: even a broken gate reaches no server.
@@ -455,7 +495,7 @@
       return { refused, allowed };
     });
     assert.ok(out.refused && out.refused[0] === 'AbortError' && out.refused[1].includes('internet access was not allowed for http://127.0.0.1:9/'), 'refused at the gate: ' + JSON.stringify(out.refused));
-    assert.deepEqual(asked, [['components', '127.0.0.1:9', 'http://127.0.0.1:9/'], ['components', '127.0.0.1:9', 'http://127.0.0.1:9/allowed']], 'the person was asked for components, with the host and the address');
+    assert.deepEqual(asked, [['python', '127.0.0.1:9', 'http://127.0.0.1:9/'], ['python', '127.0.0.1:9', 'http://127.0.0.1:9/allowed']], 'the person was asked for Python code reaching the internet, with the host and the address');
     assert.ok(out.allowed && out.allowed[0] === 'AbortError' && !out.allowed[1].includes('not allowed'), 'once allowed the request went to the browser, which refuses port 9: ' + JSON.stringify(out.allowed));
     const logged = D.net.log().filter((e) => e.at >= t0 && e.url.startsWith('http://127.0.0.1:9/'));
     assert.deepEqual(logged.map((e) => [e.method, e.url, e.status]), [['GET', 'http://127.0.0.1:9/allowed', 'error']], 'only the allowed call is in the network log, ended');
@@ -486,7 +526,7 @@
     assert.ok(out.unattended && out.unattended[0] === 'AbortError' && out.unattended[1].includes('not allowed'), 'refused at the gate: ' + JSON.stringify(out.unattended));
     assert.equal(out.before, 0, 'nothing asked for the command nobody watches');
     assert.ok(out.marked === true && out.cleared === false, 'the engine knew whose command it was');
-    assert.deepEqual(asked, [['components', '127.0.0.1:9', 'http://127.0.0.1:9/mine']], 'the next command someone runs asks');
+    assert.deepEqual(asked, [['python', '127.0.0.1:9', 'http://127.0.0.1:9/mine']], 'the next command someone runs asks');
     return 'ok';
   }, 300000);
 

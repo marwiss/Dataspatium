@@ -305,8 +305,22 @@
       return true;
     }
 
+    /**
+     * The pinned addresses Python code may reach under the consent for components (F102 a): Pyodide's own files on jsDelivr and
+     * PyPI for micropip (its index and its files). Every other address is Python code reaching the internet, asked per host.
+     */
+    const PINNED_NET = [BASE, 'https://pypi.org/simple/', 'https://pypi.org/pypi/', 'https://files.pythonhosted.org/packages/'];
+    /** Whether `url` lies under one of the pinned addresses (https, no user name or password). @param {string} url */
+    function pinnedNet(url) {
+      let u;
+      try { u = new URL(String(url)); } catch (_e) { return false; }
+      if (u.protocol !== 'https:' || u.username || u.password) return false;
+      const at = u.origin + u.pathname;
+      return PINNED_NET.some((p) => at.startsWith(p));
+    }
+
     function reset() { index = null; importMap = new Map(); provided.clear(); verifiedFiles.clear(); }
 
-    return { VERSION, BASE, PREFIX, INDEX_URL, RUNTIME, RUNTIME_SIZE, STARTUP, EXTRA, VENDORED, IFC_VERSION, IFC_WHEELS, IFC_SIZE, parse, load, has, info, all, referenced, closure, ensureRuntime, ensurePackages, provideFile, cachedRuntime, cachedPackages, provided: () => Array.from(provided), reset };
+    return { VERSION, BASE, PREFIX, INDEX_URL, RUNTIME, RUNTIME_SIZE, STARTUP, EXTRA, VENDORED, IFC_VERSION, IFC_WHEELS, IFC_SIZE, PINNED_NET, pinnedNet, parse, load, has, info, all, referenced, closure, ensureRuntime, ensurePackages, provideFile, cachedRuntime, cachedPackages, provided: () => Array.from(provided), reset };
   });
 })();

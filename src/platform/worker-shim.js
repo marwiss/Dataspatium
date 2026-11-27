@@ -171,10 +171,11 @@ function dataspatiumMakeXHR(RealXHR, lookupSync, lookupAsync, assetName, mimeFor
  * and the legacy file system read as undefined, ignoring assignments, and navigator is a frozen copy of what the engines read.
  * 'fetch' (Python) is the same, except that fetch asks the main thread first, which asks for the user's consent
  * (platform/workers, the namespace's `net`), and that Worker and SharedWorker are stand-ins that start nothing.
- * `config.netText` is the message, in the user's language, with {api} for the refused interface. Without `net` nothing changes.
+ * `config.netText` is the message, in the user's language, with {api} for the refused interface, and `config.redirectText` the one
+ * for a redirect that net 'fetch' does not follow, with {url}. Without `net` nothing changes.
  * The checks call only built-ins taken before the hosted code runs, and fetch and importScripts replace the native ones on the
  * prototype too, so that code in the worker can neither bend a check nor reach around it.
- * @param {{namespace: string, name?: string, net?: 'none'|'fetch', netText?: string}} config
+ * @param {{namespace: string, name?: string, net?: 'none'|'fetch', netText?: string, redirectText?: string}} config
  * @param {typeof dataspatiumMakeXHR} makeXHR
  */
 function dataspatiumWorkerShim(config, makeXHR) {
@@ -191,7 +192,9 @@ function dataspatiumWorkerShim(config, makeXHR) {
   var toStr = String;
   var requestUrl = getter(NativeRequest.prototype, 'url');
   var requestMethod = getter(NativeRequest.prototype, 'method');
+  var requestRedirect = getter(NativeRequest.prototype, 'redirect');
   var responseStatus = getter(Response.prototype, 'status');
+  var responseType = getter(Response.prototype, 'type');
   var messageData = getter(MessageEvent.prototype, 'data');
   // isTrusted is an own, unforgeable property of each event; its getter refuses anything that is not a genuine event.
   var isTrusted = getter(new Event('message'), 'isTrusted') || getter(Event.prototype, 'isTrusted');
@@ -434,7 +437,13 @@ function dataspatiumWorkerShim(config, makeXHR) {
   // net 'fetch': questions to the main thread, by id, out of reach of the hosted code.
   var asking = Object.create(null);
   var askSeq = 0;
-  /** Ask the main thread whether `req` may go out; fetch exactly that Request when the trusted answer allows its address. */
+  /**
+   * Ask the main thread whether `req` may go out; fetch exactly that Request when the trusted answer allows its address. The
+   * consent is for that address's host, and the browser shows where a redirect leads only after it has gone there, so a Request
+   * that would follow redirects is sent with redirect 'manual': a redirect then ends the call with an error that names the address
+   * (config.redirectText), and the code may ask for the final address itself, which is asked about in turn. One that asks for
+   * 'manual' or 'error' itself is sent as it is; neither reaches another host.
+   */
   function askFirst(req, url) {
     var id = ++askSeq;
     var entry = { url: url, ticket: null, resolve: null };
@@ -443,10 +452,16 @@ function dataspatiumWorkerShim(config, makeXHR) {
     send({ type: 'net', id: id, url: url, method: requestMethod(req) });
     return then(answer, function (ok) {
       if (ok !== true) throw new TypeError('Dataspatium: internet access was not allowed for ' + url);
-      var res = realFetch(req);
-      then(res, function (r) { send({ type: 'net-done', ticket: entry.ticket, status: responseStatus(r) }); },
-        function () { send({ type: 'net-done', ticket: entry.ticket, status: null }); });
-      return res;
+      var follows = requestRedirect(req) === 'follow';
+      var manual = Object.create(null);
+      manual.redirect = 'manual';
+      var res = realFetch(follows ? new NativeRequest(req, manual) : req);
+      return then(res, function (r) {
+        var redirected = follows && responseType(r) === 'opaqueredirect';
+        send({ type: 'net-done', ticket: entry.ticket, status: redirected ? 'redirect' : responseStatus(r) });
+        if (redirected) throw new TypeError(String(config.redirectText || 'Dataspatium: {url} redirects to another address, which is not followed.').replace('{url}', url));
+        return r;
+      }, function (err) { send({ type: 'net-done', ticket: entry.ticket, status: null }); throw err; });
     });
   }
   // With config.net the browser turns the input into a Request once; the address read from it is the one decided on, asked about

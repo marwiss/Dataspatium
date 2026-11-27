@@ -163,11 +163,11 @@
   globalThis.Worker = /** @type {any} */ (DataspatiumWorker);
 
   /**
-   * Create one of Dataspatium's own shimmed workers; `net` and `netText` go to the shim (see platform/worker-shim).
-   * @param {{namespace: string, source: string, name?: string, net?: 'none'|'fetch', netText?: string}} options
+   * Create one of Dataspatium's own shimmed workers; `net`, `netText` and `redirectText` go to the shim (see platform/worker-shim).
+   * @param {{namespace: string, source: string, name?: string, net?: 'none'|'fetch', netText?: string, redirectText?: string}} options
    */
   function create(options) {
-    const config = { namespace: options.namespace, name: options.name || options.namespace, net: options.net, netText: options.netText };
+    const config = { namespace: options.namespace, name: options.name || options.namespace, net: options.net, netText: options.netText, redirectText: options.redirectText };
     const text = D.workerShim.buildWorkerSource(config, options.source);
     const url = URL.createObjectURL(new Blob([text], { type: 'text/javascript' }));
     const worker = /** @type {any} */ (new DataspatiumWorker(url, { name: options.name || options.namespace }));
