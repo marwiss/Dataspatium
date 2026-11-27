@@ -27,7 +27,7 @@
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   async function waitFor(fn, timeoutMs = 5000, label = 'condition') {
     const t0 = performance.now();
-    for (;;) { if (fn()) return; if (performance.now() - t0 > timeoutMs) throw new Error('timeout waiting for ' + label); await wait(50); }
+    for (;;) { const v = fn(); if (v) return v; if (performance.now() - t0 > timeoutMs) throw new Error('timeout waiting for ' + label); await wait(50); }
   }
   const CSV = 'kommun;lan;ar;befolkning;kon\nStockholm;Stockholms län;2023;984748;T\nGöteborg;Västra Götalands län;2023;596841;T\nMalmö;Skåne län;2023;362133;T\nStockholm;Stockholms län;2024;995574;T\nGöteborg;Västra Götalands län;2024;608993;T\nMalmö;Skåne län;2024;365644;T\n';
   /** Run with the developer override off (the test page turns it on so that no dialog blocks the suite). */
@@ -481,7 +481,8 @@
       await plotly.toBlob(fig, 'png', { width: 200, height: 100 });
       assert.ok(!/href/.test(JSON.stringify(drawn[0])), 'an export keeps links as text');
       const html = await plotly.htmlFor('p1', fig);
-      assert.ok(!/href/.test(html) && html.includes('\\u003ca>rapport'), 'published HTML keeps links as text: ' + html.slice(0, 400));
+      // Without links an <a> keeps only a checked colour (style="color:…"), never an address.
+      assert.ok(!/href/.test(html) && /\\u003ca( style=\\"color:[a-z]+\\")?>rapport\\u003c\/a>/.test(html), 'published HTML keeps links as text: ' + html.slice(0, 400));
     } finally { if (real) globalThis.Plotly = real; else delete globalThis.Plotly; }
     return 'ok';
   });
