@@ -33,7 +33,7 @@ Dataspatium.assets.addEntries({
  "presets/api/avoindata-fi.api.json": {
   "file": "presets/api/avoindata-fi.api.json.js",
   "encoding": "text",
-  "size": 5566,
+  "size": 5572,
   "library": "dataspatium"
  },
  "presets/api/boverket-energideklarationer.api.json": {
@@ -153,7 +153,7 @@ Dataspatium.assets.addEntries({
  "presets/api/kolada.api.json": {
   "file": "presets/api/kolada.api.json.js",
   "encoding": "text",
-  "size": 16106,
+  "size": 16144,
   "library": "dataspatium"
  },
  "presets/api/kuntien-avainluvut.api.json": {
@@ -189,7 +189,7 @@ Dataspatium.assets.addEntries({
  "presets/api/luftkvalitet.api.json": {
   "file": "presets/api/luftkvalitet.api.json.js",
   "encoding": "text",
-  "size": 8785,
+  "size": 8240,
   "library": "dataspatium"
  },
  "presets/api/met-locationforecast.api.json": {
@@ -201,7 +201,7 @@ Dataspatium.assets.addEntries({
  "presets/api/naturvardsregistret.api.json": {
   "file": "presets/api/naturvardsregistret.api.json.js",
   "encoding": "text",
-  "size": 5832,
+  "size": 5849,
   "library": "dataspatium"
  },
  "presets/api/nordic-statistics.api.json": {
@@ -291,7 +291,7 @@ Dataspatium.assets.addEntries({
  "presets/api/smhi-metobs.api.json": {
   "file": "presets/api/smhi-metobs.api.json.js",
   "encoding": "text",
-  "size": 13816,
+  "size": 13920,
   "library": "dataspatium"
  },
  "presets/api/socialstyrelsen.api.json": {
@@ -357,7 +357,7 @@ Dataspatium.assets.addEntries({
  "presets/api/worldbank.api.json": {
   "file": "presets/api/worldbank.api.json.js",
   "encoding": "text",
-  "size": 8707,
+  "size": 6684,
   "library": "dataspatium"
  },
  "presets/geo/fylker-no.geojson": {
@@ -585,13 +585,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/api-konfiguration.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 21328,
+  "size": 21669,
   "library": "dataspatium"
  },
  "docs/sv/kallor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 29782,
+  "size": 29852,
   "library": "dataspatium"
  },
  "docs/sv/snabbstart.md": {
@@ -1599,13 +1599,13 @@ Dataspatium.assets.addEntries({
  "docs/en/api-konfiguration.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 21975,
+  "size": 22295,
   "library": "dataspatium"
  },
  "docs/en/kallor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 29618,
+  "size": 29694,
   "library": "dataspatium"
  },
  "docs/en/snabbstart.md": {

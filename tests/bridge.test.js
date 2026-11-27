@@ -218,7 +218,7 @@
     }
   });
 
-  test('bridge: Riksbanken and the World Bank need the bridge, and their tables come through it', async (assert) => {
+  test('bridge: Riksbanken needs the bridge, and its tables and the pages of the World Bank come through it', async (assert) => {
     const connectors = D.require('api/connectors');
     const reach = D.require('api/reach');
     const schema = D.require('api/schema');
@@ -226,7 +226,10 @@
     const wb = await connectors.get('worldbank');
     assert.ok(rb && wb, 'both presets');
     assert.equal(schema.validate(rb).length + schema.validate(wb).length, 0, 'both validate');
-    assert.equal(reach.blocked(rb, 'file'), 'bridge'); assert.equal(reach.blocked(wb, 'web'), 'bridge');
+    assert.equal(reach.blocked(rb, 'file'), 'bridge'); assert.equal(reach.blocked(rb, 'web'), 'bridge');
+    // The World Bank answers browsers again (Access-Control-Allow-Origin: *, measured with Origin null in November 2026); a
+    // refused request of it still goes through the bridge when that is on.
+    assert.equal(reach.blocked(wb, 'file'), null); assert.equal(reach.blocked(wb, 'web'), null);
     const srv = fakeBridge();
     const inner = srv.transport;
     const relayed = [];

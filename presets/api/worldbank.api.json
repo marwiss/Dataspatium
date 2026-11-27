@@ -19,10 +19,6 @@
   "requests": 2,
   "perSeconds": 1
  },
- "cors": {
-  "file": false,
-  "web": false
- },
  "endpoints": [
   {
    "id": "indikator",
@@ -90,13 +86,11 @@
    }
   }
  ],
- "notes": "Tjänsten tillåter inte anrop från webbläsaren (ingen CORS), så den nås bara via bryggan: starta bryggan med --allow-host api.worldbank.org (-AllowHosts api.worldbank.org i PowerShell), anslut den under Inhämta och slå på Hämta via bryggan i Internetåtkomst.",
  "i18n": {
   "en": {
    "name": "World Bank: indicators (World Development Indicators)",
    "publisher": "World Bank",
    "description": "The World Bank’s indicators for countries and years, such as population, GDP and carbon dioxide emissions: one row per country and year with the indicator’s value.",
-   "notes": "The service does not allow requests from the browser (no CORS), so it is reached only through the bridge: start the bridge with --allow-host api.worldbank.org (-AllowHosts api.worldbank.org in PowerShell), connect it under Import and turn on Fetch through the bridge in Internet access.",
    "endpoints": {
     "indikator": {
      "name": "One indicator for countries",
@@ -120,7 +114,6 @@
    "name": "Verdensbanken: indikatorer (World Development Indicators)",
    "publisher": "Verdensbanken",
    "description": "Verdensbankens indikatorer for lande og år, for eksempel befolkning, BNP og CO2-udledning: én række pr. land og år med indikatorens værdi.",
-   "notes": "Tjenesten tillader ikke kald fra browseren (ingen CORS), så den nås kun via broen: start broen med --allow-host api.worldbank.org (-AllowHosts api.worldbank.org i PowerShell), forbind den under Hent, og slå Hent via broen til under Internetadgang.",
    "endpoints": {
     "indikator": {
      "name": "Én indikator for lande",
@@ -144,7 +137,6 @@
    "name": "Verdensbanken: indikatorer (World Development Indicators)",
    "publisher": "Verdensbanken",
    "description": "Verdensbankens indikatorer for land og år, for eksempel folketall, BNP og CO2-utslipp: én rad per land og år med indikatorens verdi.",
-   "notes": "Tjenesten tillater ikke kall fra nettleseren (ingen CORS), så den nås bare via broen: start broen med --allow-host api.worldbank.org (-AllowHosts api.worldbank.org i PowerShell), koble den til under Hent inn og slå på Hent via broen under Internettilgang.",
    "endpoints": {
     "indikator": {
      "name": "Én indikator for land",
@@ -168,7 +160,6 @@
    "name": "Verdsbanken: indikatorar (World Development Indicators)",
    "publisher": "Verdsbanken",
    "description": "Indikatorane til Verdsbanken for land og år, til dømes folketal, BNP og CO2-utslepp: éi rad per land og år med verdien til indikatoren.",
-   "notes": "Tenesta tillèt ikkje kall frå nettlesaren (ingen CORS), så ho blir berre nådd via brua: start brua med --allow-host api.worldbank.org (-AllowHosts api.worldbank.org i PowerShell), kople ho til under Hent og slå på Hent via brua under Internettilgang.",
    "endpoints": {
     "indikator": {
      "name": "Éin indikator for land",
@@ -192,7 +183,6 @@
    "name": "Maailmanpankki: indikaattorit (World Development Indicators)",
    "publisher": "Maailmanpankki",
    "description": "Maailmanpankin indikaattorit maittain ja vuosittain, esimerkiksi väkiluku, BKT ja hiilidioksidipäästöt: yksi rivi maata ja vuotta kohden indikaattorin arvolla.",
-   "notes": "Palvelu ei salli kutsuja selaimesta (ei CORSia), joten sen tavoittaa vain sillan kautta: käynnistä silta valinnalla --allow-host api.worldbank.org (PowerShellissä -AllowHosts api.worldbank.org), yhdistä se kohdassa Tuo ja kytke Hae sillan kautta päälle kohdassa Internetyhteys.",
    "endpoints": {
     "indikator": {
      "name": "Yksi indikaattori maille",
@@ -216,7 +206,6 @@
    "name": "Alþjóðabankinn: vísar (World Development Indicators)",
    "publisher": "Alþjóðabankinn",
    "description": "Vísar Alþjóðabankans fyrir lönd og ár, til dæmis mannfjöldi, verg landsframleiðsla og koltvísýringslosun: ein röð fyrir hvert land og ár með gildi vísisins.",
-   "notes": "Þjónustan leyfir ekki köll úr vafranum (ekkert CORS), svo hún næst aðeins um brúna: ræstu brúna með --allow-host api.worldbank.org (-AllowHosts api.worldbank.org í PowerShell), tengdu hana undir Sækja og kveiktu á Sækja um brúna undir Netaðgangur.",
    "endpoints": {
     "indikator": {
      "name": "Einn vísir fyrir lönd",
