@@ -128,6 +128,115 @@
     });
   });
 
+  /** Run with the purposes' states and their kept hosts put back afterwards. */
+  async function keepingHosts(purposes, fn) {
+    const saved = [];
+    for (const p of purposes) saved.push([p, await consent.state(p), await consent.hosts(p)]);
+    try { return await fn(); } finally {
+      consent.setAsker(null);
+      for (const [p, v, list] of saved) {
+        await consent.set(p, v);
+        for (const x of await consent.hosts(p)) await consent.setHost(p, x.host, null);
+        for (const x of list) await consent.setHost(p, x.host, x.state);
+      }
+    }
+  }
+
+  test('consent per host (F102 a, F103 a): Python code is asked once per host and the answer is kept per host, a refused host stays refused, a yes for the purpose covers no host chosen by content, a removed answer is asked again, and ask: false asks nothing', async (assert) => {
+    await withoutOverride(() => keepingHosts(['python', 'url'], async () => {
+      const asked = [];
+      let answer = { allow: true, remember: true };
+      const settle = (p) => p.then(() => 'allowed', (e) => e.name + ':' + e.reason);
+      for (const p of ['python', 'url']) { await consent.set(p, null); for (const x of await consent.hosts(p)) await consent.setHost(p, x.host, null); }
+      consent.setAsker(async (purpose, info) => { asked.push([purpose, info.host, !!info.perHost]); return answer; });
+      const py = (host, extra) => settle(consent.require('python', Object.assign({ host, label: 'https://' + host + '/x' }, extra || {})));
+      assert.equal(await py('a.example.invalid'), 'allowed');
+      assert.equal(await py('A.example.invalid'), 'allowed', 'the same host, whatever its case');
+      assert.deepEqual(asked, [['python', 'a.example.invalid', true]], 'asked once, per host');
+      assert.equal(await consent.hostState('python', 'a.example.invalid'), 'granted', 'kept for that host');
+      assert.equal(await consent.state('python'), null, 'not for the purpose');
+      answer = { allow: false, remember: true };
+      assert.equal(await py('b.example.invalid'), 'ConsentError:denied', 'another host is asked, and refused');
+      assert.equal(await py('b.example.invalid'), 'ConsentError:denied', 'and stays refused');
+      assert.equal(asked.length, 2, 'without asking again');
+      answer = { allow: true, remember: true };
+      assert.equal(await py('c.example.invalid', { ask: false }), 'ConsentError:unattended', 'ask: false (a flow at start) asks nothing for a new host');
+      assert.equal(await py('a.example.invalid', { ask: false }), 'allowed', 'and lets a host kept for good through');
+      assert.equal(asked.length, 2);
+      assert.deepEqual(await consent.hosts('python'), [{ host: 'a.example.invalid', state: 'granted' }, { host: 'b.example.invalid', state: 'denied' }], 'the hosts are listed with their answers');
+      await consent.setHost('python', 'b.example.invalid', null);
+      answer = { allow: true, remember: false };
+      assert.equal(await py('b.example.invalid'), 'allowed', 'a removed answer is asked again');
+      assert.equal(await consent.hostState('python', 'b.example.invalid'), null, 'a yes for once keeps nothing');
+      assert.equal(await settle(consent.require('python', { host: '' })), 'ConsentError:denied', 'a request without a host is refused');
+      await consent.set('python', 'denied');
+      assert.equal(await py('a.example.invalid'), 'ConsentError:denied', 'a refused purpose refuses a host kept for good');
+      // url: what the person types stays per purpose, what content chooses is per host.
+      await consent.set('url', 'granted');
+      asked.length = 0;
+      assert.equal(await settle(consent.require('url', { host: 'typed.example.invalid' })), 'allowed');
+      assert.equal(asked.length, 0, 'an address the person typed is covered by the purpose');
+      assert.equal(await settle(consent.require('url', { host: 'figure.example.invalid', perHost: true })), 'allowed');
+      assert.deepEqual(asked, [['url', 'figure.example.invalid', true]], 'a host chosen by content is asked about all the same');
+      return 'ok';
+    }));
+  });
+
+  test('consent per host: many hosts in one question name only those not yet answered, keep the answer for each, and a refused purpose or ask: false allows only what is kept', async (assert) => {
+    await withoutOverride(() => keepingHosts(['basemaps'], async () => {
+      const asked = [];
+      let answer = { allow: true, remember: true };
+      await consent.set('basemaps', null);
+      for (const x of await consent.hosts('basemaps')) await consent.setHost('basemaps', x.host, null);
+      consent.setAsker(async (purpose, info) => { asked.push(info.hosts.slice()); return answer; });
+      const hosts = (list, info) => consent.allowHosts('basemaps', list, info).then((s) => Array.from(s).sort());
+      assert.deepEqual(await hosts(['a.example.invalid', 'b.example.invalid']), ['a.example.invalid', 'b.example.invalid']);
+      answer = { allow: false, remember: true };
+      assert.deepEqual(await hosts(['a.example.invalid', 'c.example.invalid', 'd.example.invalid']), ['a.example.invalid'], 'the kept host passes, the refused ones do not');
+      assert.deepEqual(asked, [['a.example.invalid', 'b.example.invalid'], ['c.example.invalid', 'd.example.invalid']], 'each question named only the hosts not yet answered');
+      assert.deepEqual(await hosts(['c.example.invalid', 'e.example.invalid'], { ask: false }), [], 'ask: false asks nothing and allows no new host');
+      assert.equal(asked.length, 2);
+      await consent.set('basemaps', 'denied');
+      assert.deepEqual(await hosts(['a.example.invalid']), [], 'a refused purpose allows none');
+      await consent.set('basemaps', 'granted');
+      answer = { allow: true, remember: false };
+      assert.deepEqual(await hosts(['a.example.invalid', 'f.example.invalid']), ['a.example.invalid', 'f.example.invalid'], 'a yes for the purpose still asks about a new host');
+      assert.deepEqual(asked[2], ['f.example.invalid']);
+      assert.equal(await consent.hostState('basemaps', 'f.example.invalid'), null, 'a yes for once keeps nothing');
+      return 'ok';
+    }));
+  });
+
+  test('consent per host: Internetåtkomst has a row for Python code reaching the internet that asks per host or is denied, lists the hosts kept per purpose, and removing one asks again', async (assert) => {
+    await withoutOverride(() => keepingHosts(['python', 'url'], async () => {
+      await consent.setHost('python', 'data.example.invalid', 'granted');
+      await consent.setHost('url', 'pic.example.invalid', 'denied');
+      const logged = [];
+      let rerendered = 0;
+      const ctx = { ui: { icon: () => document.createElement('span'), toast: { show() {} }, button: D.require('ui/basic').button }, shell: { log: (text) => logged.push(text) } };
+      const card = await D.require('ui/settings/network').networkCard(ctx, () => { rerendered++; });
+      const row = /** @type {any} */ (Array.from(card.querySelectorAll('dm-select')).find((s) => s.getAttribute('label') === D.t('consent.purpose.python')));
+      assert.ok(row, 'a row for the new purpose');
+      assert.deepEqual(row.options.map((o) => o.value), ['ask', 'denied'], 'it asks per host or is denied, never allowed for every host');
+      assert.equal(row.options[0].label, D.t('consent.state.perhost'));
+      const listed = Array.from(card.querySelectorAll('[data-consent-host]')).map((el) => el.getAttribute('data-consent-host'));
+      assert.ok(listed.includes('python data.example.invalid') && listed.includes('url pic.example.invalid'), 'the kept hosts are listed: ' + listed.join(', '));
+      const remove = /** @type {any} */ (card.querySelector('[data-consent-host="python data.example.invalid"] dm-button'));
+      remove.click();
+      const t0 = performance.now();
+      while (!rerendered && performance.now() - t0 < 3000) await new Promise((r) => setTimeout(r, 20));
+      assert.equal(await consent.hostState('python', 'data.example.invalid'), null, 'removed');
+      assert.equal(await consent.hostState('url', 'pic.example.invalid'), 'denied', 'the other stays');
+      assert.ok(logged.includes(D.t('consent.hosts.removed', { host: 'data.example.invalid', purpose: D.t('consent.purpose.python') })), 'and the log says so');
+      const asked = [];
+      consent.setAsker(async (purpose, info) => { asked.push(info.host); return { allow: false, remember: false }; });
+      let err = null;
+      try { await consent.require('python', { host: 'data.example.invalid' }); } catch (e) { err = e; }
+      assert.ok(err && err.name === 'ConsentError' && asked[0] === 'data.example.invalid', 'the next request asks again');
+      return 'ok';
+    }));
+  });
+
   test('components: fetched once with consent, verified against SHA-256, served from the cache afterwards, and removable', async (assert) => {
     const id = 'test:component';
     let calls = 0;

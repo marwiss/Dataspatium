@@ -1,8 +1,8 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Settings cards for the workspace view in Hantera: Internetåtkomst (one consent per purpose and the network calls
- * of this session) and Komponenter (what has been fetched on demand, with sizes, and removal).
+ * Settings cards for the workspace view in Hantera: Internetåtkomst (one consent per purpose, the hosts answered per host,
+ * and the network calls of this session) and Komponenter (what has been fetched on demand, with sizes, and removal).
  */
 (function () {
   'use strict';
@@ -17,14 +17,28 @@
       const states = await consent.all();
       const rows = consent.PURPOSES.map((p) => {
         const sel = /** @type {any} */ (h('dm-select', { label: t('consent.purpose.' + p), help: t('consent.purpose.' + p + '.body'), disabled: consent.override() ? true : null }));
-        sel.options = STATES.map((s) => ({ value: s, label: t('consent.state.' + s) }));
-        sel.value = states[p] || 'ask';
+        // A purpose asked per host (python) is never allowed for every host at once: it asks per host, or is denied.
+        const perHost = consent.PER_HOST.has(p);
+        sel.options = STATES.filter((s) => !perHost || s !== 'granted').map((s) => ({ value: s, label: t(perHost && s === 'ask' ? 'consent.state.perhost' : 'consent.state.' + s) }));
+        sel.value = perHost && states[p] === 'granted' ? 'ask' : states[p] || 'ask';
         sel.addEventListener('change', async () => {
           try { await consent.set(p, sel.value === 'ask' ? null : sel.value); shell.log(t('consent.changed', { purpose: t('consent.purpose.' + p), state: t('consent.state.' + sel.value) }), 'ok'); }
           catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
         });
         return sel;
       });
+      // The hosts answered per host (F102 a, F103 a), per purpose, each removable so that the next request asks again.
+      const hostRows = [];
+      for (const p of consent.PURPOSES) {
+        for (const x of await consent.hosts(p)) {
+          hostRows.push(h('div', { class: 'dm-row', 'data-consent-host': p + ' ' + x.host },
+            h('span', { class: 'dm-grow dm-truncate' }, h('strong', { text: x.host }), h('span', { class: 'dm-help', text: ' · ' + t('consent.purpose.' + p) + ' · ' + t('consent.state.' + x.state) })),
+            ui.button({ label: t('consent.hosts.remove', { host: x.host }), icon: 'trash-2', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: async () => {
+              try { await consent.setHost(p, x.host, null); shell.log(t('consent.hosts.removed', { host: x.host, purpose: t('consent.purpose.' + p) }), 'ok'); rerender(); }
+              catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+            } })));
+        }
+      }
       const logEl = h('div', { class: 'dm-stack-sm' });
       const fillLog = () => {
         const entries = (D.net && D.net.log ? D.net.log() : []).slice(-15).reverse();
@@ -65,6 +79,9 @@
         h('p', { class: 'dm-help', text: t('consent.settings.hint') }),
         consent.override() ? h('p', { class: 'dm-warn dm-small', text: t('consent.override') }) : null,
         h('div', { class: 'dm-form-grid' }, rows),
+        h('h4', { text: t('consent.hosts.title') }),
+        h('p', { class: 'dm-help dm-small', text: t('consent.hosts.hint') }),
+        hostRows.length ? h('div', { class: 'dm-stack-sm', 'data-consent-hosts': '' }, hostRows) : h('p', { class: 'dm-help', 'data-consent-hosts': '', text: t('consent.hosts.empty') }),
         h('div', { class: 'dm-stack-sm' }, relay, h('p', { class: 'dm-help dm-small', text: t('bridge.relay.help') })),
         h('div', { class: 'dm-stack-sm' }, remoteSw, remoteState, h('p', { class: 'dm-help dm-small', text: t('remote.help') })),
         h('div', { class: 'dm-row' }, h('h4', { class: 'dm-grow', text: t('consent.log.title') }), ui.button({ label: t('consent.log.refresh'), icon: 'refresh-cw', size: 'sm', variant: 'ghost', onClick: fillLog })),

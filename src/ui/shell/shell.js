@@ -359,12 +359,13 @@
             body: h('div', { class: 'dm-stack' },
               h('p', null, h('strong', { text: t('consent.purpose.' + purpose) + ': ' }), t('consent.purpose.' + purpose + '.body')),
               details ? h('p', { class: 'dm-help', text: details }) : null,
-              h('p', { class: 'dm-help', text: t('consent.change.hint') }),
+              // Asked per host (F102 a, F103 a): the answer is kept for these hosts only.
+              h('p', { class: 'dm-help', 'data-consent-perhost': info.perHost ? '' : null, text: info.perHost ? t('consent.perhost', { host: info.host || '' }) : t('consent.change.hint') }),
               remember),
             actions: [{ label: t('consent.deny'), value: false }, { label: t('consent.allow'), variant: 'primary', value: true, primary: true }],
           });
           const allow = choice === true;
-          this.log(t(allow ? 'consent.logged.allow' : 'consent.logged.deny', { purpose: t('consent.purpose.' + purpose) }), allow ? 'info' : 'warn');
+          this.log(t(allow ? 'consent.logged.allow' : 'consent.logged.deny', { purpose: t('consent.purpose.' + purpose) + (info.perHost && info.host ? ' (' + info.host + ')' : '') }), allow ? 'info' : 'warn');
           return { allow, remember: choice === undefined ? false : !!remember.checked };
         }
 
