@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 """Excerpts of the seven dictionaries src/ui/i18n/<lang>.js, so the app's own translations are the source:
 
 - the shared glossary, the words Dataspatium and Dataregium have in common, as presets/i18n-shared.json. The keys are listed in

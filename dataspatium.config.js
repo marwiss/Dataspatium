@@ -1,5 +1,14 @@
-// SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
+// SPDX-License-Identifier: 0BSD
 /*
+ * This file alone is under the Zero-Clause BSD licence (0BSD, decision F74 a), so that whoever deploys the app may change and
+ * share their version; the rest of Dataspatium is under PolyForm Strict 1.0.0 (LICENSE):
+ *
+ *   Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted.
+ *   THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ *   WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+ *   CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ *   NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
  * Deployment settings for Dataspatium (optional). index.html (and Dataspatium Mobil, m/index.html, for the language) loads
  * this file before the app, from a folder (file://) as well as from a web server. As shipped it sets nothing: no ceiling on
  * the tier, the browser's language and no server.

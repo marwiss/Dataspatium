@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 """Embed Dataspatium's own non-JavaScript files (R helpers, example data, the handbook) as asset wrappers.
 
 Pages opened via file:// cannot fetch() local files, so text files the app needs at runtime are

@@ -7,16 +7,17 @@
  *    webR's SharedArrayBuffer channel, so running R code can be interrupted. Calls to other sites (the open APIs)
  *    pass through untouched.
  * 2. It keeps the app's own files in a cache, so that an installed app (Add to Home Screen) works without a network
- *    after the first use: vendor/, presets/ and src/ are served from the cache once fetched (they only change with a
- *    new version, which brings a new cache name), the page itself is fetched first and taken from the cache offline.
+ *    after the first use: vendor/, presets/, src/, r/ and python/ are served from the cache once fetched, and every push
+ *    that changes them brings a new cache name (tools/bump_cache.py), so that old and new files never mix; the page itself
+ *    is fetched first and taken from the cache offline.
  *
  * src/boot.js registers it only when the app is served over http(s); a page opened from a folder (file://) never
  * uses it. A server that sends the two headers itself still benefits from the cache.
  */
 'use strict';
 
-/** Changes with every release (release procedure in CLAUDE.md, outside the repo), so old caches are dropped on activation. */
-const CACHE = 'dataspatium-0.1.0-2026-11-27'; // a new cache name makes installed apps fetch the new files
+/** Changes with every push that changes the cached files (tools/bump_cache.py), so old caches are dropped on activation. */
+const CACHE = 'dataspatium-0.1.0-20261127-0834';
 const CACHE_FIRST = /\/(vendor|presets|src|r|python)\//;
 /** Files shared into the mobile page (manifest share_target) wait here until m/index.html reads them. */
 const INBOX = 'dataspatium-inbox';

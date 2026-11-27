@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 """Print the pinned Pyodide runtime catalog for src/engines/python/catalog.js.
 
 Python is not shipped in the ZIP: the app fetches Pyodide's runtime files and wheels from jsDelivr on demand

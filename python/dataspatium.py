@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 # Dataspatium Python helpers, imported into every Python session (``from dataspatium import *``).
 # User documentation (Swedish): docs/sv/python.md.
 #

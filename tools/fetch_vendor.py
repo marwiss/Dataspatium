@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 """Download the pinned third-party components listed in vendor/vendor.json.
 
 Originals are stored in vendor-src/<lib>/ (git-ignored). Files marked "wrap": false and

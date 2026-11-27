@@ -448,7 +448,8 @@ Dataspatiums egen kod, dokumentation och förinställningar (allt utom `vendor/`
 myndigheter och andra offentliga institutioner, men inte att ändra, bygga vidare på eller sprida vidare utan
 skriftligt tillstånd. Licensgivare är Dataspatiums upphovsperson, som nås via GitHub-kontot
 [marwiss](https://github.com/marwiss); öppna ett ärende för andra villkor. Vad licensen betyder i praktiken
-förklaras i [docs/sv/licenser.md](docs/sv/licenser.md).
+förklaras i [docs/sv/licenser.md](docs/sv/licenser.md). Undantaget är inställningsfilen `dataspatium.config.js` bredvid
+index.html, som har licensen 0BSD, så att den som driftsätter appen får ändra och sprida sin version.
 
 Tredjepartskomponenter i `vendor/` har sina egna licenser (MIT, BSD, Apache-2.0, ISC, OFL, MPL, LGPL och GPL), se
 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md). R och de GPL-licensierade R-paketen distribueras oförändrade;

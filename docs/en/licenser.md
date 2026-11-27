@@ -9,6 +9,10 @@ Dataspatium's own code, documentation and presets (everything except the folder 
 **PolyForm Strict 1.0.0** (<https://polyformproject.org/licenses/strict/1.0.0>). The licensor is Dataspatium's
 author, who can be reached through the GitHub account [marwiss](https://github.com/marwiss).
 
+The exception is the deployment file `dataspatium.config.js` beside index.html, where whoever deploys the app sets the tier,
+the language and the server. It is under **0BSD** (Zero-Clause BSD): you may use, change and share it freely, changed or not.
+PolyForm Strict applies to the rest of Dataspatium.
+
 What you may do:
 
 - Download and use the app for non-commercial purposes: privately, for study, research, education and charity, and

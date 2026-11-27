@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 <#
 .SYNOPSIS
 Runs a Dataspatium page headless in Edge (or Chrome) and Firefox from file:// and reports the console lines

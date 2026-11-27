@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 """Build the bundled Nordic boundary files in presets/geo: municipalities and regions of Denmark, Norway and
 Finland for thematic maps, from national open data (see presets/geo/KALLA.md).
 

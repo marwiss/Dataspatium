@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 """Build the compact copy of Boverket's Planbestämmelsekatalogen that ships with the app.
 
 Boverket publishes the catalogue as open data (terms: name Boverket and Planbestämmelsekatalogen as the source) in

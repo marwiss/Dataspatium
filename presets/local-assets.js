@@ -3,13 +3,13 @@ Dataspatium.assets.addEntries({
  "r/dataspatium.R": {
   "file": "r/dataspatium.R.js",
   "encoding": "text",
-  "size": 33793,
+  "size": 33853,
   "library": "dataspatium"
  },
  "python/dataspatium.py": {
   "file": "python/dataspatium.py.js",
   "encoding": "text",
-  "size": 523313,
+  "size": 523373,
   "library": "dataspatium"
  },
  "presets/exempeldata/befolkning-kommuner-2024.csv": {
@@ -693,7 +693,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/licenser.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 10453,
+  "size": 10768,
   "library": "dataspatium"
  },
  "docs/sv/sakerhet.md": {
@@ -1707,7 +1707,7 @@ Dataspatium.assets.addEntries({
  "docs/en/licenser.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 10745,
+  "size": 11049,
   "library": "dataspatium"
  },
  "docs/en/sakerhet.md": {

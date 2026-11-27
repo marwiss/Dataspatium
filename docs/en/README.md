@@ -457,7 +457,8 @@ Dataspatium's own code, documentation and presets (everything except `vendor/`) 
 authorities and other public institutions, but not to modify, build on or redistribute without written
 permission. The licensor is Dataspatium's author, reachable through the GitHub account
 [marwiss](https://github.com/marwiss); open an issue for other terms. What the licence means in practice is
-explained in [licenser.md](licenser.md).
+explained in [licenser.md](licenser.md). The exception is the deployment file `dataspatium.config.js` beside
+index.html, which is under 0BSD, so that whoever deploys the app may change and share their version.
 
 Third-party components in `vendor/` have their own licences (MIT, BSD, Apache-2.0, ISC, OFL, MPL, LGPL and GPL), see
 [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.md). R and the GPL-licensed R packages are distributed

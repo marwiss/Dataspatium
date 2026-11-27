@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 """Embed third-party binaries and ESM text as JavaScript asset wrappers.
 
 Reads vendor/vendor.json and vendor-src/<lib>/files.json (written by fetch_vendor.py) and writes:
