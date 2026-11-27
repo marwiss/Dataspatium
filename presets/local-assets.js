@@ -9,7 +9,7 @@ Dataspatium.assets.addEntries({
  "python/dataspatium.py": {
   "file": "python/dataspatium.py.js",
   "encoding": "text",
-  "size": 524748,
+  "size": 528787,
   "library": "dataspatium"
  },
  "presets/exempeldata/befolkning-kommuner-2024.csv": {

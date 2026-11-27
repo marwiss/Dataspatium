@@ -13,7 +13,8 @@
  * `classSearch` finds the IFC class for a thing and `classReportOf` reports the model's class faults (decision B-57.2).
  * `basicsOf` reads the model's basic requirements (the card Grunduppgifter). The preview tries buildingSMART's rules, and with an
  * IDS file (analysis/ids-presets) its requirements; the approved step also the schema's EXPRESS rules: a change set that breaks
- * one the base kept is refused.
+ * one the base kept is refused. `stepsSinceFetch` reads which of these steps changed a model since it came from its CDE, and
+ * `proposalBetween` what changed from the base version's file, in Dataregium's change proposal form (decision F123 a).
  */
 (function () {
   'use strict';
@@ -225,6 +226,42 @@
       const out = await bridge().runIfcParameters(await handle.engine.export(), ids);
       return Array.isArray(out) ? out : [];
     }
-    return { python, applyTable, changeset, party, stored, hold, previewChangeset, topologyOf, classSearch, classReportOf, parametersOf, basicsOf, refuseExpress, IDS: ['ifc_apply_table', 'ifc_python'] };
+    /** The recipe steps that change a model's file (ifc_stored, the server's own version, is not one). */
+    const MODEL_STEPS = ['ifc_apply_table', 'ifc_python', 'ifc_changeset', 'ifc_party'];
+    /**
+     * The model's own steps since it was fetched from its CDE (`source.cde.fetchedAt`; the whole log without it): the steps on the
+     * model in the dataset's log after that, each id once in order, their descriptions, and the AI model of an approved change
+     * set's provenance (null without one). Read from the log only; nothing is asked of Python or the server.
+     * @param {string} datasetId @returns {Promise<{steps: string[], descriptions: string[], aiModel: string|null}>}
+     */
+    async function stepsSinceFetch(datasetId) {
+      const meta = await datasets.get(datasetId);
+      const since = String((meta && meta.source && meta.source.cde && meta.source.cde.fetchedAt) || '');
+      const out = { steps: [], descriptions: [], aiModel: null };
+      for (const e of await datasets.log(datasetId)) {
+        const op = e.action === 'op' && e.details ? e.details.op : null;
+        if (!MODEL_STEPS.includes(op) || (since && String(e.ts) <= since)) continue;
+        if (!out.steps.includes(op)) out.steps.push(op);
+        if (e.details.description) out.descriptions.push(String(e.details.description));
+        if (op === 'ifc_changeset') { try { const p = JSON.parse(String((e.details.params && e.details.params.provenance) || '{}')); if (p && p.model) out.aiModel = String(p.model).slice(0, 200); } catch (_err) { /* no provenance */ } }
+      }
+      return out;
+    }
+    /**
+     * What changed from a model's base version (the file the server keeps of the version it was fetched as) to its current file, in
+     * Dataregium's change proposal form (python/ `_ifc_proposal_between`). Python starts as for classSearch; the dataset is untouched.
+     * @param {string} datasetId @param {Uint8Array} baseBytes
+     * @returns {Promise<{changes: any[], truncated: boolean, instances: number, unexpressed: {created: number, deleted: number, relations: number, geometry: number}}>}
+     */
+    async function proposalBetween(datasetId, baseBytes) {
+      await modelMeta(datasetId);
+      const own = await model.original(datasetId);
+      if (!own) throw new Error(D.t('op.err.ifc.notmodel'));
+      const out = (await bridge().runIfcProposal(baseBytes, own.bytes)) || {};
+      const un = out.unexpressed || {};
+      return { changes: Array.isArray(out.changes) ? out.changes : [], truncated: !!out.truncated, instances: Number(out.instances) || 0,
+        unexpressed: { created: Number(un.created) || 0, deleted: Number(un.deleted) || 0, relations: Number(un.relations) || 0, geometry: Number(un.geometry) || 0 } };
+    }
+    return { python, applyTable, changeset, party, stored, hold, previewChangeset, topologyOf, classSearch, classReportOf, parametersOf, basicsOf, refuseExpress, stepsSinceFetch, proposalBetween, MODEL_STEPS, IDS: ['ifc_apply_table', 'ifc_python'] };
   });
 })();

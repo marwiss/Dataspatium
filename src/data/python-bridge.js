@@ -415,6 +415,28 @@
       }
 
       /**
+       * What changed from a model's base version to its current file, in Dataregium's change proposal form (decision F123 a; the
+       * wheel's `_ifc_proposal_files`): `changes`, `truncated`, `instances` and `unexpressed` (created, deleted, relations, geometry).
+       * Both are IFC files, not dataset files. Read-only: nothing is written back.
+       * @param {ArrayBuffer|Uint8Array} baseBytes the base version as the server keeps it @param {ArrayBuffer|Uint8Array} modelBytes the model's file now
+       * @returns {Promise<{changes: any[], truncated: boolean, instances: number, unexpressed: {created: number, deleted: number, relations: number, geometry: number}}>}
+       */
+      async runIfcProposal(baseBytes, modelBytes) {
+        return this.ifcJob(async () => {
+          const paths = ['/data/step/proposal-base.ifc', '/data/step/proposal-model.ifc'];
+          await this.engine.writeFile(paths[0], baseBytes);
+          await this.engine.writeFile(paths[1], modelBytes);
+          try {
+            await this.ensurePackages(['ifcopenshell']);
+            this.streams = [];
+            return await this.engine.evalJson(`_dataspatium._ifc_proposal_files("${paths[0]}", "${paths[1]}")`);
+          } finally {
+            for (const p of paths) { try { await this.engine.unlink(p); } catch (_err) { /* ignore */ } }
+          }
+        });
+      }
+
+      /**
        * The basic requirements of the model kept in a dataset file (the card Grunduppgifter; the wheel's `_ifc_basics_file`): the
        * header, the coordinate system, names, room numbers, the naming of one's own sets and units in values. Read-only.
        * @param {ArrayBuffer|Uint8Array} bytes the model dataset's SQLite file

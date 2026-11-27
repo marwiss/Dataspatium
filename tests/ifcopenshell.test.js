@@ -5,7 +5,7 @@
  * model, an IFC written by dm_ifc_write becomes a model dataset, the tools and steps call Python), the recipe steps that make a
  * changed IFC the dataset's content (rebuilt tables, log, undo), the Mängder tab's new tools, and, with the real Pyodide
  * (`?python=1` or cached components), the whole round trip: open, select, property sets, write a table back, a Python step,
- * geometry and a new dataset from Python.
+ * geometry, a new dataset from Python and the changes from a base version in Dataregium's proposal form.
  */
 (function () {
   'use strict';
@@ -302,6 +302,38 @@
     assert.ok(out.checks > 0 && out.failed > 0, 'the check runs as before: ' + JSON.stringify(out));
     assert.deepEqual(out.alone, ['www.w3.org:80', 'www.w3.org:80', 'www.w3.org:80'], 'by itself xmlschema tries xml.xsd, XMLSchema.xsd and XMLSchema-instance on the network before its own copies');
     return out.checks + ' checks offline';
+  }, 900000);
+
+  test('ifcopenshell: the changes from a base version to the model come in Dataregium\'s proposal form, and what the form cannot say is counted (F123 a)', async (assert) => {
+    if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them, about 13 MB more for IfcOpenShell)';
+    const ifcOps = D.require('data/ifc-ops');
+    const meta = await importer.run(fixture.ifcFile(), { format: 'model' }, null, 'Ifcforslag');
+    created.push(meta.id);
+    await bridge.start();
+    await waitFor(() => bridge.state !== 'busy', 60000, 'Python free');
+    const base = (await model.original(meta.id)).bytes;
+    const none = { created: 0, deleted: 0, relations: 0, geometry: 0 };
+    assert.deepEqual(await ifcOps.proposalBetween(meta.id, base), { changes: [], truncated: false, instances: 0, unexpressed: none }, 'nothing between the file and itself');
+    // A table written into the model and a Python step, as the person makes them in Bearbeta.
+    const walls = await model.rowsOf(meta.id, "select guid from data where typ = 'IfcWall' order by id");
+    const guid = String(walls[0].guid);
+    const table = await datasets.create({ name: 'Ifcforslagvarden', columns: [{ name: 'guid', type: 'text' }, { name: 'Pset_WallCommon.FireRating', type: 'text' }, { name: 'namn', type: 'text' }], rows: [[guid, 'EI90', 'Vägg X']] });
+    created.push(table.id);
+    await recipes.apply(meta.id, 'ifc_apply_table', { table: table.id, key: 'guid' });
+    await recipes.apply(meta.id, 'ifc_python', { code: 'def step(model):\n    for w in model.by_type("IfcWall"):\n        w.Description = "prov"\n    return model' });
+    const out = await ifcOps.proposalBetween(meta.id, base);
+    assert.ok(out.changes.some((c) => c.guid === guid && !c.path && c.attribute === 'Name' && c.op === 'set' && c.new === 'Vägg X'), 'the name by the wall\'s GlobalId: ' + JSON.stringify(out.changes.slice(0, 6)));
+    assert.ok(out.changes.some((c) => c.guid && /^HasProperties\[\d+\]$/.test(String(c.path)) && c.attribute === 'NominalValue' && c.new && c.new.type === 'IfcLabel' && c.new.value === 'EI90'), 'the property by its set\'s GlobalId and path');
+    assert.equal(out.changes.filter((c) => c.attribute === 'Description' && c.new === 'prov').length, walls.length, 'every wall\'s description from the Python step');
+    assert.ok(out.instances >= walls.length && !out.truncated, 'the instances changed');
+    assert.deepEqual([out.unexpressed.created, out.unexpressed.deleted, out.unexpressed.geometry], [0, 0, 0], 'nothing created, deleted or reshaped: ' + JSON.stringify(out.unexpressed));
+    // A new wall and a thicker slab: neither can be said in the form, and both are counted.
+    await recipes.apply(meta.id, 'ifc_python', { code: 'import ifcopenshell.api\ndef step(model):\n    ifcopenshell.api.run("root.create_entity", model, ifc_class="IfcWall", name="Ny")\n    model.by_type("IfcSlab")[0].Representation.Representations[0].Items[0].Depth = 999.0\n    return model' });
+    const more = await ifcOps.proposalBetween(meta.id, base);
+    assert.equal(more.unexpressed.created, 1, 'the new wall: ' + JSON.stringify(more.unexpressed));
+    assert.equal(more.unexpressed.geometry, 1, 'the slab\'s new shape');
+    assert.equal(more.changes.length, out.changes.length, 'the other changes as before');
+    return `${out.changes.length} changes`;
   }, 900000);
 
   test('ifcopenshell: cleanup', async () => {

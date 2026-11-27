@@ -6528,6 +6528,89 @@ class _Proposal:
         self.memberships(b, c)
 
 
+def _ifc_placement_depth(e, most=32):
+    """How many placements lie under a product's own (its PlacementRelTo chain): the spatial structure before what it contains,
+    a host before its openings."""
+    n = 0
+    p = getattr(e, "ObjectPlacement", None)
+    while p is not None and n < most:
+        p = getattr(p, "PlacementRelTo", None)
+        n += 1
+    return n
+
+
+def _ifc_shape_differs(base, cand, b, c):
+    """Whether a product's shape (its Representation and all under it, which the proposal's form leaves out) differs between
+    the base and the candidate: another representation, or one whose instances read otherwise in the file."""
+    rb = getattr(b, "Representation", None)
+    rc = getattr(c, "Representation", None)
+    if rb is None or rc is None:
+        return (rb is None) != (rc is None)
+    if rb.id() != rc.id():
+        return True
+    try:
+        return sorted(str(x) for x in base.traverse(rb)) != sorted(str(x) for x in cand.traverse(rc))
+    except Exception:
+        return False
+
+
+def _ifc_proposal_between(base, cand):
+    """The changes from a base version to a changed file of the same model (decision F123 a: a change made in the table or with
+    Python, proposed as Dataregium's DataregiumIfcChangeSet), in the form of _ChangeSet.proposal: `changes` (at most
+    _ChangeSet.MAX_PROPOSAL), `truncated`, `instances` and `unexpressed`.
+
+    The candidate is written from the base, so the instances both have keep their STEP ids. The rooted entities that both files
+    have with the same GlobalId, STEP id and class are compared with _Proposal: the products first, in the order of their placements
+    (the spatial structure before what it contains), so that a placement others build on is named from the product that owns it,
+    then the relationships, property sets and types by id. What the form cannot say is counted in `unexpressed`: `created` and
+    `deleted` products (also a product whose STEP id or class changed under the same GlobalId), `relations` for the other rooted
+    entities only one file has and the new members and properties _Proposal meets, and `geometry`, the products whose shape
+    differs (the form leaves the Representation out)."""
+    p = _Proposal(base, cand)
+    created = deleted = relations = geometry = 0
+    pairs = []
+    known = set()
+    for b in base.by_type("IfcRoot"):
+        guid = _Proposal.guid_of(b)
+        if not guid:
+            continue
+        known.add(guid)
+        try:
+            c = cand.by_guid(guid)
+        except Exception:
+            c = None
+        if c is not None and c.id() == b.id() and c.is_a() == b.is_a():
+            pairs.append((b, c))
+        elif b.is_a("IfcProduct"):
+            deleted += 1
+            if c is not None:
+                created += 1
+        else:
+            relations += 1
+    for c in cand.by_type("IfcRoot"):
+        guid = _Proposal.guid_of(c)
+        if guid and guid not in known:
+            if c.is_a("IfcProduct"):
+                created += 1
+            else:
+                relations += 1
+    order = lambda pair: (0, _ifc_placement_depth(pair[0]), pair[0].id()) if pair[0].is_a("IfcProduct") else (1, 0, pair[0].id())
+    for b, c in sorted(pairs, key=order):
+        p.diff(b, c)
+        if b.is_a("IfcProduct") and _ifc_shape_differs(base, cand, b, c):
+            geometry += 1
+    most = _ChangeSet.MAX_PROPOSAL
+    return {"changes": p.changes[:most], "truncated": len(p.changes) > most, "instances": len(p.instances),
+            "unexpressed": {"created": created, "deleted": deleted, "relations": relations + p.unexpressed, "geometry": geometry}}
+
+
+def _ifc_proposal_files(base_path, model_path):
+    """_ifc_proposal_between on two IFC files, for the app (data/python-bridge runIfcProposal): the base version as the server
+    keeps it and the model's current file. Nothing is written; returns the JSON text."""
+    import ifcopenshell
+    return json.dumps(_ifc_proposal_between(ifcopenshell.open(base_path), ifcopenshell.open(model_path)), ensure_ascii=False, default=str)
+
+
 def _ifc_integrity(model):
     """What breaks the model's relationships, keyed so that a base and its candidate can be compared: openings without a host,
     doors and windows without an opening, elements outside the spatial structure, and relationships with nothing on one side."""
