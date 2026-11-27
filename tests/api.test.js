@@ -357,7 +357,15 @@
     const c1 = connector({ id: 'px1', baseUrl: BASE + '/px', family: { type: 'pxweb', version: 1 } });
     const folder = await pxweb.listFolder(c1, ['BE', 'BE0101', 'BE0101A']);
     assert.equal(folder.length, 3); assert.equal(folder[0].type, 'table');
-    const table = await pxweb.fetchData(c1, { path: ['BE', 'BE0101', 'BE0101A', 'BefolkningNy'], title: 'Test' }, meta.variables, sel);
+    // A v1 body goes under a form type: no CORS preflight, which v1 servers answer without the headers (ÅSUB refuses it), and
+    // no firewall that refuses JSON under text/plain (ÅSUB's Threat Protection).
+    const realRequest = http.request; const sent = [];
+    http.request = (req) => { sent.push(req); return realRequest(req); };
+    let table;
+    try { table = await pxweb.fetchData(c1, { path: ['BE', 'BE0101', 'BE0101A', 'BefolkningNy'], title: 'Test' }, meta.variables, sel); } finally { http.request = realRequest; }
+    const post = sent.find((r) => r.method === 'POST');
+    assert.equal(post && post.headers['Content-Type'], 'application/x-www-form-urlencoded;charset=UTF-8', 'the body type of a v1 query');
+    assert.deepEqual(JSON.parse(post.body).query, q.query, 'the body is the query as JSON');
     assert.equal(table.rows.length, 4); assert.equal(table.meta.pages, 1);
     assert.ok(served.some((url) => url.endsWith('/px/BE/BE0101/BE0101A/BefolkningNy')));
   });
