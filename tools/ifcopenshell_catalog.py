@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 """Print the pinned IfcOpenShell wheel set for src/engines/python/catalog.js (IFC_WHEELS).
 
 IfcOpenShell is not shipped in the ZIP: the app fetches its modular WebAssembly wheels from the index at

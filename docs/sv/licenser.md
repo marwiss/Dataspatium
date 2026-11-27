@@ -9,6 +9,10 @@ Dataspatiums egen kod, dokumentation och förinställningar (allt utom mappen `v
 **PolyForm Strict 1.0.0** (<https://polyformproject.org/licenses/strict/1.0.0>). Licensgivare är Dataspatiums
 upphovsperson, som nås via GitHub-kontot [marwiss](https://github.com/marwiss).
 
+Undantaget är inställningsfilen `dataspatium.config.js` bredvid index.html, där den som driftsätter appen ställer in nivå, språk
+och server. Den har licensen **0BSD** (Zero-Clause BSD): du får använda, ändra och sprida den fritt, med eller utan ändringar.
+PolyForm Strict gäller resten av Dataspatium.
+
 Det får du göra:
 
 - Ladda ned och använda appen för icke-kommersiella ändamål: privat, för studier, forskning, utbildning och

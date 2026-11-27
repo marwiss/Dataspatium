@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 # Dataspatium R helpers, sourced into every R session. User documentation (Swedish): docs/sv/r-guide.md.
 #
 # Datasets are exchanged with the app as SQLite files in /data (see docs/sv/format.md for the schema):

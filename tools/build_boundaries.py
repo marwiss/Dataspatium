@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 """Build the bundled county and municipality boundaries (presets/geo/*.geojson) from SCB's open
 boundary files ("Digitala gränser", licence CC0).
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 """A stand-in for the user at the browser pages of a Dataregium server, for the live test of Dataspatium's OpenCDE source.
 
 The live test tests/opencde-live.test.js asks this helper to do what a person would do in the popup: sign in and consent on the

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 <#
 .SYNOPSIS
 Takes a screenshot of a Dataspatium page with headless Edge/Chrome after the app has had time to initialise.
