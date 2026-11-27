@@ -235,7 +235,8 @@
         endpoints(v, entities) {
           const common = (size) => [P('where', { label: t('geodata.param.where'), default: '1=1', help: t('geodata.param.where.help') }), P('outFields', { default: '*', hidden: true }), P('outSR', { default: '4326', hidden: true }), P('f', { default: 'geojson', hidden: true }), P('returnGeometry', { default: 'true', hidden: true }), P('resultRecordCount', { type: 'number', default: size, hidden: true }),
             P('geometry', { label: t('geodata.param.bbox'), help: t('geodata.param.bbox.help'), example: '17.5,59.2,18.5,59.5' }), P('geometryType', { default: 'esriGeometryEnvelope', hidden: true }), P('inSR', { default: '4326', hidden: true })];
-          const pagination = (size) => ({ type: 'offset', param: 'resultOffset', sizeParam: 'resultRecordCount', size, maxPages: 200 });
+          // A page too heavy for the server (large polygons: 500 at a thousand features) is asked for again smaller.
+          const pagination = (size) => ({ type: 'offset', param: 'resultOffset', sizeParam: 'resultRecordCount', size, maxPages: 200, shrink: true });
           // An answer that is an ArcGIS error ({error: {message, details}}) is reported, not read as an empty layer.
           const response = { format: 'geojson', errorPath: 'error' };
           const ids = endpointIds('layer-', entities);

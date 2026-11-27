@@ -221,6 +221,35 @@
     const progress = [];
     await runner.fetchTable(c, c.endpoints[2], {}, { onProgress: (p) => progress.push(p.pages) });
     assert.deepEqual(progress, [1, 2, 3]);
+    // A WFS that reads count as the end of the page (Naturvårdsregistret): features startIndex to count - 1, none when count is
+    // not above startIndex. With sizeEnd every page asks for its own end; without it the second page came back empty.
+    serve('tests/api/endcount', (u) => { const o = Number(u.searchParams.get('startIndex') || 0); const end = Math.min(25, Number(u.searchParams.get('count'))); return { type: 'FeatureCollection', features: Array.from({ length: Math.max(0, end - o) }, (_, i) => ({ type: 'Feature', properties: { n: o + i } })) }; });
+    const endPaging = (sizeEnd) => ({ id: 'end', name: 'End', method: 'GET', path: '/endcount', pagination: Object.assign({ type: 'offset', param: 'startIndex', sizeParam: 'count', size: 10 }, sizeEnd ? { sizeEnd: true } : {}), response: { format: 'geojson' } });
+    const ended = await runner.fetchTable(c, endPaging(true), {});
+    assert.deepEqual(ended.rows.map((r) => r[ended.columns.indexOf('n')]), Array.from({ length: 25 }, (_, i) => i), 'every feature once, in order');
+    assert.deepEqual(ended.meta.requests.map((r) => new URL(r.url).searchParams.get('count')), ['10', '20', '30'], 'the end of each page');
+    assert.equal((await runner.fetchTable(c, endPaging(false), {})).rows.length, 10, 'read as a size, only the first page');
+    assert.deepEqual(schema.validate(connector({ endpoints: [endPaging(true)] })), [], 'sizeEnd is in the schema');
+    // A layer of heavy polygons answers 500 to a page above 30 features (Skogsstyrelsen's ArcGIS): with shrink the page is asked
+    // for again a quarter as large, once each size and not repeated at the same size, and the following pages keep it.
+    const asked = [];
+    D.net.virtual('tests/api/heavy', (url) => {
+      const u = new URL(url); const o = Number(u.searchParams.get('resultOffset')); const n = Number(u.searchParams.get('resultRecordCount'));
+      asked.push(n);
+      if (n > 30) return Promise.resolve({ kind: 'text', status: 500, data: '<html><title>Error: Error performing query operation</title></html>' });
+      return Promise.resolve({ kind: 'text', data: JSON.stringify({ type: 'FeatureCollection', features: Array.from({ length: Math.max(0, Math.min(n, 70 - o)) }, (_, i) => ({ type: 'Feature', properties: { n: o + i } })) }) });
+    });
+    const heavy = (shrink) => ({ id: 'heavy', name: 'Heavy', method: 'GET', path: '/heavy', pagination: Object.assign({ type: 'offset', param: 'resultOffset', sizeParam: 'resultRecordCount', size: 1000 }, shrink ? { shrink: true } : {}), response: { format: 'geojson', errorPath: 'error' } });
+    const shrunk = await runner.fetchTable(c, heavy(true), {});
+    assert.deepEqual(shrunk.rows.map((r) => r[shrunk.columns.indexOf('n')]), Array.from({ length: 70 }, (_, i) => i), 'every feature once, in order');
+    assert.deepEqual(asked, [1000, 250, 63, 16, 16, 16, 16, 16], 'a quarter each time, once each, then pages of the smaller size');
+    assert.equal(shrunk.meta.pages, 5, 'the refused pages are not counted');
+    asked.length = 0;
+    let refused = '';
+    try { await runner.fetchTable(c, heavy(false), {}, { maxPages: 1 }); } catch (err) { refused = err.message; }
+    assert.ok(/500/.test(refused) && asked.length === 3 && asked.every((n) => n === 1000), 'without shrink the 500 stands, after the two retries of a GET: ' + asked.join(','));
+    D.net.unvirtual('tests/api/heavy');
+    assert.deepEqual(schema.validate(connector({ endpoints: [heavy(true)] })), [], 'shrink is in the schema');
     return `${served.length} mocked requests`;
   });
 
@@ -741,6 +770,9 @@
     for (const ep of c.endpoints || []) {
       try {
         const table = await runner.fetchTable(c, ep, await liveValues(c, ep), { maxPages: 2 });
+        // A second page that comes back empty after a full first one is paging the service reads otherwise (Naturvårdsregistret).
+        const reqs = table.meta.requests || [];
+        if (reqs.length > 1 && reqs[reqs.length - 1].rows === 0 && reqs[reqs.length - 2].rows > 0) throw new Error(`page ${reqs.length} came back empty after ${reqs[reqs.length - 2].rows} rows: ${reqs[reqs.length - 1].url}`);
         let text = `${ep.id} ${rowsOf(table)}${table.meta.pages > 1 ? ' in ' + table.meta.pages + ' pages' : ''}`;
         // Empty without input (a place or a station left out): the examples of every value show that the answer is read.
         if (!table.rows.length && (ep.params || []).some((p) => !p.required && p.example !== undefined)) text += `, with every example ${rowsOf(await runner.fetchTable(c, ep, await liveValues(c, ep, true), { maxPages: 1 }))}`;

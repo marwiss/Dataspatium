@@ -66,7 +66,7 @@
         bodyType: { type: 'string', enum: ['json', 'form', 'text', 'xml'] },
         pagination: {
           type: 'object', required: ['type'],
-          properties: { type: { type: 'string', enum: PAGINATION_TYPES }, in: { type: 'string', enum: ['query', 'body'] }, param: { type: 'string' }, sizeParam: { type: 'string' }, size: { type: 'number' }, start: { type: 'number' }, path: { type: 'string' }, totalPath: { type: 'string' }, totalPagesPath: { type: 'string' }, rel: { type: 'string' }, maxPages: { type: 'number' } },
+          properties: { type: { type: 'string', enum: PAGINATION_TYPES }, in: { type: 'string', enum: ['query', 'body'] }, param: { type: 'string' }, sizeParam: { type: 'string' }, size: { type: 'number' }, sizeEnd: { type: 'boolean' }, shrink: { type: 'boolean' }, start: { type: 'number' }, path: { type: 'string' }, totalPath: { type: 'string' }, totalPagesPath: { type: 'string' }, rel: { type: 'string' }, maxPages: { type: 'number' } },
         },
         response: {
           type: 'object',
