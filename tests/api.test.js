@@ -3,8 +3,9 @@
 /**
  * Tests for the API module: schema, request building, parsers, JSON-stat, pagination against a mocked
  * service (virtual dataspatium-asset:// providers, no network), rate limiting, secrets, auth, the PxWeb
- * and Socialstyrelsen families, dataset creation and appending, the Inhämta UI, and an optional live
- * smoke test (only with ?live=1 in the URL).
+ * and Socialstyrelsen families, dataset creation and appending, the Inhämta UI, and two optional runs against the real
+ * services: a smoke test (?live=1) and every preset without a key, one test each (?live=presets), from where the page runs:
+ *   powershell -File tools/run-tests.ps1 -Lock -Jobs 2 -TimeoutSec 2700 -Url "tests/index.html?files=api&live=presets"
  */
 (function () {
   'use strict';
@@ -662,6 +663,107 @@
     assert.ok(subjects.length > 5, 'Socialstyrelsen subjects');
     return `SCB ${table.rows.length}, Kolada ${kd.rows.length}, SMHI ${sd.rows.length}, Eurostat ${ed.rows.length}, dataportal ${dd.rows.length}`;
   }, 120000);
+
+  // ---- Every preset against its real service, from where the page runs (only with ?live=presets) ----
+  // One test per preset, so that the log has a line each. A preset that needs a key is skipped; every endpoint of the others
+  // runs with what a user gives it without typing: the defaults, the example of each required value, the first option of a
+  // list. Two pages at most. A family runs its own browser's path: the first table of the first folder with one value each.
+  const LIVE_PRESETS = /[?&]live=presets\b/.test(location.search);
+  /** @param {any} c @param {any} ep @param {boolean} [all] the examples of the optional values too */
+  async function liveValues(c, ep, all = false) {
+    const values = {};
+    for (const p of ep.params || []) {
+      if (p.template || p.default !== undefined || !(p.required || all)) continue;
+      if (p.example !== undefined && p.example !== '') values[p.name] = p.example;
+      else if (p.optionsFrom) { const opts = await runner.optionsFor(c, p, values); if (opts.length) values[p.name] = opts[0].value; }
+    }
+    return values;
+  }
+  /** One value of each variable, the last period of time: a table of one cell or a few. */
+  function liveSelection(variables) {
+    const sel = {};
+    for (const v of variables) if (v.values && v.values.length) sel[v.code] = v.time ? { filter: 'top', n: 1 } : { filter: 'item', values: [v.values[0].code] };
+    return sel;
+  }
+  /** The path of the first table under the first folders of a PxWeb, Statbank or FHI tree. */
+  async function liveTablePath(fam, c) {
+    let path = [];
+    for (let depth = 0; depth < 8; depth++) {
+      const list = await fam.listFolder(c, path);
+      const table = list.find((e) => e.type === 'table');
+      if (table) return path.concat(table.id);
+      const folder = list.find((e) => e.type === 'folder');
+      if (!folder) throw new Error('no table or folder under /' + path.join('/'));
+      path = path.concat(folder.id);
+    }
+    throw new Error('no table within 8 folders');
+  }
+  const rowsOf = (t) => (t.rows.length ? t.rows.length + ' rows' : 'empty');
+  /** The family's own path, as its browser in Inhämta goes. @returns {Promise<string|null>} */
+  async function liveFamily(c) {
+    const type = c.family && c.family.type;
+    if (type === 'pxweb' && pxweb.version(c) === 2) {
+      const found = await pxweb.searchTables(c, '', 1, 1);
+      const id = found.tables[0].id;
+      const meta = await pxweb.tableMetaV2(c, id);
+      return `table ${id} ${rowsOf(await pxweb.fetchData(c, { id, title: meta.title }, meta.variables, liveSelection(meta.variables)))}`;
+    }
+    if (type === 'pxweb' || type === 'statbank' || type === 'fhi') {
+      const fam = runner.families[type];
+      const path = await liveTablePath(fam, c);
+      const meta = await fam.tableMetaV1(c, path);
+      return `table ${path.join('/')} ${rowsOf(await fam.fetchData(c, { path, id: path[path.length - 1], title: meta.title }, meta.variables, liveSelection(meta.variables)))}`;
+    }
+    if (type === 'socialstyrelsen') {
+      const subject = (await sos.subjects(c))[0].id;
+      const vars = await sos.variables(c, subject);
+      return `subject ${subject} ${rowsOf(await sos.fetchData(c, subject, vars, liveSelection(vars), { maxPages: 1 }))}`;
+    }
+    if (type === 'geodata') {
+      const geodata = D.require('api/families/geodata');
+      const databases = D.require('api/families/databases');
+      const fam = geodata.byId(c.family.kind);
+      const v = fam.normalize ? fam.normalize({ baseUrl: c.baseUrl }) : { baseUrl: c.baseUrl };
+      const entities = await fam.discover(v, c, (url, headers) => databases.getJson(c, url, headers));
+      const conn = Object.assign({}, c, { endpoints: fam.endpoints(v, entities) });
+      const ep = geodata.layerEndpoints(conn)[0];
+      return `${entities.length} layers, ${ep.name} ${rowsOf(await runner.fetchTable(conn, ep, {}, { firstPageOnly: true }))}`;
+    }
+    return null;
+  }
+  /** @param {any} c the stored preset */
+  async function livePreset(c) {
+    if (!c) throw new Error('the preset file names no valid preset of that id');
+    if (c.auth && c.auth.type && c.auth.type !== 'none') return `needs a key (${c.auth.type}), skipped`;
+    const parts = []; const errors = [];
+    const fam = c.family ? await liveFamily(c).catch((err) => { errors.push(`${c.family.type}: ${err.message}`); return null; }) : null;
+    if (fam) parts.push(fam);
+    for (const ep of c.endpoints || []) {
+      try {
+        const table = await runner.fetchTable(c, ep, await liveValues(c, ep), { maxPages: 2 });
+        let text = `${ep.id} ${rowsOf(table)}${table.meta.pages > 1 ? ' in ' + table.meta.pages + ' pages' : ''}`;
+        // Empty without input (a place or a station left out): the examples of every value show that the answer is read.
+        if (!table.rows.length && (ep.params || []).some((p) => !p.required && p.example !== undefined)) text += `, with every example ${rowsOf(await runner.fetchTable(c, ep, await liveValues(c, ep, true), { maxPages: 1 }))}`;
+        parts.push(text);
+      } catch (err) { errors.push(`${ep.id}: ${(err && err.message) || err}`); }
+    }
+    // A service marked as out of the browser's reach must fail with the text that names the bridge, and fail for that reason.
+    const why = D.require('api/reach').blocked(c);
+    if (why) {
+      if (parts.length) throw new Error(`marked "${why}" but answered: ${parts.join('; ')}`);
+      const bridge = t('api.err.nocors', { host: http.hostOf(c.baseUrl) });
+      if (errors.every((e) => e.includes(bridge))) return `needs the bridge (${why}), as marked: ${errors.length} endpoints say so`;
+    }
+    if (errors.length) throw new Error(errors.join(' | ') + (parts.length ? ' || ok: ' + parts.join('; ') : ''));
+    return parts.join('; ');
+  }
+  if (!LIVE_PRESETS) test('api: every preset against its real service (only with ?live=presets)', () => 'skipped (add ?live=presets to run)');
+  else {
+    for (const name of D.assets.names(connectors.PRESET_PREFIX).filter((n) => n.endsWith('.api.json'))) {
+      const id = name.slice(connectors.PRESET_PREFIX.length, -'.api.json'.length);
+      test('api live: ' + id, async () => livePreset((await connectors.loadPresets()).find((p) => p.id === id)), 300000);
+    }
+  }
 
   test('api: cleanup', async () => {
     for (const id of created) { try { await datasets.remove(id); } catch (_e) { /* ignore */ } }
