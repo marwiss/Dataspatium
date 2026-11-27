@@ -141,7 +141,7 @@ the project; then choose whether the dataset is written in a file format or the 
 through the Documents API, where the server's own page asks for title, version and project and the file then goes up in parts,
 or as a BCF document, which takes the file only. The dataset is written from a copy that has been through the review, and
 original files get the same warning as in bundles. A dataset fetched from the server can be sent as a new version of its
-document, with a message on what the version changes (at most 2000 characters, optional), and the card *From the CDE* in
+document, with a message on what the version changes (optional, at most as many characters as the server takes, 2000 on Dataregium), and the card *From the CDE* in
 Manage then knows about it. Every send is noted in the dataset's history. A server with
 the Documents API alone has no project list here and takes no BCF documents; the server's page asks for the project.
 

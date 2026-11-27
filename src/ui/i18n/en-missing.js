@@ -439,6 +439,7 @@
     'plan.ai.field.anvandningsstatus': 'usage status',
     'plan.ai.field.kompletterande': 'complementary content type',
     'plan.ai.field.utbyggnadsordning': 'development order',
+    'cde.git.commit': 'Commit on the server',
     'op.ifc_stored': 'Stored version from the server',
     'op.ifc_stored.version': 'Version on the server',
     'op.ifc_stored.renumbered': 'Ids moved',

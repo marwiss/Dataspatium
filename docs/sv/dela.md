@@ -139,7 +139,7 @@ projekt; välj sedan om datamängden ska skrivas i ett filformat eller om origin
 Documents API, där serverns egen sida frågar efter titel, version och projekt och filen sedan laddas upp i delar, eller som
 BCF-dokument, som bara tar filen. Datamängden skrivs ur en kopia som gått genom granskningen, och originalfiler får samma
 varning som i paketen. En datamängd som hämtats från servern kan skickas som en ny version av sitt dokument, med ett
-meddelande om vad versionen ändrar (högst 2000 tecken, valfritt), och kortet *Från CDE* i Hantera vet sedan om den. Varje skickning noteras i datamängdens historik. En server med bara Documents API har
+meddelande om vad versionen ändrar (valfritt, högst så många tecken som servern tar, 2000 hos Dataregium), och kortet *Från CDE* i Hantera vet sedan om den. Varje skickning noteras i datamängdens historik. En server med bara Documents API har
 ingen projektlista här och tar inga BCF-dokument; serverns sida frågar efter projektet.
 
 *Arbetsytepaket* skickar ett paket i stället för en datamängd: paketdialogen väljer datamängder och innehåll som vanligt, granskningen

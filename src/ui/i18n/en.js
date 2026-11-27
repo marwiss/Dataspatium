@@ -6198,6 +6198,7 @@
     'cde.kind.bcf': 'Document (BCF)',
     'cde.version': 'Version',
     'cde.fetched': 'Fetched',
+    'cde.git.commit': 'Commit on the server',
     'cde.publication': 'Publication',
     'cde.publication.hint': 'Shows whether the version is published on the server. A manager of the project can publish it.',
     'cde.publication.none': 'The version is not published.',

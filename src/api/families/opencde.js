@@ -975,7 +975,7 @@
       // Dataregium's extension: the version this upload builds on; the completion answers 412 version_conflict when a newer one exists.
       if (options.documentId && options.baseVersionIndex !== undefined && options.baseVersionIndex !== null) entry.base_version_index = Number(options.baseVersionIndex);
       // And the message of the new version (the commit's message once Dataregium keeps a git history per project; ignored before).
-      const message = options.documentId ? versionMessage(options.message) : '';
+      const message = options.documentId && options.message ? versionMessage(options.message, await messageMax(connector)) : '';
       if (message) entry.message = message;
       const started = await api(connector, '/documents/1.0/upload-documents', { method: 'POST', json: { callback: { url: redirect, expires_in: 600 }, files: [entry] } });
       if (Number(started.max_size_in_bytes) > 0 && file.size > Number(started.max_size_in_bytes)) throw new Error(t('cde.err.toolarge', { max: D.require('ui/i18n').formatBytes(Number(started.max_size_in_bytes)) }));
@@ -1020,11 +1020,35 @@
     /** At most as long as Dataregium keeps a version's message (its phase 5.2). */
     const MESSAGE_MAX = 2000;
     /**
-     * A version's message as Dataregium keeps it: no control characters but line breaks, no space at the ends, at most MESSAGE_MAX
-     * characters; '' when nothing is left. @param {any} text @returns {string}
+     * A version's message as Dataregium keeps it: no control characters but line breaks, no space at the ends, at most `max`
+     * characters (MESSAGE_MAX unless the server says otherwise); '' when nothing is left. @param {any} text @param {number} [max]
+     * @returns {string}
      */
-    function versionMessage(text) {
-      return String(text || '').replace(/\r\n?/g, '\n').replace(/[\u0000-\u0009\u000b-\u001f\u007f-\u009f]/g, '').trim().slice(0, MESSAGE_MAX).trim();
+    function versionMessage(text, max = MESSAGE_MAX) {
+      return String(text || '').replace(/\r\n?/g, '\n').replace(/[\u0000-\u0009\u000b-\u001f\u007f-\u009f]/g, '').trim().slice(0, max).trim();
+    }
+    /**
+     * How long a version's message may be on this server: Dataregium's capability `git` says `max_message` (its phase 5.2); otherwise,
+     * or when the capabilities cannot be read, MESSAGE_MAX. @param {any} connector @returns {Promise<number>}
+     */
+    async function messageMax(connector) {
+      try {
+        const caps = await capabilities(connector);
+        const n = hasExtension(caps, 'git') ? Number(caps.extensions.git.max_message) : NaN;
+        return Number.isInteger(n) && n > 0 && n <= 100000 ? n : MESSAGE_MAX;
+      } catch (_e) { return MESSAGE_MAX; }
+    }
+    /**
+     * The commit a version is in, when the server keeps a git history per project (Dataregium's version metadata `git_commit`, its
+     * phase 5.2); null when it has none or the metadata cannot be read. @param {any} connector @param {string} documentId
+     * @param {number} versionIndex @returns {Promise<string|null>}
+     */
+    async function gitCommit(connector, documentId, versionIndex) {
+      try {
+        const entry = (await versionMetadata(connector, documentId, versionIndex)).find((x) => x && x.name === 'git_commit');
+        const value = entry ? String(Array.isArray(entry.value) ? entry.value[0] : entry.value) : '';
+        return /^[0-9a-f]{7,64}$/i.test(value) ? value.toLowerCase() : null;
+      } catch (_e) { return null; }
     }
     /**
      * The ids Dataregium's safety net moved in a stored version (version metadata `ifc_renumbered`, "old>new" for at most the first
@@ -1315,7 +1339,7 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { addDeployed, ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, hasBcf, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, seedStepIds, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, versionMessage, MESSAGE_MAX, renumbered, adoptStored, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
+    return { addDeployed, ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, hasBcf, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, seedStepIds, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, versionMessage, MESSAGE_MAX, messageMax, gitCommit, renumbered, adoptStored, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
       topicMay, projectMay, topicFiles, filesBody, setTopicFiles, modelFile, linkTopic, attachDocument, identity };
   });
 })();

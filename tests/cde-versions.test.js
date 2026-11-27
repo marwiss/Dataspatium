@@ -155,6 +155,54 @@
     return 'ok';
   }, 30000);
 
+  test('cde versions: a server with a git history per project sets the message\'s length, and the card shows the version\'s commit', async (assert) => {
+    const GIT = 'dataspatium-asset://tests/cde-git';
+    const COMMIT = '3f2a9c1d0e8b7a6f5e4d3c2b1a0f9e8d7c6b5a49';
+    D.net.virtual('tests/cde-git/', (url) => {
+      const rest = url.startsWith(GIT) ? url.slice(GIT.length) : new URL(url).pathname;
+      const path = rest.split('?')[0].split('#')[0] || '/';
+      if (path === '/.well-known/dataregium') return Promise.resolve(json({ server: { name: 'Dataregium', version: '0.1.0' }, extensions: { git: { enabled: true, ifcmerge: false, max_message: 500 } } }));
+      if (path === '/foundation/versions') return Promise.resolve(json({ versions: [{ api_id: 'foundation', version_id: '1.0' }, { api_id: 'documents', version_id: '1.0' }] }));
+      if (path === '/foundation/1.0/auth') return Promise.resolve(json({ oauth2_auth_url: GIT + '/foundation/oauth2/auth', oauth2_token_url: GIT + '/foundation/oauth2/token', oauth2_revocation_url: GIT + '/foundation/oauth2/revoke', oauth2_pkce_required: true }));
+      if (path === '/foundation/oauth2/token') return Promise.resolve(json({ access_token: 'g1', refresh_token: 'gr1', expires_in: 3600, token_type: 'bearer' }));
+      if (path === '/foundation/oauth2/revoke') return Promise.resolve({ kind: 'text', data: '' });
+      if (path === '/documents/1.0/upload-documents') return Promise.resolve(json({ upload_ui_url: GIT + '/ui', expires_in: 600, max_size_in_bytes: 0 }));
+      if (path === '/documents/1.0/upload-instructions') return Promise.resolve(json({ documents_to_upload: [{ session_file_id: 'f1', upload_file_parts: [{ url: GIT + '/part', http_method: 'PUT', content_range_start: 0, content_range_end: 9 }], upload_completion: { url: GIT + '/complete' } }] }));
+      if (path === '/part') return Promise.resolve({ kind: 'text', data: '' });
+      if (path === '/complete') return Promise.resolve(json({ document_id: 'doc-g', version_index: 2, version_number: '2', title: 'Tabell' }));
+      if (path === '/documents/1.0/document-versions') return Promise.resolve(json({ versions: [{ document_id: 'doc-g', version_index: 1, version_number: '1' }] }));
+      if (path === '/documents/1.0/documents/doc-g/versions/1/metadata') return Promise.resolve(json({ metadata: [{ name: 'file_name', value: ['tabell.csv'], data_type: 'string' }, { name: 'git_commit', value: [COMMIT], data_type: 'string' }] }));
+      if (path === '/documents/1.0/documents/doc-g/versions/2/metadata') return Promise.resolve(json({ metadata: [{ name: 'git_commit', value: ['not a commit'], data_type: 'string' }] }));
+      return Promise.resolve(json({ message: 'Not Found' }, 404));
+    });
+    const git = (await families.createConnector('opencde', { baseUrl: GIT, clientId: 'dm-test-cde-git', clientSecret: '' })).connector;
+    const table = await datasets.create({ name: 'Git-tabell', columns: [{ name: 'a', type: 'integer' }], rows: [[1]] });
+    created.push(table.id);
+    let card = null;
+    try {
+      await opencde.login(git, { popup: fakePopup, redirectUri: REDIRECT });
+      assert.equal(await opencde.messageMax(git), 500, 'the server\'s length');
+      assert.equal(await opencde.messageMax(connector || (await signedIn())), opencde.MESSAGE_MAX, 'and the default on a server without git');
+      await opencde.uploadDocument(git, ten('tabell.csv'), { documentId: 'doc-g', baseVersionIndex: 1, message: 'y'.repeat(800), redirectUri: REDIRECT, popup: () => Promise.resolve(`${REDIRECT}?upload_documents_url=${encodeURIComponent(GIT + '/documents/1.0/upload-instructions')}`) });
+      assert.equal(lastStart().files[0].message.length, 500, 'the message is cut where the server says');
+      assert.equal(await opencde.gitCommit(git, 'doc-g', 1), COMMIT, 'the version\'s commit');
+      assert.equal(await opencde.gitCommit(git, 'doc-g', 2), null, 'and nothing that is not a commit');
+      assert.equal(await opencde.gitCommit(git, 'doc-none', 1), null, 'nor when the metadata cannot be read');
+      await datasets.updateMeta(table.id, { source: { kind: 'file', fileName: 'tabell.csv', cde: { connectorId: git.id, connectorName: git.name, host: 'tests', projectId: PROJECT, kind: 'document', documentId: 'doc-g', versionIndex: 1, reference: GIT + '/x' } } });
+      const ui = Object.assign({ button: D.require('ui/basic').button }, D.require('ui/overlays'));
+      card = D.require('ui/kinds/insight-cards').cdeCard({ ui, store: { set: () => {} }, shell: { log: () => {}, activate: () => {} } }, await datasets.get(table.id));
+      document.body.appendChild(card);
+      card.querySelector('[data-cde-check]').click();
+      const current = await (async () => { const t0 = performance.now(); for (;;) { const el = card.querySelector('[data-cde-current]'); if (el) return el; if (performance.now() - t0 > 5000) return null; await new Promise((r) => setTimeout(r, 30)); } })();
+      assert.ok(current, 'the check is done');
+      assert.ok(card.textContent.includes(t('cde.git.commit')) && card.textContent.includes(COMMIT.slice(0, 12)) && !card.textContent.includes(COMMIT), 'the commit in brief on the card: ' + card.textContent);
+    } finally {
+      if (card) card.remove();
+      await opencde.logout(git).catch(() => {}); await connectors.remove(git.id);
+    }
+    return 'ok';
+  }, 30000);
+
   test('cde versions: cleanup', async () => {
     if (connector) { await opencde.logout(connector).catch(() => {}); await connectors.remove(connector.id); }
     for (const id of created) await datasets.remove(id).catch(() => {});

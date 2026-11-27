@@ -24,7 +24,7 @@
      */
     function create(ctx, hooks) {
       const { ui, shell, services } = ctx;
-      const s = { connectors: [], connector: null, projects: null, projectId: '', what: 'dataset', format: '', how: 'documents', busy: '', error: '', progress: null, done: '', message: '' };
+      const s = { connectors: [], connector: null, projects: null, projectId: '', what: 'dataset', format: '', how: 'documents', busy: '', error: '', progress: null, done: '', message: '', messageMax: opencde.MESSAGE_MAX };
       const el = h('div', { class: 'dm-stack' });
       const fail = (err) => { s.error = String((err && err.message) || err); shell.log(s.error, 'error'); };
       const ds = () => hooks.dataset();
@@ -33,13 +33,19 @@
         s.connectors = (await connectors.list()).filter((c) => opencde.isOpenCde(c));
         s.connector = s.connectors[0] || null;
         render();
-        if (s.connector && opencde.signedIn(s.connector)) await loadProjects();
+        if (s.connector && opencde.signedIn(s.connector)) { await loadLimits(); await loadProjects(); }
+      }
+      /** How long a version's message may be on the chosen server (Dataregium's capability git). */
+      async function loadLimits() {
+        s.messageMax = await opencde.messageMax(s.connector);
+        render();
       }
       async function signIn() {
         s.busy = 'login'; s.error = ''; render();
         try {
           if (!opencde.redirectUri()) throw new Error(t('issues.err.file'));
           await opencde.login(s.connector);
+          await loadLimits();
           await loadProjects();
         } catch (err) { fail(err); }
         s.busy = ''; render();
@@ -176,7 +182,7 @@
           const sel = /** @type {any} */ (h('dm-select', { label: t('issues.source') }));
           sel.options = s.connectors.map((c) => ({ value: c.id, label: c.name }));
           sel.value = s.connector ? s.connector.id : '';
-          sel.addEventListener('change', () => { s.connector = s.connectors.find((c) => c.id === sel.value) || null; s.projects = null; s.projectId = ''; render(); if (s.connector && opencde.signedIn(s.connector)) loadProjects(); });
+          sel.addEventListener('change', () => { s.connector = s.connectors.find((c) => c.id === sel.value) || null; s.projects = null; s.projectId = ''; s.messageMax = opencde.MESSAGE_MAX; render(); if (s.connector && opencde.signedIn(s.connector)) loadLimits().then(loadProjects); });
           nodes.push(sel);
         }
         const signed = s.connector && opencde.signedIn(s.connector);
@@ -224,12 +230,12 @@
             how.addEventListener('change', () => { s.how = how.value; render(); });
             const own = documents && d.source && d.source.cde && d.source.cde.documentId && d.source.cde.connectorId === s.connector.id ? d.source.cde : null;
             progressEl = h('div', { 'data-cde-progress': '' });
-            // What the new version changes, for its message on the server (Dataregium keeps at most MESSAGE_MAX characters).
+            // What the new version changes, for its message on the server (at most what the server's capability git says).
             let message = null;
             if (own) {
-              message = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '2', label: t('cde.send.message'), help: t('cde.send.message.help', { n: String(opencde.MESSAGE_MAX) }), 'data-cde-message': '' }));
+              message = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '2', label: t('cde.send.message'), help: t('cde.send.message.help', { n: i18n.formatNumber(s.messageMax) }), 'data-cde-message': '' }));
               message.value = s.message;
-              message.addEventListener('input', () => { s.message = String(message.value || '').slice(0, opencde.MESSAGE_MAX); });
+              message.addEventListener('input', () => { s.message = String(message.value || '').slice(0, s.messageMax); });
             }
             nodes.push(what, s.what === 'dataset' ? format : null, s.what === 'bundle' ? h('p', { class: 'dm-help dm-small', text: t('cde.send.what.bundle.hint') }) : null, how,
               h('p', { class: 'dm-help dm-small', text: t(s.how === 'bcf' ? 'cde.send.how.bcf.hint' : 'cde.send.how.documents.hint') }),

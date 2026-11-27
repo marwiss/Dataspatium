@@ -203,7 +203,8 @@ Kortet *IFC-DB* (tidigare IFC-LPG) visas när servern har en graf, se [grafer.md
 Under *Filer i projektet* listar källan de modeller och dokument som servern har för projektet. *Hämta* gör en datamängd av
 filens eget slag, så en IFC-fil blir en modell och en CSV-fil en tabell, och datamängden minns vilken server, vilket projekt
 och vilken version den kom från. I Hantera visar kortet *Från CDE* detta, och *Sök ny version* frågar servern om dokumentet
-har en nyare version; den hämtas då som en egen datamängd bredvid den gamla. Källan säger också vad du får göra i projektet,
+har en nyare version; den hämtas då som en egen datamängd bredvid den gamla. Har servern en git-historik per projekt
+(Dataregium från fas 5.2) visar kortet också vilken commit versionen ligger i. Källan säger också vad du får göra i projektet,
 till exempel skapa ärenden eller ladda upp dokument. När källan skapas frågar dialogen servern var man loggar in; svarar
 servern inte då, frågar appen igen vid första inloggningen.
 

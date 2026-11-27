@@ -87,7 +87,7 @@
       const { ui, store, shell } = ctx;
       const opencde = D.require('api/families/opencde');
       const el = h('div', { class: 'dm-card dm-stack-sm', 'data-card': 'cde' });
-      const state = { checking: false, result: null, error: '', fetching: false, pub: null, pubBusy: '' };
+      const state = { checking: false, result: null, error: '', fetching: false, pub: null, pubBusy: '', commit: null };
       const connectorOf = async () => (await D.require('api/connectors').get(cde.connectorId)) || null;
       /** What the tier in effect and the source's server show (platform/tier). @param {string} feature */
       const shows = (feature) => tier.shows(feature, { server: cde.connectorId });
@@ -98,6 +98,8 @@
           if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
           if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
           state.result = await opencde.newerVersion(connector, ds);
+          // The commit this version is in, when the server keeps a git history per project (Dataregium's phase 5.2).
+          if (cde.documentId && cde.versionIndex) state.commit = await opencde.gitCommit(connector, cde.documentId, Number(cde.versionIndex));
         } catch (err) { state.error = String((err && err.message) || err); }
         state.checking = false; draw();
       }
@@ -164,6 +166,7 @@
           { label: t('common.type'), value: t(cde.kind === 'document' ? 'cde.kind.document' : cde.kind === 'issues' ? 'cde.kind.issues' : 'cde.kind.bcf') },
           cde.versionIndex ? { label: t('cde.version'), value: String(cde.versionIndex) } : null,
           cde.fetchedAt ? { label: t('cde.fetched'), value: i18n.formatDateTime(cde.fetchedAt) } : null,
+          state.commit ? { label: t('cde.git.commit'), value: state.commit.slice(0, 12) } : null,
         ].filter(Boolean);
         const r = state.result;
         replace(el,

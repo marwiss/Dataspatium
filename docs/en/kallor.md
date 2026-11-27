@@ -209,7 +209,7 @@ Under *Files in the project* the source lists the models and documents the serve
 dataset of the file's own kind, so an IFC file becomes a model and a CSV file a table, and the dataset remembers which
 server, project and version it came from. In Manage the card *From the CDE* shows this, and *Check for a new version* asks
 the server whether the document has a newer version; that version is then fetched as a dataset of its own beside the old
-one. The source also says what you may do in the project, such as create issues or upload documents. When the source is
+one. When the server keeps a git history per project (Dataregium from phase 5.2), the card also shows the commit the version is in. The source also says what you may do in the project, such as create issues or upload documents. When the source is
 made, the dialog asks the server where to sign in; if the server does not answer then, the app asks again at the first
 sign-in.
 

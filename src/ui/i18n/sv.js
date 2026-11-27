@@ -6220,6 +6220,7 @@
     'cde.kind.bcf': 'Dokument (BCF)',
     'cde.version': 'Version',
     'cde.fetched': 'Hämtad',
+    'cde.git.commit': 'Commit på servern',
     'cde.publication': 'Publicering',
     'cde.publication.hint': 'Visar om versionen är publicerad på servern. Den som är projektansvarig kan publicera den.',
     'cde.publication.none': 'Versionen är inte publicerad.',
