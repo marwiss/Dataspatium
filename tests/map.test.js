@@ -156,6 +156,58 @@
     return 'ok';
   }, 30000);
 
+  test('map: a map that came as a file asks per host for its own WMS and tile addresses, and OpenStreetMap and the person\'s own maps per purpose (F115 b)', async (assert) => {
+    const areas = await makeAreas();
+    const own = charts.create('map', areas, 'Egen WMS-karta');
+    own.map = leaflet.defaultMap(await datasets.columns(areas.id), areas);
+    own.map.basemap = 'wms';
+    own.map.wms = { url: 'https://wms.example.invalid/ows', layers: 'topo' };
+    // The same map as a viz file from someone else: importJson marks it as received.
+    const text = charts.exportJson(Object.assign({}, own, { name: 'Mottagen WMS-karta' }));
+    const received = await charts.importJson(text);
+    assert.equal(received.map.received, true, 'a map from a file is marked as received');
+    const key = 'dataspatium.consent';
+    const before = localStorage.getItem(key);
+    localStorage.removeItem(key);
+    const prior = await consent.state('basemaps');
+    const kept = await consent.hostState('basemaps', 'wms.example.invalid');
+    const asked = [];
+    const el = host();
+    const made = [];
+    const factory = (url) => { made.push(url); return { addTo: () => {} }; };
+    try {
+      await consent.set('basemaps', 'granted');
+      await consent.setHost('basemaps', 'wms.example.invalid', null);
+      consent.setAsker(async (purpose, info) => { asked.push({ purpose, host: info.host, perHost: !!info.perHost }); return { allow: false, remember: true }; });
+      const mine = await leaflet.render(el, own, { tileFactory: factory });
+      assert.equal(asked.length, 0, 'the person\'s own WMS is covered by the purpose');
+      assert.ok(made.length === 1 && !mine.info.basemapDenied, 'and drawn');
+      mine.finalize();
+      const theirs = await leaflet.render(el, received, { tileFactory: factory });
+      assert.deepEqual(asked, [{ purpose: 'basemaps', host: 'wms.example.invalid', perHost: true }], 'the received map asks for its host although the purpose is allowed');
+      assert.ok(theirs.info.basemapDenied && made.length === 1, 'and leaves the background out when refused');
+      theirs.finalize();
+      assert.equal(await consent.hostState('basemaps', 'wms.example.invalid'), 'denied', 'the refusal is kept for that host');
+      const again = await leaflet.render(el, received, { tileFactory: factory });
+      assert.equal(asked.length, 1, 'and not asked again');
+      again.finalize();
+      // OpenStreetMap is the app's own layer, also in a received map.
+      const osm = Object.assign({}, received, { map: Object.assign({}, received.map, { basemap: 'osm' }) });
+      const drawn = await leaflet.render(el, osm, { tileFactory: factory });
+      assert.equal(asked.length, 1, 'OpenStreetMap is covered by the purpose');
+      assert.ok(!drawn.info.basemapDenied, 'and drawn');
+      drawn.finalize();
+    } finally {
+      consent.setAsker(null);
+      await consent.setHost('basemaps', 'wms.example.invalid', kept || null);
+      await consent.set('basemaps', prior === 'granted' || prior === 'denied' ? prior : null);
+      if (before !== null) localStorage.setItem(key, before);
+      el.remove();
+      await charts.remove(received.id).catch(() => {});
+    }
+    return 'ok';
+  }, 30000);
+
   /**
    * A published page in a frame with its scripts run in order. The test page's content policy, which a srcdoc frame inherits,
    * keeps inline scripts from running there, so the test runs them; `loaded(win)` is called once the page has Leaflet, before

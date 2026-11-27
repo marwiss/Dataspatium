@@ -621,7 +621,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kartor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 21538,
+  "size": 21873,
   "library": "dataspatium"
  },
  "docs/sv/raster.md": {
@@ -699,7 +699,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/sakerhet.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 47513,
+  "size": 47745,
   "library": "dataspatium"
  },
  "docs/da/kom-igang.md": {
@@ -1635,7 +1635,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kartor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 21582,
+  "size": 21880,
   "library": "dataspatium"
  },
  "docs/en/raster.md": {
@@ -1713,7 +1713,7 @@ Dataspatium.assets.addEntries({
  "docs/en/sakerhet.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 47374,
+  "size": 47603,
   "library": "dataspatium"
  }
 });

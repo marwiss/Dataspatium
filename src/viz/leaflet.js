@@ -384,6 +384,11 @@
       if (!w || !/^(https?|dataspatium-asset):\/\//i.test(String(w.url || '')) || !String(w.layers || '').trim()) return null;
       return { url: wmsUrl(w.url), attribution: escAttr(w.attribution), maxZoom: 19, wms: { layers: String(w.layers).trim(), format: w.format || 'image/png', transparent: !!w.transparent, version: w.version || '1.3.0' } };
     }
+    /**
+     * Whether a map definition came from outside (a viz file, a bundle, a workspace or GitHub: viz/charts.importJson marks it): its
+     * own image addresses were chosen by content, so they are asked about per host (decision F115 b).
+     */
+    const received = (def) => !!(def && def.received === true);
     const hostOf = (url) => { try { return new URL(String(url).replace(/\{[sxyzr-]+\}/g, '0')).host; } catch (_e) { return String(url); } };
     /** Leaflet's tile layer, or its WMS layer when the options carry WMS parameters (the shape the test factories get). */
     const defaultFactory = (url, opts) => (opts.layers ? globalThis.L.tileLayer.wms(url, opts) : globalThis.L.tileLayer(url, opts));
@@ -400,7 +405,8 @@
       const src = tileSource(def);
       if (!src) return null;
       if (grid && !src.wms) { info.basemapProjection = true; return null; }
-      try { await consent.require('basemaps', { host: hostOf(src.url), url: src.url }); } catch (err) {
+      // OpenStreetMap is the app's own layer; a template, WMS or tile set in a map that came from outside is asked per host (F115 b).
+      try { await consent.require('basemaps', { host: hostOf(src.url), url: src.url, perHost: received(def) && def.basemap !== 'osm' }); } catch (err) {
         if (err && err.name === 'ConsentError') { info.basemapDenied = true; return null; }
         throw err;
       }
@@ -450,7 +456,7 @@
         const src = overlaySource(layer);
         if (!src) continue;
         if (grid && !src.wms) { info.basemapProjection = true; continue; }
-        try { await consent.require('basemaps', { host: hostOf(src.url), url: src.url }); } catch (err) {
+        try { await consent.require('basemaps', { host: hostOf(src.url), url: src.url, perHost: received(def) }); } catch (err) {
           if (err && err.name === 'ConsentError') { info.basemapDenied = true; continue; }
           throw err;
         }

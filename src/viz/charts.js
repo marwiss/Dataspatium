@@ -80,6 +80,8 @@
       if (obj.kind === 'graph') { chart.graph = obj.graph || null; if (chart.graph) { chart.graph.datasetId = chart.datasetId; chart.graph.datasetName = chart.datasetName; } }
       if (obj.kind === 'map') {
         chart.map = obj.map || null;
+        // Its image addresses (a template, a WMS, a tile set) were chosen by whoever made the file: viz/leaflet asks per host (F115 b).
+        if (chart.map && typeof chart.map === 'object') chart.map.received = true;
         // Layers point at datasets by id (a table's features, a raster's pictures); after a transfer they are matched by name or
         // short name like the chart itself.
         for (const layer of (chart.map && chart.map.layers) || []) {

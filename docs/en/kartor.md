@@ -36,7 +36,9 @@ The map remembers the background map for each dataset, as do the plan map (with 
 the map of the place of a new building: switch to another dataset and back, and the same background map is chosen again, also
 after a reload. After a reload a background map from the net is shown only if you gave the consent to background maps for
 good, and an orthophoto with a key only when its key is already unlocked; otherwise the map starts without a background map
-and asks nothing.
+and asks nothing. A map that came as a file (a viz file, a bundle, a workspace or GitHub) asks for each host of its own image,
+WMS and tile addresses, also when background maps are allowed, and the answer is kept per host under Internet access;
+OpenStreetMap and the orthophotos are the app's own and ask as before.
 
 Large datasets are drawn on a canvas; 10 000 polygons pan smoothly. More than 50 000 features per layer are not
 drawn (the limit can be raised per layer in the map view).
