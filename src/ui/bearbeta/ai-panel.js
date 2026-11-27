@@ -345,17 +345,7 @@
           setTimeout(() => site.refresh(), 0);
           return site.el;
         }
-        function questionView() {
-          const { q, resolve } = s.questionBox;
-          const free = q.free ? /** @type {any} */ (h('dm-input', { label: t('ask.free') })) : null;
-          return h('div', { class: 'dm-card dm-stack-sm dm-ask', 'data-ask': '' },
-            h('p', { class: 'dm-ask-question', text: String(q.question || '').slice(0, 500) }),
-            (q.options || []).slice(0, 6).map((o, i) => h('div', { class: 'dm-stack-sm dm-ask-option', 'data-ask-option': String(i) },
-              basic.button({ label: String(o.label).slice(0, 80), title: o.description || o.label, onClick: () => resolve({ answer: o.label, index: i, free: false }) }),
-              o.description ? h('p', { class: 'dm-help dm-small', text: String(o.description).slice(0, 200) }) : null)),
-            free ? h('div', { class: 'dm-row-wrap dm-ask-free' }, free, basic.button({ label: t('ask.answer'), title: t('ask.answer.hint'), onClick: () => { const v = String(free.value || '').trim().slice(0, 500); if (v) resolve({ answer: v, index: null, free: true }); } })) : null,
-            basic.button({ label: t('common.cancel'), variant: 'ghost', size: 'sm', title: t('assistant.question.cancel'), onClick: () => resolve(null) }));
-        }
+        function questionView() { return questionBox(s.questionBox.q, s.questionBox.resolve); }
         /** The elements of the answer into the shared selection, which the 3D view and the table follow. */
         async function mark() {
           if (!s.elements.length) return;
@@ -688,18 +678,7 @@
             h('p', { class: 'dm-help dm-xs', text: t('ai.change.python') }));
         }
         function render() {
-          const sel = /** @type {any} */ (h('dm-select', { label: t('ai.provider') }));
-          sel.options = s.providers.map((p) => ({ value: p.id, label: `${p.name} · ${p.model}${providers.isLocal(p.baseUrl) ? ' · ' + t('ai.local') : ''}` }));
-          sel.value = s.providerId;
-          sel.addEventListener('change', () => { s.providerId = sel.value; });
-          const pol = /** @type {any} */ (h('dm-select', { label: t('ai.policy'), title: t('ai.policy.hint') }));
-          pol.options = providers.POLICIES.map((id) => ({ value: id, label: t('ai.policy.' + id) }));
-          pol.value = s.policy;
-          pol.addEventListener('change', () => { providers.setPolicy(pol.value).then(() => { s.policy = pol.value; }).catch(fail); });
-          const mode = /** @type {any} */ (h('dm-select', { label: t('ai.mode'), title: t('ai.mode.hint'), 'data-ai-mode': '' }));
-          mode.options = MODES.map((id) => ({ value: id, label: t('ai.mode.' + id) }));
-          mode.value = s.mode;
-          mode.addEventListener('change', () => { s.mode = MODES.includes(mode.value) ? mode.value : 'ask'; render(); });
+          const [sel, pol, mode] = controls(s, { modes: MODES, fail, onMode: render });
           const q = /** @type {any} */ (h('dm-input', { label: t(building() ? 'ai.build.brief' : 'ai.question'), rows: building() ? '6' : '3', placeholder: t(building() ? 'ai.build.placeholder' : checking() ? 'ai.check.placeholder' : changing() ? 'ai.question.placeholder.change' : 'ai.question.placeholder'), 'data-ai-question': '' }));
           q.value = s.question;
           q.addEventListener('input', () => { s.question = q.value; });
@@ -731,6 +710,43 @@
         function destroy() { unsubscribe(); cancel(); site.destroy(); if (s.preview && options.preview) { s.preview = null; Promise.resolve(options.preview(null)).catch(() => {}); } }
         load().then(render);
         return { el, destroy, state: s, check, site, ask: (question) => { s.question = question; return askNow(); }, attach: (list) => { s.attachments = s.attachments.concat(list || []); render(); }, addFacts, mark, load, preview: previewNow, approve: approveNow, reject: rejectNow, propose: proposeNow, approveOnServer, resolveConflicts: resolveNow, setMode: (m) => { s.mode = MODES.includes(m) ? m : 'ask'; render(); } };
+      }
+
+      /**
+       * The panel's choices of provider, policy and mode, as the model's and the plan's panels (ui/bearbeta/plan-ai) show them.
+       * @param {{providers: any[], providerId: string, policy: string, mode: string}} s the panel's state, changed in place
+       * @param {{modes: string[], fail: (err: any) => void, onMode: () => void, modeHint?: string}} opts
+       * @returns {HTMLElement[]} the provider, the policy and the mode
+       */
+      function controls(s, opts) {
+        const sel = /** @type {any} */ (h('dm-select', { label: t('ai.provider') }));
+        sel.options = s.providers.map((p) => ({ value: p.id, label: `${p.name} · ${p.model}${providers.isLocal(p.baseUrl) ? ' · ' + t('ai.local') : ''}` }));
+        sel.value = s.providerId;
+        sel.addEventListener('change', () => { s.providerId = sel.value; });
+        const pol = /** @type {any} */ (h('dm-select', { label: t('ai.policy'), title: t('ai.policy.hint') }));
+        pol.options = providers.POLICIES.map((id) => ({ value: id, label: t('ai.policy.' + id) }));
+        pol.value = s.policy;
+        pol.addEventListener('change', () => { providers.setPolicy(pol.value).then(() => { s.policy = pol.value; }).catch(opts.fail); });
+        const mode = /** @type {any} */ (h('dm-select', { label: t('ai.mode'), title: opts.modeHint || t('ai.mode.hint'), 'data-ai-mode': '' }));
+        mode.options = opts.modes.map((id) => ({ value: id, label: t('ai.mode.' + id) }));
+        mode.value = s.mode;
+        mode.addEventListener('change', () => { s.mode = opts.modes.includes(mode.value) ? mode.value : opts.modes[0]; opts.onMode(); });
+        return [sel, pol, mode];
+      }
+      /**
+       * A question from the AI (ask_person) with its answers to choose from and, when allowed, a free answer; `resolve` gets the
+       * answer or null when the person closes it. Text only. @param {{question: string, options?: any[], free?: boolean}} q
+       * @param {(answer: {answer: string, index: number|null, free: boolean}|null) => void} resolve
+       */
+      function questionBox(q, resolve) {
+        const free = q.free ? /** @type {any} */ (h('dm-input', { label: t('ask.free') })) : null;
+        return h('div', { class: 'dm-card dm-stack-sm dm-ask', 'data-ask': '' },
+          h('p', { class: 'dm-ask-question', text: String(q.question || '').slice(0, 500) }),
+          (q.options || []).slice(0, 6).map((o, i) => h('div', { class: 'dm-stack-sm dm-ask-option', 'data-ask-option': String(i) },
+            basic.button({ label: String(o.label).slice(0, 80), title: o.description || o.label, onClick: () => resolve({ answer: o.label, index: i, free: false }) }),
+            o.description ? h('p', { class: 'dm-help dm-small', text: String(o.description).slice(0, 200) }) : null)),
+          free ? h('div', { class: 'dm-row-wrap dm-ask-free' }, free, basic.button({ label: t('ask.answer'), title: t('ask.answer.hint'), onClick: () => { const v = String(free.value || '').trim().slice(0, 500); if (v) resolve({ answer: v, index: null, free: true }); } })) : null,
+          basic.button({ label: t('common.cancel'), variant: 'ghost', size: 'sm', title: t('assistant.question.cancel'), onClick: () => resolve(null) }));
       }
 
       /** The dialog that lists the providers and adds, changes or removes one; the key is written, never shown. */
@@ -780,6 +796,6 @@
           } catch (err) { error = String((err && err.message) || err); }
         }
       }
-      return { create, manage, edit };
+      return { create, manage, edit, controls, questionBox };
     });
 })();

@@ -130,6 +130,23 @@ varningar som leveransen lästes med. Filer som leveransen nämner men som inte 
 En GeoPackage med många lager som inte är en plan kan på samma sätt bli en enda datamängd, se
 [Kartlager](kartor.md#kartlager-en-geopackage-med-många-lager).
 
+## En ny översiktsplan
+
+*Ny översiktsplan* bland källorna i Inhämta skapar en tom digital översiktsplan att bygga med AI eller för hand, på samma sätt som
+*Ny byggnadsmodell* gör för byggnader. Formuläret har:
+
+- planens namn (annars *Översiktsplan* och kommunens namn);
+- kommunen, ur kommungränserna som följer med appen. Med *Hela kommunen som planområde* blir kommungränsen planens plangeometri,
+  så att kartan visar planområdet från början;
+- koordinatsystemet: SWEREF 99 TM om inget annat väljs, eller en av de lokala SWEREF 99-zonerna. Det är systemet som AI:n läser
+  och skriver koordinater i; leveransen skrivs alltid i SWEREF 99 TM;
+- en beskrivning för AI:n, som sparas med planen.
+
+*Skapa planen* gör en plan i Boverkets ÖP-modell med en ny objektidentitet, tomma tabeller för planbeskrivningen och kopplingarna
+och, med en kommun vald, plangeometrin. Inget hämtas från nätet. Planen öppnas i planvyn som en levererad plan: den kan redigeras,
+byggas med AI och exporteras som leverans. *Bygg planen med AI* öppnar den med AI-panelen i läget *Bygg från beskrivning* och
+beskrivningen ifylld.
+
 ## Redigera planen
 
 En digital översiktsplan kan redigeras i planvyn: planbeskrivningens avsnitt, områdena i plankartan och kopplingarna mellan
@@ -179,6 +196,35 @@ bort koppling* bort kopplingen.
 En koppling som görs här sparas i `_section_links` med avsnittets typ och källan `redigerad`. *Läs kopplingarna igen* och
 *Lägg till fil i planen* behåller de kopplingar och avsnitt som har gjorts här, men text som har ändrats i ett avsnitt som finns
 i en Word-fil läses om ur filen. Exportera planen som leverans först om ändringarna ska finnas i filerna.
+
+### Med AI
+
+*Fråga AI* i planvyns verktygsrad öppnar AI-panelen i inspektören, med samma leverantörer och policy som för byggnadsmodeller (se
+[Fråga AI om modellen](cad-bim.md#fråga-ai-om-modellen)). Panelen har tre lägen:
+
+- *Fråga*: AI:n läser planen med verktyg och svarar. Den läser planens uppgifter, planbeskrivningens avsnitt i ordning, områdena
+  med tema, innehållstyp, namn och läge, kopplingarna, det du har valt i kartan och objekten i andra datamängder som visas i
+  kartan. *Välj n områden i kartan* väljer de områden som svaret bygger på. AI:n kan inte ändra något.
+- *Ändra*: AI:n föreslår ändringar i avsnitten, områdena och kopplingarna.
+- *Bygg från beskrivning*: AI:n planerar och bygger planen ur beskrivningen, med avsnitt som planens syfte och
+  ställningstaganden, områden i plankartan och kopplingarna mellan dem. Saknas något väsentligt frågar den i panelen.
+
+AI:n ändrar aldrig planen själv. I lägena *Ändra* och *Bygg från beskrivning* fyller den ett ändringsset med planens egna
+redigeringar, samma som ovan. Panelen listar stegen, med texten i de nya och ändrade avsnitten under *Visa texten*.
+
+- *Förhandsvisa* prövar ändringarna på en kopia av planen och ritar områdena i kartan: nytt grönt, ändrat gult och borttaget rött
+  och streckat. Ett steg som inte går att göra visas med sitt fel, och då kan ändringssetet inte godkännas.
+- *Godkänn* gör ändringarna till ett enda steg i datamängdens logg, med leverantör, modell och frågor. *Ångra* i redigeringsraden,
+  eller i meddelandet som visas, tar bort dem på en gång.
+- *Avvisa* släpper ändringssetet utan att röra planen.
+
+Ett ändringsset som tar bort områden eller avsnitt bekräftas en gång till, och AI:n får bara ta bort något när du har bett om
+det. Områdenas former anges i planens koordinatsystem. AI:n kan också kopiera formen från ett objekt i en annan datamängd som
+visas i kartan (ögat i listan över datamängder), till exempel en detaljplan eller ett kartlager, eller från ett annat område i
+planen. Formerna som AI:n ritar själv är utkast: justera dem med *Redigera formen* och *Flytta*.
+
+Till AI-leverantören skickas planens uppgifter, texter, namn och lägen och de objekt i andra datamängder som visas i kartan och som
+AI:n läser, efter samtycke för leverantörens värd. AI-panelen hör till nivån BIM och GIS.
 
 ### Exportera som leverans
 

@@ -102,9 +102,6 @@
     // GRS 80 and SWEREF 99 TM (EPSG:3006): Gauss-Krüger series as published by Lantmäteriet, millimetre accuracy.
     const A = 6378137;
     const F = 1 / 298.257222101;
-    const K0 = 0.9996;
-    const LON0 = 15;
-    const FALSE_E = 500000;
     const FALSE_N = 0;
     const DEG = Math.PI / 180;
     /** The SWEREF 99 projections: TM and the twelve local zones (central meridian, scale, false easting), by EPSG code. */
@@ -154,8 +151,12 @@
       return [zone.lon0 + dLon / DEG, phi / DEG];
     }
 
-    /** [longitude, latitude] in degrees -> SWEREF 99 TM [easting, northing] in metres. */
-    function wgs84ToSweref(lon, lat) {
+    /**
+     * [longitude, latitude] in degrees -> SWEREF 99 [easting, northing] in metres: TM, or the local zone `epsg` (3007–3018).
+     * @param {number} lon @param {number} lat @param {number} [epsg]
+     */
+    function wgs84ToSweref(lon, lat, epsg) {
+      const zone = (epsg && SWEREF_ZONES[epsg]) || SWEREF_ZONES[3006];
       const { e2, n, aHat } = tmConstants();
       const phi = lat * DEG;
       const aC = e2;
@@ -164,15 +165,15 @@
       const dC = (1237 * e2 ** 4) / 1260;
       const s = Math.sin(phi);
       const phiStar = phi - s * Math.cos(phi) * (aC + bC * s ** 2 + cC * s ** 4 + dC * s ** 6);
-      const dLon = (lon - LON0) * DEG;
+      const dLon = (lon - zone.lon0) * DEG;
       const xiP = Math.atan(Math.tan(phiStar) / Math.cos(dLon));
       const etaP = Math.atanh(Math.cos(phiStar) * Math.sin(dLon));
       const b1 = n / 2 - (2 * n ** 2) / 3 + (5 * n ** 3) / 16 + (41 * n ** 4) / 180;
       const b2 = (13 * n ** 2) / 48 - (3 * n ** 3) / 5 + (557 * n ** 4) / 1440;
       const b3 = (61 * n ** 3) / 240 - (103 * n ** 4) / 140;
       const b4 = (49561 * n ** 4) / 161280;
-      const north = K0 * aHat * (xiP + b1 * Math.sin(2 * xiP) * Math.cosh(2 * etaP) + b2 * Math.sin(4 * xiP) * Math.cosh(4 * etaP) + b3 * Math.sin(6 * xiP) * Math.cosh(6 * etaP) + b4 * Math.sin(8 * xiP) * Math.cosh(8 * etaP)) + FALSE_N;
-      const east = K0 * aHat * (etaP + b1 * Math.cos(2 * xiP) * Math.sinh(2 * etaP) + b2 * Math.cos(4 * xiP) * Math.sinh(4 * etaP) + b3 * Math.cos(6 * xiP) * Math.sinh(6 * etaP) + b4 * Math.cos(8 * xiP) * Math.sinh(8 * etaP)) + FALSE_E;
+      const north = zone.k0 * aHat * (xiP + b1 * Math.sin(2 * xiP) * Math.cosh(2 * etaP) + b2 * Math.sin(4 * xiP) * Math.cosh(4 * etaP) + b3 * Math.sin(6 * xiP) * Math.cosh(6 * etaP) + b4 * Math.sin(8 * xiP) * Math.cosh(8 * etaP)) + FALSE_N;
+      const east = zone.k0 * aHat * (etaP + b1 * Math.cos(2 * xiP) * Math.sinh(2 * etaP) + b2 * Math.cos(4 * xiP) * Math.sinh(4 * etaP) + b3 * Math.cos(6 * xiP) * Math.sinh(6 * etaP) + b4 * Math.cos(8 * xiP) * Math.sinh(8 * etaP)) + zone.falseE;
       return [east, north];
     }
 

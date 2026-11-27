@@ -145,7 +145,9 @@ Det som går i en version går också i nästa. Varje version hör ihop med samm
   Varje lager kan visas eller döljas, flera samtidigt, med egen symbol i teckenförklaringen och Boverkets färger där de finns.
   Planbeskrivningen, områdena och kopplingarna kan redigeras i planvyn, och planen kan exporteras som en leverans med GeoPackage och
   planbeskrivning (se [Planer](docs/sv/planer.md#en-digital-översiktsplan-lager-ställningstaganden-och-filer) och
-  [Redigera planen](docs/sv/planer.md#redigera-planen)).
+  [Redigera planen](docs/sv/planer.md#redigera-planen)). En ny, tom översiktsplan skapas under *Inhämta > Ny översiktsplan* och
+  byggs med AI ur en beskrivning, med ett ändringsset som du förhandsvisar i kartan och godkänner (se
+  [En ny översiktsplan](docs/sv/planer.md#en-ny-översiktsplan)).
 - **Diagram, kartor och dokument**: diagram och kartor med Vega-Lite, D3 eller R, dashboards och rapporter ur mallar som HTML, Word,
   PDF, PowerPoint, Markdown eller LaTeX (se [Visualisera](docs/sv/visualisera.md)).
 - **Spara och dela**: data i ett tiotal format, delningspaket, kommentarer, säkerhetskopia, synk med GitHub och en portabel mapp.

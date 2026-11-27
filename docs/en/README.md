@@ -149,7 +149,9 @@ What works in one version also works in the next. Each version goes with the sam
   text). Each layer can be shown or hidden, several at once, with its own symbol in the legend and Boverket's colours where they
   exist. The plan description, the areas and the links can be edited in the plan view, and the plan can be exported as a delivery
   with a GeoPackage and the plan description (see [Plans](planer.md#a-digital-comprehensive-plan-layers-positions-and-files) and
-  [Edit the plan](planer.md#edit-the-plan)).
+  [Edit the plan](planer.md#edit-the-plan)). A new, empty comprehensive plan is made under *Import > New comprehensive plan* and
+  built with AI from a description, with a change set that you preview on the map and approve (see
+  [A new comprehensive plan](planer.md#a-new-comprehensive-plan)).
 - **Charts, maps and documents**: charts and maps with Vega-Lite, D3 or R, dashboards and reports from templates as HTML, Word, PDF,
   PowerPoint, Markdown or LaTeX (see [Visualise](visualisera.md)).
 - **Save and share**: data in some ten formats, sharing bundles, comments, backup, sync with GitHub and a portable folder.
