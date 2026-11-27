@@ -67,7 +67,8 @@
 
     /**
      * Perform a request.
-     * @param {{url: string, method?: string, headers?: Record<string, string>, body?: any, signal?: AbortSignal, timeoutMs?: number, notModifiedOk?: boolean, rateKey?: string, rateLimit?: {requests: number, perSeconds: number}, retries?: number, responseType?: 'text'|'arraybuffer', ask?: boolean}} req
+     * @param {{url: string, method?: string, headers?: Record<string, string>, body?: any, signal?: AbortSignal, timeoutMs?: number, notModifiedOk?: boolean, rateKey?: string, rateLimit?: {requests: number, perSeconds: number}, retries?: number, responseType?: 'text'|'arraybuffer', ask?: boolean, cors?: {file?: boolean, web?: boolean}}} req
+     *   `cors`: what was measured for the source (api/reach), so that a refused request names the bridge
      * @returns {Promise<{ok: boolean, status: number, statusText: string, headers: Headers, url: string, text: string, buffer: ArrayBuffer|null, contentType: string, ms: number}>}
      */
     async function request(req) {
@@ -94,7 +95,7 @@
           if (req.signal && req.signal.aborted) throw new ApiError('Avbrutet.', { kind: 'aborted' });
           if (controller.signal.aborted) throw new ApiError(D.t('api.err.timeout', { host: hostOf(req.url) }), { kind: 'timeout', url: req.url });
           res = url === req.url ? await viaBridge(req) : null;
-          if (!res) throw new ApiError(D.t('api.err.network', { host: hostOf(req.url) }), { kind: 'network', url: req.url, cause: err });
+          if (!res) throw networkError(req, err, url !== req.url);
         } finally {
           if (req.signal) req.signal.removeEventListener('abort', onAbort);
         }
@@ -115,6 +116,21 @@
         else out.text = await res.text();
         return out;
       }
+    }
+
+    /**
+     * The error of a request that never got an answer. A source marked as out of the browser's reach here (`req.cors`, what was
+     * measured for it, api/reach) says so and how the bridge fetches it, instead of "no network or no CORS"; through the user's
+     * own proxy the general text stands.
+     * @param {{url: string, cors?: {file?: boolean, web?: boolean}}} req @param {any} cause @param {boolean} proxied
+     */
+    function networkError(req, cause, proxied) {
+      const host = hostOf(req.url);
+      const reach = D.require('api/reach');
+      const why = req.cors && !proxied ? reach.blocked({ cors: req.cors }) : null;
+      if (!why) return new ApiError(D.t('api.err.network', { host }), { kind: 'network', url: req.url, cause });
+      const text = D.t('api.err.nocors', { host });
+      return new ApiError(why === 'bridge' ? text : reach.hint(why) + ' ' + text, { kind: 'network', code: 'cors', url: req.url, cause });
     }
 
     /**

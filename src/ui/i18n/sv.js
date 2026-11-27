@@ -2637,6 +2637,7 @@
     'bridge.relay.on': 'Tjänster som inte tillåter webbläsaren hämtas nu via bryggan.',
     'bridge.relay.off': 'Ingenting hämtas längre via bryggan.',
     'api.err.bridge': 'Kunde inte hämta från {host} via bryggan: {message}',
+    'api.err.nocors': '{host} tillåter inte anrop från webbläsaren (CORS), så svaret kan inte läsas här. Bryggan på den egna datorn kan hämta det: starta den med --allow-host {host} (-AllowHosts {host} i PowerShell), anslut den under Inhämta och slå på Hämta via bryggan under Internetåtkomst i Hantera.',
     'bridge.err.token': 'Bryggan avvisade token. Kopiera token från bryggans fönster.',
     'bridge.err.readonly': 'Bryggan är skrivskyddad. Starta den med skrivning tillåten för att ändra data.',
     'bridge.err.approval': 'Ändringen kräver ditt godkännande.',

@@ -11,9 +11,13 @@
   D.define('api/pagination', ['api/parsers', 'api/http'], (parsers, http) => {
     function setParam(url, name, value) { const u = new URL(url); u.searchParams.set(name, String(value)); return u.toString(); }
 
-    /** @returns {{page: number, offset: number, seen: Set<string>, size: number}} */
+    /**
+     * What the size parameter of an offset page carries: the size, or with `sizeEnd` the end of the page (offset + size), as
+     * Naturvårdsregistret's WFS reads `count` (startIndex=500&count=1000 gives features 500 to 999, count=500 gives none).
+     */
+    const sizeValue = (spec, state) => (spec.sizeEnd ? state.offset + state.size : state.size);
     /** The offset and page size as values for a request body (`in: "body"`). */
-    const bodyPage = (spec, state) => Object.assign({ [spec.param]: state.offset }, spec.sizeParam && spec.size ? { [spec.sizeParam]: spec.size } : {});
+    const bodyPage = (spec, state) => Object.assign({ [spec.param]: state.offset }, spec.sizeParam && spec.size ? { [spec.sizeParam]: sizeValue(spec, state) } : {});
     /**
      * @param {any} spec @param {any} req the first request, changed in place
      * @param {(extra: Record<string, any>) => any} [rebuild] builds the request again with extra values: an offset in the body
@@ -31,7 +35,7 @@
         if (spec.sizeParam && spec.size) req.url = setParam(req.url, spec.sizeParam, spec.size);
       } else if (spec.type === 'offset') {
         req.url = setParam(req.url, spec.param, state.offset);
-        if (spec.sizeParam && spec.size) req.url = setParam(req.url, spec.sizeParam, spec.size);
+        if (spec.sizeParam && spec.size) req.url = setParam(req.url, spec.sizeParam, sizeValue(spec, state));
       }
       return state;
     }
@@ -64,6 +68,7 @@
         if (rows === 0 || (state.size && rows < state.size) || (Number.isFinite(total) && state.offset >= total)) return null;
         if (spec.in === 'body') return state.rebuild(bodyPage(spec, state));
         url = setParam(last.request.url, spec.param, state.offset);
+        if (spec.sizeEnd && spec.sizeParam && spec.size) url = setParam(url, spec.sizeParam, sizeValue(spec, state));
       } else if (type === 'next-url') {
         const v = parsers.resolvePath(last.data, spec.path);
         if (!v || typeof v !== 'string') return null;
@@ -87,6 +92,22 @@
       return Object.assign({}, last.request, { url });
     }
 
-    return { start, next, setParam };
+    /** The smallest page that `shrink` asks for. */
+    const SHRINK_MIN = 10;
+    /** Whether a failed page may be asked for again, smaller (`shrink`: offset pages with the size in the address). */
+    const canShrink = (spec, state) => !!(spec && spec.shrink && spec.type === 'offset' && spec.sizeParam && spec.in !== 'body' && state.size > SHRINK_MIN);
+    /**
+     * The same page again a quarter as large, at least SHRINK_MIN, or null when it cannot shrink. For a service that fails on a page
+     * too heavy for it: an ArcGIS layer of large polygons answers 500 to a thousand features and gives a hundred (Skogsstyrelsen).
+     * The following pages keep the smaller size.
+     * @param {any} spec @param {any} state from start() @param {any} req the request that failed
+     */
+    function shrink(spec, state, req) {
+      if (!canShrink(spec, state)) return null;
+      state.size = Math.max(SHRINK_MIN, Math.ceil(state.size / 4));
+      return Object.assign({}, req, { url: setParam(req.url, spec.sizeParam, sizeValue(spec, state)) });
+    }
+
+    return { start, next, setParam, canShrink, shrink };
   });
 })();

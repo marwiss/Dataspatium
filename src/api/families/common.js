@@ -16,7 +16,7 @@
      */
     async function jsonRequest(connector, req, options) {
       const prepared = await auth.apply(connector, req, { ask: options.ask });
-      const res = await http.request(Object.assign(prepared, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal, ask: options.ask }));
+      const res = await http.request(Object.assign(prepared, { rateKey: connector.id, rateLimit: connector.rateLimit, cors: connector.cors, signal: options.signal, ask: options.ask }));
       if (!res.ok) throw http.httpError(res, connector.name);
       try { return JSON.parse(res.text); } catch (_e) { throw new Error(D.t('api.err.notjson', { name: connector.name })); }
     }

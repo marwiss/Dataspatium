@@ -68,9 +68,8 @@ kan aldrig lägga till någon. Den vägrar adresser som pekar på den egna dator
 rubriker och inga kakor, följer högst tre omdirigeringar till tillåtna värdar och stannar vid `--max-fetch-mb` (50 MB som
 förval). Bryggans logg visar värden och sökvägen, aldrig frågan, rubrikerna eller kroppen. Samtycket för ändamålet gäller som
 förut.
-Två förinställningar nås bara så: *Riksbanken räntor och valutakurser (SWEA)* och *Världsbanken: indikatorer*. Källistan
-märker dem *Kräver bryggan*; starta bryggan med `--allow-host api.riksbank.se --allow-host api.worldbank.org` för att hämta
-från dem.
+En förinställning nås bara så: *Riksbanken räntor och valutakurser (SWEA)*. Källistan märker den *Kräver bryggan*, och en
+hämtning utan brygga säger hur: starta bryggan med `--allow-host api.riksbank.se` för att hämta från den.
 
 ### Styra appen utifrån
 
@@ -270,7 +269,7 @@ till den sparade datamängden.
 |---|---|---|---|
 | WFS 2.0 (GeoServer, MapServer, ArcGIS Server, Deegree) | GetCapabilities | GetFeature med det GeoJSON-format som kapabiliteterna anger (`application/json`, `GEOJSON` med flera) och `srsName=EPSG:4326`; område (bbox), CQL-filter, kolumner; sidor med `startIndex`/`count`, aldrig större än tjänsten skickar (`CountDefault`) | Bearer (valfritt) |
 | OGC API Features | `/collections` | `/collections/{id}/items` med bbox, datetime och filter; next-länkar följs | Bearer (valfritt; krävs av Lantmäteriets geodataplattform) |
-| ArcGIS REST (FeatureServer, MapServer) | Tjänstens beskrivning eller hela katalogen med mapparna, och varje tjänsts lager utom grupp- och rasterlager | `/{lager}/query` med where, område, `f=geojson` och `outSR=4326`; sidor med `resultOffset`, aldrig större än `maxRecordCount` | Token (valfritt) |
+| ArcGIS REST (FeatureServer, MapServer) | Tjänstens beskrivning eller hela katalogen med mapparna, och varje tjänsts lager utom grupp- och rasterlager | `/{lager}/query` med where, område, `f=geojson` och `outSR=4326`; sidor med `resultOffset`, aldrig större än `maxRecordCount`; en sida som tjänsten inte klarar (fel 500 för tunga ytor) hämtas igen en fjärdedel så stor | Token (valfritt) |
 
 Fel som tjänsten själv rapporterar visas med tjänstens text och felkod, till exempel *Service WFS is disabled
 (ServiceUnavailable)* från en avstängd WFS eller ett ArcGIS-fel, och en WFS som inte ger GeoJSON säger vilka format den

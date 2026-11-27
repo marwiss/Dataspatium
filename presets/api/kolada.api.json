@@ -64,7 +64,7 @@
       "path": "/data/kpi/{kpi_id}/municipality/{municipality_id}",
       "params": [
         { "name": "kpi_id", "in": "path", "label": "Nyckeltal (id, flera med komma)", "type": "string", "required": true, "raw": true, "example": "N01951" },
-        { "name": "municipality_id", "in": "path", "label": "Kommun eller region", "type": "multi", "required": true, "optionsFrom": { "endpoint": "municipalities", "value": "id", "label": "title" } },
+        { "name": "municipality_id", "in": "path", "label": "Kommun eller region", "type": "multi", "required": true, "example": "0180", "optionsFrom": { "endpoint": "municipalities", "value": "id", "label": "title" } },
         { "name": "per_page", "in": "query", "type": "number", "default": 2000, "hidden": true }
       ],
       "pagination": { "type": "next-url", "path": "next_url", "maxPages": 100 },
@@ -78,7 +78,7 @@
       "path": "/data/kpi/{kpi_id}/municipality/{municipality_id}/year/{year}",
       "params": [
         { "name": "kpi_id", "in": "path", "label": "Nyckeltal (id, flera med komma)", "type": "string", "required": true, "raw": true, "example": "N01951" },
-        { "name": "municipality_id", "in": "path", "label": "Kommun eller region", "type": "multi", "required": true, "optionsFrom": { "endpoint": "municipalities", "value": "id", "label": "title" } },
+        { "name": "municipality_id", "in": "path", "label": "Kommun eller region", "type": "multi", "required": true, "example": "0180", "optionsFrom": { "endpoint": "municipalities", "value": "id", "label": "title" } },
         { "name": "year", "in": "path", "label": "År (flera med komma)", "type": "string", "required": true, "raw": true, "example": "2020,2021,2022,2023" },
         { "name": "per_page", "in": "query", "type": "number", "default": 2000, "hidden": true }
       ],

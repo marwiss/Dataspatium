@@ -78,6 +78,7 @@
     'review.changes.drop': 'Take out of the proposal',
     'review.changes.help': 'The change proposal carries {n} changes to {server}, the project {project}. Some of the new values look like personal data: identity numbers, e-mail addresses or phone numbers.',
     'review.changes.note': 'The values cannot be pseudonymised, since they become the model\'s on the server when the proposal is approved. The model in the app does not change. You write the title and the description yourself.',
+    'api.err.nocors': '{host} does not allow requests from the browser (CORS), so its answer cannot be read here. The bridge on your own computer can fetch it: start it with --allow-host {host} (-AllowHosts {host} in PowerShell), connect it under Import and turn on Fetch through the bridge under Internet access in Manage.',
     'python.net.blocked': 'Python in Dataspatium does not reach the internet through {api}; fetch with pyodide.http.pyfetch, which asks for consent.',
     'python.net.redirect': 'Dataspatium: {url} redirects to another address, and redirects are not followed, since the browser does not show where one leads until it has gone there. Fetch the final address directly, and the app asks about its host.',
     'plotly.consent.map': 'Map in a plotly chart',

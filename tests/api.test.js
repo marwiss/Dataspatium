@@ -3,8 +3,9 @@
 /**
  * Tests for the API module: schema, request building, parsers, JSON-stat, pagination against a mocked
  * service (virtual dataspatium-asset:// providers, no network), rate limiting, secrets, auth, the PxWeb
- * and Socialstyrelsen families, dataset creation and appending, the Inhämta UI, and an optional live
- * smoke test (only with ?live=1 in the URL).
+ * and Socialstyrelsen families, dataset creation and appending, the Inhämta UI, and two optional runs against the real
+ * services: a smoke test (?live=1) and every preset without a key, one test each (?live=presets), from where the page runs:
+ *   powershell -File tools/run-tests.ps1 -Lock -Jobs 2 -TimeoutSec 2700 -Url "tests/index.html?files=api&live=presets"
  */
 (function () {
   'use strict';
@@ -220,6 +221,35 @@
     const progress = [];
     await runner.fetchTable(c, c.endpoints[2], {}, { onProgress: (p) => progress.push(p.pages) });
     assert.deepEqual(progress, [1, 2, 3]);
+    // A WFS that reads count as the end of the page (Naturvårdsregistret): features startIndex to count - 1, none when count is
+    // not above startIndex. With sizeEnd every page asks for its own end; without it the second page came back empty.
+    serve('tests/api/endcount', (u) => { const o = Number(u.searchParams.get('startIndex') || 0); const end = Math.min(25, Number(u.searchParams.get('count'))); return { type: 'FeatureCollection', features: Array.from({ length: Math.max(0, end - o) }, (_, i) => ({ type: 'Feature', properties: { n: o + i } })) }; });
+    const endPaging = (sizeEnd) => ({ id: 'end', name: 'End', method: 'GET', path: '/endcount', pagination: Object.assign({ type: 'offset', param: 'startIndex', sizeParam: 'count', size: 10 }, sizeEnd ? { sizeEnd: true } : {}), response: { format: 'geojson' } });
+    const ended = await runner.fetchTable(c, endPaging(true), {});
+    assert.deepEqual(ended.rows.map((r) => r[ended.columns.indexOf('n')]), Array.from({ length: 25 }, (_, i) => i), 'every feature once, in order');
+    assert.deepEqual(ended.meta.requests.map((r) => new URL(r.url).searchParams.get('count')), ['10', '20', '30'], 'the end of each page');
+    assert.equal((await runner.fetchTable(c, endPaging(false), {})).rows.length, 10, 'read as a size, only the first page');
+    assert.deepEqual(schema.validate(connector({ endpoints: [endPaging(true)] })), [], 'sizeEnd is in the schema');
+    // A layer of heavy polygons answers 500 to a page above 30 features (Skogsstyrelsen's ArcGIS): with shrink the page is asked
+    // for again a quarter as large, once each size and not repeated at the same size, and the following pages keep it.
+    const asked = [];
+    D.net.virtual('tests/api/heavy', (url) => {
+      const u = new URL(url); const o = Number(u.searchParams.get('resultOffset')); const n = Number(u.searchParams.get('resultRecordCount'));
+      asked.push(n);
+      if (n > 30) return Promise.resolve({ kind: 'text', status: 500, data: '<html><title>Error: Error performing query operation</title></html>' });
+      return Promise.resolve({ kind: 'text', data: JSON.stringify({ type: 'FeatureCollection', features: Array.from({ length: Math.max(0, Math.min(n, 70 - o)) }, (_, i) => ({ type: 'Feature', properties: { n: o + i } })) }) });
+    });
+    const heavy = (shrink) => ({ id: 'heavy', name: 'Heavy', method: 'GET', path: '/heavy', pagination: Object.assign({ type: 'offset', param: 'resultOffset', sizeParam: 'resultRecordCount', size: 1000 }, shrink ? { shrink: true } : {}), response: { format: 'geojson', errorPath: 'error' } });
+    const shrunk = await runner.fetchTable(c, heavy(true), {});
+    assert.deepEqual(shrunk.rows.map((r) => r[shrunk.columns.indexOf('n')]), Array.from({ length: 70 }, (_, i) => i), 'every feature once, in order');
+    assert.deepEqual(asked, [1000, 250, 63, 16, 16, 16, 16, 16], 'a quarter each time, once each, then pages of the smaller size');
+    assert.equal(shrunk.meta.pages, 5, 'the refused pages are not counted');
+    asked.length = 0;
+    let refused = '';
+    try { await runner.fetchTable(c, heavy(false), {}, { maxPages: 1 }); } catch (err) { refused = err.message; }
+    assert.ok(/500/.test(refused) && asked.length === 3 && asked.every((n) => n === 1000), 'without shrink the 500 stands, after the two retries of a GET: ' + asked.join(','));
+    D.net.unvirtual('tests/api/heavy');
+    assert.deepEqual(schema.validate(connector({ endpoints: [heavy(true)] })), [], 'shrink is in the schema');
     return `${served.length} mocked requests`;
   });
 
@@ -236,6 +266,35 @@
     let kind = '';
     try { await runner.fetchTable(c, { id: 's', name: 'S', method: 'GET', path: '/slow', response: { format: 'json' } }, {}, { signal: ctrl.signal }); } catch (err) { kind = err.kind; }
     assert.equal(kind, 'aborted');
+  });
+
+  test('api: a source marked as out of the browser\'s reach names the bridge and its host when the browser is refused', async (assert) => {
+    // The browser's fetch fails as it does for a missing CORS header, without any network.
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (input, init) => (/^https:\/\/nocors\.example\//.test(String(input)) ? Promise.reject(new TypeError('Failed to fetch')) : realFetch(input, init));
+    const ep = { id: 'x', name: 'X', method: 'GET', path: '/x', response: { format: 'json' } };
+    const fail = async (c, run) => { try { await run(c); } catch (err) { return err; } throw new Error('expected an error'); };
+    try {
+      const marked = connector({ id: 'nocors-test', baseUrl: 'https://nocors.example/api', cors: { file: false, web: false }, endpoints: [ep] });
+      const e1 = await fail(marked, (c) => runner.fetchTable(c, ep, {}));
+      assert.equal(e1.message, t('api.err.nocors', { host: 'nocors.example' }), 'the runner: ' + e1.message);
+      assert.ok(e1.code === 'cors' && e1.kind === 'network', 'a network error with the code cors');
+      assert.ok(/--allow-host nocors\.example/.test(e1.message), 'the bridge is started with the host');
+      // A family's own requests (PxWeb, Statbank, FHI, Socialstyrelsen) say the same.
+      const e2 = await fail(marked, (c) => D.require('api/families/common').getJson(c, 'https://nocors.example/api/x'));
+      assert.equal(e2.message, e1.message, 'a family');
+      // Marked for one side only: what works elsewhere comes first, then the bridge.
+      const here = D.require('api/reach').mode();
+      const one = connector({ id: 'nocors-one', baseUrl: 'https://nocors.example/api', cors: { [here]: false }, endpoints: [ep] });
+      const e3 = await fail(one, (c) => runner.fetchTable(c, ep, {}));
+      assert.ok(e3.message.startsWith(D.require('api/reach').hint(here === 'file' ? 'web' : 'file')) && e3.message.endsWith(e1.message), e3.message);
+      // An unmarked source keeps the general text: no network, or no CORS.
+      const plain = connector({ id: 'nocors-plain', baseUrl: 'https://nocors.example/api', endpoints: [ep] });
+      const e4 = await fail(plain, (c) => runner.fetchTable(c, ep, {}));
+      assert.equal(e4.message, t('api.err.network', { host: 'nocors.example' }));
+      assert.ok(e4.code === undefined, 'no code');
+      return e1.message;
+    } finally { globalThis.fetch = realFetch; }
   });
 
   test('api: secrets in session, encrypted persistence, lock and unlock', async (assert) => {
@@ -328,7 +387,15 @@
     const c1 = connector({ id: 'px1', baseUrl: BASE + '/px', family: { type: 'pxweb', version: 1 } });
     const folder = await pxweb.listFolder(c1, ['BE', 'BE0101', 'BE0101A']);
     assert.equal(folder.length, 3); assert.equal(folder[0].type, 'table');
-    const table = await pxweb.fetchData(c1, { path: ['BE', 'BE0101', 'BE0101A', 'BefolkningNy'], title: 'Test' }, meta.variables, sel);
+    // A v1 body goes under a form type: no CORS preflight, which v1 servers answer without the headers (ÅSUB refuses it), and
+    // no firewall that refuses JSON under text/plain (ÅSUB's Threat Protection).
+    const realRequest = http.request; const sent = [];
+    http.request = (req) => { sent.push(req); return realRequest(req); };
+    let table;
+    try { table = await pxweb.fetchData(c1, { path: ['BE', 'BE0101', 'BE0101A', 'BefolkningNy'], title: 'Test' }, meta.variables, sel); } finally { http.request = realRequest; }
+    const post = sent.find((r) => r.method === 'POST');
+    assert.equal(post && post.headers['Content-Type'], 'application/x-www-form-urlencoded;charset=UTF-8', 'the body type of a v1 query');
+    assert.deepEqual(JSON.parse(post.body).query, q.query, 'the body is the query as JSON');
     assert.equal(table.rows.length, 4); assert.equal(table.meta.pages, 1);
     assert.ok(served.some((url) => url.endsWith('/px/BE/BE0101/BE0101A/BefolkningNy')));
   });
@@ -625,6 +692,110 @@
     assert.ok(subjects.length > 5, 'Socialstyrelsen subjects');
     return `SCB ${table.rows.length}, Kolada ${kd.rows.length}, SMHI ${sd.rows.length}, Eurostat ${ed.rows.length}, dataportal ${dd.rows.length}`;
   }, 120000);
+
+  // ---- Every preset against its real service, from where the page runs (only with ?live=presets) ----
+  // One test per preset, so that the log has a line each. A preset that needs a key is skipped; every endpoint of the others
+  // runs with what a user gives it without typing: the defaults, the example of each required value, the first option of a
+  // list. Two pages at most. A family runs its own browser's path: the first table of the first folder with one value each.
+  const LIVE_PRESETS = /[?&]live=presets\b/.test(location.search);
+  /** @param {any} c @param {any} ep @param {boolean} [all] the examples of the optional values too */
+  async function liveValues(c, ep, all = false) {
+    const values = {};
+    for (const p of ep.params || []) {
+      if (p.template || p.default !== undefined || !(p.required || all)) continue;
+      if (p.example !== undefined && p.example !== '') values[p.name] = p.example;
+      else if (p.optionsFrom) { const opts = await runner.optionsFor(c, p, values); if (opts.length) values[p.name] = opts[0].value; }
+    }
+    return values;
+  }
+  /** One value of each variable, the last period of time: a table of one cell or a few. */
+  function liveSelection(variables) {
+    const sel = {};
+    for (const v of variables) if (v.values && v.values.length) sel[v.code] = v.time ? { filter: 'top', n: 1 } : { filter: 'item', values: [v.values[0].code] };
+    return sel;
+  }
+  /** The path of the first table under the first folders of a PxWeb, Statbank or FHI tree. */
+  async function liveTablePath(fam, c) {
+    let path = [];
+    for (let depth = 0; depth < 8; depth++) {
+      const list = await fam.listFolder(c, path);
+      const table = list.find((e) => e.type === 'table');
+      if (table) return path.concat(table.id);
+      const folder = list.find((e) => e.type === 'folder');
+      if (!folder) throw new Error('no table or folder under /' + path.join('/'));
+      path = path.concat(folder.id);
+    }
+    throw new Error('no table within 8 folders');
+  }
+  const rowsOf = (t) => (t.rows.length ? t.rows.length + ' rows' : 'empty');
+  /** The family's own path, as its browser in Inhämta goes. @returns {Promise<string|null>} */
+  async function liveFamily(c) {
+    const type = c.family && c.family.type;
+    if (type === 'pxweb' && pxweb.version(c) === 2) {
+      const found = await pxweb.searchTables(c, '', 1, 1);
+      const id = found.tables[0].id;
+      const meta = await pxweb.tableMetaV2(c, id);
+      return `table ${id} ${rowsOf(await pxweb.fetchData(c, { id, title: meta.title }, meta.variables, liveSelection(meta.variables)))}`;
+    }
+    if (type === 'pxweb' || type === 'statbank' || type === 'fhi') {
+      const fam = runner.families[type];
+      const path = await liveTablePath(fam, c);
+      const meta = await fam.tableMetaV1(c, path);
+      return `table ${path.join('/')} ${rowsOf(await fam.fetchData(c, { path, id: path[path.length - 1], title: meta.title }, meta.variables, liveSelection(meta.variables)))}`;
+    }
+    if (type === 'socialstyrelsen') {
+      const subject = (await sos.subjects(c))[0].id;
+      const vars = await sos.variables(c, subject);
+      return `subject ${subject} ${rowsOf(await sos.fetchData(c, subject, vars, liveSelection(vars), { maxPages: 1 }))}`;
+    }
+    if (type === 'geodata') {
+      const geodata = D.require('api/families/geodata');
+      const databases = D.require('api/families/databases');
+      const fam = geodata.byId(c.family.kind);
+      const v = fam.normalize ? fam.normalize({ baseUrl: c.baseUrl }) : { baseUrl: c.baseUrl };
+      const entities = await fam.discover(v, c, (url, headers) => databases.getJson(c, url, headers));
+      const conn = Object.assign({}, c, { endpoints: fam.endpoints(v, entities) });
+      const ep = geodata.layerEndpoints(conn)[0];
+      return `${entities.length} layers, ${ep.name} ${rowsOf(await runner.fetchTable(conn, ep, {}, { firstPageOnly: true }))}`;
+    }
+    return null;
+  }
+  /** @param {any} c the stored preset */
+  async function livePreset(c) {
+    if (!c) throw new Error('the preset file names no valid preset of that id');
+    if (c.auth && c.auth.type && c.auth.type !== 'none') return `needs a key (${c.auth.type}), skipped`;
+    const parts = []; const errors = [];
+    const fam = c.family ? await liveFamily(c).catch((err) => { errors.push(`${c.family.type}: ${err.message}`); return null; }) : null;
+    if (fam) parts.push(fam);
+    for (const ep of c.endpoints || []) {
+      try {
+        const table = await runner.fetchTable(c, ep, await liveValues(c, ep), { maxPages: 2 });
+        // A second page that comes back empty after a full first one is paging the service reads otherwise (Naturvårdsregistret).
+        const reqs = table.meta.requests || [];
+        if (reqs.length > 1 && reqs[reqs.length - 1].rows === 0 && reqs[reqs.length - 2].rows > 0) throw new Error(`page ${reqs.length} came back empty after ${reqs[reqs.length - 2].rows} rows: ${reqs[reqs.length - 1].url}`);
+        let text = `${ep.id} ${rowsOf(table)}${table.meta.pages > 1 ? ' in ' + table.meta.pages + ' pages' : ''}`;
+        // Empty without input (a place or a station left out): the examples of every value show that the answer is read.
+        if (!table.rows.length && (ep.params || []).some((p) => !p.required && p.example !== undefined)) text += `, with every example ${rowsOf(await runner.fetchTable(c, ep, await liveValues(c, ep, true), { maxPages: 1 }))}`;
+        parts.push(text);
+      } catch (err) { errors.push(`${ep.id}: ${(err && err.message) || err}`); }
+    }
+    // A service marked as out of the browser's reach must fail with the text that names the bridge, and fail for that reason.
+    const why = D.require('api/reach').blocked(c);
+    if (why) {
+      if (parts.length) throw new Error(`marked "${why}" but answered: ${parts.join('; ')}`);
+      const bridge = t('api.err.nocors', { host: http.hostOf(c.baseUrl) });
+      if (errors.every((e) => e.includes(bridge))) return `needs the bridge (${why}), as marked: ${errors.length} endpoints say so`;
+    }
+    if (errors.length) throw new Error(errors.join(' | ') + (parts.length ? ' || ok: ' + parts.join('; ') : ''));
+    return parts.join('; ');
+  }
+  if (!LIVE_PRESETS) test('api: every preset against its real service (only with ?live=presets)', () => 'skipped (add ?live=presets to run)');
+  else {
+    for (const name of D.assets.names(connectors.PRESET_PREFIX).filter((n) => n.endsWith('.api.json'))) {
+      const id = name.slice(connectors.PRESET_PREFIX.length, -'.api.json'.length);
+      test('api live: ' + id, async () => livePreset((await connectors.loadPresets()).find((p) => p.id === id)), 300000);
+    }
+  }
 
   test('api: cleanup', async () => {
     for (const id of created) { try { await datasets.remove(id); } catch (_e) { /* ignore */ } }
