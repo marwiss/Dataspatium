@@ -104,8 +104,13 @@ PNG, with the interactive view kept as long as plotly.js is available.
 
 A plotly map (for example `px.scatter_geo`, `px.choropleth` and `px.scatter_map`) asks for consent to background maps
 before the map loads, and an image, GeoJSON or anything else the figure fetches from a web address asks for consent to
-web addresses; each purpose is asked once, naming the hosts. Without consent the chart is drawn without them, with a
-line below that says so. In published HTML they come along only when the consent is kept. Formatting in the chart's
+web addresses. The figure chooses its own hosts, so the app asks for every new host and remembers the answer per host
+(a yes for the purpose, which covers addresses you type yourself, is not enough); each purpose is asked once per figure,
+naming the hosts not yet answered. A map style or a tile set (TileJSON) given by address is read by the app itself from
+an allowed host and drawn inline, with its attributions as plain text, and the hosts it names are asked about the same
+way; a style that cannot be read, and a button that switches to a style by address, are left out. Without consent the
+chart is drawn without them, with a line below that says so. In published HTML they come along only when the answer for
+the host is kept. Formatting in the chart's
 text (`<b>`, `<span>` and the others) keeps only a plain colour: styles and other attributes are removed. A link
 (`<a href>`) in the chart's text works only when its address is a full https address, and it keeps only the address;
 other addresses (javascript:, data:, http:, relative ones and other schemes) are shown as text. When you click a link
@@ -147,10 +152,14 @@ of language.
 - Memory is limited by the browser and WebAssembly; keep datasets below a few hundred megabytes in Python.
 - Input while running (`input()`) does not work, nor do threads, processes or files outside the virtual file system.
 - Python code in its worker reaches the internet only through the worker's `fetch`, and the app first asks for
-  permission for components (a remembered permission covers every address). This covers `pyodide.http.pyfetch`,
+  permission under the purpose *Python code reaches the internet*, for every new host, and remembers the answer per
+  host (the code chooses where it goes, also in a received notebook or recipe). Only Pyodide's own files on jsDelivr
+  and PyPI for `micropip` count as *Components*. This covers `pyodide.http.pyfetch`,
   `micropip` and `js.fetch`, and `requests` and `urllib3` in code run in the console, a notebook, a Python chart, a
-  statistics tool or a flow, in browsers with JSPI (Edge, Chrome). An allowed call may follow the server's redirects.
-  The calls are listed under *Manage → Workspace → Internet access*: the app notes the address when a call is allowed,
+  statistics tool or a flow, in browsers with JSPI (Edge, Chrome). A redirect is not followed, since the browser does
+  not show where it leads until it has gone there: the call fails with an error that names the address, and the code
+  can fetch the final address directly, and the app asks about its host. The hosts with a saved answer and the calls
+  are listed under *Manage → Workspace → Internet access*, where an answer can be removed: the app notes the address when a call is allowed,
   but the worker itself reports its end and status, so the list is an overview, not an audit trail. If you say no to
   a question, the ones already waiting are refused too, and the code's further questions are refused without asking
   until you run your next command or restart Python.

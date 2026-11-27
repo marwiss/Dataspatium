@@ -135,7 +135,8 @@ datamängden och versioner, och här byter du namn och kortnamn (kortnamnet anv�
 ordnar, tar bort och hämtar igen från API. Under *Arbetsyta* finns hur mycket lagring som används, beständig
 lagring, säkerhetskopiering till ZIP och återställning, i Edge och Chrome en portabel mapp (arbetsytan sparas som
 vanliga filer i en mapp du väljer, automatiskt efter varje ändring om du vill, och kan läsas in på en annan
-dator), *Internetåtkomst* (vilka ändamål som får kontakta internet, med logg över anrop) och *Komponenter* (delar
+dator), *Internetåtkomst* (vilka ändamål som får kontakta internet, de värdar som Python-kod och plotly-figurer har fått
+svar för, var och en med en knapp som tar bort svaret, och loggen över anrop) och *Komponenter* (delar
 av appen och R-paket som hämtas när de behövs, med storlek, källa och knappar för att hämta i förväg eller ta
 bort). Paket och GitHub har flyttat till läget Dela.
 

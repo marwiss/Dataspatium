@@ -125,7 +125,8 @@ dataset and versions, and here you rename and change the short name (the short n
 files), organise, delete and re-fetch from API. Under *Workspace* you find how much storage is used, persistent
 storage, backup to ZIP and restore, in Edge and Chrome a portable folder (the workspace is saved as ordinary files in
 a folder you choose, automatically after every change if you like, and can be loaded on another computer),
-*Internet access* (which purposes may contact the internet, with a log of requests) and *Components* (parts of the
+*Internet access* (which purposes may contact the internet, the hosts Python code and plotly figures have an answer
+for, each with a button that removes the answer, and the log of requests) and *Components* (parts of the
 app and R packages that are fetched when needed, with size, source and buttons to fetch in advance or remove).
 Bundles and GitHub have moved to the Share mode.
 

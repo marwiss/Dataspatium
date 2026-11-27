@@ -13,7 +13,9 @@ No. Internet is needed only when you fetch data from an API, push to or fetch fr
 or use something that does not ship in the folder: some components (for example base maps) and R packages outside the
 built-in selection are fetched when needed and then stored locally. The first time the app needs the internet for a
 purpose it asks for permission; the answer can be remembered and changed under *Manage → Workspace → Internet
-access*, where the log of requests is too. Everything else, R included, works without a network.
+access*, where the log of requests is too. Where the content itself chooses where it goes, in Python code and plotly
+figures (also in received notebooks and recipes), the app asks for every new host and lists the hosts with a saved
+answer there, so that they can be removed. Everything else, R included, works without a network.
 
 ## Why does it take time the first time I use R?
 

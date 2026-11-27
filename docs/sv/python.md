@@ -103,8 +103,13 @@ interaktiva vyn kvar så länge plotly.js finns.
 
 En plotly-karta (till exempel `px.scatter_geo`, `px.choropleth` och `px.scatter_map`) frågar om samtycke till
 bakgrundskartor innan kartan laddas, och en bild, GeoJSON eller annat som figuren hämtar från en webbadress frågar om
-samtycke till webbadresser; varje ändamål frågas en gång, med värdarna i frågan. Utan samtycke ritas diagrammet utan
-dem, med en rad under som säger det. I publicerad HTML följer de med bara när samtycket är sparat. Formatering i
+samtycke till webbadresser. Figuren väljer själv sina värdar, så appen frågar för varje ny värd och minns svaret per
+värd (ett ja till ändamålet, som gäller adresser du själv skriver, räcker inte); varje ändamål frågas en gång per
+figur, med de värdar som ännu inte har fått svar. En kartstil eller en rutsamling (TileJSON) med en adress läser appen
+själv från en tillåten värd och ritar den inbäddad, med attributionerna som vanlig text, och värdarna den nämner
+frågas på samma sätt; en stil som inte går att läsa, och en knapp som byter till en stil med en adress, lämnas
+utanför. Utan samtycke ritas diagrammet utan dem, med en rad under som säger det. I publicerad HTML följer de med bara
+när svaret för värden är sparat. Formatering i
 diagrammets text (`<b>`, `<span>` och de andra) behåller bara en ren färg: stilar och andra attribut tas bort.
 En länk (`<a href>`) i diagrammets text fungerar bara när adressen är en fullständig https-adress, och den behåller
 bara adressen; andra adresser (javascript:, data:, http:, relativa och andra scheman) visas som text. Klickar du på
@@ -146,11 +151,15 @@ språk.
 - Minnet begränsas av webbläsaren och WebAssembly; håll datamängder under några hundra megabyte i Python.
 - Inmatning under körning (`input()`) fungerar inte, inte heller trådar, processer eller filer utanför det
   virtuella filsystemet.
-- Python-kod i sin worker når internet bara genom workerns `fetch`, och appen frågar om lov för komponenter först
-  (ett sparat lov gäller alla adresser). Det gäller `pyodide.http.pyfetch`, `micropip` och `js.fetch`, och `requests`
+- Python-kod i sin worker når internet bara genom workerns `fetch`, och appen frågar om lov först under ändamålet
+  *Python-kod når internet*, för varje ny värd, och minns svaret per värd (koden väljer själv vart den vill, också i
+  en mottagen anteckningsbok eller ett mottaget recept). Bara Pyodides egna filer på jsDelivr och PyPI för `micropip`
+  räknas till *Komponenter*. Det gäller `pyodide.http.pyfetch`, `micropip` och `js.fetch`, och `requests`
   och `urllib3` i kod som körs i konsolen, en anteckningsbok, ett Python-diagram, ett statistikverktyg eller ett
-  flöde, i webbläsare med JSPI (Edge, Chrome). Ett tillåtet anrop kan följa serverns omdirigeringar. Anropen syns under
-  *Hantera → Arbetsyta → Internetåtkomst*: appen antecknar adressen när anropet tillåts, men slutet och statusen
+  flöde, i webbläsare med JSPI (Edge, Chrome). En omdirigering följs inte, eftersom webbläsaren inte visar vart den
+  leder förrän den har varit där: anropet ger ett fel som nämner adressen, och koden kan hämta den slutliga adressen
+  direkt, så frågar appen om dess värd. Värdarna med sparat svar och anropen syns under
+  *Hantera → Arbetsyta → Internetåtkomst*, där ett svar kan tas bort: appen antecknar adressen när anropet tillåts, men slutet och statusen
   rapporterar workern själv, så listan är en överblick och ingen revisionslogg. Säger du nej till en fråga nekas också
   frågorna som väntar, och kodens följande frågor nekas utan att du tillfrågas tills du kör nästa kommando eller
   startar om Python.

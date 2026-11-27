@@ -13,7 +13,9 @@ Nej. Internet behövs bara när du hämtar data från ett API, skickar till elle
 efter uppdatering* eller använder något som inte följer med i mappen: vissa komponenter (till exempel
 bakgrundskartor) och R-paket utanför det inbyggda urvalet hämtas när de behövs och sparas sedan lokalt. Första
 gången appen behöver internet för ett ändamål frågar den om lov; svaret kan sparas och ändras under *Hantera →
-Arbetsyta → Internetåtkomst*, där också loggen över anrop finns. Allt annat, även R, fungerar utan nätverk.
+Arbetsyta → Internetåtkomst*, där också loggen över anrop finns. Där innehållet självt väljer vart det vill, i
+Python-kod och plotly-figurer (också i mottagna anteckningsböcker och recept), frågar appen för varje ny värd och
+listar värdarna med sparat svar där, så att de kan tas bort. Allt annat, även R, fungerar utan nätverk.
 
 ## Varför tar det tid första gången jag använder R?
 
