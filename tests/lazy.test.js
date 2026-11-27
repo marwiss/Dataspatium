@@ -131,11 +131,12 @@
     });
 
     test('lazy: Hantera shows a dataset from a CDE with its card, which asks for the families', async (assert) => {
+      // Counted from before the dataset is made: the shell may select and draw it as soon as it reads the list again.
+      const before = asked.length;
       const meta = await datasets.create({ name: 'Lat CDE-fil', columns: [{ name: 'a', type: 'integer' }], rows: [[1]],
         source: { kind: 'file', fileName: 'lat.csv', cde: { connectorId: 'lazy-cde', host: 'cde.lazy.test', projectId: 'p1', projectName: 'Projektet', kind: 'document', documentId: 'doc-1', versionIndex: 1, fetchedAt: new Date().toISOString() } } });
       created.push(meta.id);
       await waitFor(() => shell.store.get().datasets.some((d) => d.id === meta.id), 3000, 'the dataset in the store');
-      const before = asked.length;
       const t0 = performance.now();
       // The shell selects a dataset it has made once it has read the list again (ui/shell): the CDE file is chosen until it shows.
       await waitFor(() => { if (shell.store.get().selectedId !== meta.id) shell.store.set({ selectedId: meta.id }); return root.querySelector('[data-card="cde"] [data-cde-check]'); }, 5000, 'the CDE card with Kontrollera');
