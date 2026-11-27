@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'api/bridge', 'platform/files', 'data/linked', 'io/importers/qgis', 'data/kinds', 'io/file-sense', 'viz/leaflet', 'ui/kinds/sketches', 'platform/tier', 'ui/settings/tier'], (base, csv, encoding, types, connectors, bridge, files, linked, qgis, kinds, fileSense, leaflet, sketches, tier, tierUi) => {
+  D.define('ui/modes/inhamta', ['ui/base', 'data/encoding', 'data/types', 'api/connectors', 'api/bridge', 'platform/files', 'data/linked', 'data/kinds', 'viz/leaflet', 'ui/kinds/sketches', 'platform/tier', 'ui/settings/tier'], (base, encoding, types, connectors, bridge, files, linked, kinds, leaflet, sketches, tier, tierUi) => {
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
@@ -38,6 +38,8 @@
       /** @type {any} */ let bridgeUi = null;
       /** @type {any} */ let fieldUi = null;
       /** @type {any} */ let guidesUi = null;
+      /** The importers' modules, set once the group 'import' has loaded (importersReady). @type {any} */
+      let csv = null; /** @type {any} */ let qgis = null; /** @type {any} */ let fileSense = null;
 
       /**
        * `hidden`: the entry of a file the tier does not read (platform/tier), shown as the tier's notice in place of an error;
@@ -54,6 +56,20 @@
         return thumbs.get(file);
       }
       function freeThumbs() { for (const url of thumbs.values()) URL.revokeObjectURL(url); thumbs.clear(); }
+      /**
+       * The importers load with the groups plan and import (src/boot.js), as services.importer.ready() loads them: Inhämta waits
+       * for them before it reads a file, a text, an address or an example. False, with the shell's notice, when they could not load.
+       * @returns {Promise<boolean>}
+       */
+      async function importersReady() {
+        if (csv) return true;
+        const waiting = !D.groups.loaded('import');
+        if (waiting) { wiz.busy = true; render(); }
+        try {
+          await D.ensure(['import'], () => { csv = D.require('io/importers/csv'); qgis = D.require('io/importers/qgis'); fileSense = D.require('io/file-sense'); });
+          return true;
+        } catch (err) { shell.partFailed(err); return false; } finally { if (waiting) { wiz.busy = false; if (!csv) render(); } }
+      }
 
       let unsubStore = null;
       function activate(s) {
@@ -69,6 +85,7 @@
         if (store.get().pendingSource) consumePendingSource(store.get());
         reloadConnectors();
         render();
+        services.importer.loadAhead();
       }
       function deactivate() {
         slots = null;
@@ -244,11 +261,11 @@
       /**
        * The scripts a source's view needs, loaded ahead when the pointer or the focus reaches its item: the views of the sources
        * (the group 'sources', with the families it needs) for an API source, the bridge and the guides, the families for the saved
-       * fetches (src/boot.js). Loading them asks nothing and sends nothing to a source.
+       * fetches and the group plan for a new plan (src/boot.js). Loading them asks nothing and sends nothing to a source.
        * @param {string} id
        */
       function loadAhead(id) {
-        const wanted = id.startsWith('api:') || id.startsWith('bridge') || id === 'guides' ? D.ensure(['sources']) : id === 'saved' ? D.ensure(['families']) : null;
+        const wanted = id.startsWith('api:') || id.startsWith('bridge') || id === 'guides' ? D.ensure(['sources']) : id === 'saved' ? D.ensure(['families']) : id === 'newplan' ? D.ensure(['plan']) : null;
         if (wanted) wanted.catch((err) => D.log('inhamta', 'load ahead', id, err));
       }
       function sourceItem(id, icon, label, sub) {
@@ -358,11 +375,13 @@
        * The views of the sources are a group of scripts (src/boot.js, 'sources'): true when it is loaded; otherwise the
        * workspace says that it is loading, and the centre is drawn again once it has, unless another source was chosen.
        */
-      function sourcesReady() {
-        if (D.groups.loaded('sources')) return true;
+      function sourcesReady() { return groupReady('sources', () => D.ensure(['sources'])); }
+      /** Like sourcesReady, for the group `name` that `load` loads. @param {string} name @param {() => Promise<any>} load */
+      function groupReady(name, load) {
+        if (D.groups.loaded(name)) return true;
         const wanted = source;
         replace(slots.center, h('p', { class: 'dm-help', text: t('common.loading') }));
-        D.ensure(['sources']).then(() => { if (slots && source === wanted) renderCenter(); }, (err) => shell.partFailed(err));
+        load().then(() => { if (slots && source === wanted) renderCenter(); }, (err) => shell.partFailed(err));
         return false;
       }
       /** The dialog for a new source (ui/api/family-dialog in the group 'sources'), opened at once when the group is loaded. */
@@ -479,6 +498,8 @@
       // ---- a new, empty digital comprehensive plan (B-78) ----
       const newPlan = { values: { crs: 'EPSG:3006', boundary: true }, municipalities: /** @type {any[]|null} */ (null), busy: false, error: '', result: null };
       function renderNewPlan() {
+        // data/plan-new loads with the group 'plan' (src/boot.js).
+        if (!groupReady('plan', () => D.ensure(['plan']))) return;
         const planNew = D.require('data/plan-new');
         const geo = D.require('data/geo');
         // The municipalities ship with the app (data/boundaries); they are read once, then the form is drawn again.
@@ -551,7 +572,9 @@
       }
       /** Fetch a web address: configurations are added directly, data files continue in the wizard. */
       async function fetchUrl(url) {
-        wiz.url = url; wiz.busy = true; wiz.error = ''; render();
+        wiz.url = url;
+        if (!(await importersReady())) return;
+        wiz.busy = true; wiz.error = ''; render();
         try {
           const urlImport = D.require('io/url-import');
           const file = await urlImport.fetchFile(url);
@@ -628,7 +651,7 @@
        * columns; any other choice of several files takes the first one through the wizard as before.
        */
       async function chooseFiles(list) {
-        if (!list || !list.length) return;
+        if (!list || !list.length || !(await importersReady())) return;
         // A file whose name has no extension the app knows is recognised by its contents first (io/import recognise, F83 a);
         // the files of an archive package keep their paths, which its checksums name (io/import sortFiles reads the rest).
         if (!D.require('io/importers/plan-archive').isPackage(list)) list = await Promise.all(Array.from(list).map((f) => services.importer.recognise(f)));
@@ -720,6 +743,7 @@
        * offer to create a map view (io/importers/qgis).
        */
       async function openProject(file, companions) {
+        if (!(await importersReady())) return;
         wiz.busy = true; wiz.error = ''; render();
         try {
           const project = await qgis.parseFile(file);
@@ -822,11 +846,13 @@
       async function pickLinked() {
         try {
           const { handle, file } = await linked.pick();
+          if (!(await importersReady())) return;
           wiz.file = await services.importer.recognise(file); wiz.files = []; wiz.handle = handle; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; wiz.options.plan = undefined; wiz.options.layers = undefined; wiz.nameFromPlan = false;
           await runPreview();
         } catch (err) { if (!err || err.name !== 'AbortError') { wiz.error = (err && err.message) || String(err); render(); } }
       }
       async function importPreset(preset) {
+        if (!(await importersReady())) return;
         wiz.busy = true; render();
         try {
           const meta = await services.importer.runPreset(preset);
@@ -863,6 +889,7 @@
         throw first;
       }
       async function runPreview() {
+        if (!(await importersReady())) return;
         wiz.busy = true; wiz.error = ''; wiz.hidden = ''; wiz.refused = []; render();
         try {
           const opts = cleanOptions();

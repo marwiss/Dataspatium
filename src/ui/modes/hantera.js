@@ -26,6 +26,8 @@
         // Re-render the workspace view when the portable folder finishes an automatic save.
         unsubFolder = services.workspace.onFolder((status) => { if (slots && !status.busy && store.get().selectedId === WORKSPACE) render(); });
         render();
+        // The importers (the group 'import') on idle time, for the first file chosen or dropped.
+        services.importer.loadAhead();
       }
       function deactivate() { slots = null; if (libraryUi) { libraryUi.destroy(); libraryUi = null; } if (unsubscribe) unsubscribe(); if (unsubFolder) unsubFolder(); if (flowsUi) { flowsUi.destroy(); flowsUi = null; } }
 

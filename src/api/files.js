@@ -70,7 +70,8 @@
       const out = [];
       const base = importer.baseName(file.name);
       if (/\.gpkg$/i.test(file.name)) {
-        const info = await D.require('io/importers/sqlite').preview(file, { previewRows: 1 });
+        // The GeoPackage reader loads with the group 'plan' (src/boot.js).
+        const info = await D.ensure(['plan'], () => D.require('io/importers/sqlite').preview(file, { previewRows: 1 }));
         for (const table of info.tables) out.push(await importer.run(file, { table }, null, info.tables.length > 1 ? `${base}: ${table}` : base));
       } else out.push(await importer.run(file, {}, null, base));
       for (const meta of out) await datasets.updateMeta(meta.id, { source: Object.assign({}, meta.source || {}, { url, connectorName: connector.name }) });

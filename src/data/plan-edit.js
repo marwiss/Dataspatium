@@ -705,7 +705,8 @@
     }
     /** The value lists of an ÖP GeoPackage: `innehall_op_<tema>_lookup` → its words (a column innehallstyp_varde, else its first text). */
     async function lookupValues(file) {
-      const sqliteImp = D.require('io/importers/sqlite');
+      // The GeoPackage reader loads with the group 'plan' (src/boot.js).
+      const sqliteImp = await D.ensure(['plan'], () => D.require('io/importers/sqlite'));
       const out = new Map();
       const { engine } = await sqliteImp.openFile(file);
       try {

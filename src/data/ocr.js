@@ -130,8 +130,10 @@
       }
       if (!documents.length) return null;
       if (options.onProgress) options.onProgress(names.length, names.length);
+      // The document importer's columns: it loads with the group 'import' (src/boot.js).
+      const columns = await D.ensure(['import'], () => D.require('io/importers/documents').COLUMNS);
       return dsFiles.createDataset({
-        name: options.name || D.t('import.collection.documents', { n: documents.length }), kind: 'document', columns: D.require('io/importers/documents').COLUMNS, rows, files,
+        name: options.name || D.t('import.collection.documents', { n: documents.length }), kind: 'document', columns, rows, files,
         source: { kind: 'derived', from: id, op: 'ocr' }, meta: { documents },
       });
     }

@@ -31,8 +31,11 @@ FORBIDDEN = [
     'src/ui/modes/visualisera.js', 'src/ui/modes/exportera.js', 'src/ui/modes/dela.js',
     'src/ui/analysis/', 'src/ui/assistant/', 'src/ui/docs/', 'src/ui/viz/', 'src/mobile/',
     # The families of the sources and what fetches through them (the group families, PLAN 4 step 5), and the guides (sources).
-    'src/api/families/', 'src/api/runner.js', 'src/api/parsers.js', 'src/api/pagination.js', 'src/io/importers/bcf.js',
+    'src/api/families/', 'src/api/runner.js', 'src/api/parsers.js', 'src/api/pagination.js',
     'src/data/model-server.js', 'src/engines/gltf.js', 'src/ui/api/merge-dialog.js', 'src/ui/bearbeta/model-issues.js', 'src/ui/guides/',
+    # The importers and what reads through them (the groups plan and import, PLAN 4 step 6); io/import stays at start.
+    'src/io/importers/', 'src/io/import-pipeline.js', 'src/io/sniff.js', 'src/io/datapackage.js', 'src/io/file-sense.js',
+    'src/api/jsonstat.js', 'src/api/sdmx.js', 'src/data/plan-delivery.js', 'src/data/plan-new.js',
 ]
 PATH = re.compile(r"'((?:src|vendor|presets|tests)/[^']+\.js)'")
 DEFINE = re.compile(r"(?<![\w$])(?:D|Dataspatium|globalThis\.Dataspatium)\.define\(\s*'([^']+)'\s*,\s*(\[[^\]]*\])?", re.S)

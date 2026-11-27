@@ -218,31 +218,8 @@
     'src/data/python-bridge.js',
     'src/data/exif.js',
     'src/data/dataset-files.js',
-    // Import and export
-    'src/io/importers/csv.js',
-    'src/io/importers/excel.js',
-    'src/io/importers/json.js',
-    'src/io/importers/xml.js',
-    'src/io/importers/sqlite.js',
-    'src/io/importers/r-formats.js',
-    'src/io/importers/shapefile.js',
-    'src/io/importers/fixed-width.js',
-    'src/io/importers/tables.js',
-    'src/io/importers/geo.js',
-    'src/io/importers/access.js',
-    'src/io/importers/documents.js',
-    'src/io/importers/images.js',
-    'src/io/importers/raster.js',
-    'src/io/importers/detaljplan.js',
-    'src/io/importers/plan-archive.js',
+    // Import and export: the importers are the groups plan and import (below); io/import waits for them.
     'src/data/plan-links.js',
-    'src/data/plan-delivery.js',
-    'src/io/importers/plan-delivery.js',
-    'src/data/plan-new.js',
-    'src/io/importers/graph.js',
-    'src/io/importers/model.js',
-    'src/io/importers/qgis.js',
-    'src/io/sniff.js',
     'src/io/import.js',
     'src/data/linked-files.js',
     'src/io/export.js',
@@ -252,8 +229,6 @@
     'src/api/secrets.js',
     'src/api/http.js',
     'src/api/auth.js',
-    'src/api/jsonstat.js',
-    'src/api/sdmx.js',
     'src/api/reach.js',
     'src/api/files.js',
     'src/api/heights.js',
@@ -334,7 +309,6 @@
     // What Inhämta and Hantera require while they run: the pages of a dataset, guides, the library, field forms
     'src/data/spatial-search.js',
     'src/data/facets.js',
-    'src/io/file-sense.js',
     'src/data/version-diff.js',
     'src/ui/kinds/sketches.js',
     'src/ui/kinds/dataset-picture.js',
@@ -348,7 +322,6 @@
     'src/data/library.js',
     'src/data/codelists.js',
     'src/data/dcat.js',
-    'src/io/datapackage.js',
     'src/docgen/quality.js',
     'src/analysis/starters.js',
     'src/viz/plan-map.js',
@@ -387,11 +360,47 @@
    * mobile app's own files are a group too, since the test page runs it next to the app.
    */
   const GROUPS = [
+    // The importers (PLAN 4 step 6). plan: a digital plan's delivery (data/plan-delivery) with the two importers it reads through,
+    // for Inhämta and Bearbeta. import: every other importer, what recognises a file by its contents (io/sniff), the pipeline
+    // behind io/import, a data package, the file's sense and JSON-stat and SDMX. io/import stays at start with the same functions
+    // and waits for the group (ready()); data/plan with its edits and links stays, since data/recipes needs data/plan-edit.
+    { name: 'plan', needs: [], scripts: [
+      'src/io/importers/sqlite.js',
+      'src/io/importers/detaljplan.js',
+      'src/data/plan-delivery.js',
+      'src/data/plan-new.js',
+    ] },
+    { name: 'import', needs: ['plan'], scripts: [
+      'src/api/jsonstat.js',
+      'src/api/sdmx.js',
+      'src/io/importers/csv.js',
+      'src/io/importers/excel.js',
+      'src/io/importers/json.js',
+      'src/io/importers/xml.js',
+      'src/io/importers/r-formats.js',
+      'src/io/importers/shapefile.js',
+      'src/io/importers/fixed-width.js',
+      'src/io/importers/tables.js',
+      'src/io/importers/geo.js',
+      'src/io/importers/access.js',
+      'src/io/importers/documents.js',
+      'src/io/importers/images.js',
+      'src/io/importers/raster.js',
+      'src/io/importers/plan-archive.js',
+      'src/io/importers/plan-delivery.js',
+      'src/io/importers/graph.js',
+      'src/io/importers/model.js',
+      'src/io/importers/qgis.js',
+      'src/io/sniff.js',
+      'src/io/datapackage.js',
+      'src/io/import-pipeline.js',
+      'src/io/file-sense.js',
+    ] },
     // The families of the sources and what fetches through them (PLAN 4 step 5): the runner with its requests, parsers and pages,
     // the statistics, database and OpenCDE families, the BCF importer, a server model's glTF and the CDE's issues and merge. The
     // start asks api/connectors what it needs of them (hiddenBy, onFetched, the database families' ids) and waits for the group
     // with D.ensure(['families']) where it fetches, signs in or draws a model from the server (tests/lazy.html tries it).
-    { name: 'families', needs: [], scripts: [
+    { name: 'families', needs: ['import'], scripts: [
       'src/api/websocket.js',
       'src/api/request.js',
       'src/api/parsers.js',
@@ -443,11 +452,11 @@
       'src/ui/api/family-dialog.js',
     ] },
     // GeoTIFF files (the kind raster, B-64): the worker that reads them and what makes a raster of them, on the first file.
-    { name: 'raster', needs: [], scripts: [
+    { name: 'raster', needs: ['import'], scripts: [
       'src/engines/raster.js',
       'src/data/raster.js',
     ] },
-    { name: 'bearbeta', needs: [], scripts: [
+    { name: 'bearbeta', needs: ['plan'], scripts: [
       'src/analysis/text.js',
       'src/analysis/images.js',
       'src/data/graph-ops.js',

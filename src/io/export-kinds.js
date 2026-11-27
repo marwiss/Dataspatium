@@ -332,7 +332,8 @@
       return D.require('viz/export').svgToPdf(await svg.text(), { title: meta ? meta.name : '' });
     }
 
-    const toPackage = (id) => D.require('io/datapackage').toZip(id);
+    /** A data package (io/datapackage, which loads with the group 'import' in src/boot.js). */
+    const toPackage = (id) => D.ensure(['import'], () => D.require('io/datapackage').toZip(id));
     const toDescription = async (id) => new Blob([D.require('data/dcat').toRdf(await datasets.get(id))], { type: 'application/rdf+xml' });
     const toQuality = (id) => D.require('docgen/quality').toDocx(id);
     /** A comprehensive plan as a delivery (io/exporters/plan-delivery): its GeoPackage in Boverket's ÖP model, its plan description and its other files. */

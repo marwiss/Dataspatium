@@ -9,8 +9,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/field-collect', ['data/datasets', 'data/rules', 'data/field-form', 'data/operations', 'data/dataset-files', 'data/types', 'io/importers/images', 'viz/leaflet'],
-    (datasets, rules, fieldForm, ops, dsFiles, types, images, leaflet) => {
+  D.define('data/field-collect', ['data/datasets', 'data/rules', 'data/field-form', 'data/operations', 'data/dataset-files', 'data/types', 'viz/leaflet'],
+    (datasets, rules, fieldForm, ops, dsFiles, types, leaflet) => {
       const q = (s) => '"' + String(s).replace(/"/g, '""') + '"';
       const SYSTEM = new Set([fieldForm.ID_COLUMN, 'noggrannhet_m', 'foto', 'insamlad', 'insamlad_av']);
       const LONG_TEXT = /anteckn|kommentar|beskriv|notering|note|comment|descr/i;
@@ -164,7 +164,7 @@
       }
 
       /** One row per photo in the format of an image collection, with the position and time of the row it belongs to. */
-      async function photoEntry(row, photo, bytes, device) {
+      async function photoEntry(images, row, photo, bytes, device) {
         const file = new File([bytes], photo.name, { type: photo.type || 'image/jpeg' });
         const img = await images.readImage(file);
         const at = (name) => images.COLUMNS.findIndex((c) => c.name === name);
@@ -180,6 +180,9 @@
       /** The rows' photos as a new image collection, or added to the one earlier deliveries made. */
       async function addPhotos(result, handle, onProgress) {
         const { pack, manifest, rows } = result;
+        if (!result.photos.length) return { id: (handle.meta.field && handle.meta.field.imagesId) || null, count: 0, skipped: [] };
+        // The image importer loads with the group 'import' (src/boot.js) when a package brings photos.
+        const images = await D.ensure(['import'], () => D.require('io/importers/images'));
         const device = manifest.device || '';
         const collected = []; const skipped = [];
         let index = 0; const total = result.photos.length;
@@ -188,7 +191,7 @@
             const bytes = pack.entries[fieldForm.PHOTO_DIR + photo.name];
             if (!bytes) continue;
             if (onProgress) onProgress({ index: index++, total });
-            try { collected.push(await photoEntry(row, photo, bytes, device)); }
+            try { collected.push(await photoEntry(images, row, photo, bytes, device)); }
             catch (err) { D.log('field', 'photo not read', photo.name, err); skipped.push(photo.name); }
           }
         }

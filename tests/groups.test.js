@@ -174,15 +174,34 @@
   test('groups: the families of the sources are the group families, and the start list has none of them (PLAN 4 step 5)', (assert) => {
     const start = D.groups.start();
     const families = D.groups.list().find((g) => g.name === 'families');
-    assert.ok(families && !families.needs.length, 'the group families needs no other');
+    assert.deepEqual(families && families.needs, ['import'], 'the group families needs the importers (its parsers read JSON and CSV)');
     for (const p of start) assert.ok(!p.startsWith('src/api/families/'), p + ': no family at start');
     for (const p of ['src/api/runner.js', 'src/api/parsers.js', 'src/api/pagination.js', 'src/io/importers/bcf.js', 'src/ui/bearbeta/model-issues.js']) {
       assert.ok(!start.includes(p), p + ' is not loaded at start');
       assert.ok(families.scripts.includes(p), p + ' is in the group families');
     }
-    for (const p of ['src/api/connectors.js', 'src/api/jsonstat.js', 'src/api/sdmx.js', 'src/api/graph-source.js']) assert.ok(start.includes(p), p + ' stays at start');
+    for (const p of ['src/api/connectors.js', 'src/api/graph-source.js']) assert.ok(start.includes(p), p + ' stays at start');
     const needs = (name) => (D.groups.list().find((g) => g.name === name) || { needs: [] }).needs;
     assert.ok(needs('ai-tools').includes('families') && needs('sources').includes('families'), 'the tools of the AI and the views of the sources need it');
     return families.scripts.length + ' scripts in families';
+  });
+
+  test('groups: the importers are the groups plan and import, and io/import stays at start with the same functions (PLAN 4 step 6)', (assert) => {
+    const start = D.groups.start();
+    const group = (name) => D.groups.list().find((g) => g.name === name) || { needs: [], scripts: [] };
+    for (const p of start) assert.ok(!p.startsWith('src/io/importers/'), p + ': no importer at start');
+    for (const p of ['src/io/sniff.js', 'src/io/datapackage.js', 'src/io/file-sense.js', 'src/io/import-pipeline.js', 'src/api/jsonstat.js', 'src/api/sdmx.js', 'src/data/plan-delivery.js', 'src/data/plan-new.js']) assert.ok(!start.includes(p), p + ' is not loaded at start');
+    assert.ok(group('import').scripts.includes('src/io/import-pipeline.js') && group('import').scripts.includes('src/io/importers/csv.js'), 'the pipeline and the importers in import');
+    assert.ok(group('plan').scripts.includes('src/data/plan-delivery.js') && group('plan').scripts.includes('src/io/importers/sqlite.js'), 'a plan delivery with the GeoPackage reader in plan');
+    assert.deepEqual(group('plan').needs, [], 'plan needs no other group');
+    assert.deepEqual(group('import').needs, ['plan'], 'import needs plan');
+    assert.ok(group('bearbeta').needs.includes('plan') && group('raster').needs.includes('import'), 'Bearbeta needs plan, the rasters the image importer');
+    // data/plan with its edits and links stays at start, since data/recipes needs the plan's operations (data/plan-edit).
+    for (const p of ['src/io/import.js', 'src/data/plan.js', 'src/data/plan-edit.js', 'src/data/plan-links.js']) assert.ok(start.includes(p), p + ' stays at start');
+    const importer = D.require('io/import');
+    for (const name of ['ready', 'loadAhead', 'recognise', 'preview', 'parse', 'run', 'runText', 'runFiles', 'runPreset', 'previewText', 'sortFiles', 'runSorted', 'importerFor', 'collectionFor', 'recognisedAs', 'baseName', 'folderOf', 'materialize']) assert.equal(typeof importer[name], 'function', 'io/import.' + name);
+    assert.equal(importer.baseName('min_fil-2024.csv'), 'min fil 2024', 'baseName at once');
+    assert.equal(importer.folderOf([{ webkitRelativePath: 'mapp/a.csv' }]), 'mapp', 'folderOf at once');
+    return group('plan').scripts.length + ' scripts in plan, ' + group('import').scripts.length + ' in import';
   });
 })();
