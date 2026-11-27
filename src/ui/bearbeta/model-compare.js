@@ -6,8 +6,9 @@
  * (attribute by attribute, property by property), colour the 3D view (green only here, yellow changed), draw the other version instead
  * (red only there), and mark the elements. For a model fetched from Dataregium the panel also shows the server's change set of the
  * fetched version (the topic it was approved from, who proposed and approved it, and every change), and the server's own diff of the
- * fetched version against any other version of the document (its OB-30), sources beside the snapshots and the other models. Pure
- * reading: nothing is changed; the diff comes from data/model-diff, or from the server in the same shape.
+ * fetched version against any other version of the document (its OB-30), sources beside the snapshots and the other models. The
+ * server's diff by STEP id (its phase 5.1) also names the instances under each element, and the instances no object reaches or that
+ * too many share. Pure reading: nothing is changed; the diff comes from data/model-diff, or from the server in the same shape.
  */
 (function () {
   'use strict';
@@ -16,6 +17,7 @@
     const { h, t, i18n, replace } = base;
     const SHOW = 50;
     const SHOW_FIELDS = 6;
+    const SHOW_IDS = 12;
     const cssColor = (name) => ((globalThis.getComputedStyle ? getComputedStyle(document.documentElement).getPropertyValue(name) : '') || '').trim() || '#888888';
 
     /**
@@ -148,13 +150,38 @@
       }
       const value = (v) => (v === null || v === undefined || v === '' ? '–' : String(v));
       const line = (e) => `${e.typ}${e.namn ? ' ' + e.namn : ''}${e.vaning ? ' · ' + e.vaning : ''} (#${e.id})`;
+      /** STEP ids in brief: the first SHOW_IDS, and how many more the server counted. */
+      const idList = (list, count) => {
+        const shown = list.slice(0, SHOW_IDS);
+        return shown.map((n) => '#' + n).join(', ') + (count > shown.length ? ' ' + t('compare.more', { n: i18n.formatNumber(count - shown.length) }) : '');
+      };
+      /** What the server compared by STEP id names under an element: its instances in the other version and in this one. */
+      function steps(e) {
+        const out = [];
+        if (e.fields && !e.fields.length && !e.moreFields && (e.stepIdsCount || e.stepIdsRemovedCount)) out.push(h('li', { class: 'dm-help', 'data-compare-steps-only': '', text: t('compare.steps.only') }));
+        if (e.stepIdsCount) out.push(h('li', { class: 'dm-help', 'data-compare-steps': 'there', text: t('compare.steps.there', { ids: idList(e.stepIds || [], e.stepIdsCount) }) }));
+        if (e.stepIdsRemovedCount) out.push(h('li', { class: 'dm-help', 'data-compare-steps': 'here', text: t('compare.steps.here', { ids: idList(e.stepIdsRemoved || [], e.stepIdsRemovedCount) }) }));
+        return out;
+      }
       function section(key, label, list, total, fields) {
         if (!total) return null;
         return h('div', { class: 'dm-stack-sm', ['data-compare-' + key]: '' },
           h('h4', { text: `${t(label)} (${i18n.formatNumber(total)})` }),
-          h('ul', { class: 'dm-list dm-xs' }, list.slice(0, SHOW).map((e) => h('li', { class: 'dm-small' }, h('span', { text: line(e) }),
-            fields && e.fields ? h('ul', { class: 'dm-list dm-xs' }, e.fields.slice(0, SHOW_FIELDS).map((f) => h('li', { text: t('compare.field', { name: f.name, there: value(f.there), here: value(f.here) }) })).concat(e.fields.length > SHOW_FIELDS || e.moreFields ? [h('li', { class: 'dm-help', text: t('compare.more', { n: i18n.formatNumber(e.fields.length - SHOW_FIELDS + (e.moreFields || 0)) }) })] : [])) : null))),
+          h('ul', { class: 'dm-list dm-xs' }, list.slice(0, SHOW).map((e) => {
+            const sub = (fields && e.fields ? e.fields.slice(0, SHOW_FIELDS).map((f) => h('li', { text: t('compare.field', { name: f.name, there: value(f.there), here: value(f.here) }) })).concat(e.fields.length > SHOW_FIELDS || e.moreFields ? [h('li', { class: 'dm-help', text: t('compare.more', { n: i18n.formatNumber(e.fields.length - SHOW_FIELDS + (e.moreFields || 0)) }) })] : []) : []).concat(steps(e));
+            return h('li', { class: 'dm-small' }, h('span', { text: line(e) }), sub.length ? h('ul', { class: 'dm-list dm-xs' }, sub) : null);
+          })),
           total > SHOW ? h('p', { class: 'dm-help dm-xs', text: t('compare.more', { n: i18n.formatNumber(total - SHOW) }) }) : null);
+      }
+      /** The server's instances that no object reaches, or that too many reach to be brought to them (by STEP id only). */
+      function instances(key, label, hint, group) {
+        if (!group || !group.count) return null;
+        const shown = group.list.slice(0, SHOW);
+        return h('div', { class: 'dm-stack-sm', ['data-compare-' + key]: String(group.count) },
+          h('h4', { text: `${t(label)} (${i18n.formatNumber(group.count)})` }),
+          h('p', { class: 'dm-help dm-xs', text: t(hint) }),
+          h('ul', { class: 'dm-list dm-xs' }, shown.map((x) => h('li', { class: 'dm-small', text: t(x.objects ? 'compare.instance.objects' : 'compare.instance', { id: '#' + x.id, type: x.type, change: t('compare.change.' + x.change), side: t('compare.side.' + x.side), n: i18n.formatNumber(x.objects) }) }))),
+          group.count > shown.length ? h('p', { class: 'dm-help dm-xs', text: t('compare.more', { n: i18n.formatNumber(group.count - shown.length) }) }) : null);
       }
       function render() {
         const sel = /** @type {any} */ (h('dm-select', { label: t('compare.with'), 'data-compare-with': '' }));
@@ -169,6 +196,7 @@
           s.error ? h('p', { class: 'dm-error', text: s.error }) : null,
           r ? h('div', { class: 'dm-stack-sm', 'data-compare-result': '' },
             h('p', { class: 'dm-small', 'data-compare-counts': '', text: t('compare.counts', { other: r.other.label, here: i18n.formatNumber(r.counts.here), there: i18n.formatNumber(r.counts.there), added: i18n.formatNumber(r.counts.onlyHere), removed: i18n.formatNumber(r.counts.onlyThere), changed: i18n.formatNumber(r.counts.changed) }) }),
+            r.by ? h('p', { class: 'dm-help dm-xs', 'data-compare-by': r.by, text: t('compare.by.' + r.by) }) : null,
             nothing ? h('p', { class: 'dm-help dm-small', text: t('compare.same') }) : h('p', { class: 'dm-help dm-xs', text: t('compare.hint') }),
             r.truncated ? h('p', { class: 'dm-help dm-xs', text: t('compare.truncated', { n: i18n.formatNumber(modelDiff.MAX_LIST) }) }) : null,
             nothing ? null : h('div', { class: 'dm-row-wrap' },
@@ -176,7 +204,9 @@
               r.counts.onlyHere + r.counts.changed ? basic.button({ label: t('compare.mark', { n: i18n.formatNumber(r.counts.onlyHere + r.counts.changed) }), icon: 'list-checks', size: 'sm', 'data-compare-mark': '', onClick: mark }) : null),
             section('only-here', 'compare.only.here', r.onlyHere, r.counts.onlyHere, false),
             section('changed', 'compare.changed', r.changed, r.counts.changed, true),
-            section('only-there', 'compare.only.there', r.onlyThere, r.counts.onlyThere, false)) : null,
+            section('only-there', 'compare.only.there', r.onlyThere, r.counts.onlyThere, false),
+            instances('shared', 'compare.shared', 'compare.shared.hint', r.shared),
+            instances('unplaced', 'compare.unplaced', 'compare.unplaced.hint', r.unplaced)) : null,
           renderServer());
       }
       function destroy() { if (s.result && options.preview) { s.result = null; Promise.resolve(options.preview(null)).catch(() => {}); } }

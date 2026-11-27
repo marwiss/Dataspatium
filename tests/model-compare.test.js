@@ -147,6 +147,79 @@
     return 'ok';
   }, 20000);
 
+  test('model compare: the server\'s diff by STEP id names the instances under each element, apart from the unplaced and the shared, and by GlobalId none', async (assert) => {
+    const opencde = D.require('api/families/opencde');
+    const families = D.require('api/families/databases');
+    const connectors = D.require('api/connectors');
+    const i18n = D.require('ui/i18n');
+    const CDE = 'dataspatium-asset://tests/compare-step';
+    const REDIRECT = 'http://127.0.0.1:8080/oauth-callback.html';
+    const json = (data, status) => ({ kind: 'text', data: JSON.stringify(data), status });
+    const removedIds = Array.from({ length: 15 }, (_, i) => 1201 + i);
+    const byStep = { a: { document_id: 'doc-1', version_index: 2 }, b: { document_id: 'doc-1', version_index: 3 }, by: 'step',
+      added: [{ guid: '0NewSlab00000000000000', type: 'IfcSlab', name: 'Platta ny', storey: 'Plan 1', step_ids: [3001, 3002] }],
+      removed: [{ guid: diff.onlyHere[0].guid, type: 'IfcSlab', name: 'Platta', storey: 'Plan 1', step_ids_removed: removedIds, step_ids_removed_count: 40 }],
+      // A point moved in the wall's profile: its own paths are the same, an instance under it changed.
+      changed: [{ guid: diff.changed[0].guid, type: 'IfcWall', name: diff.changed[0].namn, storey: 'Plan 2', attributes: [], step_ids: [1105], step_ids_removed: [1104] }],
+      unplaced: [{ step_id: 5, type: 'IfcOwnerHistory', side: 'b', change: 'changed' }],
+      shared: [{ step_id: 9, type: 'IfcSurfaceStyle', side: 'b', change: 'changed', objects: 340 }, { step_id: 'x', type: 'IfcBad', side: 'a', change: 'added' }], shared_count: 12000,
+      same: 7, truncated: false };
+    const byGuid = { a: { document_id: 'doc-1', version_index: 2 }, b: { document_id: 'doc-1', version_index: 1 }, by: 'guid', added: [], removed: [], changed: [{ guid: diff.changed[0].guid, type: 'IfcWall', name: diff.changed[0].namn, attributes: [{ path: 'Name', old: 'a', new: 'b' }], step_ids: [1105] }], unplaced: [{ step_id: 5, type: 'IfcOwnerHistory', side: 'b', change: 'changed' }], same: 9 };
+    D.net.virtual('tests/compare-step/', (url) => {
+      const path = (url.startsWith(CDE) ? url.slice(CDE.length) : new URL(url).pathname).split('?')[0];
+      if (path === '/.well-known/dataregium') return Promise.resolve(json({ server: { name: 'Dataregium', version: '3.0.0' }, apis: { foundation: '1.0', documents: '1.0' }, extensions: { ifc_diff: { enabled: true, url: '/documents/1.0/documents/{document_id}/versions/{version_index}/ifc-diff/{other_index}', max_entries: 10000 } } }));
+      if (path === '/documents/1.0/document-versions') return Promise.resolve(json({ versions: [{ document_id: 'doc-1', version_index: 1, version_number: '1' }, { document_id: 'doc-1', version_index: 2, version_number: '2' }, { document_id: 'doc-1', version_index: 3, version_number: '3' }] }));
+      if (path === '/documents/1.0/documents/doc-1/versions/2/ifc-diff/3') return Promise.resolve(json(byStep));
+      if (path === '/documents/1.0/documents/doc-1/versions/2/ifc-diff/1') return Promise.resolve(json(byGuid));
+      if (path === '/foundation/versions') return Promise.resolve(json({ versions: [{ api_id: 'foundation', version_id: '1.0' }, { api_id: 'documents', version_id: '1.0' }] }));
+      if (path === '/foundation/1.0/auth') return Promise.resolve(json({ oauth2_auth_url: CDE + '/foundation/oauth2/auth', oauth2_token_url: CDE + '/foundation/oauth2/token' }));
+      if (path === '/foundation/oauth2/token') return Promise.resolve(json({ access_token: 'tok', refresh_token: 'r', expires_in: 3600 }));
+      return Promise.resolve(json({ message: 'Not Found' }, 404));
+    });
+    const { connector } = await families.createConnector('opencde', { baseUrl: CDE, clientId: 'dataspatium', clientSecret: '' });
+    const source = { kind: 'file', cde: { connectorId: connector.id, connectorName: connector.name, host: 'tests', projectId: 'p-1', documentId: 'doc-1', versionIndex: 2 } };
+    let panel = null;
+    try {
+      await opencde.login(connector, { popup: (url) => Promise.resolve(`${new URL(url).searchParams.get('redirect_uri')}?code=abc&state=${new URL(url).searchParams.get('state')}`), redirectUri: REDIRECT });
+      panel = D.require('ui/bearbeta/model-compare').create({ shell: { log: () => {} } }, Object.assign({}, a, { source }), { preview: () => {} });
+      document.body.appendChild(panel.el);
+      await waitFor(() => panel.el.querySelector('[data-compare-server-versions]'), 3000, 'the versions button');
+      await panel.loadServerVersions();
+      assert.equal(panel.state.choice, 'server:3');
+      await panel.run();
+      assert.equal(panel.state.error, '');
+      const by = panel.el.querySelector('[data-compare-by]');
+      assert.ok(by && by.getAttribute('data-compare-by') === 'step' && by.textContent === t('compare.by.step'), 'compared by STEP id, in words');
+      const here = panel.el.querySelector('[data-compare-only-here] [data-compare-steps="here"]');
+      assert.ok(here && here.textContent.includes('#1201, #1202') && here.textContent.includes('#1212') && !here.textContent.includes('#1213'), 'the removed instances in this file, the first twelve: ' + (here && here.textContent));
+      assert.ok(here.textContent.includes(t('compare.more', { n: i18n.formatNumber(28) })), 'and how many more the server counted');
+      const there = panel.el.querySelector('[data-compare-only-there] [data-compare-steps="there"]');
+      assert.ok(there && there.textContent.includes('#3001, #3002') && !there.textContent.includes('…'), 'the added instances in the other file: ' + (there && there.textContent));
+      const changed = panel.el.querySelector('[data-compare-changed]');
+      assert.ok(changed.querySelector('[data-compare-steps-only]'), 'an element where only instances under it changed says so');
+      assert.ok(changed.querySelector('[data-compare-steps="there"]').textContent.includes('#1105') && changed.querySelector('[data-compare-steps="here"]').textContent.includes('#1104'), 'with the instances on both sides');
+      assert.ok(panel.state.result.changed[0].id > 0, 'and it is coloured like any changed element');
+      const shared = panel.el.querySelector('[data-compare-shared]');
+      assert.ok(shared && shared.getAttribute('data-compare-shared') === '12000', 'the shared instances with the server\'s count');
+      assert.equal(shared.querySelectorAll('li').length, 1, 'an instance without a STEP id is left out');
+      assert.ok(shared.textContent.includes(t('compare.instance.objects', { id: '#9', type: 'IfcSurfaceStyle', change: t('compare.change.changed'), side: t('compare.side.b'), n: i18n.formatNumber(340) })), 'in words: ' + shared.textContent);
+      assert.ok(shared.textContent.includes(t('compare.more', { n: i18n.formatNumber(11999) })), 'and how many more');
+      const unplaced = panel.el.querySelector('[data-compare-unplaced]');
+      assert.ok(unplaced && unplaced.getAttribute('data-compare-unplaced') === '1' && unplaced.textContent.includes('#5 IfcOwnerHistory'), 'the instances no object reaches');
+      // Against a re-export: by GlobalId, and no STEP ids even when the answer has some.
+      panel.state.choice = 'server:1';
+      await panel.run();
+      const guid = panel.el.querySelector('[data-compare-by]');
+      assert.ok(guid && guid.getAttribute('data-compare-by') === 'guid' && guid.textContent === t('compare.by.guid'), 'compared by GlobalId, in words');
+      assert.ok(!panel.el.querySelector('[data-compare-steps]') && !panel.el.querySelector('[data-compare-shared]') && !panel.el.querySelector('[data-compare-unplaced]'), 'no STEP ids, no unplaced and no shared');
+      assert.ok(panel.el.querySelector('[data-compare-changed]').textContent.includes('Name'), 'the attributes as before');
+    } finally {
+      if (panel) { panel.destroy(); panel.el.remove(); }
+      await opencde.logout(connector).catch(() => {}); await connectors.remove(connector.id);
+    }
+    return 'ok';
+  }, 20000);
+
   test('model compare: cleanup', async () => {
     selection.clear();
     if (a) await datasets.remove(a.id);

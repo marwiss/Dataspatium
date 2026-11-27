@@ -887,6 +887,12 @@ version uploaded as a whole file has no change set. It is a third source beside 
 *The server's versions* fetches the document's other versions on Dataregium as choices in *Compare with*. When you choose one, the
 comparison is computed by the server (its diff between versions, by GlobalId and attribute, with placement, shape, container and type
 as fields of their own) and shown as the same lists and colours here, but without the other version in 3D; fetch that version to see it.
+When the STEP ids belong together in both versions, the server also compares instance by instance (Dataregium from phase 5.1): each
+element then names the instances added or changed in the other version and those removed from this one, by STEP id, and an element
+under which only instances changed, such as a point in a wall's profile, is among the changed ones. Instances that no object reaches,
+such as an owner history, are under *Without an object*, and instances that more than 100 objects reach, such as a style or a unit,
+under *Shared instances*, marking no objects. When one version is a re-export, or you compare with another document, the panel says
+that the comparison was made by GlobalId.
 
 ## Duplicates between models
 

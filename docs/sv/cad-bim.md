@@ -859,7 +859,13 @@ som laddats upp som hel fil har inget ändringsset. Det är en tredje källa bre
 
 Med *Serverns versioner* hämtas dokumentets övriga versioner på Dataregium som val i listan *Jämför med*. Väljer du en av dem räknas
 jämförelsen av servern (dess diff mellan versioner, efter GlobalId och attribut, med placering, form, behållare och typ som egna
-fält) och visas som samma listor och färger här, men utan den andra versionen i 3D; hämta den versionen om du vill se den.
+fält) och visas som samma listor och färger här, men utan den andra versionen i 3D; hämta den versionen om du vill se den. När
+STEP-id:n hör ihop i båda versionerna jämför servern också instans för instans (Dataregium från fas 5.1): under varje element står då
+de tillagda eller ändrade instanserna i den andra versionen och de borttagna i den här, med STEP-id, och ett element där bara
+instanser under det har ändrats, till exempel en punkt i en väggs profil, står bland de ändrade. Instanser som inget objekt når, som
+en ägarhistorik, står under *Utan objekt*, och instanser som fler än 100 objekt når, som en stil eller en enhet, under *Gemensamma
+instanser*, utan att markera några objekt. Är den ena versionen en omexport, eller jämför du med ett annat dokument, säger panelen att
+jämförelsen gjordes på GlobalId.
 
 ## Dubbletter mellan modeller
 

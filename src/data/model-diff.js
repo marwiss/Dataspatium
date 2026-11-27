@@ -5,7 +5,8 @@
  * dataset or another model dataset (a newer version fetched from a CDE, a colleague's file). Elements are matched on GlobalId; an
  * element is "changed" when an attribute the table shows or a property (set.name) differs. Pure logic over two engines, answered in
  * the ids of each file so that the 3D view can colour either: green for what is only here, yellow for changed, red for what is only
- * in the other version. Dataregium's diff API (OB-30) will be a third source with the same shape.
+ * in the other version. Dataregium's diff API (OB-30) is a third source with the same shape, and from its phase 5.1 also names the
+ * instances under each element by STEP id.
  */
 (function () {
   'use strict';
@@ -139,15 +140,34 @@
       if (typeof v === 'object') return v.guid !== undefined ? String(v.guid) : String(v.type || JSON.stringify(v).slice(0, 60));
       return String(v);
     }
+    /** STEP ids of the server's answer: positive whole numbers only. */
+    const stepIdsOf = (v) => (Array.isArray(v) ? v : []).map(Number).filter((n) => Number.isInteger(n) && n > 0);
+    const CHANGES = new Set(['added', 'removed', 'changed']);
+    /** Dataregium's `unplaced` or `shared` instances, with the count the server gives when it cut the list. */
+    function instancesOf(list, count) {
+      const raw = Array.isArray(list) ? list : [];
+      const out = raw.slice(0, MAX_LIST).map((x) => ({ id: Number(x && x.step_id), type: String((x && x.type) || ''), side: x && x.side === 'b' ? 'b' : 'a', change: x && CHANGES.has(x.change) ? x.change : 'changed', objects: Number(x && x.objects) || 0 }))
+        .filter((x) => Number.isInteger(x.id) && x.id > 0);
+      return { list: out, count: Math.max(raw.length, Number(count) || 0) };
+    }
     /**
      * Dataregium's diff (its OB-30) of this version (`a`) against another (`b`) in the shape `compare` gives: removed is only here,
      * added only there, the attributes that differ become fields; the ids of this file come from the table by GlobalId, the other
-     * file's ids are unknown (0) and there are no bytes to draw it.
+     * file's ids are unknown (0) and there are no bytes to draw it. Compared `by` "step" (its phase 5.1), every element also names the
+     * instances under it that differ: `stepIds` in the other version's file (added or changed) and `stepIdsRemoved` in this one's,
+     * with their counts when the server cut the lists, and the instances no object reaches (`unplaced`) or that too many reach
+     * (`shared`) come apart; `by` "guid" (a re-export, or another document) has no STEP ids.
      * @param {any} here the engine of this version @param {any} json the server's answer @param {string} label @param {any} ref
      */
     async function fromServer(here, json, label, ref) {
       const a = await elementsOf(here);
-      const of = (e) => { const own = a.get(String(e.guid)); return { guid: String(e.guid), id: own ? own.id : 0, typ: String(e.type || ''), namn: String(e.name || ''), vaning: String(e.storey || '') }; };
+      const byStep = json.by === 'step';
+      const steps = (e) => {
+        if (!byStep) return {};
+        const there = stepIdsOf(e.step_ids); const removed = stepIdsOf(e.step_ids_removed);
+        return { stepIds: there, stepIdsCount: Math.max(there.length, Number(e.step_ids_count) || 0), stepIdsRemoved: removed, stepIdsRemovedCount: Math.max(removed.length, Number(e.step_ids_removed_count) || 0) };
+      };
+      const of = (e) => { const own = a.get(String(e.guid)); return Object.assign({ guid: String(e.guid), id: own ? own.id : 0, typ: String(e.type || ''), namn: String(e.name || ''), vaning: String(e.storey || '') }, steps(e)); };
       const removed = Array.isArray(json.removed) ? json.removed : []; const added = Array.isArray(json.added) ? json.added : []; const changedIn = Array.isArray(json.changed) ? json.changed : [];
       const changed = changedIn.slice(0, MAX_LIST).map((e) => {
         const fields = (Array.isArray(e.attributes) ? e.attributes : []).map((x) => ({ name: String(x.path || ''), here: serverValue(x.old), there: serverValue(x.new) }));
@@ -156,7 +176,9 @@
       const same = Number(json.same) || 0;
       return { onlyHere: removed.slice(0, MAX_LIST).map(of), onlyThere: added.slice(0, MAX_LIST).map(of), changed,
         counts: { here: removed.length + changedIn.length + same, there: added.length + changedIn.length + same, onlyHere: removed.length, onlyThere: added.length, changed: changedIn.length },
-        truncated: !!json.truncated || removed.length > MAX_LIST || added.length > MAX_LIST || changedIn.length > MAX_LIST, other: { label, bytes: null, ref } };
+        truncated: !!json.truncated || removed.length > MAX_LIST || added.length > MAX_LIST || changedIn.length > MAX_LIST, other: { label, bytes: null, ref },
+        by: byStep ? 'step' : json.by === 'guid' ? 'guid' : null,
+        unplaced: byStep ? instancesOf(json.unplaced, json.unplaced_count) : null, shared: byStep ? instancesOf(json.shared, json.shared_count) : null };
     }
     return { FIELDS, MAX_LIST, compare, openOther, choices, diff, fromServer };
   });
