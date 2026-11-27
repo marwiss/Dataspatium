@@ -417,15 +417,17 @@
       /**
        * What changed from a model's base version to its current file, in Dataregium's change proposal form (decision F123 a; the
        * wheel's `_ifc_proposal_files`): `changes`, `truncated`, `instances` and `unexpressed` (created, deleted, relations, geometry).
-       * Both are IFC files, not dataset files. Read-only: nothing is written back.
+       * Both are IFC files, not dataset files. Read-only: nothing is written back, and the engine gets copies, since it takes over
+       * what it is given and the caller may compare the same base again.
        * @param {ArrayBuffer|Uint8Array} baseBytes the base version as the server keeps it @param {ArrayBuffer|Uint8Array} modelBytes the model's file now
        * @returns {Promise<{changes: any[], truncated: boolean, instances: number, unexpressed: {created: number, deleted: number, relations: number, geometry: number}}>}
        */
       async runIfcProposal(baseBytes, modelBytes) {
         return this.ifcJob(async () => {
           const paths = ['/data/step/proposal-base.ifc', '/data/step/proposal-model.ifc'];
-          await this.engine.writeFile(paths[0], baseBytes);
-          await this.engine.writeFile(paths[1], modelBytes);
+          const copy = (b) => (b instanceof ArrayBuffer ? b.slice(0) : new Uint8Array(b));
+          await this.engine.writeFile(paths[0], copy(baseBytes));
+          await this.engine.writeFile(paths[1], copy(modelBytes));
           try {
             await this.ensurePackages(['ifcopenshell']);
             this.streams = [];
