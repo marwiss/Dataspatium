@@ -65,6 +65,10 @@ det som hann göras kan ångras som vanligt.
 nästa steg. Ett flöde stannar vid första felet, om du inte har slagit på *Fortsätt med nästa steg efter ett fel*. Då räknas
 körningen ändå som misslyckad. Inspektören visar den senaste körningen steg för steg, med felet där det uppstod.
 
+Kunde ett dokument inte rita ett diagram eller en bild, till exempel för att samtycket saknas vid start, görs dokumentet
+ändå, med felet på diagrammets plats. Loggen och inspektören får då en anmärkning under steget som säger vilket diagram
+det gäller och varför, så att du inte behöver öppna filen för att se det.
+
 Filerna från en körning ligger kvar tills du hämtar dem med *Hämta resultatet* eller stänger appen. En fil kommer som den
 är, och flera blir en ZIP-fil.
 
@@ -77,6 +81,7 @@ Med *Kör när appen startar* körs flödet strax efter att appen öppnats. Det 
 - Steg som hämtar från nätet kräver att samtycket redan är givet, även höjdsteg i ett recept som spelas upp.
 - Steg som läser genom databasbryggan eller från en OpenCDE-server körs inte vid start, eftersom de kopplas upp och
   loggas in för hand. Detsamma gäller kommandona för OpenCDE.
+- Ett steg som läser en länkad fil kräver att webbläsaren fortfarande låter appen läsa filen.
 - Python-kod kräver att Python redan är hämtat, med de paket som Python laddar när det startar. Det gäller skript,
   diagram, dokument som ritar diagram, kodsteg i recept och steg på modeller.
 - Paket som koden använder, R-paket som inte följer med appen, IfcOpenShell och plotly.js ska redan finnas i cachen,
@@ -86,12 +91,15 @@ Med *Kör när appen startar* körs flödet strax efter att appen öppnats. Det 
 - Ett flöde som frågar dig (*Fråga mig*) körs aldrig vid start.
 
 Annars hoppas flödet över. Loggen och flödet i Flöden säger varför och vad du kan göra: köra flödet för hand en gång,
-eller tillåta det som saknas under Hantera, Arbetsyta, Internetåtkomst.
+eller tillåta det som saknas under Hantera, Arbetsyta, Internetåtkomst. Du behöver inte vänta på nästa start för att se
+det: när du väljer ett flöde som körs vid start säger inspektören redan nu om nästa start kommer att hoppa över det och
+varför, med en knapp för att köra det för hand.
 
 Vid start frågar inget steg. Hela körningen bär med sig att ingen sitter vid tangentbordet. Hämtningar, recept,
-kommandon och koden i R och Python med Pythons egna hämtningar (paket, `pyfetch`) får bara det som redan är tillåtet för
-gott. Det som saknas ändå lämnas utanför diagrammet, eller så misslyckas steget med en text om hur du tillåter det.
-Det du själv gör medan flödet körs frågar som vanligt. Inget körs när appen är stängd.
+kommandon, databasbryggan, OpenCDE-servrar, länkade filer och koden i R och Python med Pythons egna hämtningar (paket,
+`pyfetch`) får bara det som redan är tillåtet för gott. Det som saknas ändå lämnas utanför diagrammet, eller så
+misslyckas steget med en text om hur du tillåter det. Det du själv gör medan flödet körs frågar som vanligt. Inget körs
+när appen är stängd.
 
 ## Bevaka en källa
 
@@ -107,8 +115,10 @@ En ändrad rad räknas både som ny och som borta, eftersom appen inte vet vilka
 Datamängden ändras inte förrän du trycker på *Uppdatera*. Då hämtas de nya uppgifterna och receptet spelas upp, och
 bevakningen jämför därefter med den nya versionen. Det gäller också när du uppdaterar på annat sätt, till exempel i ett flöde.
 
-Med *Kontrollera när appen startar* görs kontrollen vid start, men bara för källor du redan gett samtycke till. Länkade
-filer kontrolleras då bara om webbläsaren fortfarande har kvar din tillåtelse, annars står det *Inte kontrollerad*.
+Med *Kontrollera när appen startar* görs kontrollen vid start, men bara för källor du redan gett samtycke till för gott,
+och den frågar aldrig något: varje läsning bär med sig att ingen sitter vid tangentbordet. Länkade filer kontrolleras då
+bara om webbläsaren fortfarande har kvar din tillåtelse, annars står det *Inte kontrollerad*. Källor genom databasbryggan
+och från OpenCDE-servrar kontrolleras inte vid start.
 
 ## Säkerhetskopior
 

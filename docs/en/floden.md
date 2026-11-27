@@ -66,6 +66,10 @@ once. A step that has already begun runs to its end. The log says where the flow
 flow before the next step. A flow stops at the first error unless you have turned on *Go on with the next step after an
 error*. The run still counts as failed then. The inspector shows the latest run step by step, with the error where it happened.
 
+If a document could not draw a chart or a picture, for example because the consent is missing at start, the document is
+made all the same, with the error in the chart's place. The log and the inspector then get a remark under the step that says
+which chart it is and why, so you need not open the file to see it.
+
 The files from a run stay until you fetch them with *Download the result* or close the app. One file comes as it is, and
 several become a ZIP file.
 
@@ -79,6 +83,7 @@ With *Run when the app starts* the flow runs shortly after the app opens. It onl
 - Steps that fetch from the net need the consent already given, also height steps in a recipe that is replayed.
 - Steps that read through the database bridge or from an OpenCDE server do not run at start, since they are connected and
   signed in by hand. The same goes for the OpenCDE commands.
+- A step that reads a linked file needs the browser still to let the app read the file.
 - Python code needs Python already fetched, with the packages Python loads when it starts. That covers scripts, charts,
   documents that draw charts, code steps in recipes and steps on models.
 - Packages the code uses, R packages that do not come with the app, IfcOpenShell and plotly.js must already be in the
@@ -88,12 +93,14 @@ With *Run when the app starts* the flow runs shortly after the app opens. It onl
 - A flow that asks you (*Ask me*) never runs at start.
 
 Otherwise the flow is skipped. The log and the flow in Flows say why and what you can do: run the flow by hand once, or
-allow what is missing under Manage, Workspace, Internet access.
+allow what is missing under Manage, Workspace, Internet access. You need not wait for the next start to see it: when you
+select a flow that runs at start, the inspector already says whether the next start will skip it and why, with a button to
+run it by hand.
 
-At start no step asks. The whole run carries with it that nobody is at the keyboard. Fetches, recipes, commands and the
-code in R and Python, with Python's own fetches (packages, `pyfetch`), get only what is already allowed for good.
-Whatever is still missing is left out of the chart, or the step fails with a text that says how to allow it. What you do
-yourself while the flow runs asks as usual. Nothing runs while the app is closed.
+At start no step asks. The whole run carries with it that nobody is at the keyboard. Fetches, recipes, commands, the
+database bridge, OpenCDE servers, linked files and the code in R and Python, with Python's own fetches (packages, `pyfetch`),
+get only what is already allowed for good. Whatever is still missing is left out of the chart, or the step fails with a
+text that says how to allow it. What you do yourself while the flow runs asks as usual. Nothing runs while the app is closed.
 
 ## Watching a source
 
@@ -109,8 +116,10 @@ A changed row counts both as new and as gone, since the app does not know which 
 The dataset does not change until you press *Update*. The new data is then fetched and the recipe replayed, and the watch
 then compares with the new version. That also applies when you update in another way, for example in a flow.
 
-With *Check when the app starts* the check happens at start, but only for sources you have already consented to. Linked
-files are then checked only if the browser still holds your permission; otherwise it says *Not checked*.
+With *Check when the app starts* the check happens at start, but only for sources you have already consented to for good,
+and it never asks anything: every read carries with it that nobody is at the keyboard. Linked files are then checked only if
+the browser still holds your permission; otherwise it says *Not checked*. Sources through the database bridge and from
+OpenCDE servers are not checked at start.
 
 ## Backups
 

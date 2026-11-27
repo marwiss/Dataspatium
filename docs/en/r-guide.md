@@ -63,6 +63,12 @@ shown under *Manage → Workspace → Components*, where they can also be remove
 the code gets the usual error that the package is missing. Packages that need system libraries not available in the
 browser may be missing from the repository.
 
+Every package from the repository is checked before it is used. The app has the checksum (SHA-256) of the repository's
+list of packages for R 4.5, which no longer changes, and the list gives every package's own checksum (MD5). A package is
+used only when its file has that checksum, both when it is downloaded and every time it is taken from the browser's
+storage; a stored copy that has changed is removed and fetched again after consent. A package the list gives no
+checksum, or a list other than the one the app knows, is not used, and R says why before the code runs.
+
 ## R steps in recipes
 
 Process has the action **R step** (the Code group): a function `function(df) { ... }` runs on the whole table and

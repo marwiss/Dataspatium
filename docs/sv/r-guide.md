@@ -62,6 +62,12 @@ sparas paketen i webbläsaren, finns kvar vid nästa start och visas under *Hant
 de också kan tas bort. Utan nätverk, eller om du svarar nej, får koden det vanliga felet att paketet saknas. Paket
 som kräver systembibliotek som inte finns i webbläsaren kan saknas i förrådet.
 
+Varje paket från förrådet kontrolleras innan det används. Appen har kontrollsumman (SHA-256) för förrådets förteckning
+över paket för R 4.5, som inte längre ändras, och förteckningen anger varje pakets egen kontrollsumma (MD5). Ett paket
+används bara när dess fil har den kontrollsumman, både när det hämtas och varje gång det tas ur webbläsarens lagring; en
+sparad kopia som har ändrats tas bort och hämtas på nytt efter samtycke. Ett paket som förteckningen inte anger någon
+kontrollsumma för, eller en annan förteckning än den appen känner, används inte, och R säger varför innan koden körs.
+
 ## R-steg i recept
 
 I Bearbeta finns åtgärden **R-steg** (gruppen Kod): en funktion `function(df) { ... }` körs på hela tabellen och det
