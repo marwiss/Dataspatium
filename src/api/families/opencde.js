@@ -1081,6 +1081,21 @@
       return Number.isInteger(n) && n > 0 ? { withVersion: n } : null;
     }
     /**
+     * The file of the version a dataset was fetched as (`source.cde`: its document and version index), from the source's own server:
+     * the base a change proposal is made against (decision F123 a). The app keeps no copy of it, since each step on a model replaces
+     * the model's file. The address is built from the Documents API's path, never taken from elsewhere, so the token goes nowhere else.
+     * @param {any} connector @param {{documentId?: string, versionIndex?: any}} cde @returns {Promise<Uint8Array>}
+     */
+    async function baseFile(connector, cde) {
+      if (!cde || !cde.documentId || !(Number(cde.versionIndex) >= 1)) throw new Error(t('opencde.err.noreference'));
+      const got = await binary(connector, `${versionPath(String(cde.documentId), Number(cde.versionIndex))}/download`, '*/*');
+      return new Uint8Array(got.buffer);
+    }
+    /** Whether the server takes change proposals (Dataregium's capability `ifc_changes`). @param {any} connector @returns {Promise<boolean>} */
+    async function takesChanges(connector) {
+      try { return hasExtension(await capabilities(connector), 'ifc_changes'); } catch (_e) { return false; }
+    }
+    /**
      * The stored version of a model that went up as a new version and came back renumbered or merged: its file becomes the dataset's model,
      * as an undoable step (data/ifc-ops `ifc_stored`) in the history but not in the recipe, so that the next change and the next
      * version build on the ids the server keeps; the dataset then points at that version, and its facts take the version's highest id.
@@ -1362,7 +1377,7 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { addDeployed, ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, hasBcf, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, seedStepIds, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, versionMessage, MESSAGE_MAX, messageMax, gitCommit, renumbered, mergedOf, adoptStored, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
+    return { addDeployed, ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, hasBcf, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, seedStepIds, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, versionMessage, MESSAGE_MAX, messageMax, gitCommit, renumbered, mergedOf, adoptStored, baseFile, takesChanges, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
       topicMay, projectMay, topicFiles, filesBody, setTopicFiles, modelFile, linkTopic, attachDocument, identity };
   });
 })();

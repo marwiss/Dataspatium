@@ -4,7 +4,7 @@
  * The review before sharing: everything in a dataset that may be personal data is listed (data/share-scan), and for each
  * the user chooses what happens in the copy that leaves the app. The datasets themselves are never changed. In an IFC model the
  * review looks inside the file; changing it there needs the app's Python with IfcOpenShell, so without Python running the dialog
- * offers to keep or to stop, says why, and can start Python.
+ * offers to keep or to stop, says why, and can start Python. A change proposal's values (changeSet) are kept or left out, not pseudonymised.
  */
 (function () {
   'use strict';
@@ -194,6 +194,35 @@
       return ok === true ? { places } : null;
     }
 
+    /**
+     * A change proposal on its way to the model's server (decision F123 a): the changes whose new value holds personal data are
+     * counted, and the person keeps them or takes them out of the proposal. A value cannot be pseudonymised there, since it becomes the
+     * model's on the server when the proposal is approved. Nothing is shown when no value holds any. Resolves with the changes to
+     * send and how many were taken out, or null when the person cancels.
+     * @param {any} ctx @param {{changes: any[], server: string, project: string}} info
+     * @returns {Promise<{changes: any[], dropped: number}|null>}
+     */
+    async function changeSet(ctx, info) {
+      const changes = info.changes || [];
+      const flagged = await shareScan.personalChanges(changes);
+      if (!flagged.length) return { changes, dropped: 0 };
+      let choice = 'drop';
+      const sel = /** @type {any} */ (h('dm-select', { label: t('review.changes.choice', { n: i18n.formatNumber(flagged.length) }), 'data-review-changes': String(flagged.length) }));
+      sel.options = [{ value: 'drop', label: t('review.changes.drop') }, { value: 'keep', label: t('review.choice.keep') }];
+      sel.value = choice;
+      sel.addEventListener('change', () => { choice = sel.value === 'keep' ? 'keep' : 'drop'; });
+      const dialog = (ctx && ctx.ui && ctx.ui.dialog) || D.require('ui/overlays').dialog;
+      const body = h('div', { class: 'dm-stack', 'data-review-changeset': '' },
+        h('p', { text: t('review.changes.help', { n: i18n.formatNumber(changes.length), server: String(info.server || ''), project: String(info.project || '') }) }),
+        sel,
+        h('p', { class: 'dm-help dm-small', text: t('review.changes.note') }));
+      const ok = await dialog.open({ title: t('review.title'), help: 'dela#granskning-före-delning', body, actions: [{ label: t('common.cancel'), value: false }, { label: t('review.continue'), variant: 'primary', value: true, primary: true }] });
+      if (ok !== true) return null;
+      if (choice === 'keep') return { changes, dropped: 0 };
+      const out = changes.filter((_c, i) => !flagged.includes(i));
+      return { changes: out, dropped: changes.length - out.length };
+    }
+
     /** A short line for the log: what was changed in the copy. */
     function summary(transform) {
       let hash = 0; let drop = 0; let other = 0;
@@ -206,6 +235,6 @@
       return other ? `${t('review.applied', { hash, drop })} ${t('review.applied.more', { n: other })}` : t('review.applied', { hash, drop });
     }
 
-    return { findings, scan, review, warn, material, summary, PHONE_NAME: shareScan.PHONE_NAME };
+    return { findings, scan, review, warn, material, changeSet, summary, PHONE_NAME: shareScan.PHONE_NAME };
   });
 })();

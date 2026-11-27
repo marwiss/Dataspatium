@@ -397,6 +397,28 @@
       const r = await e.exec('select coalesce(sum(dm_has_personal(value)), 0) from json_each(?)', [JSON.stringify(list)]);
       return number(r);
     }
+    /** The texts of a change set's value (a scalar, a typed value's `value` or a list of them); type names and references are not texts. */
+    function valueTexts(v, out = []) {
+      if (typeof v === 'string') out.push(v);
+      else if (Array.isArray(v)) for (const x of v) valueTexts(x, out);
+      else if (v && typeof v === 'object' && v.value !== undefined) valueTexts(v.value, out);
+      return out;
+    }
+    /**
+     * The changes of a change proposal whose new value holds personal data (identity numbers, e-mail addresses, phone numbers, as
+     * in the review's columns), by their place in the list.
+     * @param {any[]} changes in Dataregium's form (`new` per change) @returns {Promise<number[]>}
+     */
+    async function personalChanges(changes) {
+      const texts = []; const owner = [];
+      (changes || []).forEach((c, i) => { for (const text of valueTexts(c && c.new)) { texts.push(text); owner.push(i); } });
+      if (!texts.length) return [];
+      const e = await scratchEngine();
+      const r = await e.exec('select key, dm_has_personal(value) from json_each(?)', [JSON.stringify(texts)]);
+      const hit = new Set();
+      for (const row of (r[0] ? r[0].values : [])) if (Number(row[1])) hit.add(owner[Number(row[0])]);
+      return Array.from(hit).sort((a, b) => a - b);
+    }
     /**
      * A JSON text with the review's choice applied: `mask` puts [***] where personal data was, `strip` also empties a notebook's
      * saved outputs. Returns the new text.
@@ -458,6 +480,6 @@
     /** Whether a dataset is an IFC model with its file, whose review looks inside the file. @param {string} id */
     async function isIfc(id) { return !!(await ifcOriginal(await datasets.ensureOpen(id))); }
 
-    return { PHONE_NAME, IFC_PARTS, columnFindings, columnChoices, inspect, changes, copy, exportCopy, extras, cleanJson, personalCount, maskText, pythonRuns, isIfc };
+    return { PHONE_NAME, IFC_PARTS, columnFindings, columnChoices, inspect, changes, copy, exportCopy, extras, cleanJson, personalCount, personalChanges, maskText, pythonRuns, isIfc };
   });
 })();

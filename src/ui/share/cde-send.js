@@ -6,12 +6,15 @@
  * looks inside it and cleans the copy), and the file goes up through the Documents API
  * (the server's own page asks for title and version) or as a BCF document. A dataset that came from the CDE can go back as a new
  * version of the same document. A workspace bundle (the package dialog, through the review) goes the same way, so that two
- * Dataspatium users share through the server; the source view's files card receives it on the other side.
+ * Dataspatium users share through the server; the source view's files card receives it on the other side. A model fetched from
+ * Dataregium and changed since in the table or with Python can instead go as a change proposal (decision F123 a): the changes from
+ * the base version's file (fetched from the server, since each step replaces the model's own) to the model's, in the server's form,
+ * through the review and ui/share/change-proposal, as in the AI panel.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/share/cde-send', ['ui/base', 'data/datasets', 'data/kinds', 'api/connectors', 'ui/share/review', 'data/share-scan', 'platform/tier', 'ui/settings/tier'], (base, datasets, kinds, connectors, review, shareScan, tier, tierUi) => {
+  D.define('ui/share/cde-send', ['ui/base', 'data/datasets', 'data/kinds', 'data/model', 'data/ifc-ops', 'api/connectors', 'ui/share/review', 'data/share-scan', 'platform/tier', 'ui/settings/tier'], (base, datasets, kinds, model, ifcOps, connectors, review, shareScan, tier, tierUi) => {
     const { h, t, i18n, replace } = base;
     /** Tests give a popup of their own; the app opens the server's page in a window. */
     let popup = null;
@@ -26,10 +29,14 @@
       const { ui, shell, services } = ctx;
       // The OpenCDE family is part of the group 'families' (src/boot.js), which load() below has loaded before the panel is made.
       const opencde = D.require('api/families/opencde');
-      const s = { connectors: [], connector: null, projects: null, projectId: '', what: 'dataset', format: '', how: 'documents', busy: '', error: '', progress: null, done: '', message: '', messageMax: opencde.MESSAGE_MAX, conflict: null };
+      const s = { connectors: [], connector: null, projects: null, projectId: '', what: 'dataset', format: '', how: 'documents', busy: '', error: '', progress: null, done: '', message: '', messageMax: opencde.MESSAGE_MAX, conflict: null,
+        // The change proposal (F123 a): whether the server takes them, the model's own steps since it was fetched (for `stepsFor`,
+        // read again when `stepsKey` changes), the last proposal computed with its note when it cannot go, and the one sent.
+        takesChanges: false, steps: null, stepsKey: '', stepsFor: '', proposal: null, proposalNote: '', cde: null, proposed: null, approvingServer: false };
       const el = h('div', { class: 'dm-stack' });
       const fail = (err) => { s.error = String((err && err.message) || err); shell.log(s.error, 'error'); };
       const ds = () => hooks.dataset();
+      const flow = D.require('ui/share/change-proposal').create({ state: s, log: (msg, kind) => shell.log(msg, kind || 'ok'), fail, render: () => render(), busy: () => !!s.busy });
 
       async function start() {
         s.connectors = (await connectors.list()).filter((c) => opencde.isOpenCde(c));
@@ -40,6 +47,7 @@
       /** How long a version's message may be on the chosen server (Dataregium's capability git). */
       async function loadLimits() {
         s.messageMax = await opencde.messageMax(s.connector);
+        s.takesChanges = await opencde.takesChanges(s.connector);
         render();
       }
       async function signIn() {
@@ -178,6 +186,89 @@
         if (d) await validation.record(d.id, 'server', { status: report && report.status ? report.status : 'issues', findings: c.findings, errors: c.errors, refused: true });
         render();
       }
+      // ---- the model's changes as a change proposal (decision F123 a) ------------------------------------------------------
+      /**
+       * Whether the button Föreslå ändringarna is offered: an IFC model that came from a document on this server, a server that takes
+       * change proposals (`ifc_changes`) and BCF topics in the tier (platform/tier), and steps on the model since it was fetched. The
+       * steps are read from the dataset's log, once per dataset and change; nothing is asked of the server or Python here.
+       * @param {any} d @param {any} own the dataset's source.cde on this server, or null
+       */
+      function offersProposal(d, own) {
+        if (!own || !s.takesChanges || !model.isModel(d) || model.isDxf(d) || !tier.shows('cde.bcf', { server: s.connector.id })) return false;
+        const key = `${d.id}|${d.updatedAt || ''}|${own.versionIndex || ''}|${own.fetchedAt || ''}`;
+        if (s.stepsKey !== key) checkSteps(d, key);
+        return s.stepsFor === d.id && !!s.steps && s.steps.steps.length > 0;
+      }
+      async function checkSteps(d, key) {
+        s.stepsKey = key;
+        // Another dataset: what was computed or sent for the last one is not shown under this one.
+        if (s.stepsFor !== d.id) { s.steps = null; s.proposal = null; s.proposalNote = ''; s.proposed = null; s.cde = null; }
+        let got = null;
+        try { got = await ifcOps.stepsSinceFetch(d.id); } catch (err) { D.log('cde', err); }
+        if (s.stepsKey !== key) return;
+        s.steps = got; s.stepsFor = d.id;
+        render();
+      }
+      /** Why a computed proposal cannot go, pointing at the new version instead; '' when it can. */
+      function whyNot(p, cde) {
+        const un = p.unexpressed;
+        const button = t('cde.send.version', { n: String((Number(cde.versionIndex) || 0) + 1) });
+        if (p.truncated) return t('cde.propose.none.truncated', { n: i18n.formatNumber(p.changes.length), button });
+        if (p.changes.length) return '';
+        if (!un.created && !un.deleted && !un.relations && !un.geometry) return t('cde.propose.none.same', { version: String(cde.versionIndex) });
+        // New elements bring their relationships along, so only deletions and new shapes tell otherwise.
+        if (un.created && !un.deleted && !un.geometry) return t('cde.propose.none.created', { n: i18n.formatNumber(un.created), button });
+        return t('cde.propose.none.unexpressed', { created: i18n.formatNumber(un.created), deleted: i18n.formatNumber(un.deleted), relations: i18n.formatNumber(un.relations), geometry: i18n.formatNumber(un.geometry), button });
+      }
+      /** What the proposal carries, and what only its description can tell. */
+      function proposalLines(p) {
+        const un = p.unexpressed;
+        const lines = [t('ai.change.propose.summary', { n: i18n.formatNumber(p.changes.length), m: i18n.formatNumber(p.instances) })];
+        if (un.created || un.deleted || un.relations || un.geometry) lines.push(t('cde.propose.unexpressed', { created: i18n.formatNumber(un.created), deleted: i18n.formatNumber(un.deleted), relations: i18n.formatNumber(un.relations), geometry: i18n.formatNumber(un.geometry) }));
+        return lines;
+      }
+      /**
+       * The model's changes since it was fetched as a change proposal on its server: the base version's file is fetched from the
+       * server, Python computes the changes from it to the model's file (data/ifc-ops proposalBetween), the person gives the topic's
+       * words, the review takes out values with personal data when the person wants, and the proposal goes with the base version, the
+       * signed-in user and the steps that made it as its provenance. The model is neither changed nor published.
+       * @param {{title?: string, description?: string}} [given] the words, when the dialog is not to ask
+       */
+      async function propose(given) {
+        const d = ds();
+        const cde = d && d.source && d.source.cde;
+        if (!d || !cde || !cde.documentId || !s.connector || cde.connectorId !== s.connector.id || s.busy || !s.steps || s.stepsFor !== d.id) return;
+        s.busy = 'propose'; s.error = ''; s.done = ''; s.proposalNote = ''; s.conflict = null; render();
+        try {
+          // Dataregium's floor for proposing is the role editor (its F35 a).
+          if (!(await opencde.canPropose(s.connector, cde.projectId).catch(() => true))) throw new Error(t('ai.change.propose.role.none'));
+          const proposal = await ifcOps.proposalBetween(d.id, await opencde.baseFile(s.connector, cde));
+          s.proposal = proposal;
+          s.proposalNote = whyNot(proposal, cde);
+          if (s.proposalNote) return;
+          const project = cde.projectName || cde.projectId;
+          const lines = proposalLines(proposal);
+          const defaults = { title: t('cde.propose.default.title', { name: d.name }).slice(0, 120), description: s.steps.descriptions.slice(0, 20).concat([''], lines).join('\n').trim() };
+          const how = s.steps.steps.map((op) => t('op.' + op)).join(', ');
+          const values = given || await D.require('ui/share/change-proposal').askWords(Object.assign({ hint: t('cde.propose.dialog.hint', { project, version: String(cde.versionIndex), how }), lines, help: 'dela#till-cde' }, defaults));
+          if (!values) return;
+          const reviewed = await review.changeSet(ctx, { changes: proposal.changes, server: s.connector.name, project });
+          if (!reviewed) return;
+          if (!reviewed.changes.length) throw new Error(t('cde.propose.none.left'));
+          if (reviewed.dropped) shell.log(t('cde.propose.dropped', { n: i18n.formatNumber(reviewed.dropped) }), 'info');
+          s.cde = cde; s.proposed = null;
+          await flow.send(s.connector, { title: values.title || defaults.title, description: values.description || defaults.description, changes: reviewed.changes, aiModel: s.steps.aiModel, toolCall: s.steps.steps.join(',') });
+          try { await datasets.appendLog(await datasets.ensureOpen(d.id), 'shared', { name: t('cde.propose.log', { host: opencde.hostOf(s.connector.baseUrl) }) }); datasets.scheduleSave(d.id); } catch (err) { D.log('cde', err); }
+        } catch (err) { fail(err); if (err && err.status === 403) s.error = t('ai.change.propose.role'); }
+        finally { s.busy = ''; render(); }
+      }
+      /** The proposal under the buttons: why it cannot go, what the last one computed carries, and the one sent with its trial. */
+      function proposalView() {
+        return h('div', { class: 'dm-stack-sm', 'data-cde-proposal-box': '' },
+          s.proposalNote ? h('p', { class: 'dm-help dm-small', 'data-cde-propose-note': '', text: s.proposalNote }) : null,
+          s.proposal && !s.proposalNote ? h('p', { class: 'dm-help dm-xs', 'data-cde-proposal': String(s.proposal.changes.length), text: proposalLines(s.proposal).join(' ') }) : null,
+          ...flow.view());
+      }
       const isCancelled = (err) => String((err && err.message) || '') === t('opencde.err.cancelled');
       /** While the server's page is open in a popup (sign-in, upload): stop waiting instead of sitting out the five minutes. */
       const cancelButton = () => ui.button({ label: t('common.cancel'), size: 'sm', title: t('opencde.cancel.hint'), 'data-cde-cancel': '', onClick: () => opencde.cancelPopup() });
@@ -195,7 +286,7 @@
           const sel = /** @type {any} */ (h('dm-select', { label: t('issues.source') }));
           sel.options = s.connectors.map((c) => ({ value: c.id, label: c.name }));
           sel.value = s.connector ? s.connector.id : '';
-          sel.addEventListener('change', () => { s.connector = s.connectors.find((c) => c.id === sel.value) || null; s.projects = null; s.projectId = ''; s.messageMax = opencde.MESSAGE_MAX; render(); if (s.connector && opencde.signedIn(s.connector)) loadLimits().then(loadProjects); });
+          sel.addEventListener('change', () => { s.connector = s.connectors.find((c) => c.id === sel.value) || null; s.projects = null; s.projectId = ''; s.messageMax = opencde.MESSAGE_MAX; s.takesChanges = false; render(); if (s.connector && opencde.signedIn(s.connector)) loadLimits().then(loadProjects); });
           nodes.push(sel);
         }
         const signed = s.connector && opencde.signedIn(s.connector);
@@ -242,6 +333,7 @@
             how.value = s.how;
             how.addEventListener('change', () => { s.how = how.value; render(); });
             const own = documents && d.source && d.source.cde && d.source.cde.documentId && d.source.cde.connectorId === s.connector.id ? d.source.cde : null;
+            const offer = offersProposal(d, own);
             progressEl = h('div', { 'data-cde-progress': '' });
             // What the new version changes, for its message on the server (at most what the server's capability git says).
             let message = null;
@@ -256,8 +348,10 @@
               h('div', { class: 'dm-row-wrap' },
                 ui.button({ label: t('cde.send.button'), icon: 'upload', variant: 'primary', loading: s.busy === 'send', title: t('cde.send.button.hint'), 'data-cde-send': '', onClick: () => send() }),
                 own ? ui.button({ label: t('cde.send.version', { n: String((Number(own.versionIndex) || 0) + 1) }), icon: 'upload', loading: s.busy === 'send', title: t('cde.send.version.hint'), 'data-cde-send-version': '', onClick: () => send({ asVersionOf: own.documentId }) }) : null,
+                offer ? ui.button({ label: t('cde.propose'), icon: 'share-2', loading: s.busy === 'propose', title: s.proposalNote || t('cde.propose.hint'), 'data-cde-propose': '', onClick: () => propose() }) : null,
                 s.busy === 'send' ? cancelButton() : null),
-              progressEl);
+              progressEl,
+              offer ? proposalView() : null);
           }
         }
         if (s.error) nodes.push(h('p', { class: 'dm-error', text: s.error }));
@@ -285,7 +379,7 @@
       }
       function destroy() { progressEl = null; }
 
-      return { el, start, send, render, destroy, state: s };
+      return { el, start, send, propose, approveOnServer: flow.approve, resolveConflicts: flow.resolve, render, destroy, state: s };
     }
 
     /** Loads what the panel needs and the start does without: the group 'families' with the OpenCDE family. Call it before create. */
