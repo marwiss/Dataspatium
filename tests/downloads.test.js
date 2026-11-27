@@ -90,7 +90,7 @@
   });
 
   test('downloads: a component download shows in the registry and an abort gives a translated error', async (assert) => {
-    const spec = { id: 'test:downloads-component', urls: ['https://example.invalid/component.bin'], size: 4000, label: 'Provkomponent', purpose: 'components' };
+    const spec = { id: 'test:downloads-component', urls: ['https://example.invalid/component.bin'], size: 4000, label: 'Provkomponent', purpose: 'components', sha256: '0'.repeat(64) };
     const stalled = (url, init) => Promise.resolve(chunkedResponse([new Uint8Array(1000)], init && init.signal, true));
     const p = components.ensure(spec, { fetch: stalled });
     await waitFor(() => downloads.list().some((d) => d.id === spec.id && d.received === 1000), 5000, 'the component download in flight');

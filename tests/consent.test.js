@@ -258,13 +258,17 @@
       assert.ok(listed && listed.size === bytes.byteLength && listed.sha256 === digest, 'listed with size and digest');
       // A wrong digest is refused, the second source is tried, and the cache is not poisoned.
       let err = null;
-      try { await components.ensure({ id: 'test:bad', urls: ['https://example.invalid/x', 'https://example.invalid/y'], sha256: 'deadbeef', label: 'Fel' }, { fetch: () => response(enc('tampered')) }); } catch (e) { err = e; }
+      try { await components.ensure({ id: 'test:bad', urls: ['https://example.invalid/x', 'https://example.invalid/y'], sha256: '0'.repeat(64), label: 'Fel' }, { fetch: () => response(enc('tampered')) }); } catch (e) { err = e; }
       assert.ok(err && /Fel/.test(err.message), 'hash mismatch reported: ' + (err && err.message));
       assert.ok(!(await components.meta('test:bad')), 'nothing cached for the bad component');
       // A failing first source falls back to the second.
       let n = 0;
-      const got2 = await components.ensure({ id: 'test:second', urls: ['https://example.invalid/down', 'https://example.invalid/up'] }, { fetch: () => (++n === 1 ? response(enc('x'), 503) : response(enc('second'))) });
+      const got2 = await components.ensure({ id: 'test:second', urls: ['https://example.invalid/down', 'https://example.invalid/up'], sha256: await components.sha256Hex(enc('second')) }, { fetch: () => (++n === 1 ? response(enc('x'), 503) : response(enc('second'))) });
       assert.equal(new TextDecoder().decode(got2), 'second');
+      // A component without a pinned digest is refused before anything is asked or fetched (F118 a).
+      let fetchedNone = 0; let none = null;
+      try { await components.ensure({ id: 'test:nodigest', urls: ['https://example.invalid/n'], label: 'Utan summa' }, { fetch: () => { fetchedNone++; return response(enc('n')); } }); } catch (e) { none = e; }
+      assert.ok(none && none.message === t('components.err.nodigest', { label: 'Utan summa' }) && fetchedNone === 0, 'no digest, no fetch: ' + (none && none.message));
       await components.remove(id); await components.remove('test:second');
       assert.ok(!(await components.meta(id)), 'removed');
       return 'ok';

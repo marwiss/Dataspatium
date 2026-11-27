@@ -69,6 +69,7 @@
     'consent.hosts.empty': 'No saved hosts yet.',
     'consent.hosts.remove': 'Remove the answer for {host}',
     'consent.hosts.removed': 'The answer for {host} ({purpose}) is removed.',
+    'components.err.nodigest': '{label} has no pinned checksum and is not fetched.',
     'r.remote.index': 'webR\'s package index for R {version}',
     'r.remote.unpinned': 'R packages from webR\'s package repository are not used for R {version}: the app has no pinned checksum for the repository\'s index, so the packages cannot be checked.',
     'r.remote.index.changed': 'webR\'s package repository for R {version} has changed since this version of the app was made, so its packages cannot be checked and are not used. A newer version of the app pins the new repository.',

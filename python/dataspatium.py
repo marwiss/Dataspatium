@@ -1844,6 +1844,7 @@ class _ChangeSet:
         except Exception:
             self.scale = 1.0
         self.refs = {}
+        self._own_material = set()  # elements this change set gave a material by name (op_assign, F84 a)
         self.created = []
         self.changed = {}
         self.deleted = []
@@ -3118,23 +3119,44 @@ class _ChangeSet:
             self.touch(e)
 
     def op_assign(self, op):
+        """A storey, a material or both for elements. A stair's material also goes to its flights and landings (decision F84 a), the
+        parts create_stair makes without refs, unless the change set gives a part a material of its own, before or after; so the app's
+        IDS Avfallshantering (AH-01) takes the stair in the same change set, and other materials on the parts come by their GlobalIds."""
         import ifcopenshell.api.material
         storey = self.storey(op["storey"]) if op.get("storey") else None
         material = op.get("material")
         if storey is None and not material:
             raise DataspatiumError("give a storey, a material or both")
         category = self.material_category(op, material)
-        for e in self.elements(op):
+        own = self._own_material
+        elements = self.elements(op)
+        if material:
+            own.update(e.id() for e in elements)
+        for e in elements:
             if storey is not None:
                 self.contain(e, storey)
             if material:
                 mat = self.named_material(str(material), category)  # the file's material of the name, or a new one
-                try:
-                    ifcopenshell.api.material.unassign_material(self.m, products=[e])
-                except Exception:
-                    pass
-                ifcopenshell.api.material.assign_material(self.m, products=[e], type="IfcMaterial", material=mat)
+                for target in [e] + [p for p in self.stair_parts(e) if p.id() not in own]:
+                    try:
+                        ifcopenshell.api.material.unassign_material(self.m, products=[target])
+                    except Exception:
+                        pass
+                    ifcopenshell.api.material.assign_material(self.m, products=[target], type="IfcMaterial", material=mat)
+                    if target is not e:
+                        self.touch(target)
             self.touch(e)
+
+    def stair_parts(self, e):
+        """The flights (IfcStairFlight) and landings (IfcSlab LANDING) a stair aggregates; none for anything else."""
+        if not e.is_a("IfcStair"):
+            return []
+        out = []
+        for rel in getattr(e, "IsDecomposedBy", None) or []:
+            for part in rel.RelatedObjects or []:
+                if part.is_a("IfcStairFlight") or (part.is_a("IfcSlab") and str(getattr(part, "PredefinedType", "") or "") == "LANDING"):
+                    out.append(part)
+        return out
 
     def op_transform_elements(self, op):
         """Move elements by dx, dy, dz metres in their storey's plane (an opening's: its host's; without a storey the world's), turned

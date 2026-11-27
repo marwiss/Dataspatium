@@ -179,6 +179,11 @@
      * @returns {Promise<ArrayBuffer>}
      */
     async function ensure(spec, options = {}) {
+      // Every component has a pinned digest (decision F118 a): its own SHA-256, or the MD5 of a file listed in an index pinned by
+      // SHA-256 (webR's packages). A spec without either is refused before anything is asked or fetched.
+      if (!/^[0-9a-f]{64}$/i.test(String(spec && spec.sha256 || '')) && !/^[0-9a-f]{32}$/i.test(String(spec && spec.md5 || ''))) {
+        throw new Error(D.t('components.err.nodigest', { label: (spec && (spec.label || spec.id)) || '?' }));
+      }
       const hit = await verified(spec);
       if (hit) return hit;
       const first = spec.urls[0];

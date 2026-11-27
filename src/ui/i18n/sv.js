@@ -2286,6 +2286,7 @@
     'components.fetched': 'hämtad {when} från {host}',
     'components.err.status': 'Kunde inte hämta ({status}): {url}',
     'components.err.hash': 'Kontrollsumman för {label} stämmer inte; filen används inte.',
+    'components.err.nodigest': '{label} har ingen fäst kontrollsumma och hämtas inte.',
     'r.remote.packages': 'Hämtar R-paket från webR:s paketarkiv: {names}',
     'r.remote.index': 'webR:s paketförteckning för R {version}',
     'r.remote.unpinned': 'R-paket från webR:s paketarkiv används inte för R {version}: appen har ingen fäst kontrollsumma för arkivets förteckning, så paketen kan inte kontrolleras.',
