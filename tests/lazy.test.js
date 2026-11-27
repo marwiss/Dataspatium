@@ -1,9 +1,10 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * The start without the groups (tests/lazy.html, PLAN 4 step 5): the page loads only the start list, as the app does, and tries
- * what the start draws and does without the group 'families' (src/boot.js), and that what needs the group waits for it. The cases
- * run in order: those that must not load the group first, then an update that loads it, then what asks for it once it is there.
+ * The start without the groups (tests/lazy.html, PLAN 4 steps 5 and 6): the page loads only the start list, as the app does, and
+ * tries what the start draws and does without the groups 'families', 'plan' and 'import' (src/boot.js), and that what needs a group
+ * waits for it. The cases run in order: those that must not load a group first, then what loads it, then what asks for it once it is
+ * there. The importers' loading ahead (io/import loadAhead) is counted, not run, so that the first file shows the wait.
  * The test page itself (tests/index.html) loads every group at start, so only this page and tools/check_groups.py see a wait that
  * is missing. Nothing touches the net: the service is virtual (D.net.virtual) and the consent is never asked.
  */
@@ -26,6 +27,24 @@
       for (;;) { const v = await fn(); if (v) return v; if (performance.now() - t0 > timeoutMs) throw new Error('timeout waiting for ' + label); await wait(30); }
     }
     const loaded = () => D.groups.loaded('families');
+    const importer = D.require('io/import');
+    const linked = D.require('data/linked');
+    /** The importers' loading ahead, counted in place of run until the cleanup. */
+    const realAhead = importer.loadAhead;
+    let ahead = 0;
+    importer.loadAhead = () => { ahead += 1; };
+    const realPick = linked.pick;
+    const button = (text) => Array.from(root.querySelectorAll('dm-button')).find((b) => b.textContent.trim() === text);
+    const click = (el) => /** @type {HTMLElement} */ (el.querySelector('button') || el).click();
+    const sourceButton = (id) => waitFor(() => root.querySelector(`.dm-left button[data-source="${id}"]`), 5000, 'the source ' + id);
+    /** Files dropped on Inhämta's drop zone (the source Filer). @param {File[]} list */
+    async function drop(list) {
+      click(await sourceButton('file'));
+      const zone = await waitFor(() => root.querySelector('.dm-center dm-dropzone'), 5000, 'the drop zone');
+      zone.dispatchEvent(new CustomEvent('dm-files', { detail: { files: list }, bubbles: true }));
+    }
+    /** The wizard's preview once it shows `text` (dm-table draws its rows on the next frame). @param {string} text */
+    const preview = (text) => waitFor(() => { const el = root.querySelector('.dm-center .dm-table-preview'); return el && el.textContent.includes(text) ? el : null; }, 8000, 'the preview with ' + text);
     /** The groups asked for through D.ensure while the page runs, in order (every caller in the app goes through it). */
     const asked = [];
     const ensure = D.ensure;
@@ -59,8 +78,122 @@
       const ms = Math.round(performance.now() - t0);
       await wait(300);
       assert.ok(!loaded() && !asked.includes('families'), 'the start neither loads nor asks for the families: ' + asked.join(','));
+      assert.ok(!start.some((p) => p.startsWith('src/io/importers/')) && !D.has('io/importers/csv') && !D.has('io/import-pipeline'), 'no importer at start');
+      assert.ok(!D.groups.loaded('import') && !D.groups.loaded('plan') && !asked.includes('import'), 'the start neither loads nor asks for the importers');
+      assert.ok(ahead > 0, 'the mode drawn first loads them ahead');
       return start.length + ' scripts at start, the shell in ' + ms + ' ms';
     }, 30000);
+
+    test('lazy: io/import names files at once, and its questions about a file wait for the importers', async (assert) => {
+      assert.equal(importer.baseName('lat_fil-1.csv'), 'lat fil 1', 'baseName without the group');
+      assert.deepEqual(importer.materialize({ columns: ['a'], rows: [['1']] }, [{ name: 'a', type: 'integer' }]).rows, [[1]], 'materialize without the group');
+      let early = null;
+      try { importer.importerFor(new File(['a\n1\n'], 'x.csv')); } catch (err) { early = err; }
+      assert.ok(early && /ready\(\)/.test(early.message), 'importerFor before the group says to await ready(): ' + (early && early.message));
+      assert.ok(!D.groups.loaded('import'), 'still not loaded');
+      return 'ok';
+    });
+
+    test('lazy: a new plan in Inhämta waits for the group plan, not for the importers', async (assert) => {
+      await shell.activate('inhamta');
+      const t0 = performance.now();
+      click(await sourceButton('newplan'));
+      await waitFor(() => root.querySelector('.dm-center [data-newplan="name"]'), 8000, 'the form of a new plan');
+      assert.ok(D.groups.loaded('plan') && D.has('data/plan-new'), 'the group plan is loaded');
+      assert.ok(!D.groups.loaded('import') && !loaded(), 'neither the importers nor the families');
+      return 'the form, with the group, in ' + Math.round(performance.now() - t0) + ' ms';
+    }, 30000);
+
+    test('lazy: a CSV dropped in Inhämta waits for the importers, then shows its preview with the choices of a CSV', async (assert) => {
+      assert.ok(!D.groups.loaded('import'), 'the importers are not loaded yet');
+      const before = asked.length;
+      const t0 = performance.now();
+      await drop([new File(['kommun;folk\nLund;20\nUmeå;30\n'], 'lat-tabell.csv', { type: 'text/csv' })]);
+      await preview('Umeå');
+      const ms = Math.round(performance.now() - t0);
+      assert.ok(root.querySelector(`.dm-center dm-select[label="${t('import.delimiter')}"]`), 'the delimiters of the CSV importer');
+      assert.ok(root.querySelector('.dm-center .dm-sense'), 'what the file is (io/file-sense)');
+      assert.ok(D.groups.loaded('import') && askedSince(before).includes('import'), 'the group import was asked for and loaded');
+      assert.ok(!loaded(), 'the families are not loaded');
+      return 'previewed, with the group, in ' + ms + ' ms';
+    }, 30000);
+
+    test('lazy: pasted text and a web address are read through the importers', async (assert) => {
+      let t0 = performance.now();
+      click(await sourceButton('paste'));
+      const box = /** @type {any} */ (await waitFor(() => root.querySelector('.dm-center dm-input[type="textarea"]'), 5000, 'the text box'));
+      box.value = 'namn,antal\nA,1\nB,2\n';
+      click(await waitFor(() => button(t('import.paste.use')), 3000, 'Använd'));
+      assert.ok(await preview('B'), 'the pasted rows');
+      const paste = Math.round(performance.now() - t0);
+      const servedBefore = served.length;
+      D.net.virtual('tests/lazy/punkter.csv', (url) => { served.push(url); return Promise.resolve({ kind: 'text', data: 'plats,lon,lat\nLund,13.19,55.70\n' }); });
+      try {
+        t0 = performance.now();
+        click(await sourceButton('url'));
+        const input = /** @type {any} */ (await waitFor(() => root.querySelector('.dm-center dm-input[type="url"]'), 5000, 'the address'));
+        input.value = BASE + '/punkter.csv';
+        click(await waitFor(() => button(t('import.url.fetch')), 3000, 'Hämta'));
+        assert.ok(await preview('Lund'), 'the rows from the address');
+      } finally { D.net.unvirtual('tests/lazy/punkter.csv'); }
+      assert.equal(served.length - servedBefore, 1, 'one request to the virtual address');
+      assert.ok(!loaded() && consentAsked.length === 0, 'no families, nothing asked');
+      return 'pasted in ' + paste + ' ms, fetched in ' + Math.round(performance.now() - t0) + ' ms';
+    }, 30000);
+
+    test('lazy: a QGIS project dropped in Inhämta opens with its layers', async (assert) => {
+      const qgs = `<qgis projectname="Lat" version="3.34.6"><title>Lat projekt</title><projectCrs><spatialrefsys><authid>EPSG:4326</authid></spatialrefsys></projectCrs>
+<layer-tree-group><layer-tree-layer id="p_1" name="Punkter" checked="Qt::Checked" source="./punkter.csv" providerKey="delimitedtext"/></layer-tree-group>
+<projectlayers><maplayer geometry="Point" type="vector"><id>p_1</id><datasource>./punkter.csv?xField=lon&amp;yField=lat</datasource><layername>Punkter</layername><provider>delimitedtext</provider></maplayer></projectlayers></qgis>`;
+      const t0 = performance.now();
+      await drop([new File([qgs], 'lat.qgs', { type: 'application/xml' }), new File(['namn,lon,lat\nLund,13.19,55.70\n'], 'punkter.csv', { type: 'text/csv' })]);
+      await waitFor(() => root.querySelector(`.dm-center dm-input[label="${t('import.project.name')}"]`), 8000, 'the project step');
+      assert.ok(root.querySelector('.dm-center').textContent.includes(t('import.project.layer.import', { file: 'punkter.csv' })), 'its layer, from the file dropped with it');
+      assert.ok(!loaded(), 'the families are not loaded');
+      return 'opened in ' + Math.round(performance.now() - t0) + ' ms';
+    }, 30000);
+
+    test('lazy: a plan file, an example, a linked file and photos from the field are read through io/import', async (assert) => {
+      const times = [];
+      const timed = async (label, fn) => { const t0 = performance.now(); const out = await fn(); times.push(label + ' ' + Math.round(performance.now() - t0) + ' ms'); return out; };
+      const plan = await timed('plan', () => importer.run(new File([JSON.stringify(planFile())], 'lat-plan.json', { type: 'application/json' }), {}, null, 'Lat plan'));
+      created.push(plan.id);
+      assert.equal(plan.kind, 'plan', 'a plan dataset');
+      const example = await timed('example', () => importer.runPreset(D.require('presets').examples[0]));
+      created.push(example.id);
+      assert.ok(((await datasets.get(example.id)) || {}).rowCount > 0, 'the example has rows');
+      // A linked file read again from "disk" (a test double for the handle), as Uppdatera does.
+      let text = 'kommun;antal\nUmeå;3\n';
+      const handle = { kind: 'file', name: 'lat-lankad.csv', getFile: async () => new File([text], 'lat-lankad.csv', { type: 'text/csv' }), queryPermission: async () => 'granted', requestPermission: async () => 'granted' };
+      const link = await timed('linked', async () => { const m = await importer.run(await handle.getFile(), { linked: true }, null, 'Lat länkad'); await linked.link(m.id, handle); return m; });
+      created.push(link.id);
+      text = 'kommun;antal\nUmeå;3\nLund;4\n';
+      const again = await timed('read again', () => linked.refetch(link.source, { datasetId: link.id }));
+      assert.equal(again.rows.length, 2, 'the linked file read again');
+      // Rows from the phone with a photo: the photos become an image collection through the image importer.
+      const collect = D.require('data/field-collect'); const fieldForm = D.require('data/field-form');
+      const inventory = await datasets.create({ name: 'Lat inventering', columns: [{ name: 'plats', type: 'text' }], rows: [['Hem']] });
+      created.push(inventory.id);
+      const form = await collect.compile(inventory.id, Object.assign(await collect.formFor(inventory.id), { position: 'off', photo: 'optional' }));
+      const jpeg = await photo();
+      const pack = await fieldForm.packRows(form, [{ id: 'rad_1', createdAt: '2026-06-01T10:00:00.000Z', values: { plats: 'Ute' }, position: null, photos: [{ name: 'rad_1-1.jpg', size: jpeg.size, type: 'image/jpeg' }], warnings: [] }], async () => jpeg.arrayBuffer(), { device: 'Lat mobil' });
+      const res = await timed('field', async () => collect.apply(await collect.plan(await fieldForm.readPackage(pack.blob))));
+      if (res.imagesId) created.push(res.imagesId);
+      assert.ok(res.rows === 1 && res.photos === 1 && res.imagesId, 'the row and its photo: ' + JSON.stringify({ rows: res.rows, photos: res.photos }));
+      // The same file picked through the picker of linked files in Inhämta, where the browser has one (a test double here).
+      if (linked.supported()) {
+        linked.pick = async () => ({ handle, file: await handle.getFile() });
+        try {
+          click(await sourceButton('file'));
+          click(await waitFor(() => button(t('linked.pick')), 3000, 'the picker of linked files'));
+          assert.ok(await preview('Lund'), 'the linked file in the preview');
+          times.push('picked');
+        } finally { linked.pick = realPick; }
+      }
+      click(await sourceButton('file'));
+      assert.ok(!loaded(), 'the families are not loaded');
+      return times.join(', ');
+    }, 45000);
 
     test('lazy: Inhämta lists a dataset from an API among the saved fetches without the families', async (assert) => {
       await connectors.importJson(JSON.stringify(CONNECTOR));
@@ -110,6 +243,18 @@
       return 'ok';
     });
 
+    test('lazy: a BCF file at the tier that reads it loads the group families and is read', async (assert) => {
+      await D.assets.loadScript('fixtures/bcf-fixture.js');
+      const fx = D.require('tests/fixtures/bcf');
+      const file = new File([await D.require('platform/storage/zip').createZip(fx.bytesOf(fx.v30))], 'lat-fynd.bcfzip', { type: 'application/zip' });
+      const before = asked.length;
+      const t0 = performance.now();
+      const p = await shell.ctx.services.importer.preview(file);
+      assert.ok(p.importer === 'bcf' && p.dataRows.length > 0, 'the topics of the file: ' + p.importer);
+      assert.ok(loaded() && askedSince(before).includes('families'), 'the group families asked for and loaded');
+      return 'read, with the group, in ' + Math.round(performance.now() - t0) + ' ms';
+    }, 30000);
+
     test('lazy: the palette\'s api:refresh fetches from a virtual service, loading the families first', async (assert) => {
       const stop = connectors.onFetched((id, table) => { heard.push([id, table.rows.length]); });
       const cmd = (await shell.palette.collect()).find((c) => c.id === 'api:refresh');
@@ -117,7 +262,8 @@
       try { await cmd.run(); } finally { stop(); }
       const ms = Math.round(performance.now() - t0);
       assert.ok(loaded(), 'the group families is loaded');
-      assert.ok(served.length === 1 && served[0].startsWith(BASE + '/rows'), 'one request to the virtual service: ' + served.join(' '));
+      const rows = served.filter((u) => u.startsWith(BASE + '/rows'));
+      assert.ok(rows.length === 1, 'one request to the virtual service: ' + served.join(' '));
       assert.deepEqual(await datasets.query(apiId, { limit: 10 }), [['Lund', 20], ['Umeå', 30], ['Visby', 5]], 'the rows of the service');
       assert.equal(consentAsked.length, 0, 'nothing asked');
       return 'updated, with the group, in ' + ms + ' ms';
@@ -166,9 +312,28 @@
       for (const id of created) await datasets.remove(id, { quiet: true }).catch(() => {});
       await connectors.remove(CONNECTOR.id);
       D.net.unvirtual('tests/lazy/rows');
+      importer.loadAhead = realAhead;
+      linked.pick = realPick;
       if (root) root.remove();
       return 'ok';
     });
+
+    /** A small detaljplan per Detaljplan 4.1: the plan and one provision. */
+    function planFile() {
+      const square = (x0, y0, d) => ({ type: 'Polygon', coordinates: [[[x0, y0], [x0 + d, y0], [x0 + d, y0 + d], [x0, y0 + d], [x0, y0]]] });
+      const g = (position) => [{ geometri: { typ: 'yta', position, koordinatsystemPlan: 'EPSG:3006', dimension: 2 } }];
+      return { type: 'FeatureCollection', 'feature:mediatyp': 'application/vnd.lm.detaljplan.v4+json', features: [
+        { type: 'Feature', id: 'p1', geometry: null, properties: { 'feature:typ': 'detaljplan', objektidentitet: 'p1', namn: 'Lat plan', beteckning: 'DP 1', status: 'laga kraft', kommun: '1280', plangeometri: g(square(374000, 6164000, 200)) } },
+        { type: 'Feature', id: 'b1', geometry: null, properties: { 'feature:typ': 'användningsbestämmelse', detaljplan: 'p1', objektidentitet: 'b1', bestammelseformulering: 'Bostäder', planbestammelsekatalogreferens: 'f9e056a6-cda8-4b92-a15d-dc70d61dfa36', bestammelsegeometri: g(square(374000, 6164000, 100)) } },
+      ] };
+    }
+    /** A small JPEG, as a camera would hand it over. */
+    async function photo() {
+      const canvas = document.createElement('canvas'); canvas.width = 64; canvas.height = 48;
+      const g = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d')); g.fillStyle = '#336699'; g.fillRect(0, 0, 64, 48);
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+      return new File([/** @type {Blob} */ (blob)], 'rad_1-1.jpg', { type: 'image/jpeg' });
+    }
 
     /** A binary glTF with one triangle, the element 101 (an IfcWall). */
     function glb() {
