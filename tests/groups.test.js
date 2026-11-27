@@ -170,4 +170,19 @@
     for (const name of ['ui/modes/analysera', 'ui/bearbeta/ai-panel', 'ui/assistant', 'ui/api/api-view', 'mobile/app']) assert.ok(D.has(name), name + ' is there');
     return start.length + ' scripts at start, ' + lazy.length + ' in ' + groups.length + ' groups';
   });
+
+  test('groups: the families of the sources are the group families, and the start list has none of them (PLAN 4 step 5)', (assert) => {
+    const start = D.groups.start();
+    const families = D.groups.list().find((g) => g.name === 'families');
+    assert.ok(families && !families.needs.length, 'the group families needs no other');
+    for (const p of start) assert.ok(!p.startsWith('src/api/families/'), p + ': no family at start');
+    for (const p of ['src/api/runner.js', 'src/api/parsers.js', 'src/api/pagination.js', 'src/io/importers/bcf.js', 'src/ui/bearbeta/model-issues.js']) {
+      assert.ok(!start.includes(p), p + ' is not loaded at start');
+      assert.ok(families.scripts.includes(p), p + ' is in the group families');
+    }
+    for (const p of ['src/api/connectors.js', 'src/api/jsonstat.js', 'src/api/sdmx.js', 'src/api/graph-source.js']) assert.ok(start.includes(p), p + ' stays at start');
+    const needs = (name) => (D.groups.list().find((g) => g.name === name) || { needs: [] }).needs;
+    assert.ok(needs('ai-tools').includes('families') && needs('sources').includes('families'), 'the tools of the AI and the views of the sources need it');
+    return families.scripts.length + ' scripts in families';
+  });
 })();

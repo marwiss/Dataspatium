@@ -11,7 +11,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/share/cde-send', ['ui/base', 'data/datasets', 'data/kinds', 'api/families/opencde', 'api/connectors', 'ui/share/review', 'data/share-scan', 'platform/tier', 'ui/settings/tier'], (base, datasets, kinds, opencde, connectors, review, shareScan, tier, tierUi) => {
+  D.define('ui/share/cde-send', ['ui/base', 'data/datasets', 'data/kinds', 'api/connectors', 'ui/share/review', 'data/share-scan', 'platform/tier', 'ui/settings/tier'], (base, datasets, kinds, connectors, review, shareScan, tier, tierUi) => {
     const { h, t, i18n, replace } = base;
     /** Tests give a popup of their own; the app opens the server's page in a window. */
     let popup = null;
@@ -24,6 +24,8 @@
      */
     function create(ctx, hooks) {
       const { ui, shell, services } = ctx;
+      // The OpenCDE family is part of the group 'families' (src/boot.js), which load() below has loaded before the panel is made.
+      const opencde = D.require('api/families/opencde');
       const s = { connectors: [], connector: null, projects: null, projectId: '', what: 'dataset', format: '', how: 'documents', busy: '', error: '', progress: null, done: '', message: '', messageMax: opencde.MESSAGE_MAX, conflict: null };
       const el = h('div', { class: 'dm-stack' });
       const fail = (err) => { s.error = String((err && err.message) || err); shell.log(s.error, 'error'); };
@@ -286,6 +288,9 @@
       return { el, start, send, render, destroy, state: s };
     }
 
-    return { create, setPopup: (fn, redirect) => { popup = fn; redirectOverride = redirect || null; } };
+    /** Loads what the panel needs and the start does without: the group 'families' with the OpenCDE family. Call it before create. */
+    const load = () => D.ensure(['families']);
+
+    return { create, load, setPopup: (fn, redirect) => { popup = fn; redirectOverride = redirect || null; } };
   });
 })();

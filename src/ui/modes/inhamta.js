@@ -209,7 +209,7 @@
         if (type === 'geodata' || type === 'geoportal') return 'map';
         if (type === 'neo4j') return 'share-2';
         if (type === 'opencde') return 'building-2';
-        return D.require('api/families/databases').FAMILIES.some((f) => String(c.id).startsWith(f.id + '-')) ? 'database' : 'globe';
+        return connectors.isDatabase(c) ? 'database' : 'globe';
       }
 
       // ---- country filter for the API sources (remembered per browser) ----
@@ -241,8 +241,18 @@
           chip(t('api.countries.all'), !countryFilter, () => { countryFilter = null; saveCountryFilter(); renderCenter(); }),
           all.map((code) => chip(t('country.' + code), !countryFilter || countryFilter.has(code), () => toggleCountry(code))));
       }
+      /**
+       * The scripts a source's view needs, loaded ahead when the pointer or the focus reaches its item: the views of the sources
+       * (the group 'sources', with the families it needs) for an API source, the bridge and the guides, the families for the saved
+       * fetches (src/boot.js). Loading them asks nothing and sends nothing to a source.
+       * @param {string} id
+       */
+      function loadAhead(id) {
+        const wanted = id.startsWith('api:') || id.startsWith('bridge') || id === 'guides' ? D.ensure(['sources']) : id === 'saved' ? D.ensure(['families']) : null;
+        if (wanted) wanted.catch((err) => D.log('inhamta', 'load ahead', id, err));
+      }
       function sourceItem(id, icon, label, sub) {
-        return h('button', { type: 'button', class: 'dm-list-item', 'data-source': id, 'aria-current': source === id ? 'true' : null, onclick: () => { source = id; if (!id.startsWith('api:') && wiz.step !== 'file') restart(); else render(); } },
+        return h('button', { type: 'button', class: 'dm-list-item', 'data-source': id, 'aria-current': source === id ? 'true' : null, onpointerenter: () => loadAhead(id), onfocus: () => loadAhead(id), onclick: () => { source = id; if (!id.startsWith('api:') && wiz.step !== 'file') restart(); else render(); } },
           ui.icon(icon, 16), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: label }), sub ? h('span', { class: 'dm-list-sub dm-truncate', text: sub }) : null));
       }
       async function addConnector() {
@@ -277,7 +287,9 @@
       }
 
       // ---- saved fetches: every dataset from an API, updated with one click; those whose source the tier hides are left out ----
-      const apiDatasets = () => store.get().datasets.filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge') && !D.require('api/runner').hiddenBy(d.source, connectorList.find((c) => c.id === d.source.connectorId)));
+      const apiDatasets = () => store.get().datasets.filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge') && !connectors.hiddenBy(d.source, connectorList.find((c) => c.id === d.source.connectorId)));
+      /** api/runner, which updates them; it loads with the group 'families' (src/boot.js) on the first update. */
+      const runnerOf = () => D.ensure(['families'], () => D.require('api/runner'));
       /** Ids being updated; '*' while everything is. */
       const updating = new Set();
       function renderSaved() {
@@ -304,7 +316,7 @@
       async function updateOne(d) {
         updating.add(d.id); renderSaved();
         try {
-          const res = await D.require('api/runner').refreshDataset(d.id);
+          const res = await (await runnerOf()).refreshDataset(d.id);
           const text = res.steps ? t('api.refresh.done.steps', { name: d.name, rows: i18n.formatNumber(res.rows), steps: res.steps }) : t('api.refresh.done', { name: d.name, rows: i18n.formatNumber(res.rows) });
           shell.log(text, 'ok'); ui.toast.show(text, { kind: 'ok' });
         } catch (err) {
@@ -315,7 +327,7 @@
       async function updateAll() {
         updating.add('*'); renderSaved();
         try {
-          const results = await D.require('api/runner').refreshAll();
+          const results = await (await runnerOf()).refreshAll();
           for (const r of results) shell.log(r.ok ? t('api.refresh.done', { name: r.name, rows: i18n.formatNumber(r.rows || 0) }) : `${r.name}: ${r.error}`, r.ok ? 'ok' : 'error');
           const ok = results.filter((r) => r.ok).length;
           ui.toast.show(t('api.refresh.all.done', { ok, failed: results.length - ok }), { kind: ok === results.length ? 'ok' : 'warn', timeout: 10000 });
@@ -522,6 +534,8 @@
       }
 
       function renderGuides() {
+        // The guides fetch through the families and are part of the group 'sources' (src/boot.js).
+        if (!sourcesReady()) return;
         if (!guidesUi) guidesUi = D.require('ui/guides/guides-view').create(ctx);
         guidesUi.render(slots.center);
       }

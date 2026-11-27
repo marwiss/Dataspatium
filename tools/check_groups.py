@@ -30,6 +30,9 @@ FORBIDDEN = [
     'src/ui/modes/soka.js', 'src/ui/modes/bearbeta.js', 'src/ui/modes/kontrollera.js', 'src/ui/modes/analysera.js',
     'src/ui/modes/visualisera.js', 'src/ui/modes/exportera.js', 'src/ui/modes/dela.js',
     'src/ui/analysis/', 'src/ui/assistant/', 'src/ui/docs/', 'src/ui/viz/', 'src/mobile/',
+    # The families of the sources and what fetches through them (the group families, PLAN 4 step 5), and the guides (sources).
+    'src/api/families/', 'src/api/runner.js', 'src/api/parsers.js', 'src/api/pagination.js', 'src/io/importers/bcf.js',
+    'src/data/model-server.js', 'src/engines/gltf.js', 'src/ui/api/merge-dialog.js', 'src/ui/bearbeta/model-issues.js', 'src/ui/guides/',
 ]
 PATH = re.compile(r"'((?:src|vendor|presets|tests)/[^']+\.js)'")
 DEFINE = re.compile(r"(?<![\w$])(?:D|Dataspatium|globalThis\.Dataspatium)\.define\(\s*'([^']+)'\s*,\s*(\[[^\]]*\])?", re.S)

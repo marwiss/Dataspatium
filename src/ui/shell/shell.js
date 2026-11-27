@@ -405,8 +405,12 @@
           await tier.load();
           tier.subscribe(() => this.applyTier());
           this.assistantEl.hidden = !tier.shows('status:assistant');
-          // The deployment's Dataregium server (dataspatium.config.js) becomes a source once; it is not contacted.
-          try { await D.require('api/families/opencde').addDeployed(tier.deployment().server); } catch (err) { D.log('shell', 'deployed server', err); }
+          // The deployment's Dataregium server (dataspatium.config.js) becomes a source once; it is not contacted. The OpenCDE family
+          // loads with the group 'families' (src/boot.js) only for a server not yet added.
+          try {
+            const server = tier.deployment().server;
+            if (!(await D.require('api/connectors').deployedNoted(server))) await D.ensure(['families'], () => D.require('api/families/opencde').addDeployed(server));
+          } catch (err) { D.log('shell', 'deployed server', err); }
           // Datasets from versions before short names get one, derived from their name.
           try { await datasets.ensureShortNames(); } catch (err) { D.log('shell', 'short names', err); }
           await this.reloadDatasets();

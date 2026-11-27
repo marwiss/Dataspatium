@@ -44,6 +44,10 @@
       const hit = RANKS.find(([re]) => re.test(s));
       return hit ? hit[1] : 3;
     }
+    /** Badge colours follow what a status means (rank, also the Swedish review statuses); unknown statuses are plain. */
+    const BADGE = ['warn', 'accent', 'ok'];
+    /** The dm-badge kind of a status: warn while open, accent in progress, ok when done; undefined for an unknown one. @param {any} status */
+    const badgeKind = (status) => BADGE[rank(status)];
     /**
      * One colour per status: open is the error colour, in progress the warning colour, done the ok colour; statuses whose words
      * say nothing take the categorical palette in turn.
@@ -157,6 +161,6 @@
       return (list || []).filter(own).sort((a, b) => Number(!!(model && b.source.cde.modelId === model.id)) - Number(!!(model && a.source.cde.modelId === model.id)) || String(a.name).localeCompare(String(b.name)));
     }
 
-    return { rank, statusColors, colorGroups, tableOf, summary, tablesFor, COLUMNS, TOPIC_FIELDS, ELEMENT_FIELDS, SUMMARY_GROUPS, REVIEW_STATUSES };
+    return { rank, badgeKind, statusColors, colorGroups, tableOf, summary, tablesFor, COLUMNS, TOPIC_FIELDS, ELEMENT_FIELDS, SUMMARY_GROUPS, REVIEW_STATUSES };
   });
 })();

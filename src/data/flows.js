@@ -21,8 +21,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/flows', ['platform/storage/idb', 'platform/consent', 'platform/storage/zip', 'platform/files', 'data/datasets', 'data/recipes', 'data/lists', 'api/runner', 'viz/charts', 'viz/render', 'viz/batch', 'viz/dashboards', 'docgen/documents', 'docgen/generate', 'io/export', 'data/r-bridge', 'data/python-bridge', 'data/conditions'],
-    (idb, consent, zip, files, datasets, recipes, lists, runner, charts, render, batch, dashboards, documents, generate, exporter, rBridge, pyBridge, conditions) => {
+  D.define('data/flows', ['platform/storage/idb', 'platform/consent', 'platform/storage/zip', 'platform/files', 'data/datasets', 'data/recipes', 'data/lists', 'viz/charts', 'viz/render', 'viz/batch', 'viz/dashboards', 'docgen/documents', 'docgen/generate', 'io/export', 'data/r-bridge', 'data/python-bridge', 'data/conditions'],
+    (idb, consent, zip, files, datasets, recipes, lists, charts, render, batch, dashboards, documents, generate, exporter, rBridge, pyBridge, conditions) => {
       const PREFIX = 'flow:';
       const FORMAT = 'dataspatium-flow/1';
       const HISTORY = 20;
@@ -154,6 +154,8 @@
             return out;
           },
           async run(p, ctx) {
+            // api/runner fetches; it loads with the group 'families' (src/boot.js), which the start does without.
+            const runner = await D.ensure(['families'], () => D.require('api/runner'));
             if (p.datasetId) {
               const ds = await datasetOf(p.datasetId);
               const res = await runner.refreshDataset(ds.id, Object.assign({ signal: ctx.signal, fetch: ctx.fetch }, askOf(ctx)));

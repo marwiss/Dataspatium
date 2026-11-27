@@ -519,6 +519,49 @@
     } finally { await connectors.remove('kolada-test'); }
   });
 
+  test('api: what the start asks of the sources lives in api/connectors: hiddenBy as the runner had it, onFetched, the database families', async (assert) => {
+    const tier = D.require('platform/tier');
+    // The runner's own hiddenBy before it moved (PLAN 4 step 5), as the reference.
+    const before = (source, connector) => {
+      if (!source || source.kind !== 'api') return null;
+      const entry = connector ? tier.connectorEntry(connector) : (source.connectorId && !tier.shows('preset:' + source.connectorId) ? 'preset:' + source.connectorId : null);
+      if (entry) return { entry, options: {} };
+      const spec = source.family === 'opencde' && source.opencde;
+      if (!spec) return null;
+      const server = { server: source.connectorId };
+      const needs = spec.kind === 'admin' ? (spec.admin === 'graph' ? 'cde.ifc-graph' : null) : 'cde.bcf';
+      return needs && !tier.shows(needs, server) ? { entry: needs, options: server } : null;
+    };
+    const sources = [null, { kind: 'file' }, { kind: 'bridge', label: 'x' }, { kind: 'api', connectorId: 'scb-pxweb' }, { kind: 'api', connectorId: 'naturvardsregistret' },
+      { kind: 'api', family: 'opencde', connectorId: 'cde-x', opencde: { kind: 'topics', projectId: 'p' } }, { kind: 'api', family: 'opencde', connectorId: 'cde-x', opencde: { kind: 'admin', admin: 'users' } },
+      { kind: 'api', family: 'opencde', connectorId: 'cde-x', opencde: { kind: 'admin', admin: 'graph' } }];
+    const withConnector = [undefined, { id: 'naturvardsregistret', preset: true }, { id: 'neo4j-localhost', family: { type: 'neo4j' } }, { id: 'opencde-x', family: { type: 'opencde' } }];
+    let compared = 0;
+    try {
+      for (const level of [1, 2, 3]) {
+        await tier.set(level);
+        for (const s of sources) for (const c of withConnector) { assert.deepEqual(connectors.hiddenBy(s, c), before(s, c), JSON.stringify([level, s, c])); compared++; }
+      }
+      await tier.set(1);
+      assert.ok(connectors.hiddenBy(sources[5]), 'a CDE\'s topics are hidden in Dokument');
+      assert.deepEqual(await connectors.hidden(sources[4]), before(sources[4], await connectors.get('naturvardsregistret')), 'hidden looks the connector up');
+    } finally { await tier.set(3); }
+    assert.ok(runner.hiddenBy === connectors.hiddenBy && runner.hidden === connectors.hidden && runner.onFetched === connectors.onFetched, 'the runner hands on the same functions');
+    // onFetched: told after an update, through connectors.fetched (api/runner refreshDataset), and no more once let go.
+    const heard = [];
+    const stop = connectors.onFetched((id, table) => { heard.push([id, table.rows.length]); });
+    await connectors.fetched('ds-x', { columns: ['a'], rows: [[1], [2]] });
+    stop();
+    await connectors.fetched('ds-y', { columns: ['a'], rows: [] });
+    assert.deepEqual(heard, [['ds-x', 2]]);
+    // The database families: the same ids as api/families/databases, with the neo4j and opencde their modules add.
+    D.require('api/families/neo4j'); D.require('api/families/opencde');
+    const ids = D.require('api/families/databases').FAMILIES.map((f) => f.id);
+    assert.deepEqual(connectors.DATABASE_FAMILIES.slice().sort(), ids.slice().sort(), 'connectors.DATABASE_FAMILIES = databases.FAMILIES');
+    assert.ok(connectors.isDatabase({ id: 'postgrest-xyz-supabase-co' }) && !connectors.isDatabase({ id: 'scb-pxweb' }), 'a database source by its id');
+    return compared + ' sources compared';
+  });
+
   test('app: Inhämta lists API sources, runs an endpoint form and saves the result as a dataset', async (assert) => {
     serve('tests/api/ui', (u) => ({ values: [{ namn: 'Alfa', tal: 1, sok: u.searchParams.get('q') }, { namn: 'Beta', tal: 2, sok: u.searchParams.get('q') }] }));
     const c = connector({ id: 'ui-test', name: 'UI-testtjänst', publisher: 'Test', endpoints: [{ id: 'list', name: 'Lista', method: 'GET', path: '/ui', params: [{ name: 'q', in: 'query', label: 'Sökord', type: 'string', required: true }], response: { format: 'json', path: 'values' }, dataset: { name: 'UI {q}' } }] });

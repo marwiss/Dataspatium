@@ -7,8 +7,10 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/hantera', ['ui/base', 'ui/flows/flows-view', 'data/watches', 'platform/storage/folder', 'ui/share/bundle', 'ui/batch-actions', 'ui/settings/network', 'data/kinds', 'ui/settings/tier', 'platform/tier'], (base, flowsView, watches, folder, share, batch, settings, kinds, tierUi, tier) => {
+  D.define('ui/modes/hantera', ['ui/base', 'ui/flows/flows-view', 'data/watches', 'platform/storage/folder', 'ui/share/bundle', 'ui/batch-actions', 'ui/settings/network', 'data/kinds', 'ui/settings/tier', 'platform/tier', 'api/connectors'], (base, flowsView, watches, folder, share, batch, settings, kinds, tierUi, tier, connectors) => {
     const { h, t, i18n, replace } = base;
+    /** api/runner, which loads with the group 'families' (src/boot.js) the first time a dataset is fetched again from here. */
+    const runnerOf = () => D.ensure(['families'], () => D.require('api/runner'));
     const WORKSPACE = '__workspace';
     const FLOWS = '__flows';
     const LIBRARY = '__library';
@@ -27,8 +29,11 @@
       }
       function deactivate() { slots = null; if (libraryUi) { libraryUi.destroy(); libraryUi = null; } if (unsubscribe) unsubscribe(); if (unsubFolder) unsubFolder(); if (flowsUi) { flowsUi.destroy(); flowsUi = null; } }
 
+      /** Counts the drawings, so that a dataset's page whose drawing waited does not cover what was chosen after it. */
+      let drawn = 0;
       function render() {
         if (!slots) return;
+        const my = ++drawn;
         const state = store.get();
         const selectedIds = state.selectedIds || [];
         ui.datasetList.render(slots.left, {
@@ -50,7 +55,7 @@
         else if (state.selectedId === WORKSPACE) { renderWorkspace(); renderWorkspaceInspector(); }
         else if (selected) {
           // The dataset can be removed (here or in another tab) while its views load; only report other errors.
-          renderDataset(selected).catch(async (err) => { if (await services.datasets.get(selected.id)) shell.log(String((err && err.message) || err), 'error'); });
+          renderDataset(selected, my).catch(async (err) => { if (await services.datasets.get(selected.id)) shell.log(String((err && err.message) || err), 'error'); });
           renderInspector(selected);
         }
         else { renderEmpty(); replace(slots.right, h('p', { class: 'dm-help', text: t('mode.hantera.desc') })); }
@@ -71,7 +76,8 @@
           ui.button({ label: t('datasets.storage.title'), icon: 'hard-drive', onClick: () => store.set({ selectedId: WORKSPACE }) })));
       }
 
-      async function renderDataset(ds) {
+      /** @param {any} ds @param {number} [my] the drawing it belongs to (render) */
+      async function renderDataset(ds, my = drawn) {
         // A tab asked for from elsewhere (the comments behind the status bar).
         const asked = store.get().datasetTab;
         if (asked) { tab = asked; store.set({ datasetTab: null }); }
@@ -80,8 +86,9 @@
         tabs.active = tab;
         tabs.addEventListener('dm-change', (e) => { tab = /** @type {any} */ (e).detail.id; render(); });
         const body = h('div', { class: 'dm-center-fill' });
-        // A source the tier hides (platform/tier, api/runner) is neither fetched again nor watched from here.
-        const sourceHidden = !!(ds.source && ds.source.kind === 'api' && await D.require('api/runner').hidden(ds.source));
+        // A source the tier hides (platform/tier, api/connectors) is neither fetched again nor watched from here.
+        const sourceHidden = !!(ds.source && ds.source.kind === 'api' && await connectors.hidden(ds.source));
+        if (my !== drawn || !slots) return;
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon(ui.datasetList.kindIcon(ds.kind), 20), ds.name, ' ', ...kindBadges(ds)),
@@ -216,7 +223,7 @@
       /** Read a linked file again (File System Access): the same import options, the recipe replayed. */
       async function refreshLinked(ds) {
         try {
-          const res = await D.require('api/runner').refreshDataset(ds.id);
+          const res = await (await runnerOf()).refreshDataset(ds.id);
           const text = t('linked.refresh.done', { name: ds.name, rows: i18n.formatNumber(res.rows), steps: res.steps });
           shell.log(text, 'ok'); ui.toast.show(text, { kind: 'ok' });
         } catch (err) {
@@ -233,9 +240,9 @@
           actions: [{ label: t('common.cancel'), value: null }, { label: t('api.into.mode.append'), value: 'append' }, { label: t('api.saved.update'), variant: 'primary', value: 'update', primary: true }],
         });
         if (!choice) return;
-        const runner = D.require('api/runner');
         shell.log(t('api.refetch.running', { name: ds.name }));
         try {
+          const runner = await runnerOf();
           let text;
           if (choice === 'update') {
             // The rows are replaced and the dataset's recipe is replayed (see api/runner refreshDataset).
@@ -400,15 +407,15 @@
           await settings.componentsCard(ctx, render));
       }
 
-      /** The datasets from a source that can be fetched again: those whose source the tier hides are left out (api/runner). */
-      function apiDatasets() { return store.get().datasets.filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge') && !D.require('api/runner').hiddenBy(d.source)); }
+      /** The datasets from a source that can be fetched again: those whose source the tier hides are left out (api/connectors). */
+      function apiDatasets() { return store.get().datasets.filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge') && !connectors.hiddenBy(d.source)); }
 
       /** Re-fetch every API-sourced dataset (replace mode), one after the other, with progress in a toast. */
       async function refreshAllApi() {
-        const runner = D.require('api/runner');
         const abort = new AbortController();
         const toast = ui.toast.show(t('api.refresh.all.running', { name: '', done: 0, total: apiDatasets().length }), { kind: 'info', timeout: 0, action: { label: t('api.cancel'), onClick: () => abort.abort() } });
         try {
+          const runner = await runnerOf();
           const results = await runner.refreshAll({ signal: abort.signal, onProgress: (p) => { const el = toast.querySelector('.dm-toast-text'); if (el) el.textContent = t('api.refresh.all.running', { name: p.name, done: p.done, total: p.total }); } });
           const ok = results.filter((r) => r.ok).length; const failed = results.length - ok;
           for (const r of results) shell.log(r.ok ? t('api.into.replaced', { name: r.name, rows: i18n.formatNumber(r.rows || 0) }) : `${r.name}: ${r.error}`, r.ok ? 'ok' : 'error');

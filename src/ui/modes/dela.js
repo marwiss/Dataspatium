@@ -232,7 +232,10 @@
       /** A dataset or its original to a project on an OpenCDE server; the panel keeps its sign-in while the tab is open. */
       async function renderCde(body) {
         if (!cdePanel) {
-          cdePanel = D.require('ui/share/cde-send').create(ctx, { dataset: selected });
+          const cdeSend = D.require('ui/share/cde-send');
+          await cdeSend.load();
+          if (cdePanel) { cdePanel.render(); replace(body, cdePanel.el); return; }
+          cdePanel = cdeSend.create(ctx, { dataset: selected });
           await cdePanel.start();
         } else cdePanel.render();
         replace(body, cdePanel.el);

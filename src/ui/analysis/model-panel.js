@@ -14,6 +14,8 @@
   const D = globalThis.Dataspatium;
   D.define('ui/analysis/model-panel', ['ui/base', 'ui/basic', 'data/datasets', 'data/model', 'analysis/model', 'data/issues', 'ui/analysis/climate-panel', 'ui/analysis/inventory-panel', 'analysis/ids-presets', 'platform/tier'], (base, basic, datasets, model, analysis, issuesLogic, climateModule, inventoryModule, idsPresets, tier) => {
     const { h, t, i18n, replace } = base;
+    /** The OpenCDE family, with the group 'families' (src/boot.js) loaded the first time a tool talks to the server. */
+    const openCde = () => D.ensure(['families'], () => D.require('api/families/opencde'));
     const PREVIEW_ROWS = 2000;
     const IFC_TOOLS = ['summary', 'quantities', 'list', 'climate', 'inventory', 'properties', 'entities', 'issues', 'validate', 'ids', 'clash', 'structure', 'psets', 'select', 'geometry'];
     const DXF_TOOLS = ['summary', 'quantities', 'entities'];
@@ -287,8 +289,8 @@
         const cde = ds.source.cde;
         const other = c.other ? store.get().datasets.find((d) => d.id === c.other) : ds;
         const sideOf = (d, type) => Object.assign({ document_id: d.source.cde.documentId, version_index: Number(d.source.cde.versionIndex) }, type ? { types: [type] } : {});
-        const opencde = D.require('api/families/opencde');
         try {
+          const opencde = await openCde();
           const connector = await D.require('api/connectors').get(cde.connectorId);
           if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
           if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
@@ -362,8 +364,8 @@
           const bcfXml = D.require('data/bcf-xml');
           const cde = ds.source && ds.source.cde;
           const connector = cde && cde.connectorId ? await D.require('api/connectors').get(cde.connectorId).catch(() => null) : null;
-          const opencde = D.require('api/families/opencde');
-          const author = bcfXml.authorOf(connector && opencde.isOpenCde(connector) ? await opencde.identity(connector) : null, await D.require('data/comments').author());
+          const opencde = connector ? await openCde() : null;
+          const author = bcfXml.authorOf(opencde && opencde.isOpenCde(connector) ? await opencde.identity(connector) : null, await D.require('data/comments').author());
           const blob = await D.require('analysis/clash').bcfFile(r, { t, projectName: ds.name, colors: clashColors(), header: bcfXml.headerOf(ds), author });
           const name = `${ds.name.replace(/[\\/:*?"<>|]+/g, '_')} ${t('model.tool.clash').toLowerCase()}.bcfzip`;
           D.require('platform/files').download(blob, name);
@@ -372,9 +374,9 @@
       }
       async function sendTopics(ds, r) {
         const cde = ds.source.cde;
-        const opencde = D.require('api/families/opencde');
         const clash = D.require('analysis/clash');
         try {
+          const opencde = await openCde();
           const connector = await D.require('api/connectors').get(cde.connectorId);
           if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
           const ok = await ui.dialog.confirm(t('clash.send.confirm', { n: i18n.formatNumber(r.clashes.length), project: cde.projectName || cde.projectId, host: cde.host }), { okLabel: t('clash.send') });

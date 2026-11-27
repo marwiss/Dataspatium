@@ -77,7 +77,7 @@
         case 'bearer': out.headers.Authorization = 'Bearer ' + values.token; break;
         case 'oauth2_client_credentials': out.headers.Authorization = 'Bearer ' + (await token(connector, values, options)); break;
         // OpenCDE servers: the token comes from the user's own sign-in (api/families/opencde), refreshed there.
-        case 'oauth2_pkce': out.headers.Authorization = 'Bearer ' + (await D.require('api/families/opencde').ensureToken(connector)); break;
+        case 'oauth2_pkce': out.headers.Authorization = 'Bearer ' + (await D.ensure(['families'], () => D.require('api/families/opencde').ensureToken(connector))); break;
         default: break;
       }
       return out;

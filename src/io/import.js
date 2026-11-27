@@ -74,7 +74,11 @@
      */
     async function resolveImporter(file, forced) {
       if (forced === 'datapackage') return D.require('io/datapackage');
-      if (forced === 'bcf' || (!forced && /\.(bcf|bcfzip)$/i.test(file.name || ''))) return D.require('io/importers/bcf');
+      if (forced === 'bcf' || (!forced && /\.(bcf|bcfzip)$/i.test(file.name || ''))) {
+        // The BCF importer loads with the group 'families' (src/boot.js); a tier that reads no BCF files refuses them before that.
+        tier.guard('import:bcf');
+        return D.ensure(['families'], () => D.require('io/importers/bcf'));
+      }
       if (!forced && /\.zip$/i.test(file.name) && await D.require('io/datapackage').sniff(file)) return D.require('io/datapackage');
       // An archive package of a plan (metadata/PREMIS.xml with the plan in content/), zipped as a whole.
       if (forced === 'planarchive' || (!forced && /\.zip$/i.test(file.name) && await D.require('io/importers/plan-archive').sniff(file))) return D.require('io/importers/plan-archive');

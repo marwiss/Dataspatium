@@ -14,9 +14,8 @@
   const D = globalThis.Dataspatium;
   D.define('ui/bearbeta/model-issues', ['ui/base', 'data/datasets', 'api/families/opencde', 'api/connectors', 'data/bcf-xml', 'data/issues', 'viz/charts', 'api/runner', 'ui/bearbeta/issue-fields', 'platform/tier'], (base, datasets, opencde, connectors, bcfXml, issuesLogic, charts, runner, issueFields, tier) => {
     const { h, t, i18n, replace } = base;
-    /** Badge colours follow what a status means (data/issues.rank, also the Swedish review statuses); unknown statuses are plain. */
-    const BADGE = ['warn', 'accent', 'ok'];
-    const badgeKind = (status) => BADGE[issuesLogic.rank(status)];
+    /** Badge colours follow what a status means (data/issues.badgeKind, where the start's cards find it too). */
+    const badgeKind = issuesLogic.badgeKind;
     /** Fields the server owns; a PUT sends everything else back. */
     const SERVER_FIELDS = ['guid', 'server_assigned_id', 'creation_author', 'creation_date', 'modified_author', 'modified_date', 'authorization'];
 

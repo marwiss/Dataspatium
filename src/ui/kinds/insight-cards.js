@@ -9,6 +9,8 @@
   const D = globalThis.Dataspatium;
   D.define('ui/kinds/insight-cards', ['ui/base', 'data/facets', 'data/kind-health', 'platform/tier'], (base, facets, health, tier) => {
     const { h, t, i18n, replace } = base;
+    /** The OpenCDE family, with the group 'families' (src/boot.js) loaded the first time a card talks to the server. */
+    const openCde = () => D.ensure(['families'], () => D.require('api/families/opencde'));
 
     /**
      * What the app sees. Shows nothing when it sees nothing.
@@ -85,7 +87,8 @@
       const cde = ds.source && ds.source.cde;
       if (!cde) return null;
       const { ui, store, shell } = ctx;
-      const opencde = D.require('api/families/opencde');
+      // Loaded while the page is read, so that a press of the card's buttons (a sign-in opens a window) finds the family there.
+      openCde().catch((err) => D.log('cde', 'families', err));
       const el = h('div', { class: 'dm-card dm-stack-sm', 'data-card': 'cde' });
       const state = { checking: false, result: null, error: '', fetching: false, pub: null, pubBusy: '', commit: null };
       const connectorOf = async () => (await D.require('api/connectors').get(cde.connectorId)) || null;
@@ -96,6 +99,7 @@
         try {
           const connector = await connectorOf();
           if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
+          const opencde = await openCde();
           if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
           state.result = await opencde.newerVersion(connector, ds);
           // The commit this version is in, when the server keeps a git history per project (Dataregium's phase 5.2).
@@ -110,7 +114,7 @@
         try {
           const connector = await connectorOf();
           const entry = { filename: (v.file_description && v.file_description.name) || v.title || cde.reference.split('/').pop(), reference: v.links && v.links.document_version_download ? v.links.document_version_download.url : cde.reference, documentId: v.document_id, versionIndex: Number(v.version_index), ifcProject: cde.ifcProject, source: 'Documents API' };
-          const meta = await opencde.importFile(connector, { project_id: cde.projectId, name: cde.projectName }, entry, { name: `${ds.name} (v${v.version_number || v.version_index})` });
+          const meta = await (await openCde()).importFile(connector, { project_id: cde.projectId, name: cde.projectName }, entry, { name: `${ds.name} (v${v.version_number || v.version_index})` });
           shell.log(t('cde.fetched.version', { name: meta.name }), 'ok');
           ui.toast.show(t('cde.fetched.version', { name: meta.name }), { kind: 'ok' });
           store.set({ selectedId: meta.id });
@@ -120,6 +124,7 @@
       async function connected() {
         const connector = await connectorOf();
         if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
+        const opencde = await openCde();
         if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
         return connector;
       }
@@ -131,18 +136,19 @@
       // Publicering (Dataregium's publication): the status for every member; publishing for a manager, once, after a confirmation.
       const loadPublication = () => pubStep('load', async () => {
         const connector = await connected();
+        const opencde = await openCde();
         if (!(await opencde.canPublish(connector))) { state.pub = { unsupported: true }; return; }
         state.pub = (await opencde.publication(connector, cde.documentId, cde.versionIndex)) || { none: true };
       });
       const doPublish = () => pubStep('publish', async () => {
         const ok = await ui.dialog.confirm(t('cde.publication.confirm', { name: ds.name, version: String(cde.versionIndex), host: cde.host }), { okLabel: t('cde.publication.publish') });
         if (!ok) return;
-        state.pub = await opencde.publish(await connected(), cde.documentId, cde.versionIndex);
+        state.pub = await (await openCde()).publish(await connected(), cde.documentId, cde.versionIndex);
         const done = t('cde.publication.done', { name: ds.name, date: i18n.formatDateTime(state.pub.published_at) });
         shell.log(done, 'ok'); ui.toast.show(done, { kind: 'ok' });
       });
       const saveArchive = () => pubStep('download', async () => {
-        const file = await opencde.publicationFile(await connected(), cde.documentId, cde.versionIndex, state.pub.file_name);
+        const file = await (await openCde()).publicationFile(await connected(), cde.documentId, cde.versionIndex, state.pub.file_name);
         D.require('platform/files').download(file, file.name);
       });
       function publicationPart() {
@@ -174,7 +180,7 @@
           kv,
           h('div', { class: 'dm-row-wrap' },
             cde.documentId ? ui.button({ label: t('cde.check'), icon: 'refresh-cw', size: 'sm', loading: state.checking, title: t('cde.check.hint'), 'data-cde-check': '', onClick: check }) : null,
-            ds.kind === 'model' && cde.documentId && !D.require('data/model').isDxf(ds) && shows('cde.merge') ? ui.button({ label: t('merge.button'), icon: 'layers', size: 'sm', title: t('merge.button.hint'), 'data-cde-merge': '', onClick: () => D.require('ui/api/merge-dialog').open(ctx, ds).catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) }) : null,
+            ds.kind === 'model' && cde.documentId && !D.require('data/model').isDxf(ds) && shows('cde.merge') ? ui.button({ label: t('merge.button'), icon: 'layers', size: 'sm', title: t('merge.button.hint'), 'data-cde-merge': '', onClick: () => D.ensure(['families'], () => D.require('ui/api/merge-dialog').open(ctx, ds)).catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) }) : null,
             ds.kind === 'model' && shows('cde.bcf') ? ui.button({ label: t('issues.title'), icon: 'message-square', size: 'sm', title: t('cde.issues.hint'), onClick: () => { store.set({ selectedId: ds.id, openModelIssues: { datasetId: ds.id } }); ctx.shell.activate('bearbeta'); } }) : null,
             ds.kind === 'model' && !D.require('data/model').isDxf(ds) && shows('cde.ifc-graph') ? ui.button({ label: t('ifcgraph.title'), icon: 'network', size: 'sm', title: t('ifcgraph.open.hint'), 'data-cde-graph': '', onClick: async () => { if (!(await D.require('api/graph-source').open(ctx, ds))) ui.toast.show(t('cde.err.noconnector', { host: cde.host }), { kind: 'warn' }); } }) : null),
           r && r.newer ? h('div', { class: 'dm-row-wrap', 'data-cde-newer': '' }, h('span', { class: 'dm-warn', text: t('cde.newer', { have: String(r.have), latest: String(r.version.version_index) }) }), ui.button({ label: t('cde.fetch.version', { n: String(r.version.version_number || r.version.version_index) }), icon: 'download', size: 'sm', variant: 'primary', loading: state.fetching, onClick: fetchNew })) : null,
@@ -239,7 +245,7 @@
       const issues = D.require('data/issues');
       const el = h('div');
       const state = { busy: false, error: '' };
-      const badge = (status) => { const k = D.require('ui/bearbeta/model-issues').badgeKind(status); return k ? { kind: k } : {}; };
+      const badge = (status) => { const k = issues.badgeKind(status); return k ? { kind: k } : {}; };
       async function draw() {
         if (!(await facets.has(ds.id, 'bcf'))) { replace(el); return; }
         const datasets = D.require('data/datasets');
@@ -289,7 +295,7 @@
       async function signedIn() {
         const connector = (await D.require('api/connectors').get(cde.connectorId)) || null;
         if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
-        const opencde = D.require('api/families/opencde');
+        const opencde = await openCde();
         if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
         return connector;
       }
@@ -300,11 +306,11 @@
       }
       const fetchServer = () => step('fetch', async () => {
         state.report = null;
-        const entries = await D.require('api/families/opencde').versionMetadata(await signedIn(), cde.documentId, cde.versionIndex);
+        const entries = await (await openCde()).versionMetadata(await signedIn(), cde.documentId, cde.versionIndex);
         state.results = await validation.record(ds.id, 'server', validation.fromMetadata(entries) || { status: null });
       });
       const fetchReport = () => step('report', async () => {
-        state.report = await D.require('api/families/opencde').validationReport(await signedIn(), cde.documentId, cde.versionIndex);
+        state.report = await (await openCde()).validationReport(await signedIn(), cde.documentId, cde.versionIndex);
         if (!state.report) throw new Error(t('validation.status.none'));
       });
       async function mark() {
@@ -339,7 +345,7 @@
         const ok = await ui.dialog.confirm(t('validation.unreachable.confirm', { name: ds.name, version: String(cde.versionIndex) }), { okLabel: t('validation.unreachable') });
         if (!ok) return;
         let res = null;
-        try { res = await D.require('api/families/opencde').proposeUnreachable(connector, cde.projectId, cde.documentId, cde.versionIndex); }
+        try { res = await (await openCde()).proposeUnreachable(connector, cde.projectId, cde.documentId, cde.versionIndex); }
         catch (err) { if (err && err.status === 409) { ui.toast.show(t('validation.unreachable.nothing'), { kind: 'info' }); return; } throw err; }
         if (!res) throw new Error(t('validation.unreachable.unsupported'));
         const done = t('validation.unreachable.done', { n: i18n.formatNumber(res.changes || 0), title: res.title || res.topic_guid });

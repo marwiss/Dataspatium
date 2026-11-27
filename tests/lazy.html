@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <!-- The content policy (F26), as on the test page: no inline scripts; eval only because web-ifc and Vega need it. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: blob: data:; script-src 'self' file: blob: 'unsafe-eval' 'wasm-unsafe-eval'; worker-src 'self' file: blob:; style-src 'self' file: 'unsafe-inline'; img-src 'self' file: data: blob: https: http://127.0.0.1:* http://localhost:*; font-src 'self' file: data: blob:; connect-src 'self' file: blob: data: https: http://127.0.0.1:* http://localhost:* ws: wss:; media-src 'self' file: blob: mediastream:; frame-src 'self' file: blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Dataspatium – starten utan grupperna</title>
+  <link rel="icon" type="image/svg+xml" href="../src/ui/design/favicon.svg">
+  <!-- The language, the course and the consent as on the test page, but only the start list: the groups load when they are used. -->
+  <script src="setup.js" data-groups="start"></script>
+  <link rel="stylesheet" href="../src/ui/design/tokens.css">
+  <link rel="stylesheet" href="../src/ui/design/base.css">
+  <link rel="stylesheet" href="../src/ui/design/components.css">
+  <link rel="stylesheet" href="../src/ui/shell/shell.css">
+  <style>
+    body { overflow: auto; padding: 24px; }
+    ul.results { list-style: none; padding: 0; }
+    ul.results li { font-family: var(--dm-font-mono); font-size: 13px; padding: 2px 0; }
+    .ok { color: var(--dm-ok); } .fail { color: var(--dm-error); }
+  </style>
+  <script src="../src/boot.js"></script>
+</head>
+<body>
+  <h1>Dataspatium: starten utan grupperna</h1>
+  <p class="dm-muted">Bara startlistan laddas, som i appen; proven visar att det som behöver en grupp väntar på den. Kör headless med
+    <code>powershell -File tools/run-tests.ps1 -Url tests/lazy.html</code>.</p>
+  <p id="summary" class="dm-muted">Kör …</p>
+  <ul id="results" class="results"></ul>
+  <script src="lazy.test.js"></script>
+</body>
+</html>

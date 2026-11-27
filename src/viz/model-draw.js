@@ -36,8 +36,9 @@
       const key = datasetId + '|' + meta.updatedAt;
       if (cache && cache.key === key) return cache.meshes;
       const file = await model.original(datasetId);
-      // A large model from the server (data/model-server) has no IFC file: its glTF is read instead (engines/gltf).
-      const server = file || !D.has('data/model-server') ? null : await D.require('data/model-server').geometry(datasetId);
+      // A large model from the server (data/model-server) has no IFC file: its glTF is read instead (engines/gltf). Both are part of
+      // the group 'families' (src/boot.js), loaded for such a model only.
+      const server = file ? null : await D.ensure(['families'], () => D.require('data/model-server').geometry(datasetId));
       if (!file && !server) throw new Error(D.t('model.err.nofile'));
       const meshes = file
         ? ifc.meshes(file.bytes, { onProgress: options.onProgress }).then((m) => { ifc.release(); return indexed(m); })
@@ -46,7 +47,7 @@
       meshes.catch(() => { if (cache && cache.key === key) cache = null; });
       return meshes;
     }
-    /** Forget the kept meshes (the dataset was removed, or memory is needed). */
+    /** Forget the kept meshes (the dataset was removed, or memory is needed); a glTF worker runs only once its group has loaded. */
     function clearCache() { cache = null; ifc.terminate(); if (D.has('engines/gltf')) D.require('engines/gltf').terminate(); }
 
     function indexed(m) {

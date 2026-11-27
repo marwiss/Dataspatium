@@ -10,7 +10,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/heights', ['data/geo', 'api/connectors', 'api/auth', 'api/runner', 'platform/consent'], (geo, connectors, auth, runner, consent) => {
+  D.define('api/heights', ['data/geo', 'api/connectors', 'api/auth', 'platform/consent'], (geo, connectors, auth, consent) => {
     const CONNECTOR = 'lantmateriet-stac';
     const COLLECTION = 'dtm-cog';
     /** At most this many points are looked up at a time. */
@@ -30,6 +30,8 @@
     async function tiles(connector, box, options = {}) {
       const endpoint = (connector.endpoints || []).find((e) => e.id === 'hojd');
       if (!endpoint) throw new Error(D.t('heights.err.noconnector'));
+      // The search goes through api/runner, which loads with the group 'families' (src/boot.js).
+      const runner = await D.ensure(['families'], () => D.require('api/runner'));
       const table = await runner.fetchTable(connector, endpoint, { collections: COLLECTION, bbox: box.map((v) => v.toFixed(6)).join(',') }, { ask: options.ask });
       const at = (name) => table.columns.indexOf(name);
       const url = at('asset_data'); const proj = at('proj:bbox'); const wgs = at('bbox');

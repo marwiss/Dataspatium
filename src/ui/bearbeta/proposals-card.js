@@ -10,7 +10,9 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/proposals-card', ['ui/base', 'ui/basic', 'ui/overlays', 'data/datasets', 'api/connectors', 'api/families/opencde'], (base, basic, overlays, datasets, connectors, opencde) => {
+  D.define('ui/bearbeta/proposals-card', ['ui/base', 'ui/basic', 'ui/overlays', 'data/datasets', 'api/connectors'], (base, basic, overlays, datasets, connectors) => {
+    /** The OpenCDE family, set by ready() with the group 'families' (src/boot.js) loaded for a model from a server document. @type {any} */
+    let opencde = null;
     const { h, t, i18n, replace } = base;
     const STATES = ['queued', 'running', 'clean', 'issues', 'failed', 'approved'];
     const MAX_ROWS = 200;
@@ -31,6 +33,7 @@
         const cde = meta && meta.source && meta.source.cde;
         if (!cde || !cde.connectorId || !cde.projectId || !cde.documentId) { s.shown = false; render(); return false; }
         const connector = await connectors.get(cde.connectorId);
+        if (connector) opencde = await D.ensure(['families'], () => D.require('api/families/opencde'));
         if (!connector || !opencde.isOpenCde(connector) || !opencde.signedIn(connector)) { s.shown = false; render(); return false; }
         s.cde = cde; s.connector = connector; s.shown = true; render();
         return true;

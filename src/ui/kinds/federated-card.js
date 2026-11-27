@@ -148,8 +148,9 @@
           const bcfXml = D.require('data/bcf-xml');
           const cde = ds.source && ds.source.cde;
           const connector = cde && cde.connectorId ? await D.require('api/connectors').get(cde.connectorId).catch(() => null) : null;
-          const opencde = D.require('api/families/opencde');
-          const author = bcfXml.authorOf(connector && opencde.isOpenCde(connector) ? await opencde.identity(connector) : null, await D.require('data/comments').author());
+          // The OpenCDE family loads with the group 'families' (src/boot.js), only for a model from a CDE.
+          const opencde = connector ? await D.ensure(['families'], () => D.require('api/families/opencde')) : null;
+          const author = bcfXml.authorOf(opencde && opencde.isOpenCde(connector) ? await opencde.identity(connector) : null, await D.require('data/comments').author());
           const blob = await federated.bcfFile(r, { t, projectName: ds.name, colors: colors(), author });
           const name = `${ds.name.replace(/[\\/:*?"<>|]+/g, '_')} ${t('kontrollera.federated').toLowerCase()}.bcfzip`;
           D.require('platform/files').download(blob, name);
@@ -159,8 +160,8 @@
       /** One topic per finding in the model's project on the server, with a viewpoint where the finding has a place. */
       async function sendTopics(r) {
         const cde = ds.source.cde;
-        const opencde = D.require('api/families/opencde');
         try {
+          const opencde = await D.ensure(['families'], () => D.require('api/families/opencde'));
           const connector = await D.require('api/connectors').get(cde.connectorId);
           if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
           const ok = await ui.dialog.confirm(t('clash.send.confirm', { n: fmt(r.findings.length), project: cde.projectName || cde.projectId, host: cde.host }), { okLabel: t('clash.send') });

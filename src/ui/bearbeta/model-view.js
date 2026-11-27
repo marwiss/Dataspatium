@@ -142,9 +142,22 @@
         if (dxfView) await drawDxf(my); else await drawIfc(my);
       }
 
-      /** The issues from the CDE, in the inspector; the same panel until the dataset changes. */
+      /**
+       * The issues from the CDE, in the inspector; the same panel until the dataset changes. The panel is part of the group 'families'
+       * (src/boot.js): once that is loaded it opens at once, the first time it opens when the group has loaded, unless the view moved on.
+       */
       function openIssues() {
         if (issues) return;
+        const id = ds.id;
+        let later = false;
+        D.ensure(['families'], () => {
+          if (issues || !slots || !ds || ds.id !== id) return;
+          createIssues();
+          if (later) renderInspector();
+        }).catch((err) => shell.log(String((err && err.message) || err), 'error'));
+        later = true;
+      }
+      function createIssues() {
         issues = D.require('ui/bearbeta/model-issues').create(ctx, ds, {
           select: (ids, fit) => { if (handle) handle.select(ids, { fit }); },
           camera: (vp) => { if (handle) return handle.setViewpoint(vp); s.pendingViewpoint = vp; return true; },

@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/klimatdatabas', ['api/connectors', 'api/runner', 'platform/storage/idb'], (connectors, runner, idb) => {
+  D.define('api/klimatdatabas', ['api/connectors', 'platform/storage/idb'], (connectors, idb) => {
     const CONNECTOR = 'boverket-klimatdatabas';
     const CACHE_KEY = 'klimat:databas';
     /** The units a building product is counted in. */
@@ -71,6 +71,8 @@
      */
     async function fetchLatest(options = {}) {
       const c = await connector();
+      // api/runner fetches; it loads with the group 'families' (src/boot.js).
+      const runner = await D.ensure(['families'], () => D.require('api/runner'));
       const latest = await runner.fetchTable(c, endpoint(c, 'senaste-version'), { culture: 'sv' }, { firstPageOnly: true, signal: options.signal });
       const version = String(((latest.meta && latest.meta.firstData) || {}).Version || '').trim();
       if (!/^\d+(\.\d+)*$/.test(version)) throw new Error(D.t('climate.err.version'));

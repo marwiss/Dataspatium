@@ -14,7 +14,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/bridge', ['api/secrets', 'api/runner', 'platform/storage/idb', 'platform/consent'], (secrets, runner, idb, consent) => {
+  D.define('api/bridge', ['api/secrets', 'platform/storage/idb', 'platform/consent'], (secrets, idb, consent) => {
     const ID = '__bridge';
     const URL_KEY = 'bridge.url';
     const RELAY_KEY = 'bridge.relay';
@@ -187,7 +187,8 @@
       if (result.affected !== undefined) throw new BridgeError(D.t('bridge.err.notaquery'), 0);
       const table = toTable(result);
       const name = options.name || options.table || D.t('bridge.fetched.name');
-      return runner.toDataset(table, { name, source: describeSource(source, options, table) });
+      // api/runner makes the dataset; it loads with the group 'families' (src/boot.js), which the start does without.
+      return D.ensure(['families'], () => D.require('api/runner').toDataset(table, { name, source: describeSource(source, options, table) }));
     }
     /**
      * Fetch again what a dataset's bridge source describes (api/runner.refetch delegates here). `ask: false` (a flow at start): the

@@ -9,11 +9,17 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/graph-source', ['api/connectors', 'api/families/neo4j', 'api/families/opencde-admin', 'platform/tier'], (connectors, neo4j, admin, tier) => {
+  D.define('api/graph-source', ['api/connectors', 'platform/tier'], (connectors, tier) => {
+    /**
+     * The Neo4j family and Dataregium's administration API, with the group 'families' (src/boot.js) loaded the first time a way to a
+     * graph is asked for; the start has this module without them.
+     * @returns {Promise<{neo4j: any, admin: any}>}
+     */
+    const families = () => D.ensure(['families'], () => ({ neo4j: D.require('api/families/neo4j'), admin: D.require('api/families/opencde-admin') }));
     /** Queries over Bolt with a Neo4j source's credentials. @param {any} connector */
-    const boltRunner = (connector) => (text, options) => neo4j.run(connector, text, options);
+    const boltRunner = (connector) => async (text, options) => (await families()).neo4j.run(connector, text, options);
     /** Queries through the administration API of an OpenCDE source signed in with the scope admin. @param {any} connector */
-    const adminRunner = (connector) => async (text, options) => neo4j.answerToTable(await admin.graphQuery(connector, text, options && options.params));
+    const adminRunner = (connector) => async (text, options) => { const { neo4j, admin } = await families(); return neo4j.answerToTable(await admin.graphQuery(connector, text, options && options.params)); };
     /** What a dataset saved from a graph keeps of where it came from. @param {any} connector @param {string} cypher @param {'admin'} [via] */
     const sourceOf = (connector, cypher, via) => Object.assign({ kind: 'api', connector: connector.id, cypher, fetchedAt: new Date().toISOString() }, via ? { via } : {});
     /**
@@ -26,6 +32,7 @@
       if (!source || !source.cypher || !source.connector) return null;
       const connector = await connectors.get(source.connector);
       if (!connector) return null;
+      const { neo4j, admin } = await families();
       const host = neo4j.hostOf(connector.baseUrl);
       if (source.via === 'admin') return admin.hasAdminScope(connector) && tier.shows('cde.ifc-graph', { server: connector.id }) ? { connector, host, run: adminRunner(connector) } : null;
       return neo4j.isNeo4j(connector) ? { connector, host, run: boltRunner(connector) } : null;
@@ -42,6 +49,7 @@
      */
     async function connectorFor(cde) {
       const all = await connectors.list();
+      const { neo4j } = await families();
       const machine = machineOf(cde.host);
       return all.find((c) => neo4j.isNeo4j(c) && machineOf(neo4j.hostOf(c.baseUrl)) === machine) || (await connectors.get(cde.connectorId)) || null;
     }

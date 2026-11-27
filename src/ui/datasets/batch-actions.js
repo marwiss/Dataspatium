@@ -362,7 +362,8 @@
         } else if (choice === 'refresh') {
           const api = chosen.filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge'));
           if (!api.length) { ui.toast.show(t('datasets.batch.refresh.none'), { kind: 'warn' }); return; }
-          const runner = D.require('api/runner');
+          // api/runner loads with the group 'families' (src/boot.js), which the start does without.
+          const runner = await D.ensure(['families'], () => D.require('api/runner'));
           let ok = 0;
           for (const d of api) { try { await runner.refreshDataset(d.id); ok++; shell.log(t('api.into.replaced', { name: d.name, rows: i18n.formatNumber(((await services.datasets.get(d.id)) || {}).rowCount || 0) }), 'ok'); } catch (err) { shell.log(`${d.name}: ${(err && err.message) || err}`, 'error'); } }
           ui.toast.show(t('api.refresh.all.done', { ok, failed: api.length - ok }), { kind: ok === api.length ? 'ok' : 'warn' });

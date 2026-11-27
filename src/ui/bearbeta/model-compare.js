@@ -13,7 +13,9 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/model-compare', ['ui/base', 'ui/basic', 'ui/overlays', 'data/model-diff', 'data/selection', 'api/connectors', 'api/families/opencde'], (base, basic, overlays, modelDiff, selection, connectors, opencde) => {
+  D.define('ui/bearbeta/model-compare', ['ui/base', 'ui/basic', 'ui/overlays', 'data/model-diff', 'data/selection', 'api/connectors'], (base, basic, overlays, modelDiff, selection, connectors) => {
+    /** The OpenCDE family, set by connectorOf below with the group 'families' (src/boot.js) loaded before the server is asked. @type {any} */
+    let opencde = null;
     const { h, t, i18n, replace } = base;
     const SHOW = 50;
     const SHOW_FIELDS = 6;
@@ -70,6 +72,7 @@
         overlays.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });
       }
       async function connectorOf() {
+        opencde = await D.ensure(['families'], () => D.require('api/families/opencde'));
         const connector = await connectors.get(cde.connectorId);
         if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
         if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }

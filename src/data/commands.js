@@ -520,7 +520,9 @@
 
       // ---------------------------------------------------------------------------- the CDE (decision F42 b): OpenCDE sources signed in under Inhämta
       const hostOf = (url) => { try { return new URL(String(url)).host; } catch (_e) { return String(url || ''); } };
-      const cdeSources = async () => { const opencde = D.require('api/families/opencde'); return (await D.require('api/connectors').list()).filter((c) => opencde.isOpenCde(c)); };
+      /** The OpenCDE family, with the group 'families' (src/boot.js) loaded the first time a CDE command runs. */
+      const openCde = () => D.ensure(['families'], () => D.require('api/families/opencde'));
+      const cdeSources = async () => { const opencde = await openCde(); return (await D.require('api/connectors').list()).filter((c) => opencde.isOpenCde(c)); };
       /**
        * A signed-in OpenCDE source by id or name; signing in happens under Inhämta, never through a command. A command that needs a
        * feature of the server (the BCF topics) is refused when the server's own tier does not offer it (what its capabilities
@@ -528,7 +530,7 @@
        * @param {string} ref @param {string} [entry] the command's entry in platform/tier
        */
       async function cde(ref, entry) {
-        const opencde = D.require('api/families/opencde');
+        const opencde = await openCde();
         const connector = pick(await cdeSources(), ref, 'connector');
         if (!opencde.signedIn(connector)) throw new Error(t('commands.err.cde.signin', { name: connector.name }));
         if (entry) tier.guard(entry, { server: connector.id });
@@ -548,7 +550,7 @@
         name: 'list_cde_sources', writes: false,
         description: 'The OpenCDE sources the app knows (Dataregium and other servers): id, name, host, and whether each is signed in. Signing in happens under Inhämta, never here.',
         parameters: S.obj({}),
-        async run() { const opencde = D.require('api/families/opencde'); return { sources: (await cdeSources()).map((c) => ({ id: c.id, name: c.name, host: hostOf(c.baseUrl), signed_in: opencde.signedIn(c) })) }; },
+        async run() { const opencde = await openCde(); return { sources: (await cdeSources()).map((c) => ({ id: c.id, name: c.name, host: hostOf(c.baseUrl), signed_in: opencde.signedIn(c) })) }; },
       });
       define({
         name: 'cde_projects', attended: true, writes: false,

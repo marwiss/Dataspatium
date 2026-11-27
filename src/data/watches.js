@@ -11,8 +11,10 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/watches', ['platform/storage/idb', 'platform/consent', 'data/datasets', 'api/runner', 'data/linked'], (idb, consent, datasets, runner, linked) => {
+  D.define('data/watches', ['platform/storage/idb', 'platform/consent', 'data/datasets', 'api/connectors', 'data/linked'], (idb, consent, datasets, connectors, linked) => {
     const PREFIX = 'watch:';
+    /** api/runner, with the group 'families' (src/boot.js) loaded the first time a source is read: the start has the watches without it. */
+    const runnerOf = () => D.ensure(['families'], () => D.require('api/runner'));
     const ON_START = 'watch.onStart';
     const listeners = new Set();
     const notify = (type, payload) => { for (const fn of Array.from(listeners)) { try { fn(type, payload); } catch (err) { console.error('[watches] listener failed', err); } } };
@@ -63,7 +65,8 @@
 
     /** Reads the source of a dataset as a table, without touching the dataset; `ask: false` goes along to whatever it fetches. */
     async function readSource(meta, options = {}) {
-      return (options.fetch || runner.refetch)(meta.source, { datasetId: meta.id, signal: options.signal, ask: options.ask });
+      const read = options.fetch || (await runnerOf()).refetch;
+      return read(meta.source, { datasetId: meta.id, signal: options.signal, ask: options.ask });
     }
     /**
      * Starts or stops watching a dataset. Starting reads the source once, which also shows whether it has already moved
@@ -151,10 +154,11 @@
         if (meta.source.kind === 'bridge' || (meta.source.kind === 'api' && !allowed)) continue;
         // A source the tier hides is not contacted (api/runner refuses it); an OpenCDE source needs the user's sign-in and the
         // consent for OpenCDE servers, which start never asks for.
-        if (await runner.hidden(meta.source)) continue;
+        if (await connectors.hidden(meta.source)) continue;
         if (meta.source.family === 'opencde') {
-          const c = await D.require('api/connectors').get(meta.source.connectorId);
-          if (!c || !D.require('api/families/opencde').signedIn(c) || (await consent.state('opencde')) !== 'granted') continue;
+          const c = await connectors.get(meta.source.connectorId);
+          if (!c || (await consent.state('opencde')) !== 'granted') continue;
+          if (!(await D.ensure(['families'], () => D.require('api/families/opencde').signedIn(c)))) continue;
         }
         out.push(await check(rec.datasetId, Object.assign({}, options, { ask: false })));
       }
@@ -163,10 +167,10 @@
     /** Watches where new data waits. */
     async function pending() { return (await list()).filter((r) => r.state === 'new'); }
     /** Fetches the dataset again (with its recipe replayed); the fingerprint follows through onFetched below. */
-    async function update(id, options = {}) { return runner.refreshDataset(id, options); }
+    async function update(id, options = {}) { return (await runnerOf()).refreshDataset(id, options); }
 
     // Whenever a dataset is updated from its source, by anyone, what it was made from is what the next check compares with.
-    runner.onFetched(async (id, table) => {
+    connectors.onFetched(async (id, table) => {
       const rec = await get(id);
       if (!rec) return;
       rec.baseline = await fingerprint(table);

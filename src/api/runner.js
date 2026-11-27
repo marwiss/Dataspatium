@@ -80,10 +80,9 @@
         return importer.materialize({ columns: table.columns, rows: table.rows }, specs, { decimal });
       }
 
-      /** @type {Set<(id: string, table: any) => any>} */
-      const fetchedListeners = new Set();
-      /** Tells a listener whenever a dataset has been updated from its source (with the table it was read from). */
-      function onFetched(fn) { fetchedListeners.add(fn); return () => fetchedListeners.delete(fn); }
+      // What hides a source, and the listeners told after an update, live in api/connectors, so that the start has them without
+      // the families (src/boot.js, the group 'families').
+      const { hiddenBy, hidden, onFetched } = connectors;
 
       /**
        * Update an API dataset with one click: fetch it again, rebuild its table from the new rows and replay
@@ -122,7 +121,7 @@
         const handle = await datasets.ensureOpen(id);
         await datasets.appendLog(handle, 'refresh', { source: { kind: source.kind, connectorName: source.connectorName || source.label || source.fileName, endpointName: source.endpointName }, rows: handle.meta.rowCount, steps: steps.length });
         await datasets.save(id);
-        for (const fn of Array.from(fetchedListeners)) { try { await fn(id, table); } catch (err) { console.error('[runner] listener failed', err); } }
+        await connectors.fetched(id, table);
         return { rows: handle.meta.rowCount, steps: steps.length };
       }
 
@@ -163,29 +162,6 @@
           if (options.onProgress) options.onProgress({ done: results.length, total: list.length, name: ds.name });
         }
         return results;
-      }
-
-      /**
-       * What hides a dataset's source in the tier in effect (platform/tier): its connector's family or preset (the geodata services),
-       * or what a CDE's list needs of that server (the BCF topics, the IFC graph's query); null when the tier shows it. Without the
-       * connector, only the preset and the server are looked at.
-       * @param {any} source @param {any} [connector]
-       * @returns {{entry: string, options: {server?: string}}|null}
-       */
-      function hiddenBy(source, connector) {
-        if (!source || source.kind !== 'api') return null;
-        const entry = connector ? tier.connectorEntry(connector) : (source.connectorId && !tier.shows('preset:' + source.connectorId) ? 'preset:' + source.connectorId : null);
-        if (entry) return { entry, options: {} };
-        const spec = source.family === 'opencde' && source.opencde;
-        if (!spec) return null;
-        const server = { server: source.connectorId };
-        const needs = spec.kind === 'admin' ? (spec.admin === 'graph' ? 'cde.ifc-graph' : null) : 'cde.bcf';
-        return needs && !tier.shows(needs, server) ? { entry: needs, options: server } : null;
-      }
-      /** The same, with the source's connector looked up. @param {any} source */
-      async function hidden(source) {
-        const connector = source && source.kind === 'api' && source.connectorId ? await connectors.get(source.connectorId).catch(() => null) : null;
-        return hiddenBy(source, connector);
       }
 
       async function refetch(source, options = {}) {

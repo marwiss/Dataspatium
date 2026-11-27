@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/connectors', ['api/schema', 'platform/storage/idb', 'ui/i18n', 'platform/startup-profile'], (schema, idb, i18n, profile) => {
+  D.define('api/connectors', ['api/schema', 'platform/storage/idb', 'ui/i18n', 'platform/startup-profile', 'platform/tier'], (schema, idb, i18n, profile, tier) => {
     const PRESET_PREFIX = 'presets/api/';
     const USER_KEY = 'api:connectors';
     const COUNTRIES = schema.COUNTRIES;
@@ -192,6 +192,60 @@
       }
     }
 
-    return { list, get, importJson, save, remove, exportJson, describeAuth, localize, loadPresets, subscribe, added, setAdded, isAdded, DEFAULT_ADDED, PRESET_PREFIX, COUNTRIES };
+    // ---- what the start asks of the sources without the families, which load as the group 'families' (src/boot.js, PLAN 4) ----
+    /**
+     * The ids of the database families (api/families/databases FAMILIES, with the neo4j and opencde that those modules add),
+     * so that the list of sources can mark them without loading the families. tests/api.test.js keeps the two lists the same.
+     */
+    const DATABASE_FAMILIES = ['postgrest', 'odata', 'graphql', 'couchdb', 'clickhouse', 'elasticsearch', 'sparql', 'influxdb', 'sheets', 'airtable', 'neo4j', 'opencde'];
+    /** Whether a connector was made for a database family (its id begins with the family's). @param {{id?: string}} connector */
+    const isDatabase = (connector) => DATABASE_FAMILIES.some((f) => String(connector && connector.id).startsWith(f + '-'));
+
+    /**
+     * What hides a dataset's source in the tier in effect (platform/tier): its connector's family or preset (the geodata services),
+     * or what a CDE's list needs of that server (the BCF topics, the IFC graph's query); null when the tier shows it. Without the
+     * connector, only the preset and the server are looked at. api/runner refuses what this names.
+     * @param {any} source @param {any} [connector]
+     * @returns {{entry: string, options: {server?: string}}|null}
+     */
+    function hiddenBy(source, connector) {
+      if (!source || source.kind !== 'api') return null;
+      const entry = connector ? tier.connectorEntry(connector) : (source.connectorId && !tier.shows('preset:' + source.connectorId) ? 'preset:' + source.connectorId : null);
+      if (entry) return { entry, options: {} };
+      const spec = source.family === 'opencde' && source.opencde;
+      if (!spec) return null;
+      const server = { server: source.connectorId };
+      const needs = spec.kind === 'admin' ? (spec.admin === 'graph' ? 'cde.ifc-graph' : null) : 'cde.bcf';
+      return needs && !tier.shows(needs, server) ? { entry: needs, options: server } : null;
+    }
+    /** The same, with the source's connector looked up. @param {any} source */
+    async function hidden(source) {
+      const connector = source && source.kind === 'api' && source.connectorId ? await get(source.connectorId).catch(() => null) : null;
+      return hiddenBy(source, connector);
+    }
+
+    /** The setting that remembers the deployment's server once added (api/families/opencde addDeployed), so that one the user took away stays away. */
+    const DEPLOYED_KEY = 'deploy.server';
+    /** @param {{baseUrl?: string}|null} server */
+    const deployedAddress = (server) => String((server && server.baseUrl) || '').trim().replace(/\/+$/, '').toLowerCase();
+    /**
+     * Whether there is nothing to add for the server a deployment names (dataspatium.config.js): none is named, or it was added
+     * before. The shell asks this at start, so that the families load only for a server not yet added.
+     * @param {{baseUrl?: string}|null} server @returns {Promise<boolean>}
+     */
+    async function deployedNoted(server) { return !server || !server.baseUrl || (await idb.getSetting(DEPLOYED_KEY, null)) === deployedAddress(server); }
+    /** Remembers that the deployment's server has been added. @param {{baseUrl: string}} server */
+    async function noteDeployed(server) { await idb.setSetting(DEPLOYED_KEY, deployedAddress(server)); }
+
+    /** @type {Set<(id: string, table: any) => any>} */
+    const fetchedListeners = new Set();
+    /** Tells a listener whenever a dataset has been updated from its source (with the table it was read from). */
+    function onFetched(fn) { fetchedListeners.add(fn); return () => fetchedListeners.delete(fn); }
+    /** Tells the listeners that a dataset was updated from its source (api/runner, after an update). @param {string} id @param {any} table */
+    async function fetched(id, table) {
+      for (const fn of Array.from(fetchedListeners)) { try { await fn(id, table); } catch (err) { console.error('[connectors] listener failed', err); } }
+    }
+
+    return { list, get, importJson, save, remove, exportJson, describeAuth, localize, loadPresets, subscribe, added, setAdded, isAdded, hiddenBy, hidden, onFetched, fetched, isDatabase, deployedNoted, noteDeployed, DATABASE_FAMILIES, DEFAULT_ADDED, PRESET_PREFIX, COUNTRIES };
   });
 })();
