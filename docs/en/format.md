@@ -77,6 +77,31 @@ get the choice *The whole plan as a plan*. See [planer.md](planer.md).
 **Building models and drawings** (kind model): IFC (`.ifc`, `.ifczip`; IFC2X3, IFC4, IFC4X3) and DXF. The original file is
 kept; elements, properties and quantities become tables, and the DXF drawing becomes SVG. See [cad-bim.md](cad-bim.md).
 
+## Files without a known extension
+
+The file extension decides which reader takes a file, as before. When it is missing, or the app does not know it (a file
+called `export` or `report.bin`), the start of the file is read, at most 16 kB (for a ZIP file also the directory at its
+end), and the file is recognised by its contents when the signature is sure. The formats are tried in this order:
+
+| Format | Recognised by | Becomes |
+|---|---|---|
+| SQLite, GeoPackage | `SQLite format 3`; GeoPackage by its application_id `GPKG` | `.sqlite`, `.gpkg` |
+| ZIP | The files in the archive: Excel (`xl/workbook.xml`), Word (`word/document.xml`), ODS and ODT (`mimetype`), data package, archive package and ÖP delivery, shapefiles, BCF, QGIS project, IFC and KML. Another ZIP file is not recognised | `.xlsx`, `.docx`, `.ods`, `.odt`, `.zip`, `.bcfzip`, `.qgz`, `.ifczip`, `.kmz` |
+| PDF, TIFF and pictures | `%PDF-`; `II*` or `MM*` (becomes a raster); PNG, JPEG, GIF, WebP, BMP and AVIF by their first bytes | `.pdf`, `.tif`, the picture's extension |
+| Excel 97–2003, Access, shapefile | An OLE2 file with the stream `Workbook`; `Standard Jet DB` or `Standard ACE DB`; file code 9994 with version 1000 | `.xls`, `.mdb`, `.accdb`, `.shp` |
+| SPSS, Stata, SAS, Parquet, RData | `$FL2`, `<stata_dta>`, the SAS file's signature, `HEADER RECORD` (transport file), `PAR1` at both ends, `RDX3` | the format's extension |
+| IFC, DXF | `ISO-10303-21;` with a `FILE_SCHEMA` that is IFC; `0 SECTION 2 HEADER` (or another section) | `.ifc`, `.dxf` |
+| JSON | `{` or `[` that holds as JSON through the whole start that is read; GeoJSON, TopoJSON, JSON Lines and the app's own formats (the field `format`, for example `dataspatium-viz/1`) | `.json`, `.geojson`, `.topojson`, `.ndjson` |
+| XML, HTML | The root element: KML, GPX, GraphML, GEXF, QGIS, HTML, FODS and Excel 2003 XML; other XML with an XML declaration or a namespace (GML and IDS are named) | the format's extension, otherwise `.xml` |
+| SQL, LaTeX, PC-Axis, Cypher | `CREATE TABLE` (after `PRAGMA`, `BEGIN` and the like), `\documentclass`, `CHARSET=` with `STUB=` or `HEADING=`, `CREATE (:…)` | `.sql`, `.tex`, `.px`, `.cypher` |
+| CSV, TSV (last) | The same number of one delimiter (tab, semicolon, comma or pipe) on every line | `.csv`, `.tsv` |
+
+The file gets the extension in the app (`export` becomes `export.gpkg`), and the preview says *Recognised by its contents
+as …*; the file on the computer is not changed. When the signature is not sure, as for ordinary text, the file keeps its
+name and is read as before: on its own as delimited text, where the format can be chosen in the import step, and in a
+choice of several files among those the app does not read. In the file picker, files without an extension show under
+*All files*; dragging the file onto the area always works.
+
 ## Character encoding
 
 Text files are checked in this order: byte order mark (UTF-8, UTF-16), UTF-16 without BOM (many zero bytes), plain

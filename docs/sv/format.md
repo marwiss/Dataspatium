@@ -77,6 +77,30 @@ reguleringsplaner/kommuneplaner som GeoPackage (Rp-/Kp-tabeller). Känns igen p�
 **Byggnadsmodeller och ritningar** (slaget modell): IFC (`.ifc`, `.ifczip`; IFC2X3, IFC4, IFC4X3) och DXF. Originalfilen
 sparas; byggdelar, egenskaper och mängder blir tabeller, och DXF-ritningen blir SVG. Se [cad-bim.md](cad-bim.md).
 
+## Filer utan känd filändelse
+
+Filändelsen avgör som förut vilken läsare som tar filen. Saknas den, eller känner appen inte till den (en fil som heter
+`export` eller `rapport.bin`), läses filens början, högst 16 kB (för en ZIP-fil även förteckningen i slutet), och filen
+känns igen på innehållet när kännetecknet är säkert. Formaten prövas i denna ordning:
+
+| Format | Känns igen på | Blir |
+|---|---|---|
+| SQLite, GeoPackage | `SQLite format 3`; GeoPackage på sitt application_id `GPKG` | `.sqlite`, `.gpkg` |
+| ZIP | Filerna i arkivet: Excel (`xl/workbook.xml`), Word (`word/document.xml`), ODS och ODT (`mimetype`), datapaket, arkivpaket och ÖP-leverans, shapefiler, BCF, QGIS-projekt, IFC och KML. En annan ZIP-fil känns inte igen | `.xlsx`, `.docx`, `.ods`, `.odt`, `.zip`, `.bcfzip`, `.qgz`, `.ifczip`, `.kmz` |
+| PDF, TIFF och bilder | `%PDF-`; `II*` eller `MM*` (blir ett raster); PNG, JPEG, GIF, WebP, BMP och AVIF på sina första byte | `.pdf`, `.tif`, bildens ändelse |
+| Excel 97–2003, Access, shapefil | En OLE2-fil med strömmen `Workbook`; `Standard Jet DB` eller `Standard ACE DB`; filkod 9994 med version 1000 | `.xls`, `.mdb`, `.accdb`, `.shp` |
+| SPSS, Stata, SAS, Parquet, RData | `$FL2`, `<stata_dta>`, SAS-filens kännetecken, `HEADER RECORD` (transportfil), `PAR1` i båda ändar, `RDX3` | formatets ändelse |
+| IFC, DXF | `ISO-10303-21;` med en `FILE_SCHEMA` som är IFC; `0 SECTION 2 HEADER` (eller en annan sektion) | `.ifc`, `.dxf` |
+| JSON | `{` eller `[` som håller som JSON i hela den lästa början; GeoJSON, TopoJSON, JSON Lines och appens egna format (fältet `format`, till exempel `dataspatium-viz/1`) | `.json`, `.geojson`, `.topojson`, `.ndjson` |
+| XML, HTML | Rotelementet: KML, GPX, GraphML, GEXF, QGIS, HTML, FODS och Excel 2003 XML; annan XML med XML-deklaration eller namnrymd (GML och IDS nämns vid namn) | formatets ändelse, annars `.xml` |
+| SQL, LaTeX, PC-Axis, Cypher | `CREATE TABLE` (efter `PRAGMA`, `BEGIN` och liknande), `\documentclass`, `CHARSET=` med `STUB=` eller `HEADING=`, `CREATE (:…)` | `.sql`, `.tex`, `.px`, `.cypher` |
+| CSV, TSV (sist) | Samma antal av en avgränsare (tabb, semikolon, komma eller lodstreck) på varje rad | `.csv`, `.tsv` |
+
+Filen får ändelsen i appen (`export` blir `export.gpkg`), och förhandsgranskningen säger *Känd igen på innehållet som …*;
+filen på datorn ändras inte. Är kännetecknet osäkert, som för en vanlig text, behåller filen sitt namn och läses som förut:
+ensam som text med avgränsare, där formatet kan väljas i importsteget, och i ett val av flera filer bland dem som appen inte
+läser. I filväljaren visas filer utan ändelse under *Alla filer*; att dra filen till ytan går alltid.
+
 ## Teckenkodning
 
 Textfiler kontrolleras i denna ordning: byte order mark (UTF-8, UTF-16), UTF-16 utan BOM (många nollbytes),
