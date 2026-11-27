@@ -625,6 +625,8 @@ byggdelen (IfcRelAggregates) eller ligger i rummet; bara i IFC2X3 får den IfcRe
 trappa (STRAIGHT_RUN_STAIR) består av ett lutande trapplopp (IfcStairFlight, STRAIGHT) med antal steg, steghöjd, stegdjup och bredd
 som attribut och i Pset_StairFlightCommon, och på begäran ett vilplan (IfcSlab, LANDING) överst; den sista steghöjden är vilplanets
 eller bjälklagets framkant. Trapploppet får sin volym i Qto_StairFlightBaseQuantities och vilplanet sina basmängder som ett bjälklag.
+Ett material som trappan får gäller också trapploppet och vilplanet, så att appens IDS Avfallshantering godtar trappan i samma
+ändringsset; ett eget material på en del ges med delens GlobalId i ett senare ändringsset och står kvar när trappan får ett nytt.
 
 En glasfasad (IfcCurtainWall) går längs sin axel som en vägg, från en start till ett slut i våningens plan, med sin höjd från en
 underkant över våningen. Axeln är dess representation, men den har ingen egen kropp: den består av sina delar, som ligger i den

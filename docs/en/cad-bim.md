@@ -645,7 +645,9 @@ a part of the element (IfcRelAggregates) or lies in the space; only in IFC2X3 do
 IfcRelCoversSpaces. A straight stair (STRAIGHT_RUN_STAIR) is a sloped flight (IfcStairFlight, STRAIGHT) with the number of risers,
 the riser height, the tread length and the width as attributes and in Pset_StairFlightCommon, and on request a landing (IfcSlab,
 LANDING) at the top; the last riser is the front edge of the landing or of the floor above. The flight gets its volume in
-Qto_StairFlightBaseQuantities and the landing its base quantities as a slab.
+Qto_StairFlightBaseQuantities and the landing its base quantities as a slab. A material the stair gets also goes to the flight and
+the landing, so that the app's IDS Avfallshantering accepts the stair in the same change set; a part's own material is given by its
+GlobalId in a later change set and stays when the stair gets a new one.
 
 A curtain wall (IfcCurtainWall), a glass façade, runs along its axis as a wall does, from a start to an end in the storey's plane, with
 its height from a base above the storey. The axis is its representation, but it has no body of its own: it is made of its parts, which

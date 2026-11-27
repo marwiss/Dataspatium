@@ -2264,6 +2264,7 @@
     'components.fetched': 'fetched {when} from {host}',
     'components.err.status': 'Could not fetch ({status}): {url}',
     'components.err.hash': 'The checksum of {label} does not match; the file is not used.',
+    'components.err.nodigest': '{label} has no pinned checksum and is not fetched.',
     'r.remote.packages': 'Fetching R packages from webR\'s package repository: {names}',
     'r.remote.index': 'webR\'s package index for R {version}',
     'r.remote.unpinned': 'R packages from webR\'s package repository are not used for R {version}: the app has no pinned checksum for the repository\'s index, so the packages cannot be checked.',
