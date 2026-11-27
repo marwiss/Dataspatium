@@ -497,7 +497,7 @@
       cog.release(again);
     });
     return 'ok';
-  }, 90000);
+  }, 90000, { serial: true });
 
   test('orthophoto-cog: when the file host refuses the key\'s token, the Geotorget login is asked once, goes as Basic only to the file host and is kept with the key', async (assert) => {
     const USER = 'prov-anvandare'; const PASSWORD = 'prov-lösen-ortofoto';

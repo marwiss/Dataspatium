@@ -68,7 +68,8 @@
     let registered = 0;
     const fakeFetch = async () => chunkedResponse(['Dataspatium.assets.register("' + name + '", "text", "hej");', ' /* tail */'], null, false);
     const seen = [];
-    const unsub = downloads.onChange((items) => { if (items.length) seen.push(items[0].received); });
+    // Over http another test's real download can be in flight too: only this one counts.
+    const unsub = downloads.onChange((items) => { const mine = items.find((d) => d.name === name); if (mine) seen.push(mine.received); });
     try {
       await D.assets.fetchScript('vendor/fake/downloads-asset.js', { name, size: 80 }, { fetch: fakeFetch });
       registered = 1;
@@ -145,5 +146,5 @@
       root.remove();
     }
     return 'ok';
-  }, 20000);
+  }, 20000, { serial: true });
 })();

@@ -46,7 +46,7 @@
       assert.equal(labelled.querySelector('button').getAttribute('data-tip'), 'Kör koden (Ctrl+Enter)');
       return 'ok';
     } finally { tooltip.hide(); host.remove(); }
-  });
+  }, 20000, { serial: true });
 
   test('tooltips: a plain element with a title gets data-tip (and an aria-label when it had no name); inside a dialog the tooltip renders in the dialog', async (assert) => {
     const host = h('div', null);

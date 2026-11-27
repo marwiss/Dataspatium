@@ -98,7 +98,7 @@
     assert.equal(stopped.aborted, true);
     assert.ok(stopped.steps.some((s) => s.message === t('flows.stopped.round', { n: 1, total: flows.DEFAULT_ROUNDS })), 'the round it stopped in: ' + JSON.stringify(stopped.steps));
     return 'ok';
-  });
+  }, 20000, { serial: true });
 
   test('plans: the step ask waits for the answer, which later steps read; a flow that asks never runs at start', async (assert) => {
     const asked = [];

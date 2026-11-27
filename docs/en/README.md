@@ -440,7 +440,9 @@ you did. See [CONTRIBUTING.md](../../CONTRIBUTING.md). Attach no personal data a
   requires only what is loaded with it. The test page loads everything at start.
 - Third-party components: `python tools/fetch_vendor.py` followed by `python tools/wrap_assets.py`.
 - Tests: `powershell -File tools/run-tests.ps1` or `tools/run-tests.sh` (headless Edge and Firefox). The tests never go to the network;
-  real services are tried only with their own parameters (`?cde=` against a Dataregium, `?python=1` with Pyodide).
+  real services are tried only with their own parameters (`?cde=` against a Dataregium, `?python=1` with Pyodide). `-Jobs 2` runs
+  the browsers at the same time and `-Shards N` splits the suite into N parts, `tests/index.html?files=a,b` runs only some test
+  files, and `python -I tools/affected_tests.py` lists the test files and configurations a change affects.
 - Security: the tests for consent, secrets, review before sharing, OAuth2 (PKCE, state, return) and the log's masking are part of the
   suite; see [sakerhet.md](sakerhet.md).
 

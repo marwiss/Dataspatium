@@ -220,7 +220,11 @@
         const details = /** @type {HTMLDetailsElement} */ (await waitFor(() => panel.el.querySelector('[data-site-map]'), 3000, 'the site map'));
         details.open = true;
         await waitFor(() => panel.site.handle && panel.site.state.orthos.length, 8000, 'the map and its choices');
-        const sel = /** @type {any} */ (await waitFor(() => panel.el.querySelector('[data-site-map-basemap]'), 3000, 'the choice'));
+        // The choice is drawn after the state has the orthophotos: wait for the element read, not the state (LD-69).
+        const sel = /** @type {any} */ (await waitFor(() => {
+          const s = /** @type {any} */ (panel.el.querySelector('[data-site-map-basemap]'));
+          return s && s.options.some((o) => o.value === 'ortho-is') ? s : null;
+        }, 3000, 'the choice with the orthophoto'));
         assert.deepEqual(sel.options.map((o) => o.value), ['none', 'osm', 'ortho-is'], 'the orthophoto that covers the place');
         assert.ok(!asked.length && !made.length, 'opening the map asks nothing and fetches nothing');
         assert.ok(panel.site.handle.map.getZoom() >= 17, 'close enough to see the house: zoom ' + panel.site.handle.map.getZoom());

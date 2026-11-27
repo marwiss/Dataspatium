@@ -431,7 +431,9 @@ säkerhetssårbarhet, följ [SECURITY.md](SECURITY.md) i stället för att öppn
   kräver det som laddas med den. Provsidan laddar allt vid start.
 - Tredjepartskomponenter: `python tools/fetch_vendor.py` följt av `python tools/wrap_assets.py`.
 - Prov: `powershell -File tools/run-tests.ps1` eller `tools/run-tests.sh` (headless Edge och Firefox). Proven går aldrig mot nätet;
-  riktiga tjänster provas bara med egna parametrar (`?cde=` mot en Dataregium, `?python=1` med Pyodide).
+  riktiga tjänster provas bara med egna parametrar (`?cde=` mot en Dataregium, `?python=1` med Pyodide). `-Jobs 2` kör
+  webbläsarna samtidigt och `-Shards N` delar sviten i N delar, `tests/index.html?files=a,b` kör bara några provfiler, och
+  `python -I tools/affected_tests.py` listar de provfiler och lägen som en ändring berör.
 - Säkerhet: proven för samtycke, hemligheter, granskning före delning, OAuth2 (PKCE, state, återhopp) och loggens maskering ingår i
   sviten; se [docs/sv/sakerhet.md](docs/sv/sakerhet.md).
 

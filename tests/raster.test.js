@@ -402,7 +402,7 @@
     assert.ok(ds.raster.files[0].kept === 'original' && ds.raster.files[0].preview.width > 1000, JSON.stringify(ds.raster.files[0].preview));
     assert.ok(run.longest < 50, `the page never waits more than 50 ms: ${run.longest.toFixed(1)} ms`);
     return `${run.longest.toFixed(1)} ms`;
-  }, 90000);
+  }, 90000, { serial: true });
 
   test('raster: Exportera gives the original byte for byte and the map image as a GeoTIFF in Web Mercator with its attribution beside it', async (assert) => {
     const zip = D.require('platform/storage/zip');

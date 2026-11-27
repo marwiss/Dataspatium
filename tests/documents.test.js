@@ -147,7 +147,7 @@
     assert.ok(dark > 500, 'rendered page has text pixels: ' + dark);
     await doc.destroy();
     return `${meta.rowCount} paragraphs in ${Math.round(ms)} ms`;
-  }, 180000);
+  }, 180000, { serial: true });
 
   test('images: JPEG with EXIF gives date, camera and position; previews and thumbnails are stored', async (assert) => {
     const jpg = await makeJpeg('foto.jpg', 2400, 1600, { dateTimeOriginal: '2024-06-01 12:30:00', make: 'Testkamera', model: 'X1', lat: 59.3293, lon: 18.0686, altitude: 12.5, description: 'Stockholm' });
