@@ -44,7 +44,7 @@
         let pages = 0; let truncated = false; let firstData = null; let lastMeta = null;
         while (req) {
           const authed = await auth.apply(connector, req, { signal: options.signal, ask: options.ask });
-          const res = await http.request(Object.assign({}, authed, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal, ask: options.ask }));
+          const res = await http.request(Object.assign({}, authed, { rateKey: connector.id, rateLimit: connector.rateLimit, cors: connector.cors, signal: options.signal, ask: options.ask }));
           pages++;
           if (!res.ok) throw http.httpError(res, connector.name);
           const parsed = await parsers.parse(res.text, spec, { options: runtimeOptions });

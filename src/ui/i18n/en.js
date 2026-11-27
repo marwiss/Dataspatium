@@ -2615,6 +2615,7 @@
     'bridge.relay.on': 'Services that do not allow the browser are now fetched through the bridge.',
     'bridge.relay.off': 'Nothing is fetched through the bridge any more.',
     'api.err.bridge': 'Could not fetch from {host} through the bridge: {message}',
+    'api.err.nocors': '{host} does not allow requests from the browser (CORS), so its answer cannot be read here. The bridge on your own computer can fetch it: start it with --allow-host {host} (-AllowHosts {host} in PowerShell), connect it under Import and turn on Fetch through the bridge under Internet access in Manage.',
     'bridge.err.token': 'The bridge rejected the token. Copy the token from the bridge\'s window.',
     'bridge.err.readonly': 'The bridge is read-only. Start it with writing allowed to change data.',
     'bridge.err.approval': 'The change needs your approval.',

@@ -238,6 +238,35 @@
     assert.equal(kind, 'aborted');
   });
 
+  test('api: a source marked as out of the browser\'s reach names the bridge and its host when the browser is refused', async (assert) => {
+    // The browser's fetch fails as it does for a missing CORS header, without any network.
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (input, init) => (/^https:\/\/nocors\.example\//.test(String(input)) ? Promise.reject(new TypeError('Failed to fetch')) : realFetch(input, init));
+    const ep = { id: 'x', name: 'X', method: 'GET', path: '/x', response: { format: 'json' } };
+    const fail = async (c, run) => { try { await run(c); } catch (err) { return err; } throw new Error('expected an error'); };
+    try {
+      const marked = connector({ id: 'nocors-test', baseUrl: 'https://nocors.example/api', cors: { file: false, web: false }, endpoints: [ep] });
+      const e1 = await fail(marked, (c) => runner.fetchTable(c, ep, {}));
+      assert.equal(e1.message, t('api.err.nocors', { host: 'nocors.example' }), 'the runner: ' + e1.message);
+      assert.ok(e1.code === 'cors' && e1.kind === 'network', 'a network error with the code cors');
+      assert.ok(/--allow-host nocors\.example/.test(e1.message), 'the bridge is started with the host');
+      // A family's own requests (PxWeb, Statbank, FHI, Socialstyrelsen) say the same.
+      const e2 = await fail(marked, (c) => D.require('api/families/common').getJson(c, 'https://nocors.example/api/x'));
+      assert.equal(e2.message, e1.message, 'a family');
+      // Marked for one side only: what works elsewhere comes first, then the bridge.
+      const here = D.require('api/reach').mode();
+      const one = connector({ id: 'nocors-one', baseUrl: 'https://nocors.example/api', cors: { [here]: false }, endpoints: [ep] });
+      const e3 = await fail(one, (c) => runner.fetchTable(c, ep, {}));
+      assert.ok(e3.message.startsWith(D.require('api/reach').hint(here === 'file' ? 'web' : 'file')) && e3.message.endsWith(e1.message), e3.message);
+      // An unmarked source keeps the general text: no network, or no CORS.
+      const plain = connector({ id: 'nocors-plain', baseUrl: 'https://nocors.example/api', endpoints: [ep] });
+      const e4 = await fail(plain, (c) => runner.fetchTable(c, ep, {}));
+      assert.equal(e4.message, t('api.err.network', { host: 'nocors.example' }));
+      assert.ok(e4.code === undefined, 'no code');
+      return e1.message;
+    } finally { globalThis.fetch = realFetch; }
+  });
+
   test('api: secrets in session, encrypted persistence, lock and unlock', async (assert) => {
     const id = 'test-secret-connector';
     await secrets.clearPersisted();
