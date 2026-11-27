@@ -24,7 +24,7 @@
      */
     function create(ctx, hooks) {
       const { ui, shell, services } = ctx;
-      const s = { connectors: [], connector: null, projects: null, projectId: '', what: 'dataset', format: '', how: 'documents', busy: '', error: '', progress: null, done: '' };
+      const s = { connectors: [], connector: null, projects: null, projectId: '', what: 'dataset', format: '', how: 'documents', busy: '', error: '', progress: null, done: '', message: '' };
       const el = h('div', { class: 'dm-stack' });
       const fail = (err) => { s.error = String((err && err.message) || err); shell.log(s.error, 'error'); };
       const ds = () => hooks.dataset();
@@ -113,13 +113,26 @@
           } else {
             const redirect = redirectOverride || opencde.redirectUri();
             if (!redirect) throw new Error(t('opencde.err.file.documents'));
-            const version = await opencde.uploadDocument(s.connector, file, { documentId: options.asVersionOf || null, baseVersionIndex: options.asVersionOf && d.source && d.source.cde && d.source.cde.documentId === options.asVersionOf && d.source.cde.versionIndex != null ? Number(d.source.cde.versionIndex) : null, redirectUri: redirect, popup: popup || undefined, onProgress: (p) => { s.progress = p; renderProgress(); } });
+            const version = await opencde.uploadDocument(s.connector, file, { documentId: options.asVersionOf || null, baseVersionIndex: options.asVersionOf && d.source && d.source.cde && d.source.cde.documentId === options.asVersionOf && d.source.cde.versionIndex != null ? Number(d.source.cde.versionIndex) : null, message: options.asVersionOf ? s.message : '', redirectUri: redirect, popup: popup || undefined, onProgress: (p) => { s.progress = p; renderProgress(); } });
             if (!version) { s.done = t('cde.send.cancelled'); }
             else {
               result = version;
               s.done = t('cde.send.done.document', { name: version.title || file.name, version: String(version.version_number || version.version_index) });
-              // The dataset that went back as a new version now points at that version.
-              if (options.asVersionOf && d.source && d.source.cde && d.source.cde.documentId === options.asVersionOf) {
+              const same = options.asVersionOf && d.source && d.source.cde && d.source.cde.documentId === options.asVersionOf;
+              if (same) s.message = '';
+              // The server moved ids the file reused (Dataregium's safety net): the stored version becomes the model, so that the next
+              // change builds on the ids the server keeps. Otherwise the dataset that went back now points at that version.
+              let adopted = false;
+              if (same && version.renumbered) {
+                try {
+                  await opencde.adoptStored(s.connector, d.id, version);
+                  adopted = true;
+                  s.done += ' ' + t('cde.send.renumbered', { n: version.renumbered.count });
+                } catch (err) { D.log('cde', err); s.error = t('cde.send.renumbered.failed', { n: version.renumbered.count, detail: String((err && err.message) || err) }); }
+              }
+              // When the stored version could not be fetched, the dataset keeps pointing at the version it came from, so that the server
+              // refuses the next version (version_conflict) and Sök ny version offers the stored one.
+              if (same && !adopted && !version.renumbered) {
                 const cde = Object.assign({}, d.source.cde, { versionIndex: Number(version.version_index), reference: version.links && version.links.document_version_download ? version.links.document_version_download.url : d.source.cde.reference, fetchedAt: new Date().toISOString() });
                 await datasets.updateMeta(d.id, { source: Object.assign({}, d.source, { cde }) });
               }
@@ -211,8 +224,16 @@
             how.addEventListener('change', () => { s.how = how.value; render(); });
             const own = documents && d.source && d.source.cde && d.source.cde.documentId && d.source.cde.connectorId === s.connector.id ? d.source.cde : null;
             progressEl = h('div', { 'data-cde-progress': '' });
+            // What the new version changes, for its message on the server (Dataregium keeps at most MESSAGE_MAX characters).
+            let message = null;
+            if (own) {
+              message = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '2', label: t('cde.send.message'), help: t('cde.send.message.help', { n: String(opencde.MESSAGE_MAX) }), 'data-cde-message': '' }));
+              message.value = s.message;
+              message.addEventListener('input', () => { s.message = String(message.value || '').slice(0, opencde.MESSAGE_MAX); });
+            }
             nodes.push(what, s.what === 'dataset' ? format : null, s.what === 'bundle' ? h('p', { class: 'dm-help dm-small', text: t('cde.send.what.bundle.hint') }) : null, how,
               h('p', { class: 'dm-help dm-small', text: t(s.how === 'bcf' ? 'cde.send.how.bcf.hint' : 'cde.send.how.documents.hint') }),
+              message,
               h('div', { class: 'dm-row-wrap' },
                 ui.button({ label: t('cde.send.button'), icon: 'upload', variant: 'primary', loading: s.busy === 'send', title: t('cde.send.button.hint'), 'data-cde-send': '', onClick: () => send() }),
                 own ? ui.button({ label: t('cde.send.version', { n: String((Number(own.versionIndex) || 0) + 1) }), icon: 'upload', loading: s.busy === 'send', title: t('cde.send.version.hint'), 'data-cde-send-version': '', onClick: () => send({ asVersionOf: own.documentId }) }) : null,

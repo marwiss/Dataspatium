@@ -732,7 +732,11 @@ själv sitt ändringsset innan du ser det och rättar det som hjulet hittar, hö
 
 En modell hämtad från Dataregium publiceras som ny version i Dela med dokumentets basversion, den version du hämtade. Har dokumentet
 fått en nyare version under tiden avvisar servern publiceringen (412 version_conflict); hämta då den nyaste versionen, gör om
-ändringarna och publicera igen. För en modell hämtad från Dataregium frågar *Förhandsvisa* också serverns förhandskontroll av
+ändringarna och publicera igen. Svaret avgörs av serverns felkod också när en lång kontroll svarar med status 200. Har filen
+återanvänt id som en tidigare version av dokumentet hade, flyttar Dataregium dem över historiken när versionen sparas och anger
+dem i versionens metadata (`ifc_renumbered`); appen hämtar då den sparade versionen och gör den till modellen, som ett steg i
+historiken som kan ångras men inte ingår i receptet, så att nästa ändring bygger på serverns id. Går den inte att hämta pekar
+datamängden kvar på den version du hämtade, och *Sök ny version* erbjuder den sparade. För en modell hämtad från Dataregium frågar *Förhandsvisa* också serverns förhandskontroll av
 kandidaten (schema, buildingSMART-regler och projektets IDS) när källan är inloggad, och ett projekt som inte tar emot filer med
 valideringsfel avvisar publiceringen (422) med serverns fynd i meddelandet och på kortet Validera modellen.
 
