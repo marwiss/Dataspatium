@@ -430,7 +430,7 @@
       ['create_element', element({ ifc_class: 'IfcFooting', predefined_type: 'PAD_FOOTING', name: 'Plint', at: [3, 4], z: -0.5, shape: rect(0.8, 1.2, 0.5) })],
       ['create_element', element({ ifc_class: 'IfcFooting', predefined_type: 'STRIP_FOOTING', name: 'Sula', at: null, z: -0.6, shape: polygon([[-0.3, -0.3], [12.3, -0.3], [12.3, 0.3], [-0.3, 0.3]], 0.4) })],
       ['create_element', element({ ifc_class: 'IfcStair', name: 'Trappa', at: [8, 2], rotation: 90, shape: null, stair: STAIR })],
-      ['assign', { ids: ['new-4', 'new-5', 'new-8', 'new-9'], storey: null, material: 'Betong', category: 'concrete' }],
+      ['assign', { ids: ['new-4', 'new-5', 'new-8', 'new-9', 'new-10'], storey: null, material: 'Betong', category: 'concrete' }],
       ['assign', { ids: ['new-7'], storey: null, material: 'Furu', category: 'wood' }],
     ];
     const cs = writeTools.create(dataset.id);
