@@ -202,7 +202,7 @@ sedan i webbläsaren. Inget skickas någonstans; modellen lämnar inte datorn.
 
 Båda är steg i receptet: den ändrade modellen blir datamängdens nya innehåll (originalfilen byts och tabellerna byggs om),
 steget loggas och kan ångras, och originalfilen är alltid den aktuella versionen när du exporterar modellen eller skickar den
-till ett CDE.
+till ett CDE. En modell från Dataregium kan i stället skicka ändringarna som ett ändringsförslag, se [Dela](dela.md#till-cde).
 
 **I Python** (fliken Python i Analysera och kodceller i anteckningsboken) öppnar `dm_ifc("namn")` modellen som en
 `ifcopenshell.file`. Hjälparna `dm_ifc_elements`, `dm_ifc_psets`, `dm_ifc_tree`, `dm_ifc_validate`, `dm_ifc_select` och
@@ -759,7 +759,9 @@ Modellen i appen ändras inte av det; hämta den nya versionen från Dataregium 
 nyare versioner sedan basen prövar servern förslaget om mot den senaste i samma steg och godkänner mot den när prövningen är ren;
 krockar ändringarna med det som kommit emellan vägrar servern (412) och panelen listar de krockande nycklarna (instans och attribut),
 eller säger att allt kan ha ändrats när en hel fil laddats upp emellan. Hämta då den nyaste versionen, gör om ändringarna och föreslå
-igen.
+igen. Ändringar som du gjort med *Skriv tabell till modellen* eller *Python på modellen* föreslås på samma sätt från Dela, fliken
+*Till CDE*, med *Föreslå ändringarna*: appen jämför modellens fil med basversionens fil från servern, och förslagets proveniens
+anger stegen i stället för en AI-modell (se [Dela](dela.md#till-cde)).
 Kortet *Ändringsförslag på servern* i modellvyn visar, för en modell hämtad från Dataregium, alla förslag mot dokumentet när servern
 anger kapabiliteten `ifc_proposals_url`: titel, tillstånd, vem som föreslog, hur många ändringar och mot vilken version; *Godkänn* gör
 ett prövat förslag till nästa version för den som får godkänna, så att flera personer med varsin klient kan arbeta mot samma modell. En

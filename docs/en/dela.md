@@ -148,6 +148,27 @@ the Documents API alone has no project list here and takes no BCF documents; the
 *Workspace bundle* sends a bundle instead of a dataset: the bundle dialog chooses datasets and contents as usual, the review is done,
 and the file goes up as a document. The recipient sees the bundle in the source's file list in Import and receives it with a click.
 
+*Propose the changes*: a model fetched from Dataregium that you have since changed in Process, with *Write a table into the
+model* or *Python on the model*, can go to the server as a change proposal instead of as a new version of the whole file. The
+button stands beside *Send as version* when the server states the capability `ifc_changes` and the model has steps since it was fetched.
+The app then fetches the file of the version the model was fetched as from the server, since every step replaces the model's own
+file and the app keeps no copy of the base. Python with IfcOpenShell then compares the base with the model's file: the rooted
+entities that both files have with the same GlobalId are gone through, and every changed attribute is given in the server's form,
+for instance names, descriptions, property values, placements and the storey an element belongs to.
+
+The dialog shows how many changes the proposal carries and what the form cannot express: new and removed elements, new
+relationships, property sets and properties, and changed shapes. Those go into the topic's description instead. You write the
+title and the description, and the review then shows whether any of the new values looks like personal data. Such changes can be
+taken out of the proposal but not pseudonymised, since the value becomes the model's on the server when the proposal is approved.
+The proposal carries the base version, your name on the server and the steps that made the change. The server tries the proposal,
+and a manager of the project can approve it as the document's next version. When the document has got newer versions you decide
+the collisions one by one, the same way as for proposals from the AI panel (see [CAD and BIM](cad-bim.md#change-with-ai)). The model
+in the app does not change.
+
+When the model does not differ from the base version, or the changes are only new elements, the app says so at the button. The
+same goes when nothing that changed can be expressed, or when the changes are more than a proposal can carry. Use *Send as
+version* then, and the server merges the whole file with what came between.
+
 ## Receive
 
 Open a bundle from a file (drop it on the surface) or from a web address. Sender, message and changes are shown

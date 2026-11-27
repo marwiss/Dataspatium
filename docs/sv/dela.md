@@ -145,6 +145,26 @@ ingen projektlista här och tar inga BCF-dokument; serverns sida frågar efter p
 *Arbetsytepaket* skickar ett paket i stället för en datamängd: paketdialogen väljer datamängder och innehåll som vanligt, granskningen
 görs, och filen går upp som dokument. Den som tar emot ser paketet i källans fillista i Inhämta och tar emot det med ett klick.
 
+*Föreslå ändringarna*: en modell som hämtats från Dataregium och som du sedan ändrat i Bearbeta, med *Skriv tabell till
+modellen* eller *Python på modellen*, kan gå till servern som ett ändringsförslag i stället för som en ny version av hela filen.
+Knappen står bredvid *Skicka som version* när servern anger kapabiliteten `ifc_changes` och modellen har steg sedan den hämtades. Appen
+hämtar då filen för den version som modellen hämtades som från servern, eftersom varje steg byter modellens egen fil och appen
+inte sparar någon kopia av basen. Python med IfcOpenShell jämför sedan basen med modellens fil: de rotade entiteter som finns i båda
+filerna med samma GlobalId gås igenom, och varje ändrat attribut anges i serverns form, till exempel namn, beskrivningar,
+egenskapsvärden, placeringar och vilken våning ett element hör till.
+
+Dialogen visar hur många ändringar förslaget bär och vad formen inte kan uttrycka: nya och borttagna element, nya samband,
+egenskapsuppsättningar och egenskaper samt ändrade former. Det står i stället i ärendets beskrivning. Du skriver rubrik och
+beskrivning, och granskningen visar sedan om något av de nya värdena ser ut att vara en personuppgift. Sådana ändringar kan tas bort
+ur förslaget men inte pseudonymiseras, eftersom värdet blir modellens på servern när förslaget godkänns. Förslaget bär basversionen,
+ditt namn på servern och vilka steg som gjorde ändringen. Servern prövar förslaget, och en projektansvarig kan godkänna det som
+dokumentets nästa version. Har dokumentet fått nyare versioner avgör du krockarna per krock, på samma sätt som för förslag från
+AI-panelen (se [CAD och BIM](cad-bim.md#ändra-med-ai)). Modellen i appen ändras inte.
+
+Är modellen oförändrad mot basversionen, eller är ändringarna bara nya element, säger appen det vid knappen. Det gäller också när
+inget av det som ändrats kan uttryckas eller när ändringarna är fler än ett förslag kan bära. Använd då *Skicka som version*, så
+sammanfogar servern hela filen med det som kommit emellan.
+
 ## Ta emot
 
 Öppna ett paket från en fil (släpp den på ytan) eller från en webbadress. Avsändare, meddelande och ändringar visas

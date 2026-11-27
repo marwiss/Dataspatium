@@ -209,7 +209,7 @@ browser. Nothing is sent anywhere; the model does not leave the computer.
 
 Both are steps in the recipe: the changed model becomes the dataset's new content (the original file is replaced and the tables
 rebuilt), the step is logged and can be undone, and the original file is always the current version when you export the model
-or send it to a CDE.
+or send it to a CDE. A model from Dataregium can instead send the changes as a change proposal, see [Share](dela.md#to-the-cde).
 
 **In Python** (the Python tab in Analyse and code cells in the notebook) `dm_ifc("name")` opens the model as an
 `ifcopenshell.file`. The helpers `dm_ifc_elements`, `dm_ifc_psets`, `dm_ifc_tree`, `dm_ifc_validate`, `dm_ifc_select` and
@@ -783,7 +783,10 @@ the approver in the version's metadata) and closes the topic. The model in the a
 Dataregium to go on working on it. When the document has got newer versions since the base, the server tries the proposal again on
 the latest in the same step and approves against it when the trial is clean; when the changes collide with what came between, the
 server refuses (412) and the panel lists the colliding keys (instance and attribute), or says that anything may have changed when a
-whole file was uploaded in between. Fetch the newest version then, redo the changes and propose again.
+whole file was uploaded in between. Fetch the newest version then, redo the changes and propose again. Changes you made with
+*Write a table into the model* or *Python on the model* are proposed the same way from Share, the tab *To the CDE*, with *Propose
+the changes*: the app compares the model's file with the base version's file from the server, and the proposal's provenance names
+the steps instead of an AI model (see [Share](dela.md#to-the-cde)).
 The card *Change proposals on the server* in the model view shows, for a model fetched from Dataregium, every proposal against the
 document when the server states the capability `ifc_proposals_url`: title, state, who proposed it, how many changes and against which
 version; *Approve* makes a tried proposal the next version for those allowed to approve, so that several people with their own clients
