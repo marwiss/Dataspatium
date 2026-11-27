@@ -147,7 +147,9 @@ What works in one version also works in the next. Each version goes with the sam
   are marked, and click an area, or select several, and every position concerning them is listed. The links are read from
   Boverket's ÖP model, and also from deliveries that do not follow it (link tables, columns on the areas and areas named in the
   text). Each layer can be shown or hidden, several at once, with its own symbol in the legend and Boverket's colours where they
-  exist (see [Plans](planer.md#a-digital-comprehensive-plan-layers-positions-and-files)).
+  exist. The plan description, the areas and the links can be edited in the plan view, and the plan can be exported as a delivery
+  with a GeoPackage and the plan description (see [Plans](planer.md#a-digital-comprehensive-plan-layers-positions-and-files) and
+  [Edit the plan](planer.md#edit-the-plan)).
 - **Charts, maps and documents**: charts and maps with Vega-Lite, D3 or R, dashboards and reports from templates as HTML, Word, PDF,
   PowerPoint, Markdown or LaTeX (see [Visualise](visualisera.md)).
 - **Save and share**: data in some ten formats, sharing bundles, comments, backup, sync with GitHub and a portable folder.

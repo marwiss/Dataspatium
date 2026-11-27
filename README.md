@@ -142,8 +142,10 @@ Det som går i en version går också i nästa. Varje version hör ihop med samm
   filerna hålls ihop. Planbeskrivningen visas bredvid plankartan: välj ett ställningstagande så markeras alla dess områden, och
   klicka på ett område, eller markera flera, så visas alla ställningstaganden som berör dem. Kopplingarna läses ur Boverkets
   ÖP-modell, och också ur leveranser som inte följer den (kopplingstabeller, kolumner på områdena och områden som nämns i texten).
-  Varje lager kan visas eller döljas, flera samtidigt, med egen symbol i teckenförklaringen och Boverkets färger där de finns (se
-  [Planer](docs/sv/planer.md#en-digital-översiktsplan-lager-ställningstaganden-och-filer)).
+  Varje lager kan visas eller döljas, flera samtidigt, med egen symbol i teckenförklaringen och Boverkets färger där de finns.
+  Planbeskrivningen, områdena och kopplingarna kan redigeras i planvyn, och planen kan exporteras som en leverans med GeoPackage och
+  planbeskrivning (se [Planer](docs/sv/planer.md#en-digital-översiktsplan-lager-ställningstaganden-och-filer) och
+  [Redigera planen](docs/sv/planer.md#redigera-planen)).
 - **Diagram, kartor och dokument**: diagram och kartor med Vega-Lite, D3 eller R, dashboards och rapporter ur mallar som HTML, Word,
   PDF, PowerPoint, Markdown eller LaTeX (se [Visualisera](docs/sv/visualisera.md)).
 - **Spara och dela**: data i ett tiotal format, delningspaket, kommentarer, säkerhetskopia, synk med GitHub och en portabel mapp.
