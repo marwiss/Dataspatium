@@ -82,7 +82,8 @@
   const languageScripts = chosenLanguages().map((code) => 'src/ui/i18n/' + code + '.js');
   /**
    * Scripts on their way at once: the whole number of `?inflight=` from 1 to 32, a parameter for measuring the start (the
-   * start profile), else 8, enough to hide the round trips and few enough that a web server never sees several hundred (LD-61).
+   * start profile), else 16, which the measurement from Pages found faster than 8 with no failed file in 99 starts (F80 a), and
+   * few enough that a web server never sees several hundred (LD-61).
    * @param {string} search a location.search
    * @returns {number}
    */
@@ -90,7 +91,7 @@
     let asked = '';
     try { asked = new URLSearchParams(search || '').get('inflight') || ''; } catch (_e) { asked = ''; }
     const n = /^\d+$/.test(asked) ? Number(asked) : 0;
-    return n >= 1 && n <= 32 ? n : 8;
+    return n >= 1 && n <= 32 ? n : 16;
   }
   // For ui/i18n (the same detection), the start profile and the tests; the registry keeps the object when it loads.
   const D = /** @type {any} */ (globalThis).Dataspatium || (/** @type {any} */ (globalThis).Dataspatium = {});
@@ -580,6 +581,8 @@
       let done = false;
       try { done = sessionStorage.getItem(FLAG) === '1'; sessionStorage.setItem(FLAG, '1'); } catch (_e) { done = true; }
       if (done) return Promise.resolve();
+      // For the start profile, the time this first page began, so that the reload's cost can be shown (F81 c).
+      if (/[?&]profil=/.test(location.search)) { try { sessionStorage.setItem('dataspatium.isolation.began', String(performance.timeOrigin)); } catch (_e) { /* nothing to show */ } }
       location.reload();
       return new Promise(() => {});
     };

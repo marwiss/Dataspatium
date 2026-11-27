@@ -48,10 +48,12 @@ server (`python -m http.server 8092 --bind 127.0.0.1` in the folder) the address
 `http://127.0.0.1:8092/index.html?lang=sv&profil=start&profil-exit=1`. `lang=sv` (or `lang=en`) picks the language in advance, since
 the very first start waits for the language choice.
 
-The profile takes a few additions to the address. `&inflight=16` loads 16 scripts at a time instead of 8 (1–32; the first line gives
+The profile takes a few additions to the address. `&inflight=8` loads 8 scripts at a time instead of 16 (1–32; the first line gives
 the number). `&profil-ensure=sources` loads that group of scripts after the summary (several separated by commas; the groups are listed
 in `src/boot.js`) and writes how many scripts it was and how long it took. The line `profil presets:` shows how long the presets of
-the open APIs took to read, and the line `profil retry` that the page was reloaded once because a file could not be fetched.
+the open APIs took to read, and the line `profil retry` that the page was reloaded once because a file could not be fetched. On the
+first visit from a web server the page reloads once to become isolated (the service worker), and the line `profil isolation` shows how
+long the first page lasted and when the app was ready counted from it.
 
 ## Can I interrupt R code that is stuck?
 

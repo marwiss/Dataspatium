@@ -48,10 +48,12 @@ parametern mäts ingenting. Med `&profil-exit=1` avslutas mätningen som ett pro
 `http://127.0.0.1:8092/index.html?lang=sv&profil=start&profil-exit=1`. `lang=sv` väljer språket i förväg, eftersom den allra första
 starten väntar på språkvalet.
 
-Profilen tar några tillägg i adressen. `&inflight=16` laddar 16 skript åt gången i stället för 8 (1–32; första raden anger antalet).
+Profilen tar några tillägg i adressen. `&inflight=8` laddar 8 skript åt gången i stället för 16 (1–32; första raden anger antalet).
 `&profil-ensure=sources` laddar efter sammanfattningen den gruppen av skript (flera med komma emellan; grupperna står i `src/boot.js`)
 och skriver ut hur många skript det blev och hur lång tid det tog. Raden `profil presets:` visar hur lång tid förinställningarna för de
-öppna API:erna tog att läsa, och raden `profil retry` att sidan laddades om en gång eftersom en fil inte gick att hämta.
+öppna API:erna tog att läsa, och raden `profil retry` att sidan laddades om en gång eftersom en fil inte gick att hämta. Vid första
+besöket från en webbserver laddas sidan om en gång för att bli isolerad (service workern), och raden `profil isolation` visar hur
+länge den första sidan pågick och när appen var redo räknat från den.
 
 ## Kan jag avbryta R-kod som fastnat?
 

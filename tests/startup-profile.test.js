@@ -36,6 +36,11 @@
     const lines = P.lines(s);
     assert.equal(lines[0], 'profil start: full page over http:, 3 scripts, 8 at a time; from navigation start: boot 10 ms, DOMContentLoaded 30 ms, last script 125 ms, ready 130 ms, first render 400 ms');
     assert.ok(!lines.some((l) => l.startsWith('profil retry')), 'no retry line for a first try');
+    assert.ok(s.isolation === null && !lines.some((l) => l.startsWith('profil isolation')), 'no isolation line without a reload for isolation');
+    const reloaded = P.summarize({ marks, protocol: 'https:', isolation: 1234.6 });
+    assert.equal(reloaded.isolation, 1234.6);
+    assert.ok(P.lines(reloaded).includes('profil isolation: the page reloaded once for cross-origin isolation; the first page began 1235 ms before this one, ready 1365 ms after it'),
+      'the reload\'s cost and the ready time from the first page (F81 c): ' + P.lines(reloaded).join(' / '));
     for (const line of ['profil paint: first-contentful-paint 90 ms', 'profil slowest 2: src/ui/i18n/sv.js 108 ms from insertion to load (own 100 ms, 300.0 kB)',
       'profil group: src/ui/i18n 1 script, own 100 ms, 300.0 kB', 'profil largest 1: src/ui/i18n/sv.js 300.0 kB', 'profil long task: 92 ms at 30 ms during src/ui/i18n/sv.js']) {
       assert.ok(lines.includes(line), 'line: ' + line + ' in ' + lines.join(' / '));

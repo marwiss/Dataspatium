@@ -70,11 +70,11 @@
     return 'ok';
   });
 
-  test('groups: ?inflight= sets the scripts on their way at once, a whole number from 1 to 32, else eight', (assert) => {
+  test('groups: ?inflight= sets the scripts on their way at once, a whole number from 1 to 32, else sixteen (F80 a)', (assert) => {
     const of = D.boot.inFlightOf;
-    assert.equal(of('?inflight=16'), 16);
-    for (const search of ['', '?inflight=0', '?inflight=x']) assert.equal(of(search), 8, 'eight for ' + JSON.stringify(search));
-    for (const [search, n] of [['?inflight=1', 1], ['?inflight=32', 32], ['?inflight=33', 8], ['?inflight=2.5', 8], ['?inflight=-4', 8], ['?lang=sv&inflight=12&profil=start', 12]]) assert.equal(of(search), n, search);
+    assert.equal(of('?inflight=8'), 8);
+    for (const search of ['', '?inflight=0', '?inflight=x']) assert.equal(of(search), 16, 'sixteen for ' + JSON.stringify(search));
+    for (const [search, n] of [['?inflight=1', 1], ['?inflight=32', 32], ['?inflight=33', 16], ['?inflight=2.5', 16], ['?inflight=-4', 16], ['?lang=sv&inflight=12&profil=start', 12]]) assert.equal(of(search), n, search);
     assert.equal(D.boot.inFlight, of(location.search), 'the loader of this page uses it');
     return D.boot.inFlight + ' at a time';
   });

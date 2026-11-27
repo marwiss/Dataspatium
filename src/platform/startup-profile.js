@@ -62,6 +62,8 @@
      * @property {string} [page] 'full' or 'mobile'
      * @property {string|null} [error] why the start did not finish, if it did not
      * @property {number|null} [inFlight] the scripts the loader has on their way at once (src/boot.js)
+     * @property {number|null} [isolation] ms from the first page's navigation start to this one's, when the page reloaded once for
+     *   cross-origin isolation (src/boot.js isolate)
      * @property {ProfileTracked[]} [tracked] the promises noted with track(), as settle() gives them
      */
     /**
@@ -177,7 +179,8 @@
       const paints = (input.paints || []).map((p) => ({ name: p.name, start: round(p.startTime) }));
       const tracked = (input.tracked || []).map((x) => ({ name: x.name, begun: round(x.begun), ended: round(x.ended), failed: !!x.failed }));
       const inFlight = Number(input.inFlight) > 0 ? Number(input.inFlight) : null;
-      return { page: input.page || 'full', protocol: input.protocol || '', inFlight, retry: at('retry') !== null, timeline, scripts, slowest, groups, bytes, longTasks, paints, tracked, error: input.error || null };
+      const isolation = Number(input.isolation) > 0 ? round(Number(input.isolation)) : null;
+      return { page: input.page || 'full', protocol: input.protocol || '', inFlight, isolation, retry: at('retry') !== null, timeline, scripts, slowest, groups, bytes, longTasks, paints, tracked, error: input.error || null };
     }
 
     /**
@@ -189,6 +192,7 @@
       const tl = s.timeline;
       const out = [`profil start: ${s.page} page over ${s.protocol || '?'}, ${count(s.scripts.length, 'script')}${s.inFlight ? ', ' + s.inFlight + ' at a time' : ''}; from navigation start: boot ${ms(tl.boot)}, DOMContentLoaded ${ms(tl.domContentLoaded)}, last script ${ms(tl.scriptsDone)}, ready ${ms(tl.ready)}, first render ${ms(tl.firstRender)}`];
       if (s.retry) out.push('profil retry: the second try, after a file of the first one failed to load');
+      if (s.isolation !== null) out.push(`profil isolation: the page reloaded once for cross-origin isolation; the first page began ${ms(s.isolation)} before this one${tl.ready === null ? '' : ', ready ' + ms(s.isolation + tl.ready) + ' after it'}`);
       for (const p of s.paints) out.push(`profil paint: ${p.name} ${ms(p.start)}`);
       for (const x of s.tracked) {
         if (x.ended === null) out.push(`profil ${x.name}: not done (begun at ${ms(x.begun)})`);
@@ -270,6 +274,19 @@
       }
     }
 
+    /**
+     * The time from the first page to this one, which boot.js noted before reloading for isolation, read once.
+     * @returns {number|null}
+     */
+    function isolationTime() {
+      try {
+        const began = Number(sessionStorage.getItem('dataspatium.isolation.began'));
+        sessionStorage.removeItem('dataspatium.isolation.began');
+        const gap = performance.timeOrigin - began;
+        return began > 0 && gap > 0 && gap < 120000 ? gap : null;
+      } catch (_e) { return null; }
+    }
+
     /** The page's entries now, for summarize. @param {string|null} error */
     function collect(error) {
       /** @param {string} type @returns {any[]} */
@@ -283,6 +300,7 @@
         protocol: location.protocol,
         page: /** @type {any} */ (globalThis).DATASPATIUM_PROFILE === 'mobile' ? 'mobile' : 'full',
         inFlight: D.boot ? D.boot.inFlight : null,
+        isolation: isolationTime(),
         error,
       };
     }
