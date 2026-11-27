@@ -10,7 +10,8 @@
  * (plotly's topojson), a map's style, tiles and icons, layout images, GeoJSON by address, and what buttons and sliders bring
  * in; its text is pseudo-HTML whose styles and links reach the page. Every drawing works on a copy built key by key: text
  * keeps only bare tags, and prepare() asks once per purpose for the hosts the figure names (background maps, web addresses),
- * leaves out what is refused or cannot be checked, and says so. Plotly's cloud is never offered.
+ * per host since the figure chose them (F103 a), reads a map's style or tile set by address itself and draws it inline, leaves
+ * out what is refused or cannot be checked, and says so. Plotly's cloud is never offered.
  *
  * A link in a chart drawn in the app (render) stays a link only when its address is an absolute https URL, rebuilt with that
  * address alone; a click on it never navigates: a dialog names the host and shows the address, and only a yes opens it in a new
@@ -305,8 +306,10 @@
         if (c.last === 'subplot') addMap(canon(v, 'map'));
         if (typeof v !== 'string') return;
         if (c.map) {
-          if (c.style) for (const h of styleHosts(v)) out.basemaps.add(h);
           const host = looseHost(v, true);
+          // A style, tile set or layer source by address names hosts of its own, which cannot be checked before the click.
+          if (host && (c.style || c.last === 'url' || c.last === 'source')) { out.blocked = true; return; }
+          if (c.style) for (const h of styleHosts(v)) out.basemaps.add(h);
           if (host === null) out.blocked = true; else if (host) out.basemaps.add(host);
         } else if (c.last === 'source' || c.last === 'geojson') {
           const src = strictSource(v);
@@ -332,6 +335,80 @@
       };
       walk(args, [], at([]), 0);
       return out;
+    }
+
+    // ---- a map's JSON by address ----------------------------------------------------------------------------------
+    /**
+     * A map's style by address, and a tile set by address (TileJSON, a source's `url` or a vector or raster layer's `source`),
+     * is JSON that names hosts of its own and carries attributions that MapLibre writes into the page as HTML (F103 a). prepare()
+     * fetches it itself from a host already allowed, cleans it as the figure's own map text and draws it inline, so that the
+     * hosts it names are asked about in turn; whatever is still by address after that is never drawn (UNCHECKED).
+     */
+    const UNCHECKED = 'data:,unchecked';
+    const MAX_JSON = 5 * 1024 * 1024;
+    const TILE_LAYERS = new Set(['vector', 'raster']);
+    /** What a TileJSON gives a source drawn inline; its attribution is cleaned like any map text. */
+    const TILEJSON_KEYS = ['tiles', 'minzoom', 'maxzoom', 'bounds', 'scheme', 'attribution', 'tileSize', 'encoding'];
+    /** The JSON a figure's maps load by address: [{url, kind: 'style'|'tiles', set(value)}]; set(UNCHECKED) leaves the map out. */
+    function remoteJson(layout) {
+      const out = [];
+      const remote = (v) => typeof v === 'string' && !!looseHost(v, true);
+      for (const id of Object.keys(layout)) {
+        const sub = layout[id];
+        if (!MAP_KEY.test(id) || !isPlain(sub)) continue;
+        if (remote(sub.style)) out.push({ url: sub.style, kind: 'style', set: (v) => { sub.style = v; } });
+        const sources = isPlain(sub.style) && isPlain(sub.style.sources) ? sub.style.sources : {};
+        for (const k of Object.keys(sources)) {
+          const src = sources[k];
+          if (isPlain(src) && remote(src.url)) out.push({ url: src.url, kind: 'tiles', set: (v) => { if (v === UNCHECKED) src.url = v; else { delete src.url; Object.assign(src, v); } } });
+        }
+        for (const layer of Array.isArray(sub.layers) ? sub.layers : []) {
+          if (isPlain(layer) && TILE_LAYERS.has(layer.sourcetype) && remote(layer.source)) {
+            out.push({ url: layer.source, kind: 'tiles', set: (v) => {
+              if (v === UNCHECKED || !Array.isArray(v.tiles)) { layer.source = UNCHECKED; return; }
+              layer.source = v.tiles;
+              if (typeof v.attribution === 'string') layer.sourceattribution = v.attribution;
+            } });
+          }
+        }
+      }
+      return out;
+    }
+    /** The JSON object at an address (no credentials, no redirect, at most MAX_JSON characters). */
+    async function readJson(url, fetcher) {
+      const res = await fetcher(url, { credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      if (text.length > MAX_JSON) throw new Error('too large');
+      const value = JSON.parse(text);
+      if (!isPlain(value)) throw new Error('not an object');
+      return value;
+    }
+    /**
+     * Draw inline the map JSON whose hosts are allowed: fetched, copied as map text and, for a tile set, only what a source
+     * takes. One that cannot be read leaves its map out. @returns {Promise<boolean>} whether anything changed
+     */
+    async function inlineMaps(figure, allowed, fetcher) {
+      let changed = false;
+      for (const r of remoteJson(figure.layout)) {
+        if (!allowed.has(looseHost(r.url, true))) continue;
+        let value = UNCHECKED;
+        try {
+          const json = cleanCopy(await readJson(r.url, fetcher), 'map', 0, false);
+          if (r.kind === 'style') value = json;
+          else { value = {}; for (const k of TILEJSON_KEYS) if (json[k] !== undefined) value[k] = json[k]; }
+        } catch (err) { D.log('plotly', 'map JSON not read', r.url, (err && err.message) || err); }
+        r.set(value);
+        changed = true;
+      }
+      return changed;
+    }
+    /** Leave out every map whose JSON is still by address. */
+    function sealMaps(analysed) {
+      const left = remoteJson(analysed.figure.layout);
+      for (const r of left) r.set(UNCHECKED);
+      if (left.length) analysed.parts = partsOf(analysed.figure);
+      return analysed;
     }
 
     /**
@@ -443,7 +520,7 @@
      * @param {{links?: boolean}} [options]
      * @returns {{figure: {data: any[], layout: any}, removed: {basemaps: boolean, url: boolean}, topojson: boolean}}
      */
-    function sanitize(fig, allowed = {}, options = {}) { return apply(analyze(fig, !!options.links), allowed); }
+    function sanitize(fig, allowed = {}, options = {}) { return apply(sealMaps(analyze(fig, !!options.links)), allowed); }
 
     /** The message for what a drawing left out, or ''. */
     function noticeFor(removed) {
@@ -456,32 +533,34 @@
     }
 
     /**
-     * A copy of the figure that may be drawn now: the consents it needs are asked first, at most one question per purpose
-     * (background maps, then web addresses) naming its hosts, and what is refused is left out. Each question carries every
-     * host (`hosts`), so a consent kept per host can answer it host by host. With `ask: false` nothing is asked and only a
-     * purpose that is allowed for good counts (published HTML, which is drawn later and elsewhere; a flow at start). `links`
-     * keeps the links to https addresses in the text (only for a chart drawn in the app, whose clicks guardLinks() catches).
-     * @param {any} fig figure JSON ({data, layout}) @param {{ask?: boolean, links?: boolean}} [options]
+     * A copy of the figure that may be drawn now: the consents it needs are asked first, per host, since the figure chose its
+     * hosts (F103 a): at most one question per purpose (background maps, then web addresses) naming the hosts not yet answered,
+     * whose answer is kept for each of them, and what is refused is left out. A map's style or tile set by address is then read
+     * from its allowed host and drawn inline, and the hosts it names are asked about the same way (up to three rounds). With
+     * `ask: false` nothing is asked and only the hosts allowed for good count (published HTML, which is drawn later and
+     * elsewhere; a flow at start). `links` keeps the links to https addresses in the text (only for a chart drawn in the app,
+     * whose clicks guardLinks() catches). `fetch` replaces the page's fetch for the map JSON (tests).
+     * @param {any} fig figure JSON ({data, layout}) @param {{ask?: boolean, links?: boolean, fetch?: (url: string, init: any) => Promise<Response>}} [options]
      * @returns {Promise<{figure: {data: any[], layout: any}, removed: {basemaps: boolean, url: boolean}, topojson: boolean, notice: string}>}
      */
     async function prepare(fig, options = {}) {
       const analysed = analyze(fig, !!options.links);
-      /** @type {{basemaps: true|Set<string>, url: true|Set<string>}} */
+      const fetcher = options.fetch || ((url, init) => globalThis.fetch(url, init));
+      /** @type {{basemaps: Set<string>, url: Set<string>}} */
       const allowed = { basemaps: new Set(), url: new Set() };
-      if (options.ask === false) {
-        for (const purpose of ['basemaps', 'url']) if ((await consent.state(purpose)) === 'granted') allowed[purpose] = true;
-      } else {
+      const answered = { basemaps: new Set(), url: new Set() };
+      for (let round = 0; ; round++) {
         for (const q of questionsOf(analysed.parts)) {
+          const open = q.hosts.filter((h) => !answered[q.purpose].has(h));
+          if (!open.length) continue;
+          for (const h of open) answered[q.purpose].add(h);
           const label = q.purpose === 'basemaps' ? D.t('plotly.consent.map') : D.t('plotly.consent.url', { url: String(q.address || q.hosts[0]).slice(0, 200) });
-          try {
-            await consent.require(q.purpose, { host: hostList(q.hosts), hosts: q.hosts.slice(), label });
-            for (const h of q.hosts) /** @type {Set<string>} */ (allowed[q.purpose]).add(h);
-          } catch (err) {
-            if (!err || err.name !== 'ConsentError') console.error('[plotly] consent failed', err);
-          }
+          for (const h of await consent.allowHosts(q.purpose, open, { host: hostList(open), label, ask: options.ask })) allowed[q.purpose].add(h);
         }
+        if (round === 2 || !(await inlineMaps(analysed.figure, allowed.basemaps, fetcher))) break;
+        analysed.parts = partsOf(analysed.figure);
       }
-      const ready = apply(analysed, allowed);
+      const ready = apply(sealMaps(analysed), allowed);
       return Object.assign(ready, { notice: noticeFor(ready.removed) });
     }
 

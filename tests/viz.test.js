@@ -428,6 +428,107 @@
     });
   });
 
+  /** Run with the override off, background maps and web addresses unanswered and no host kept; all is put back afterwards. */
+  async function withHostsCleared(fn) {
+    const consent = D.require('platform/consent');
+    return withoutOverride(async () => {
+      const saved = [];
+      for (const p of ['basemaps', 'url']) { saved.push([p, await consent.state(p), await consent.hosts(p)]); await consent.set(p, null); for (const x of await consent.hosts(p)) await consent.setHost(p, x.host, null); }
+      try { return await fn(consent); } finally {
+        consent.setAsker(null);
+        for (const [p, v, list] of saved) {
+          await consent.set(p, v);
+          for (const x of await consent.hosts(p)) await consent.setHost(p, x.host, null);
+          for (const x of list) await consent.setHost(p, x.host, x.state);
+        }
+      }
+    });
+  }
+
+  test('plotly: a figure asks per host (F103 a): a host answered for good is not asked again, a refused one stays out, a yes for the purpose covers no host of a figure, and with ask: false only hosts kept for good count', async (assert) => {
+    const plotly = D.require('viz/plotly');
+    return withHostsCleared(async (consent) => {
+      const asked = [];
+      let answer = { allow: true, remember: true };
+      consent.setAsker(async (purpose, info) => { asked.push([purpose, info.hosts.join(','), !!info.perHost]); return answer; });
+      const fig = (...hosts) => ({ data: [{ type: 'bar', y: [1] }], layout: { images: hosts.map((h) => ({ source: `https://${h}/p.png` })) } });
+      const shown = (ready) => ready.figure.layout.images.map((i) => new URL(i.source).host);
+      // A yes for web addresses (an address the person typed) does not cover what a figure names.
+      await consent.set('url', 'granted');
+      assert.deepEqual(shown(await plotly.prepare(fig('a.example.invalid', 'b.example.invalid'))), ['a.example.invalid', 'b.example.invalid']);
+      assert.deepEqual(asked, [['url', 'a.example.invalid,b.example.invalid', true]], 'one question per host set, asked per host');
+      assert.deepEqual(shown(await plotly.prepare(fig('a.example.invalid', 'b.example.invalid'))), ['a.example.invalid', 'b.example.invalid'], 'drawn again');
+      assert.equal(asked.length, 1, 'without asking: the answer is kept per host');
+      answer = { allow: false, remember: true };
+      const mixed = await plotly.prepare(fig('a.example.invalid', 'c.example.invalid'));
+      assert.deepEqual(asked[1], ['url', 'c.example.invalid', true], 'only the new host is asked about');
+      assert.deepEqual(shown(mixed), ['a.example.invalid'], 'the refused one is left out');
+      assert.equal(mixed.notice, t('plotly.denied.url'));
+      assert.deepEqual(shown(await plotly.prepare(fig('c.example.invalid'))), [], 'and stays out');
+      assert.equal(asked.length, 2, 'unasked');
+      assert.deepEqual(shown(await plotly.prepare(fig('a.example.invalid', 'd.example.invalid'), { ask: false })), ['a.example.invalid'], 'ask: false: only the host kept for good');
+      assert.equal(asked.length, 2, 'nothing asked');
+      await consent.setHost('url', 'c.example.invalid', null);
+      answer = { allow: true, remember: false };
+      assert.deepEqual(shown(await plotly.prepare(fig('c.example.invalid'))), ['c.example.invalid'], 'a removed answer is asked again');
+      assert.equal(asked.length, 3);
+      return 'ok';
+    });
+  });
+
+  test('plotly: a map style or tile set by address is read from its allowed host and drawn inline, with its attributions as plain text, and the hosts it names are asked about in turn; one refused or unreadable leaves the map out, as does a button that points a map at one', async (assert) => {
+    const plotly = D.require('viz/plotly');
+    const STYLE = 'https://style.example.invalid/s.json';
+    const TILEJSON = 'https://tilejson.example.invalid/t.json';
+    const style = {
+      version: 8, sprite: 'https://sprite.example.invalid/s', glyphs: 'https://glyphs.example.invalid/{fontstack}/{range}.pbf',
+      sources: { v: { type: 'vector', url: TILEJSON }, r: { type: 'raster', tiles: ['https://raster.example.invalid/{z}/{x}/{y}.png'], attribution: '<img src="https://spy.example.invalid/x.png">© Någon' } },
+      layers: [{ id: 'r', type: 'raster', source: 'r' }],
+    };
+    const tilejson = { tiles: ['https://vt.example.invalid/{z}/{x}/{y}.pbf'], maxzoom: 14, attribution: '<a href="https://spy.example.invalid/">A</a>', vector_layers: [{ id: 'x' }] };
+    const fetched = [];
+    let missing = '';
+    const fetcher = async (url, init) => {
+      fetched.push([url, init.credentials, init.redirect]);
+      const body = url === STYLE ? style : url === TILEJSON ? tilejson : null;
+      return url === missing || !body ? new Response('no', { status: 404 }) : new Response(JSON.stringify(body), { status: 200 });
+    };
+    const fig = () => ({ data: [{ type: 'scattermap', lat: [59], lon: [18] }], layout: { map: { style: STYLE } } });
+    return withHostsCleared(async (consent) => {
+      const asked = [];
+      let refuse = '';
+      consent.setAsker(async (purpose, info) => { asked.push(info.hosts.slice().sort()); return { allow: !info.hosts.includes(refuse), remember: false }; });
+      const ready = await plotly.prepare(fig(), { fetch: fetcher });
+      assert.deepEqual(asked, [['cdn.jsdelivr.net', 'style.example.invalid'], ['glyphs.example.invalid', 'raster.example.invalid', 'sprite.example.invalid', 'tilejson.example.invalid'], ['vt.example.invalid']], 'the style host, then the hosts the style names, then those its tile set names');
+      assert.deepEqual(fetched, [[STYLE, 'omit', 'error'], [TILEJSON, 'omit', 'error']], 'read once each, without credentials or redirects');
+      assert.equal(ready.figure.data.length, 1, 'the map is drawn');
+      const drawn = ready.figure.layout.map.style;
+      assert.equal(typeof drawn, 'object', 'with the style inline');
+      assert.deepEqual(drawn.sources.v, { type: 'vector', tiles: ['https://vt.example.invalid/{z}/{x}/{y}.pbf'], maxzoom: 14, attribution: 'A' }, 'the tile set inline, with what a source takes');
+      assert.equal(drawn.sources.r.attribution, '© Någon', 'attributions are plain text');
+      assert.ok(!JSON.stringify(ready.figure).includes('spy.example.invalid'), 'nothing of the attributions loads anything');
+      // Refused at the second round: the map needs those hosts, so it is left out, and the tile set is never read.
+      asked.length = 0; fetched.length = 0; refuse = 'tilejson.example.invalid';
+      const refused = await plotly.prepare(fig(), { fetch: fetcher });
+      assert.equal(refused.figure.data.length, 0, 'a refusal leaves the map out');
+      assert.equal(refused.notice, t('plotly.denied.basemaps'));
+      assert.deepEqual(fetched.map((f) => f[0]), [STYLE], 'and nothing from the refused host is read');
+      // Unreadable: left out.
+      refuse = ''; missing = STYLE; fetched.length = 0;
+      assert.equal((await plotly.prepare(fig(), { fetch: fetcher })).figure.data.length, 0, 'a style that cannot be read leaves the map out');
+      missing = '';
+      // A vector layer's tile set by address becomes its tile list.
+      const layered = await plotly.prepare({ data: [{ type: 'scattermap' }], layout: { map: { style: 'white-bg', layers: [{ sourcetype: 'vector', source: TILEJSON, sourcelayer: 'x' }] } } }, { fetch: fetcher });
+      assert.deepEqual(layered.figure.layout.map.layers[0].source, ['https://vt.example.invalid/{z}/{x}/{y}.pbf'], 'a layer gets the tiles');
+      assert.equal(layered.figure.layout.map.layers[0].sourceattribution, 'A');
+      // Pure sanitizing never reads anything: a style by address is never drawn as an address.
+      assert.equal(plotly.sanitize(fig(), { basemaps: true }).figure.data.length, 0, 'sanitize leaves a style by address out');
+      const button = { data: [{ type: 'scattermap' }], layout: { map: { style: 'white-bg' }, updatemenus: [{ buttons: [{ method: 'relayout', args: [{ 'map.style': STYLE }] }, { method: 'relayout', args: [{ 'map.style': 'carto-positron' }] }] }] } };
+      assert.deepEqual(plotly.sanitize(button, { basemaps: true }).figure.layout.updatemenus[0].buttons.map((b) => b.args[0]['map.style']), ['carto-positron'], 'a button that points the map at a style by address is left out');
+      return 'ok';
+    });
+  });
+
   test('plotly: a figure\'s text keeps only bare tags and its keys never become a prototype, so no label, link or attribution loads anything', (assert) => {
     const plotly = D.require('viz/plotly');
     const SPY = 'https://spy.example.invalid/p.png?d=1';

@@ -92,7 +92,8 @@
         const fig = chart.kind === 'python' && chart.python && chart.python.plotly;
         if (!fig) return out;
         const plotly = D.require('viz/plotly');
-        for (const purpose of new Set(plotly.requests(fig).map((q) => q.purpose))) if (!(await kept(purpose))) out.push(noConsent(purpose));
+        // A figure's hosts are answered per host (F103 a): each one it names must be allowed for good.
+        for (const q of plotly.requests(fig)) if ((await consent.allowHosts(q.purpose, q.hosts, { ask: false })).size < new Set(q.hosts).size) out.push(noConsent(q.purpose));
         if (!(await kept('components')) && !(await D.require('platform/components').verified(plotly.SPEC))) out.push(t('flows.block.packages', { names: 'plotly.js' }));
         return out;
       }
