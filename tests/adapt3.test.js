@@ -214,7 +214,7 @@
 
   test('import wizard: a mixed choice is sorted, a folder can be dropped, and one failure does not stop the rest', async (assert) => {
     const pics = [await photo('a.jpg'), await photo('b.jpg')];
-    const sorted = await importer.sortFiles([csvFile('x\n1\n', 'tal.csv'), pics[0], new File(['# R\n\nText\n'], 'text.md', { type: 'text/markdown' }), pics[1], new File(['x'], 'Thumbs.db'), new File(['x'], 'program.exe')]);
+    const sorted = await importer.sortFiles([csvFile('x\n1\n', 'tal.csv'), pics[0], new File(['# R\n\nText\n'], 'text.md', { type: 'text/markdown' }), pics[1], new File(['x'], 'Thumbs.db'), new File([new Uint8Array([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00])], 'program.exe')]);
     assert.deepEqual(sorted.groups.map((g) => [g.importer, g.files.length]), [['images', 2], ['documents', 1], ['csv', 1]]);
     assert.deepEqual(sorted.skipped.map((f) => f.name), ['program.exe'], 'junk is silent, the unknown is said');
     const broken = new File(['{ inte json'], 'trasig.json', { type: 'application/json' });
@@ -245,7 +245,7 @@
     await withApp(async (shell, root) => {
       shell.activate('inhamta');
       const dz = await waitFor(() => root.querySelector('dm-dropzone'), 3000, 'the drop zone');
-      dz.dispatchEvent(new CustomEvent('dm-files', { detail: { files: [csvFile('x\n1\n', 'blandad.csv'), csvFile('y\n2\n', 'bortvald.csv'), pics[0], pics[1], new File(['x'], 'program.exe')] }, bubbles: true }));
+      dz.dispatchEvent(new CustomEvent('dm-files', { detail: { files: [csvFile('x\n1\n', 'blandad.csv'), csvFile('y\n2\n', 'bortvald.csv'), pics[0], pics[1], new File([new Uint8Array([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00])], 'program.exe')] }, bubbles: true }));
       await waitFor(() => root.querySelectorAll('.dm-sort-row').length === 3, 5000, 'three rows');
       assert.ok(root.textContent.includes('program.exe'), 'what is skipped is said');
       const rows = Array.from(root.querySelectorAll('.dm-sort-row'));
