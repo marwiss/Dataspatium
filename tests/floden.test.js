@@ -50,6 +50,31 @@
     return { meta, setRows: (r) => { rows = r; }, stop: () => D.net.unvirtual(virtual) };
   }
 
+  test('floden: a chart a document cannot draw is a remark in the flow’s log, by hand and at start, and the document is still made', async (assert) => {
+    const meta = await table('Dokumentdata');
+    const doc = await documents.save({ name: 'Rapport med lucka', format: 'markdown', body: '# Rapport\n\n{{diagram "Saknas i flödet"}}\n\nText.' });
+    docIds.push(doc.id);
+    const missing = t('doc.err.chart.gone', { name: 'Saknas i flödet' });
+    const flow = await saved({ name: 'Rapport med lucka', steps: [
+      { type: 'document', params: { documentId: doc.id, datasetId: meta.id, format: 'html' } },
+      { type: 'command', params: { command: 'make_document', args: { document: doc.id, dataset: meta.id, format: 'html' } } },
+    ] });
+    for (const unattended of [false, true]) {
+      const res = await flows.run(flow, { unattended });
+      assert.ok(res.ok, 'the run went through: ' + JSON.stringify(res.steps));
+      assert.equal(res.files.length, 2, 'both documents were made');
+      for (const path of ['1', '2']) {
+        const lines = res.steps.filter((s) => s.path === path);
+        assert.equal(lines.length, 2, `step ${path}: its line and one remark: ` + JSON.stringify(lines));
+        assert.ok(lines[1].ok && lines[1].warn && lines[1].message === missing, `step ${path} says what the document lacks (unattended ${unattended}): ` + JSON.stringify(lines[1]));
+      }
+    }
+    const one = await D.require('docgen/generate').generate(doc, meta.id, 'html');
+    assert.deepEqual(one.problems, [missing], 'the generator names it');
+    assert.ok((await one.blob.text()).includes('Saknas i flödet'), 'and the document still shows it in its place');
+    return 'ok';
+  }, 30000);
+
   test('floden: saving, listing, files and removing', async (assert) => {
     assert.ok(flows.STEP_TYPES.includes('refresh') && flows.STEP_TYPES.includes('export'));
     const f = await saved({ name: ' Månadsrapport ', description: 'Varje månad', onStart: true, steps: [{ type: 'export', params: { datasetId: 'x', format: 'csv' } }] });
@@ -575,7 +600,7 @@
       const ran = (await flows.runOnStart({ force: true })).find((r) => r.flowId === flow.id);
       assert.ok(ran, 'the flow ran at start');
       assert.deepEqual(asked, [], 'nothing asked at start: ' + JSON.stringify(asked));
-      assert.equal(ran.steps.length, steps.length, 'every step ran: ' + JSON.stringify(ran.steps.map((s) => s.message)));
+      assert.equal(ran.steps.filter((s) => !s.warn).length, steps.length, 'every step ran: ' + JSON.stringify(ran.steps.map((s) => s.message)));
       const allowed = PURPOSES.map(unattended).concat([t('commands.err.attended', { name: 'cde_projects' }), D.require('platform/tier').hiddenText('cmd:cde_projects')]);
       // An index of webR's repository already in this profile's cache leaves R to say the package is missing.
       const rIndex = !!(await components.meta('webr-repo:PACKAGES'));
@@ -584,6 +609,9 @@
         assert.ok(allowed.some((a) => s.message.includes(a)) || (rIndex && s.message.includes('zzdataspatiumprov')), `step ${s.path} ${s.type} fails only for what it may not ask: ${s.message}`);
       }
       assert.ok(ran.steps.some((s) => !s.ok && s.message.includes(unattended('components'))), 'something was refused without asking: ' + JSON.stringify(ran.steps.map((s) => s.message)));
+      // The R chart the document could not draw at start is said in the log, not only inside the document.
+      const notDrawn = t('doc.err.chart.render', { name: 'R vid start', message: '\u0001' }).split('\u0001')[0];
+      assert.ok(ran.steps.some((s) => s.path === '7' && s.type === 'document' && s.ok && s.warn && s.message.startsWith(notDrawn)), 'the document step has the remark: ' + JSON.stringify(ran.steps.filter((s) => s.path === '7')));
       assert.ok(!/error/.test(D.require('data/python-bridge').bridge.state), 'Python is not left broken: ' + D.require('data/python-bridge').bridge.state);
       // 3. The marker went with the run, not with the page: the person's own question right after it is asked.
       let refused = null;

@@ -379,7 +379,7 @@
           async run(a, ctx) {
             const out = await flows.STEPS[type].run(await toParams(a), { signal: ctx.signal, step: {}, unattended: !!ctx.unattended });
             const made = keep(out.files);
-            return Object.assign({ done: out.message || '' }, made.length ? { files: made } : {});
+            return Object.assign({ done: out.message || '' }, made.length ? { files: made } : {}, out.problems && out.problems.length ? { problems: out.problems } : {});
           },
         });
       }
@@ -415,7 +415,7 @@
           const flow = await item('flows', a.flow, 'flow');
           const r = await flows.run(await flows.get(flow.id), { unattended: !!ctx.unattended });
           const out = await flows.output(flow.id);
-          return { ok: r.ok, steps: r.steps.map((s) => ({ type: s.type, ok: s.ok, message: s.message })), files: out ? keep([out]) : [] };
+          return { ok: r.ok, steps: r.steps.map((s) => ({ type: s.type, ok: s.ok, remark: s.warn || undefined, message: s.message })), files: out ? keep([out]) : [] };
         },
       });
 
@@ -433,7 +433,7 @@
           const r = await flows.run(flow, { signal: options.signal, unattended: !!options.unattended });
           if (r.aborted && options.signal && options.signal.aborted) throw new Error(t('commands.err.aborted'));
           const out = await flows.output(flow.id);
-          return { ok: r.ok, stopped: r.stopped || null, steps: r.steps.map((s) => ({ path: s.path, type: s.type, ok: s.ok, message: s.message })), files: out ? keep([out]) : [] };
+          return { ok: r.ok, stopped: r.stopped || null, steps: r.steps.map((s) => ({ path: s.path, type: s.type, ok: s.ok, remark: s.warn || undefined, message: s.message })), files: out ? keep([out]) : [] };
         },
       });
 
@@ -514,7 +514,7 @@
           const doc = await item('documents', a.document, 'document');
           const d = await dataset(a.dataset);
           const out = await D.require('docgen/generate').generate(doc, d.id, String(a.format || 'html'), askOf(ctx));
-          return { files: keep([{ name: out.filename, blob: out.blob }]) };
+          return Object.assign({ files: keep([{ name: out.filename, blob: out.blob }]) }, out.problems.length ? { problems: out.problems } : {});
         },
       });
 

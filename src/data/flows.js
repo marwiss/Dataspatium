@@ -244,16 +244,17 @@
           icon: 'file-text',
           fields: [{ name: 'documentId', type: 'document' }, { name: 'datasetId', type: 'dataset' }, { name: 'format', type: 'select', options: ['docx', 'pdf', 'html', 'md', 'tex'] }, { name: 'groupColumn', type: 'text', optional: true }],
           async blockers(p) { return documentBlockers(p.documentId ? await documents.get(p.documentId) : null); },
+          /** A chart the document could not draw (at start: one that would have had to ask) is said in the log too, not only in the file. */
           async run(p, ctx) {
             const doc = need(p.documentId && (await documents.get(p.documentId)), t('flows.err.document'));
             const ds = await datasetOf(p.datasetId);
             const format = p.format || 'docx';
             if (p.groupColumn) {
               const out = await generate.batch(doc, ds.id, Object.assign({ groupColumn: p.groupColumn, format }, askOf(ctx)));
-              return { message: t('flows.done.chart.batch', { name: doc.name, n: out.count }), files: [{ name: files.safeName(doc.name, 'zip'), blob: out.blob }] };
+              return { message: t('flows.done.chart.batch', { name: doc.name, n: out.count }), files: [{ name: files.safeName(doc.name, 'zip'), blob: out.blob }], problems: out.problems };
             }
             const out = await generate.generate(doc, ds.id, format, askOf(ctx));
-            return { message: t('flows.done.file', { name: out.filename }), files: [{ name: out.filename, blob: out.blob }] };
+            return { message: t('flows.done.file', { name: out.filename }), files: [{ name: out.filename, blob: out.blob }], problems: out.problems };
           },
         },
         export: {
@@ -294,7 +295,7 @@
             const out = await commands.run(String(p.command || ''), args, { trusted: true, signal: ctx.signal, unattended: !!(ctx && ctx.unattended) });
             if (!out.ok) throw new Error(out.error);
             const made = ((out.result && out.result.files) || []).map((name) => commands.take(name)).filter(Boolean);
-            return { message: t('flows.done.command', { name: String(p.command) }), value: out.result, files: made };
+            return { message: t('flows.done.command', { name: String(p.command) }), value: out.result, files: made, problems: (out.result && out.result.problems) || [] };
           },
         },
         if: { icon: 'git-branch', branches: ['steps', 'otherwise'], fields: [{ name: 'condition', type: 'condition' }] },
@@ -476,6 +477,8 @@
             for (const f of out.files || []) { frame.made.push(f); frame.result.files.push(f.name); }
             if (step.id) frame.scope[step.id] = out.value !== undefined ? out.value : { message: out.message || '', files: (out.files || []).map((f) => f.name) };
             logLine(frame, { type: step.type, path: at, ok: true, ms: ms(), message: out.message || '' });
+            // What the step made without (a chart a document could not draw) follows as a remark of its own, so nobody has to open the file.
+            for (const problem of out.problems || []) logLine(frame, { type: step.type, path: at, ok: true, warn: true, ms: 0, message: String(problem) });
           } catch (err) {
             if (err && err.halt) throw err;
             logLine(frame, { type: step.type, path: at, ok: false, ms: ms(), message: String((err && err.message) || err) });

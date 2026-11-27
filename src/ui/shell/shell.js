@@ -257,9 +257,9 @@
               this.flowEl.lastChild.textContent = t('shell.flow.step', { name: p.name, n: p.index + 1, total: p.total, step: p.label });
             } else if (type === 'end') {
               this.flowEl.hidden = true; this.flowStopEl.hidden = true;
-              // A long run with loops logs what failed and how it ended, not every round.
-              const lines = p.steps.length > 30 ? p.steps.filter((x, i) => !x.ok || i === p.steps.length - 1) : p.steps;
-              for (const x of lines) this.log(`${p.name}: ${x.path ? x.path + ' ' : ''}${t('flows.step.' + x.type)}: ${x.message}`, x.ok ? 'info' : 'error');
+              // A long run with loops logs what failed, the remarks and how it ended, not every round.
+              const lines = p.steps.length > 30 ? p.steps.filter((x, i) => !x.ok || x.warn || i === p.steps.length - 1) : p.steps;
+              for (const x of lines) this.log(`${p.name}: ${x.path ? x.path + ' ' : ''}${t('flows.step.' + x.type)}: ${x.message}`, x.ok ? (x.warn ? 'warn' : 'info') : 'error');
               const text = t(p.ok ? 'flows.finished.ok' : (p.aborted ? 'flows.finished.aborted' : 'flows.finished.failed'), { name: p.name });
               this.log(text, p.ok ? 'ok' : 'error');
               overlays.toast.show(text, { kind: p.ok ? 'ok' : 'error', action: p.files.length ? { label: t('flows.fetch'), onClick: async () => { const out = await flows.output(p.flowId); if (out) D.require('platform/files').download(out.blob, out.name); } } : undefined });
