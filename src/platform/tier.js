@@ -68,7 +68,7 @@
      */
     const ENTRIES = {
       'kind:model': 'kind.model', 'view:model': 'kind.model', 'tab:model': 'kind.model', 'chart:model': 'kind.model',
-      'op:ifc_apply_table': 'kind.model', 'op:ifc_python': 'kind.model', 'op:ifc_changeset': 'kind.model', 'op:ifc_party': 'kind.model',
+      'op:ifc_apply_table': 'kind.model', 'op:ifc_python': 'kind.model', 'op:ifc_changeset': 'kind.model', 'op:ifc_party': 'kind.model', 'op:ifc_stored': 'kind.model',
       // GeoTIFF files are read in every tier, as IFC files are; below BIM och GIS a raster is its table of files.
       'kind:raster': 'kind.raster',
       // A GeoPackage's layers as one dataset (kind layers) are read in every tier; below BIM och GIS they are their table of features.

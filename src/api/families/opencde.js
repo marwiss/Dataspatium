@@ -458,9 +458,15 @@
     function failure(connector, res, url) {
       let data = null;
       try { data = JSON.parse(res.text); } catch (_e) { /* not JSON */ }
-      const { code, message, text } = describeError(data);
-      return new http.ApiError(`${connector.name}: ${http.describeStatus(res.status)}${text ? ' ' + text : ''}`, { kind: 'http', status: res.status, url, detail: message, code, report: data && typeof data.report === 'string' ? data.report : undefined, conflicts: data && Array.isArray(data.conflicts) ? data.conflicts.map(String) : undefined, conflictDetails: data && Array.isArray(data.conflict_details) ? data.conflict_details : undefined });
+      return bodyError(connector, data, res.status, url);
     }
+    /** The error a body describes (`code`, `message`, `report`, `conflicts`), as the status says it or as the body came at 200. */
+    function bodyError(connector, data, status, url) {
+      const { code, message, text } = describeError(data);
+      return new http.ApiError(`${connector.name}: ${http.describeStatus(status)}${text ? ' ' + text : ''}`, { kind: 'http', status, url, detail: message, code, report: data && typeof data.report === 'string' ? data.report : undefined, conflicts: data && Array.isArray(data.conflicts) ? data.conflicts.map(String) : undefined, conflictDetails: data && Array.isArray(data.conflict_details) ? data.conflict_details : undefined });
+    }
+    /** The status of Dataregium's error codes (its opencde/errors.py), for a refusal that comes as 200 after the keep-alive. */
+    const CODE_STATUS = { validation_error: 400, invalid_token: 401, unauthenticated: 401, forbidden: 403, insufficient_scope: 403, not_found: 404, conflict: 409, version_conflict: 412, payload_too_large: 413, upload_too_large: 413, ifc_validation_failed: 422, rate_limited: 429, internal_error: 500, unavailable: 503 };
     const MAX_LINK_PAGES = 200;
     /**
      * The rest of a list the server has capped (Dataregium at 1000 items): its answer says where the next part is with
@@ -954,9 +960,11 @@
     // ---------------------------------------------------------------------------- Documents API: upload
     /**
      * Upload a file through the Documents API (1.0 upload flow): the server's own page asks the user for title, version and
-     * project in a popup; then the parts go up and the version is completed. `documentId` makes it a new version of that document.
+     * project in a popup; then the parts go up and the version is completed. `documentId` makes it a new version of that document,
+     * `baseVersionIndex` the version it builds on and `message` what the version changes (Dataregium's extensions). An IFC file that
+     * went up as a new version and was renumbered by the server carries `renumbered` ({pairs, count}) in the answer.
      * @param {any} connector @param {File} file
-     * @param {{documentId?: string|null, redirectUri?: string, popup?: Function, onProgress?: (p: {done: number, total: number}) => void}} [options]
+     * @param {{documentId?: string|null, baseVersionIndex?: number|null, message?: string, redirectUri?: string, popup?: Function, onProgress?: (p: {done: number, total: number}) => void}} [options]
      * @returns {Promise<any|null>} the DocumentVersion, or null when the user cancelled on the page
      */
     async function uploadDocument(connector, file, options = {}) {
@@ -966,6 +974,9 @@
       if (options.documentId) entry.document_id = options.documentId;
       // Dataregium's extension: the version this upload builds on; the completion answers 412 version_conflict when a newer one exists.
       if (options.documentId && options.baseVersionIndex !== undefined && options.baseVersionIndex !== null) entry.base_version_index = Number(options.baseVersionIndex);
+      // And the message of the new version (the commit's message once Dataregium keeps a git history per project; ignored before).
+      const message = options.documentId ? versionMessage(options.message) : '';
+      if (message) entry.message = message;
       const started = await api(connector, '/documents/1.0/upload-documents', { method: 'POST', json: { callback: { url: redirect, expires_in: 600 }, files: [entry] } });
       if (Number(started.max_size_in_bytes) > 0 && file.size > Number(started.max_size_in_bytes)) throw new Error(t('cde.err.toolarge', { max: D.require('ui/i18n').formatBytes(Number(started.max_size_in_bytes)) }));
       const callback = await (options.popup || popupFlow)(withLang(connector, started.upload_ui_url));
@@ -993,13 +1004,67 @@
         if (options.onProgress) options.onProgress({ done: Math.min(done, file.size), total: file.size });
       }
       const finished = await api(connector, todo.upload_completion.url, { method: 'POST' });
-      // Dataregium's OB-28: a project may refuse a file with validation errors at the completion (422 ifc_validation_failed with the
-      // report's address). A check that took long comes as 200 with the same code in the body, so the code decides, not the status.
-      if (finished && typeof finished.code === 'string' && finished.code === 'ifc_validation_failed') {
-        const d = describeError(finished);
-        throw new http.ApiError(`${connector.name}: ${d.text || d.message}`, { kind: 'http', status: 422, url: todo.upload_completion.url, detail: d.message, code: d.code, report: typeof finished.report === 'string' ? finished.report : undefined });
+      // A completion that took long answers 200 with spaces to keep the connection open, and a refusal then comes as an error body
+      // after them (Dataregium's keep-alive): any code in the body decides, not the status, so that 412 version_conflict with its
+      // conflicts and 422 ifc_validation_failed with the report's address (Dataregium's OB-28) read the same either way.
+      if (finished && typeof finished.code === 'string' && finished.code && finished.version_index === undefined) {
+        throw bodyError(connector, finished, CODE_STATUS[finished.code] || 400, todo.upload_completion.url);
+      }
+      // Dataregium's safety net (its phase 5.0) may move ids the file reused from the document's history above it; the version's
+      // metadata then says which, and the stored file is not the one that went up.
+      if (finished && entry.document_id && /\.ifc$/i.test(file.name) && finished.document_id && finished.version_index !== undefined) {
+        try { finished.renumbered = await renumbered(connector, String(finished.document_id), Number(finished.version_index)); } catch (err) { D.log('opencde', 'version metadata after the upload not read', err); }
       }
       return finished;
+    }
+    /** At most as long as Dataregium keeps a version's message (its phase 5.2). */
+    const MESSAGE_MAX = 2000;
+    /**
+     * A version's message as Dataregium keeps it: no control characters but line breaks, no space at the ends, at most MESSAGE_MAX
+     * characters; '' when nothing is left. @param {any} text @returns {string}
+     */
+    function versionMessage(text) {
+      return String(text || '').replace(/\r\n?/g, '\n').replace(/[\u0000-\u0009\u000b-\u001f\u007f-\u009f]/g, '').trim().slice(0, MESSAGE_MAX).trim();
+    }
+    /**
+     * The ids Dataregium's safety net moved in a stored version (version metadata `ifc_renumbered`, "old>new" for at most the first
+     * 1000, and `ifc_renumbered_count` when there were more); null when the entry is missing, which means nothing was moved.
+     * @param {any} connector @param {string} documentId @param {number} versionIndex
+     * @returns {Promise<{pairs: string[], count: number}|null>}
+     */
+    async function renumbered(connector, documentId, versionIndex) {
+      const metadata = await versionMetadata(connector, documentId, versionIndex);
+      const entry = metadata.find((x) => x && x.name === 'ifc_renumbered');
+      const pairs = entry ? (Array.isArray(entry.value) ? entry.value : [entry.value]).map(String).filter((p) => /^\d+>\d+$/.test(p)) : [];
+      if (!pairs.length) return null;
+      const counted = metadata.find((x) => x && x.name === 'ifc_renumbered_count');
+      const n = counted ? Number(Array.isArray(counted.value) ? counted.value[0] : counted.value) : NaN;
+      return { pairs, count: Number.isFinite(n) && n > pairs.length ? Math.floor(n) : pairs.length };
+    }
+    /**
+     * The stored version of a model that went up as a new version and came back renumbered: its file becomes the dataset's model,
+     * as an undoable step (data/ifc-ops `ifc_stored`) in the history but not in the recipe, so that the next change and the next
+     * version build on the ids the server keeps; the dataset then points at that version, and its facts take the version's highest id.
+     * @param {any} connector @param {string} datasetId @param {any} version the DocumentVersion with `renumbered`
+     * @returns {Promise<any>} the dataset
+     */
+    async function adoptStored(connector, datasetId, version) {
+      const datasets = D.require('data/datasets');
+      const meta = await datasets.get(datasetId);
+      const cde = meta && meta.source && meta.source.cde;
+      if (!cde) throw new Error(t('opencde.err.noreference'));
+      // The server's link only when it is on the source's own server, so that the token goes nowhere else.
+      const link = version.links && version.links.document_version_download ? version.links.document_version_download.url : '';
+      const reference = ownUrl(connector, link, `${versionPath(String(version.document_id), Number(version.version_index))}/download`);
+      const fileName = (version.file_description && version.file_description.name) || (meta.model && meta.model.file) || 'model.ifc';
+      const file = await downloadFile(connector, { reference, filename: fileName });
+      const count = version.renumbered ? version.renumbered.count : 0;
+      D.require('data/ifc-ops').hold(datasetId, new Uint8Array(await file.arrayBuffer()), fileName);
+      await D.require('data/recipes').apply(datasetId, 'ifc_stored', { version: Number(version.version_index), renumbered: count }, { logAction: 'refresh', description: t('cde.stored.log', { n: count, version: String(version.version_number || version.version_index) }) });
+      const next = Object.assign({}, cde, { documentId: String(version.document_id), versionIndex: Number(version.version_index), reference, fetchedAt: new Date().toISOString() });
+      await datasets.updateMeta(datasetId, { source: Object.assign({}, meta.source, { cde: next }) });
+      await seedStepIds(connector, datasetId, String(version.document_id), Number(version.version_index));
+      return datasets.get(datasetId);
     }
     /**
      * Dataregium's precheck (OB-28): the server checks an IFC file against the schema, buildingSMART's rules and the project's IDS
@@ -1250,7 +1315,7 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { addDeployed, ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, hasBcf, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, seedStepIds, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
+    return { addDeployed, ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, hasBcf, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, seedStepIds, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, versionMessage, MESSAGE_MAX, renumbered, adoptStored, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
       topicMay, projectMay, topicFiles, filesBody, setTopicFiles, modelFile, linkTopic, attachDocument, identity };
   });
 })();

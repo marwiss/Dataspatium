@@ -114,6 +114,32 @@
       toSQL: () => ['-- ' + D.t('op.ifc_party.note')],
       toR: () => '# ' + D.t('op.ifc_party.note'),
     });
+    /** Files held for the next `ifc_stored` step on a dataset, by dataset id. */
+    const held = new Map();
+    /**
+     * Hold the stored version of a model's CDE document for the next `ifc_stored` step on the dataset (api/families/opencde.adoptStored).
+     * @param {string} datasetId @param {Uint8Array} bytes @param {string} fileName
+     */
+    function hold(datasetId, bytes, fileName) { held.set(datasetId, { bytes, info: null, fileName }); }
+    /**
+     * The version a CDE stored becomes the model, when it is not the file that went up (Dataregium moved reused ids above the
+     * document's history). Undoable, in the history but never in a recipe (its file comes from the server, not from the step), and
+     * hidden from the assistant's operations.
+     */
+    const stored = ops.define({
+      id: 'ifc_stored', group: 'model', manualPreview: true, internal: true,
+      params: [{ name: 'version', type: 'number' }, { name: 'renumbered', type: 'number' }],
+      async prepare(ctx) {
+        await modelOf(ctx);
+        const job = held.get(ctx.datasetId);
+        held.delete(ctx.datasetId);
+        if (!job) throw new Error(D.t('op.err.ifc_stored.nofile'));
+        ctx._ifc = job;
+      },
+      apply: (ctx) => take(ctx),
+      toSQL: () => ['-- ' + D.t('op.ifc_stored.note')],
+      toR: () => '# ' + D.t('op.ifc_stored.note'),
+    });
     /**
      * The approved step refuses a change set that breaks the schema's EXPRESS rules where the base kept them (the wheel's `express`
      * report; only new errors count), naming the first rules, so that the person can ask the AI to mend it. @param {any} info
@@ -199,6 +225,6 @@
       const out = await bridge().runIfcParameters(await handle.engine.export(), ids);
       return Array.isArray(out) ? out : [];
     }
-    return { python, applyTable, changeset, party, previewChangeset, topologyOf, classSearch, classReportOf, parametersOf, basicsOf, refuseExpress, IDS: ['ifc_apply_table', 'ifc_python'] };
+    return { python, applyTable, changeset, party, stored, hold, previewChangeset, topologyOf, classSearch, classReportOf, parametersOf, basicsOf, refuseExpress, IDS: ['ifc_apply_table', 'ifc_python'] };
   });
 })();

@@ -351,10 +351,16 @@
         await datasets.updateMeta(table.id, { source: { kind: 'file', fileName: 'skickad.csv', cde: { connectorId: connector.id, host: 'test', projectId: PROJECT, projectName: 'Bygglovet', kind: 'document', documentId: 'doc-old', versionIndex: 1, reference: BASE + '/x' } } });
         world.lastDocumentId = 'doc-old';
         await waitFor(() => root.querySelector('[data-cde-send-version]'), 8000, 'the version button');
+        // What the version changes goes with it as its message.
+        const message = /** @type {any} */ (await waitFor(() => root.querySelector('[data-cde-message]'), 3000, 'the message field'));
+        message.value = ' Två nya kommuner ';
+        message.dispatchEvent(new Event('input', { bubbles: true }));
         root.querySelector('[data-cde-send-version]').click();
         await waitFor(() => { const el = root.querySelector('[data-cde-done]'); return el && el.textContent.includes('2') ? el : null; }, 20000, 'version 2 done');
         const again = spy.requests.filter((r) => /upload-documents$/.test(r.url)).map(bodyOf).pop();
         assert.equal(again.files[0].document_id, 'doc-old', 'a new version of the same document');
+        assert.equal(again.files[0].message, 'Två nya kommuner', 'with its message');
+        assert.equal(/** @type {any} */ (root.querySelector('[data-cde-message]')).value, '', 'and the field is empty again');
         assert.equal((await datasets.get(table.id)).source.cde.versionIndex, 2, 'the dataset now points at version 2');
         world.lastDocumentId = null;
         // And as a BCF document, with the name in Content-Disposition.

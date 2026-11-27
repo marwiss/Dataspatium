@@ -755,7 +755,12 @@ previews its change set itself before you see it and mends what the wheel finds,
 
 A model fetched from Dataregium is published as a new version in Share with the document's base version, the version you fetched. If
 the document has got a newer version meanwhile, the server refuses the publish (412 version_conflict); fetch the newest version, redo
-the changes and publish again. For a model fetched from Dataregium, *Preview* also asks the server's precheck of the candidate (the
+the changes and publish again. The server's error code decides also when a long check answers with status 200. When the file
+reused ids that an earlier version of the document had, Dataregium moves them above the history as it stores the version and names
+them in the version's metadata (`ifc_renumbered`); the app then fetches the stored version and makes it the model, as a step in the
+history that can be undone but is not part of the recipe, so that the next change builds on the server's ids. When it cannot be
+fetched, the dataset keeps pointing at the version you fetched, and *Check for a new version* offers the stored one. For a model
+fetched from Dataregium, *Preview* also asks the server's precheck of the candidate (the
 schema, buildingSMART's rules and the project's IDS) when the source is signed in, and a project that does not accept files with
 validation errors refuses the publish (422) with the server's findings in the message and on the card Validate the model.
 

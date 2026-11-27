@@ -287,7 +287,7 @@
         description: 'The operations of Bearbeta that apply_operation can run: id, group, what kind of dataset they are for, and their title. group null lists all.',
         parameters: S.obj({ group: S.strOrNull('only this group (column, values, rows, structure, calc, timeseries, regex, geo, graph, model, plan, code)') }),
         async run(a) {
-          return { operations: ops.list().filter((op) => (!a.group || op.group === a.group) && tier.shows('op:' + op.id)).map((op) => ({ id: op.id, group: op.group || null, for: forKind(op), title: title(op.id) })) };
+          return { operations: ops.list().filter((op) => !op.internal && (!a.group || op.group === a.group) && tier.shows('op:' + op.id)).map((op) => ({ id: op.id, group: op.group || null, for: forKind(op), title: title(op.id) })) };
         },
       });
       define({
@@ -320,6 +320,7 @@
       function operation(id) {
         let op;
         try { op = ops.get(id); } catch (_e) { throw new Error(t('commands.err.operation', { name: String(id) })); }
+        if (op.internal) throw new Error(t('commands.err.operation', { name: String(id) }));
         tier.guard('op:' + op.id);
         return op;
       }
