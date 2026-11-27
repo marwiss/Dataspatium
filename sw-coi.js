@@ -17,7 +17,7 @@
 'use strict';
 
 /** Changes with every push that changes the cached files (tools/bump_cache.py), so old caches are dropped on activation. */
-const CACHE = 'dataspatium-0.1.0-20261127-1011';
+const CACHE = 'dataspatium-0.1.0-20261127-1036';
 const CACHE_FIRST = /\/(vendor|presets|src|r|python)\//;
 /** Files shared into the mobile page (manifest share_target) wait here until m/index.html reads them. */
 const INBOX = 'dataspatium-inbox';

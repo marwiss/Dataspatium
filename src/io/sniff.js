@@ -314,6 +314,15 @@
       return t === null ? null : text(t, file.size <= HEAD);
     }
 
-    return { sniff, HEAD };
+    /**
+     * Whether a file reads as text by its first bytes (no NUL, few control characters), for a file no signature knows: it is then
+     * read as a text document, not as a table (decision F119 a). @param {Blob} file @returns {Promise<boolean>}
+     */
+    async function isText(file) {
+      if (!file || !file.size) return false;
+      return textOf(await bytesOf(file, 0, HEAD)) !== null;
+    }
+
+    return { sniff, isText, HEAD };
   });
 })();

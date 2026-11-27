@@ -97,9 +97,12 @@ känns igen på innehållet när kännetecknet är säkert. Formaten prövas i d
 | CSV, TSV (sist) | Samma antal av en avgränsare (tabb, semikolon, komma eller lodstreck) på varje rad | `.csv`, `.tsv` |
 
 Filen får ändelsen i appen (`export` blir `export.gpkg`), och förhandsgranskningen säger *Känd igen på innehållet som …*;
-filen på datorn ändras inte. Är kännetecknet osäkert, som för en vanlig text, behåller filen sitt namn och läses som förut:
-ensam som text med avgränsare, där formatet kan väljas i importsteget, och i ett val av flera filer bland dem som appen inte
-läser. I filväljaren visas filer utan ändelse under *Alla filer*; att dra filen till ytan går alltid.
+filen på datorn ändras inte. Namnet ändras bara när formatet är säkert. En text som inget kännetecken passar, inte heller CSV
+eller TSV, läses som ett textdokument, stycke för stycke, och får ändelsen `.txt`; förhandsgranskningen säger det, och
+formatet kan väljas i importsteget. En fil som varken är text eller ett känt format läses inte, och appen ber dig byta
+namn på filen med rätt ändelse; i ett val av flera filer står den bland dem som appen inte läser. En fil från en
+webbadress utan ändelse får en ändelse bara när servern anger formatet (JSON, CSV, XML, ZIP, Excel eller GeoPackage), annars
+avgör innehållet. I filväljaren visas filer utan ändelse under *Alla filer*; att dra filen till ytan går alltid.
 
 ## Teckenkodning
 

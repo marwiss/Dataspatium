@@ -892,7 +892,7 @@
         const left = h('div', { class: 'dm-stack' });
         if (wiz.file) left.appendChild(h('p', { class: 'dm-help', text: t('import.file', { name: wiz.file.name, size: i18n.formatBytes(wiz.file.size) }) }));
         // A file recognised by its contents, since its name has no extension the app knows (F83 a).
-        if (wiz.file && p && p.recognised) left.appendChild(h('p', { class: 'dm-help dm-small', 'data-import-recognised': '', text: t('import.recognised', { format: p.recognised }) }));
+        if (wiz.file && p && p.recognised) left.appendChild(h('p', { class: 'dm-help dm-small', 'data-import-recognised': '', text: p.recognisedText ? t('import.recognised.text') : t('import.recognised', { format: p.recognised }) }));
         const sense = p ? senseCard(p) : null;
         if (sense) left.appendChild(sense);
         // A coordinate system the app cannot convert: said before the import (the places would otherwise land in the wrong place).

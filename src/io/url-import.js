@@ -25,9 +25,12 @@
         const last = decodeURIComponent(u.pathname.split('/').filter(Boolean).pop() || '');
         if (last && /\.[A-Za-z0-9]+$/.test(last)) return last;
         const ct = String(contentType || '').toLowerCase();
-        const ext = /json/.test(ct) ? 'json' : /csv/.test(ct) ? 'csv' : /xml/.test(ct) ? 'xml' : /zip/.test(ct) ? 'zip' : /excel|spreadsheet/.test(ct) ? 'xlsx' : /geopackage|sqlite/.test(ct) ? 'gpkg' : 'txt';
-        return `${last || u.hostname || D.t('url.file.name')}.${ext}`;
-      } catch (_err) { return D.t('url.file.name') + '.txt'; }
+        // A content type that says the format gives the extension; otherwise the name stays without one, and the contents decide
+        // (io/import recognise, decisions F83 a and F119 a).
+        const ext = /json/.test(ct) ? 'json' : /csv/.test(ct) ? 'csv' : /xml/.test(ct) ? 'xml' : /zip/.test(ct) ? 'zip' : /excel|spreadsheet/.test(ct) ? 'xlsx' : /geopackage|sqlite/.test(ct) ? 'gpkg' : '';
+        const base = last || D.t('url.file.name');
+        return ext ? `${base}.${ext}` : base;
+      } catch (_err) { return D.t('url.file.name'); }
     }
 
     /** Fetch a URL (CORS) and return it as a File. */

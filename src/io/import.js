@@ -36,7 +36,14 @@
         pending.set(file, (async () => {
           let found = null;
           try { found = await sniffer.sniff(file); } catch (err) { D.log('import', err); }
-          if (!found) return file;
+          // No sure signature: a text is read as a text document, paragraph by paragraph, rather than guessed as a table (decision
+          // F119 a), and anything else is not read at all; the name is not changed for a guess (F120 a).
+          if (!found) {
+            let text = false;
+            try { text = await sniffer.isText(file); } catch (err) { D.log('import', err); }
+            if (!text) { recognised.set(file, { unknown: true }); return file; }
+            found = { ext: 'txt', format: D.t('import.recognised.text.format'), type: 'text/plain', document: true };
+          }
           const renamed = new File([file], `${file.name || D.t('datasets.default.name')}.${found.ext}`, { type: found.type || file.type, lastModified: file.lastModified });
           const path = /** @type {any} */ (file).webkitRelativePath || /** @type {any} */ (file).dmPath;
           if (path) /** @type {any} */ (renamed).dmPath = `${path}.${found.ext}`;
@@ -47,11 +54,15 @@
       return pending.get(file);
     }
     /** What a file's contents were recognised as ({ext, format, type}), or null when its name decided. @param {File} file */
-    function recognisedAs(file) { return recognised.get(file) || null; }
+    function recognisedAs(file) { const found = recognised.get(file); return found && !found.unknown ? found : null; }
 
     /** @param {File} file @param {string} [forced] importer id */
     function importerFor(file, forced) {
       if (forced) { const found = importers.find((i) => i.id === forced); if (found) return found; }
+      // A file without a known extension that no signature knows (recognise): a text is a document, anything else is not read.
+      const guess = recognised.get(file);
+      if (guess && guess.document) return documents;
+      if (guess && guess.unknown) throw new Error(D.t('import.err.unrecognised', { name: file.name || D.t('datasets.default.name') }));
       return importers.find((i) => i.detect(file)) || csv;
     }
 
@@ -119,6 +130,7 @@
       // A file recognised by its contents says so in the preview, with the format it was recognised as.
       const found = recognisedAs(file);
       if (found) p.recognised = found.format;
+      if (found && found.document) p.recognisedText = true;
       return Object.assign(p, { importer: importer.id, columns, inferred: inferred.map((c, i) => Object.assign({ include: true, label: columns[i], sourceName: p.columns[i] }, c)) });
     }
 

@@ -97,9 +97,12 @@ end), and the file is recognised by its contents when the signature is sure. The
 | CSV, TSV (last) | The same number of one delimiter (tab, semicolon, comma or pipe) on every line | `.csv`, `.tsv` |
 
 The file gets the extension in the app (`export` becomes `export.gpkg`), and the preview says *Recognised by its contents
-as …*; the file on the computer is not changed. When the signature is not sure, as for ordinary text, the file keeps its
-name and is read as before: on its own as delimited text, where the format can be chosen in the import step, and in a
-choice of several files among those the app does not read. In the file picker, files without an extension show under
+as …*; the file on the computer is not changed. The name changes only when the format is sure. A text that no signature
+fits, not even CSV or TSV, is read as a text document, paragraph by paragraph, and gets the extension `.txt`; the preview
+says so, and the format can be chosen in the import step. A file that is neither text nor a known format is not read, and the
+app asks you to rename it with the right extension; in a choice of several files it is among those the app does not read. A
+file from a web address without an extension gets one only when the server names the format (JSON, CSV, XML, ZIP, Excel or
+GeoPackage); otherwise the contents decide. In the file picker, files without an extension show under
 *All files*; dragging the file onto the area always works.
 
 ## Character encoding

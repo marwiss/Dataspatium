@@ -579,7 +579,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/format.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 17388,
+  "size": 17768,
   "library": "dataspatium"
  },
  "docs/sv/api-konfiguration.md": {
@@ -1593,7 +1593,7 @@ Dataspatium.assets.addEntries({
  "docs/en/format.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 17872,
+  "size": 18233,
   "library": "dataspatium"
  },
  "docs/en/api-konfiguration.md": {

@@ -154,14 +154,26 @@
     return p.importer;
   });
 
-  test('recognise: an unsure text is not taken over', async (assert) => {
+  test('recognise: a text no signature knows is read as a text document, not as a table, and anything else is not read (F119 a)', async (assert) => {
     const note = new File([PROSE], 'anteckning');
-    assert.equal(await importer.recognise(note), note, 'the same file');
+    const renamed = await importer.recognise(note);
+    assert.equal(renamed.name, 'anteckning.txt', 'a text is a text, for certain');
     const p = await importer.preview(note, {});
-    assert.equal(p.importer, 'csv', 'the default reader, as today');
-    assert.equal(p.recognised, undefined);
+    assert.equal(p.importer, 'documents', 'read as a text document, paragraph by paragraph');
+    assert.ok(p.recognisedText, 'and the preview says so');
     const sorted = await importer.sortFiles([note]);
-    assert.deepEqual(sorted.skipped.map((f) => f.name), ['anteckning'], 'in a mixed choice it is listed, not guessed at');
+    assert.deepEqual(sorted.groups.map((g) => [g.importer, g.files[0].name]), [['documents', 'anteckning.txt']], 'in a mixed choice it is a document');
+    // Bytes that are not text and that no signature knows are not read, with a message.
+    const junk = new File([bytes([1, 2, 0, 0, 7, 9])], 'okänt');
+    assert.equal(await importer.recognise(junk), junk, 'its name is not changed for a guess (F120 a)');
+    const err = await importer.preview(junk, {}).catch((e) => e);
+    assert.ok(err instanceof Error && err.message === t('import.err.unrecognised', { name: 'okänt' }), 'refused in words: ' + (err && err.message));
+    // A .txt is still read as before: its extension decides.
+    assert.equal((await importer.preview(new File([PROSE], 'anteckning.txt', { type: 'text/plain' }), {})).importer, 'csv', 'a named .txt as today');
+    // A web address without an extension and with a vague content type keeps a name without one, so that the contents decide.
+    const urlImport = D.require('io/url-import');
+    assert.equal(urlImport.fileName('https://example.invalid/data/export', 'application/octet-stream'), 'export');
+    assert.equal(urlImport.fileName('https://example.invalid/data/export', 'application/json'), 'export.json', 'a content type that says the format still names it');
     return 'ok';
   });
 
