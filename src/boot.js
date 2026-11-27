@@ -399,7 +399,8 @@
     // The families of the sources and what fetches through them (PLAN 4 step 5): the runner with its requests, parsers and pages,
     // the statistics, database and OpenCDE families, the BCF importer, a server model's glTF and the CDE's issues and merge. The
     // start asks api/connectors what it needs of them (hiddenBy, onFetched, the database families' ids) and waits for the group
-    // with D.ensure(['families']) where it fetches, signs in or draws a model from the server (tests/lazy.html tries it).
+    // with D.ensure(['families']) where it fetches, signs in or draws a model from the server (tests/lazy.html tries it); a change
+    // proposal's life on the server (ui/share/change-proposal) is here for the AI panel and Dela's Till CDE alike.
     { name: 'families', needs: ['import'], scripts: [
       'src/api/websocket.js',
       'src/api/request.js',
@@ -422,6 +423,7 @@
       'src/data/model-server.js',
       'src/ui/api/merge-dialog.js',
       'src/ui/bearbeta/model-issues.js',
+      'src/ui/share/change-proposal.js',
     ] },
     { name: 'ai-tools', needs: ['families'], scripts: [
       'src/api/bsdd.js',

@@ -12,7 +12,7 @@
  * trial of the proposal against the base version (state, applied changes, findings) is shown under the topic, and a manager can make
  * a clean proposal the document's next version from here (OB-27 on the server's side); against a stale base the server retries the
  * trial on the latest version and merges what does not collide, and the person decides each collision here (base, what came between,
- * the proposal) before the proposal goes again (OB-19 d). The
+ * the proposal) before the proposal goes again (OB-19 d), as in Dela's Till CDE (ui/share/change-proposal). The
  * keys live in api/secrets; nothing is sent without the consent for the provider's host. The dialog `providers` adds, changes and
  * removes providers (Anthropic Messages, OpenAI-compatible, local servers). The mode Bygg från beskrivning (decision F43 a) builds a whole
  * building in an empty model from a brief, with photos and scanned drawings attached as pictures, the AI's questions answered in the
@@ -26,8 +26,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/ai-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ai/providers', 'ai/agent', 'ai/write-tools', 'ai/check-tools', 'ui/bearbeta/ai-check', 'data/selection', 'data/recipes', 'data/ifc-ops', 'data/datasets', 'data/ifc-validation', 'api/connectors', 'api/families/opencde', 'platform/storage/idb', 'analysis/ids-presets', 'ui/bearbeta/site-map'],
-    (base, basic, overlays, icons, providers, agent, writeTools, checkTools, aiCheck, selection, recipes, ifcOps, datasets, validation, connectors, opencde, idb, idsPresets, siteMap) => {
+  D.define('ui/bearbeta/ai-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ai/providers', 'ai/agent', 'ai/write-tools', 'ai/check-tools', 'ui/bearbeta/ai-check', 'data/selection', 'data/recipes', 'data/ifc-ops', 'data/datasets', 'data/ifc-validation', 'api/connectors', 'api/families/opencde', 'platform/storage/idb', 'analysis/ids-presets', 'ui/bearbeta/site-map', 'ui/share/change-proposal'],
+    (base, basic, overlays, icons, providers, agent, writeTools, checkTools, aiCheck, selection, recipes, ifcOps, datasets, validation, connectors, opencde, idb, idsPresets, siteMap, changeProposal) => {
       const { h, t, i18n, replace } = base;
       const LAST_SETTING = 'ai.lastProvider';
       const MODES = ['ask', 'change', 'build', 'check'];
@@ -58,6 +58,8 @@
         // The place of the building on a map, over an orthophoto when the person chooses one (decision B-64); made once and kept
         // between the panel's drawings, so that an open map is not drawn again.
         const site = siteMap.create(ctx, { tileFactory: options.tileFactory });
+        // The proposal on the server once it is sent: its trial, approval and collisions (shared with Dela's Till CDE).
+        const flow = changeProposal.create({ state: s, log, fail, render: () => render(), busy: () => s.busy });
 
         async function load() {
           // The providers are set last, so that a panel with its providers is one whose lists are all in place.
@@ -406,18 +408,6 @@
           else if (un.created || un.deleted || un.relations) lines.push(t('ai.change.propose.unexpressed', { created: i18n.formatNumber(un.created || 0), deleted: i18n.formatNumber(un.deleted || 0), relations: i18n.formatNumber(un.relations || 0) }));
           return lines.join(' ');
         }
-        async function proposeDialog(defaults) {
-          const title = /** @type {any} */ (h('dm-input', { label: t('ai.change.propose.topic'), 'data-ai-propose-title': '' }));
-          title.value = defaults.title;
-          const description = /** @type {any} */ (h('dm-input', { label: t('ai.change.propose.description'), rows: '6' }));
-          description.value = defaults.description;
-          const ok = await overlays.dialog.open({
-            title: t('ai.change.propose.title'), help: 'cad-bim#ändra-med-ai',
-            body: h('div', { class: 'dm-stack-sm' }, h('p', { class: 'dm-help', text: t('ai.change.propose.hint.dialog', { project: defaults.project }) }), title, description),
-            actions: [{ label: t('common.cancel'), value: false }, { label: t('ai.change.propose.send'), variant: 'primary', value: true, primary: true }],
-          });
-          return ok === true ? { title: String(title.value || '').trim(), description: String(description.value || '') } : null;
-        }
         /**
          * The previewed change set as a change proposal on Dataregium: a BCF topic with the attribute-level changes as its snippet in
          * the server's form, the base version and the signed-in user as provenance. The model is neither changed nor published.
@@ -435,28 +425,13 @@
           const project = cde.projectName || cde.projectId;
           const last = s.exchanges.length ? s.exchanges[s.exchanges.length - 1].question : '';
           const defaults = { project, title: (last || t('ai.change.title')).replace(/\s+/g, ' ').slice(0, 120), description: s.changeset.ops.map((op) => writeTools.describe(op)).join('\n') + '\n\n' + proposalText(proposal) };
-          const values = given || await proposeDialog(defaults);
+          const values = given || await changeProposal.askWords({ title: defaults.title, description: defaults.description, hint: t('ai.change.propose.hint.dialog', { project }), help: 'cad-bim#ändra-med-ai' });
           if (!values) return;
           s.proposing = true; s.error = ''; render();
           try {
-            if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
-            const me = await opencde.currentUser(connector).catch(() => null);
-            const ext = (await opencde.extensions(connector, cde.projectId).catch(() => null)) || {};
-            const types = Array.isArray(ext.topic_type) ? ext.topic_type : [];
-            const topicType = types.find((x) => /change|proposal|ändring|förslag|endring|forslag|ændring|muutos|ehdotus|breyting|tillaga/i.test(String(x))) || types[0] || null;
             const p = provider();
-            const changeSet = {
-              base: { document_id: String(cde.documentId || ''), version_index: Number(cde.versionIndex) || 1 },
-              provenance: { user: String((me && (me.name || me.id)) || 'Dataspatium'), ai_model: p ? p.model : null, tool_call: s.changeset.ops.map((op) => op.tool).join(',').slice(0, 200) || null, created_at: new Date().toISOString() },
-              changes: proposal.changes,
-            };
-            const out = await opencde.proposeChanges(connector, cde.projectId, { title: values.title || defaults.title, description: values.description || defaults.description, topicType, changeSet, ops: withOps ? await guidOps(writeTools.toWheel(s.changeset)) : undefined });
-            if (!out) throw new Error(t('ai.change.propose.unsupported'));
-            s.proposed = { guid: out.topic.guid, title: values.title || defaults.title, trial: out.tried ? { state: 'queued' } : null, approveUrl: out.approveUrl || null, approved: null,
-              proposalUrl: out.proposalUrl || null, schemaUrl: out.schemaUrl, changeSet: out.changeSet || changeSet, details: null, picks: [] };
-            const msg = t('ai.change.propose.done', { title: s.proposed.title, project });
-            log(msg, 'ok'); overlays.toast.show(msg, { kind: 'ok', timeout: 8000 });
-            if (out.tried) trialOf(connector, out.proposalUrl, s.proposed);
+            await flow.send(connector, { title: values.title || defaults.title, description: values.description || defaults.description, changes: proposal.changes,
+              aiModel: p ? p.model : null, toolCall: s.changeset.ops.map((op) => op.tool).join(',') || null, ops: withOps ? await guidOps(writeTools.toWheel(s.changeset)) : undefined });
           } catch (err) { fail(err); if (err && err.status === 403) s.error = t('ai.change.propose.role'); }
           s.proposing = false; render();
         }
@@ -477,114 +452,6 @@
           }
           return writeTools.withGuids(ops, (id) => map.get(id) || null);
         }
-        /** The server's trial of the proposal, polled until it is final; its failure is a line under the topic, not an error. */
-        async function trialOf(connector, proposalUrl, mine) {
-          try {
-            const report = await opencde.proposalTrial(connector, proposalUrl, { onStatus: (state) => { if (s.proposed === mine) { mine.trial = { state }; render(); } } });
-            if (s.proposed !== mine) return;
-            const state = report && ['queued', 'running', 'clean', 'issues', 'failed'].includes(report.state) ? report.state : 'failed';
-            mine.trial = { state, applied: Number(report && report.applied) || 0, count: Number(report && report.change_count) || 0, issues: Number(report && report.issue_count) || 0, errors: Number(report && report.error_count) || 0, error: (report && report.error) || '', list: Array.isArray(report && report.issues) ? report.issues : [],
-              // Dataregium 3.0.0: the teams whose part the change set touches; one team's part is approved by its responsible.
-              teams: Array.isArray(report && report.teams) ? report.teams.map((x) => ({ id: String(x.team_id || ''), name: String(x.name || x.team_id || '') })) : [], teamsError: String((report && report.teams_error) || '') };
-            log(trialText(mine.trial), state === 'clean' ? 'ok' : 'warn');
-          } catch (err) { if (s.proposed === mine) mine.trial = { state: 'failed', error: String((err && err.message) || err), list: [] }; }
-          render();
-        }
-        /** A manager makes a clean proposal the document's next version on the server; the local model is not touched. */
-        async function approveOnServer(options = {}) {
-          const mine = s.proposed;
-          const cde = s.cde;
-          if (!mine || !cde || !mine.approveUrl || !mine.trial || mine.trial.state !== 'clean' || mine.approved || s.approvingServer || s.busy) return;
-          const connector = await connectors.get(cde.connectorId);
-          if (!connector) return;
-          const project = cde.projectName || cde.projectId;
-          if (!options.confirmed && !(await overlays.dialog.confirm(t('ai.change.approve.server.confirm', { title: mine.title, project })))) return;
-          s.approvingServer = true; s.error = ''; render();
-          try {
-            const version = await opencde.approveProposal(connector, mine.approveUrl);
-            if (s.proposed === mine) {
-              mine.conflicts = null;
-              mine.approved = { index: Number(version && version.version_index) || 0, number: String((version && (version.version_number || version.version_index)) || ''), title: String((version && version.title) || '') };
-              const msg = t('ai.change.approve.server.done', { n: mine.approved.number, title: mine.approved.title || mine.title, project });
-              log(msg, 'ok'); overlays.toast.show(msg, { kind: 'ok', timeout: 8000 });
-            }
-          } catch (err) {
-            fail(err);
-            // A change that touches one team's part is the team's responsible's to approve, not a manager's (403).
-            if (s.proposed === mine && err && err.status === 403) s.error = t('ai.change.approve.server.team', { detail: String((err && (err.detail || err.message)) || '') });
-            if (s.proposed === mine && err && err.status === 412 && Array.isArray(err.conflicts)) {
-              // The document moved on and the changes collide with what came between: the keys, or everything after a whole file.
-              mine.conflicts = err.conflicts;
-              // With the three values per key the person decides each collision here; the merge itself stays on the server (OB-19 d).
-              mine.details = !err.conflicts.includes('*') && Array.isArray(err.conflictDetails) && err.conflictDetails.length ? err.conflictDetails : null;
-              mine.picks = (mine.details || []).map(() => 'ours');
-              s.error = err.conflicts.includes('*') ? t('ai.change.approve.server.conflict.all')
-                : mine.details ? t('ai.change.approve.server.conflict.choose', { k: i18n.formatNumber(mine.details.length) })
-                  : t('ai.change.approve.server.conflict', { k: i18n.formatNumber(err.conflicts.length), keys: err.conflicts.slice(0, 10).join(', ') + (err.conflicts.length > 10 ? ' …' : '') });
-            } else if (s.proposed === mine && err && err.status === 409 && mine.approveUrl && mine.trial) {
-              // The trial on the latest version was not clean: the server's findings replace the old verdict.
-              mine.trial = { state: 'queued' };
-              trialOf(connector, mine.approveUrl.replace(/\/approve$/, ''), mine);
-            }
-          }
-          s.approvingServer = false; render();
-        }
-        /**
-         * The collisions decided: a change kept takes the latest version's value as its old one, a change given up leaves the proposal;
-         * the proposal goes again against the latest version and the server tries it anew before it can be approved.
-         * @param {string[]} [choices] 'ours' or 'theirs' per collision, in the server's order; the panel's picks otherwise
-         */
-        async function resolveNow(choices) {
-          const mine = s.proposed;
-          const cde = s.cde;
-          if (!mine || !cde || !mine.details || !mine.changeSet || s.approvingServer || s.busy) return;
-          const picks = mine.details.map((d, i) => ((choices && choices[i]) || mine.picks[i] || 'ours'));
-          s.approvingServer = true; s.error = ''; render();
-          try {
-            const connector = await connectors.get(cde.connectorId);
-            if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
-            const versions = await opencde.documentVersions(connector, [cde.documentId]);
-            const latest = versions.filter((v) => !v.document_id || v.document_id === cde.documentId).reduce((n, v) => Math.max(n, Number(v.version_index) || 0), 0);
-            const { changes, keepTheirs, kept, dropped } = decideConflicts(mine.changeSet, mine.details, picks);
-            const hasOps = Array.isArray(mine.changeSet.ops) && mine.changeSet.ops.length > 0;
-            if (!changes.length && !hasOps) throw new Error(t('ai.change.conflict.empty'));
-            const changeSet = Object.assign({}, mine.changeSet, { base: Object.assign({}, mine.changeSet.base, { version_index: latest || mine.changeSet.base.version_index }), changes },
-              hasOps ? { keep_theirs: Array.from(new Set((mine.changeSet.keep_theirs || []).concat(keepTheirs))) } : {});
-            await opencde.putChangeSet(connector, cde.projectId, mine.guid, mine.schemaUrl, changeSet);
-            mine.changeSet = changeSet; mine.details = null; mine.picks = []; mine.conflicts = null;
-            log(t('ai.change.conflict.resent', { n: String(changeSet.base.version_index), kept: i18n.formatNumber(kept), dropped: i18n.formatNumber(dropped) }), 'ok');
-            if (mine.proposalUrl) { mine.trial = { state: 'queued' }; trialOf(connector, mine.proposalUrl, mine); }
-          } catch (err) { fail(err); }
-          s.approvingServer = false; render();
-        }
-        /** A value of the change set's form in words, for the collisions. */
-        function conflictValue(v) {
-          if (v === null || v === undefined) return '–';
-          if (Array.isArray(v)) { const text = v.map(conflictValue).join(', '); return text.length > 60 ? text.slice(0, 57) + '…' : text; }
-          if (typeof v === 'object') {
-            if (v.value !== undefined) return String(v.value);
-            if (v.enum !== undefined) return '.' + v.enum + '.';
-            if (v.guid !== undefined) return String(v.guid) + (v.path ? '/' + v.path : '');
-            if (v.step_id !== undefined) return '#' + v.step_id;
-            return JSON.stringify(v).slice(0, 60);
-          }
-          return String(v);
-        }
-        function renderConflicts(mine) {
-          return h('div', { class: 'dm-stack-sm', 'data-ai-conflicts': String(mine.details.length) },
-            h('strong', { class: 'dm-small', text: t('ai.change.conflict.title') }),
-            mine.details.slice(0, 100).map((d, i) => {
-              const pick = /** @type {any} */ (h('dm-select', { label: t('ai.change.conflict.choice'), 'data-ai-conflict-pick': String(i) }));
-              pick.options = [{ value: 'ours', label: t('ai.change.conflict.ours') }, { value: 'theirs', label: t('ai.change.conflict.theirs') }];
-              pick.value = mine.picks[i] || 'ours';
-              pick.addEventListener('change', () => { mine.picks[i] = pick.value === 'theirs' ? 'theirs' : 'ours'; });
-              return h('div', { class: 'dm-row-wrap', 'data-ai-conflict': String(i) },
-                h('span', { class: 'dm-small dm-grow', text: t('ai.change.conflict.line', { key: String(d.key || ''), base: conflictValue(d.base), theirs: conflictValue(d.theirs), ours: conflictValue(d.ours), n: String(d.version_index || '–') }) }), pick,
-                wholeConflict(d) ? h('span', { class: 'dm-help dm-xs', 'data-ai-conflict-whole': String(i), text: t('ai.change.conflict.whole') }) : null);
-            }),
-            h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('ai.change.conflict.resend'), icon: 'refresh-cw', size: 'sm', loading: s.approvingServer, disabled: s.busy, title: t('ai.change.conflict.resend.hint'), 'data-ai-conflict-resend': '', onClick: () => resolveNow() })));
-        }
-        const trialText = (trial) => t('ai.change.trial.' + (trial.state === 'running' ? 'queued' : trial.state), { applied: i18n.formatNumber(trial.applied || 0), n: i18n.formatNumber(trial.count || 0), issues: i18n.formatNumber(trial.issues || 0), errors: i18n.formatNumber(trial.errors || 0), error: trial.error || '' });
         const deletions = () => s.changeset.ops.filter((op) => op.tool === 'delete_elements').reduce((n, op) => n + op.ids.length, 0);
         /** The previewed change set as a recipe step: undoable, logged with its provenance, a new version of the model. */
         async function approveNow() {
@@ -651,15 +518,7 @@
               s.preview.server ? h('p', { class: s.preview.server.status === 'issues' || s.preview.server.status === 'failed' ? 'dm-error dm-small' : 'dm-help dm-xs', 'data-ai-precheck': s.preview.server.status,
                 text: t('ai.change.precheck.' + s.preview.server.status, { n: i18n.formatNumber((s.preview.server.counts || {}).findings || 0), errors: i18n.formatNumber((s.preview.server.counts || {}).errors || 0), error: s.preview.server.error || '' }) }) : null,
               s.cde && proposal ? h('p', { class: 'dm-help dm-xs', 'data-ai-proposal': String(proposal.changes.length), text: proposalText(proposal) }) : null,
-              s.proposed ? h('p', { class: 'dm-small', 'data-ai-proposed': s.proposed.guid, text: t('ai.change.proposed', { title: s.proposed.title }) }) : null,
-              s.proposed && s.proposed.trial ? h('p', { class: s.proposed.trial.state === 'issues' || s.proposed.trial.state === 'failed' ? 'dm-error dm-small' : 'dm-help dm-xs', 'data-ai-trial': s.proposed.trial.state, text: trialText(s.proposed.trial) }) : null,
-              s.proposed && s.proposed.trial && (s.proposed.trial.teams || []).length ? h('p', { class: 'dm-help dm-xs', 'data-ai-trial-teams': String(s.proposed.trial.teams.length), text: t(s.proposed.trial.teams.length === 1 ? 'ai.change.trial.team' : 'ai.change.trial.teams', { names: s.proposed.trial.teams.map((x) => x.name).join(', ') }) }) : null,
-              s.proposed && s.proposed.trial && s.proposed.trial.teamsError ? h('p', { class: 'dm-help dm-xs', 'data-ai-trial-teams-error': '', text: t('ai.change.trial.teams.error', { error: s.proposed.trial.teamsError }) }) : null,
-              s.proposed && s.proposed.trial && (s.proposed.trial.list || []).length ? h('ul', { class: 'dm-list dm-xs', 'data-ai-trial-issues': '' }, s.proposed.trial.list.slice(0, 10).map((f) => h('li', { class: 'dm-xs', text: `${f.kind || ''}${f.rule ? ' ' + f.rule : ''}${f.step_id ? ' #' + f.step_id : ''}: ${f.message || ''}` }))) : null,
-              s.proposed && s.proposed.trial && s.proposed.trial.state === 'clean' && s.proposed.approveUrl && !s.proposed.approved ? h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('ai.change.approve.server'), icon: 'circle-check', size: 'sm', loading: s.approvingServer, disabled: s.busy, title: t('ai.change.approve.server.hint'), 'data-ai-approve-server': '', onClick: () => approveOnServer() })) : null,
-              s.proposed && s.proposed.approved ? h('p', { class: 'dm-small', 'data-ai-approved-server': String(s.proposed.approved.index), text: t('ai.change.approved.server', { n: s.proposed.approved.number }) }) : null,
-              s.proposed && s.proposed.details ? renderConflicts(s.proposed)
-                : s.proposed && s.proposed.conflicts ? h('ul', { class: 'dm-list dm-xs', 'data-ai-approve-conflicts': String(s.proposed.conflicts.length) }, s.proposed.conflicts.slice(0, 10).map((k) => h('li', { class: 'dm-xs', text: k }))) : null) : null,
+              ...flow.view()) : null,
             h('div', { class: 'dm-row-wrap' },
               basic.button({ label: t('ai.change.preview'), icon: 'eye', size: 'sm', loading: s.previewing, disabled: !cs.ops.length || s.busy, title: t('ai.change.preview.hint'), 'data-ai-preview': '', onClick: previewNow }),
               basic.button({ label: t('ai.change.approve'), icon: 'check', size: 'sm', loading: s.approving, disabled: !report || errors > 0 || s.busy, title: t('ai.change.approve.hint'), 'data-ai-approve': '', onClick: approveNow }),
@@ -700,7 +559,7 @@
         }
         function destroy() { unsubscribe(); cancel(); site.destroy(); if (s.preview && options.preview) { s.preview = null; Promise.resolve(options.preview(null)).catch(() => {}); } }
         load().then(render);
-        return { el, destroy, state: s, check, site, ask: (question) => { s.question = question; return askNow(); }, attach: (list) => { s.attachments = s.attachments.concat(list || []); render(); }, addFacts, mark, load, preview: previewNow, approve: approveNow, reject: rejectNow, propose: proposeNow, approveOnServer, resolveConflicts: resolveNow, setMode: (m) => { s.mode = MODES.includes(m) ? m : 'ask'; render(); } };
+        return { el, destroy, state: s, check, site, ask: (question) => { s.question = question; return askNow(); }, attach: (list) => { s.attachments = s.attachments.concat(list || []); render(); }, addFacts, mark, load, preview: previewNow, approve: approveNow, reject: rejectNow, propose: proposeNow, approveOnServer: flow.approve, resolveConflicts: flow.resolve, setMode: (m) => { s.mode = MODES.includes(m) ? m : 'ask'; render(); } };
       }
 
       /**
@@ -787,54 +646,7 @@
           } catch (err) { error = String((err && err.message) || err); }
         }
       }
-      /**
-       * A collision on a whole instance (Dataregium's `#<step>` without an attribute): it was deleted or changed class in the latest
-       * version, so it cannot be given up with keep_theirs; the change set goes again on the latest version.
-       * @param {any} d an entry of conflict_details
-       */
-      function wholeConflict(d) {
-        return !d.attribute && !String(d.key || '').includes('.');
-      }
-      /**
-       * The person's choices on the collisions applied to the change set. Each collision finds its change by its place in `changes`
-       * (Dataregium's change_index), else by the change's address: the STEP id when both have one, else the GlobalId and path, else
-       * the instance's own GlobalId. A change kept takes the latest version's value as its old one, a change given up leaves the
-       * proposal (for a whole instance every change of it), and the keys given up that are not whole instances go to keep_theirs for
-       * the operations.
-       * @param {{changes: any[]}} changeSet @param {any[]} details conflict_details @param {string[]} picks 'ours' or 'theirs' per detail
-       * @returns {{changes: any[], keepTheirs: string[], kept: number, dropped: number}}
-       */
-      function decideConflicts(changeSet, details, picks) {
-        const list = changeSet.changes || [];
-        const address = (c) => JSON.stringify([c.guid || null, c.path || null, c.step_id === undefined || c.step_id === null ? null : Number(c.step_id)]);
-        const same = (c, d) => c.attribute === d.attribute && (!d.op || c.op === d.op) && (
-          c.step_id !== undefined && c.step_id !== null && d.step_id !== undefined && d.step_id !== null ? Number(c.step_id) === Number(d.step_id)
-            : c.path ? !!c.guid && c.guid === d.guid && c.path === d.path
-              : !!c.guid && c.guid === d.guid && !d.path);
-        const changeOf = (d) => (Number.isInteger(d.change_index) && d.change_index >= 0 && d.change_index < list.length ? d.change_index : list.findIndex((c) => same(c, d)));
-        /** @type {Map<number, number>} */ const decided = new Map();
-        const gone = new Set();
-        details.forEach((d, i) => {
-          const at = changeOf(d);
-          if (at < 0) return;
-          decided.set(at, i);
-          if (wholeConflict(d) && picks[i] === 'theirs') gone.add(address(list[at]));
-        });
-        let kept = 0; let dropped = 0;
-        const changes = [];
-        list.forEach((c, at) => {
-          if (gone.has(address(c))) { dropped++; return; }
-          const i = decided.has(at) ? /** @type {number} */ (decided.get(at)) : -1;
-          if (i < 0) { changes.push(c); return; }
-          if (picks[i] === 'theirs') { dropped++; return; }
-          kept++;
-          const d = details[i];
-          changes.push(c.op === 'set' && !wholeConflict(d) ? Object.assign({}, c, { old: d.theirs === undefined ? null : d.theirs }) : c);
-        });
-        const keepTheirs = details.filter((d, i) => picks[i] === 'theirs' && !wholeConflict(d))
-          .map((d) => String(d.key || (d.guid ? `${d.guid}${d.path ? '/' + d.path : ''}.${d.attribute}` : `#${d.step_id}.${d.attribute}`)));
-        return { changes, keepTheirs, kept, dropped };
-      }
-      return { create, manage, edit, controls, questionBox, decideConflicts };
+      /** The collisions decided (moved to ui/share/change-proposal, which Dela's Till CDE shares); kept here for its callers. */
+      return { create, manage, edit, controls, questionBox, decideConflicts: changeProposal.decideConflicts };
     });
 })();
