@@ -66,13 +66,14 @@
     /**
      * Parse the linked file again with the dataset's import options: a table for api/runner.refreshDataset, which
      * infers the types afresh, rebuilds the rows and replays the recipe.
-     * @param {any} source the dataset's source descriptor @param {{datasetId?: string}} [options]
+     * @param {any} source the dataset's source descriptor @param {{datasetId?: string, ask?: boolean}} [options] `ask: false` (a flow
+     *   or a watch at start): the browser's permission is never asked for, so a file without it fails with linked.err.denied
      */
     async function refetch(source, options = {}) {
       const id = options.datasetId;
       if (!id) throw new Error(D.t('linked.err.nohandle'));
       const meta = await datasets.get(id);
-      const f = await file(id, { request: true });
+      const f = await file(id, { request: options.ask !== false });
       const importer = D.require('io/import');
       const types = D.require('data/types');
       const importOptions = Object.assign({}, (meta && meta.importOptions) || {});

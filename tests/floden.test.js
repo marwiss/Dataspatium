@@ -278,6 +278,14 @@
     finally { await consent.set('api', previous); localStorage.setItem('dataspatium.consent', before || 'granted'); }
     const out = await watches.checkOnStart({ force: true });
     assert.ok(out.some((w) => w.datasetId === api.meta.id && w.state === 'new'), JSON.stringify(out.map((w) => w.state)));
+    // Every read at start carries ask: false down to whatever it fetches; a check by hand does not.
+    const seen = [];
+    const reader = async (_source, o) => { seen.push(o.ask); return { columns: ['a'], rows: [[3]] }; };
+    await watches.checkOnStart({ force: true, fetch: reader });
+    assert.ok(seen.length >= 1 && seen.every((a) => a === false), 'the reads at start ask for nothing: ' + JSON.stringify(seen));
+    seen.length = 0;
+    await watches.check(api.meta.id, { fetch: reader });
+    assert.deepEqual(seen, [undefined], 'a check by hand may ask');
     await watches.setChecksOnStart(false);
     await watches.setWatched(api.meta.id, false);
     api.stop();
@@ -593,6 +601,30 @@
       api.stop();
     }
   }, 240000);
+
+  test('floden: a refresh nobody watches asks nothing of an OpenCDE server: without its consents kept for good it is refused unasked', async (assert) => {
+    const consent = D.require('platform/consent');
+    const opencde = D.require('api/families/opencde');
+    const before = localStorage.getItem('dataspatium.consent');
+    localStorage.removeItem('dataspatium.consent');
+    const kept = await consent.state('opencde');
+    const asked = [];
+    consent.setAsker(async (purpose, info) => { asked.push([purpose, info.host]); return { allow: true, remember: false }; });
+    try {
+      await consent.set('opencde', null);
+      let err = null;
+      // The address is never contacted: the consent is settled first, and nothing is fetched in the suite.
+      try { await opencde.refetch({ id: 'test-cde-start', name: 'CDE vid start', baseUrl: 'https://cde.example.invalid' }, { opencde: { kind: 'topics', projectId: 'p' } }, { ask: false }); } catch (e) { err = e; }
+      assert.ok(err && err.name === 'ConsentError' && err.reason === 'unattended' && err.purpose === 'opencde', 'refused unasked: ' + (err && err.message));
+      assert.equal(err.message, t('consent.unattended', { purpose: t('consent.purpose.opencde') }), 'with how to allow it');
+      assert.deepEqual(asked, [], 'nothing asked');
+      return 'ok';
+    } finally {
+      consent.setAsker(null);
+      await consent.set('opencde', kept);
+      localStorage.setItem('dataspatium.consent', before || 'granted');
+    }
+  });
 
   test('floden: cleanup', async (assert) => {
     for (const id of flowIds) await flows.remove(id).catch(() => {});

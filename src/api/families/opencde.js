@@ -1327,8 +1327,14 @@
     /** A readable description for a dataset's source. */
     function describe(connector, what, projectName) { return t('opencde.source', { host: hostOf(connector.baseUrl), what, project: projectName || '' }); }
     const FETCHERS = { topics: fetchTopics, comments: fetchComments, components: fetchComponents, events: fetchEvents, files: fetchFiles };
-    /** Fetch again what a dataset's source recorded (api/runner calls this for family 'opencde'). */
-    async function refetch(connector, source) {
+    /**
+     * Fetch again what a dataset's source recorded (api/runner calls this for family 'opencde'). `ask: false` (a flow or a watch at
+     * start): nothing may be asked, so the consents for the server's requests (API fetches and OpenCDE servers) must be kept for good,
+     * or it fails unasked with a ConsentError that says how to allow them; signing in is never offered here either way.
+     * @param {any} connector @param {any} source @param {{ask?: boolean}} [options]
+     */
+    async function refetch(connector, source, options = {}) {
+      if (options.ask === false) for (const purpose of ['opencde', 'api']) await consent.require(purpose, { host: hostOf(connector.baseUrl), ask: false });
       const spec = (source && source.opencde) || {};
       // Administration lists (api/families/opencde-admin) record kind 'admin' and fetch again through their own module.
       if (spec.kind === 'admin' && D.has('api/families/opencde-admin')) return D.require('api/families/opencde-admin').refetch(connector, spec);

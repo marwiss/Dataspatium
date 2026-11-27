@@ -56,11 +56,15 @@
       return detail || D.t('bridge.err.http', { status });
     }
 
-    /** One call to the bridge: GET without a body, POST with one. The 'databases' consent is asked once. */
-    async function call(path, body) {
+    /**
+     * One call to the bridge: GET without a body, POST with one. The 'databases' consent is asked once; with `ask: false` it is
+     * not asked, and only one kept for good lets the call through.
+     * @param {string} path @param {any} [body] @param {{ask?: boolean}} [options]
+     */
+    async function call(path, body, options = {}) {
       const conn = connection();
       if (!conn) throw new BridgeError(D.t('bridge.err.notconnected'), 0);
-      await consent.require('databases', { host: hostOf(conn.url) });
+      await consent.require('databases', { host: hostOf(conn.url), ask: options.ask });
       const init = { method: body ? 'POST' : 'GET', headers: { Authorization: 'Bearer ' + conn.token, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' };
       let res;
       try { res = await (transport || fetch)(conn.url + path, init); } catch (err) { throw new BridgeError(D.t('bridge.err.unreachable', { url: conn.url }), 0, { cause: String((err && err.message) || err) }); }
@@ -112,9 +116,9 @@
     function sources() { return call('/sources'); }
     function tables(source) { return call('/tables', { source: withSecrets(source) }).then((r) => r.tables || []); }
     function columns(source, table) { return call('/columns', { source: withSecrets(source), table }).then((r) => r.columns || []); }
-    function rows(source, table, limit) { return call('/rows', { source: withSecrets(source), table, limit }); }
+    function rows(source, table, limit, options = {}) { return call('/rows', { source: withSecrets(source), table, limit }, options); }
     /** Run SQL. A write (anything but SELECT) needs `approved: true`; the bridge answers 428 until then, 403 when read-only. */
-    function query(source, sql, options = {}) { return call('/query', { source: withSecrets(source), sql, limit: options.limit, approved: !!options.approved }); }
+    function query(source, sql, options = {}) { return call('/query', { source: withSecrets(source), sql, limit: options.limit, approved: !!options.approved }, options); }
 
     // ---- secrets of a source ----
     const MASK = '***';
@@ -185,12 +189,16 @@
       const name = options.name || options.table || D.t('bridge.fetched.name');
       return runner.toDataset(table, { name, source: describeSource(source, options, table) });
     }
-    /** Fetch again what a dataset's bridge source describes (api/runner.refetch delegates here). */
+    /**
+     * Fetch again what a dataset's bridge source describes (api/runner.refetch delegates here). `ask: false` (a flow at start): the
+     * consent for databases is not asked for, so only one kept for good lets the call through.
+     * @param {any} desc @param {{limit?: number, ask?: boolean}} [options]
+     */
     async function refetch(desc, options = {}) {
       if (!connection()) throw new BridgeError(D.t('bridge.err.notconnected'), 0);
       const source = withSecrets(desc.source || {});
       if (desc.source && desc.source.hasSecrets && !hasSecretValues(source)) throw new BridgeError(D.t('bridge.err.password', { name: desc.label || '' }), 0);
-      const result = desc.sql ? await query(source, desc.sql, { limit: options.limit }) : await rows(source, desc.table, options.limit);
+      const result = desc.sql ? await query(source, desc.sql, { limit: options.limit, ask: options.ask }) : await rows(source, desc.table, options.limit, { ask: options.ask });
       if (result.affected !== undefined) throw new BridgeError(D.t('bridge.err.notaquery'), 0);
       return toTable(result);
     }

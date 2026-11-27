@@ -132,6 +132,43 @@
     }
   }, 30000);
 
+  test('bridge: a refresh nobody watches (ask: false) asks nothing: refused unasked without the consent for databases kept, and run with it', async (assert) => {
+    const srv = fakeBridge();
+    bridge.setTransport(srv.transport);
+    const consent = D.require('platform/consent');
+    const created = [];
+    const override = localStorage.getItem('dataspatium.consent');
+    const kept = await consent.state('databases');
+    const asked = [];
+    try {
+      await bridge.disconnect();
+      await bridge.connect('127.0.0.1:8731', 'hemlig-token');
+      const meta = await bridge.importTable({ kind: 'sqlite', path: 'C:\\Data\\start.sqlite' }, { table: 'Kommuner', name: 'Brygga vid start' });
+      created.push(meta.id);
+      localStorage.removeItem('dataspatium.consent');
+      await consent.set('databases', null);
+      consent.setAsker(async (purpose) => { asked.push(purpose); return { allow: true, remember: false }; });
+      const calls = srv.calls.length;
+      let err = null;
+      try { await runner.refreshDataset(meta.id, { ask: false }); } catch (e) { err = e; }
+      assert.ok(err && err.name === 'ConsentError' && err.reason === 'unattended' && err.purpose === 'databases', 'refused unasked: ' + (err && err.message));
+      assert.deepEqual(asked, [], 'nothing asked');
+      assert.equal(srv.calls.length, calls, 'and the bridge not called');
+      await consent.set('databases', 'granted');
+      const res = await runner.refreshDataset(meta.id, { ask: false });
+      assert.equal(res.rows, 3, 'with the consent kept for good it runs');
+      assert.deepEqual(asked, []);
+      return 'ok';
+    } finally {
+      consent.setAsker(null);
+      await consent.set('databases', kept);
+      if (override !== null) localStorage.setItem('dataspatium.consent', override);
+      bridge.setTransport(null);
+      await bridge.disconnect();
+      for (const id of created) await datasets.remove(id);
+    }
+  }, 30000);
+
   test('bridge: with the switch on, a service that refuses the browser is fetched through the bridge, and only then', async (assert) => {
     const http = D.require('api/http');
     const srv = fakeBridge();

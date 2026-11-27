@@ -61,9 +61,9 @@
       return { rowsBefore: before.rows, rowsNow: after.rows, added, removed, columnsAdded, columnsRemoved, same: !added && !removed && !columnsAdded.length && !columnsRemoved.length };
     }
 
-    /** Reads the source of a dataset as a table, without touching the dataset. */
+    /** Reads the source of a dataset as a table, without touching the dataset; `ask: false` goes along to whatever it fetches. */
     async function readSource(meta, options = {}) {
-      return (options.fetch || runner.refetch)(meta.source, { datasetId: meta.id, signal: options.signal });
+      return (options.fetch || runner.refetch)(meta.source, { datasetId: meta.id, signal: options.signal, ask: options.ask });
     }
     /**
      * Starts or stops watching a dataset. Starting reads the source once, which also shows whether it has already moved
@@ -81,7 +81,8 @@
 
     /**
      * Checks one watched dataset.
-     * @param {string} id @param {{fetch?: Function, signal?: AbortSignal, first?: boolean}} [options]
+     * @param {string} id @param {{fetch?: Function, signal?: AbortSignal, first?: boolean, ask?: boolean}} [options] `ask: false` (the
+     *   check at start): the read asks for nothing, so only consents kept for good and a file permission still held let it through
      * @returns {Promise<any>} the watch with state same, new, unknown or error
      */
     async function check(id, options = {}) {
@@ -133,9 +134,9 @@
     async function setChecksOnStart(on) { await idb.setSetting(ON_START, !!on); notify('changed', {}); }
     let startDone = false;
     /**
-     * The check at start, when the user has asked for it. It never asks for anything: API sources need their consent
-     * given already, linked files need their permission still valid (see check), and the local bridge is left out because
-     * its token is only known once the user has connected.
+     * The check at start, when the user has asked for it. It never asks for anything: every read carries `ask: false` down to
+     * the consent and the file permission, API sources need their consent given already, linked files need their permission
+     * still valid (see check), and the local bridge and OpenCDE sources are left out, since they are connected and signed in by hand.
      * @param {{force?: boolean, fetch?: Function}} [options]
      */
     async function checkOnStart(options = {}) {
@@ -148,11 +149,14 @@
         const meta = await datasets.get(rec.datasetId);
         if (!meta || !meta.source) continue;
         if (meta.source.kind === 'bridge' || (meta.source.kind === 'api' && !allowed)) continue;
-        // A source the tier hides is not contacted (api/runner refuses it); an OpenCDE source needs the user's sign-in, which start
-        // never asks for.
+        // A source the tier hides is not contacted (api/runner refuses it); an OpenCDE source needs the user's sign-in and the
+        // consent for OpenCDE servers, which start never asks for.
         if (await runner.hidden(meta.source)) continue;
-        if (meta.source.family === 'opencde') { const c = await D.require('api/connectors').get(meta.source.connectorId); if (!c || !D.require('api/families/opencde').signedIn(c)) continue; }
-        out.push(await check(rec.datasetId, options));
+        if (meta.source.family === 'opencde') {
+          const c = await D.require('api/connectors').get(meta.source.connectorId);
+          if (!c || !D.require('api/families/opencde').signedIn(c) || (await consent.state('opencde')) !== 'granted') continue;
+        }
+        out.push(await check(rec.datasetId, Object.assign({}, options, { ask: false })));
       }
       return out.filter(Boolean);
     }
