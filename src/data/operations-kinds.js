@@ -82,7 +82,7 @@
       id: 'geo_from_system', group: 'geo',
       params: [
         { name: 'xColumn', type: 'column', required: true, kinds: NUMERIC }, { name: 'yColumn', type: 'column', required: true, kinds: NUMERIC },
-        { name: 'crs', type: 'select', required: true, options: () => D.require('io/file-sense').SYSTEMS, default: '3006' },
+        { name: 'crs', type: 'select', required: true, options: () => geo.SYSTEMS, default: '3006' },
         { name: 'xName', type: 'text', default: 'lon' }, { name: 'yName', type: 'text', default: 'lat' },
       ],
       async apply(ctx, p) {

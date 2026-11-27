@@ -285,6 +285,18 @@
       if (code === 3057) return `+proj=lcc +lat_0=${ISN93.lat0} +lon_0=${ISN93.lon0} +lat_1=${ISN93.lat1} +lat_2=${ISN93.lat2} +x_0=${ISN93.falseE} +y_0=${ISN93.falseN} ${tail}`;
       return null;
     }
+    /** The coordinate systems the app can read, in the order a Nordic user would look for them (io/file-sense, geo_from_system). */
+    const SYSTEMS = [
+      { value: '3006', label: 'SWEREF 99 TM', group: 'SWEREF 99' },
+      ...[[3007, '12 00'], [3008, '13 30'], [3012, '14 15'], [3009, '15 00'], [3013, '15 45'], [3010, '16 30'], [3014, '17 15'], [3011, '18 00'], [3015, '18 45'], [3016, '20 15'], [3017, '21 45'], [3018, '23 15']]
+        .map(([code, zone]) => ({ value: String(code), label: `SWEREF 99 ${zone}`, group: 'SWEREF 99' })),
+      { value: '3021', label: 'RT 90 2,5 gon V', group: 'RT 90' },
+      { value: '25832', label: 'ETRS89 / UTM 32N', group: 'UTM' }, { value: '25833', label: 'ETRS89 / UTM 33N', group: 'UTM' },
+      { value: '25834', label: 'ETRS89 / UTM 34N', group: 'UTM' }, { value: '25835', label: 'ETRS89 / UTM 35N', group: 'UTM' },
+      { value: '3067', label: 'ETRS-TM35FIN', group: 'UTM' },
+      { value: '3057', label: 'ISN93', group: 'ISN93' },
+      { value: '3857', label: 'Web Mercator', group: 'Web Mercator' },
+    ];
     /** Height systems by EPSG code (the Nordic national ones). */
     const HEIGHT_SYSTEMS = { 5613: 'RH 2000', 5718: 'RH 70', 5799: 'DVR90', 5941: 'NN2000', 3900: 'N2000', 8089: 'ISH2004' };
     /** The name of a height system given as "EPSG:5613", a URN or a name; the text itself when the code is not one of the Nordic systems; '' for nothing. */
@@ -346,6 +358,6 @@
       return [(x / R) / DEG, Math.atan(Math.sinh(y / R)) / DEG];
     }
 
-    return { SWEREF_ZONES, TM_ZONES, ISN93, HEIGHT_SYSTEMS, swerefZone, epsgOf, crsCode, crsUnknown, crsLabel, crsText, crsOfMeta, proj4Def, heightLabel, knownCrs, parseGeometry, wktToGeoJson, firstCoordinate, isProjected, bounds, swerefToWgs84, wgs84ToSweref, tmToWgs84, lccToWgs84, mercatorToWgs84, mapCoordinates, toWgs84 };
+    return { SWEREF_ZONES, TM_ZONES, ISN93, SYSTEMS, HEIGHT_SYSTEMS, swerefZone, epsgOf, crsCode, crsUnknown, crsLabel, crsText, crsOfMeta, proj4Def, heightLabel, knownCrs, parseGeometry, wktToGeoJson, firstCoordinate, isProjected, bounds, swerefToWgs84, wgs84ToSweref, tmToWgs84, lccToWgs84, mercatorToWgs84, mapCoordinates, toWgs84 };
   });
 })();

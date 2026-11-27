@@ -9,18 +9,8 @@
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('io/file-sense', ['viz/leaflet', 'data/facets', 'data/types', 'data/geo', 'data/kinds', 'data/boundaries', 'data/spatial-search', 'data/datasets'], (leaflet, facets, types, geo, kinds, boundaries, spatial, datasets) => {
-    /** The coordinate systems the app can read, in the order a Nordic user would look for them. */
-    const SYSTEMS = [
-      { value: '3006', label: 'SWEREF 99 TM', group: 'SWEREF 99' },
-      ...[[3007, '12 00'], [3008, '13 30'], [3012, '14 15'], [3009, '15 00'], [3013, '15 45'], [3010, '16 30'], [3014, '17 15'], [3011, '18 00'], [3015, '18 45'], [3016, '20 15'], [3017, '21 45'], [3018, '23 15']]
-        .map(([code, zone]) => ({ value: String(code), label: `SWEREF 99 ${zone}`, group: 'SWEREF 99' })),
-      { value: '3021', label: 'RT 90 2,5 gon V', group: 'RT 90' },
-      { value: '25832', label: 'ETRS89 / UTM 32N', group: 'UTM' }, { value: '25833', label: 'ETRS89 / UTM 33N', group: 'UTM' },
-      { value: '25834', label: 'ETRS89 / UTM 34N', group: 'UTM' }, { value: '25835', label: 'ETRS89 / UTM 35N', group: 'UTM' },
-      { value: '3067', label: 'ETRS-TM35FIN', group: 'UTM' },
-      { value: '3057', label: 'ISN93', group: 'ISN93' },
-      { value: '3857', label: 'Web Mercator', group: 'Web Mercator' },
-    ];
+    /** The coordinate systems the app can read (data/geo, where the start's operations find them too). */
+    const SYSTEMS = geo.SYSTEMS;
     const DEFAULT_SYSTEM = '3006';
     const RT90 = '3021';
     /** Boundary sets that can name a place, one per country that ships with the app. */
