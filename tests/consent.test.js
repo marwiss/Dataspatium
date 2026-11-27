@@ -1,6 +1,9 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
-/** Tests of internet access by consent, components fetched on demand (hash, cache, a changed cached copy, removal) and remote R packages. */
+/**
+ * Tests of internet access by consent, components fetched on demand (hash, cache, a changed cached copy, removal, MD5) and remote R
+ * packages (the pinned index, each package's sum). Nothing reaches the network: fetches are stand-ins.
+ */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
@@ -11,6 +14,7 @@
   const packages = D.require('engines/r/packages');
   const enc = (s) => new TextEncoder().encode(s);
   const response = (bytes, status = 200) => Promise.resolve(new Response(bytes, { status }));
+  const t = (key, params) => D.t(key, params);
 
   /** Run with the developer override off (the test page turns it on so that no dialog blocks the suite). */
   async function withoutOverride(fn) {
@@ -409,13 +413,22 @@
     }
   });
 
+  /** A stand-in for webR's index with the MD5 sums of the given package files, and its pin (the tests never reach the repository). */
+  async function fakeIndex(bundled, sums = {}) {
+    const md5 = async (name) => (sums[name] === null ? '' : `MD5sum: ${sums[name] || await components.md5Hex(enc(name === 'fakepkg' ? 'PKG1' : name === 'fakedep' ? 'DEP' : name))}\n`);
+    const text = `Package: ${bundled}\nVersion: 9.9.9\nDepends: R (>= 4.0)\n\nPackage: fakepkg\nVersion: 1.2.3\nImports: ${bundled}, fakedep\n${await md5('fakepkg')}\nPackage: fakedep\nVersion: 0.1.0\n${await md5('fakedep')}\nPackage: other\nVersion: 2.0.0\n`;
+    return { text, pin: { sha256: await components.sha256Hex(enc(text)) } };
+  }
+  const R_IDS = ['webr-repo:PACKAGES', 'webr-repo:fakepkg_1.2.3.tgz', 'webr-repo:fakedep_0.1.0.tgz'];
+
   test('remote R packages: the webR index is fetched once, only packages that are not bundled are downloaded, and the worker index is extended', async (assert) => {
     await packages.load();
     const bundled = packages.all()[0];
-    const indexText = `Package: ${bundled}\nVersion: 9.9.9\nDepends: R (>= 4.0)\n\nPackage: fakepkg\nVersion: 1.2.3\nImports: ${bundled}, fakedep\n\nPackage: fakedep\nVersion: 0.1.0\n\nPackage: other\nVersion: 2.0.0\n`;
+    const { text: indexText, pin } = await fakeIndex(bundled);
     const urls = [];
     const fetcher = (url) => { urls.push(url); if (/PACKAGES$/.test(url)) return response(enc(indexText)); if (/fakepkg_1\.2\.3\.tgz$/.test(url)) return response(enc('PKG1')); if (/fakedep_0\.1\.0\.tgz$/.test(url)) return response(enc('DEP')); return response(enc(''), 404); };
-    remote.reset();
+    for (const id of R_IDS) await components.remove(id).catch(() => {});
+    remote.reset({ pin });
     try {
       assert.deepEqual(remote.missing([bundled, 'stats', 'fakepkg']), ['fakepkg'], 'bundled and base packages are not missing');
       const none = await remote.ensure([bundled], { fetch: fetcher });
@@ -437,9 +450,95 @@
       return 'ok';
     } finally {
       remote.reset();
-      for (const id of ['webr-repo:PACKAGES', 'webr-repo:fakepkg_1.2.3.tgz', 'webr-repo:fakedep_0.1.0.tgz']) await components.remove(id).catch(() => {});
+      for (const id of R_IDS) await components.remove(id).catch(() => {});
       // The index asset goes back to the bundled text on the next load (the provided copy is dropped).
       D.assets.take(packages.indexAssetName());
+    }
+  });
+
+  test('components: MD5 matches RFC 1321 across block edges and slices', async (assert) => {
+    const a = (n) => enc('a'.repeat(n));
+    assert.equal(await components.md5Hex(new Uint8Array(0)), 'd41d8cd98f00b204e9800998ecf8427e');
+    assert.equal(await components.md5Hex(enc('abc')), '900150983cd24fb0d6963f7d28e17f72');
+    assert.equal(await components.md5Hex(enc('The quick brown fox jumps over the lazy dog').buffer), '9e107d9d372bb6826bd81d3542a419d6', 'an ArrayBuffer too');
+    assert.equal(await components.md5Hex(a(55)), 'ef1772b6dff9a122358552954ad0df65');
+    assert.equal(await components.md5Hex(a(56)), '3b0c8ac703f828b04c6c197006d17218', 'the length spills into a second block');
+    assert.equal(await components.md5Hex(a(64)), '014842d480b571495a4a0363793f7367');
+    assert.equal(await components.md5Hex(a(2000000)), '2a915e52d86d42e58e580f4073120a6b', 'over two slices');
+    return 'ok';
+  });
+
+  test('remote R packages: the index must have its pinned SHA-256 and each package the MD5 it lists, downloaded and from the cache; one without a sum, or an R version without a pin, is refused', async (assert) => {
+    const idb = D.require('platform/storage/idb');
+    await packages.load();
+    const bundled = packages.all()[0];
+    const pinned = remote.INDEX_PINS[remote.rVersion()];
+    assert.ok(pinned && /^[0-9a-f]{64}$/.test(pinned.sha256), 'the bundled R version ' + remote.rVersion() + ' has a pinned index: move the pin with webR (tools/webr_repo_pin.py)');
+    const good = await fakeIndex(bundled);
+    let pkgBytes = 'PKG1';
+    const urls = [];
+    const fetcherFor = (indexText) => (url) => { urls.push(url); if (/PACKAGES$/.test(url)) return response(enc(indexText)); if (/fakepkg_1\.2\.3\.tgz$/.test(url)) return response(enc(pkgBytes)); if (/fakedep_0\.1\.0\.tgz$/.test(url)) return response(enc('DEP')); return response(enc(''), 404); };
+    const failure = async (p) => { try { await p; return null; } catch (e) { return e; } };
+    const clear = async () => { for (const id of R_IDS) await components.remove(id).catch(() => {}); D.assets.take(packages.indexAssetName()); };
+    const realContrib = packages.contrib;
+    try {
+      await clear();
+      // 1. An index that is not the pinned one is never used or kept.
+      remote.reset({ pin: { sha256: '0'.repeat(64) } });
+      let err = await failure(remote.ensure(['fakepkg'], { fetch: fetcherFor(good.text) }));
+      assert.ok(err && err.integrity && err.message === t('r.remote.index.changed', { version: remote.rVersion() }), 'refused: ' + (err && err.message));
+      assert.equal(await components.meta('webr-repo:PACKAGES'), null, 'nothing kept');
+      // 2. A package whose bytes lack the listed sum is neither kept nor provided.
+      remote.reset({ pin: good.pin });
+      pkgBytes = 'EVIL';
+      err = await failure(remote.ensure(['fakepkg'], { fetch: fetcherFor(good.text) }));
+      assert.ok(err && err.integrity && err.message === t('components.err.hash', { label: 'fakepkg' }), 'refused: ' + (err && err.message));
+      assert.equal(await components.meta('webr-repo:fakepkg_1.2.3.tgz'), null, 'the wrong file is not kept');
+      assert.ok(!remote.provided().includes('fakepkg'), 'nor provided');
+      // 3. The right bytes go through; a cached copy changed afterwards counts as not cached, is removed and is fetched again.
+      pkgBytes = 'PKG1';
+      const res = await remote.ensure(['fakepkg'], { fetch: fetcherFor(good.text) });
+      assert.deepEqual(res.packages.sort(), ['fakedep', 'fakepkg']);
+      remote.reset({ pin: good.pin });
+      assert.equal(await remote.cached(['fakepkg']), true, 'the pinned index and both files from the cache');
+      await idb.saveBlob('component:webr-repo:fakepkg_1.2.3.tgz', enc('EVIL').buffer);
+      remote.reset({ pin: good.pin });
+      assert.equal(await remote.cached(['fakepkg']), false, 'the bytes count, not the row');
+      assert.equal(await components.meta('webr-repo:fakepkg_1.2.3.tgz'), null, 'and the changed copy is removed');
+      urls.length = 0;
+      const again = await remote.ensure(['fakepkg'], { fetch: fetcherFor(good.text) });
+      assert.ok(urls.some((u) => /fakepkg_1\.2\.3\.tgz$/.test(u)) && !urls.some((u) => /PACKAGES$/.test(u)), 'only the package is fetched again: ' + urls.join(' '));
+      assert.equal(new TextDecoder().decode(new Uint8Array(D.assets.peek(again.assets.find((x) => /fakepkg/.test(x))).data)), 'PKG1');
+      // The pinned index never goes stale: one fetched a month ago is used as it is, also by a run at start, and nothing is fetched.
+      const row = await components.meta('webr-repo:PACKAGES');
+      await idb.setSetting('component:webr-repo:PACKAGES', Object.assign({}, row, { fetchedAt: new Date(Date.now() - 30 * 86400000).toISOString() }));
+      remote.reset({ pin: good.pin });
+      urls.length = 0;
+      const old = await remote.ensure(['fakepkg'], { fetch: fetcherFor(good.text), ask: false });
+      assert.deepEqual(old.packages.sort(), ['fakedep', 'fakepkg']);
+      assert.deepEqual(urls, [], 'nothing fetched for an index a month old');
+      // 4. A package the index gives no sum is refused before anything is downloaded.
+      await clear();
+      const bare = await fakeIndex(bundled, { fakepkg: null });
+      remote.reset({ pin: bare.pin });
+      urls.length = 0;
+      err = await failure(remote.ensure(['fakepkg'], { fetch: fetcherFor(bare.text) }));
+      assert.ok(err && err.integrity && err.message === t('r.remote.nodigest', { name: 'fakepkg' }), 'refused: ' + (err && err.message));
+      assert.ok(!urls.some((u) => /\.tgz$/.test(u)), 'no package fetched: ' + urls.join(' '));
+      assert.equal(await remote.cached(['fakepkg']), false);
+      // 5. An R version without a pinned index uses nothing, and R says why before any code runs.
+      remote.reset();
+      /** @type {any} */ (packages).contrib = () => 'webr-repo/bin/emscripten/contrib/9.9/';
+      err = await failure(remote.ensure(['fakepkg'], { fetch: fetcherFor(good.text) }));
+      assert.ok(err && err.integrity && err.message === t('r.remote.unpinned', { version: '9.9' }), 'refused: ' + (err && err.message));
+      err = await failure(D.require('data/r-bridge').bridge.ensureRemote(['fakepkg']));
+      assert.ok(err && err.integrity, 'the R run fails with the reason: ' + (err && err.message));
+      assert.equal(await remote.cached(['fakepkg']), false);
+      return 'ok';
+    } finally {
+      /** @type {any} */ (packages).contrib = realContrib;
+      remote.reset();
+      await clear();
     }
   });
 })();

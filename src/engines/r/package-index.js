@@ -11,7 +11,7 @@
   D.define('engines/r/packages', [], () => {
     const CONTRIB = 'webr-repo/bin/emscripten/contrib/';
     const BASE = new Set(['R', 'base', 'stats', 'utils', 'methods', 'grDevices', 'graphics', 'grid', 'tools', 'parallel', 'splines', 'stats4', 'tcltk', 'compiler', 'datasets', 'webr']);
-    /** @type {Map<string, {version: string, deps: string[]}>|null} */
+    /** @type {Map<string, {version: string, deps: string[], md5: string}>|null} */
     let index = null;
     let contribPath = '';
 
@@ -21,7 +21,7 @@
       return name;
     }
 
-    /** Parse the Debian-control-style PACKAGES file. */
+    /** Parse the Debian-control-style PACKAGES file: version, dependencies and the file's MD5 sum (MD5sum, '' when absent). */
     function parse(text) {
       const map = new Map();
       for (const block of text.split(/\n\s*\n/)) {
@@ -39,7 +39,7 @@
             if (name && !BASE.has(name)) deps.push(name);
           }
         }
-        map.set(fields.Package, { version: fields.Version, deps });
+        map.set(fields.Package, { version: fields.Version, deps, md5: /^[0-9a-f]{32}$/i.test(fields.MD5sum || '') ? fields.MD5sum.toLowerCase() : '' });
       }
       return map;
     }
