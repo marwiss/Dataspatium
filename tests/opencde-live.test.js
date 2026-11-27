@@ -714,7 +714,8 @@
       log(`capabilities: ${caps.server ? caps.server.name + ' ' + caps.server.version : '?'}; extensions on: ${on.join(', ')}; scopes ${caps.scopes.join(' ')}; max upload ${caps.limits.max_upload_bytes}`);
       assert.ok(caps.apis && caps.apis.bcf, 'the document names the BCF API');
       if (caps.bcfVersions) assert.deepEqual(opencde.bcfVersionsOf({ family: {} }, caps), ['3.0', '2.1'], 'and which versions');
-      assert.ok(on.includes('dynamic_client_registration'), 'registration is on in the dev stack');
+      // Registration is on in the dev stack and off in a seeded pair stack; the app's own test of it skips when it is off.
+      if (!on.includes('dynamic_client_registration')) log('capabilities: registration is off on this server');
     }
     // A missing topic: the server answers 404 with a code when it has codes, a plain message otherwise.
     const err = await opencde.api(shared.connector, `${BCF}/projects/${shared.projectId}/topics/00000000-0000-4000-8000-000000000000`).catch((e) => e);
@@ -1077,7 +1078,12 @@
   // (no operations, no Python): a collision on the same Name (412 with change_index, then keep_theirs), two proposals on one base
   // merged into one version, and a merged file with a new finding (409). Only when the server merges with git and ifcmerge.
   const pair = { documentId: '', on: false, why: '' };
-  const PAIR_NAMES = new Map(Array.from(IFC_TEXT.matchAll(/IFCWALL\('([^']+)',#\d+,'([^']*)'/g)).map((m) => [m[1], m[2]]));
+  // The walls of the pair model and their names, read from its version 1 (ours uploaded, or the server's own with ?cdepairdoc=).
+  let PAIR_NAMES = new Map();
+  let PAIR_WALLS = [];
+  const PAIR_DOC = params.get('cdepairdoc') || '';
+  /** A mark of this run, so that the server's own model can be tried again with new values. */
+  const RUN = Date.now().toString(36).slice(-5);
   async function pairPropose(title, base, changes, extra = {}) {
     const ext = (await opencde.extensions(shared.connector, shared.projectId).catch(() => null)) || {};
     const types = Array.isArray(ext.topic_type) ? ext.topic_type : [];
@@ -1089,7 +1095,7 @@
     return out;
   }
   function assert0(ok, text) { if (!ok) throw new Error(text); }
-  const pairTrial = async (out, label) => { const r = await opencde.proposalTrial(shared.connector, out.proposalUrl, { pollMs: 1000, timeoutMs: 240000 }); log(`${label}: ${r && r.state}${r && r.merged_with_version_index ? ', merged with ' + r.merged_with_version_index : ''}`); return r; };
+  const pairTrial = async (out, label) => { const r = await opencde.proposalTrial(shared.connector, out.proposalUrl, { pollMs: 1000, timeoutMs: 240000 }); log(`${label}: ${r && r.state}${r && r.merged_with_version_index ? ', merged with ' + r.merged_with_version_index : ''}${r && r.state !== 'clean' ? ' ' + JSON.stringify((r.issues || []).slice(0, 3)).slice(0, 600) + (r.error ? ' ' + r.error : '') : ''}`); return r; };
   const refused = async (fn) => { try { return { version: await fn(), err: null }; } catch (err) { return { version: null, err }; } };
   /** The latest version's IFC text and its index. */
   async function pairLatest() {
@@ -1098,90 +1104,132 @@
     const file = await opencde.downloadVersion(shared.connector, v);
     return { index: Number(v.version_index), text: await file.text() };
   }
-  const nameIn = (text, guid) => { const m = text.match(new RegExp(`IFCWALL\\('${guid.replace(/\$/g, '\\$')}',#\\d+,'([^']*)'`)); return m ? m[1] : null; };
+  /** A STEP string as text: \X2\…\X0\ (UTF-16 in hex), \X\hh and doubled quotes. */
+  const stepText = (s) => (s === null || s === undefined ? s : String(s).replace(/\\X2\\([0-9A-F]+)\\X0\\/gi, (_m, hex) => hex.match(/.{4}/g).map((h) => String.fromCharCode(parseInt(h, 16))).join('')).replace(/\\X\\([0-9A-F]{2})/gi, (_m, h) => String.fromCharCode(parseInt(h, 16))).replace(/''/g, "'"));
+  const nameIn = (text, guid) => { const m = text.match(new RegExp(`IFCWALL(?:STANDARDCASE)?\\('${guid.replace(/\$/g, '\\$')}',#\\d+,'([^']*)'`)); return m ? stepText(m[1]) : null; };
 
-  test('opencde live VIII: two proposals set the same Name on one base; the second collides at approval (412 with change_index) and goes again with keep_theirs', async (assert) => {
+  test('opencde live VIII: two proposals set the same Name on one base; the second collides at approval (412 with change_index) and goes again with the panel\'s choice', async (assert) => {
     if (V21) return 'skipped: change proposals are BCF 3.0 (run without cdebcf=2.1)';
     const caps = await opencde.capabilities(shared.connector);
     const ext = (caps && caps.extensions) || {};
     if (!ext.ifc_changes || !ext.ifc_changes.approve_url) { pair.why = 'the server approves no proposals'; return 'skipped: ' + pair.why; }
     if (!ext.git || !ext.git.enabled || !ext.git.ifcmerge) { pair.why = 'the server merges with ifcmerge only with git on (OPENCDE_GIT_ENABLED)'; return 'skipped: ' + pair.why; }
     const popupUpload = async (url) => (await helper('/upload', { url, project: shared.projectId, title: 'Parprov 5.4', version: '1' })).callback;
-    const v1 = await timed('upload the pair model', () => opencde.uploadDocument(shared.connector, new File([ifcBytes()], 'parprov.ifc', { type: 'application/octet-stream' }), { redirectUri: REDIRECT, popup: popupUpload }));
-    pair.documentId = v1.document_id;
+    if (PAIR_DOC) pair.documentId = PAIR_DOC;
+    else pair.documentId = (await timed('upload the pair model', () => opencde.uploadDocument(shared.connector, new File([ifcBytes()], 'parprov.ifc', { type: 'application/octet-stream' }), { redirectUri: REDIRECT, popup: popupUpload }))).document_id;
+    // Counted from the document's latest version, so that the server's own model can be tried again.
+    const first = await pairLatest();
+    const L = first.index;
+    PAIR_WALLS = Array.from(first.text.matchAll(/IFCWALL(?:STANDARDCASE)?\('([^']+)',#\d+,'([^']*)'/g)).map((m) => m[1]);
+    PAIR_NAMES = new Map(Array.from(first.text.matchAll(/IFCWALL(?:STANDARDCASE)?\('([^']+)',#\d+,'([^']*)'/g)).map((m) => [m[1], stepText(m[2])]));
+    assert.ok(PAIR_WALLS.length >= 3, 'three walls: ' + PAIR_WALLS.length);
     pair.on = true;
-    const a = WALLS[0];
+    const a = PAIR_WALLS[0];
     const was = PAIR_NAMES.get(a);
-    const p1 = await pairPropose('Parprov: väggens namn P1', 1, [{ guid: a, attribute: 'Name', op: 'set', old: was, new: 'Vägg P1' }]);
-    const p2 = await pairPropose('Parprov: väggens namn P2', 1, [{ guid: a, attribute: 'Name', op: 'set', old: was, new: 'Vägg P2' }]);
-    assert.equal((await pairTrial(p1, 'trial P1')).state, 'clean', 'P1 clean on version 1');
-    assert.equal((await pairTrial(p2, 'trial P2')).state, 'clean', 'P2 clean on version 1');
-    const v2 = await timed('approve P1', () => opencde.approveProposal(shared.connector, p1.approveUrl));
-    assert.equal(Number(v2 && v2.version_index), 2, 'P1 is version 2');
+    const p1 = await pairPropose('Parprov: väggens namn P1', L, [{ guid: a, attribute: 'Name', op: 'set', old: was, new: ('Vägg P1 ' + RUN) }]);
+    const p2 = await pairPropose('Parprov: väggens namn P2', L, [{ guid: a, attribute: 'Name', op: 'set', old: was, new: ('Vägg P2 ' + RUN) }]);
+    assert.equal((await pairTrial(p1, 'trial P1')).state, 'clean', 'P1 clean on its base');
+    assert.equal((await pairTrial(p2, 'trial P2')).state, 'clean', 'P2 clean on its base');
+    const v1 = await timed('approve P1', () => opencde.approveProposal(shared.connector, p1.approveUrl));
+    assert.equal(Number(v1 && v1.version_index), L + 1, 'P1 is the next version');
     const { version, err } = await timed('approve P2 (412)', () => refused(() => opencde.approveProposal(shared.connector, p2.approveUrl)));
     assert.ok(!version && err && err.status === 412 && err.code === 'version_conflict', 'refused with 412 version_conflict: ' + (err ? `${err.status} ${err.code} ${err.message}` : JSON.stringify(version)));
     assert.ok(Array.isArray(err.conflicts) && err.conflicts.length === 1 && /^#\d+\.Name$/.test(String(err.conflicts[0])), 'one key #<step>.Name in the base\'s numbering: ' + JSON.stringify(err.conflicts));
     const key = String(err.conflicts[0]);
     const d = (err.conflictDetails || [])[0] || {};
     assert.ok(d.key === key && d.change_index === 0 && d.guid === a, 'the detail names the change by change_index 0 and the wall by its GlobalId: ' + JSON.stringify(d));
-    assert.ok(plain(d.base) === was && plain(d.theirs) === 'Vägg P1' && plain(d.ours) === 'Vägg P2' && Number(d.version_index) === 2, 'base, theirs and ours: ' + JSON.stringify(d));
-    assert.ok(err.merge && Number(err.merge.baseVersionIndex) === 1 && Number(err.merge.latestVersionIndex) === 2, 'the merge\'s base and latest: ' + JSON.stringify(err.merge));
-    // The panel's choice to take what came between strikes the change and gives the key up for the operations (FU-3212).
-    const decided = D.require('ui/bearbeta/ai-panel').decideConflicts(p2.changeSet, err.conflictDetails, ['theirs']);
-    assert.deepEqual([decided.changes.length, decided.keepTheirs], [0, [key]], 'the panel: no change left, the key to keep_theirs');
-    // The server's own way (their recipe): the change stays and keep_theirs gives it up, against version 2.
-    const again = Object.assign({}, p2.changeSet, { base: { document_id: pair.documentId, version_index: 2 }, keep_theirs: [key] });
+    assert.ok(plain(d.base) === was && plain(d.theirs) === ('Vägg P1 ' + RUN) && plain(d.ours) === ('Vägg P2 ' + RUN) && Number(d.version_index) === L + 1, 'base, theirs and ours: ' + JSON.stringify(d));
+    assert.ok(err.merge && Number(err.merge.baseVersionIndex) === L && Number(err.merge.latestVersionIndex) === L + 1, 'the merge\'s base and latest: ' + JSON.stringify(err.merge));
+    const panel = D.require('ui/bearbeta/ai-panel');
+    // Taking what came between strikes the change and gives the key up for the operations (FU-3212).
+    const gaveUp = panel.decideConflicts(p2.changeSet, err.conflictDetails, ['theirs']);
+    assert.deepEqual([gaveUp.changes.length, gaveUp.keepTheirs], [0, [key]], 'the panel: no change left, the key to keep_theirs');
+    // Keeping the proposal: the change takes what came between as its old value and goes again on the latest version.
+    const kept = panel.decideConflicts(p2.changeSet, err.conflictDetails, ['ours']);
+    assert.ok(kept.changes.length === 1 && plain(kept.changes[0].old) === ('Vägg P1 ' + RUN), 'the kept change has the latest value as its old one: ' + JSON.stringify(kept.changes));
+    const again = Object.assign({}, p2.changeSet, { base: { document_id: pair.documentId, version_index: L + 1 }, changes: kept.changes });
     await opencde.putChangeSet(shared.connector, shared.projectId, p2.topic.guid, p2.schemaUrl, again);
-    assert.equal((await pairTrial(p2, 'trial P2 on version 2')).state, 'clean', 'P2 with keep_theirs clean on version 2');
-    const v3 = await timed('approve P2', () => opencde.approveProposal(shared.connector, p2.approveUrl));
-    assert.equal(Number(v3 && v3.version_index), 3, 'version 3');
+    assert.equal((await pairTrial(p2, 'trial P2 kept on the latest')).state, 'clean', 'P2 kept, clean on the latest version');
+    const v2 = await timed('approve P2', () => opencde.approveProposal(shared.connector, p2.approveUrl));
+    assert.equal(Number(v2 && v2.version_index), L + 2, 'P2 is the version after');
     const latest = await pairLatest();
-    assert.equal(nameIn(latest.text, a), 'Vägg P1', 'the wall keeps version 2\'s name (keep_theirs)');
-    return `412 on ${key}, then version 3`;
+    assert.equal(nameIn(latest.text, a), ('Vägg P2 ' + RUN), 'the wall has the proposal\'s name');
+    PAIR_NAMES.set(a, ('Vägg P2 ' + RUN));
+    return `412 on ${key}, then version ${L + 2}`;
+  }, 600000);
+
+  test('opencde live VIII: keep_theirs on a change that stays in the change set (the server\'s recipe)', async (assert) => {
+    if (!pair.on) return 'skipped: ' + (pair.why || 'no pair model (see the test before)');
+    const now = await pairLatest();
+    const L = now.index;
+    for (const g of PAIR_WALLS) PAIR_NAMES.set(g, nameIn(now.text, g));
+    const a = PAIR_WALLS[0];
+    const was = PAIR_NAMES.get(a);
+    const p1 = await pairPropose('Parprov: keep_theirs A', L, [{ guid: a, attribute: 'Name', op: 'set', old: was, new: ('Vägg K1 ' + RUN) }]);
+    const p2 = await pairPropose('Parprov: keep_theirs B', L, [{ guid: a, attribute: 'Name', op: 'set', old: was, new: ('Vägg K2 ' + RUN) }]);
+    assert.equal((await pairTrial(p1, 'trial K1')).state, 'clean');
+    assert.equal((await pairTrial(p2, 'trial K2')).state, 'clean');
+    await timed('approve K1', () => opencde.approveProposal(shared.connector, p1.approveUrl));
+    const { err } = await refused(() => opencde.approveProposal(shared.connector, p2.approveUrl));
+    assert.ok(err && err.status === 412, '412: ' + (err && err.status));
+    const key = String(err.conflicts[0]);
+    const again = Object.assign({}, p2.changeSet, { base: { document_id: pair.documentId, version_index: L + 1 }, keep_theirs: [key] });
+    await opencde.putChangeSet(shared.connector, shared.projectId, p2.topic.guid, p2.schemaUrl, again);
+    const trial = await pairTrial(p2, 'trial K2 with keep_theirs and the change');
+    if (trial.state !== 'clean') finding(`keep_theirs ${key} with the change still in changes: the trial is ${trial.state} (${JSON.stringify((trial.issues || []).slice(0, 2)).slice(0, 300)}); the panel strikes the change itself, so the app is not affected`);
+    PAIR_NAMES.set(a, ('Vägg K1 ' + RUN));
+    return 'keep_theirs with the change: ' + trial.state;
   }, 600000);
 
   test('opencde live VIII: two proposals on one base change different walls; the second is approved after the first and merged into the next version', async (assert) => {
     if (!pair.on) return 'skipped: ' + (pair.why || 'no pair model (see the test before)');
-    const [, b, c] = WALLS;
-    const p3 = await pairPropose('Parprov: vägg B', 3, [{ guid: b, attribute: 'Name', op: 'set', old: PAIR_NAMES.get(b), new: 'Vägg B ny' }]);
-    const p4 = await pairPropose('Parprov: vägg C', 3, [{ guid: c, attribute: 'Name', op: 'set', old: PAIR_NAMES.get(c), new: 'Vägg C ny' }]);
+    const now = await pairLatest();
+    const L = now.index;
+    for (const g of PAIR_WALLS) PAIR_NAMES.set(g, nameIn(now.text, g));
+    const [a, b, c] = PAIR_WALLS;
+    const p3 = await pairPropose('Parprov: vägg B', L, [{ guid: b, attribute: 'Name', op: 'set', old: PAIR_NAMES.get(b), new: ('Vägg B ' + RUN) }]);
+    const p4 = await pairPropose('Parprov: vägg C', L, [{ guid: c, attribute: 'Name', op: 'set', old: PAIR_NAMES.get(c), new: ('Vägg C ' + RUN) }]);
     assert.equal((await pairTrial(p3, 'trial P3')).state, 'clean');
     assert.equal((await pairTrial(p4, 'trial P4')).state, 'clean');
-    const v4 = await timed('approve P3', () => opencde.approveProposal(shared.connector, p3.approveUrl));
-    assert.equal(Number(v4 && v4.version_index), 4, 'P3 is version 4');
-    const { version: v5, err } = await timed('approve P4 on the stale base', () => refused(() => opencde.approveProposal(shared.connector, p4.approveUrl)));
-    assert.ok(v5 && !err, 'approved without a collision: ' + (err ? `${err.status} ${err.code} ${err.message} ${JSON.stringify(err.conflicts)}` : ''));
-    assert.equal(Number(v5.version_index), 5, 'version 5');
-    const meta = await opencde.versionMetadata(shared.connector, pair.documentId, 5);
-    assert.deepEqual(opencde.mergedOf(meta), { withVersion: 4 }, 'merged with version 4: ' + JSON.stringify(meta).slice(0, 300));
+    const v3 = await timed('approve P3', () => opencde.approveProposal(shared.connector, p3.approveUrl));
+    assert.equal(Number(v3 && v3.version_index), L + 1, 'P3 is the next version');
+    const { version: v4, err } = await timed('approve P4 on the stale base', () => refused(() => opencde.approveProposal(shared.connector, p4.approveUrl)));
+    assert.ok(v4 && !err, 'approved without a collision: ' + (err ? `${err.status} ${err.code} ${err.message} ${JSON.stringify(err.conflicts)}` : ''));
+    assert.equal(Number(v4.version_index), L + 2, 'the version after');
+    const meta = await opencde.versionMetadata(shared.connector, pair.documentId, L + 2);
+    assert.deepEqual(opencde.mergedOf(meta), { withVersion: L + 1 }, 'merged with the version before: ' + JSON.stringify(meta).slice(0, 300));
     const trial = await opencde.proposalTrial(shared.connector, p4.proposalUrl);
-    assert.equal(Number(trial.merged_with_version_index), 4, 'the trial says merged with version 4: ' + JSON.stringify(trial).slice(0, 300));
+    assert.equal(Number(trial.merged_with_version_index), L + 1, 'the trial says merged with it: ' + JSON.stringify(trial).slice(0, 300));
     if (trial.renumbered) log('trial P4 renumbered: ' + JSON.stringify(trial.renumbered).slice(0, 200) + (trial.renumbered_count ? ` (${trial.renumbered_count})` : ''));
     const latest = await pairLatest();
-    assert.ok(nameIn(latest.text, b) === 'Vägg B ny' && nameIn(latest.text, c) === 'Vägg C ny' && nameIn(latest.text, WALLS[0]) === 'Vägg P1', 'both changes and the earlier name in version 5');
-    return 'version 5 merged with 4';
+    assert.ok(nameIn(latest.text, b) === ('Vägg B ' + RUN) && nameIn(latest.text, c) === ('Vägg C ' + RUN) && nameIn(latest.text, a) === PAIR_NAMES.get(a), 'both changes and the earlier name: ' + [a, b, c].map((g) => nameIn(latest.text, g)).join(', '));
+    PAIR_NAMES.set(b, ('Vägg B ' + RUN)); PAIR_NAMES.set(c, ('Vägg C ' + RUN));
+    return `version ${L + 2} merged with ${L + 1}`;
   }, 600000);
 
   test('opencde live VIII: two proposals each give a wall the same new GlobalId; the merged file has a new finding and the approval answers 409', async (assert) => {
     if (!pair.on) return 'skipped: ' + (pair.why || 'no pair model (see the test before)');
-    const [a, b] = WALLS;
-    const SAME = '2PairTestGuid000000000';
-    const p5 = await pairPropose('Parprov: GlobalId på vägg A', 5, [{ guid: a, attribute: 'GlobalId', op: 'set', old: a, new: SAME }]);
-    const p6 = await pairPropose('Parprov: GlobalId på vägg B', 5, [{ guid: b, attribute: 'GlobalId', op: 'set', old: b, new: SAME }]);
+    const now = await pairLatest();
+    const L = now.index;
+    for (const g of PAIR_WALLS) PAIR_NAMES.set(g, nameIn(now.text, g));
+    const [a, b] = PAIR_WALLS;
+    const SAME = '2PairTest' + String(Date.now() % 1e13).padStart(13, '0');
+    const p5 = await pairPropose('Parprov: GlobalId på vägg A', L, [{ guid: a, attribute: 'GlobalId', op: 'set', old: a, new: SAME }]);
+    const p6 = await pairPropose('Parprov: GlobalId på vägg B', L, [{ guid: b, attribute: 'GlobalId', op: 'set', old: b, new: SAME }]);
     assert.equal((await pairTrial(p5, 'trial P5')).state, 'clean', 'P5 clean alone');
     assert.equal((await pairTrial(p6, 'trial P6')).state, 'clean', 'P6 clean alone');
-    const v6 = await timed('approve P5', () => opencde.approveProposal(shared.connector, p5.approveUrl));
-    assert.equal(Number(v6 && v6.version_index), 6, 'P5 is version 6');
+    const v5 = await timed('approve P5', () => opencde.approveProposal(shared.connector, p5.approveUrl));
+    assert.equal(Number(v5 && v5.version_index), L + 1, 'P5 is the next version');
     const { version, err } = await timed('approve P6 (409)', () => refused(() => opencde.approveProposal(shared.connector, p6.approveUrl)));
     assert.ok(!version && err && err.status === 409, 'refused with 409: ' + (err ? `${err.status} ${err.code} ${err.message}` : JSON.stringify(version)));
-    assert.ok(/merged with version 6/i.test(String(err.detail || err.message)), 'the server\'s words name the merge: ' + (err.detail || err.message));
+    assert.ok(new RegExp('merged with version ' + (L + 1), 'i').test(String(err.detail || err.message)), 'the server\'s words name the merge: ' + (err.detail || err.message));
     const trial = await opencde.proposalTrial(shared.connector, p6.proposalUrl);
-    assert.ok(trial.state === 'issues' && Number(trial.merged_with_version_index) === 6, 'the trial is issues after the merge: ' + JSON.stringify({ state: trial.state, merged: trial.merged_with_version_index }));
+    assert.ok(trial.state === 'issues' && Number(trial.merged_with_version_index) === L + 1, 'the trial is issues after the merge: ' + JSON.stringify({ state: trial.state, merged: trial.merged_with_version_index }));
     const found = (trial.issues || []).find((i) => /IfcRoot\.UR1/.test(String(i.message || '')));
     assert.ok(found && String(found.global_id || found.guid || '') === SAME, 'the finding names IfcRoot.UR1 and the GlobalId: ' + JSON.stringify(trial.issues).slice(0, 400));
     const latest = await pairLatest();
-    assert.equal(latest.index, 6, 'no version 7');
-    return '409 after the merge with version 6';
+    assert.equal(latest.index, L + 1, 'no version after the refused one');
+    return `409 after the merge with version ${L + 1}`;
   }, 600000);
 
   test('opencde live: cleanup', async (assert) => {
