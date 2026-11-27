@@ -338,17 +338,19 @@ def report(result, graph, why):
     for key, label in (("768", "768x1024 Edge and Firefox"), ("localhost", "Edge from localhost"), ("python", "Edge with ?python=1")):
         hit = result["configs"][key]
         print(f"  {label}: " + (("yes, " + ", ".join(hit[:4]) + (" ..." if len(hit) > 4 else "")) if hit else "no"))
-    run = "powershell -File tools/run-tests.ps1 -Jobs 2 -TimeoutSec 1800"
+    run = "powershell -File tools/run-tests.ps1 -Lock -Jobs 2 -TimeoutSec 1800"
+    # One browser over http: two at once against python's server lost a script at start.
+    one = "powershell -File tools/run-tests.ps1 -Lock -Browsers edge -TimeoutSec 1800"
     print("Run:")
     if files:
         print(f'  {run} -Url "{page(files, total)}"')
         if result["configs"]["768"]:
             print(f'  {run} -Url "{page(files, total)}" -Width 768 -Height 1024')
     if result["configs"]["localhost"]:
-        print(f'  python -m http.server 8137 --bind 127.0.0.1, then {run} -Browsers edge -Url "http://127.0.0.1:8137/{page(files, total)}"')
+        print(f'  python -m http.server 8137 --bind 127.0.0.1, then {one} -Url "http://127.0.0.1:8137/{page(files, total)}"')
     if result["configs"]["python"]:
         py = result["python_files"] or [f for f in graph.test_files if PY_TEST.search(graph.test_text[f])]
-        print(f'  {run} -Browsers edge -Url "{page(py, total, "python=1")}"')
+        print(f'  {one} -Url "{page(py, total, "python=1")}"')
 
 
 def write_weights(outputs):
