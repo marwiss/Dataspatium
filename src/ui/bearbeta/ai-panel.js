@@ -26,8 +26,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/ai-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ai/providers', 'ai/agent', 'ai/write-tools', 'ai/check-tools', 'ui/bearbeta/ai-check', 'data/selection', 'data/recipes', 'data/ifc-ops', 'data/datasets', 'data/ifc-validation', 'api/connectors', 'api/families/opencde', 'platform/storage/idb', 'analysis/ids-presets', 'ui/bearbeta/site-map', 'ui/share/change-proposal'],
-    (base, basic, overlays, icons, providers, agent, writeTools, checkTools, aiCheck, selection, recipes, ifcOps, datasets, validation, connectors, opencde, idb, idsPresets, siteMap, changeProposal) => {
+  D.define('ui/bearbeta/ai-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ai/providers', 'ai/agent', 'ai/write-tools', 'ai/check-tools', 'ui/bearbeta/ai-check', 'data/selection', 'data/recipes', 'data/ifc-ops', 'data/datasets', 'data/ifc-validation', 'api/connectors', 'api/families/opencde', 'platform/storage/idb', 'analysis/ids-presets', 'ui/bearbeta/site-map', 'ui/share/change-proposal', 'ui/share/review'],
+    (base, basic, overlays, icons, providers, agent, writeTools, checkTools, aiCheck, selection, recipes, ifcOps, datasets, validation, connectors, opencde, idb, idsPresets, siteMap, changeProposal, review) => {
       const { h, t, i18n, replace } = base;
       const LAST_SETTING = 'ai.lastProvider';
       const MODES = ['ask', 'change', 'build', 'check'];
@@ -427,10 +427,15 @@
           const defaults = { project, title: (last || t('ai.change.title')).replace(/\s+/g, ' ').slice(0, 120), description: s.changeset.ops.map((op) => writeTools.describe(op)).join('\n') + '\n\n' + proposalText(proposal) };
           const values = given || await changeProposal.askWords({ title: defaults.title, description: defaults.description, hint: t('ai.change.propose.hint.dialog', { project }), help: 'cad-bim#ändra-med-ai' });
           if (!values) return;
+          // What leaves the app goes through the review (CLAUDE.md): new values that look like personal data are kept or struck.
+          const reviewed = await review.changeSet(ctx, { changes: proposal.changes, server: connector.name, project });
+          if (!reviewed) return;
+          if (!reviewed.changes.length && !withOps) { fail(new Error(t('cde.propose.none.left'))); render(); return; }
+          if (reviewed.dropped) log(t('cde.propose.dropped', { n: i18n.formatNumber(reviewed.dropped) }), 'info');
           s.proposing = true; s.error = ''; render();
           try {
             const p = provider();
-            await flow.send(connector, { title: values.title || defaults.title, description: values.description || defaults.description, changes: proposal.changes,
+            await flow.send(connector, { title: values.title || defaults.title, description: values.description || defaults.description, changes: reviewed.changes,
               aiModel: p ? p.model : null, toolCall: s.changeset.ops.map((op) => op.tool).join(',') || null, ops: withOps ? await guidOps(writeTools.toWheel(s.changeset)) : undefined });
           } catch (err) { fail(err); if (err && err.status === 403) s.error = t('ai.change.propose.role'); }
           s.proposing = false; render();

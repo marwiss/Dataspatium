@@ -337,7 +337,13 @@
       assert.ok(line && line.getAttribute('data-ai-proposal') === '2' && line.textContent.includes('1'), 'the proposal\'s form and what it leaves out: ' + (line && line.textContent));
       const btn = /** @type {any} */ (panel.el.querySelector('[data-ai-propose]'));
       assert.ok(btn && !btn.disabled, 'the button Föreslå på servern for a fetched model');
-      await panel.propose({ title: 'Brandklass EI90 på väggen', description: 'Väggen får EI90.' });
+      // What leaves the app goes through the review, the AI's proposal too.
+      const reviewModule = D.require('ui/share/review');
+      const realReview = reviewModule.changeSet;
+      /** @type {any[]} */ const reviewed = [];
+      reviewModule.changeSet = async (c, info) => { reviewed.push(info); return realReview(c, info); };
+      try { await panel.propose({ title: 'Brandklass EI90 på väggen', description: 'Väggen får EI90.' }); } finally { reviewModule.changeSet = realReview; }
+      assert.ok(reviewed.length === 1 && reviewed[0].changes.length === 2 && reviewed[0].project === 'Testprojekt', 'the changes through the review: ' + JSON.stringify(reviewed.map((x) => x.project)));
       assert.equal(panel.state.error, '', 'no error');
       assert.ok(hits.includes('/bcf/3.0/projects/p-1/topics') && hits.includes('/bcf/3.0/projects/p-1/topics/t-1/snippet'), 'the topic and then its snippet: ' + hits.join(' '));
       const topic = JSON.parse(bodies['/bcf/3.0/projects/p-1/topics'].body);
