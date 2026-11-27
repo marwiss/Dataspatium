@@ -3208,6 +3208,7 @@
     'geodata.generic.collection': 'Any collection',
     'geodata.generic.hint': 'Name the layer yourself, for example one that is not in the list',
     'geodata.err.nolayers': 'The service listed no layers.',
+    'geodata.err.nojson': 'The service does not provide GeoJSON, only {formats}. The app reads WFS layers as GeoJSON and cannot read GML yet; choose another service for the same data, for example an OGC API Features service.',
     'geodata.err.discover': 'The layers could not be read from the service ({message}).',
     'geodata.err.http': 'The service answered {status}.',
     'geodata.loading': 'Reading the layer list from the service …',

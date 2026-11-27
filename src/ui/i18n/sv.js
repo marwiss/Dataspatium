@@ -3230,6 +3230,7 @@
     'geodata.generic.collection': 'Valfri samling',
     'geodata.generic.hint': 'Ange lagret själv, till exempel ett som inte står i listan',
     'geodata.err.nolayers': 'Tjänsten listade inga lager.',
+    'geodata.err.nojson': 'Tjänsten ger inte GeoJSON, bara {formats}. Appen läser WFS-lager som GeoJSON och kan inte läsa GML ännu; välj en annan tjänst för samma data, till exempel en OGC API Features-tjänst.',
     'geodata.err.discover': 'Lagren kunde inte läsas från tjänsten ({message}).',
     'geodata.err.http': 'Tjänsten svarade {status}.',
     'geodata.loading': 'Läser lagerlistan från tjänsten …',

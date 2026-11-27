@@ -100,6 +100,7 @@
     'overlay.truncated': 'The map shows the first {n} features of {name}; the table has them all.',
     'overlay.crs.unknown': '{name} is in the coordinate system {crs}, which cannot be converted. The dataset is not shown on the map, since it would land in the wrong place.',
     'overlay.raster.grid': 'The raster {name} shows in Web Mercator only, not in the plan\'s coordinate system.',
+    'geodata.err.nojson': 'The service does not provide GeoJSON, only {formats}. The app reads WFS layers as GeoJSON and cannot read GML yet; choose another service for the same data, for example an OGC API Features service.',
     'datasets.kind.raster': 'Raster',
     'datasets.picture.raster': 'The raster at a small size',
     'raster.files.n': '{n} rasters',
