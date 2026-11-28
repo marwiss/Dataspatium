@@ -147,6 +147,53 @@ och, med en kommun vald, plangeometrin. Inget hämtas från nätet. Planen öppn
 byggas med AI och exporteras som leverans. *Bygg planen med AI* öppnar den med AI-panelen i läget *Bygg från beskrivning* och
 beskrivningen ifylld.
 
+## En ny detaljplan
+
+*Ny detaljplan* bland källorna i Inhämta skapar en tom digital detaljplan enligt den nationella specifikationen, i samma form som
+de detaljplaner appen läser in. Formuläret har:
+
+- planens namn (annars *Ny detaljplan*) och beteckning hos kommunen, till exempel DP 2026:4;
+- kommunen, ur kommungränserna som följer med appen. Kommunkoden följer med planen och exporten;
+- koordinatsystemet: SWEREF 99 TM om inget annat väljs, eller en av de lokala SWEREF 99-zonerna. Planen exporteras i det;
+- planens syfte.
+
+*Skapa planen* gör en plan med en ny objektidentitet och dagens datum som påbörjad, utan objekt. Inget hämtas från nätet. *Rita
+planen* öppnar den i planvyn med *Redigera planen* påslaget.
+
+I redigeringsläget väljer raden ovanför kartan vad som ritas: *Plangräns*, *Användningsområde* eller *Egenskapsområde*.
+
+- Plangränsen och användningsområdena är ytor; ett egenskapsområde kan också vara en linje (till exempel utfartsförbud) eller en
+  punkt. Planen har en plangräns: ritas den igen får den befintliga den nya formen.
+- För ett användnings- eller egenskapsområde väljs bestämmelsen ur Boverkets planbestämmelsekatalog (BFS 2020:5). Listan har de
+  vanligaste bestämmelserna först: användningarna för kvartersmark, allmän plats och vatten (B, C, D, E, H, J, K, P, S, T, Z, W,
+  GATA, TORG, PARK, NATUR) och egenskaperna prickmark, korsmark, största byggnadsarea, högsta nockhöjd och totalhöjd, största
+  takvinkel, minsta fastighetsstorlek, utfartsförbud och upphävt strandskydd. *Sök i katalogen* söker bland alla gällande
+  bestämmelser.
+- Katalogen följer med appen (release 2025-12-01), så allt detta fungerar utan nät. En nyare release kan läsas från Boverket med
+  källan *Boverket Planbestämmelsekatalogen* under Inhämta, efter samtycke.
+
+Ett nytt område får en ny objektidentitet och bestämmelsens katalogreferens, kod, kategori, användningsform, beteckning och färg.
+Klicka på ett område för att ändra det i inspektören:
+
+- byta bestämmelse;
+- fylla i bestämmelsens värden, till exempel höjden i *Högsta nockhöjd är [höjd] meter*. Formuleringen fylls i med värdet, och
+  mallen sparas med området;
+- ändra beteckningen på plankartan (till exempel e1) och skriva motivet;
+- *Redigera formen*, *Flytta* och *Ta bort området*, som för en översiktsplan.
+
+Varje ändring är ett steg i datamängdens logg och ångras med *Ångra* i redigeringsraden.
+
+*Exportera som detaljplan* i verktygsraden, och formatet *Detaljplan: nationell specifikation (GeoJSON)* i Exportera, sparar
+planen som utbytesmodellen i GeoJSON (`application/vnd.lm.detaljplan.v4+json`):
+
+- ett objekt `detaljplan` med planens uppgifter, plangränsen och beslutsinformationen;
+- ett objekt per bestämmelse med katalogreferensen, formuleringen och värdena, motivet och geometrin.
+
+Geometrin skrivs i planens koordinatsystem med millimeterupplösning. Filen läses in igen som samma plan, med samma objekt,
+bestämmelser och värden. Kommunens namn kommer då ur kommungränserna, eftersom specifikationen bara anger koden. En plan utan
+plangräns exporteras inte. Detaljplaner som lästs in från fil kan redigeras och exporteras på samma sätt, utom planer från de
+andra nordiska länderna.
+
 ## Redigera planen
 
 En digital översiktsplan kan redigeras i planvyn: planbeskrivningens avsnitt, områdena i plankartan och kopplingarna mellan

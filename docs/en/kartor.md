@@ -78,6 +78,29 @@ opened at start. A dataset that is removed leaves the map, and one that changes 
 drawn in rounds, so that the app responds meanwhile; at most 50 000 features are drawn per table and 20 000 per plan or map
 layers. A map with several layers to keep, for dashboards and publishing, is made as a map view in Visualise.
 
+## A new map layer
+
+*New map layer* among the sources in Import (under *Create sources*) makes an empty layer to draw in. The form has:
+
+- the name;
+- the geometry: points, lines or areas. A layer has one kind of geometry;
+- the coordinate system: SWEREF 99 TM unless another is chosen, one of the local SWEREF 99 zones, or WGS 84. The coordinates
+  are kept in that system, in metres or degrees;
+- the columns, one per line: `species` or `count: integer`, as for *New table*.
+
+The layer is a table with the columns and a geometry column, `geometri`. It opens as a map in Process. *Draw in the layer* in
+the toolbar shows the drawing bar, and *Done* closes it:
+
+- *Draw point*, *Draw line* or *Draw area* (the layer's kind) draws with Leaflet-Geoman: click on the map for a point, or click
+  the points and finish on the last one (a line), on the first one (an area) or with *Finish the shape*;
+- click a feature to change its values (*Save*), *Edit the shape* (drag the corners), *Move* (drag the whole feature, a point
+  too; *Save the shape*) or *Remove the feature*;
+- every change is a step in the dataset's log: a new feature, a new shape or place, a changed value and a removed feature are
+  undone with *Undo* in the drawing bar, one at a time.
+
+The values can also be filled in in the table. The drawing tools apply to layers made with *New map layer*. The layer needs
+the tier BIM and GIS, as the map view does.
+
 ## Map views in Visualise
 
 *New chart → Map* creates a map view with the selected dataset as its first layer. The settings on the left:

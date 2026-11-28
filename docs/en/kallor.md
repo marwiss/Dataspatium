@@ -8,11 +8,34 @@ ordinary sources in Import. Files chosen with the computer's file picker can als
 dataset is read again from disk with one click. Everything happens in the browser; nothing is sent anywhere but
 to the database you name yourself.
 
-In Import the sources are in groups in the left column: *Database sources* (External database, Database through the bridge
+In Import the sources are in groups in the left column: *Create sources* (see below), *Database sources* (External database, Database through the bridge
 and Neo4j), *API sources*, *Geodata sources* (Geodata source and Boundaries for maps) and more, with OpenCDE and Phone under
 *Common sources*. What you choose is shown in the middle. The forms that add a source have their help text above them, and
 the new source opens there once it is saved. The same form is shown as a dialog when it is opened from somewhere else, such
 as Neo4j from an OpenCDE server's card.
+
+## Create sources
+
+The group *Create sources* at the top of Import makes new, empty datasets to build yourself. Nothing is fetched from the
+network.
+
+- *New building model*: an empty IFC model, see [cad-bim.md](cad-bim.md).
+- *New comprehensive plan* and *New detailed plan*: an empty digital plan to draw in the plan view, see
+  [planer.md](planer.md#a-new-comprehensive-plan) and [planer.md](planer.md#a-new-detailed-plan).
+- *New map layer*: an empty layer of points, lines or areas to draw on the map, see [kartor.md](kartor.md#a-new-map-layer).
+- *New table*: an empty table to fill in by hand.
+
+### New table
+
+Give the name and the columns, one per line: the name alone (`place`, which becomes text) or the name and the type
+(`count: integer`). The types are text, integer, number, date and true/false, in the app's words or the internal ones. *Create
+the table* makes an empty table, and *Fill in the table* opens it in Process:
+
+- *New row* adds an empty row at the end;
+- double-click a cell to type in it.
+
+Every new row and every changed cell is a step in the dataset's log and is undone with *Undo*. The same column lines are used
+by *New dataset* in Field collection and by *New map layer*.
 
 ## Access files (mdb, accdb)
 

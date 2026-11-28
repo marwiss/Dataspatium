@@ -537,13 +537,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/anvandarguide.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 25414,
+  "size": 25456,
   "library": "dataspatium"
  },
  "docs/sv/lagen.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 34002,
+  "size": 34044,
   "library": "dataspatium"
  },
  "docs/sv/soka.md": {
@@ -591,7 +591,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kallor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 32060,
+  "size": 33281,
   "library": "dataspatium"
  },
  "docs/sv/snabbstart.md": {
@@ -621,7 +621,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kartor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 21873,
+  "size": 23286,
   "library": "dataspatium"
  },
  "docs/sv/raster.md": {
@@ -633,7 +633,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/planer.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 35328,
+  "size": 38618,
   "library": "dataspatium"
  },
  "docs/sv/grafer.md": {
@@ -1551,13 +1551,13 @@ Dataspatium.assets.addEntries({
  "docs/en/anvandarguide.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 25224,
+  "size": 25269,
   "library": "dataspatium"
  },
  "docs/en/lagen.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 33794,
+  "size": 33839,
   "library": "dataspatium"
  },
  "docs/en/soka.md": {
@@ -1605,7 +1605,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kallor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 31975,
+  "size": 33210,
   "library": "dataspatium"
  },
  "docs/en/snabbstart.md": {
@@ -1635,7 +1635,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kartor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 21880,
+  "size": 23303,
   "library": "dataspatium"
  },
  "docs/en/raster.md": {
@@ -1647,7 +1647,7 @@ Dataspatium.assets.addEntries({
  "docs/en/planer.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 35550,
+  "size": 38912,
   "library": "dataspatium"
  },
  "docs/en/grafer.md": {

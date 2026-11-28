@@ -78,6 +78,29 @@ visas är arbetsytans egna datamängder, så inget hämtas från nätet och inge
 ritas i omgångar, så att appen svarar under tiden; högst 50 000 objekt ritas per tabell och 20 000 per plan eller kartlager.
 En karta med flera lager som ska sparas, för dashboards och publicering, gör du som en kartvy i Visualisera.
 
+## Ett nytt kartlager
+
+*Nytt kartlager* bland källorna i Inhämta (under *Skapa källor*) skapar ett tomt lager att rita i. Formuläret har:
+
+- namnet;
+- geometrin: punkter, linjer eller ytor. Ett lager har en sorts geometri;
+- koordinatsystemet: SWEREF 99 TM om inget annat väljs, en av de lokala SWEREF 99-zonerna eller WGS 84. Koordinaterna sparas i
+  det systemet, i meter eller grader;
+- kolumnerna, en per rad: `art` eller `antal: heltal`, som för *Ny tabell*.
+
+Lagret är en tabell med kolumnerna och en geometrikolumn, `geometri`. Det öppnas som karta i Bearbeta. *Rita i lagret* i
+verktygsraden visar ritraden, och *Klar* stänger den:
+
+- *Rita punkt*, *Rita linje* eller *Rita yta* (lagrets sort) ritar med Leaflet-Geoman: klicka i kartan för en punkt, eller klicka
+  ut punkterna och avsluta på den sista (en linje), på den första (en yta) eller med *Avsluta formen*;
+- klicka på ett objekt för att ändra dess värden (*Spara*), *Redigera formen* (dra i hörnen), *Flytta* (dra hela objektet, också en
+  punkt; *Spara formen*) eller *Ta bort objektet*;
+- varje ändring är ett steg i datamängdens logg: ett nytt objekt, en ny form eller plats, ett ändrat värde och ett borttaget
+  objekt ångras med *Ångra* i ritraden, ett i taget.
+
+Värdena kan också fyllas i i tabellen. Ritverktygen gäller lager som skapats med *Nytt kartlager*. Lagret kräver nivån BIM och
+GIS, som kartvyn.
+
 ## Kartvyer i Visualisera
 
 *Nytt diagram → Karta* skapar en kartvy med den valda datamängden som första lager. Inställningarna till vänster:

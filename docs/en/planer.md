@@ -139,6 +139,53 @@ links and, with a municipality chosen, the plan geometry. Nothing is fetched fro
 delivered plan does: it can be edited, built with AI and exported as a delivery. *Build the plan with AI* opens it with the AI
 panel in the mode *Build from brief* and the description filled in.
 
+## A new detailed plan
+
+*New detailed plan* among the sources in Import makes an empty digital detailed plan per the national specification, in the
+same form as the detailed plans the app reads. The form has:
+
+- the plan's name (else *New detailed plan*) and its designation at the municipality, for example DP 2026:4;
+- the municipality, from the municipal boundaries that ship with the app. The municipality's code goes with the plan and the
+  export;
+- the coordinate system: SWEREF 99 TM unless another is chosen, or one of the local SWEREF 99 zones. The plan is exported in it;
+- the plan's purpose.
+
+*Create the plan* makes a plan with a new object identity and today's date as begun, without objects. Nothing is fetched from
+the network. *Draw the plan* opens it in the plan view with *Edit the plan* on.
+
+In edit mode the bar above the map chooses what is drawn: *Plan boundary*, *Use area* or *Property area*.
+
+- The plan boundary and the use areas are areas; a property area can also be a line (an exit ban, for example) or a point. The
+  plan has one plan boundary: drawn again, the one there is gets the new shape.
+- For a use or property area the provision is chosen from Boverket's catalogue of plan provisions (BFS 2020:5). The list has the
+  most common provisions first: the uses of kvartersmark, allmän plats and water (B, C, D, E, H, J, K, P, S, T, Z, W, GATA, TORG,
+  PARK, NATUR) and the properties prickmark, korsmark, largest building area, highest ridge and total height, largest roof
+  angle, smallest plot size, exit ban and lifted shore protection. *Search the catalogue* searches every provision in force.
+- The catalogue ships with the app (release 2025-12-01), so all of this works without the network. A newer release can be read
+  from Boverket with the source *Boverket Planbestämmelsekatalogen* under Import, after consent.
+
+A new area gets a new object identity and the provision's catalogue reference, code, category, use form, designation and
+colour. Click an area to change it in the inspector:
+
+- choose another provision;
+- fill in the provision's values, for example the height in *Högsta nockhöjd är [höjd] meter*. The formulation is filled in
+  with the value, and the template is kept with the area;
+- change the designation on the plan map (e1, for example) and write the motive;
+- *Edit the shape*, *Move* and *Remove the area*, as for a comprehensive plan.
+
+Every change is a step in the dataset's log and is undone with *Undo* in the edit bar.
+
+*Export as detailed plan* in the toolbar, and the format *Detailed plan: national specification (GeoJSON)* in Export, save
+the plan as the exchange model in GeoJSON (`application/vnd.lm.detaljplan.v4+json`):
+
+- one object `detaljplan` with the plan's facts, the plan boundary and the decision information;
+- one object per provision with the catalogue reference, the formulation and its values, the motive and the geometry.
+
+The geometry is written in the plan's coordinate system to the millimetre. The file reads back as the same plan, with the same
+objects, provisions and values. The municipality's name then comes from the municipal boundaries, since the specification
+gives only its code. A plan without a plan boundary is not exported. Detailed plans read from a file can be edited and exported
+the same way, except plans from the other Nordic countries.
+
 ## Edit the plan
 
 A digital comprehensive plan can be edited in the plan view: the plan description's sections, the areas on the plan map and

@@ -7,11 +7,33 @@ lokal brygga, och **databastjänster över HTTP** (PostgREST, OData, GraphQL med
 Inhämta. Filer som valts med datorns filväljare kan dessutom **länkas**, så att datamängden läses in igen från
 disken med ett klick. Allt sker i webbläsaren; inget skickas någon annanstans än till den databas du själv anger.
 
-I Inhämta ligger källorna i grupper i vänsterkolumnen: *Databaskällor* (Extern databas, Databas via bryggan och Neo4j),
+I Inhämta ligger källorna i grupper i vänsterkolumnen: *Skapa källor* (se nedan), *Databaskällor* (Extern databas, Databas via bryggan och Neo4j),
 *API-källor*, *Geodatakällor* (Geodatakälla och Gränser för kartor) med flera, och OpenCDE och Mobilen under *Vanliga
 källor*. Det du väljer visas i mitten. Formulären som lägger till en källa har sin hjälptext ovanför, och den nya källan
 öppnas där när den är sparad. Samma formulär visas som dialog när det öppnas från ett annat ställe, till exempel Neo4j
 från en OpenCDE-servers kort.
+
+## Skapa källor
+
+Gruppen *Skapa källor* överst i Inhämta gör nya, tomma datamängder att bygga själv. Inget hämtas från nätet.
+
+- *Ny byggnadsmodell*: en tom IFC-modell, se [cad-bim.md](cad-bim.md).
+- *Ny översiktsplan* och *Ny detaljplan*: en tom digital plan att rita i planvyn, se [planer.md](planer.md#en-ny-översiktsplan)
+  och [planer.md](planer.md#en-ny-detaljplan).
+- *Nytt kartlager*: ett tomt lager med punkter, linjer eller ytor att rita i kartan, se [kartor.md](kartor.md#ett-nytt-kartlager).
+- *Ny tabell*: en tom tabell att fylla i för hand.
+
+### Ny tabell
+
+Ange namnet och kolumnerna, en per rad: bara namnet (`plats`, som blir text) eller namnet och typen (`antal: heltal`). Typerna
+är text, heltal, decimaltal, datum och sant/falskt, med appens namn eller de engelska (`integer`, `number`, `date`). *Skapa
+tabellen* gör en tom tabell, och *Fyll i tabellen* öppnar den i Bearbeta:
+
+- *Ny rad* lägger till en tom rad sist;
+- dubbelklicka på en cell för att skriva i den.
+
+Varje ny rad och varje ändrad cell är ett steg i datamängdens logg och ångras med *Ångra*. Samma kolumnrader används av *Ny
+datamängd* i Insamling i fält och av *Nytt kartlager*.
 
 ## Access-filer (mdb, accdb)
 

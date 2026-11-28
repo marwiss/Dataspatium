@@ -63,7 +63,7 @@ The left column has no heading in its head; it consists of groups that each fold
 the heading, and the browser remembers which ones are folded. Everything you choose, also the forms that add a source, is
 shown in the middle with a help text above it.
 
-- *Create sources*: New building model and New comprehensive plan.
+- *Create sources*: New building model, New comprehensive plan, New detailed plan, New map layer and New table.
 - *Common sources*: Files, Paste, Web address, OpenCDE and Phone (pair the phone and receive what it collected, and Field
   collection, the form the phone fills in; see [insamling.md](insamling.md)).
 - *Database sources*: External database, Database through the bridge and Neo4j.

@@ -62,7 +62,7 @@ Vänsterkolumnen har inget huvud med rubrik; den består av grupper som var och 
 rubriken, och webbläsaren kommer ihåg vilka som är infällda. Allt du väljer, också formulären som lägger till en källa,
 visas i mitten med en hjälptext ovanför.
 
-- *Skapa källor*: Ny byggnadsmodell och Ny översiktsplan.
+- *Skapa källor*: Ny byggnadsmodell, Ny översiktsplan, Ny detaljplan, Nytt kartlager och Ny tabell.
 - *Vanliga källor*: Filer, Klistra in, Webbadress, OpenCDE och Mobilen (para telefonen och ta emot det den samlat in, och
   Insamling i fält, formuläret som telefonen fyller i; se [insamling.md](insamling.md)).
 - *Databaskällor*: Extern databas, Databas via bryggan och Neo4j.
