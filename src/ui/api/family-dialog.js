@@ -1,11 +1,14 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * "Lägg till databaskälla" and "Lägg till geodatakälla" in Inhämta: pick a family (api/families/databases or
- * api/families/geodata), enter its address and key, and get a connector with one endpoint per discovered table or
- * layer plus a generic one. The geodata dialog also lists the ready-made open geodata services (presets/geodata/
- * services.json, all verified to allow requests from the browser): a preset opens, any other is added with one click.
- * The CORS requirement and the documentation link of the family are shown; keys stay in the session (api/secrets).
+ * The form that adds a source of a family: an external database (api/families/databases: PostgREST, OData, ...), an OpenCDE
+ * server, a Neo4j database or a geodata service (api/families/geodata). Enter the address and the key, and get a connector with
+ * one endpoint per discovered table or layer plus a generic one. The geodata form also lists the ready-made open geodata services
+ * (presets/geodata/services.json, all verified to allow requests from the browser): a preset opens, any other is added with one
+ * click. The CORS requirement and the documentation link of the family are shown; keys stay in the session (api/secrets).
+ *
+ * The form is built once and shown in one of two places (F126 a): in Inhämta's workspace (`form`), or as a dialog (`open`) when
+ * it is opened from somewhere else, such as a card in a source's view.
  */
 (function () {
   'use strict';
@@ -13,7 +16,9 @@
   D.define('ui/api/family-dialog', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'api/families/databases', 'api/families/geodata', 'api/connectors'], (base, basic, overlays, icons, families, geodata, connectors) => {
     const { h, t, i18n, replace } = base;
     const SERVICES_ASSET = 'presets/geodata/services.json';
-    /** Both groups of families share the dialog: databases (tables) and geodata services (layers with geometry). */
+    /** Families with an entry of their own in Inhämta: their form has no choice of family, and Extern databas leaves them out. */
+    const OWN = ['opencde', 'neo4j'];
+    /** Both groups of families share the form: databases (tables) and geodata services (layers with geometry). */
     const ALL = () => families.FAMILIES.concat(geodata.FAMILIES);
     const byId = (id) => families.byId(id) || geodata.byId(id);
     const createFor = (id, values) => (geodata.byId(id) ? geodata.createConnector(id, values) : families.createConnector(id, values));
@@ -27,21 +32,30 @@
     }
     function setServices(list) { servicesOverride = Array.isArray(list) ? list : null; }
     const aboutOf = (svc) => { const a = svc.about || {}; return a[i18n.language()] || a.en || a.sv || ''; };
+    /** @param {{family?: string, group?: string}} options */
+    const groupOf = (options) => options.group || (geodata.byId(options.family || '') ? 'geodata' : 'databases');
+    /** The form's title: Lägg till geodatakälla, the name of a family with an entry of its own, or Lägg till extern databas. */
+    function titleOf(options) {
+      if (groupOf(options) === 'geodata') return t('geodata.add.title');
+      return OWN.includes(options.family || '') ? t('families.' + options.family + '.add') : t('families.title');
+    }
 
     /**
+     * The form's element; `finish(connector)` is called with the saved connector.
      * @param {any} ctx the mode context (shell for the log)
-     * @param {{family?: string, values?: Record<string, string>, group?: 'databases'|'geodata'}} [options]
-     * @returns {Promise<any|null>} the saved connector, or null when cancelled
+     * @param {{family?: string, values?: Record<string, string>, group?: 'databases'|'geodata'}} options
+     * @param {(connector: any) => void} finish
      */
-    function open(ctx, options = {}) {
-      const group = options.group || (geodata.byId(options.family || '') ? 'geodata' : 'databases');
-      const list = () => (group === 'geodata' ? geodata.FAMILIES : families.FAMILIES);
+    function build(ctx, options, finish) {
+      const group = groupOf(options);
+      const own = OWN.includes(options.family || '') ? options.family : '';
+      const list = () => (group === 'geodata' ? geodata.FAMILIES : own ? [byId(own)] : families.FAMILIES.filter((f) => !OWN.includes(f.id)));
       const state = { family: options.family || list()[0].id, values: Object.assign({}, options.values || {}), busy: false, error: '', filter: '', services: null, adding: '' };
-      const body = h('div', { class: 'dm-stack' });
-      let finish = null;
+      const body = h('div', { class: 'dm-stack', 'data-family-form': own || group });
 
       function render() {
-        const fam = byId(state.family) || list()[0];
+        const fam = list().find((f) => f.id === state.family) || list()[0];
+        state.family = fam.id;
         const sel = /** @type {any} */ (h('dm-select', { label: t('families.family') }));
         sel.options = list().map((f) => ({ value: f.id, label: f.name }));
         sel.value = fam.id;
@@ -54,7 +68,7 @@
             choice.addEventListener('change', () => { state.values[f.name] = choice.value; });
             return choice;
           }
-          const inp = /** @type {any} */ (h('dm-input', { label: t('families.field.' + f.name), type: f.type === 'secret' ? 'password' : 'text', placeholder: f.placeholder || '' }));
+          const inp = /** @type {any} */ (h('dm-input', { label: t('families.field.' + f.name), type: f.type === 'secret' ? 'password' : 'text', placeholder: f.placeholder || '', 'data-family-field': f.name }));
           inp.value = state.values[f.name] || '';
           inp.addEventListener('input', () => { state.values[f.name] = inp.value; });
           inp.addEventListener('keydown', (e) => { if (/** @type {KeyboardEvent} */ (e).key === 'Enter') create(); });
@@ -65,7 +79,7 @@
         replace(body,
           group === 'geodata' ? readyServices() : null,
           group === 'geodata' ? h('h3', { class: 'dm-small', text: t('geodata.own.title') }) : null,
-          sel,
+          list().length > 1 ? sel : null,
           h('p', { class: 'dm-help', text: t('families.' + fam.id + '.desc') }),
           h('div', { class: 'dm-form-grid' }, fields),
           advanced.length ? h('details', { class: 'dm-more' }, h('summary', { text: t('common.more') }), h('div', { class: 'dm-form-grid' }, advanced)) : null,
@@ -107,14 +121,15 @@
         if (state.busy || state.adding) return;
         if (svc.preset) {
           const existing = await connectors.get(svc.preset);
-          if (existing) { if (finish) finish(existing); return; }
+          if (existing) { finish(existing); return; }
         }
         if (!geodata.byId(svc.kind)) { state.error = t('geodata.ready.unsupported'); render(); return; }
         state.adding = svc.id; state.error = ''; render();
         try {
           const res = await createFor(svc.kind, { baseUrl: svc.url, name: svc.name });
           announce(res);
-          if (finish) finish(res.connector);
+          state.adding = '';
+          finish(res.connector);
         } catch (err) { state.adding = ''; state.error = (err && err.message) || String(err); render(); }
       }
       function announce(res) {
@@ -143,13 +158,35 @@
           }
           const res = await createFor(state.family, state.values);
           announce(res);
-          if (finish) finish(res.connector);
+          state.busy = false; state.values = {}; render();
+          finish(res.connector);
         } catch (err) { state.busy = false; state.error = (err && err.message) || String(err); render(); }
       }
       render();
-      return overlays.dialog.open({ title: t(group === 'geodata' ? 'geodata.add.title' : 'families.title'), help: group === 'geodata' ? 'kallor#öppna-geodata' : 'kallor', size: 'lg', body: (done) => { finish = done; return body; }, actions: [{ label: t('common.cancel'), value: null }] })
+      return body;
+    }
+
+    /**
+     * The form in a workspace (Inhämta's centre): `done` resolves with the first connector it saves.
+     * @param {any} ctx @param {{family?: string, values?: Record<string, string>, group?: 'databases'|'geodata'}} [options]
+     * @returns {{el: HTMLElement, done: Promise<any>, title: string}}
+     */
+    function form(ctx, options = {}) {
+      /** @type {(c: any) => void} */ let settle = () => {};
+      const done = new Promise((resolve) => { settle = resolve; });
+      return { el: build(ctx, options, (c) => settle(c)), done, title: titleOf(options) };
+    }
+
+    /**
+     * The same form as a dialog, for another mode or a card.
+     * @param {any} ctx the mode context (shell for the log)
+     * @param {{family?: string, values?: Record<string, string>, group?: 'databases'|'geodata'}} [options]
+     * @returns {Promise<any|null>} the saved connector, or null when cancelled
+     */
+    function open(ctx, options = {}) {
+      return overlays.dialog.open({ title: titleOf(options), help: groupOf(options) === 'geodata' ? 'kallor#öppna-geodata' : 'kallor', size: 'lg', body: (done) => build(ctx, options, done), actions: [{ label: t('common.cancel'), value: null }] })
         .then((result) => (result && typeof result === 'object' ? result : null));
     }
-    return { open, ALL, byId, services, setServices, SERVICES_ASSET };
+    return { open, form, ALL, OWN, byId, services, setServices, SERVICES_ASSET };
   });
 })();
