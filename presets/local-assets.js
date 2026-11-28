@@ -135,7 +135,7 @@ Dataspatium.assets.addEntries({
  "presets/api/kartverket-adm.api.json": {
   "file": "presets/api/kartverket-adm.api.json.js",
   "encoding": "text",
-  "size": 2826,
+  "size": 2849,
   "library": "dataspatium"
  },
  "presets/api/kartverket-kommuneinfo.api.json": {
@@ -147,7 +147,7 @@ Dataspatium.assets.addEntries({
  "presets/api/kartverket-teig.api.json": {
   "file": "presets/api/kartverket-teig.api.json.js",
   "encoding": "text",
-  "size": 2910,
+  "size": 2933,
   "library": "dataspatium"
  },
  "presets/api/kolada.api.json": {

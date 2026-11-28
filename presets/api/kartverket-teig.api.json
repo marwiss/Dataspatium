@@ -20,12 +20,12 @@
     "kind": "wfs"
   },
   "endpoints": [],
-  "notes": "Lagren hämtas från tjänsten när källan öppnas (GetCapabilities respektive tjänstekatalogen). Svaren är GeoJSON i WGS 84 och öppnas som kartor.",
+  "notes": "Lagren hämtas från tjänsten när källan öppnas (GetCapabilities). Tjänsten ger bara GML, som appen läser och lägger i WGS 84; svaren öppnas som kartor.",
   "i18n": {
     "en": {
       "name": "Norwegian Mapping Authority cadastral parcels (WFS)",
       "description": "Cadastral parcels (teig) from the Norwegian cadastre. Always limit by an area (bbox): the whole country is too large to fetch.",
-      "notes": "The layers are read from the service when the source is opened (GetCapabilities or the service directory). Answers are GeoJSON in WGS 84 and open as maps."
+      "notes": "The layers are read from the service when the source is opened (GetCapabilities). The service gives only GML, which the app reads into WGS 84; the answers open as maps."
     },
     "da": {
       "name": "Kartverket ejendomskort (WFS)",
