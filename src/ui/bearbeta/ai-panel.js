@@ -22,12 +22,16 @@
  * purpose and stage (recommendation 10 of the native IFC study and 12 of the Praxi study): the purpose picks the default level of
  * detail and one of the app's IDS files, which the AI's previews and the person's try the candidate against. The preview lists
  * buildingSMART's rules with their codes, errors and warnings apart, and the approval runs the schema's EXPRESS rules too.
+ * While the AI works a status line above the answer says what it does, with the text as it is written, the AI's time and the tokens
+ * (ui/bearbeta/ai-run, B-83); a question from the AI comes first in the panel and the run button waits for the answer instead of
+ * spinning; a change or build that proposed nothing says so, with Fråga igen and Ändra frågan. The model is chosen in the panel, and
+ * the providers' dialog (ui/bearbeta/ai-providers) says where each key is and can try it.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/ai-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ai/providers', 'ai/agent', 'ai/write-tools', 'ai/check-tools', 'ui/bearbeta/ai-check', 'data/selection', 'data/recipes', 'data/ifc-ops', 'data/datasets', 'data/ifc-validation', 'api/connectors', 'api/families/opencde', 'platform/storage/idb', 'analysis/ids-presets', 'ui/bearbeta/site-map', 'ui/share/change-proposal', 'ui/share/review'],
-    (base, basic, overlays, icons, providers, agent, writeTools, checkTools, aiCheck, selection, recipes, ifcOps, datasets, validation, connectors, opencde, idb, idsPresets, siteMap, changeProposal, review) => {
+  D.define('ui/bearbeta/ai-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ai/providers', 'ai/agent', 'ai/write-tools', 'ai/check-tools', 'ui/bearbeta/ai-check', 'data/selection', 'data/recipes', 'data/ifc-ops', 'data/datasets', 'data/ifc-validation', 'api/connectors', 'api/families/opencde', 'platform/storage/idb', 'analysis/ids-presets', 'ui/bearbeta/site-map', 'ui/share/change-proposal', 'ui/share/review', 'ui/bearbeta/ai-run', 'ui/bearbeta/ai-providers'],
+    (base, basic, overlays, icons, providers, agent, writeTools, checkTools, aiCheck, selection, recipes, ifcOps, datasets, validation, connectors, opencde, idb, idsPresets, siteMap, changeProposal, review, aiRun, aiProviders) => {
       const { h, t, i18n, replace } = base;
       const LAST_SETTING = 'ai.lastProvider';
       const MODES = ['ask', 'change', 'build', 'check'];
@@ -43,10 +47,15 @@
           changeset: writeTools.create(options.datasetId), preview: null, previewing: false, approving: false, proposing: false, proposed: null, cde: null, approvingServer: false,
           attachments: [], questionBox: null, picturesFrom: '', albums: [], factsFrom: '', tables: [],
           form: { building: '', storeys: '', length: '', width: '', height: '', foundation: '', roof: '', purpose: '', purposeText: '', stage: '' }, detail: 'main', ids: '', idsTitles: {}, nextLabel: 'photo', material: null, uploading: false, opsForm: null, heightsSource: false, factsHeights: false, canPropose: null, projectPolicy: undefined,
-          findings: checkTools.create(options.datasetId) };
+          findings: checkTools.create(options.datasetId), none: false, lastQuestion: '' };
         const el = h('div', { class: 'dm-card dm-stack-sm', 'data-ai-panel': '' });
         let abort = null;
+        // What the run does now, and the question brought forward once when it comes (B-83).
+        const run = aiRun.create({ onChange: () => render() });
+        let shownQuestion = null;
         const unsubscribe = providers.subscribe(() => load().then(render));
+        // Where the chosen provider's key is (session, stored, locked, missing), kept up to date (B-83).
+        const keys = aiProviders.keyWatch(() => provider(), () => render());
         const log = (msg, kind) => { if (shell && shell.log) shell.log(msg, kind || 'ok'); };
         const fail = (err) => { s.error = String((err && err.message) || err); log(`AI: ${s.error}`, 'error'); };
         const changing = () => s.mode === 'change' || s.mode === 'build' || s.mode === 'check';
@@ -84,6 +93,7 @@
           await check.load(meta);
           s.idsTitles = Object.fromEntries((await idsPresets.list().catch(() => [])).map((x) => [x.file, x.title]));
           s.providers = list;
+          await keys.refresh();
         }
         /** Uploads the brief and the pictures as documents on the server, tied to the topic Underlag (data/model-material). */
         async function uploadMaterial() {
@@ -115,11 +125,14 @@
             if (s.projectPolicy === undefined) s.projectPolicy = await opencde.aiPolicy(s.material.connector, s.material.cde.projectId).catch(() => null);
             if (s.projectPolicy === 'local') { s.error = t('ai.err.policy.project', { project: s.material.cde.projectName || s.material.cde.projectId, host: providers.hostOf(p.baseUrl) }); render(); return; }
           }
-          s.busy = true; s.error = ''; s.answer = ''; s.steps = []; s.elements = []; s.usage = null; render();
+          s.busy = true; s.error = ''; s.answer = ''; s.steps = []; s.elements = []; s.usage = null; s.none = false; s.lastQuestion = s.question;
+          run.start(); render();
           abort = new AbortController();
           try {
-            const out = await agent.ask({ provider: p, datasetId: options.datasetId, question, history: s.history, changeset: changing() ? s.changeset : null, build: building(), check: checking(), findings: checking() ? s.findings : undefined, ids: building() ? await requirements() : null, images: withPictures() ? s.attachments.map((a, i) => ({ mediaType: a.mediaType, data: a.data, caption: captionOf(a, i + 1), name: a.name, where: a.where, when: a.when })) : undefined, ask: building() ? askPerson : undefined, signal: abort.signal, onEvent: (ev) => { if (ev.type === 'tool') { s.steps.push(ev.step); renderSteps(); } } });
+            const out = await agent.ask({ provider: p, datasetId: options.datasetId, question, history: s.history, changeset: changing() ? s.changeset : null, build: building(), check: checking(), findings: checking() ? s.findings : undefined, ids: building() ? await requirements() : null, images: withPictures() ? s.attachments.map((a, i) => ({ mediaType: a.mediaType, data: a.data, caption: captionOf(a, i + 1), name: a.name, where: a.where, when: a.when })) : undefined, ask: building() ? run.ask(askPerson) : undefined, signal: abort.signal, onEvent: (ev) => { run.event(ev); if (ev.type === 'tool') { s.steps.push(ev.step); renderSteps(); } } });
             s.answer = out.answer; s.steps = out.steps; s.elements = out.elements; s.usage = out.usage;
+            // A change or a build that ended without a step says so, with the AI's words (B-83).
+            s.none = (s.mode === 'change' || s.mode === 'build') && !s.changeset.ops.length && out.stopped !== 'cancelled';
             // The next question continues the conversation, but only the words: the tool traffic is not carried on.
             s.history = s.history.concat([{ role: 'user', content: question }, { role: 'assistant', content: out.answer }]).slice(-10);
             s.exchanges.push({ question, answer: out.answer, elements: out.elements.length });
@@ -131,9 +144,14 @@
             } else log(t('ai.log.answered', { tools: String(out.steps.length), input: i18n.formatNumber(out.usage.input), output: i18n.formatNumber(out.usage.output) }), out.stopped === 'answered' ? 'ok' : 'warn');
             await idb.setSetting(LAST_SETTING, p.id);
           } catch (err) { fail(err); }
+          run.stop();
           abort = null; s.busy = false; s.question = ''; render();
         }
         function cancel() { if (abort) abort.abort(); }
+        /** The last question again, as it was (Fråga igen). */
+        function askAgain() { if (s.busy) return; s.question = s.lastQuestion; askNow(); }
+        /** The last question back in its box to be changed (Ändra frågan). */
+        function refineQuestion() { s.question = s.lastQuestion; s.none = false; render(); aiRun.refine(el, s.lastQuestion); }
         // ---- build mode (decision F43 a): a question to the person, and pictures and drawings as the brief's material ----
         const MAX_IMAGES = 16; const MAX_SIDE = 1600; const MAX_PAGES = 8; const MAX_RAW_BYTES = 4 * 1024 * 1024;
         /** Bytes as base64 without a prefix, in slices so that a large picture does not overflow the call stack. */
@@ -347,7 +365,7 @@
           setTimeout(() => site.refresh(), 0);
           return site.el;
         }
-        function questionView() { return questionBox(s.questionBox.q, s.questionBox.resolve); }
+        function questionView() { return aiRun.questionBox(s.questionBox.q, s.questionBox.resolve); }
         /** The elements of the answer into the shared selection, which the 3D view and the table follow. */
         async function mark() {
           if (!s.elements.length) return;
@@ -568,7 +586,7 @@
             h('p', { class: 'dm-help dm-xs', text: t('ai.change.python') }));
         }
         function render() {
-          const [sel, pol, mode] = controls(s, { modes: MODES, fail, onMode: render });
+          const [sel, pol, mode, model] = controls(s, { modes: MODES, fail: (err) => { fail(err); render(); }, onMode: render, onProvider: () => keys.refresh().then(render) });
           const q = /** @type {any} */ (h('dm-input', { label: t(building() ? 'ai.build.brief' : 'ai.question'), rows: building() ? '6' : '3', placeholder: t(building() ? 'ai.build.placeholder' : checking() ? 'ai.check.placeholder' : changing() ? 'ai.question.placeholder.change' : 'ai.question.placeholder'), 'data-ai-question': '' }));
           q.value = s.question;
           q.addEventListener('input', () => { s.question = q.value; });
@@ -576,43 +594,50 @@
           stepsEl = h('div');
           const p = provider();
           replace(el,
-            h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t(building() ? 'ai.title.build' : checking() ? 'ai.title.check' : changing() ? 'ai.title.change' : 'ai.title') }), basic.button({ label: t('ai.providers.manage'), icon: 'settings', size: 'sm', 'data-ai-providers': '', onClick: () => manage(ctx).then(() => load().then(render)) })),
+            h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t(building() ? 'ai.title.build' : checking() ? 'ai.title.check' : changing() ? 'ai.title.change' : 'ai.title') }), basic.button({ label: t('ai.providers.manage'), icon: 'settings', size: 'sm', title: t('ai.providers.manage.hint'), 'data-ai-providers': '', onClick: () => manage(ctx).then(() => load().then(render)) })),
+            // A question from the AI comes first, marked, while the run waits for the answer (B-83).
+            s.questionBox ? questionView() : null,
             h('p', { class: 'dm-help dm-xs', text: t(building() ? 'ai.hint.build' : checking() ? 'ai.hint.check' : changing() ? 'ai.hint.change' : 'ai.hint') }),
-            s.providers.length ? h('div', { class: 'dm-row-wrap' }, sel, pol, mode) : h('p', { class: 'dm-help', 'data-ai-none': '', text: t('ai.providers.none') }),
-            p && !providers.hasKey(p.id) && !providers.isLocal(p.baseUrl) ? h('p', { class: 'dm-help dm-xs', text: t('ai.key.missing', { name: p.name }) }) : null,
+            s.providers.length ? h('div', { class: 'dm-row-wrap' }, sel, model, pol, mode) : h('p', { class: 'dm-help', 'data-ai-none': '', text: t('ai.providers.none') }),
+            aiProviders.keyNotice(p, keys.state, () => keys.refresh().then(render)),
             building() ? formView() : null,
             q,
             withPictures() ? attachRow() : null,
-            s.questionBox ? questionView() : null,
             h('div', { class: 'dm-row-wrap' },
-              basic.button({ label: t(building() ? 'ai.build.run' : checking() ? 'ai.check.run' : changing() ? 'ai.propose' : 'ai.ask'), icon: 'cpu', variant: 'primary', size: 'sm', loading: s.busy, disabled: !s.providers.length, 'data-ai-ask': '', onClick: askNow }),
-              s.busy ? basic.button({ label: t('common.cancel'), size: 'sm', 'data-ai-cancel': '', onClick: cancel }) : null,
+              run.button({ label: t(building() ? 'ai.build.run' : checking() ? 'ai.check.run' : changing() ? 'ai.propose' : 'ai.ask'), icon: 'cpu', variant: 'primary', size: 'sm', loading: s.busy, disabled: !s.providers.length, title: t('ai.run.hint'), 'data-ai-ask': '', onClick: askNow, focusQuestion: () => aiRun.reveal(el) }),
+              s.busy ? basic.button({ label: t('common.cancel'), size: 'sm', title: t('ai.run.cancel.hint'), 'data-ai-cancel': '', onClick: cancel }) : null,
               s.elements.length && !s.busy ? basic.button({ label: t('ai.mark', { n: i18n.formatNumber(s.elements.length) }), icon: 'list-checks', size: 'sm', 'data-ai-mark': '', onClick: mark }) : null),
+            run.view(),
             s.error ? h('p', { class: 'dm-error', 'data-ai-error': '', text: s.error }) : null,
-            s.answer ? h('div', { class: 'dm-stack-sm', 'data-ai-answer': '' }, s.answer.split(/\n{2,}/).map((para) => h('p', { class: 'dm-small', text: para }))) : null,
+            s.answer && s.none && !s.busy ? aiRun.noChanges({ answer: s.answer, onAgain: askAgain, onRefine: refineQuestion }) : null,
+            s.answer && !(s.none && !s.busy) ? h('div', { class: 'dm-stack-sm', 'data-ai-answer': '' }, s.answer.split(/\n{2,}/).map((para) => h('p', { class: 'dm-small', text: para }))) : null,
             checking() ? check.view() : null,
             stepsEl,
             changing() ? renderChanges() : null,
             s.usage ? h('p', { class: 'dm-help dm-xs', 'data-ai-usage': '', text: t('ai.usage', { input: i18n.formatNumber(s.usage.input), output: i18n.formatNumber(s.usage.output) }) }) : null,
             s.exchanges.length > 1 ? h('p', { class: 'dm-help dm-xs', text: t('ai.history', { n: String(s.exchanges.length) }) }) : null);
           renderSteps();
+          const asked = s.questionBox ? s.questionBox.q : null;
+          if (asked && asked !== shownQuestion) aiRun.reveal(el);
+          shownQuestion = asked;
         }
-        function destroy() { unsubscribe(); cancel(); site.destroy(); if (s.preview && options.preview) { s.preview = null; Promise.resolve(options.preview(null)).catch(() => {}); } }
+        function destroy() { unsubscribe(); keys.destroy(); cancel(); run.stop(); site.destroy(); if (s.preview && options.preview) { s.preview = null; Promise.resolve(options.preview(null)).catch(() => {}); } }
         load().then(render);
-        return { el, destroy, state: s, check, site, ask: (question) => { s.question = question; return askNow(); }, attach: (list) => { s.attachments = s.attachments.concat(list || []); render(); }, addFacts, mark, load, preview: previewNow, approve: approveNow, reject: rejectNow, propose: proposeNow, approveOnServer: flow.approve, resolveConflicts: flow.resolve, setMode: (m) => { s.mode = MODES.includes(m) ? m : 'ask'; render(); } };
+        return { el, destroy, state: s, run, check, site, ask: (question) => { s.question = question; return askNow(); }, attach: (list) => { s.attachments = s.attachments.concat(list || []); render(); }, addFacts, mark, load, preview: previewNow, approve: approveNow, reject: rejectNow, propose: proposeNow, approveOnServer: flow.approve, resolveConflicts: flow.resolve, setMode: (m) => { s.mode = MODES.includes(m) ? m : 'ask'; render(); } };
       }
 
       /**
-       * The panel's choices of provider, policy and mode, as the model's and the plan's panels (ui/bearbeta/plan-ai) show them.
+       * The panel's choices of provider, its model, the policy and the mode, as the model's and the plan's panels (ui/bearbeta/plan-ai)
+       * show them; the model is kept with its provider (B-83).
        * @param {{providers: any[], providerId: string, policy: string, mode: string}} s the panel's state, changed in place
-       * @param {{modes: string[], fail: (err: any) => void, onMode: () => void, modeHint?: string}} opts
-       * @returns {HTMLElement[]} the provider, the policy and the mode
+       * @param {{modes: string[], fail: (err: any) => void, onMode: () => void, modeHint?: string, onProvider?: () => void}} opts
+       * @returns {Array<HTMLElement|null>} the provider, the policy, the mode and the model (null without a provider)
        */
       function controls(s, opts) {
-        const sel = /** @type {any} */ (h('dm-select', { label: t('ai.provider') }));
-        sel.options = s.providers.map((p) => ({ value: p.id, label: `${p.name} · ${p.model}${providers.isLocal(p.baseUrl) ? ' · ' + t('ai.local') : ''}` }));
+        const sel = /** @type {any} */ (h('dm-select', { label: t('ai.provider'), 'data-ai-provider-select': '' }));
+        sel.options = s.providers.map((p) => ({ value: p.id, label: `${p.name}${providers.isLocal(p.baseUrl) ? ' · ' + t('ai.local') : ''}` }));
         sel.value = s.providerId;
-        sel.addEventListener('change', () => { s.providerId = sel.value; });
+        sel.addEventListener('change', () => { s.providerId = sel.value; if (opts.onProvider) opts.onProvider(); else opts.onMode(); });
         const pol = /** @type {any} */ (h('dm-select', { label: t('ai.policy'), title: t('ai.policy.hint') }));
         pol.options = providers.POLICIES.map((id) => ({ value: id, label: t('ai.policy.' + id) }));
         pol.value = s.policy;
@@ -621,71 +646,14 @@
         mode.options = opts.modes.map((id) => ({ value: id, label: t('ai.mode.' + id) }));
         mode.value = s.mode;
         mode.addEventListener('change', () => { s.mode = opts.modes.includes(mode.value) ? mode.value : opts.modes[0]; opts.onMode(); });
-        return [sel, pol, mode];
-      }
-      /**
-       * A question from the AI (ask_person) with its answers to choose from and, when allowed, a free answer; `resolve` gets the
-       * answer or null when the person closes it. Text only. @param {{question: string, options?: any[], free?: boolean}} q
-       * @param {(answer: {answer: string, index: number|null, free: boolean}|null) => void} resolve
-       */
-      function questionBox(q, resolve) {
-        const free = q.free ? /** @type {any} */ (h('dm-input', { label: t('ask.free') })) : null;
-        return h('div', { class: 'dm-card dm-stack-sm dm-ask', 'data-ask': '' },
-          h('p', { class: 'dm-ask-question', text: String(q.question || '').slice(0, 500) }),
-          (q.options || []).slice(0, 6).map((o, i) => h('div', { class: 'dm-stack-sm dm-ask-option', 'data-ask-option': String(i) },
-            basic.button({ label: String(o.label).slice(0, 80), title: o.description || o.label, onClick: () => resolve({ answer: o.label, index: i, free: false }) }),
-            o.description ? h('p', { class: 'dm-help dm-small', text: String(o.description).slice(0, 200) }) : null)),
-          free ? h('div', { class: 'dm-row-wrap dm-ask-free' }, free, basic.button({ label: t('ask.answer'), title: t('ask.answer.hint'), onClick: () => { const v = String(free.value || '').trim().slice(0, 500); if (v) resolve({ answer: v, index: null, free: true }); } })) : null,
-          basic.button({ label: t('common.cancel'), variant: 'ghost', size: 'sm', title: t('assistant.question.cancel'), onClick: () => resolve(null) }));
+        const model = aiProviders.modelSelect(s.providers.find((p) => p.id === s.providerId) || null, opts.fail);
+        return [sel, pol, mode, model];
       }
 
-      /** The dialog that lists the providers and adds, changes or removes one; the key is written, never shown. */
-      async function manage(_ctx) {
-        for (;;) {
-          const all = await providers.list();
-          const rows = all.map((p) => h('div', { class: 'dm-row', 'data-ai-provider': p.id },
-            h('span', { class: 'dm-grow dm-small', text: `${p.name} · ${t('ai.kind.' + p.kind)} · ${p.model} · ${providers.hostOf(p.baseUrl)}${providers.hasKey(p.id) ? '' : ' · ' + t('ai.key.none')}` }),
-            basic.button({ label: t('common.edit'), size: 'sm', onClick: () => done({ edit: p }) }),
-            basic.button({ label: t('ai.providers.remove'), size: 'sm', variant: 'ghost', onClick: () => done({ remove: p }) })));
-          let done = () => {};
-          const chosen = await overlays.dialog.open({
-            title: t('ai.providers.title'),
-            body: (finish) => { done = finish; return h('div', { class: 'dm-stack-sm' }, h('p', { class: 'dm-help', text: t('ai.providers.hint') }), rows.length ? rows : h('p', { class: 'dm-help', text: t('ai.providers.none') })); },
-            actions: [{ label: t('common.close'), value: null }, { label: t('ai.providers.add'), variant: 'primary', value: 'add', primary: true }],
-          });
-          if (!chosen) return;
-          if (chosen === 'add') await edit(null);
-          else if (chosen.edit) await edit(chosen.edit);
-          else if (chosen.remove) { if (await overlays.dialog.confirm(t('ai.providers.remove.confirm', { name: chosen.remove.name }), { danger: true })) await providers.remove(chosen.remove.id); }
-        }
-      }
-      /** One provider's form: a preset to start from, then kind, name, address, model and key. */
-      async function edit(existing) {
-        const values = Object.assign({ kind: 'anthropic', name: '', baseUrl: providers.KINDS.anthropic.baseUrl, model: providers.KINDS.anthropic.model }, existing || {});
-        let error = '';
-        for (;;) {
-          const preset = /** @type {any} */ (h('dm-select', { label: t('ai.preset') }));
-          preset.options = [{ value: '', label: t('ai.preset.own') }].concat(providers.PRESETS.map((p) => ({ value: p.id, label: t(p.nameKey) })));
-          preset.value = '';
-          const kind = /** @type {any} */ (h('dm-select', { label: t('ai.kind') }));
-          kind.options = Object.keys(providers.KINDS).map((k) => ({ value: k, label: t(providers.KINDS[k].labelKey) }));
-          kind.value = values.kind;
-          const name = /** @type {any} */ (h('dm-input', { label: t('ai.name'), value: values.name }));
-          const baseUrl = /** @type {any} */ (h('dm-input', { label: t('ai.baseUrl'), value: values.baseUrl, placeholder: 'https://…' }));
-          const model = /** @type {any} */ (h('dm-input', { label: t('ai.model'), value: values.model }));
-          const key = /** @type {any} */ (h('dm-input', { label: t('ai.key'), type: 'password', help: t('ai.key.hint'), placeholder: existing && providers.hasKey(existing.id) ? t('ai.key.kept') : '' }));
-          preset.addEventListener('change', () => { const p = providers.PRESETS.find((x) => x.id === preset.value); if (!p) return; kind.value = p.kind; name.value = t(p.nameKey); baseUrl.value = p.baseUrl; model.value = p.model; });
-          const body = h('div', { class: 'dm-stack-sm' }, existing ? null : preset, kind, name, baseUrl, model, key, error ? h('p', { class: 'dm-error', text: error }) : null);
-          const ok = await overlays.dialog.open({ title: existing ? t('ai.providers.edit') : t('ai.providers.add'), body, actions: [{ label: t('common.cancel'), value: false }, { label: t('common.save'), variant: 'primary', value: true, primary: true }] });
-          Object.assign(values, { kind: kind.value, name: name.value, baseUrl: baseUrl.value, model: model.value });
-          if (ok !== true) return null;
-          try {
-            const saved = await providers.save(values);
-            if (key.value) providers.setKey(saved.id, key.value);
-            return saved;
-          } catch (err) { error = String((err && err.message) || err); }
-        }
-      }
+      /** The providers' dialog and the AI's question (moved to ui/bearbeta/ai-providers and ui/bearbeta/ai-run); kept here for their callers. */
+      const manage = aiProviders.manage;
+      const edit = aiProviders.edit;
+      const questionBox = aiRun.questionBox;
       /** The collisions decided (moved to ui/share/change-proposal, which Dela's Till CDE shares); kept here for its callers. */
       return { create, manage, edit, controls, questionBox, decideConflicts: changeProposal.decideConflicts };
     });

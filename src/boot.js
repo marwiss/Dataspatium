@@ -516,6 +516,8 @@
       'src/ai/agent.js',
       'src/ui/bearbeta/site-map.js',
       'src/ui/bearbeta/ai-check.js',
+      'src/ui/bearbeta/ai-run.js',
+      'src/ui/bearbeta/ai-providers.js',
       'src/ui/bearbeta/ai-panel.js',
       'src/ai/plan-tools.js',
       'src/ui/bearbeta/plan-ai.js',

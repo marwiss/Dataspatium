@@ -7,12 +7,14 @@
  * its arguments; a question from the AI shows in the panel with a button per answer; a proposed plan can be saved as a flow, and so
  * can the writing steps that ran. The conversation is remembered between sessions as a notebook of the workspace (F37 b, on
  * trial): earlier exchanges go to the provider as history, and Nytt samtal forgets them. Everything from the AI is shown as text only.
+ * While the AI works a status line above the conversation says what it does, with its text as it is written, its time and the tokens,
+ * and a question from the AI comes first in the panel (ui/bearbeta/ai-run, B-83).
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/assistant', ['ui/base', 'ui/basic', 'ui/overlays', 'ai/providers', 'ai/assistant', 'data/flows', 'data/commands', 'platform/storage/idb', 'ui/approve'],
-    (base, basic, overlays, providers, assistant, flows, commands, idb, approval) => {
+  D.define('ui/assistant', ['ui/base', 'ui/basic', 'ui/overlays', 'ai/providers', 'ai/assistant', 'data/flows', 'data/commands', 'platform/storage/idb', 'ui/approve', 'ui/bearbeta/ai-run', 'ui/bearbeta/ai-providers'],
+    (base, basic, overlays, providers, assistant, flows, commands, idb, approval, aiRun, aiProviders) => {
       const { h, t, i18n } = base;
       const LAST_SETTING = 'assistant.lastProvider';
       /** One panel per page, kept while the app is open. */
@@ -24,7 +26,12 @@
       function open(ctx) {
         if (current) { current.panel.collapse(false); current.panel.focus(); return current; }
         const s = { providers: [], providerId: '', task: '', busy: false, error: '', exchanges: [], messages: [], earlier: [], question: null, controller: null };
-        const panel = overlays.floating({ onClose: () => { if (s.controller) s.controller.abort(); if (s.question) s.question.resolve(null); current = null; } });
+        // What the run does now, above the conversation, and the question brought forward once when it comes (B-83).
+        const run = aiRun.create({ onChange: () => render() });
+        let shownQuestion = null;
+        // Where the chosen provider's key is, kept up to date.
+        const keys = aiProviders.keyWatch(() => s.providers.find((p) => p.id === s.providerId) || null, () => render());
+        const panel = overlays.floating({ onClose: () => { if (s.controller) s.controller.abort(); if (s.question) s.question.resolve(null); run.stop(); keys.destroy(); current = null; } });
         panel.el.setAttribute('data-assistant', '');
         const log = (msg, kind) => { if (ctx && ctx.shell && ctx.shell.log) ctx.shell.log(msg, kind || 'ok'); };
 
@@ -33,6 +40,7 @@
           s.earlier = await assistant.recall().catch(() => []);
           const last = await idb.getSetting(LAST_SETTING, '');
           if (!s.providers.some((p) => p.id === s.providerId)) s.providerId = (s.providers.find((p) => p.id === last) || s.providers[0] || { id: '' }).id;
+          await keys.refresh();
         }
         /** A question from the AI, shown in the panel until the person answers or closes it. */
         function ask(q) {
@@ -50,11 +58,12 @@
           const ex = { task, steps: [], answer: '', plan: null, usage: null, error: '' };
           s.exchanges.push(ex); s.task = ''; s.busy = true; s.error = '';
           s.controller = new AbortController();
+          run.start();
           render();
           try {
             const r = await assistant.run({
-              provider, task, history: assistant.historyOf(s.earlier).concat(s.messages), approve, ask, signal: s.controller.signal,
-              onEvent: (ev) => { if (ev.type === 'step') { ex.steps.push(ev.step); render(); } else if (ev.type === 'plan') { ex.plan = ev.plan; render(); } },
+              provider, task, history: assistant.historyOf(s.earlier).concat(s.messages), approve, ask: run.ask(ask), signal: s.controller.signal,
+              onEvent: (ev) => { run.event(ev); if (ev.type === 'step') { ex.steps.push(ev.step); render(); } else if (ev.type === 'plan') { ex.plan = ev.plan; render(); } },
             });
             ex.answer = r.answer; ex.usage = r.usage; ex.all = r.steps;
             s.messages = r.messages;
@@ -62,6 +71,7 @@
           } catch (err) {
             ex.error = String((err && err.message) || err);
           } finally {
+            run.stop();
             s.busy = false; s.controller = null; render();
           }
         }
@@ -91,30 +101,25 @@
             writes ? basic.button({ label: t('assistant.steps.save'), icon: 'list-checks', size: 'sm', title: t('assistant.steps.save.hint'), onClick: () => saveFlow(assistant.toFlow(ex.all, ex.task.slice(0, 60))) }) : null,
             ex.usage ? h('p', { class: 'dm-help dm-small', text: t('ai.usage', { input: i18n.formatNumber(ex.usage.input), output: i18n.formatNumber(ex.usage.output) }) }) : null);
         }
-        function questionView() {
-          const { q, resolve } = s.question;
-          const free = q.free ? /** @type {any} */ (h('dm-input', { label: t('ask.free') })) : null;
-          return h('div', { class: 'dm-card dm-stack-sm dm-ask', 'data-ask': '' },
-            h('p', { class: 'dm-ask-question', text: String(q.question || '').slice(0, 500) }),
-            (q.options || []).slice(0, 6).map((o, i) => h('div', { class: 'dm-stack-sm dm-ask-option', 'data-ask-option': String(i) },
-              basic.button({ label: String(o.label).slice(0, 80), title: o.description || o.label, onClick: () => resolve({ answer: o.label, index: i, free: false }) }),
-              o.description ? h('p', { class: 'dm-help dm-small', text: String(o.description).slice(0, 200) }) : null)),
-            free ? h('div', { class: 'dm-row-wrap dm-ask-free' }, free, basic.button({ label: t('ask.answer'), title: t('ask.answer.hint'), onClick: () => { const v = String(free.value || '').trim().slice(0, 500); if (v) resolve({ answer: v, index: null, free: true }); } })) : null,
-            basic.button({ label: t('common.cancel'), variant: 'ghost', size: 'sm', title: t('assistant.question.cancel'), onClick: () => resolve(null) }));
-        }
+        /** The AI's question, shared with the model's panel (ui/bearbeta/ai-run). */
+        function questionView() { return aiRun.questionBox(s.question.q, s.question.resolve); }
         function render() {
           const provider = s.providers.find((p) => p.id === s.providerId);
           const body = [];
+          // A question from the AI comes first, marked, while the run waits for the answer (B-83).
+          if (s.question) body.push(questionView());
           if (!s.providers.length) {
             body.push(h('p', { class: 'dm-help', text: t('ai.providers.none') }));
           } else if (s.providers.length > 1) {
-            body.push(basic.select(t('ai.provider'), s.providers.map((p) => ({ value: p.id, label: p.name })), s.providerId, (v) => { s.providerId = v; render(); }));
+            body.push(basic.select(t('ai.provider'), s.providers.map((p) => ({ value: p.id, label: `${p.name} · ${p.model}` })), s.providerId, (v) => { s.providerId = v; keys.refresh().then(render); }));
           }
+          const notice = aiProviders.keyNotice(provider, keys.state, () => keys.refresh().then(render));
+          if (notice) body.push(notice);
+          // The run's status above the conversation.
+          body.push(run.view());
           if (!s.exchanges.length) body.push(h('p', { class: 'dm-help dm-small', text: t('assistant.intro', { n: commands.list().length }) }));
           if (s.earlier.length) body.push(h('p', { class: 'dm-help dm-small', 'data-assistant-memory': String(s.earlier.length), text: t('assistant.memory', { n: s.earlier.length, name: t('assistant.title') }) }));
           for (const ex of s.exchanges) body.push(exchangeView(ex));
-          if (s.question) body.push(questionView());
-          if (s.busy && !s.question) body.push(h('p', { class: 'dm-help', text: t('assistant.working') }));
           const input = /** @type {any} */ (h('dm-input', { label: t('assistant.task'), type: 'textarea', rows: '3', placeholder: t('assistant.task.placeholder') }));
           input.value = s.task;
           input.addEventListener('input', () => { s.task = input.value; });
@@ -122,17 +127,21 @@
           if (!s.busy) body.push(input);
           panel.update({
             title: t('assistant.title'),
-            meta: provider ? provider.name : '',
+            // The provider and the model it runs, chosen in the providers' dialog or the model's panel.
+            meta: provider ? `${provider.name} · ${provider.model}` : '',
             body,
             actions: [
               s.busy ? basic.button({ label: t('flows.cancel'), icon: 'octagon-x', title: t('assistant.stop.hint'), onClick: () => { if (s.controller) s.controller.abort(); } })
                 : basic.button({ label: t('assistant.send'), icon: 'sparkles', variant: 'primary', title: t('assistant.send.hint'), disabled: !provider, onClick: send }),
-              basic.button({ label: t('ai.providers.manage'), icon: 'settings', variant: 'ghost', title: t('ai.providers.title'), onClick: async () => { await D.require('ui/bearbeta/ai-panel').manage(ctx); await load(); render(); } }),
+              basic.button({ label: t('ai.providers.manage'), icon: 'settings', variant: 'ghost', title: t('ai.providers.title'), onClick: async () => { await aiProviders.manage(ctx); await load(); render(); } }),
               (s.exchanges.length || s.earlier.length) && !s.busy ? basic.button({ label: t('assistant.new'), icon: 'plus', variant: 'ghost', title: t('assistant.new.hint'), onClick: () => { s.exchanges = []; s.messages = []; s.earlier = []; assistant.forget().catch((err) => console.error('[assistant] memory', err)); render(); } }) : null,
             ].filter(Boolean),
           });
+          const asked = s.question ? s.question.q : null;
+          if (asked && asked !== shownQuestion) aiRun.reveal(panel.el);
+          shownQuestion = asked;
         }
-        current = { panel, state: s, send, render };
+        current = { panel, state: s, send, render, run };
         load().then(render);
         render();
         return current;

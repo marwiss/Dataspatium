@@ -594,3 +594,19 @@ body.dm-presenting { overflow: hidden; }
 /* Big assets loading: a short indeterminate bar beside the engines in the status bar. */
 .dm-sb-loading { display: inline-flex; align-items: center; gap: var(--dm-space-2); }
 .dm-sb-loading dm-progress { width: 4rem; }
+
+/* An AI run (ui/bearbeta/ai-run, B-83): the status line above the conversation, the question that waits for the person, and the
+   notice of a run that proposed nothing. */
+.dm-ai-run { display: flex; flex-direction: column; gap: var(--dm-s-1); padding: var(--dm-s-2) var(--dm-s-3); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); background: var(--dm-surface-2); }
+.dm-ai-run-line { display: flex; align-items: center; flex-wrap: wrap; gap: var(--dm-s-2); font-size: var(--dm-text-sm); }
+.dm-ai-run:not(.dm-ai-run-waiting) .dm-ai-run-line dm-icon { animation: dm-spin 0.9s linear infinite; color: var(--dm-accent); }
+.dm-ai-run-waiting { border-color: var(--dm-accent); background: var(--dm-accent-soft); }
+.dm-ai-run-phase { font-weight: var(--dm-weight-medium); min-width: 0; overflow-wrap: anywhere; }
+.dm-ai-run-meta { color: var(--dm-text-muted); font-size: var(--dm-text-xs); font-variant-numeric: tabular-nums; }
+.dm-ai-run-live { margin: 0; color: var(--dm-text-muted); font-size: var(--dm-text-xs); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 6em; overflow: hidden; }
+.dm-ask-pending { border-color: var(--dm-accent); box-shadow: inset 3px 0 0 var(--dm-accent); }
+.dm-ask-pending:focus { outline: 2px solid var(--dm-focus); outline-offset: 2px; }
+.dm-ask-waiting { margin: 0; color: var(--dm-accent); font-weight: var(--dm-weight-medium); }
+.dm-ai-none { border-color: var(--dm-warn); background: var(--dm-warn-soft); }
+.dm-ai-none-answer { padding-inline-start: var(--dm-s-3); border-inline-start: 2px solid var(--dm-border-strong); }
+.dm-ai-model-row { align-items: flex-end; }

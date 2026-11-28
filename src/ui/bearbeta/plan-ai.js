@@ -10,13 +10,14 @@
  * once with the app's undo, and Avvisa drops it. Nothing reaches the plan before the approval, and removals are confirmed once
  * more. The model's panel is not reused as a whole: its preview runs the IFC wheel in Python and draws in 3D, and its approval
  * and proposals go through the model's own steps and Dataregium; here they are the plan's edits and its map. Texts reach the page
- * only as text.
+ * only as text. The run's status, the AI's question first in the panel, the notice of a run that proposed nothing, the choice of
+ * model and the key's state are the model panel's (ui/bearbeta/ai-run, ui/bearbeta/ai-providers; B-83).
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/plan-ai', ['ui/base', 'ui/basic', 'ai/providers', 'ai/agent', 'ai/plan-tools', 'ui/bearbeta/ai-panel', 'data/plan-edit', 'data/plan-links', 'data/recipes', 'viz/theme', 'platform/storage/idb'],
-    (base, basic, providers, agent, planTools, aiPanel, planEdit, planLinks, recipes, theme, idb) => {
+  D.define('ui/bearbeta/plan-ai', ['ui/base', 'ui/basic', 'ai/providers', 'ai/agent', 'ai/plan-tools', 'ui/bearbeta/ai-panel', 'data/plan-edit', 'data/plan-links', 'data/recipes', 'viz/theme', 'platform/storage/idb', 'ui/bearbeta/ai-run', 'ui/bearbeta/ai-providers'],
+    (base, basic, providers, agent, planTools, aiPanel, planEdit, planLinks, recipes, theme, idb, aiRun, aiProviders) => {
       const { h, t, i18n, replace } = base;
       const MODES = ['ask', 'change', 'build'];
       const LAST_SETTING = 'ai.lastProvider';
@@ -34,14 +35,19 @@
         const { shell, ui } = ctx;
         const s = { providers: [], providerId: '', policy: 'ask', mode: MODES.includes(String(options.mode)) ? String(options.mode) : 'ask', question: options.brief ? String(options.brief) : '',
           busy: false, answer: '', steps: [], areas: [], usage: null, error: '', history: [], exchanges: [], changeset: planTools.create(options.datasetId),
-          preview: /** @type {any} */ (null), previewing: false, approving: false, questionBox: /** @type {any} */ (null) };
+          preview: /** @type {any} */ (null), previewing: false, approving: false, questionBox: /** @type {any} */ (null), none: false, lastQuestion: '' };
         const el = h('div', { class: 'dm-card dm-stack-sm', 'data-plan-ai': '' });
         let abort = null; let layer = null;
+        // What the run does now, and the question brought forward once when it comes (B-83).
+        const run = aiRun.create({ onChange: () => render() });
+        let shownQuestion = null;
         const log = (msg, kind) => { if (shell && shell.log) shell.log(msg, kind || 'ok'); };
         const fail = (err) => { s.error = String((err && err.message) || err); log(`AI: ${s.error}`, 'error'); };
         const changing = () => s.mode !== 'ask';
         const provider = () => s.providers.find((p) => p.id === s.providerId) || null;
         const unsubscribe = providers.subscribe(() => load().then(render));
+        // Where the chosen provider's key is (session, stored, locked, missing), kept up to date (B-83).
+        const keys = aiProviders.keyWatch(() => provider(), () => render());
 
         async function load() {
           const list = await providers.list();
@@ -49,6 +55,7 @@
           const last = await idb.getSetting(LAST_SETTING, '');
           if (!list.some((p) => p.id === s.providerId)) s.providerId = list.some((p) => p.id === last) ? last : (list[0] ? list[0].id : '');
           s.providers = list;
+          await keys.refresh();
         }
         /** A question from the AI in the build mode, shown in the panel until the person answers or closes it. */
         function askPerson(q) {
@@ -62,13 +69,16 @@
           const p = provider();
           const question = s.question.trim() || (s.mode === 'build' ? t('plan.ai.build.default') : '');
           if (s.busy || !p || !question) return;
-          s.busy = true; s.error = ''; s.answer = ''; s.steps = []; s.areas = []; s.usage = null; render();
+          s.busy = true; s.error = ''; s.answer = ''; s.steps = []; s.areas = []; s.usage = null; s.none = false; s.lastQuestion = s.question;
+          run.start(); render();
           abort = new AbortController();
           try {
             const kit = planTools.kit({ datasetId: options.datasetId, mode: s.mode, changeset: changing() ? s.changeset : null, env: { view: options.view, sources: options.sources } });
-            const out = await agent.ask({ provider: p, datasetId: options.datasetId, question, history: s.history, kit, ask: s.mode === 'build' ? askPerson : undefined, signal: abort.signal,
-              onEvent: (ev) => { if (ev.type === 'tool') { s.steps.push(ev.step); renderSteps(); } } });
+            const out = await agent.ask({ provider: p, datasetId: options.datasetId, question, history: s.history, kit, ask: s.mode === 'build' ? run.ask(askPerson) : undefined, signal: abort.signal,
+              onEvent: (ev) => { run.event(ev); if (ev.type === 'tool') { s.steps.push(ev.step); renderSteps(); } } });
             s.answer = out.answer; s.steps = out.steps; s.areas = out.elements.map(String); s.usage = out.usage;
+            // A change or a build that ended without a step says so, with the AI's words (B-83).
+            s.none = changing() && !s.changeset.steps.length && out.stopped !== 'cancelled';
             // The next question continues the conversation, with the words only.
             s.history = s.history.concat([{ role: 'user', content: question }, { role: 'assistant', content: out.answer }]).slice(-10);
             s.exchanges.push({ question, answer: out.answer });
@@ -79,9 +89,14 @@
             } else log(t('ai.log.answered', { tools: String(out.steps.length), input: i18n.formatNumber(out.usage.input), output: i18n.formatNumber(out.usage.output) }), out.stopped === 'answered' ? 'ok' : 'warn');
             await idb.setSetting(LAST_SETTING, p.id);
           } catch (err) { fail(err); }
+          run.stop();
           abort = null; s.busy = false; s.question = ''; render();
         }
         function cancel() { if (abort) abort.abort(); }
+        /** The last question again, as it was (Fråga igen). */
+        function askAgain() { if (s.busy) return; s.question = s.lastQuestion; askNow(); }
+        /** The last question back in its box to be changed (Ändra frågan). */
+        function refineQuestion() { s.question = s.lastQuestion; s.none = false; render(); aiRun.refine(el, s.lastQuestion); }
 
         // ---- the change set on the map ----
         /** The shapes of the change set for the map: new and moved from the steps, changed and removed from the plan's rows. */
@@ -198,7 +213,7 @@
               basic.button({ label: t('ai.change.reject'), icon: 'x', size: 'sm', variant: 'ghost', disabled: !cs.steps.length || s.busy, title: t('plan.ai.reject.hint'), 'data-plan-ai-reject': '', onClick: rejectNow })));
         }
         function render() {
-          const [sel, pol, mode] = aiPanel.controls(s, { modes: MODES, fail: (err) => { fail(err); render(); }, onMode: render, modeHint: t('plan.ai.mode.hint') });
+          const [sel, pol, mode, model] = aiPanel.controls(s, { modes: MODES, fail: (err) => { fail(err); render(); }, onMode: render, modeHint: t('plan.ai.mode.hint'), onProvider: () => keys.refresh().then(render) });
           const q = /** @type {any} */ (h('dm-input', { label: t(s.mode === 'build' ? 'plan.ai.brief' : 'ai.question'), rows: s.mode === 'build' ? '6' : '3', placeholder: t('plan.ai.placeholder.' + s.mode), 'data-ai-question': '' }));
           q.value = s.question;
           q.addEventListener('input', () => { s.question = q.value; });
@@ -206,29 +221,35 @@
           stepsEl = h('div');
           const p = provider();
           replace(el,
-            h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t('plan.ai.title.' + s.mode) }), basic.button({ label: t('ai.providers.manage'), icon: 'settings', size: 'sm', 'data-ai-providers': '', onClick: () => aiPanel.manage(ctx).then(() => load().then(render)) })),
+            h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t('plan.ai.title.' + s.mode) }), basic.button({ label: t('ai.providers.manage'), icon: 'settings', size: 'sm', title: t('ai.providers.manage.hint'), 'data-ai-providers': '', onClick: () => aiPanel.manage(ctx).then(() => load().then(render)) })),
+            // A question from the AI comes first, marked, while the run waits for the answer (B-83).
+            s.questionBox ? aiRun.questionBox(s.questionBox.q, s.questionBox.resolve) : null,
             h('p', { class: 'dm-help dm-xs', text: t('plan.ai.hint.' + s.mode) }),
-            s.providers.length ? h('div', { class: 'dm-row-wrap' }, sel, pol, mode) : h('p', { class: 'dm-help', 'data-ai-none': '', text: t('ai.providers.none') }),
-            p && !providers.hasKey(p.id) && !providers.isLocal(p.baseUrl) ? h('p', { class: 'dm-help dm-xs', text: t('ai.key.missing', { name: p.name }) }) : null,
+            s.providers.length ? h('div', { class: 'dm-row-wrap' }, sel, model, pol, mode) : h('p', { class: 'dm-help', 'data-ai-none': '', text: t('ai.providers.none') }),
+            aiProviders.keyNotice(p, keys.state, () => keys.refresh().then(render)),
             q,
-            s.questionBox ? aiPanel.questionBox(s.questionBox.q, s.questionBox.resolve) : null,
             h('div', { class: 'dm-row-wrap' },
-              basic.button({ label: t(s.mode === 'build' ? 'plan.ai.build.run' : changing() ? 'ai.propose' : 'ai.ask'), icon: 'cpu', variant: 'primary', size: 'sm', loading: s.busy, disabled: !s.providers.length, 'data-ai-ask': '', onClick: askNow }),
-              s.busy ? basic.button({ label: t('common.cancel'), size: 'sm', 'data-ai-cancel': '', onClick: cancel }) : null,
+              run.button({ label: t(s.mode === 'build' ? 'plan.ai.build.run' : changing() ? 'ai.propose' : 'ai.ask'), icon: 'cpu', variant: 'primary', size: 'sm', loading: s.busy, disabled: !s.providers.length, title: t('ai.run.hint'), 'data-ai-ask': '', onClick: askNow, focusQuestion: () => aiRun.reveal(el) }),
+              s.busy ? basic.button({ label: t('common.cancel'), size: 'sm', title: t('ai.run.cancel.hint'), 'data-ai-cancel': '', onClick: cancel }) : null,
               s.areas.length && !s.busy && options.pick ? basic.button({ label: t('plan.ai.mark', { n: s.areas.length }), icon: 'list-checks', size: 'sm', title: t('plan.ai.mark.hint'), 'data-plan-ai-mark': '', onClick: mark }) : null),
+            run.view(),
             s.error ? h('p', { class: 'dm-error', 'data-ai-error': '', text: s.error }) : null,
-            s.answer ? h('div', { class: 'dm-stack-sm', 'data-ai-answer': '' }, s.answer.split(/\n{2,}/).map((para) => h('p', { class: 'dm-small', text: para }))) : null,
+            s.answer && s.none && !s.busy ? aiRun.noChanges({ answer: s.answer, onAgain: askAgain, onRefine: refineQuestion }) : null,
+            s.answer && !(s.none && !s.busy) ? h('div', { class: 'dm-stack-sm', 'data-ai-answer': '' }, s.answer.split(/\n{2,}/).map((para) => h('p', { class: 'dm-small', text: para }))) : null,
             stepsEl,
             changing() ? renderChanges() : null,
             s.usage ? h('p', { class: 'dm-help dm-xs', 'data-ai-usage': '', text: t('ai.usage', { input: i18n.formatNumber(s.usage.input), output: i18n.formatNumber(s.usage.output) }) }) : null,
             s.exchanges.length > 1 ? h('p', { class: 'dm-help dm-xs', text: t('ai.history', { n: String(s.exchanges.length) }) }) : null);
           renderSteps();
+          const asked = s.questionBox ? s.questionBox.q : null;
+          if (asked && asked !== shownQuestion) aiRun.reveal(el);
+          shownQuestion = asked;
         }
         /** The plan's map was drawn again: the preview goes on it again. */
         function mapDrawn() { if (s.preview) drawPreview(false); else layer = null; }
-        function destroy() { unsubscribe(); cancel(); removeLayer(); if (s.questionBox) s.questionBox.resolve(null); }
+        function destroy() { unsubscribe(); keys.destroy(); cancel(); run.stop(); removeLayer(); if (s.questionBox) s.questionBox.resolve(null); }
         load().then(render).catch((err) => { fail(err); render(); });
-        return { el, destroy, state: s, mapDrawn, load, preview: previewNow, approve: approveNow, reject: rejectNow, undo,
+        return { el, destroy, state: s, run, mapDrawn, load, preview: previewNow, approve: approveNow, reject: rejectNow, undo,
           ask: (question) => { s.question = question; return askNow(); }, setMode: (m) => { s.mode = MODES.includes(m) ? m : 'ask'; render(); } };
       }
       return { create, MODES };
