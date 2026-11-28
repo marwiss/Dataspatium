@@ -365,15 +365,24 @@
         // The server's ifcmerge found a conflict with the latest version (Dataregium's phase 5.3, here at 200 after the keep-alive):
         // the panel lists it with what to do.
         world.conflict = { message: 'Conflict', code: 'version_conflict', conflicts: ['#5.Name'], conflict_details: [{ key: '#5.Name', guid: null, path: null, step_id: 5, attribute: 'Name', op: 'set', base: 'Vägg', theirs: 'Vägg B', ours: 'Vägg C', version_index: 3 }], merge: { base_version_index: 2, latest_version_index: 3 } };
-        root.querySelector('[data-cde-send-version]').click();
-        const report = await waitFor(() => root.querySelector('[data-cde-conflicts]'), 20000, 'the conflict report');
+        // The panel draws itself again after version 2 (the dataset's source changed), so the button is found anew once it is idle,
+        // and pressed again if a press landed on the button just replaced.
+        const sendAgain = async (until, label) => {
+          for (let i = 0; i < 4; i++) {
+            const btn = /** @type {any} */ (await waitFor(() => { const x = /** @type {any} */ (root.querySelector('[data-cde-send-version]')); return x && !x.disabled && !x.loading ? x : null; }, 8000, 'the version button, idle'));
+            btn.click();
+            const got = await waitFor(until, 5000, label).catch(() => null);
+            if (got) return got;
+          }
+          return waitFor(until, 1, label);
+        };
+        const report = await sendAgain(() => root.querySelector('[data-cde-conflicts]'), 'the conflict report');
         assert.equal(report.getAttribute('data-cde-conflicts'), '1');
         assert.ok(report.textContent.includes(t('cde.send.conflict.title', { n: 1, latest: '3' })) && report.textContent.includes('#5.Name') && report.textContent.includes('Vägg C') && report.textContent.includes('Vägg B'), 'the conflict in words: ' + report.textContent);
         assert.equal((await datasets.get(table.id)).source.cde.versionIndex, 2, 'the dataset still points at the version it came from');
         // Files that cannot be merged as text: one key, '*'.
         world.conflict = { message: 'Conflict', code: 'version_conflict', conflicts: ['*'], conflict_details: [], merge: { base_version_index: 2, latest_version_index: 3 } };
-        root.querySelector('[data-cde-send-version]').click();
-        const whole = await waitFor(() => { const el = root.querySelector('[data-cde-conflicts]'); return el && el.textContent.includes(t('cde.send.conflict.whole', { latest: '3' })) ? el : null; }, 20000, 'the whole-file conflict');
+        const whole = await sendAgain(() => { const el = root.querySelector('[data-cde-conflicts]'); return el && el.textContent.includes(t('cde.send.conflict.whole', { latest: '3' })) ? el : null; }, 'the whole-file conflict');
         assert.equal(whole.getAttribute('data-cde-conflicts'), '0');
         world.conflict = null;
         assert.equal((await datasets.get(table.id)).source.cde.versionIndex, 2, 'the dataset now points at version 2');
