@@ -29,27 +29,24 @@
     return `${checked} values`;
   });
 
-  test('glossary: the deep link #/inhamta/opencde?server=… lands in the store for Inhämta to open the dialog with the server', async (assert) => {
+  test('glossary: the deep link #/inhamta/opencde?server=… lands in the store for Inhämta to open the form with the server', async (assert) => {
     const root = document.createElement('div');
     root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
     document.body.appendChild(root);
     try {
       history.replaceState(null, '', location.pathname + location.search + '#/inhamta/' + encodeURIComponent('opencde?server=https://cde.example.org'));
       const shell = await D.require('app').start(root);
-      // The route is consumed on start: either the dialog is open with the server filled in, or the pending source waits for Inhämta.
+      // The route is consumed on start: the source's form opens in the workspace (F126 a) with the server filled in.
       const t0 = performance.now();
-      let dialog = null;
-      while (performance.now() - t0 < 5000) {
-        dialog = document.querySelector('dialog[open]');
-        if (dialog && dialog.textContent.includes('cde.example.org')) break;
-        if (dialog) { const input = Array.from(dialog.querySelectorAll('dm-input')).find((x) => /** @type {any} */ (x).value === 'https://cde.example.org'); if (input) break; }
+      let input = null;
+      while (performance.now() - t0 < 8000) {
+        input = Array.from(root.querySelectorAll('.dm-center [data-source-form="opencde"] dm-input')).find((x) => String(/** @type {any} */ (x).value || '').includes('cde.example.org'));
+        if (input) break;
         await new Promise((r) => setTimeout(r, 50));
       }
-      assert.ok(dialog, 'the source dialog opened');
-      const input = Array.from(dialog.querySelectorAll('dm-input')).find((x) => String(/** @type {any} */ (x).value || '').includes('cde.example.org'));
-      assert.ok(input, 'the server address is filled in');
+      assert.ok(input, 'the OpenCDE form with the server address filled in');
+      assert.ok(!document.querySelector('dialog[open]'), 'in the workspace, not a dialog');
       assert.equal(shell.store.get().pendingSource, null, 'consumed once');
-      /** @type {any} */ (dialog).close();
       // Project, document and version travel with the link; with Inhämta inactive nothing consumes them, so they can be read.
       shell.activate('hantera');
       await shell.openRoute({ mode: 'inhamta', object: 'opencde?server=https://cde.example.org/&project=p1&document=d1&version=2' });

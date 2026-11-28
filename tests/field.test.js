@@ -463,14 +463,16 @@
     } finally { for (const el of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (el).close(); root.remove(); }
   }
 
-  test('ui: Insamling i fält in Inhämta edits the form, shows what leaves, and hands it to Enheter', async (assert) => {
+  test('ui: Insamling i fält in Mobilen edits the form, shows what leaves, and hands it to Para och ta emot', async (assert) => {
     const meta = await inventory('Från Inhämta');
     await withShell(async (shell, root) => {
       await waitFor(() => shell.store.get().datasets.some((d) => d.id === meta.id), 3000, 'dataset in store');
       shell.store.set({ selectedId: meta.id });
       shell.activate('inhamta');
-      const item = await waitFor(() => Array.from(root.querySelectorAll('.dm-list-item')).find((b) => b.textContent.includes(t('field.source'))), 3000, 'the source');
-      item.click();
+      const item = await waitFor(() => root.querySelector('.dm-left [data-source="mobile"]'), 3000, 'the source Mobilen');
+      /** @type {HTMLElement} */ (item).click();
+      const tab = await waitFor(() => Array.from(root.querySelectorAll('.dm-center dm-tabs [role="tab"]')).find((b) => b.textContent.trim() === t('field.source')), 3000, 'the tab Insamling i fält');
+      /** @type {HTMLElement} */ (tab).click();
       const row = await waitFor(() => root.querySelector('.dm-field-row[data-field="antal"]'), 5000, 'the fields');
       assert.ok(root.textContent.includes(t('field.about')), 'says what it is for');
       // Switch one column off, make one required, and give one its choices.
@@ -498,14 +500,18 @@
         const read = await fieldForm.readPackage(saved.blob);
         assert.ok(!read.manifest.form.fields.some((f) => f.name === 'antal'));
         assert.deepEqual(read.manifest.form.fields.find((f) => f.name === 'plats').options.map((o) => o.value), ['Umeå', 'Luleå']);
-        // Send to the phone goes through Enheter with the form ready to send.
+        // Send to the phone goes through Para och ta emot in Mobilen, with the form ready to send.
         await waitFor(() => !document.querySelector('dialog[open]'), 2000, 'closed');
         /** @type {HTMLElement} */ (buttons().find((b) => b.getAttribute('label') === t('field.send.phone')).querySelector('button')).click();
         const dlg2 = await waitFor(() => document.querySelector('dialog[open]'), 3000, 'the review again');
         /** @type {HTMLElement} */ (Array.from(dlg2.querySelectorAll('.dm-dialog-actions dm-button button')).pop()).click();
-        const pick = await waitFor(() => Array.from(root.querySelectorAll('dm-select')).find((s) => /** @type {any} */ (s).options && /** @type {any} */ (s).options.some((o) => o.value === 'pending')), 5000, 'the form in Enheter');
-        assert.equal(/** @type {any} */ (pick).value, 'pending', 'chosen already');
-        assert.equal(shell.store.get().mode, 'dela');
+        await waitFor(() => root.querySelector('.dm-center [data-mobile-tab="receive"]'), 5000, 'Para och ta emot');
+        assert.equal(shell.store.get().mode, 'inhamta', 'still in Inhämta');
+        assert.ok(shell.store.get().devicesPending && shell.store.get().devicesPending.kind === 'field-form', 'the form waits for the phone');
+        if (D.require('platform/p2p').supported()) {
+          const pick = await waitFor(() => Array.from(root.querySelectorAll('.dm-center dm-select')).find((s) => /** @type {any} */ (s).options && /** @type {any} */ (s).options.some((o) => o.value === 'pending')), 8000, 'the form in Para och ta emot');
+          assert.equal(/** @type {any} */ (pick).value, 'pending', 'chosen already');
+        }
       } finally { files.download = real; shell.store.set({ devicesPending: null }); }
     });
     return 'ok';

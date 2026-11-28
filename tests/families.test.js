@@ -176,7 +176,7 @@
     }
   }, 30000);
 
-  test('families: the dialog in Inhämta adds a source and opens it', async (assert) => {
+  test('families: the form in the workspace of Inhämta adds a source and opens it, and the same form as a dialog adds one too', async (assert) => {
     const root = document.createElement('div');
     root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
     document.body.appendChild(root);
@@ -186,8 +186,22 @@
     let id = null;
     try {
       shell.activate('inhamta');
-      const btn = await waitFor(() => root.querySelector('[data-add-source="family"]'), 5000, 'the item Databaskälla');
+      const btn = await waitFor(() => root.querySelector('[data-source="database"]'), 5000, 'the item Extern databas');
       assert.ok(btn, 'the way to add a database source is in the list');
+      // In Inhämta the form is drawn in the workspace (F126 a): filled in and added, the new source opens there.
+      /** @type {HTMLElement} */ (btn).click();
+      const form = await waitFor(() => root.querySelector('.dm-center [data-source-form="database"]'), 8000, 'the form in the workspace');
+      const kind = /** @type {any} */ (form.querySelector('dm-select'));
+      kind.value = 'sparql'; kind.dispatchEvent(new Event('change'));
+      const address = /** @type {any} */ (await waitFor(() => form.querySelector('[data-family-field="baseUrl"]'), 2000, 'the address'));
+      address.value = BASE + '/sparql-form'; address.dispatchEvent(new Event('input'));
+      const before = new Set((await connectors.list()).map((c) => c.id));
+      /** @type {HTMLElement} */ (Array.from(form.querySelectorAll('dm-button')).find((b) => b.getAttribute('label') === t('families.add')).querySelector('button')).click();
+      const made = await waitFor(async () => (await connectors.list()).find((c) => !before.has(c.id)), 8000, 'the source saved');
+      await waitFor(() => root.querySelector('.dm-center .dm-api-view') && root.querySelector(`.dm-left [data-added="api:${made.id}"]`), 8000, 'opened, and among the added sources');
+      assert.ok(!document.querySelector('dialog[open]'), 'no dialog');
+      await connectors.remove(made.id);
+      // From elsewhere the same form is a dialog.
       const p = dialog.open(shell.ctx, { family: 'sparql', values: { baseUrl: BASE + '/sparql-ui' } });
       const dlg = await waitFor(() => document.querySelector('dialog[open]'), 3000, 'dialog');
       assert.ok(dlg.textContent.includes(t('families.sparql.cors')), 'CORS note shown');

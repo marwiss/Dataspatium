@@ -320,6 +320,10 @@ dm-input input[type="range"].dm-field { padding: 0; border: none; background: no
 .dm-tree-placeholder .dm-tree-main { color: var(--dm-text-muted); }
 /* Klipp ut: what will move when pasted is shown faded until then. */
 .dm-tree-cut > .dm-tree-main { opacity: 0.55; }
+/* Inhämta's groups of sources (B-81): each group a heading like the panel's h4, with room above it; a note in place of a source. */
+.dm-source-tree > .dm-tree-folder-row:not(:first-child) { margin-top: var(--dm-s-2); }
+.dm-tree .dm-tree-heading .dm-tree-label { font-size: var(--dm-text-sm); font-weight: var(--dm-weight-semibold); color: var(--dm-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.dm-tree .dm-tree-note { color: var(--dm-text-muted); font-size: var(--dm-text-xs); }
 .dm-tree[data-dragging] { cursor: grabbing; }
 .dm-tree-ghost {
   position: fixed; z-index: var(--dm-z-menu); display: flex; align-items: center; gap: var(--dm-s-2); max-width: var(--dm-panel-w);

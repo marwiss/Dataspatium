@@ -3,11 +3,15 @@
 /**
  * Mode "Inhämta": import wizard for files and pasted text (steps: file, options with preview, columns,
  * done) and open APIs (connector presets and imported configurations, see src/ui/api/api-view.js).
+ *
+ * The left column is a tree of groups of sources (B-81, ui/tree in the simple mode), folded per browser; everything a source
+ * shows, also the forms that add a source, is drawn in the workspace (F126 a). A source is a post in GROUPS: its id is the
+ * deep link #/inhamta/<id> and its command in the palette.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/inhamta', ['ui/base', 'data/encoding', 'data/types', 'api/connectors', 'api/bridge', 'platform/files', 'data/linked', 'data/kinds', 'viz/leaflet', 'ui/kinds/sketches', 'platform/tier', 'ui/settings/tier'], (base, encoding, types, connectors, bridge, files, linked, kinds, leaflet, sketches, tier, tierUi) => {
+  D.define('ui/modes/inhamta', ['ui/base', 'data/encoding', 'data/types', 'api/connectors', 'api/bridge', 'data/linked', 'data/kinds', 'viz/leaflet', 'ui/kinds/sketches', 'platform/tier', 'ui/settings/tier', 'ui/tree', 'ui/import/source-forms', 'ui/field/mobile-source'], (base, encoding, types, connectors, bridge, linked, kinds, leaflet, sketches, tier, tierUi, treeMod, sourceForms, mobileSource) => {
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
@@ -23,6 +27,50 @@
       + '.html,.htm,.xhtml,.md,.markdown,.docx,.tex,.json,.ndjson,.jsonl,.geojson,.topojson,.kml,.kmz,.gpx,.xml,.sqlite,.sqlite3,.db,.s3db,.gpkg,.sql,'
       + '.shp,.zip,.sav,.zsav,.por,.dta,.sas7bdat,.xpt,.px,.rds,.rda,.RData,.parquet,.mdb,.accdb,'
       + '.pdf,.odt,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif,.tif,.tiff,.gtiff,.qgs,.qgz,.graphml,.gexf,.cypher,.cql,.cyp,.ifc,.ifczip,.dxf';
+    /**
+     * The left column, group by group in this order (B-81): each source has an id (the deep link #/inhamta/<id>), an icon, its
+     * name and the line under it (keys, or a function), and the tier's feature that shows it. Tillagda källor lists what the
+     * person has added. A new source is one more post here and a branch in renderCenter.
+     */
+    const GROUPS = [
+      { id: 'create', label: 'import.sources.create', items: [
+        { id: 'newmodel', icon: 'box', label: 'import.sources.newmodel', sub: 'import.sources.newmodel.hint', feature: 'source:newmodel' },
+        { id: 'newplan', icon: 'layers', label: 'import.sources.newplan', sub: 'import.sources.newplan.hint' }] },
+      { id: 'common', label: 'import.sources.common', items: [
+        { id: 'file', icon: 'folder-open', label: 'import.sources.files', sub: 'import.sources.files.hint' },
+        { id: 'paste', icon: 'clipboard-paste', label: 'import.sources.paste', sub: 'import.sources.paste.hint' },
+        { id: 'url', icon: 'link', label: 'import.sources.url', sub: 'import.sources.url.hint' },
+        { id: 'opencde', icon: 'building-2', label: 'families.opencde.add', sub: 'families.opencde.add.hint' },
+        { id: 'mobile', icon: 'smartphone', label: 'import.sources.mobile', sub: 'import.sources.mobile.hint' }] },
+      { id: 'databases', label: 'import.sources.databases', items: [
+        { id: 'database', icon: 'database', label: 'families.add.short', sub: 'import.sources.database.hint' },
+        { id: 'bridge', icon: 'hard-drive', label: 'bridge.title', sub: 'bridge.hint' },
+        { id: 'neo4j', icon: 'share-2', label: 'families.neo4j.add', sub: 'families.neo4j.add.hint' }] },
+      { id: 'apis', label: 'import.sources.apis', items: [
+        { id: 'catalog', icon: 'globe', label: 'api.sources', sub: 'api.catalog.hint' },
+        { id: 'apifile', icon: 'file-json', label: 'api.add.file.short', sub: 'import.sources.api.hint' }] },
+      { id: 'geodata', label: 'import.sources.geodata', items: [
+        { id: 'geodata', icon: 'map', label: 'geodata.add.short', sub: 'geodata.add.hint', feature: 'source:geodata' },
+        { id: 'boundaries', icon: 'grid-2x2', label: 'presets.geo.label', sub: 'import.sources.boundaries.hint' }] },
+      { id: 'added', label: 'import.sources.added', items: [] },
+      { id: 'other', label: 'import.sources.other', items: [
+        { id: 'saved', icon: 'refresh-cw', label: 'api.saved.title', sub: 'api.saved.hint' },
+        { id: 'examples', icon: 'sparkles', label: 'examples.title', sub: 'examples.hint' },
+        { id: 'guides', icon: 'graduation-cap', label: 'guides.title', sub: 'guides.hint' }] },
+    ];
+    /** Deep links to sources that moved: Insamling i fält is a part of Mobilen, Databaskälla is Extern databas. */
+    const MOVED = { field: 'mobile', family: 'database' };
+    /** The sources whose form adds a source of a family (ui/api/family-dialog), with the form's options and its lead. */
+    const FAMILY_FORMS = {
+      database: { options: { group: 'databases' }, lead: 'families.database.lead' },
+      opencde: { options: { family: 'opencde' }, lead: 'families.opencde.add.hint' },
+      neo4j: { options: { family: 'neo4j' }, lead: 'families.neo4j.add.hint' },
+      geodata: { options: { group: 'geodata' }, lead: 'geodata.add.hint' },
+    };
+    /** Under this key the tree keeps which groups are folded, per browser (ui/tree memory). */
+    const GROUPS_KEY = 'inhamta.groups';
+    /** @param {string} id */
+    const itemOf = (id) => { for (const g of GROUPS) { const it = g.items.find((x) => x.id === id); if (it) return it; } return null; };
 
     function createMode(ctx) {
       const { ui, services, store, shell } = ctx;
@@ -36,8 +84,12 @@
       /** @type {any} */ let apiUi = null;
       let apiId = null;
       /** @type {any} */ let bridgeUi = null;
-      /** @type {any} */ let fieldUi = null;
       /** @type {any} */ let guidesUi = null;
+      /** Mobilen (ui/field/mobile-source), kept while it is the source. @type {any} */ let mobileUi = null;
+      /** Exempeldata (ui/import/source-forms). @type {any} */ let examplesUi = null;
+      /** The form in the workspace that adds a source: {id, el, title}, built once per opening. @type {any} */ let formUi = null;
+      /** What a deep link asks of the next form: {id, values, after(connector)}. @type {any} */ let formWanted = null;
+      /** The tree of the left column (ui/tree), kept while the mode is active. @type {any} */ let leftTree = null;
       /** The importers' modules, set once the group 'import' has loaded (importersReady). @type {any} */
       let csv = null; /** @type {any} */ let qgis = null; /** @type {any} */ let fileSense = null;
 
@@ -79,9 +131,13 @@
         // The saved fetches follow the datasets (count in the source list, rows and times in the view).
         unsubStore = store.subscribe((state, changed) => {
           if (changed.includes('pendingSource') && state.pendingSource && slots) { consumePendingSource(state); return; }
+          if (changed.includes('pendingImportSource') && state.pendingImportSource && slots) { consumeRoute(state); return; }
           if (!changed.includes('datasets') || !slots) return;
-          renderLeft(); if (source === 'saved') renderSaved();
+          renderLeft();
+          if (source === 'saved') renderSaved();
+          if (source === 'examples' && examplesUi) examplesUi.render(slots.center);
         });
+        if (store.get().pendingImportSource) consumeRoute(store.get());
         if (store.get().pendingSource) consumePendingSource(store.get());
         reloadConnectors();
         render();
@@ -95,8 +151,30 @@
         if (unsubStore) { unsubStore(); unsubStore = null; }
         if (apiUi) { apiUi.destroy(); apiUi = null; apiId = null; }
         if (bridgeUi) { bridgeUi.destroy(); bridgeUi = null; }
-        if (fieldUi) { fieldUi.destroy(); fieldUi = null; }
         if (guidesUi) { guidesUi.destroy(); guidesUi = null; }
+        if (mobileUi) { mobileUi.destroy(); mobileUi = null; }
+        if (examplesUi) { examplesUi.destroy(); examplesUi = null; }
+        if (leftTree) { leftTree.destroy(); leftTree = null; }
+        formUi = null;
+      }
+      /** The tab Mobilen opens at next, when a deep link names Insamling i fält. */
+      let mobileTab = '';
+      /**
+       * A source asked for by its id: a deep link (#/inhamta/<id>, through the store), a command in the palette, or a link.
+       * @param {string} id @returns {boolean} false when there is no such source, or the tier hides it
+       */
+      function openSource(id) {
+        const wanted = MOVED[id] || id;
+        if (!itemOf(wanted) || !shownItem(itemOf(wanted))) return false;
+        if (id === 'field') mobileTab = 'field';
+        if (store.get().mode !== 'inhamta' || !slots) { source = wanted; shell.activate('inhamta'); return true; }
+        choose(wanted);
+        return true;
+      }
+      function consumeRoute(state) {
+        const id = String(state.pendingImportSource || '');
+        store.set({ pendingImportSource: null });
+        openSource(id);
       }
       /** The presets the user has added; the other presets wait in the catalogue of open APIs. */
       let addedPresets = new Set();
@@ -117,7 +195,8 @@
         if (!slots) return;
         // A source the tier now hides (after the tier was lowered) gives way to the files.
         const hiddenApi = source.startsWith('api:') && connectorList.some((c) => c.id === source.slice(4) && !tier.showsConnector(c));
-        if (hiddenApi || (source === 'newmodel' && !tier.shows('source:newmodel'))) source = 'file';
+        const item = itemOf(source);
+        if (hiddenApi || (item && !shownItem(item))) source = 'file';
         // A file the tier did not read: once the tier is raised the notice goes, with the refusal it stood for, and the file can be
         // chosen again.
         if (wiz.hidden && tier.shows(wiz.hidden)) { wiz.hidden = ''; wiz.error = ''; }
@@ -125,46 +204,59 @@
         renderLeft(); renderCenter(); renderRight();
       }
 
-      // ---- left: sources ----
+      // ---- left: the groups of sources, a tree in the simple mode (B-81) ----
+      /** @param {any} item a post of GROUPS */
+      const shownItem = (item) => !item.feature || tier.shows(item.feature);
+      /** The line under a source's name. @param {any} item */
+      const subOf = (item) => (item.id === 'saved' ? t(item.sub, { n: apiDatasets().length }) : t(item.sub));
+      function sourceNode(item) {
+        const id = item.id;
+        return { id, label: t(item.label), sub: subOf(item), icon: item.icon, mainAttrs: { 'data-source': id, 'data-course': id === 'examples' ? 'example' : null, onpointerenter: () => loadAhead(id), onfocus: () => loadAhead(id) } };
+      }
+      /** An added source, with a button at the end of its row that takes it out of the list. */
+      function addedNode(id, icon, label, sub, onRemove) {
+        return {
+          id, label, sub, icon, rowAttrs: { 'data-added': id }, mainAttrs: { 'data-source': id, onpointerenter: () => loadAhead(id), onfocus: () => loadAhead(id) },
+          trailing: ui.button({ label: t('common.delete'), icon: 'x', size: 'sm', 'icon-only': true, variant: 'ghost', title: t('import.sources.remove.hint'), 'data-remove-source': id, onClick: onRemove }),
+        };
+      }
+      function addedNodes() {
+        const list = bridgeSources.map((b, i) => addedNode('bridge:' + i, 'database', b.label, t('bridge.added.sub'), () => forgetBridge(b)))
+          .concat(addedConnectors().map((c) => addedNode('api:' + c.id, connectorIcon(c), c.name, connectorSub(c), () => removeConnector(c))));
+        return list.length ? list : [{ id: 'added:none', label: t('import.sources.added.none'), icon: 'info', mainClass: 'dm-tree-note', mainAttrs: { 'data-added-sources': 'empty' } }];
+      }
+      /** The tree's nodes: a group per post of GROUPS with the sources the tier shows; a group without any is left out. */
+      function leftNodes() {
+        const nodes = [];
+        for (const g of GROUPS) {
+          const children = g.id === 'added' ? addedNodes() : g.items.filter(shownItem).map(sourceNode);
+          if (children.length) nodes.push({ id: 'group:' + g.id, label: t(g.label), icon: false, mainClass: 'dm-tree-heading', mainAttrs: { 'data-source-group': g.id }, children });
+        }
+        return nodes;
+      }
       function renderLeft() {
-        const group = (key, items, attrs) => [h('h4', { text: t(key) }), h('div', Object.assign({ class: 'dm-list' }, attrs || {}), items)];
-        const added = addedConnectors().map((c) => addedItem('api:' + c.id, connectorIcon(c), c.name, connectorSub(c), () => removeConnector(c)));
-        const bridges = bridgeSources.map((b, i) => addedItem('bridge:' + i, 'database', b.label, t('bridge.added.sub'), () => forgetBridge(b)));
-        replace(slots.left,
-          group('import.sources.common', [
-            sourceItem('file', 'folder-open', t('import.sources.files'), t('import.sources.files.hint')),
-            sourceItem('paste', 'clipboard-paste', t('import.sources.paste'), t('import.sources.paste.hint')),
-            sourceItem('url', 'link', t('import.sources.url'), t('import.sources.url.hint')),
-            tier.shows('source:newmodel') ? sourceItem('newmodel', 'box', t('import.sources.newmodel'), t('import.sources.newmodel.hint')) : null,
-            sourceItem('newplan', 'layers', t('import.sources.newplan'), t('import.sources.newplan.hint'))]),
-          group('import.sources.addgroup', [
-            sourceItem('bridge', 'database', t('bridge.title'), t('bridge.hint')),
-            sourceItem('catalog', 'globe', t('api.sources'), t('api.catalog.hint')),
-            actionItem('file', 'file-json', t('api.add.file.short'), t('import.sources.api.hint'), addConnector),
-            actionItem('family', 'database', t('families.add.short'), t('families.hint'), () => addFamily()),
-            actionItem('opencde', 'building-2', t('families.opencde.add'), t('families.opencde.add.hint'), () => addFamily(null, 'opencde')),
-            actionItem('neo4j', 'share-2', t('families.neo4j.add'), t('families.neo4j.add.hint'), () => addFamily(null, 'neo4j')),
-            tier.shows('source:geodata') ? actionItem('geodata', 'map', t('geodata.add.short'), t('geodata.add.hint'), () => addFamily('geodata')) : null], { 'data-add-sources': '' }),
-          h('h4', { text: t('import.sources.added') }),
-          added.length || bridges.length
-            ? h('div', { class: 'dm-list', 'data-added-sources': '' }, bridges, added)
-            : h('p', { class: 'dm-help dm-xs', 'data-added-sources': 'empty', text: t('import.sources.added.empty') }),
-          group('import.sources.other', [
-            sourceItem('saved', 'refresh-cw', t('api.saved.title'), t('api.saved.hint', { n: apiDatasets().length })),
-            sourceItem('field', 'smartphone', t('field.source'), t('field.source.hint')),
-            sourceItem('guides', 'graduation-cap', t('guides.title'), t('guides.hint'))]));
+        if (!slots) return;
+        const nodes = leftNodes();
+        if (!leftTree) {
+          leftTree = treeMod.create({ label: t('import.sources'), simple: true, memory: GROUPS_KEY, nodes, activeId: source, onActivate: activateNode });
+          leftTree.el.classList.add('dm-source-tree');
+        } else leftTree.update({ nodes, activeId: source });
+        if (leftTree.el.parentNode !== slots.left) replace(slots.left, leftTree.el);
       }
-      /** A list item that runs an action (adds a source) instead of opening a view. */
-      function actionItem(id, icon, label, sub, run) {
-        return h('button', { type: 'button', class: 'dm-list-item', 'data-add-source': id, onclick: () => Promise.resolve().then(run).catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error', timeout: 12000 })) },
-          ui.icon(icon, 16), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: label }), sub ? h('span', { class: 'dm-list-sub dm-truncate', text: sub }) : null));
+      /** A tap on a group folds it; one on a source opens it (and closes the column when it is a sheet). */
+      function activateNode(node) {
+        if (node.id.startsWith('group:')) return false;
+        if (node.id === 'added:none') return true;
+        choose(node.id);
+        if (slots) slots.left.dispatchEvent(new CustomEvent('dm-choose', { bubbles: true }));
+        return true;
       }
-      /** An added source: the item, and a button that takes it out of the list. */
-      function addedItem(id, icon, label, sub, onRemove) {
-        return h('div', { class: 'dm-list-row', 'data-added': id },
-          sourceItem(id, icon, label, sub),
-          ui.button({ label: t('common.delete'), icon: 'x', size: 'sm', 'icon-only': true, variant: 'ghost', title: t('import.sources.remove.hint'), 'data-remove-source': id, onClick: onRemove }));
+      /** @param {string} id */
+      function choose(id) {
+        source = id;
+        if (!id.startsWith('api:') && wiz.step !== 'file') restart(); else render();
       }
+
       /** A preset goes back to the catalogue; a source of the user's own is deleted with its keys. */
       async function removeConnector(c) {
         const preset = !!c.preset;
@@ -260,43 +352,34 @@
       }
       /**
        * The scripts a source's view needs, loaded ahead when the pointer or the focus reaches its item: the views of the sources
-       * (the group 'sources', with the families it needs) for an API source, the bridge and the guides, the families for the saved
-       * fetches and the group plan for a new plan (src/boot.js). Loading them asks nothing and sends nothing to a source.
+       * (the group 'sources', with the families it needs) for an API source, the forms that add one, the bridge and the guides, the
+       * families for the saved fetches, the group plan for a new plan and the group dela (the panel for devices) for Mobilen
+       * (src/boot.js). Loading them asks nothing and sends nothing to a source.
        * @param {string} id
        */
       function loadAhead(id) {
-        const wanted = id.startsWith('api:') || id.startsWith('bridge') || id === 'guides' ? D.ensure(['sources']) : id === 'saved' ? D.ensure(['families']) : id === 'newplan' ? D.ensure(['plan']) : null;
+        const sources = id.startsWith('api:') || id.startsWith('bridge') || id === 'guides' || !!FAMILY_FORMS[id];
+        const wanted = sources ? D.ensure(['sources']) : id === 'saved' ? D.ensure(['families']) : id === 'newplan' ? D.ensure(['plan']) : id === 'mobile' ? D.ensure(['dela']) : null;
         if (wanted) wanted.catch((err) => D.log('inhamta', 'load ahead', id, err));
-      }
-      function sourceItem(id, icon, label, sub) {
-        return h('button', { type: 'button', class: 'dm-list-item', 'data-source': id, 'aria-current': source === id ? 'true' : null, onpointerenter: () => loadAhead(id), onfocus: () => loadAhead(id), onclick: () => { source = id; if (!id.startsWith('api:') && wiz.step !== 'file') restart(); else render(); } },
-          ui.icon(icon, 16), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: label }), sub ? h('span', { class: 'dm-list-sub dm-truncate', text: sub }) : null));
-      }
-      async function addConnector() {
-        const [file] = await files.pick({ accept: '.json,application/json' });
-        if (!file) return;
-        try {
-          const c = await connectors.importJson(await file.text());
-          shell.log(t('api.added', { name: c.name }), 'ok');
-          ui.toast.show(t('api.added', { name: c.name }), { kind: 'ok' });
-          await reloadConnectors();
-          source = 'api:' + c.id;
-          render();
-        } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error', timeout: 12000 }); }
       }
 
       // ---- centre ----
       function renderCenter() {
+        // What a source keeps while it is shown goes when another one is chosen.
+        if (source !== 'mobile' && mobileUi) { mobileUi.destroy(); mobileUi = null; }
+        if (source !== 'examples' && examplesUi) { examplesUi.destroy(); examplesUi = null; }
+        if (formUi && formUi.id !== source) formUi = null;
         if (source === 'catalog') { renderCatalog(); return; }
         if (source.startsWith('bridge:')) { renderBridge(bridgeSources[Number(source.slice(7))]); return; }
         if (source.startsWith('api:')) { renderApi(); return; }
         if (source === 'saved') { renderSaved(); return; }
         if (source === 'bridge') { renderBridge(); return; }
-        if (source === 'field') { renderField(); return; }
+        if (source === 'mobile') { renderMobile(); return; }
         if (source === 'guides') { renderGuides(); return; }
         if (source === 'newmodel') { renderNewModel(); return; }
         if (source === 'newplan') { renderNewPlan(); return; }
-        if (fieldUi) { fieldUi.destroy(); fieldUi = null; }
+        if (source === 'examples') { renderExamples(); return; }
+        if (source === 'boundaries' || source === 'apifile' || FAMILY_FORMS[source]) { renderForm(); return; }
         const stepper = /** @type {any} */ (h('dm-stepper'));
         stepper.steps = STEPS; stepper.active = wiz.step === 'sort' ? 'options' : wiz.step;
         const body = wiz.project ? stepProject() : wiz.step === 'file' ? stepFile() : wiz.step === 'sort' ? stepSort() : wiz.step === 'options' ? stepOptions() : wiz.step === 'columns' ? stepColumns() : stepDone();
@@ -384,35 +467,77 @@
         load().then(() => { if (slots && source === wanted) renderCenter(); }, (err) => shell.partFailed(err));
         return false;
       }
-      /** The dialog for a new source (ui/api/family-dialog in the group 'sources'), opened at once when the group is loaded. */
-      function familyDialog(options) { return D.ensure(['sources'], () => D.require('ui/api/family-dialog').open(ctx, options)); }
       /**
-       * A server handed over by a deep link (#/inhamta/opencde?server=…&project=…&document=…&version=…): a server the workspace already
-       * has as a source opens directly, a new one goes through the source dialog with the address filled in, once. A named project and
-       * document wait in the store for the source's view (ui/api/opencde-view), which chooses and fetches them.
+       * A server handed over by a deep link (#/inhamta/opencde?server=…&project=…&document=…&version=…) or by a model's IFC graph: a
+       * server the workspace already has as a source opens directly, a new one opens the source's form with the address filled in.
+       * A named project and document wait in the store for the source's view (ui/api/opencde-view), which chooses and fetches them.
        */
       async function consumePendingSource(state) {
         const p = state.pendingSource;
         store.set({ pendingSource: null });
         if (!p || !p.baseUrl) return;
+        const family = p.family || 'opencde';
         const same = (u) => String(u || '').trim().replace(/\/+$/, '').toLowerCase();
-        const known = connectorList.find((c) => c.family && c.family.type === (p.family || 'opencde') && same(c.baseUrl) === same(p.baseUrl));
-        const connector = known || (await familyDialog({ family: p.family || 'opencde', values: { baseUrl: p.baseUrl } }));
-        if (!connector) return;
-        if (p.projectId || p.documentId) store.set({ pendingCde: { connectorId: connector.id, projectId: p.projectId || null, documentId: p.documentId || null, versionIndex: p.versionIndex == null ? null : p.versionIndex, at: Date.now() } });
-        await openConnector(connector);
-      }
-      /** A connector for a database family (PostgREST, OData, ...) or a geodata service (WFS, OGC API Features, ArcGIS) from an address and a key; it opens when created. */
-      async function addFamily(group, family) {
-        const connector = await familyDialog(Object.assign({}, group ? { group } : {}, family ? { family } : {}));
-        if (!connector) return;
-        await openConnector(connector);
+        const known = (await connectors.list()).find((c) => c.family && c.family.type === family && same(c.baseUrl) === same(p.baseUrl));
+        const then = (connector) => {
+          if (p.projectId || p.documentId) store.set({ pendingCde: { connectorId: connector.id, projectId: p.projectId || null, documentId: p.documentId || null, versionIndex: p.versionIndex == null ? null : p.versionIndex, at: Date.now() } });
+        };
+        if (known) { then(known); await openConnector(known); return; }
+        const id = FAMILY_FORMS[family] ? family : 'database';
+        formWanted = { id, values: { baseUrl: p.baseUrl }, family, after: then };
+        formUi = null;
+        if (slots) choose(id); else source = id;
       }
       /** Show a connector that was just created or added. */
       async function openConnector(connector) {
         await reloadConnectors();
         source = 'api:' + connector.id;
         render();
+      }
+
+      // ---- the forms that add a source, in the workspace with their help (F126 a) ----
+      /**
+       * The form of the source chosen, built once per opening: Extern databas, OpenCDE, Neo4j and Geodatakälla (ui/api/family-dialog
+       * in the group 'sources'), API från fil and Gränser för kartor (ui/import/source-forms). The same forms open as dialogs from
+       * other places. A form that adds a source opens the source when it is saved.
+       */
+      function renderForm() {
+        const id = source;
+        const family = FAMILY_FORMS[id];
+        if (family && !sourcesReady()) return;
+        if (!formUi) {
+          const wanted = formWanted && formWanted.id === id ? formWanted : null;
+          formWanted = null;
+          const f = family
+            ? D.require('ui/api/family-dialog').form(ctx, Object.assign({}, family.options, wanted ? { values: wanted.values } : {}, wanted && wanted.family !== id && id === 'database' ? { family: wanted.family } : {}))
+            : id === 'apifile' ? sourceForms.apiFileForm.form(ctx) : sourceForms.boundariesForm.form(ctx);
+          const mine = { id, el: f.el, title: f.title };
+          formUi = mine;
+          if (id !== 'boundaries') {
+            f.done.then((connector) => {
+              if (!connector) return;
+              if (wanted && wanted.after) wanted.after(connector);
+              if (formUi === mine) formUi = null;
+              return openConnector(connector);
+            }).catch((err) => shell.log(String((err && err.message) || err), 'error'));
+          }
+        }
+        const item = itemOf(id);
+        const lead = family ? family.lead : id === 'apifile' ? 'apifile.lead' : 'boundaries.lead';
+        replace(slots.center,
+          h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon(item.icon, 20), t(item.label))),
+          h('p', { class: 'dm-help', 'data-source-lead': id, text: t(lead) }),
+          id === 'database' ? h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('bridge.title'), icon: 'hard-drive', size: 'sm', title: t('bridge.hint'), 'data-open-source': 'bridge', onClick: () => choose('bridge') })) : null,
+          h('div', { class: 'dm-source-form', 'data-source-form': id }, formUi.el));
+      }
+      function renderExamples() {
+        if (!examplesUi) examplesUi = sourceForms.examplesView(ctx);
+        examplesUi.render(slots.center);
+      }
+      function renderMobile() {
+        if (!mobileUi) mobileUi = mobileSource.create(ctx);
+        if (mobileTab) { mobileUi.setTab(mobileTab); mobileTab = ''; }
+        mobileUi.render({ center: slots.center, right: slots.right });
       }
       /** The local database bridge (api/bridge): connection, source, tables, preview, own SQL and import. */
       // ---- a new, empty building model (OB-06 Schemaval för nya modeller) ----
@@ -560,10 +685,6 @@
         if (!guidesUi) guidesUi = D.require('ui/guides/guides-view').create(ctx);
         guidesUi.render(slots.center);
       }
-      function renderField() {
-        if (!fieldUi) fieldUi = D.require('ui/field/field-view').create(ctx);
-        fieldUi.render({ center: slots.center, right: slots.right }).catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' }));
-      }
       function renderBridge(remembered) {
         if (!sourcesReady()) return;
         if (!bridgeUi) { bridgeUi = D.require('ui/api/bridge-view').create(ctx, remembered ? { source: remembered.source } : {}); bridgeUi.start(); }
@@ -629,21 +750,14 @@
         }
         const dz = h('dm-dropzone', { text: t('import.drop'), hint: t('import.drop.hint'), accept: ACCEPT, multiple: true });
         dz.addEventListener('dm-files', (e) => chooseFiles(/** @type {any} */ (e).detail.files));
-        // Bundled data: the example table as a button, the boundaries for maps in a list.
-        const examples = D.require('presets').examples;
-        const tables = examples.filter((p) => p.format !== 'geojson');
-        const boundaries = examples.filter((p) => p.format === 'geojson');
-        const pick = /** @type {any} */ (h('dm-select', { label: t('presets.geo.label') }));
-        pick.options = boundaries.map((p) => ({ value: p.id, label: p.nameKey ? t(p.nameKey) : p.name }));
-        pick.value = wiz.boundary || boundaries[0].id;
-        pick.addEventListener('change', () => { wiz.boundary = pick.value; });
-        return h('div', { class: 'dm-stack' }, dz,
+        // An empty workspace (the first start) points at the examples (F128 a).
+        const first = store.get().datasets.length ? null : h('div', { class: 'dm-card dm-row-wrap', 'data-first-examples': '' },
+          h('p', { class: 'dm-grow', text: t('examples.first') }),
+          ui.button({ label: t('examples.first.open'), icon: 'sparkles', 'data-course': 'example', onClick: () => choose('examples') }));
+        return h('div', { class: 'dm-stack' }, first, dz,
           problem(),
           h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('import.folder'), icon: 'folder', title: t('import.folder.hint'), onClick: async () => chooseFiles(await services.files.pick({ directory: true })) })),
-          linked.supported() ? h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('linked.pick'), icon: 'link', onClick: pickLinked }), h('span', { class: 'dm-help', text: t('linked.pick.hint') })) : null,
-          h('div', { class: 'dm-row-wrap' }, tables.map((p, i) => ui.button({ label: i === 0 ? t('presets.try') : (p.nameKey ? t(p.nameKey) : p.name), 'data-course': i === 0 ? 'example' : null, icon: 'sparkles', onClick: () => importPreset(p) }))),
-          h('div', { class: 'dm-row-end' }, pick, ui.button({ label: t('presets.geo.import'), icon: 'globe', onClick: () => importPreset(boundaries.find((p) => p.id === pick.value) || boundaries[0]) })),
-          h('span', { class: 'dm-help', text: t('presets.geo.hint') }));
+          linked.supported() ? h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('linked.pick'), icon: 'link', onClick: pickLinked }), h('span', { class: 'dm-help', text: t('linked.pick.hint') })) : null);
       }
 
       /**
@@ -850,19 +964,6 @@
           wiz.file = await services.importer.recognise(file); wiz.files = []; wiz.handle = handle; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; wiz.options.plan = undefined; wiz.options.layers = undefined; wiz.nameFromPlan = false;
           await runPreview();
         } catch (err) { if (!err || err.name !== 'AbortError') { wiz.error = (err && err.message) || String(err); render(); } }
-      }
-      async function importPreset(preset) {
-        if (!(await importersReady())) return;
-        wiz.busy = true; render();
-        try {
-          const meta = await services.importer.runPreset(preset);
-          wiz.result = meta; wiz.step = 'done'; wiz.name = meta.name;
-          shell.log(t('presets.done', { name: meta.name }), 'ok');
-        } catch (err) {
-          wiz.error = (err && err.message) || String(err);
-          shell.log(t('import.error', { message: wiz.error }), 'error');
-        }
-        wiz.busy = false; render();
       }
 
       /**
@@ -1301,7 +1402,10 @@
 
       // ---- right ----
       function renderRight() {
-        if (source === 'field') return;
+        if (source === 'mobile') return;
+        if (source === 'examples') { if (examplesUi) examplesUi.renderRight(slots.right); return; }
+        if (source === 'boundaries') { replace(slots.right, h('h4', { text: t('presets.geo.label') }), h('p', { class: 'dm-help', text: t('boundaries.right') })); return; }
+        if (source === 'apifile' || FAMILY_FORMS[source]) { replace(slots.right, h('h4', { text: t(itemOf(source).label) }), h('p', { class: 'dm-help', text: t('import.form.right') })); return; }
         if (source === 'guides') { replace(slots.right, h('h4', { text: t('guides.title') }), h('p', { class: 'dm-help', text: t('guides.right') })); return; }
         if (source === 'newmodel') { replace(slots.right, h('h4', { text: t('newmodel.title') }), h('p', { class: 'dm-help', text: t('newmodel.right') })); return; }
         if (source === 'newplan') { replace(slots.right, h('h4', { text: t('newplan.title') }), h('p', { class: 'dm-help', text: t('newplan.right') })); return; }
@@ -1368,8 +1472,17 @@
         replace(slots.right, items);
       }
 
-      return { id: 'inhamta', leftTitle: 'import.sources', activate, deactivate, get bridgeView() { return bridgeUi; } };
+      // The palette finds every source the tier shows, as the deep links do (#/inhamta/<id>).
+      if (ctx.palette) {
+        ctx.palette.register(() => GROUPS.flatMap((g) => g.items.filter(shownItem).map((item) => ({
+          id: 'source:' + item.id, label: t(item.label), hint: subOf(item), group: t('palette.group.sources'), icon: item.icon, keywords: [t('mode.inhamta'), t(g.label)],
+          run: () => openSource(item.id),
+        }))));
+      }
+
+      // The pane head has no heading in Inhämta (B-81.1): every group says that it holds sources. `leftLabel` names the column.
+      return { id: 'inhamta', leftTitle: '', leftLabel: 'import.sources', activate, deactivate, openSource, get bridgeView() { return bridgeUi; }, get mobileView() { return mobileUi; }, get sourceTree() { return leftTree; } };
     }
-    return { createMode };
+    return { createMode, GROUPS };
   });
 })();

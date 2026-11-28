@@ -66,7 +66,7 @@
       course.next();
       assert.equal(course.step, 'import');
       assert.ok(panel.querySelector('.dm-course-task'), 'task box');
-      assert.ok(panel.textContent.includes(t('presets.try')), 'task names the button to click');
+      assert.ok(panel.textContent.includes(t('examples.title')) && panel.textContent.includes(t('common.import')), 'task names the source and the button to click');
       assert.equal(courseMod.load().status, 'open');
       // Until the user is in the step's mode, that mode's button is highlighted.
       course.next();

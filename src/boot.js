@@ -348,6 +348,8 @@
     'src/ui/settings/tier-card.js',
     'src/ui/field/field-view.js',
     'src/ui/field/receive.js',
+    'src/ui/field/mobile-source.js',
+    'src/ui/import/source-forms.js',
     'src/ui/modes/inhamta.js',
     'src/ui/flows/flows-view.js',
     'src/ui/modes/hantera.js',

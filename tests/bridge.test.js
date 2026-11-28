@@ -279,7 +279,7 @@
     try {
       await bridge.disconnect();
       shell.activate('inhamta');
-      const item = await waitFor(() => Array.from(root.querySelectorAll('.dm-pane-body button')).find((b) => b.textContent.includes(t('bridge.title'))), 5000, 'bridge source in the list');
+      const item = await waitFor(() => Array.from(root.querySelectorAll('.dm-pane-body .dm-list-item')).find((b) => b.textContent.includes(t('bridge.title'))), 5000, 'bridge source in the list');
       /** @type {HTMLElement} */ (item).click();
       const view = await waitFor(() => shell.modes.get('inhamta').bridgeView, 5000, 'bridge view');
       await waitFor(() => root.querySelector('.dm-center .dm-bridge') && root.textContent.includes(t('bridge.start.windows')), 3000, 'connection card with the start command');

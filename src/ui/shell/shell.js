@@ -480,7 +480,7 @@
 
         /**
          * Deep links: `#/<mode>` and `#/<mode>/<object>`, where the object is a dataset's short name or id, a chart's
-         * id or name (Visualisera) or a search text (Söka). They work from file:// too and are what QR codes and
+         * id or name (Visualisera), a search text (Söka) or a source (Inhämta). They work from file:// too and are what QR codes and
          * published pages point at.
          */
         parseRoute() {
@@ -516,7 +516,12 @@
             const version = q.get('version');
             if (server && /^https?:\/\//i.test(server)) {
               this.store.set({ pendingSource: { family: 'opencde', baseUrl: server, projectId: q.get('project') || null, documentId: q.get('document') || null, versionIndex: version && /^\d+$/.test(version) ? Number(version) : null, at: Date.now() } });
-            }
+            } else this.store.set({ pendingImportSource: 'opencde' });
+          } else if (mode === 'inhamta' && object) {
+            // #/inhamta/<source> (exempeldata is `examples`): Inhämta opens the source when it is one (ui/modes/inhamta GROUPS).
+            this.store.set({ pendingImportSource: object });
+            const ds = byName(object);
+            if (ds) this.store.set({ selectedId: ds.id });
           } else if (mode === 'soka') { this.store.set({ pendingSearch: { text: object, at: Date.now() } }); }
           else if (mode === 'visualisera') {
             const charts = await D.require('viz/charts').list();
@@ -572,10 +577,11 @@
           if (this.active && this.active.deactivate) this.active.deactivate();
           for (const slot of Object.values(this.slots)) slot.replaceChildren();
           this.active = mode;
-          // The object panel is named after what the mode keeps there: the sources in Inhämta, the datasets elsewhere.
-          const leftTitle = t(mode.leftTitle || 'shell.datasets');
+          // The object panel is named after what the mode keeps there: the datasets, unless the mode says otherwise. A mode whose
+          // leftTitle is empty (Inhämta, B-81.1) has the same pane head without a heading, and `leftLabel` names the panel.
+          const leftTitle = mode.leftTitle === undefined ? t('shell.datasets') : mode.leftTitle ? t(mode.leftTitle) : '';
           if (this.leftTitle) this.leftTitle.textContent = leftTitle;
-          if (this.leftAside) this.leftAside.setAttribute('aria-label', leftTitle);
+          if (this.leftAside) this.leftAside.setAttribute('aria-label', leftTitle || t(mode.leftLabel || 'shell.datasets'));
           this.store.set({ mode: id });
           for (const btn of this.modeNav.children) btn.setAttribute('aria-current', btn.getAttribute('data-mode') === id ? 'page' : 'false');
           if (!options.redraw && location.hash !== '#/' + id) history.replaceState(null, '', '#/' + id);

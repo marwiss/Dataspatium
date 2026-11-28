@@ -81,7 +81,7 @@
       const shell = await D.require('app').start(root);
       shell.activate('inhamta');
       await wait(500);
-      const item = Array.from(root.querySelectorAll('.dm-left button.dm-list-item')).find((b) => b.textContent.includes(t('api.saved.title')));
+      const item = Array.from(root.querySelectorAll('.dm-left .dm-list-item')).find((b) => b.textContent.includes(t('api.saved.title')));
       assert.ok(item, 'source item');
       /** @type {HTMLElement} */ (item).click();
       await wait(400);

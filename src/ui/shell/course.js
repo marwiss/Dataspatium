@@ -107,7 +107,7 @@
           const p = (key, params) => rich('course.' + step.id + '.' + key, params);
           switch (step.id) {
             case 'welcome': return { paragraphs: [p('p1'), p('p2', { example: strong(t('preset.befolkning.name')), modes: MODES.map((m) => t('mode.' + m)).join(' → ') }), p('p3')] };
-            case 'import': return { paragraphs: [p('p1')], task: p('task', { mode: mode('inhamta'), button: strong(t('presets.try')), name: strong(t('preset.befolkning.name')) }), done: p('done', { short: code(shortName()) }) };
+            case 'import': return { paragraphs: [p('p1')], task: p('task', { mode: mode('inhamta'), source: strong(t('examples.title')), button: strong(t('common.import')), name: strong(t('preset.befolkning.name')) }), done: p('done', { short: code(shortName()) }) };
             case 'manage': return { paragraphs: [p('p1', { mode: mode('hantera'), short: code(shortName()) }), p('p2', { backup: strong(t('datasets.backup')) })], task: p('task', { mode: mode('hantera') }), done: p('done') };
             case 'search': return { paragraphs: [p('p1', { mode: mode('soka') })], task: p('task', { mode: mode('soka'), query: code(QUERY), run: strong(t('soka.run')) }), done: p('done', { save: strong(t('soka.save.list')), lists: strong(t('soka.tabs.listor')) }) };
             case 'share': return { paragraphs: [p('p1', { mode: mode('dela') })], task: p('task', { mode: mode('dela') }), done: p('done', { bundle: strong(t('bundle.create')), receive: strong(t('dela.tabs.receive')) }) };

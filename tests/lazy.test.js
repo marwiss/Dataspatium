@@ -36,7 +36,7 @@
     const realPick = linked.pick;
     const button = (text) => Array.from(root.querySelectorAll('dm-button')).find((b) => b.textContent.trim() === text);
     const click = (el) => /** @type {HTMLElement} */ (el.querySelector('button') || el).click();
-    const sourceButton = (id) => waitFor(() => root.querySelector(`.dm-left button[data-source="${id}"]`), 5000, 'the source ' + id);
+    const sourceButton = (id) => waitFor(() => root.querySelector(`.dm-left [data-source="${id}"]`), 5000, 'the source ' + id);
     /** Files dropped on Inhämta's drop zone (the source Filer). @param {File[]} list */
     async function drop(list) {
       click(await sourceButton('file'));
@@ -203,7 +203,7 @@
       await waitFor(() => shell.store.get().datasets.some((d) => d.id === meta.id), 3000, 'the dataset in the store');
       const t0 = performance.now();
       await shell.activate('inhamta');
-      const item = await waitFor(() => Array.from(root.querySelectorAll('.dm-left button.dm-list-item')).find((b) => b.textContent.includes(t('api.saved.title'))), 5000, 'the saved fetches');
+      const item = await waitFor(() => Array.from(root.querySelectorAll('.dm-left .dm-list-item')).find((b) => b.textContent.includes(t('api.saved.title'))), 5000, 'the saved fetches');
       /** @type {HTMLElement} */ (item).click();
       const row = await waitFor(() => Array.from(root.querySelectorAll('.dm-center tbody tr')).find((tr) => tr.textContent.includes('Lat hämtning')), 5000, 'the dataset listed');
       assert.ok(row.querySelector(`dm-button[label="${t('api.saved.update')}"]`), 'with its update');

@@ -260,7 +260,9 @@
         const connected = bridge.isConnected() && state.info;
         replace(el,
           h('div', { class: 'dm-page-head' }, h('h1', null, icons.icon('database', 20), t('bridge.title'))),
-          h('p', { class: 'dm-help', text: t('bridge.intro') }),
+          // Why the bridge is needed first, then what it is for (PLAN 12 b).
+          h('p', { class: 'dm-help', 'data-bridge-why': '', text: t('bridge.why') }),
+          h('p', { class: 'dm-help', 'data-bridge-uses': '', text: t('bridge.uses') }),
           connectionCard(),
           state.error ? h('p', { class: 'dm-error', text: state.error }) : null,
           connected ? sourceCard() : null,

@@ -475,14 +475,15 @@
     return 'ok';
   }, 60000);
 
-  test('ui: every kind of source in Inhämta looks the same, and all ways to add one are in one place', async (assert) => {
+  test('ui: every kind of source in Inhämta looks the same, and each way to add one is a source of its group', async (assert) => {
     const connectors = D.require('api/connectors');
     const geo = await connectors.save({ format: 'dataspatium-api/1', id: 'test-adapt-geo', name: 'Geotjänst', baseUrl: 'dataspatium-asset://tests/geo', auth: { type: 'none' }, family: { type: 'geodata', kind: 'wfs' }, endpoints: [] });
     try {
       await withApp(async (shell, root) => {
         shell.activate('inhamta');
         const left = await waitFor(() => { const l = root.querySelector('.dm-left .dm-pane-body'); return l && l.querySelector('.dm-list-item') ? l : null; }, 5000, 'the source list');
-        const items = await waitFor(() => { const all = Array.from(left.querySelectorAll('.dm-list-item')); return all.some((i) => i.textContent.includes('Geotjänst')) ? all : null; }, 5000, 'the sources');
+        // The sources, not the groups' headings nor the note of an empty group.
+        const items = await waitFor(() => { const all = Array.from(left.querySelectorAll('.dm-list-item[data-source]')); return all.some((i) => i.textContent.includes('Geotjänst')) ? all : null; }, 5000, 'the sources');
         for (const item of items) {
           assert.equal(item.querySelectorAll('svg').length, 1, 'one mark: ' + item.textContent);
           assert.ok(item.querySelector('.dm-list-main'), 'a name');
@@ -490,14 +491,14 @@
         }
         const heights = new Set(items.map((i) => Math.round(i.getBoundingClientRect().height)));
         assert.equal(heights.size, 1, 'the same height: ' + Array.from(heights).join(', '));
-        assert.equal(left.querySelectorAll('[data-add-sources] .dm-list-item').length, 7, 'seven ways to add a source, as list items');
+        for (const id of ['database', 'opencde', 'neo4j', 'geodata', 'apifile', 'bridge', 'catalog']) assert.ok(left.querySelector(`.dm-list-item[data-source="${id}"]`), 'a way to add a source, as a list item: ' + id);
         assert.ok(!Array.from(left.querySelectorAll('dm-button')).some((b) => !b.closest('[data-added]')), 'no separate add button: the only buttons in the column take an added source out');
         const mark = (name) => { const it = items.find((i) => i.textContent.includes(name)); return it ? (it.querySelector('svg') || {}).innerHTML : null; };
         assert.ok(mark('Geotjänst') !== mark('SCB') || !mark('SCB'), 'a geodata source has its own mark');
         assert.ok(left.textContent.includes(t('geodata.add.hint')), 'each way to add says what it is for');
-        /** @type {HTMLElement} */ (left.querySelector('[data-add-source="geodata"]')).click();
-        const next = await waitFor(() => document.querySelector('dialog[open]'), 3000, 'the geodata dialog');
-        /** @type {HTMLElement} */ (next.querySelector('.dm-dialog-actions dm-button button')).click();
+        /** @type {HTMLElement} */ (left.querySelector('[data-source="geodata"]')).click();
+        await waitFor(() => root.querySelector('.dm-center [data-source-form="geodata"]'), 5000, 'the geodata form in the workspace');
+        assert.ok(!document.querySelector('dialog[open]'), 'not a dialog');
       });
     } finally { await connectors.remove(geo.id).catch(() => {}); }
     return 'ok';

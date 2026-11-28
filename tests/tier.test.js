@@ -142,7 +142,7 @@
       // Tier 2, the default.
       shell.activate('inhamta');
       await waitFor(() => has('[data-source="file"]'), 3000, 'the source list');
-      assert.ok(has('[data-add-source="geodata"]') && has('[data-source="newmodel"]'), 'geodata services and a new model in BIM och GIS');
+      assert.ok(has('[data-source="geodata"]') && has('[data-source="newmodel"]'), 'geodata services and a new model in BIM och GIS');
       assert.ok(root.querySelector('.dm-sb-assistant').hidden, 'the assistant is Experimentell');
       assert.ok(!shell.builtinCommands().some((c) => c.id === 'assistant'), 'nor in the palette');
       assert.ok(ops('table').includes('geo_height') && ops('model').includes('ifc_python'), 'the heights and the model actions');
@@ -151,9 +151,9 @@
       assert.ok(tier.shows('map.basemap') && tier.shows('view:map') && tier.shows('geo:buffer'));
       // Tier 1: the same entry points are gone, the rest stays.
       await tier.set('documents');
-      await waitFor(() => !has('[data-add-source="geodata"]'), 3000, 'Inhämta redrawn');
+      await waitFor(() => !has('[data-source="geodata"]'), 3000, 'Inhämta redrawn');
       assert.ok(!has('[data-source="newmodel"]'), 'no new model');
-      assert.ok(has('[data-add-source="opencde"]') && has('[data-add-source="neo4j"]'), 'OpenCDE and Neo4j stay in Dokument');
+      assert.ok(has('[data-source="opencde"]') && has('[data-source="neo4j"]'), 'OpenCDE and Neo4j stay in Dokument');
       const catalogue = D.require('api/connectors');
       const all = await catalogue.list();
       assert.ok(!all.filter((c) => tier.showsConnector(c)).some((c) => c.id === 'naturvardsregistret' || (c.family && c.family.type === 'geodata')), 'the geodata presets are left out');
@@ -170,7 +170,7 @@
       await waitFor(() => !root.querySelector('.dm-sb-assistant').hidden, 3000, 'the assistant shown');
       assert.ok(shell.builtinCommands().some((c) => c.id === 'assistant'), 'and in the palette');
       assert.ok(tools.offered().some((x) => x.name === 'server_query'), 'server_query offered');
-      assert.ok(has('[data-add-source="geodata"]'), 'tier 2 is there too');
+      assert.ok(has('[data-source="geodata"]'), 'tier 2 is there too');
       return 'ok';
     } finally { stop(root); await restore(); }
   }, 30000);
