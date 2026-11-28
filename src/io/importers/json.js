@@ -3,19 +3,21 @@
 /**
  * JSON importer: arrays of objects (nested objects flattened to dotted keys), arrays of arrays,
  * objects wrapping an array (optionally addressed with a dotted path), and NDJSON (one object per
- * line). GeoJSON FeatureCollections become one row per feature with properties flattened.
+ * line). GeoJSON FeatureCollections become one row per feature with properties flattened, and so do features one per line
+ * (GeoJSON Lines, and GeoJSON text sequences with their record separators, RFC 8142).
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('io/importers/json', ['data/encoding'], (encoding) => {
-    const EXT = /\.(json|ndjson|jsonl|geojson)$/i;
+    const EXT = /\.(json|ndjson|jsonl|geojson|geojsonl|geojsons|geojsonseq)$/i;
 
     /** @param {File} file */
     function detect(file) { return EXT.test(file.name) || /json/.test(file.type || ''); }
 
     function parseJsonText(text) {
-      const trimmed = text.replace(/^﻿/, '').trim();
+      // A GeoJSON text sequence starts each record with a record separator (U+001E).
+      const trimmed = text.replace(/^﻿/, '').replace(/\u001e/g, '').trim();
       if (!trimmed) throw new Error(D.t('import.err.empty'));
       try { return JSON.parse(trimmed); } catch (err) {
         // NDJSON: one JSON value per line
@@ -33,6 +35,8 @@
 
     function toRecords(data, path) {
       let node = path ? resolvePath(data, path) : data;
+      // Features one per line (GeoJSON Lines) are a FeatureCollection too.
+      if (Array.isArray(node) && node.length && node.every((f) => f && f.type === 'Feature')) node = { type: 'FeatureCollection', features: node };
       if (node && typeof node === 'object' && !Array.isArray(node) && node.type === 'FeatureCollection' && Array.isArray(node.features)) {
         return node.features.map((f) => Object.assign({}, f.properties || {}, { geometry_type: f.geometry ? f.geometry.type : null, geometry: f.geometry ? JSON.stringify(f.geometry) : null }));
       }

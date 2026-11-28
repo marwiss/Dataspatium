@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * Shapefile importer: a ZIP with .shp, .dbf and optionally .prj and .cpg (the usual download from SCB,
- * Lantmäteriet and others), or a bare .shp. Attributes become typed columns, geometries become GeoJSON in a
- * `geometry` text column (like the GeoJSON importer), optionally simplified with Douglas-Peucker. Point,
- * polyline, polygon and multipoint shapes with or without Z/M are read; coordinates stay in the file's
- * reference system (SWEREF99 TM metres or WGS84 degrees), which the map chart detects.
+ * Lantmäteriet and others), a .shp with its parts beside it in a folder (bundle), or a bare .shp. Attributes
+ * become typed columns, geometries become GeoJSON in a `geometry` text column (like the GeoJSON importer),
+ * optionally simplified with Douglas-Peucker. Point, polyline, polygon and multipoint shapes with or without Z/M
+ * are read; coordinates stay in the file's reference system (SWEREF99 TM metres or WGS84 degrees), which the map chart detects.
  */
 (function () {
   'use strict';
@@ -16,6 +16,30 @@
     const cache = new WeakMap();
 
     function detect(file) { return EXT.test(file.name); }
+
+    /** The parts that came beside a bare .shp ({dbf, prj, cpg}: File), by the .shp. @type {WeakMap<File, Record<string, File>>} */
+    const companions = new WeakMap();
+    /** The files that belong to a shapefile beside its .shp: what is read, and the indexes and metadata that are not. */
+    const PART = /\.(dbf|prj|cpg|shx|sbn|sbx|qix|fix|aih|ain|atx|shp\.xml)$/i;
+    /**
+     * A folder or a choice of files with shapefiles in it: each .shp gets the parts of the same name and folder beside it (the
+     * attributes in .dbf, the coordinate system in .prj, the code page in .cpg), and those parts and the indexes are no files of
+     * their own any more. A .dbf without a .shp stays, as the table it is. @param {File[]} files @returns {File[]}
+     */
+    function bundle(files) {
+      const pathOf = (f) => String(/** @type {any} */ (f).dmPath || /** @type {any} */ (f).webkitRelativePath || f.name).toLowerCase();
+      const shps = new Map();
+      for (const f of files) if (/\.shp$/i.test(f.name)) shps.set(pathOf(f).replace(/\.shp$/, ''), f);
+      if (!shps.size) return files;
+      return files.filter((f) => {
+        const m = PART.exec(f.name);
+        const shp = m ? shps.get(pathOf(f).slice(0, -m[0].length)) : null;
+        if (!shp) return true;
+        const ext = m[1].toLowerCase();
+        if (ext === 'dbf' || ext === 'prj' || ext === 'cpg') companions.set(shp, Object.assign(companions.get(shp) || {}, { [ext]: f }));
+        return false;
+      });
+    }
 
     /** Group the shapefile parts (shp, dbf, prj, cpg) by base name. */
     async function layersOf(file) {
@@ -32,7 +56,9 @@
               (parts[key] = parts[key] || { name: m[2] })[m[3].toLowerCase()] = bytes;
             }
           } else {
-            parts[file.name] = { name: file.name.replace(/\.shp$/i, ''), shp: new Uint8Array(await file.arrayBuffer()) };
+            const part = parts[file.name] = { name: file.name.replace(/\.shp$/i, ''), shp: new Uint8Array(await file.arrayBuffer()) };
+            // The dbf, prj and cpg that came beside it in a folder or a choice of files (bundle).
+            for (const [ext, beside] of Object.entries(companions.get(file) || {})) part[ext] = new Uint8Array(await beside.arrayBuffer());
           }
           const layers = Object.values(parts).filter((l) => l.shp);
           if (!layers.length) throw new Error(D.t('import.err.noshp'));
@@ -227,6 +253,6 @@
       return { kind: 'shapefile', columns: table.columns, dataRows: table.rows.slice(0, options.previewRows || 100), totalRows: table.rows.length, header: true, layers: table.meta.layers, layer: table.meta.layer, crs: table.meta.crs, points: table.meta.points, declaredTypes: table.meta.declaredTypes };
     }
 
-    return { id: 'shapefile', detect, preview, parse, parseShp, parseDbf, simplifyGeometry, polygonsFromRings, countPoints };
+    return { id: 'shapefile', detect, bundle, preview, parse, parseShp, parseDbf, simplifyGeometry, polygonsFromRings, countPoints };
   });
 })();
