@@ -29,8 +29,13 @@ LOCAL_GLOBS = [
     "presets/geodata/*.json",
     "presets/ids/*.ids",
 ]
-# Larger text files travel gzip+base64 (platform/assets gunzips them with DecompressionStream): the plan catalogue.
+# Larger text files travel gzip+base64 (platform/assets gunzips them with DecompressionStream): the plan catalogue and the
+# examples other than the table (tools/build_examples.py).
 LOCAL_GZIP_GLOBS = [
+    "presets/exempeldata/*.geojson",
+    "presets/exempeldata/*.ifc",
+    "presets/exempeldata/*.json",
+    "presets/exempeldata/*.cypher",
     "presets/plan/*.json",
     "presets/bibliotek/*.json",
     "presets/kodlistor/*.json",

@@ -15,7 +15,7 @@ Dataspatium.assets.addEntries({
  "presets/exempeldata/befolkning-kommuner-2024.csv": {
   "file": "presets/exempeldata/befolkning-kommuner-2024.csv.js",
   "encoding": "text",
-  "size": 13121,
+  "size": 15255,
   "library": "dataspatium"
  },
  "presets/i18n-shared.json": {
@@ -444,6 +444,36 @@ Dataspatium.assets.addEntries({
   "size": 7057,
   "library": "dataspatium"
  },
+ "presets/exempeldata/bjorreds-vangar-hus.ifc": {
+  "file": "presets/exempeldata/bjorreds-vangar-hus.ifc.js",
+  "encoding": "gzip+base64",
+  "size": 142333,
+  "library": "dataspatium"
+ },
+ "presets/exempeldata/fardigstallda-lagenheter-2024.json": {
+  "file": "presets/exempeldata/fardigstallda-lagenheter-2024.json.js",
+  "encoding": "gzip+base64",
+  "size": 12244,
+  "library": "dataspatium"
+ },
+ "presets/exempeldata/kommungrannar.cypher": {
+  "file": "presets/exempeldata/kommungrannar.cypher.js",
+  "encoding": "gzip+base64",
+  "size": 167051,
+  "library": "dataspatium"
+ },
+ "presets/exempeldata/lomma-dp-bjorreds-vangar.geojson": {
+  "file": "presets/exempeldata/lomma-dp-bjorreds-vangar.geojson.js",
+  "encoding": "gzip+base64",
+  "size": 15822,
+  "library": "dataspatium"
+ },
+ "presets/exempeldata/lomma-op-2020.geojson": {
+  "file": "presets/exempeldata/lomma-op-2020.geojson.js",
+  "encoding": "gzip+base64",
+  "size": 206266,
+  "library": "dataspatium"
+ },
  "presets/kodlistor/ammatti2010.json": {
   "file": "presets/kodlistor/ammatti2010.json.js",
   "encoding": "gzip+base64",
@@ -579,7 +609,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/format.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 22197,
+  "size": 22332,
   "library": "dataspatium"
  },
  "docs/sv/api-konfiguration.md": {
@@ -591,7 +621,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kallor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 36042,
+  "size": 38205,
   "library": "dataspatium"
  },
  "docs/sv/snabbstart.md": {
@@ -693,7 +723,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/licenser.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 10768,
+  "size": 11528,
   "library": "dataspatium"
  },
  "docs/sv/sakerhet.md": {
@@ -1593,7 +1623,7 @@ Dataspatium.assets.addEntries({
  "docs/en/format.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 22693,
+  "size": 22817,
   "library": "dataspatium"
  },
  "docs/en/api-konfiguration.md": {
@@ -1605,7 +1635,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kallor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 35922,
+  "size": 38204,
   "library": "dataspatium"
  },
  "docs/en/snabbstart.md": {
@@ -1707,7 +1737,7 @@ Dataspatium.assets.addEntries({
  "docs/en/licenser.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 11049,
+  "size": 11855,
   "library": "dataspatium"
  },
  "docs/en/sakerhet.md": {
