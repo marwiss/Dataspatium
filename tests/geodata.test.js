@@ -299,7 +299,7 @@
       made = res.connector;
       assert.deepEqual([made.auth.type, made.auth.tokenUrl, made.auth.clientAuth], ['oauth2_client_credentials', 'https://apimanager.lantmateriet.se/oauth2/token', 'body'], 'the login copied');
       assert.deepEqual(secrets.get(made.id), { clientId: 'konsumentnyckel', clientSecret: 'konsumenthemlighet' }, 'the session\'s keys copied');
-      assert.notEqual(made.auth, from.auth, 'a copy, not the same object');
+      assert.ok(made.auth !== from.auth, 'a copy, not the same object');
     } finally {
       await secrets.forget(from.id);
       if (made) { await secrets.forget(made.id); await connectors.remove(made.id).catch(() => {}); }
@@ -376,7 +376,7 @@
       assert.ok(['sv', 'en'].every((l) => s.about && s.about[l]) && langs.every((l) => !s.about[l] || String(s.about[l]).trim()), s.id + ': a description in Swedish and English (the others may lack one and show English, F49 a)');
     }
     for (const s of ngp) {
-      assert.equal(s.preset, 'lantmateriet-ngp-detaljplan', s.id + ' uses the platform key');
+      assert.ok(!s.preset && s.authFrom === 'lantmateriet-ngp-detaljplan', s.id + ' logs in with the platform key, as a source of its own');
       assert.ok(s.key && s.kind === 'ogcapi' && /\/sokning\/v1\/[a-z]+\/v1$/.test(s.url), s.id + ': ' + s.url);
     }
     assert.equal(new Set(list.map((s) => s.id)).size, list.length, 'the ids are unique');
