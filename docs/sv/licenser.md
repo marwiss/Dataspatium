@@ -92,6 +92,11 @@ Lantmäteriets ortofoton (Sverige) läses ur Lantmäteriets filer med din nyckel
 Lantmäteriets användningsvillkor för värdefulla datamängder, som ber om produktnamnet, ©Lantmäteriet, att informationen har bearbetats
 och licensen; kartans hörn visar därför "Ortofoto © Lantmäteriet (år), bearbetad för kartan (CC BY 4.0)".
 
+Databasbryggans drivrutiner följer inte heller med i appen. Den som kör Python-bryggan installerar dem själv när de behövs (`pip
+install pymysql pg8000 oracledb`), och bryggan importerar dem bara när de finns: PyMySQL (MIT), pg8000 (BSD-3-Clause) och
+python-oracledb (Apache-2.0 eller UPL-1.0). PowerShell-bryggan använder de ODBC-drivrutiner som redan är installerade på datorn,
+under sina egna villkor. Se [kallor.md](kallor.md#bryggans-drivrutiner).
+
 ## Dataregium och Dataspatium
 
 [Dataregium OpenCDE server](https://github.com/marwiss/Dataregium) är ett eget verk under AGPL-3.0 och ingen del av Dataspatium. Samma person äger upphovsrätten till båda verken och har 2026-11-05 tillåtit två saker mellan dem: Dataregium återger Dataspatiums utseende (designvariablerna i `src/ui/design/tokens.css` och komponenternas stilar är avskrivna där under AGPL, så att de två ser ut som en produkt), och Dataspatium får använda kod och resurser ur Dataregium, till exempel testfiler, exempeltexter och API-beskrivningar. Licenserna för respektive verk gäller i övrigt oförändrade; allt annat som är gemensamt (ordlista, README-struktur, felkoder, kapabilitetsdokument) återskapas som fakta i vardera repot.

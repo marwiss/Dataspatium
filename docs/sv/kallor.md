@@ -48,18 +48,21 @@ Varför bryggan behövs: webbläsaren får inte öppna en anslutning till en dat
 inte själv har valt. Bryggan är ett litet skript som du startar på datorn när du behöver det, i samma anda som en lokal
 webbserver. Den lyssnar bara på den egna datorn (127.0.0.1), kräver en token som visas i fönstret, är skrivskyddad om du
 inte startar den med skrivning tillåten och låter dig godkänna varje skrivning. Appen hämtar tabeller genom bryggan; inget
-lämnar datorn. Den används för Access, Excel, SQL Server, SQLite, MySQL, MariaDB, PostgreSQL och andra ODBC-källor, och
-för att hämta från en adress som stänger ute webbläsare (se *Hämta via bryggan* nedan). Vyn i Inhämta säger detsamma
-överst.
+lämnar datorn utom till den databas du själv anger. Den används för Access, Excel, SQLite, SQL Server och andra ODBC-källor,
+för MySQL, MariaDB, PostgreSQL och Oracle, som den ansluter till själv med sina drivrutiner, och för att hämta från en adress som
+stänger ute webbläsare (se *Hämta via bryggan* nedan). Vyn i Inhämta säger detsamma överst.
 
 ### Starta bryggan
 
 - **Windows**: öppna PowerShell i appens mapp och kör `powershell -ExecutionPolicy Bypass -File tools\db-bridge.ps1`.
   Bryggan talar ODBC, OLE DB och SqlClient och når därmed Access (mdb och accdb via Microsoft ACE), Excel, SQL
-  Server (även LocalDB och Express), Oracle, PostgreSQL, MySQL/MariaDB, Paradox, dBase och alla ODBC-datakällor
-  (DSN) som finns på datorn. Inga administratörsrättigheter behövs.
-- **macOS och Linux** (och Windows utan PowerShell): `python tools/db_bridge.py` (Python 3, standardbiblioteket).
-  SQLite-filer går alltid; med `pyodbc` installerat (`pip install pyodbc`) även ODBC-källor.
+  Server (även LocalDB och Express), Oracle, Paradox, dBase och alla ODBC-datakällor (DSN) som finns på datorn. MySQL,
+  MariaDB och PostgreSQL väljer du direkt i formuläret; den här bryggan når dem genom deras ODBC-drivrutiner (MySQL
+  Connector/ODBC, MariaDB Connector/ODBC, psqlODBC) när de är installerade. Inga administratörsrättigheter behövs.
+- **macOS och Linux** (och Windows utan PowerShell): `python tools/db_bridge.py` (Python 3). SQLite-filer går alltid. Till
+  MySQL och MariaDB, PostgreSQL och Oracle ansluter bryggan själv med sina drivrutiner, som du installerar en gång (bara de du
+  behöver): `pip install pymysql pg8000 oracledb`. Med `pyodbc` (`pip install pyodbc`) når den även ODBC-källor. En drivrutin
+  som saknas nämns när bryggan startar och i formuläret, med kommandot som installerar den.
 
 Fönstret visar adressen (`http://127.0.0.1:<port>/`) och token. Tillval: `-Port` respektive `--port` väljer port,
 `-AllowWrite` respektive `--allow-write` tillåter ändringar, `-MaxRows` respektive `--max-rows` begränsar antalet
@@ -67,21 +70,47 @@ rader per hämtning (standard 100 000) och `-AllowOrigins` respektive `--allow-o
 får anropa bryggan. En sida öppnad från mappen har ursprunget `null`, som är tillåtet, liksom `localhost` och
 appens adress på GitHub Pages. Stäng fönstret, eller tryck Ctrl+C, för att stoppa.
 
+### Bryggans drivrutiner
+
+Ingen drivrutin följer med appen, och bryggan importerar en bara när den är installerad. Alla har licenser som appen tillåter.
+
+| Databas | Drivrutin i Python-bryggan | Licens | Installera | I PowerShell-bryggan |
+|---|---|---|---|---|
+| MySQL, MariaDB | PyMySQL | MIT | `pip install pymysql` | MySQL Connector/ODBC eller MariaDB Connector/ODBC |
+| PostgreSQL, även PostGIS, TimescaleDB, CockroachDB och YugabyteDB | pg8000 | BSD-3-Clause | `pip install pg8000` | psqlODBC |
+| Oracle (tunt läge, ingen Oracle-klient behövs) | python-oracledb | Apache-2.0 eller UPL-1.0 | `pip install oracledb` | ODBC-DSN eller OLE DB |
+| SQL Server och andra ODBC-källor | pyodbc med källans ODBC-drivrutin | MIT (pyodbc) | `pip install pyodbc` | SqlClient, ODBC och OLE DB (inbyggt) |
+
+En databas anges med värd, port (3306, 5432 respektive 1521 när fältet är tomt), databas (tjänstnamnet för Oracle),
+användarnamn, lösenord och kryptering. Krypteringen har databasernas egna namn: för MySQL och MariaDB `preferred` (krypterar när
+servern kan, förval), `required`, `verify_identity`, `verify_ca` och `disabled`; för PostgreSQL `prefer` (förval), `require`,
+`verify-full`, `verify-ca` och `disable`; för Oracle `disabled` (förval) och `verify_identity` (TCPS). Mot en server på en annan
+dator väljer du `verify_identity` eller `verify-full`: då kontrolleras serverns certifikat mot datorns betrodda certifikat, och
+värdnamnet. Med `required` och `require` avbryter bryggan anslutningen om servern inte krypterar.
+
+Läsningar körs i en skrivskyddad transaktion (`SET SESSION TRANSACTION READ ONLY` i MySQL och MariaDB,
+`default_transaction_read_only` i PostgreSQL, `SET TRANSACTION READ ONLY` i Oracle) som rullas tillbaka, och en tabell hämtas
+med `LIMIT`, så att en stor tabell inte läses hel. En server som saknar inställningen (CrateDB, QuestDB) har kvar ordkontrollen
+nedan. Geometrikolumner i PostGIS kommer som WKT med SRID (`ST_AsEWKT`), som Visualisera ritar på kartan; i egen SQL skriver du
+`ST_AsEWKT(geom)` själv.
+
 ### Använda bryggan i appen
 
 1. Välj *Databas via bryggan* under *Databaskällor* i Inhämta, klistra in adressen och token och tryck på **Anslut**.
    Token gäller för sessionen; *Spara krypterat* lagrar den med samma lösenfras som API-nycklarna.
 2. Beskriv källan: Access- eller Excel-fil (sökväg på datorn), SQL Server (server, databas och användare, eller
-   Windows-inloggning), ODBC-datakälla (välj bland datorns DSN) eller en anslutningssträng. Tryck på
-   **Hämta tabeller**.
+   Windows-inloggning i PowerShell-bryggan), MySQL, MariaDB, PostgreSQL eller Oracle (värd, port, databas, användare, lösenord
+   och kryptering), ODBC-datakälla (välj bland datorns DSN) eller en anslutningssträng. Formuläret säger om bryggan har
+   drivrutinen, och annars hur du installerar den. Tryck på **Hämta tabeller**.
 3. Välj en tabell, se de första hundra raderna och tryck på **Importera**. Kolumntyperna kommer från databasen.
 4. **Egen SQL** kör en fråga i databasens egen dialekt och importerar resultatet. SELECT visas direkt; andra satser
    kräver att bryggan startats med skrivning tillåten och godkänns en i taget i en dialog som visar satsen.
 
 Importerade datamängder minns källan: *Uppdatera* i Hantera, eller *Sparade hämtningar* i Inhämta, hämtar om
-tabellen eller frågan och spelar upp receptet. Lösenord sparas aldrig med datamängden; efter en omstart ber appen
-dig öppna källan igen innan den uppdateras. Fliken SQL i Analysera kan köra direkt mot den källa som senast
-öppnades i bryggan (*Kör mot*).
+tabellen eller frågan och spelar upp receptet. Lösenord sparas aldrig med datamängden. De hålls i sessionen som andra
+nycklar, och *Spara krypterat* sparar dem med lösenfrasen tillsammans med token; efter en omstart låser du upp dem, eller öppnar
+källan igen, innan datamängden uppdateras. *Koppla från* glömmer token och lösenorden. Fliken SQL i Analysera kan köra direkt mot
+den källa som senast öppnades i bryggan (*Kör mot*).
 
 ### Hämta via bryggan
 
@@ -133,11 +162,14 @@ godkänt eller det gått fem minuter.
 ### Säkerhet
 
 - Bryggan svarar bara på 127.0.0.1, kräver token i varje anrop och tillåter CORS bara för appens egna adresser.
-- Skrivskyddad som standard: bara SELECT släpps igenom. Med skrivning tillåten krävs ändå ditt godkännande per
-  sats; bryggan svarar 428 tills appen skickar godkännandet.
-- Bryggan loggar de senaste anropen (`GET /log`) och stannar när fönstret stängs.
+- Skrivskyddad som standard: bara SELECT släpps igenom, och en SELECT eller WITH som ändrar något (INSERT, UPDATE, DELETE,
+  INTO, FOR UPDATE med flera, utanför citattecken) räknas som skrivning. Med skrivning tillåten krävs ändå ditt godkännande
+  per sats; bryggan svarar 428 tills appen skickar godkännandet.
+- Bryggan loggar de senaste anropen (`GET /log`) med källans typ och början av satsen, aldrig adress, användare eller
+  lösenord, och stannar när fönstret stängs.
 - Token och lösenord lagras bara i sessionen eller krypterat med lösenfras, aldrig i klartext och aldrig i delade
-  konfigurationer.
+  konfigurationer. Lösenordet till en databas lämnar appen bara i anropet till bryggan på 127.0.0.1 och stannar i bryggans
+  process; om en drivrutin upprepar det i ett felmeddelande tar både bryggan och appen bort det.
 
 ### Felsökning
 
@@ -145,15 +177,21 @@ godkänt eller det gått fem minuter.
   (ACE) i 64-bitarsversion, eller använd ett ODBC-DSN med 64-bitarsdrivrutin. Bryggan är 64-bitars när PowerShell är det.
 - *Fel eller saknad token*: kopiera token från bryggans fönster igen; den byts vid varje start om du inte anger `-Token`.
 - *Bryggan svarar inte*: kontrollera att fönstret är öppet och att adressen stämmer; prova en annan port.
+- *Bryggan saknar drivrutinen*: installera den med kommandot i formuläret på datorn där bryggan körs och starta om bryggan.
+  PowerShell-bryggan behöver en ODBC-drivrutin i samma bitversion som PowerShell.
+- *Servern krypterar inte anslutningen*: välj `preferred` eller `prefer`, eller slå på TLS i databasen.
 - Körpolicy: skriptet startas med `-ExecutionPolicy Bypass`, precis som appens testverktyg, så inga inställningar
   behöver ändras.
-- IT-avdelningen kan granska skriptet (`tools/db-bridge.ps1`, omkring 200 rader) och starta det med fast port och token.
+- IT-avdelningen kan granska skripten (`tools/db-bridge.ps1` och `tools/db_bridge.py`, omkring 500 respektive 1 000 rader) och
+  starta dem med fast port och token. `python tools/check_bridge.py` prövar Python-bryggans drivrutiner mot låtsade drivrutiner,
+  utan databaser.
 
 ## Databaskällor över HTTP
 
 Valet **Extern databas** under *Databaskällor* i Inhämta öppnar ett formulär i mitten som skapar en vanlig API-källa av en
-adress och en nyckel. Det gäller databaser som svarar över HTTP; MySQL, MariaDB och PostgreSQL nås genom bryggan, eftersom
-webbläsaren inte kan öppna en anslutning till dem, och formuläret har en knapp dit. Appen frågar tjänsten efter dess tabeller (schemaupptäckt) och lägger en ändpunkt per tabell plus en allmän
+adress och en nyckel. Det gäller databaser som svarar över HTTP; MySQL, MariaDB, PostgreSQL och Oracle nås genom bryggan,
+som ansluter till dem själv med sina drivrutiner, eftersom webbläsaren inte kan öppna en anslutning till dem, och formuläret har
+en knapp dit. Appen frågar tjänsten efter dess tabeller (schemaupptäckt) och lägger en ändpunkt per tabell plus en allmän
 där du anger tabellen själv. Källan fungerar sedan som de förinställda API:erna: parametrar, förhandsgranskning,
 sidor som följs automatiskt och sparade hämtningar som uppdateras med ett klick.
 
@@ -173,11 +211,35 @@ sidor som följs automatiskt och sparade hämtningar som uppdateras med ett klic
 CORS betyder att databasens server måste tillåta anrop från webbläsaren. En sida öppnad från mappen skickar
 ursprunget `null`; i serverläge appens adress. Hur det slås på står i respektive dokumentation (länk i dialogen).
 Går det inte att ändra på servern återstår proxyinställningen (se [api-konfiguration.md](api-konfiguration.md))
-eller bryggan via ODBC.
+eller *Hämta via bryggan*.
 
 Nycklar och lösenord stannar i sessionen eller sparas krypterat; konfigurationen som skapas kan exporteras och
 delas utan dem. Svarsformaten `graphql`, `sparql` och `influx-csv` samt `lift` (lyfta upp ett nästlat objekt till
 kolumner) beskrivs i [api-konfiguration.md](api-konfiguration.md) och kan användas i egna konfigurationer.
+
+### Fler databaser och hur de nås
+
+En databas med öppen källkod nås på något av tre sätt: direkt från webbläsaren över HTTP (Extern databas, Neo4j), genom bryggan
+med en drivrutin, eller inte än.
+
+| Databas | Väg | Skäl |
+|---|---|---|
+| PostgreSQL, PostGIS, TimescaleDB | Bryggan (pg8000); PostgREST eller Supabase över HTTP | PostGIS och TimescaleDB är tillägg i PostgreSQL; geometrin kommer som WKT |
+| CockroachDB, YugabyteDB, CrateDB, QuestDB | Bryggan (pg8000) | Talar PostgreSQL:s protokoll; CrateDB och QuestDB saknar skrivskyddade transaktioner, så där gäller ordkontrollen |
+| MySQL, MariaDB | Bryggan (PyMySQL) | |
+| Oracle | Bryggan (python-oracledb i tunt läge) | Rent Python, ingen Oracle-klient behövs |
+| SQL Server | Bryggan: SqlClient i PowerShell, pyodbc i Python | python-tds (MIT) läggs inte till: kryptering kräver pyOpenSSL och ett CA-certifikat, annars går inloggningen okrypterad |
+| Firebird | Bryggan via ODBC (Firebirds ODBC-drivrutin) | firebird-driver (MIT) behöver Firebirds klientbibliotek installerat; ODBC räcker tills vidare |
+| SQLite | Filer direkt i appen, eller bryggan | |
+| Neo4j, Memgraph | Neo4j-källan (Bolt över WebSocket) | Memgraph talar Bolt; inte prövat mot en riktig Memgraph |
+| Elasticsearch, OpenSearch, CouchDB, ClickHouse, InfluxDB 2 | Extern databas över HTTP | Servern måste tillåta CORS; ClickHouse nås också genom bryggan med MySQL- eller PostgreSQL-protokollet |
+| InfluxDB 3 | Inte än | Frågas med SQL över `/api/v3/query_sql`; familjen läser InfluxDB 2 med Flux |
+| ArangoDB, SurrealDB | Inte än | Båda svarar över HTTP (AQL i `/_api/cursor`, SurrealQL i `/sql`) och kan bli familjer i Extern databas |
+| MongoDB | Inte än | pymongo (Apache-2.0) passar bryggan, men dokument och frågor är inte SQL och kräver ett eget svarsformat; Atlas Data API över HTTP är nedlagt |
+| Cassandra, ScyllaDB | Inte än | cassandra-driver (Apache-2.0) talar CQL utan DB-API, och det finns inget HTTP-gränssnitt utan tillägg |
+| Trino, Presto | Inte än | trino (Apache-2.0) följer DB-API, men HTTP-protokollet saknar CORS och drivrutinen drar in fler paket |
+| Redis, Valkey | Inte som tabellkälla | Nycklar och värden utan tabeller |
+| H2, HSQLDB, Derby | Inte alls | Bara JDBC (Java); ingen drivrutin i Python med tillåten licens |
 
 ### Neo4j över Bolt
 

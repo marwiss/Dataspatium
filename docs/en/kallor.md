@@ -50,18 +50,21 @@ Why the bridge is needed: the browser may not open a connection to a database, n
 have not chosen yourself. The bridge is a small script you start on the computer when you need it, in the spirit of a
 local web server. It listens on your own computer only (127.0.0.1), requires a token shown in its window, is read-only
 unless you start it with writing allowed and lets you approve every write. The app fetches tables through the bridge;
-nothing leaves the computer. It is used for Access, Excel, SQL Server, SQLite, MySQL, MariaDB, PostgreSQL and other ODBC
-sources, and to fetch from an address that shuts out browsers (see *Fetching through the bridge* below). Its view in Import
-says the same at the top.
+nothing leaves the computer except to the database you name yourself. It is used for Access, Excel, SQLite, SQL Server and
+other ODBC sources, for MySQL, MariaDB, PostgreSQL and Oracle, which it connects to itself with its drivers, and to fetch from an
+address that shuts out browsers (see *Fetching through the bridge* below). Its view in Import says the same at the top.
 
 ### Starting the bridge
 
 - **Windows**: open PowerShell in the app's folder and run `powershell -ExecutionPolicy Bypass -File tools\db-bridge.ps1`.
   The bridge speaks ODBC, OLE DB and SqlClient and thereby reaches Access (mdb and accdb through Microsoft ACE),
-  Excel, SQL Server (LocalDB and Express included), Oracle, PostgreSQL, MySQL/MariaDB, Paradox, dBase and every
-  ODBC data source (DSN) on the computer. No administrator rights are needed.
-- **macOS and Linux** (and Windows without PowerShell): `python tools/db_bridge.py` (Python 3, standard library).
-  SQLite files always work; with `pyodbc` installed (`pip install pyodbc`) ODBC sources too.
+  Excel, SQL Server (LocalDB and Express included), Oracle, Paradox, dBase and every ODBC data source (DSN) on the computer.
+  You choose MySQL, MariaDB and PostgreSQL directly in the form; this bridge reaches them through their ODBC drivers (MySQL
+  Connector/ODBC, MariaDB Connector/ODBC, psqlODBC) when they are installed. No administrator rights are needed.
+- **macOS and Linux** (and Windows without PowerShell): `python tools/db_bridge.py` (Python 3). SQLite files always work. The
+  bridge connects to MySQL and MariaDB, PostgreSQL and Oracle itself with its drivers, which you install once (only the ones you
+  need): `pip install pymysql pg8000 oracledb`. With `pyodbc` (`pip install pyodbc`) it reaches ODBC sources too. A missing
+  driver is named when the bridge starts and in the form, with the command that installs it.
 
 The window shows the address (`http://127.0.0.1:<port>/`) and the token. Options: `-Port` or `--port` picks the
 port, `-AllowWrite` or `--allow-write` allows changes, `-MaxRows` or `--max-rows` caps the rows per fetch
@@ -69,22 +72,49 @@ port, `-AllowWrite` or `--allow-write` allows changes, `-MaxRows` or `--max-rows
 page opened from the folder has the origin `null`, which is allowed, as are `localhost` and the app's address on
 GitHub Pages. Close the window, or press Ctrl+C, to stop.
 
+### The bridge's drivers
+
+No driver ships with the app, and the bridge imports one only when it is installed. All have licences the app allows.
+
+| Database | Driver in the Python bridge | Licence | Install | In the PowerShell bridge |
+|---|---|---|---|---|
+| MySQL, MariaDB | PyMySQL | MIT | `pip install pymysql` | MySQL Connector/ODBC or MariaDB Connector/ODBC |
+| PostgreSQL, also PostGIS, TimescaleDB, CockroachDB and YugabyteDB | pg8000 | BSD-3-Clause | `pip install pg8000` | psqlODBC |
+| Oracle (thin mode, no Oracle client needed) | python-oracledb | Apache-2.0 or UPL-1.0 | `pip install oracledb` | ODBC DSN or OLE DB |
+| SQL Server and other ODBC sources | pyodbc with the source's ODBC driver | MIT (pyodbc) | `pip install pyodbc` | SqlClient, ODBC and OLE DB (built in) |
+
+A database is given by host, port (3306, 5432 and 1521 when the field is empty), database (the service name for Oracle), user
+name, password and encryption. The encryption has the databases' own names: for MySQL and MariaDB `preferred` (encrypts when
+the server can, the default), `required`, `verify_identity`, `verify_ca` and `disabled`; for PostgreSQL `prefer` (the default),
+`require`, `verify-full`, `verify-ca` and `disable`; for Oracle `disabled` (the default) and `verify_identity` (TCPS). Against a
+server on another computer, choose `verify_identity` or `verify-full`: the server's certificate is then checked against the
+computer's trusted certificates, and so is the host name. With `required` and `require` the bridge stops the connection when
+the server does not encrypt.
+
+Reads run in a read-only transaction (`SET SESSION TRANSACTION READ ONLY` in MySQL and MariaDB, `default_transaction_read_only`
+in PostgreSQL, `SET TRANSACTION READ ONLY` in Oracle) that is rolled back, and a table is fetched with `LIMIT`, so that a large
+table is not read whole. A server without the setting (CrateDB, QuestDB) keeps the keyword check below. Geometry columns in
+PostGIS come as WKT with their SRID (`ST_AsEWKT`), which Visualise draws on the map; in your own SQL you write `ST_AsEWKT(geom)`
+yourself.
+
 ### Using the bridge in the app
 
 1. Choose *Database through the bridge* under *Database sources* in Import, paste the address and the token and press
    **Connect**. The token lasts for the session; *Save encrypted* stores it with the same passphrase as the API keys.
 2. Describe the source: an Access or Excel file (path on the computer), SQL Server (server, database and user, or
-   Windows sign-in), an ODBC data source (choose among the computer's DSNs) or a connection string. Press
-   **Fetch tables**.
+   Windows sign-in in the PowerShell bridge), MySQL, MariaDB, PostgreSQL or Oracle (host, port, database, user, password and
+   encryption), an ODBC data source (choose among the computer's DSNs) or a connection string. The form says whether the
+   bridge has the driver, and otherwise how to install it. Press **Fetch tables**.
 3. Choose a table, see the first hundred rows and press **Import**. The column types come from the database.
 4. **Own SQL** runs a query in the database's own dialect and imports the result. SELECT shows directly; other
    statements need a bridge started with writing allowed and are approved one at a time in a dialog that shows
    the statement.
 
 Imported datasets remember their source: *Update* in Manage, or *Saved fetches* in Import, fetches the table or
-query again and replays the recipe. Passwords are never stored with the dataset; after a restart the app asks you
-to open the source again before updating. The SQL tab in Analyse can run directly against the source last opened
-in the bridge (*Run against*).
+query again and replays the recipe. Passwords are never stored with the dataset. They are kept in the session like other
+keys, and *Save encrypted* saves them with the passphrase together with the token; after a restart you unlock them, or open the
+source again, before the dataset is updated. *Disconnect* forgets the token and the passwords. The SQL tab in Analyse can run
+directly against the source last opened in the bridge (*Run against*).
 
 ### Fetching through the bridge
 
@@ -137,11 +167,14 @@ browser.
 ### Security
 
 - The bridge answers on 127.0.0.1 only, requires the token in every call and allows CORS only for the app's own addresses.
-- Read-only by default: only SELECT passes. With writing allowed, your approval is still needed per statement;
+- Read-only by default: only SELECT passes, and a SELECT or WITH that changes something (INSERT, UPDATE, DELETE, INTO,
+  FOR UPDATE and more, outside quotes) counts as a write. With writing allowed, your approval is still needed per statement;
   the bridge answers 428 until the app sends the approval.
-- The bridge logs the latest calls (`GET /log`) and stops when its window is closed.
+- The bridge logs the latest calls (`GET /log`) with the kind of source and the start of the statement, never the address,
+  user or password, and stops when its window is closed.
 - Tokens and passwords are kept in the session or encrypted with a passphrase, never in clear text and never in
-  shared configurations.
+  shared configurations. A database's password leaves the app only in the call to the bridge on 127.0.0.1 and stays in the
+  bridge's process; when a driver repeats it in an error message, both the bridge and the app take it out.
 
 ### Troubleshooting
 
@@ -150,15 +183,21 @@ browser.
 - *Wrong or missing token*: copy the token from the bridge's window again; it changes at every start unless you
   pass `-Token`.
 - *The bridge does not answer*: check that the window is open and the address is right; try another port.
+- *The bridge lacks the driver*: install it with the command in the form on the computer where the bridge runs, and restart
+  the bridge. The PowerShell bridge needs an ODBC driver of the same bitness as PowerShell.
+- *The server does not encrypt the connection*: choose `preferred` or `prefer`, or turn on TLS in the database.
 - Execution policy: the script is started with `-ExecutionPolicy Bypass`, like the app's test tools, so no
   settings need changing.
-- An IT department can review the script (`tools/db-bridge.ps1`, about 200 lines) and start it with a fixed port and token.
+- An IT department can review the scripts (`tools/db-bridge.ps1` and `tools/db_bridge.py`, about 500 and 1,000 lines) and
+  start them with a fixed port and token. `python tools/check_bridge.py` tries the Python bridge's drivers against fake
+  drivers, without databases.
 
 ## Database sources over HTTP
 
 The way **External database** under *Database sources* in Import opens a form in the middle that makes an ordinary API
-source out of an address and a key. It is for databases that answer over HTTP; MySQL, MariaDB and PostgreSQL are reached
-through the bridge, since the browser cannot open a connection to them, and the form has a button there. The app asks the service for its tables (schema discovery) and adds one endpoint per table plus a
+source out of an address and a key. It is for databases that answer over HTTP; MySQL, MariaDB, PostgreSQL and Oracle are
+reached through the bridge, which connects to them itself with its drivers, since the browser cannot open a connection to them,
+and the form has a button there. The app asks the service for its tables (schema discovery) and adds one endpoint per table plus a
 generic one where you name the table yourself. The source then works like the preset APIs: parameters, preview,
 pages followed automatically and saved fetches updated with one click.
 
@@ -178,12 +217,36 @@ pages followed automatically and saved fetches updated with one click.
 CORS means that the database's server must allow calls from the browser. A page opened from the folder sends the
 origin `null`; in server mode the app's address. How to enable it is in each service's documentation (link in
 the dialog). When the server cannot be changed, the proxy setting (see [api-konfiguration.md](api-konfiguration.md))
-or the bridge through ODBC remain.
+or *Fetch through the bridge* remain.
 
 Keys and passwords stay in the session or are saved encrypted; the configuration that is created can be exported
 and shared without them. The response formats `graphql`, `sparql` and `influx-csv` and `lift` (lifting a nested
 object into columns) are described in [api-konfiguration.md](api-konfiguration.md) and can be used in your own
 configurations.
+
+### More databases and how they are reached
+
+An open-source database is reached in one of three ways: directly from the browser over HTTP (External database, Neo4j),
+through the bridge with a driver, or not yet.
+
+| Database | Way | Reason |
+|---|---|---|
+| PostgreSQL, PostGIS, TimescaleDB | The bridge (pg8000); PostgREST or Supabase over HTTP | PostGIS and TimescaleDB are extensions of PostgreSQL; the geometry comes as WKT |
+| CockroachDB, YugabyteDB, CrateDB, QuestDB | The bridge (pg8000) | They speak PostgreSQL's protocol; CrateDB and QuestDB lack read-only transactions, so the keyword check applies there |
+| MySQL, MariaDB | The bridge (PyMySQL) | |
+| Oracle | The bridge (python-oracledb in thin mode) | Pure Python, no Oracle client needed |
+| SQL Server | The bridge: SqlClient in PowerShell, pyodbc in Python | python-tds (MIT) is not added: encryption needs pyOpenSSL and a CA certificate, otherwise the sign-in goes unencrypted |
+| Firebird | The bridge through ODBC (Firebird's ODBC driver) | firebird-driver (MIT) needs Firebird's client library installed; ODBC suffices for now |
+| SQLite | Files directly in the app, or the bridge | |
+| Neo4j, Memgraph | The Neo4j source (Bolt over WebSocket) | Memgraph speaks Bolt; not tried against a real Memgraph |
+| Elasticsearch, OpenSearch, CouchDB, ClickHouse, InfluxDB 2 | External database over HTTP | The server must allow CORS; ClickHouse is also reached through the bridge with the MySQL or PostgreSQL protocol |
+| InfluxDB 3 | Not yet | Queried with SQL over `/api/v3/query_sql`; the family reads InfluxDB 2 with Flux |
+| ArangoDB, SurrealDB | Not yet | Both answer over HTTP (AQL in `/_api/cursor`, SurrealQL in `/sql`) and can become families in External database |
+| MongoDB | Not yet | pymongo (Apache-2.0) suits the bridge, but documents and queries are not SQL and need an answer format of their own; the Atlas Data API over HTTP is shut down |
+| Cassandra, ScyllaDB | Not yet | cassandra-driver (Apache-2.0) speaks CQL without the DB-API, and there is no HTTP interface without add-ons |
+| Trino, Presto | Not yet | trino (Apache-2.0) follows the DB-API, but the HTTP protocol lacks CORS and the driver pulls in more packages |
+| Redis, Valkey | Not as a table source | Keys and values without tables |
+| H2, HSQLDB, Derby | Not at all | Only JDBC (Java); no Python driver with an allowed licence |
 
 ### Neo4j over Bolt
 

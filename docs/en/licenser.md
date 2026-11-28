@@ -95,6 +95,11 @@ BY 4.0 under Lantmäteriet's terms of use for high-value datasets, which ask for
 has been processed and the licence; the corner of the map therefore shows "Ortofoto © Lantmäteriet (year), processed for the map (CC BY
 4.0)".
 
+The database bridge's drivers are not included in the app either. Whoever runs the Python bridge installs them when they are
+needed (`pip install pymysql pg8000 oracledb`), and the bridge imports them only when they are there: PyMySQL (MIT), pg8000
+(BSD-3-Clause) and python-oracledb (Apache-2.0 or UPL-1.0). The PowerShell bridge uses the ODBC drivers already installed on the
+computer, under their own terms. See [kallor.md](kallor.md#the-bridges-drivers).
+
 ## Dataregium and Dataspatium
 
 [Dataregium OpenCDE server](https://github.com/marwiss/Dataregium) is a separate work under AGPL-3.0 and no part of Dataspatium. The same person holds the copyright of both works and on 2026-11-05 permitted two things between them: Dataregium reproduces Dataspatium's look (the design tokens in `src/ui/design/tokens.css` and the component styles are transcribed there under the AGPL, so that the two look like one product), and Dataspatium may use code and resources from Dataregium, for example test files, example texts and API descriptions. The licences of each work are otherwise unchanged; everything else they share (glossary, README structure, error codes, capabilities document) is recreated as facts in each repository.
