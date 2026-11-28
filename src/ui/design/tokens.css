@@ -118,6 +118,8 @@
   /* A split work area (the plan's map and text): the second pane's width and the least either pane keeps. */
   --dm-split-w: 380px;
   --dm-split-min-w: 260px;
+  /* A small picture in a list: the picture an AI tool drew, in the AI panel's steps. */
+  --dm-thumb-w: 200px;
   --dm-z-sheet: 40;
   --dm-floating-max-h: 640px;
   --dm-z-drawer: 10;

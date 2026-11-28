@@ -68,6 +68,13 @@ according to the national specification (Detaljplan 4.1), that file is fetched a
 or when the file cannot be read, the plan's reference objects are fetched page by page. The key goes only to Lantmäteriet's
 own server, never to a file on another host.
 
+**Comprehensive plans from the geodata platform.** Under *Geodata source*, *Comprehensive plans (geodata platform)* adds
+Lantmäteriet's search for comprehensive plans (version 2, in WGS 84) as a source of its own with the same login and keys as the
+detailed plans. The municipalities' collections become layers, and a layer is fetched as a map. The specification for comprehensive
+plans is still a test (Test 5), and on 2026-11-28 search version 2 could not be subscribed to in the production API portal (only
+GeodatakatalogSökning v1); if it is in the portal's list, subscribe to it too. The verification environment (api-ver.lantmateriet.se, its own portal and keys)
+may have test plans when production has none.
+
 **A key to the geodata platform.** Anyone can become a consumer free of charge: a private person, company, association,
 municipality or authority. Create an account in Geotorget, apply under *Nationella geodataplattformen* to become a consumer
 and accept the terms (for an organisation the account takes about two working days). Then sign in to the API portal

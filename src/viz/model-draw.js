@@ -618,6 +618,8 @@
         toIfc: (p) => toIfc(meshes.coordination, p),
         /** The current picture as a PNG data URL. */
         png: () => { draw(); return canvas.toDataURL('image/png'); },
+        /** The current picture as a Blob of a type (PNG by default), encoded off the main thread where the browser can. */
+        blob: (type, quality) => new Promise((resolve) => { draw(); canvas.toBlob(resolve, type || 'image/png', quality); }),
         destroy() {
           if (destroyed) return;
           destroyed = true;
@@ -668,23 +670,60 @@
      */
     async function pictures(datasetId, shots, opts = {}) {
       const width = Math.min(opts.width || 1200, 1500); const height = Math.min(opts.height || 750, 1500);
+      return offscreen(datasetId, width, height, (hd) => shots.map((shot) => { aim(hd, shot); return hd.png(); }));
+    }
+    /**
+     * One picture of a model drawn off screen as the 3D view draws it, for the AI's picture tools (ai/view-tools): a shot as in
+     * `pictures`, which may also give the elements shown (`visible`), a section in BCF's form, the projection and the direction of
+     * the view in the model's own axes (from what is shown towards the camera). JPEG by default, its quality stepped down until it
+     * is at most `maxBytes`; the main thread gets a break between the steps, and the encoding runs where the browser puts it.
+     * @param {string} datasetId
+     * @param {{visible?: number[]|null, selected?: number[], section?: Array<{location: number[], direction: number[]}>, projection?: string, direction?: number[]}} shot
+     * @param {{width?: number, height?: number, type?: string, maxBytes?: number}} [opts]
+     * @returns {Promise<{url: string, mediaType: string, bytes: number, width: number, height: number, view: any}>}
+     */
+    async function picture(datasetId, shot, opts = {}) {
+      const width = Math.min(opts.width || 1024, 1500); const height = Math.min(opts.height || 768, 1500);
+      const type = opts.type || 'image/jpeg';
+      const pause = () => new Promise((resolve) => setTimeout(resolve, 0));
+      return offscreen(datasetId, width, height, async (hd) => {
+        await pause();
+        aim(hd, shot);
+        await pause();
+        let quality = 0.85; let blob = await hd.blob(type, quality);
+        while (blob && opts.maxBytes && blob.size > opts.maxBytes && type === 'image/jpeg' && quality > 0.4) { quality -= 0.15; await pause(); blob = await hd.blob(type, quality); }
+        if (!blob) throw new Error(D.t('model.err.webgl'));
+        const url = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.onerror = () => reject(r.error); r.readAsDataURL(blob); });
+        return { url, mediaType: blob.type || type, bytes: blob.size, width, height, view: hd.view() };
+      });
+    }
+    /**
+     * An off-screen view of a model of a set size for `fn`, taken down afterwards with its WebGL context let go at once, so that
+     * pictures in a row never push out the context of the view on screen.
+     */
+    async function offscreen(datasetId, width, height, fn) {
       const host = document.createElement('div');
       host.style.cssText = `position:absolute;left:-20000px;top:0;width:${width}px;height:${height}px;`;
       document.body.appendChild(host);
       let hd = null;
       try {
         hd = await render(host, { datasetId }, { preserve: true, width, height, pixelRatio: 1 });
-        const out = [];
-        for (const shot of shots) {
-          const selected = shot.selected || [];
-          // Coloured elements are not also marked, so that their colour shows.
-          hd.select(shot.colors && shot.colors.length ? [] : selected);
-          hd.setColors(shot.colors || []);
-          if (!(shot.viewpoint && hd.setViewpoint(shot.viewpoint))) hd.fit(selected.length ? selected : null);
-          out.push(hd.png());
-        }
-        return out;
-      } finally { if (hd) hd.destroy(); host.remove(); }
+        return await fn(hd);
+      } finally {
+        if (hd) { hd.destroy(); try { hd.renderer.forceContextLoss(); } catch (_e) { /* the context is gone already */ } }
+        host.remove();
+      }
+    }
+    /** A shot in an off-screen view: what is shown, marked, coloured and cut, the projection, and the camera. */
+    function aim(hd, shot) {
+      const selected = shot.selected || [];
+      if (Array.isArray(shot.visible)) hd.setVisible(shot.visible);
+      // Coloured elements are not also marked, so that their colour shows.
+      hd.select(shot.colors && shot.colors.length ? [] : selected);
+      hd.setColors(shot.colors || []);
+      if (Array.isArray(shot.section)) hd.setSection(shot.section);
+      if (shot.projection) hd.setProjection(shot.projection);
+      if (!(shot.viewpoint && hd.setViewpoint(shot.viewpoint))) hd.fit(selected.length ? selected : null, shot.direction ? fromIfcDir(hd.meshes.coordination, shot.direction) : undefined);
     }
     /** A DXF drawing as a standalone SVG: its size, a background, and only the chosen layers. */
     async function drawingSvg(id, def, width, height) {
@@ -761,6 +800,6 @@
       return `<img src="${url}" alt="" width="${width}" height="${height}" style="max-width:100%;height:auto">${legend}`;
     }
 
-    return { ensureThree, meshesOf, clearCache, render, toBlob, htmlFor, pictures, drawingSvg, toIfc, fromIfc, fromIfcDir, VIEWS, VIEW_ORDER, boxPlanes, boxOfPlanes };
+    return { ensureThree, meshesOf, clearCache, render, toBlob, htmlFor, pictures, picture, drawingSvg, toIfc, fromIfc, fromIfcDir, VIEWS, VIEW_ORDER, boxPlanes, boxOfPlanes };
   });
 })();

@@ -147,9 +147,18 @@
         };
         const chosenModel = () => (model.value === OTHER ? String(own.value || '').trim() : model.value);
         fillModels(values.model);
-        model.addEventListener('change', () => { own.hidden = model.value !== OTHER; if (!own.hidden) own.focus(); });
-        kind.addEventListener('change', () => fillModels(providers.KINDS[kind.value] ? providers.KINDS[kind.value].model : ''));
-        preset.addEventListener('change', () => { const p = providers.PRESETS.find((x) => x.id === preset.value); if (!p) return; kind.value = p.kind; name.value = t(p.nameKey); baseUrl.value = p.baseUrl; values.models = undefined; fillModels(p.model); });
+        // Whether an OpenAI-compatible model sees pictures (F139 a): preset from the model's name until the person sets it; Claude
+        // always does, so the switch shows only for the other kind.
+        const images = /** @type {any} */ (h('dm-switch', { label: t('ai.images'), title: t('ai.images.hint'), 'data-ai-form-images': '' }));
+        const imagesByName = () => providers.seesByName(chosenModel());
+        const showImages = () => { images.hidden = kind.value === 'anthropic'; if (typeof values.images !== 'boolean') images.checked = imagesByName(); };
+        images.checked = typeof values.images === 'boolean' ? values.images : imagesByName();
+        images.addEventListener('change', () => { values.images = !!images.checked; });
+        showImages();
+        model.addEventListener('change', () => { own.hidden = model.value !== OTHER; if (!own.hidden) own.focus(); showImages(); });
+        own.addEventListener('input', showImages);
+        kind.addEventListener('change', () => { fillModels(providers.KINDS[kind.value] ? providers.KINDS[kind.value].model : ''); showImages(); });
+        preset.addEventListener('change', () => { const p = providers.PRESETS.find((x) => x.id === preset.value); if (!p) return; kind.value = p.kind; name.value = t(p.nameKey); baseUrl.value = p.baseUrl; values.models = undefined; fillModels(p.model); showImages(); });
         const status = h('p', { class: 'dm-help dm-xs', 'data-ai-form-status': '', role: 'status', 'aria-live': 'polite' });
         const say = (text, kindOf) => { status.textContent = text; status.className = kindOf === 'error' ? 'dm-error dm-small' : kindOf === 'ok' ? 'dm-small' : 'dm-help dm-xs'; status.setAttribute('data-ai-form-status', kindOf || ''); };
         const key = /** @type {any} */ (h('dm-input', { label: t('ai.key'), type: 'password', autocomplete: 'off', help: t('ai.key.hint'), placeholder: state === 'session' || state === 'saved' ? t('ai.key.kept') : '', 'data-ai-form-key': '' }));
@@ -179,7 +188,7 @@
         const body = (finish) => {
           done = finish;
           return h('div', { class: 'dm-stack-sm' }, existing ? null : preset, kind, name, baseUrl,
-            h('div', { class: 'dm-row-wrap dm-ai-model-row' }, model, fetchModels), own,
+            h('div', { class: 'dm-row-wrap dm-ai-model-row' }, model, fetchModels), own, images,
             h('div', { class: 'dm-row' }, h('strong', { class: 'dm-small dm-grow', text: t('ai.key') }), keyBadge(state)),
             key, keepSel, keyRow, status, error ? h('p', { class: 'dm-error', 'data-ai-form-error': '', text: error }) : null);
         };

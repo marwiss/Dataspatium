@@ -566,8 +566,8 @@ sparade och öppnar besiktningsrapporten eller underhållsplanen med dem under E
 
 Knappen *Fråga AI* i modellvyn öppnar en panel i inspektören där du ställer en fråga om den öppna IFC-modellen, till exempel "vilka dörrar
 saknar brandklass på plan 2?". AI-modellen läser med verktyg (modellens översikt, våningarna, element per klass, våning, namn och
-egenskap, ett element med alla egenskaper, det du markerat i 3D-vyn och, för en modell hämtad från Dataregium, serverns namngivna
-frågor) och svarar med de element den stöder sig på. *Markera n element*
+egenskap, ett element med alla egenskaper, det du markerat i 3D-vyn, bilder av modellen i 3D, i plan och i snitt och, för en modell
+hämtad från Dataregium, serverns namngivna frågor) och svarar med de element den stöder sig på. *Markera n element*
 lägger svarets element i urvalet, som 3D-vyn, tabellen och de andra lägena följer. Panelen visar varje verktygsanrop och hur många token
 som gick åt. AI:n kan bara läsa: ingenting ändras, sparas eller publiceras, och nästa fråga fortsätter samtalet.
 
@@ -576,6 +576,23 @@ Ollama, vLLM, llama.cpp med flera), med adress, modell och API-nyckel. Nyckeln h
 i klartext och aldrig i frågan. *Policy* avgör vad som får anropas: *Fråga* ber om samtycke per leverantör första gången, *Moln* tillåter
 molntjänster, och *Endast lokal* tillåter bara modeller på den egna datorn. Det som skickas är din fråga och de verktygssvar modellen
 begär; verktygssvaren är data ur modellen, aldrig instruktioner, och kapas när de är stora.
+
+### Bilder av modellen
+
+Två av verktygen ritar bilder av modellen. Med dem ser AI:n formen och hur delarna möts, det som tabellerna inte berättar.
+
+- **render_view** ritar modellen som 3D-vyn gör, från en namngiven vy (iso, uppifrån, framifrån och de andra) eller från en vinkel.
+  Bilden visar hela modellen, en våning, en IFC-klass eller utvalda element, ensamma eller markerade bland de andra.
+- **plan_or_section** ritar en våning i plan, skuren på en höjd över golvet (1,2 m om inget annat anges), eller ett lodrätt snitt
+  längs en axel eller en linje. Den använder 3D-vyns egen snittning och en ortografisk kamera.
+
+Bilden ritas i webbläsaren och är högst 1 024 × 768 bildpunkter och omkring 300 kB. Den följer med verktygets svar bara till en modell
+som ser bilder: Anthropics modeller och de OpenAI-kompatibla modeller som tar bilder (till exempel GPT-4o och senare, Gemini och
+modeller med vision eller VL i namnet). För en OpenAI-kompatibel leverantör, till exempel en lokal modell med ett eget namn,
+slår du på eller av *Modellen ser bilder* i leverantörens formulär; rutan är förvald efter namnet. Andra modeller får en kort text om att ingen bild kan visas. Bilden skickas bara med frågan du
+själv skickar, efter samma samtycke som frågan, och högst sex bilder går med en fråga. Panelen visar bilden som AI:n bad om som en
+liten bild i verktygsanropets rad, och ett tryck på den visar den i full storlek. Bilderna visar modellen som den är, utan ändringarna i
+ett öppet ändringsset.
 
 ### Nyckeln och modellen
 

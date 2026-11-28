@@ -20,6 +20,8 @@
  * With a kit (B-78: ai/plan-tools for a digital comprehensive plan) the same loop runs another dataset's system prompt and tools.
  * While it runs the loop tells the panel what happens (B-83): the answer's pieces as they are written (delta), each tool before it
  * runs (tool-start) and after (tool), and the tokens after each turn (usage); its time limit stands still while the person answers.
+ * The picture tools (ai/view-tools, B-84) draw only for a provider that sees pictures: the picture goes beside the tool's words to
+ * the provider (ai/providers puts it in the provider's form), at most MAX_PICTURES in a question, and into the step for the panel.
  */
 (function () {
   'use strict';
@@ -128,6 +130,8 @@
     };
     const MAX_PREVIEWS = 3;
     const MAX_PREVIEWS_BUILD = 8;
+    /** The pictures of the picture tools in one question (ai/view-tools): each goes with every later turn of the question. */
+    const MAX_PICTURES = 6;
     const PREVIEW_TOOL = {
       name: 'preview_changeset',
       description: 'Run the open change set on a copy of the model with IfcOpenShell, as the person\'s Preview does, and get what would be created, changed and deleted, the errors in the schema or the model\'s relationships that block approval, the buildingSMART rules the change set fails (rules: code, error or warning, count and examples), for each storey of its walls the topology: rooms, whether the storey is closed, open wall ends (dangles) and the external walls by facing, notes on what the app left out (such as IsExternal on a storey whose walls do not close), and, when the brief names an IDS file, the specifications that fail (ids). Nothing is changed. Works only when the app\'s Python is already running.',
@@ -243,6 +247,9 @@
       let answer = '';
       let stopped = 'answered';
       let previews = 0;
+      // The picture tools draw only for a provider that sees pictures, at most MAX_PICTURES in a question (B-84).
+      const sees = providers.seesImages(input.provider);
+      let pictures = 0;
       try {
         for (let turn = 0; turn < budget.turns; turn++) {
           if (controller.signal.aborted) { stopped = 'cancelled'; break; }
@@ -267,13 +274,20 @@
               : changing && call.name === PREVIEW_TOOL.name
               ? (++previews > maxPreviews ? { error: 'no more previews in this question; tell the person what the change set holds' } : await previewFor(input.datasetId, input.changeset, { ids: input.ids || null }))
               : checking && writeTools.has(call.name) ? checkTools.write(input.changeset, call.name, call.args)
-              : changing && writeTools.has(call.name) ? writeTools.call(input.changeset, call.name, call.args) : await tools.call(input.datasetId, call.name, call.args);
+              : changing && writeTools.has(call.name) ? writeTools.call(input.changeset, call.name, call.args)
+              : sees && tools.isPicture(call.name) && pictures >= MAX_PICTURES ? { error: `no more pictures in this question (at most ${MAX_PICTURES}); answer with what you have` }
+              : await tools.call(input.datasetId, call.name, call.args, { images: sees });
             const ms = Math.round(performance.now() - t0);
             for (const id of kit ? (kit.idsOf ? kit.idsOf(result) : []) : tools.idsOf(result)) elements.add(id);
+            // A picture goes beside the answer's words, never inside them; the person sees it in the step.
+            const image = !kit && result && result.picture && result.picture.data ? result.picture : null;
+            if (image) pictures++;
+            const said = image ? Object.assign({}, result, { picture: 'attached' }) : result;
             const step = { name: call.name, args: call.args, count: result && typeof result.count === 'number' ? result.count : (result && Array.isArray(result.elements) ? result.elements.length : null), error: result && result.error ? String(result.error) : null, ms };
+            if (image) step.picture = `data:${image.mediaType};base64,${image.data}`;
             steps.push(step);
             emit({ type: 'tool', step });
-            results.push({ id: call.id, name: call.name, content: resultText(result, kit && kit.source ? kit.source : undefined) });
+            results.push(Object.assign({ id: call.id, name: call.name, content: resultText(said, kit && kit.source ? kit.source : undefined) }, image ? { image: { mediaType: image.mediaType, data: image.data } } : {}));
           }
           messages.push({ role: 'tool', results });
           if (usage.input + usage.output > budget.tokens) { stopped = 'budget'; break; }
@@ -305,6 +319,6 @@
       try { got = await ask({ question: String(a.question || '').slice(0, 500), options, free: !!a.allow_free, signal }); } finally { if (clock) clock.resume(); }
       return got ? { answer: got.answer, index: got.index, own_text: !!got.free } : { error: 'the person closed the question without answering' };
     }
-    return { ask, previewFor, topologyBrief, rulesBrief, idsBrief, SYSTEM, SYSTEM_CHANGE, SYSTEM_BUILD, SYSTEM_CHECK, ASK_TOOL, MAX_RESULT_CHARS, MAX_PREVIEWS, MAX_PREVIEWS_BUILD, PREVIEW_TOOL };
+    return { ask, previewFor, topologyBrief, rulesBrief, idsBrief, SYSTEM, SYSTEM_CHANGE, SYSTEM_BUILD, SYSTEM_CHECK, ASK_TOOL, MAX_RESULT_CHARS, MAX_PREVIEWS, MAX_PREVIEWS_BUILD, MAX_PICTURES, PREVIEW_TOOL };
   });
 })();

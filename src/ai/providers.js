@@ -9,6 +9,8 @@
  * The answer is streamed (ai/stream) so that the panels can show it while it is written, and the call falls back to the plain answer
  * when the server sends one or refuses to stream (B-83). Each kind has its own list of models, and the server's own list is fetched
  * and the key tried (the cheapest real call: the list of models) only on the person's press, after the same consent as a question.
+ * A picture tool's picture (ai/view-tools) goes to a provider that sees pictures (`seesImages`): in Anthropic's tool result, and for
+ * an OpenAI-compatible API in a user message after the tool messages, since those take text only.
  */
 (function () {
   'use strict';
@@ -70,6 +72,8 @@
       const i = all.findIndex((x) => x.id === p.id);
       const models = cleanModels(provider.models !== undefined ? provider.models : i >= 0 ? all[i].models : []);
       if (models.length) p.models = models;
+      // Whether the model sees pictures, when the person said so (F139 a); without it the model's name decides (seesImages).
+      if (typeof provider.images === 'boolean') p.images = provider.images;
       if (i >= 0) all[i] = p; else all.push(p);
       await idb.setSetting(SETTING, all);
       notify();
@@ -168,11 +172,26 @@
     }
     /** The text of an assistant message's blocks. */
     const textOf = (content) => (typeof content === 'string' ? content : (content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n'));
+    /**
+     * The OpenAI-compatible models known to take pictures; the others are taken to read text only. Every Claude model sees pictures.
+     */
+    const SEES = /gpt-4o|gpt-4\.1|gpt-4-turbo|gpt-5|chatgpt|\bo[134](?!-mini)|\bo4-mini|gemini|claude|vision|llava|moondream|minicpm-v|vl\b|pixtral|gemma-?3|llama-?4|mistral-(small|medium)/i;
+    /**
+     * Whether a provider sees pictures, so that the picture tools' pictures go to it (ai/view-tools): Anthropic Messages always,
+     * an OpenAI-compatible API when its model is one of SEES. @param {{kind?: string, model?: string}|null} provider
+     */
+    const seesImages = (provider) => !!provider && (provider.kind === 'anthropic' || (typeof provider.images === 'boolean' ? provider.images : seesByName(provider.model)));
+    /** Whether a model's name is one of the OpenAI-compatible models known to see pictures (the dialog's default, F139 a). @param {string} model */
+    const seesByName = (model) => SEES.test(String(model || ''));
+    /** A tool's picture as the kind's image block. @param {{mediaType?: string, data: string}} image @param {string} kind */
+    const imageBlock = (image, kind) => userContent([{ type: 'image', mediaType: image.mediaType, data: image.data }], kind)[0];
 
     function anthropicBody(provider, req) {
       const messages = [];
+      const sees = seesImages(provider);
       for (const m of req.messages) {
-        if (m.role === 'tool') messages.push({ role: 'user', content: m.results.map((r) => ({ type: 'tool_result', tool_use_id: r.id, content: String(r.content) })) });
+        // A tool's picture goes in its result, after the words (decision B-84).
+        if (m.role === 'tool') messages.push({ role: 'user', content: m.results.map((r) => ({ type: 'tool_result', tool_use_id: r.id, content: sees && r.image && r.image.data ? [{ type: 'text', text: String(r.content) }, imageBlock(r.image, 'anthropic')] : String(r.content) })) });
         else if (m.role === 'assistant') messages.push({ role: 'assistant', content: (typeof m.content === 'string' ? [{ type: 'text', text: m.content }] : m.content).map((b) => (b.type === 'tool_use' ? { type: 'tool_use', id: b.id, name: b.name, input: b.input || {} } : { type: 'text', text: b.text || '' })).filter((b) => b.type === 'tool_use' || b.text) });
         else messages.push({ role: 'user', content: userContent(m.content, 'anthropic') });
       }
@@ -193,10 +212,15 @@
     }
     function openaiBody(provider, req) {
       const messages = [];
+      const sees = seesImages(provider);
       if (req.system) messages.push({ role: 'system', content: req.system });
       for (const m of req.messages) {
-        if (m.role === 'tool') for (const r of m.results) messages.push({ role: 'tool', tool_call_id: r.id, content: String(r.content) });
-        else if (m.role === 'assistant') {
+        if (m.role === 'tool') {
+          for (const r of m.results) messages.push({ role: 'tool', tool_call_id: r.id, content: String(r.content) });
+          // A tool message takes text only: the tools' pictures follow in one user message, each after a line that names its call.
+          const shots = sees ? m.results.filter((r) => r.image && r.image.data) : [];
+          if (shots.length) messages.push({ role: 'user', content: shots.flatMap((r) => [{ type: 'text', text: `[picture from the model: the answer of ${r.name}, call ${r.id}]` }, imageBlock(r.image, 'openai')]) });
+        } else if (m.role === 'assistant') {
           const calls = (typeof m.content === 'string' ? [] : m.content.filter((b) => b.type === 'tool_use')).map((b) => ({ id: b.id, type: 'function', function: { name: b.name, arguments: JSON.stringify(b.input || {}) } }));
           const msg = { role: 'assistant', content: textOf(m.content) || null };
           if (calls.length) msg.tool_calls = calls;
@@ -344,6 +368,6 @@
       const code = out.status === 401 ? 'key' : out.status === 403 ? 'access' : out.status === 404 || out.status === 405 ? 'address' : 'other';
       return { ok: false, status: out.status, code, message: statusText(out.status, provider, errorText(out.res, key)), models: [] };
     }
-    return { KINDS, MODELS, PRESETS, POLICIES, list, get, save, setModel, modelsFor, remove, setKey, hasKey, saveKey, forgetKey, unstoreKey, unlockKeys, keyState, subscribeKeys, isLocal, hostOf, policy, setPolicy, allowed, chat, fetchModels, testKey, subscribe };
+    return { KINDS, MODELS, PRESETS, POLICIES, list, get, save, setModel, modelsFor, remove, setKey, hasKey, saveKey, forgetKey, unstoreKey, unlockKeys, keyState, subscribeKeys, isLocal, hostOf, policy, setPolicy, allowed, chat, fetchModels, testKey, subscribe, seesImages, seesByName };
   });
 })();

@@ -358,7 +358,7 @@
   test('geodata: NGP\'s other datasets are sources of their own that take the plan source\'s login and the keys given there', async (assert) => {
     const list = JSON.parse(await D.assets.loadText('presets/geodata/services.json')).services;
     const others = list.filter((s) => /^lantmateriet-ngp-/.test(s.id) && s.id !== 'lantmateriet-ngp-detaljplan');
-    assert.equal(others.length, 4, 'buildings, shore protection, cultural remains and the near-mountain forest line');
+    assert.equal(others.length, 5, 'buildings, shore protection, cultural remains, the near-mountain forest line and the comprehensive plans');
     assert.ok(others.every((s) => !s.preset && s.authFrom === 'lantmateriet-ngp-detaljplan'), 'none opens the plan source; all log in like it');
     const secrets = D.require('api/secrets');
     const from = { id: 'test-ngp-login', auth: { type: 'oauth2_client_credentials', tokenUrl: 'https://apimanager.lantmateriet.se/oauth2/token', clientAuth: 'body' } };
@@ -449,6 +449,10 @@
       assert.ok(!s.preset && s.authFrom === 'lantmateriet-ngp-detaljplan', s.id + ' logs in with the platform key, as a source of its own');
       assert.ok(s.key && s.kind === 'ogcapi' && /\/sokning\/v1\/[a-z]+\/v1$/.test(s.url), s.id + ': ' + s.url);
     }
+    // The comprehensive plans: search version 2 (WGS 84), the same login (F136, L-355).
+    const op = byId.get('lantmateriet-ngp-oversiktsplan');
+    assert.ok(op && !op.preset && op.authFrom === 'lantmateriet-ngp-detaljplan' && op.kind === 'ogcapi' && /\/sokning\/v2\/oversiktsplan\/v2$/.test(op.url), 'the comprehensive plans: ' + (op && op.url));
+    assert.ok(op.about.sv && op.about.en, 'described in Swedish and English');
     assert.equal(new Set(list.map((s) => s.id)).size, list.length, 'the ids are unique');
     // The review of 2026-11-27: SCB's workspace, SGU's and Riksantikvaren's OGC APIs, SYKE's GeoServer.
     assert.equal(byId.get('scb-geodata').url, 'https://geodata.scb.se/geoserver/stat/wfs');

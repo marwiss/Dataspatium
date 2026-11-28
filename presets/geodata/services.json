@@ -274,6 +274,22 @@
    }
   },
   {
+   "id": "lantmateriet-ngp-oversiktsplan",
+   "authFrom": "lantmateriet-ngp-detaljplan",
+   "name": "Översiktsplaner (geodataplattformen)",
+   "publisher": "Lantmäteriet",
+   "country": "SE",
+   "kind": "ogcapi",
+   "key": true,
+   "url": "https://api.lantmateriet.se/distribution/geodatakatalog/sokning/v2/oversiktsplan/v2",
+   "docs": "https://www.lantmateriet.se/sv/nationella-geodataplattformen/datamangder/oversiktsplan/",
+   "license": "CC0 1.0 (kräver nyckel)",
+   "about": {
+    "sv": "Kommunernas översiktsplaner ur den nationella geodataplattformen, en samling per kommun (sökningens version 2, i WGS 84); specifikationen är ett test (Test 5), och sökningen version 2 gick 2026-11-28 inte att prenumerera på i produktionens API-portal. Samma nyckel som detaljplanerna, som alla kan få utan kostnad genom Geotorget.",
+    "en": "The municipalities' comprehensive plans from the national geodata platform, one collection per municipality (search version 2, in WGS 84); the specification is a test (Test 5), and on 2026-11-28 search version 2 could not be subscribed to in the production API portal. The same key as the detailed plans, which anyone can get free of charge through Geotorget."
+   }
+  },
+  {
    "id": "lantmateriet-stac",
    "preset": "lantmateriet-stac",
    "name": "Vektordata, ortofoton, höjddata och kartor (Lantmäteriet STAC)",
