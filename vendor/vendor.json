@@ -852,6 +852,18 @@
           "as": "icons/building-2.svg",
           "wrap": "text",
           "bundle": "icons"
+        },
+        {
+          "path": "icons/scissors.svg",
+          "as": "icons/scissors.svg",
+          "wrap": "text",
+          "bundle": "icons"
+        },
+        {
+          "path": "icons/folder-input.svg",
+          "as": "icons/folder-input.svg",
+          "wrap": "text",
+          "bundle": "icons"
         }
       ]
     },

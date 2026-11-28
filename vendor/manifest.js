@@ -2109,6 +2109,20 @@ Dataspatium.assets.manifest({
    "sha256": "1351b6df413b505b589e0e0dcf986f4cf3b996295c92362a92821e90b871b1c7",
    "library": "lucide"
   },
+  "lucide/icons/scissors.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 450,
+   "sha256": "e314b41c7c95bc65187499a159cba11110e3ba623317b00baf03ed5d5cf6c17f",
+   "library": "lucide"
+  },
+  "lucide/icons/folder-input.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 479,
+   "sha256": "b6c85dded1f8543a7a126b6a3cb8c65a8a563366a875a10e11b1c586deeed953",
+   "library": "lucide"
+  },
   "pdfjs/pdf.worker.min.js": {
    "file": "vendor/pdfjs/pdf.worker.min.js.js",
    "encoding": "text",
@@ -2848,7 +2862,7 @@ Dataspatium.assets.manifest({
     "geotiff.js"
    ],
    "assets": 1,
-   "notes": "Reads Lantmäteriet's cloud-optimised GeoTIFF files with range requests. The browser build is a classic script with the global GeoTIFF: loaded on the page for the terrain model's heights (small windows), and the same file wrapped as text for the app's own Blob worker that decodes the orthophotos (api/orthophoto-cog). Its own worker pool is never used."
+   "notes": "Reads Lantmäteriet's cloud-optimised GeoTIFF files with range requests. The browser build is a classic script with the global GeoTIFF: loaded on the page for the terrain model's heights (small windows), and the same file wrapped as text for the app's own Blob worker that decodes the orthophotos (api/orthophoto-cog) and the app's raster worker (engines/raster) for imported GeoTIFF files and GeoTIFF export. Its own worker pool is never used."
   },
   "fflate": {
    "version": "0.8.3",
@@ -2872,7 +2886,7 @@ Dataspatium.assets.manifest({
    "license": "ISC",
    "homepage": "https://lucide.dev/",
    "direct": [],
-   "assets": 111
+   "assets": 113
   },
   "pdfjs": {
    "version": "3.11.174",
