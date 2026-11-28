@@ -27,7 +27,7 @@
      */
     function create(ctx, api) {
       const { ui, shell } = ctx;
-      const st = { editing: false, drawing: false, shape: /** @type {any} */ (null), pending: 0 };
+      const st = { editing: false, drawing: false, shape: /** @type {any} */ (null), pending: 0, for: '' };
       let map = null; let L = null; let handle = null; let copy = null; let barEl = null;
       const ds = () => api.dataset();
       const available = () => layerNew.isLayer(ds());
@@ -81,6 +81,9 @@
       /** The map drawn (again): in drawing mode a shape drawn becomes a feature, a new feature is chosen, a shape edited stays so. */
       function mapDrawn(hd, Lib) {
         handle = hd; map = hd ? hd.map : null; L = Lib; copy = null;
+        // A shape or a feature waiting to be chosen belongs to the layer it was made in.
+        const id = ds() ? ds().id : '';
+        if (st.for !== id) { st.for = id; st.shape = null; st.pending = 0; st.drawing = false; }
         if (!st.editing || !available() || !map) return;
         if (L.PM && !map.pm) L.PM.reInitLayer(map);
         if (map.pm) map.pm.setGlobalOptions({ snappable: true, snapDistance: 15, tooltips: false });
