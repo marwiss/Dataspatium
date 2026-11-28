@@ -75,7 +75,7 @@
         assert.ok(!Array.from(pane.querySelectorAll('dm-button')).some((b) => !b.closest('[data-added]')), 'no separate add button: the only buttons in the column take an added source out');
         // The pane head: the same head, without a heading; the column is still named for screen readers.
         assert.ok(paneHead(root), 'the pane head is drawn');
-        assert.equal(paneHead(root).textContent, '', 'no heading in the pane head (B-81.1)');
+        assert.equal(paneHead(root).textContent, t('import.sources'), 'the pane head says Källor, as in every mode (B-81.2)');
         assert.equal(root.querySelector('.dm-left').getAttribute('aria-label'), t('import.sources'));
         assert.equal(root.querySelector('.dm-left [role="tree"], .dm-left [role="group"]').getAttribute('aria-label'), t('import.sources'));
         // A group folds and unfolds with its arrow, and with the keys.

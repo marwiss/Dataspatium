@@ -306,6 +306,18 @@
       return 'meshes in ' + Math.round(performance.now() - t0) + ' ms';
     }, 30000);
 
+    test('lazy: each source of Inhämta opens its view in the workspace, loading the groups it needs', async (assert) => {
+      await shell.activate('inhamta');
+      const seen = [];
+      for (const [id, sel] of [['opencde', '[data-source-form="opencde"] [data-family-form="opencde"]'], ['neo4j', '[data-source-form="neo4j"]'], ['database', '[data-source-form="database"]'], ['geodata', '[data-source-form="geodata"]'], ['apifile', '[data-source-form="apifile"]'], ['boundaries', '[data-source-form="boundaries"]'], ['url', 'input'], ['file', 'dm-dropzone']]) {
+        click(await sourceButton(id));
+        await waitFor(() => root.querySelector('.dm-center ' + sel), 15000, 'the view of ' + id);
+        seen.push(id);
+      }
+      assert.equal(seen.length, 8);
+      return seen.join(', ');
+    }, 120000);
+
     test('lazy: cleanup', async () => {
       for (const dlg of document.querySelectorAll('dialog')) dlg.remove();
       await D.require('data/watches').setWatched(apiId, false);

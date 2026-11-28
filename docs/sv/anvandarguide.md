@@ -58,7 +58,7 @@ delad Dataspatium-konfiguration läggs till direkt). Kontrollera förhandsgransk
 rubrikrad och decimaltecken gissas men kan ändras. I kolumnsteget får varje kolumn en typ; koder med inledande
 nollor (kommunkoder, personnummer) behålls som text. Ge datamängden ett namn och importera.
 
-Vänsterkolumnen har inget huvud med rubrik; den består av grupper som var och en fälls ut och in med pilen framför
+Vänsterkolumnen har rubriken Källor, som varje läge har sin; den består av grupper som var och en fälls ut och in med pilen framför
 rubriken, och webbläsaren kommer ihåg vilka som är infällda. Allt du väljer, också formulären som lägger till en källa,
 visas i mitten med en hjälptext ovanför.
 

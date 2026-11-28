@@ -1675,8 +1675,8 @@
         }))));
       }
 
-      // The pane head has no heading in Inhämta (B-81.1): every group says that it holds sources. `leftLabel` names the column.
-      return { id: 'inhamta', leftTitle: '', leftLabel: 'import.sources', activate, deactivate, openSource, get bridgeView() { return bridgeUi; }, get mobileView() { return mobileUi; }, get sourceTree() { return leftTree; } };
+      // The pane head says Källor, as every mode names its column (B-81.2: Martin took the empty head back).
+      return { id: 'inhamta', leftTitle: 'import.sources', leftLabel: 'import.sources', activate, deactivate, openSource, get bridgeView() { return bridgeUi; }, get mobileView() { return mobileUi; }, get sourceTree() { return leftTree; } };
     }
     return { createMode, GROUPS };
   });

@@ -39,7 +39,7 @@ text med fasta kolumnbredder, Excel, ODS, JSON (även JSON-stat och GeoJSON), XM
 samt via R: SPSS, Stata, SAS, PX, Parquet, RDS och RData (se
 [format.md](format.md)); R-formaten importeras i ett steg utan förhandsgranskning.
 
-Vänsterkolumnen har ingen rubrik i panelhuvudet, eftersom varje grupp säger att den håller källor. Grupperna fälls ut och
+Vänsterkolumnen har rubriken Källor i panelhuvudet, som i alla lägen. Grupperna fälls ut och
 in med pilen framför rubriken, och webbläsaren minns hur de stod. *Skapa källor*: Ny byggnadsmodell, Ny översiktsplan, Ny detaljplan, Nytt kartlager och Ny tabell.
 *Vanliga källor*: Filer, Klistra in, Webbadress, OpenCDE och Mobilen. *Databaskällor*: Extern databas, Databas via bryggan
 och Neo4j. *API-källor*: Öppna API:er och API från fil. *Geodatakällor*: Geodatakälla och Gränser för kartor. *Tillagda

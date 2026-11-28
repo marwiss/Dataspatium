@@ -59,7 +59,7 @@ Dataspatium configuration is added directly). Check the preview: character encod
 decimal separator are guessed but can be changed. In the column step each column gets a type; codes with leading
 zeros (municipality codes, personal identity numbers) are kept as text. Give the dataset a name and import.
 
-The left column has no heading in its head; it consists of groups that each fold in and out with the arrow in front of
+The left column is headed Sources, as every mode names its column; it consists of groups that each fold in and out with the arrow in front of
 the heading, and the browser remembers which ones are folded. Everything you choose, also the forms that add a source, is
 shown in the middle with a help text above it.
 

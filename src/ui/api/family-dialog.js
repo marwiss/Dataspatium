@@ -13,7 +13,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/family-dialog', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'api/families/databases', 'api/families/geodata', 'api/connectors'], (base, basic, overlays, icons, families, geodata, connectors) => {
+  D.define('ui/api/family-dialog', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'api/families/databases', 'api/families/geodata', 'api/connectors', 'api/families/opencde', 'api/families/neo4j'], (base, basic, overlays, icons, families, geodata, connectors) => {
+    // OpenCDE and Neo4j add themselves to the database families when they are first required; the forms need them there.
     const { h, t, i18n, replace } = base;
     const SERVICES_ASSET = 'presets/geodata/services.json';
     /** Families with an entry of their own in Inhämta: their form has no choice of family, and Extern databas leaves them out. */
