@@ -59,7 +59,7 @@ dm-splitter:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--dm-
 
 .dm-center { grid-area: center; min-width: 0; min-height: 0; overflow: auto; padding: var(--dm-s-5); display: flex; flex-direction: column; gap: var(--dm-s-4); }
 .dm-center-fill { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: var(--dm-s-3); }
-/* A long list scrolls by itself: in the work area it takes the window's height when its content needs it (Martin 2026-11-28), in a
+/* A long list scrolls by itself: in the work area it takes the window's height when its content needs it, in a
    dialog or a panel the least height. */
 .dm-fill { max-height: var(--dm-fill-min-h); overflow: auto; }
 .dm-center .dm-fill { max-height: max(var(--dm-fill-min-h), calc(100vh - var(--dm-fill-reserve-h))); }
