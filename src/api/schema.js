@@ -114,7 +114,9 @@
         headers: { type: 'object' },
         auth: {
           type: 'object', required: ['type'],
-          properties: { type: { type: 'string', enum: AUTH_TYPES }, in: { type: 'string', enum: ['header', 'query', 'body'] }, name: { type: 'string' }, prefix: { type: 'string' }, tokenUrl: { type: 'string' }, authUrl: { type: 'string' }, revocationUrl: { type: 'string' }, clientId: { type: 'string' }, scope: { type: 'string' }, help: { type: 'string' }, signupUrl: { type: 'string' } },
+          properties: { type: { type: 'string', enum: AUTH_TYPES }, in: { type: 'string', enum: ['header', 'query', 'body'] }, name: { type: 'string' }, prefix: { type: 'string' }, tokenUrl: { type: 'string' }, authUrl: { type: 'string' }, revocationUrl: { type: 'string' }, clientId: { type: 'string' }, scope: { type: 'string' }, help: { type: 'string' }, signupUrl: { type: 'string' },
+            // How OAuth2 client credentials reach the token URL: a Basic header (the default) or the form body (client_secret_post).
+            clientAuth: { type: 'string', enum: ['header', 'body'] } },
         },
         // What was measured for the service's CORS from a folder (file://, origin null) and from the web version (api/reach).
         cors: { type: 'object', properties: { file: { type: 'boolean' }, web: { type: 'boolean' } } },
@@ -127,7 +129,7 @@
         rateLimit: { type: 'object', required: ['requests', 'perSeconds'], properties: { requests: { type: 'number', minimum: 1 }, perSeconds: { type: 'number', minimum: 0.1 } } },
         // urls: one service root per UI language (API v1 puts the language in the URL); langs: the UI languages the
         // service's `lang` parameter accepts, as a list or as a map from UI code to the service's own code.
-        family: { type: 'object', required: ['type'], properties: { type: { type: 'string', enum: FAMILIES }, kind: { type: 'string', enum: ['wfs', 'ogcapi', 'arcgis'] }, plans: { type: 'string', enum: ['plandata', 'skipulag'] }, version: { type: 'number' }, lang: { type: 'string' }, maxCells: { type: 'number' }, urls: { type: 'object' }, langs: {}, clientId: { type: 'string' }, database: { type: 'string' }, bcfVersion: { type: 'string' }, bcfVersions: {}, bcfBases: { type: 'object' }, documents: { type: 'boolean' } } },
+        family: { type: 'object', required: ['type'], properties: { type: { type: 'string', enum: FAMILIES }, kind: { type: 'string', enum: ['wfs', 'ogcapi', 'arcgis'] }, plans: { type: 'string', enum: ['plandata', 'skipulag', 'ngp'] }, version: { type: 'number' }, lang: { type: 'string' }, maxCells: { type: 'number' }, urls: { type: 'object' }, langs: {}, clientId: { type: 'string' }, database: { type: 'string' }, bcfVersion: { type: 'string' }, bcfVersions: {}, bcfBases: { type: 'object' }, documents: { type: 'boolean' } } },
         endpoints: { type: 'array', items: endpointSchema },
         notes: { type: 'string' },
       },

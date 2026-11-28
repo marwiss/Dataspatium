@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * Authentication for connectors: API key (header or query), Basic, Bearer and OAuth2 client
- * credentials (used by Lantmäteriet). Credentials come from api/secrets; tokens are cached per
- * connector until they expire.
+ * credentials (used by Lantmäteriet; the secret as a Basic header or, with `auth.clientAuth: 'body'`, in the form body).
+ * Credentials come from api/secrets; tokens are cached per connector until they expire.
  */
 (function () {
   'use strict';
@@ -28,16 +28,23 @@
       return !needsCredentials(connector) || (!!values && requiredFields(connector.auth).every((f) => values[f.key]));
     }
 
-    /** Fetch (or reuse) an OAuth2 client-credentials token. */
+    /**
+     * Fetch (or reuse) an OAuth2 client-credentials token. The client id and secret go as a Basic header (client_secret_basic), or
+     * with `auth.clientAuth: 'body'` in the form body (client_secret_post, RFC 6749 2.3.1): Lantmäteriet's api.lantmateriet.se/token
+     * answers the browser's question before a request with an Authorization header without allowing it, while a plain form post needs
+     * no such question. The secret is in the body of that one request and nowhere else.
+     */
     async function token(connector, values, options = {}) {
       const cached = tokens.get(connector.id);
       if (cached && cached.expiresAt > Date.now() + 30000 && !options.force) return cached.token;
       const auth = connector.auth;
-      const body = 'grant_type=client_credentials' + (auth.scope ? '&scope=' + encodeURIComponent(auth.scope) : '');
-      const res = await http.request({
-        url: auth.tokenUrl, method: 'POST', body, signal: options.signal, rateKey: connector.id, ask: options.ask,
-        headers: { Authorization: 'Basic ' + btoa(`${values.clientId}:${values.clientSecret}`), 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
-      });
+      const inBody = auth.clientAuth === 'body';
+      const body = 'grant_type=client_credentials' + (auth.scope ? '&scope=' + encodeURIComponent(auth.scope) : '')
+        + (inBody ? '&client_id=' + encodeURIComponent(values.clientId) + '&client_secret=' + encodeURIComponent(values.clientSecret) : '');
+      /** @type {Record<string, string>} */
+      const headers = { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' };
+      if (!inBody) headers.Authorization = 'Basic ' + btoa(`${values.clientId}:${values.clientSecret}`);
+      const res = await http.request({ url: auth.tokenUrl, method: 'POST', body, signal: options.signal, rateKey: connector.id, ask: options.ask, headers });
       if (!res.ok) throw http.httpError(res, D.t('api.err.token'));
       let data;
       try { data = JSON.parse(res.text); } catch (_e) { throw new http.ApiError(D.t('api.err.token.json'), { kind: 'auth' }); }
