@@ -367,9 +367,9 @@ the way to a fetched feature with geometry, Kartverket's WFS services too, which
 by name, country or contents. The list lives in `presets/geodata/services.json`. A service that is not in the list is
 added under *Your own geodata source* (see below).
 
-Whole Swedish detailed plans are fetched with the entry **Detailed plans (whole plans)** at the top of the layer list of a
-WFS with Lantmäteriet's NGP layers (the ready source *Sundsvall and neighbouring municipalities: detailed plans in NGP form
-(WFS)*, no key) and of *Lantmäteriet geodataplattformen: detaljplaner*: search by name or designation and choose a plan, see
+Whole Swedish detailed plans are fetched in the mode **Whole detailed plans** of a WFS with Lantmäteriet's NGP layers (the
+ready source *Sundsvall and neighbouring municipalities: detailed plans in NGP form (WFS)*, no key) and of *Lantmäteriet
+geodataplattformen: detaljplaner*: search by name or designation and choose a plan, see
 [planer.md](planer.md#whole-detailed-plans-from-a-geodata-source).
 
 Three sources fetch Nordic plans: *Plandata.dk (WFS)* and *Skipulagsstofnun skipulagsgögn (ArcGIS)* have the button **Fetch
@@ -379,9 +379,21 @@ Boverket's Planbestämmelsekatalog is an ordinary API source (*Boverket Planbest
 
 A geodata source, ready-made or your own, is an ordinary API source. The app reads the service's layers and adds one
 endpoint per layer plus a generic one where you name the layer yourself. The answers are read in WGS 84: the dataset gets a geometry column
-and opens as a map in Process (see [kartor.md](kartor.md)). The source shows the layers as a filterable list; choose a
-layer, limit by an area (bbox) when you can, and fetch. The preview shows the answer as a small map above the table,
-and *Open as map* takes you to the saved dataset.
+and opens as a map in Process (see [kartor.md](kartor.md)). The workspace shows the source like this, from the top:
+
+- **Layers** and **Whole detailed plans**: the modes, only when the source has whole plans (see above). Without plans there
+  are just the layers.
+- **The search box**: in *Layers* it filters the layers as you type, in *Whole detailed plans* it searches the plans (see
+  [planer.md](planer.md#whole-detailed-plans-from-a-geodata-source)). Down arrow goes to the list, Esc empties the box.
+  Beside it are how many layers the filter shows and **Reread layers**, which reads the layer list from the service again.
+- **Any layer**: a layer you name yourself, for example one that is not in the list.
+- **The list** of layers, which fills the rest of the workspace and scrolls by itself. The arrow keys move between the layers.
+
+Choose a layer and its form appears in **Properties** on the right, above the facts about the service: limit by an area
+(bbox) when you can, give a filter or columns, and choose **Fetch**. The answer takes the list's place in the workspace: a
+small map above the table and the buttons that save it. *Open as map* takes you to the saved dataset, and **All layers** at
+the top goes back to the list. The form stays in Properties, so you can change it and fetch again. In a narrow window
+(below 1,100 px) Properties is a sheet that opens when you choose a layer and closes when you fetch.
 
 | Family | Discovery | Fetching | Key |
 |---|---|---|---|

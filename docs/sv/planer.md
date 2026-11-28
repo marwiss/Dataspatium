@@ -32,23 +32,27 @@ aðalskipulag.
 
 Ett svar med delar av flera planer, till exempel en kommuns lager *NGP_Detaljplan_yta* med alla detaljplanernas ytor, är
 ingen plan utan en karta över planerna. Det sparas med *Spara som datamängd* och öppnas som karta, och en rad ovanför
-knapparna säger hur många planer svaret har; en hel plan ur lagren hämtas med *Detaljplaner (hela planer)*, se nedan. Svenska översiktsplaner hämtas ännu inte från något API; de läses från filer
+knapparna säger hur många planer svaret har; en hel plan ur lagren hämtas i läget *Hela detaljplaner*, se nedan. Svenska översiktsplaner hämtas ännu inte från något API; de läses från filer
 (GeoPackage enligt Boverkets ÖP-modell eller GeoJSON).
 
 ## Hela detaljplaner från en geodatakälla
 
 En detaljplan i Lantmäteriets NGP-form ligger i flera lager: ett med planernas ytor (en rad per plan) och ett per slag av
-bestämmelse. En geodatakälla med de lagren, och källan *Lantmäteriet geodataplattformen: detaljplaner*, har därför posten
-**Detaljplaner (hela planer)** överst i lagerlistan, så att du inte behöver välja lagren själv:
+bestämmelse. En geodatakälla med de lagren, och källan *Lantmäteriet geodataplattformen: detaljplaner*, har därför två lägen
+överst i arbetsytan, **Lager** och **Hela detaljplaner**, så att du inte behöver välja lagren själv:
 
-1. Välj **Detaljplaner (hela planer)** och skriv en del av planens namn eller beteckning, till exempel *Prästbordet* eller
-   *22-HAV-1125*. Utan text listas de första planerna.
-2. **Sök** ger en kort lista med beteckning, namn, status och datum (laga kraft, annars påbörjad).
-3. Välj en plan. Planområdet och alla bestämmelser hämtas och sparas som en detaljplan med Boverkets färger och
+1. Välj **Hela detaljplaner** och skriv minst två tecken av planens namn eller beteckning i sökrutan, till exempel
+   *Prästbordet* eller *22-HAV-1125*. Listan under rutan visar träffarna medan du skriver: beteckning, namn, status och
+   datum (laga kraft, annars påbörjad). Sökningen skickas när du gjort en kort paus, och en ny tangent stoppar sökningen
+   före den, så att tjänsten inte får en fråga per tangent. Retur söker direkt, utan text efter de första planerna; hos
+   geodataplattformen kan du också välja en kommun bredvid rutan.
+2. Välj en plan i listan (piltangenterna och Retur fungerar också). Planens uppgifter visas i **Egenskaper** till höger:
+   beteckning, namn, status, datum och kommun. I ett smalt fönster öppnas Egenskaper som ett flak.
+3. **Hämta hela planen** hämtar planområdet och alla bestämmelser och sparar dem som en detaljplan med Boverkets färger och
    beteckningar, och *Öppna i Bearbeta* visar plankartan. Förloppet visas lager för lager, och **Avbryt** stoppar
    hämtningen utan att något sparas.
 
-**En kommuns WFS.** Posten finns när tjänsten har lagret `NGP_Detaljplan_yta` och ett eller flera `NGP_…bestammelse…`-lager
+**En kommuns WFS.** Läget finns när tjänsten har lagret `NGP_Detaljplan_yta` och ett eller flera `NGP_…bestammelse…`-lager
 (användnings-, egenskaps- och administrativa bestämmelser), i vilken arbetsyta som helst (`RIGES:NGP_Detaljplan_yta`).
 Planen hämtas ur planlagret och varje bestämmelselager med ett filter på planens identitet (`detaljplan.objektidentitet`):
 med `CQL_FILTER` på GeoServer och annars med ett FES 2.0-filter. Tar tjänsten inte emot det ena prövas det andra, och tar

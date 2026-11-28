@@ -31,24 +31,28 @@ kommuneplanrammer and an aðalskipulag as comprehensive plans.
 
 An answer with parts of several plans, such as a municipality's layer *NGP_Detaljplan_yta* with the areas of all its
 detailed plans, is no plan but a map of the plans. It is saved with *Save as dataset* and opens as a map, and a line above
-the buttons says how many plans the answer holds; a whole plan from the layers is fetched with *Detailed plans (whole plans)*, see below. Swedish comprehensive plans are not yet fetched from any API; they are
+the buttons says how many plans the answer holds; a whole plan from the layers is fetched in the mode *Whole detailed plans*, see below. Swedish comprehensive plans are not yet fetched from any API; they are
 read from files (GeoPackage in Boverket's ÖP model, or GeoJSON).
 
 ## Whole detailed plans from a geodata source
 
 A detailed plan in Lantmäteriet's NGP form lies in several layers: one with the plans' areas (a row per plan) and one per
 kind of provision. A geodata source with those layers, and the source *Lantmäteriet geodataplattformen: detaljplaner*,
-therefore has the entry **Detailed plans (whole plans)** at the top of its layer list, so that you need not choose the
-layers yourself:
+therefore has two modes at the top of the workspace, **Layers** and **Whole detailed plans**, so that you need not choose
+the layers yourself:
 
-1. Choose **Detailed plans (whole plans)** and type part of the plan's name or designation, for example *Prästbordet* or
-   *22-HAV-1125*. Without text the first plans are listed.
-2. **Search** gives a short list with designation, name, status and date (in force, else started).
-3. Choose a plan. The plan area and every provision are fetched and kept as a detailed plan with Boverket's colours and
-   designations, and *Open in Process* shows the plan map. Progress is shown layer by layer, and **Cancel** stops the
-   fetch without saving anything.
+1. Choose **Whole detailed plans** and type at least two characters of the plan's name or designation in the search box,
+   for example *Prästbordet* or *22-HAV-1125*. The list below the box shows the hits as you type: designation, name, status
+   and date (in force, else started). The search is sent when you pause briefly, and a new key stops the search before it,
+   so the service does not get one request per key. Enter searches at once, without text for the first plans; on the
+   geodata platform you can also choose a municipality beside the box.
+2. Choose a plan in the list (the arrow keys and Enter work too). The plan's facts appear in **Properties** on the right:
+   designation, name, status, date and municipality. In a narrow window Properties opens as a sheet.
+3. **Fetch the whole plan** fetches the plan area and every provision and keeps them as a detailed plan with Boverket's
+   colours and designations, and *Open in Process* shows the plan map. Progress is shown layer by layer, and **Cancel**
+   stops the fetch without saving anything.
 
-**A municipality's WFS.** The entry is there when the service has the layer `NGP_Detaljplan_yta` and one or more
+**A municipality's WFS.** The mode is there when the service has the layer `NGP_Detaljplan_yta` and one or more
 `NGP_…bestammelse…` layers (use, property and administrative provisions), in any workspace (`RIGES:NGP_Detaljplan_yta`).
 The plan is fetched from the plan layer and each provision layer with a filter on the plan's identity
 (`detaljplan.objektidentitet`): with `CQL_FILTER` on GeoServer and otherwise with an FES 2.0 filter. When the service refuses

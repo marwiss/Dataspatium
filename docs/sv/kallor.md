@@ -359,10 +359,9 @@ hela vägen till ett hämtat objekt med geometri, också Kartverkets WFS-tjänst
 tjänsten; filtrera på namn, land eller innehåll. Listan ligger i `presets/geodata/services.json`. En tjänst som inte står
 i listan lägger du till under *Egen geodatakälla* (se nedan).
 
-Hela svenska detaljplaner hämtas med posten **Detaljplaner (hela planer)** överst i lagerlistan hos en WFS med
-Lantmäteriets NGP-lager (den färdiga källan *Sundsvall med grannkommuner: detaljplaner i NGP-form (WFS)*, utan nyckel) och
-hos *Lantmäteriet geodataplattformen: detaljplaner*: sök på namn eller beteckning och välj en plan, se
-[planer.md](planer.md#hela-detaljplaner-från-en-geodatakälla).
+Hela svenska detaljplaner hämtas i läget **Hela detaljplaner** hos en WFS med Lantmäteriets NGP-lager (den färdiga källan
+*Sundsvall med grannkommuner: detaljplaner i NGP-form (WFS)*, utan nyckel) och hos *Lantmäteriet geodataplattformen:
+detaljplaner*: sök på namn eller beteckning och välj en plan, se [planer.md](planer.md#hela-detaljplaner-från-en-geodatakälla).
 
 Tre källor hämtar nordiska planer: *Plandata.dk (WFS)* och *Skipulagsstofnun skipulagsgögn (ArcGIS)* har knappen **Hämta plan**
 som läser en hel lokalplan respektive ett deiliskipulag (alla lager) med planens nummer och sparar den som plan, och
@@ -371,9 +370,20 @@ Boverkets Planbestämmelsekatalog finns som vanlig API-källa (*Boverket Planbes
 
 En geodatakälla, färdig eller egen, är en vanlig API-källa. Appen läser tjänstens lager och lägger en ändpunkt per lager
 plus en allmän där du anger lagret själv. Svaren läses i WGS 84: datamängden får en geometrikolumn och öppnas som karta i Bearbeta (se
-[kartor.md](kartor.md)). Källan visar lagren som en lista att filtrera i; välj ett lager, begränsa gärna med ett område
-(bbox) och hämta. Förhandsgranskningen visar svaret som en liten karta ovanför tabellen, och *Öppna som karta* tar dig
-till den sparade datamängden.
+[kartor.md](kartor.md)). Arbetsytan visar källan så här, uppifrån:
+
+- **Lager** och **Hela detaljplaner**: lägena, bara när källan har hela planer (se ovan). Utan planer finns bara lagren.
+- **Sökrutan**: i *Lager* filtrerar den lagren medan du skriver, i *Hela detaljplaner* söker den bland planerna (se
+  [planer.md](planer.md#hela-detaljplaner-från-en-geodatakälla)). Pil ned går till listan, Esc tömmer rutan. Bredvid står
+  hur många lager filtret visar och **Läs om lagren**, som läser lagerlistan från tjänsten igen.
+- **Valfritt lager**: ett lager som du anger själv, till exempel ett som inte står i listan.
+- **Listan** med lagren, som fyller resten av arbetsytan och rullar för sig själv. Piltangenterna flyttar mellan lagren.
+
+Välj ett lager så visas dess formulär i **Egenskaper** till höger, ovanför uppgifterna om tjänsten: begränsa gärna med ett
+område (bbox), ange ett filter eller kolumner och välj **Hämta**. Svaret tar listans plats i arbetsytan: en liten karta
+ovanför tabellen och knapparna som sparar det. *Öppna som karta* tar dig till den sparade datamängden, och **Alla lager**
+överst går tillbaka till listan. Formuläret står kvar i Egenskaper, så att du kan ändra det och hämta igen. I ett smalt
+fönster (under 1 100 px) är Egenskaper ett flak som öppnas när du väljer ett lager och stängs när du hämtar.
 
 | Familj | Upptäckt | Hämtning | Nyckel |
 |---|---|---|---|
