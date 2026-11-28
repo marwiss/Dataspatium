@@ -29,7 +29,11 @@ Protocol (JSON): GET / (info), GET /sources (DSNs, ODBC drivers, OLE DB provider
   commands up (GET /commands/next) and answers (POST /commands/<id>/result {ok, result, error}). POST /commands/<id>/cancel takes a queued command out of
   the queue and marks a running one cancelling, which the app stops at its next check. One thread: a poll answers at once.
   A source is {kind: access|excel|sqlserver|dsn|odbc|oledb, ...} with path, password,
-  server, database, user, dsn or connectionString depending on the kind.
+  server, database, user, dsn or connectionString depending on the kind, or {kind: mysql|mariadb|postgres, host, port, database,
+  user, password} with tls (mysql, mariadb) or sslmode (postgres). This bridge reaches those through an installed ODBC driver
+  (MySQL Connector/ODBC, MariaDB Connector/ODBC, psqlODBC); the Python bridge connects itself with PyMySQL and pg8000. GET / tells
+  which drivers it found (drivers: {kind: {name, ok, version, via, package}}). A password is never logged, and an error that
+  repeats it is answered without it.
 #>
 param(
   [int]$Port = 0,
@@ -42,8 +46,25 @@ param(
   [switch]$AllowCommands
 )
 $ErrorActionPreference = "Stop"
-$Version = "2.6.0"
-$Kinds = @("access", "excel", "sqlserver", "dsn", "odbc", "oledb")
+$Version = "2.7.0"
+# MySQL, MariaDB and PostgreSQL go through the ODBC driver installed for this process's bitness, when there is one.
+$OdbcNames = @()
+try { $OdbcNames = @(Get-OdbcDriver -Platform $(if ([Environment]::Is64BitProcess) { "64-bit" } else { "32-bit" }) | ForEach-Object { [string]$_.Name }) } catch { }
+function Find-Driver([string[]]$patterns) {
+  foreach ($p in $patterns) { $hit = @($OdbcNames | Where-Object { $_ -match $p } | Sort-Object -Descending); if ($hit.Count -gt 0) { return $hit[0] } }
+  return $null
+}
+$OdbcFor = @{
+  mysql = Find-Driver @('^MySQL ODBC .*Unicode', '^MySQL ODBC', '^MariaDB ODBC')
+  mariadb = Find-Driver @('^MariaDB ODBC', '^MySQL ODBC .*Unicode', '^MySQL ODBC')
+  postgres = Find-Driver @('^PostgreSQL Unicode', '^PostgreSQL')
+}
+$DriverInfo = @{}
+foreach ($k in @("mysql", "mariadb", "postgres")) {
+  $name = @{ mysql = "MySQL Connector/ODBC"; mariadb = "MariaDB Connector/ODBC"; postgres = "psqlODBC" }[$k]
+  $DriverInfo[$k] = @{ name = $name; ok = [bool]$OdbcFor[$k]; version = $(if ($OdbcFor[$k]) { $OdbcFor[$k] } else { "" }); via = "odbc"; package = $(if ($k -eq "postgres") { "pg8000" } else { "pymysql" }) }
+}
+$Kinds = @("access", "excel", "sqlserver", "dsn", "odbc", "oledb") + @(@("mysql", "mariadb", "postgres") | Where-Object { $OdbcFor[$_] })
 if ($Port -eq 0) { $Port = Get-Random -Minimum 49152 -Maximum 65535 }
 if ($Token -eq "") {
   $bytes = New-Object byte[] 18
@@ -155,11 +176,55 @@ function Get-ConnectionInfo($source) {
     }
     "odbc" { if (-not $source.connectionString) { throw "Ange anslutningssträngen." }; return @{ provider = "odbc"; cs = $source.connectionString } }
     "oledb" { if (-not $source.connectionString) { throw "Ange anslutningssträngen." }; return @{ provider = "oledb"; cs = $source.connectionString } }
+    { $_ -eq "mysql" -or $_ -eq "mariadb" -or $_ -eq "postgres" } { return (Get-DriverConnectionInfo $source) }
     default { throw ("Okänd källtyp: " + $source.kind) }
   }
 }
 
-function Open-Connection($source) {
+# A value in an ODBC connection string: in braces when it holds a character that would end or change the attribute.
+function Format-OdbcValue($value) {
+  $v = [string]$value
+  if ($v -match '[;{}]' -or $v -ne $v.Trim()) { return "{" + $v.Replace("}", "}}") + "}" }
+  return $v
+}
+
+# MySQL, MariaDB and PostgreSQL through the installed ODBC driver, with the same fields as the Python bridge's own drivers.
+function Get-DriverConnectionInfo($source) {
+  $kind = [string]$source.kind
+  $isPg = $kind -eq "postgres"
+  $driver = $OdbcFor[$kind]
+  if (-not $driver) {
+    if ($isPg) { throw "Ingen ODBC-drivrutin för PostgreSQL hittades. Installera psqlODBC (64-bitars), eller kör Python-bryggan efter pip install pg8000." }
+    throw "Ingen ODBC-drivrutin för MySQL eller MariaDB hittades. Installera MySQL Connector/ODBC eller MariaDB Connector/ODBC (64-bitars), eller kör Python-bryggan efter pip install pymysql."
+  }
+  if (-not $source.host) { throw "Ange värden (host)." }
+  $port = if ($source.port) { [string][int]$source.port } elseif ($isPg) { "5432" } else { "3306" }
+  $cs = "Driver={" + $driver + "};Server=" + (Format-OdbcValue $source.host) + ";Port=" + $port + ";"
+  if ($source.database) { $cs += "Database=" + (Format-OdbcValue $source.database) + ";" }
+  if ($source.user) { $cs += "Uid=" + (Format-OdbcValue $source.user) + ";Pwd=" + (Format-OdbcValue $source.password) + ";" }
+  if ($isPg) {
+    $mode = if ($source.sslmode) { ([string]$source.sslmode).ToLowerInvariant() } else { "prefer" }
+    if (@("disable", "prefer", "require", "verify-ca", "verify-full") -notcontains $mode) { throw ("Okänt läge för kryptering: " + $mode) }
+    $cs += "SSLmode=" + $mode + ";"
+  } else {
+    $mode = if ($source.tls) { ([string]$source.tls).ToLowerInvariant() } else { "preferred" }
+    if (@("disabled", "preferred", "required", "verify_ca", "verify_identity") -notcontains $mode) { throw ("Okänt läge för kryptering: " + $mode) }
+    if ($driver -match '^MariaDB') {
+      if ($mode -eq "required") { $cs += "FORCETLS=1;" } elseif ($mode -like "verify_*") { $cs += "FORCETLS=1;SSLVERIFY=1;" }
+    } else { $cs += "SSLMODE=" + $mode.ToUpperInvariant() + ";CHARSET=utf8mb4;" }
+  }
+  return @{ provider = "odbc"; cs = $cs }
+}
+
+function Get-Dialect($source) {
+  if ($null -eq $source) { return "" }
+  if ($source.kind -eq "mysql" -or $source.kind -eq "mariadb") { return "mysql" }
+  if ($source.kind -eq "postgres") { return "postgres" }
+  return ""
+}
+
+# A read runs read-only in MySQL, MariaDB and PostgreSQL; a server without the setting keeps the keyword check.
+function Open-Connection($source, $write = $false) {
   $info = Get-ConnectionInfo $source
   switch ($info.provider) {
     "oledb" { $cn = New-Object System.Data.OleDb.OleDbConnection($info.cs) }
@@ -167,20 +232,66 @@ function Open-Connection($source) {
     "sqlclient" { $cn = New-Object System.Data.SqlClient.SqlConnection($info.cs) }
   }
   $cn.Open()
+  $dialect = Get-Dialect $source
+  if ($dialect -and -not $write) {
+    try { $cmd = $cn.CreateCommand(); $cmd.CommandText = $(if ($dialect -eq "mysql") { "SET SESSION TRANSACTION READ ONLY" } else { "SET default_transaction_read_only = on" }); [void]$cmd.ExecuteNonQuery() } catch { }
+  }
   return $cn
 }
 
-# Identifier quoting per provider: [name] for OLE DB (Access, Excel) and SQL Server, "name" for ODBC.
-function Quote-Name($cn, $name) {
+# Identifier quoting per provider: [name] for OLE DB (Access, Excel) and SQL Server, "name" for ODBC, `name` for MySQL and
+# MariaDB; schema.table from the table list is quoted part by part for MySQL, MariaDB and PostgreSQL.
+function Quote-Name($cn, $name, $source = $null) {
+  $dialect = Get-Dialect $source
+  if ($dialect) {
+    $q = $(if ($dialect -eq "mysql") { '`' } else { '"' })
+    $n = [string]$name; $i = $n.IndexOf(".")
+    $parts = if ($i -gt 0 -and $i -lt $n.Length - 1) { @($n.Substring(0, $i), $n.Substring($i + 1)) } else { @($n) }
+    return (($parts | ForEach-Object { $q + $_.Replace($q, $q + $q) + $q }) -join ".")
+  }
   if ($cn -is [System.Data.Odbc.OdbcConnection]) { return '"' + ([string]$name).Replace('"', '""') + '"' }
   return "[" + ([string]$name).Replace("]", "]]") + "]"
 }
 
+# A statement that starts with SELECT or WITH but writes after all (a data-modifying WITH, SELECT ... INTO, FOR UPDATE) is a write;
+# text in quotes is left out before the words are looked for.
 function Test-ReadOnly($sql) {
   $s = ($sql -replace "/\*[\s\S]*?\*/", " " -replace "--[^\r\n]*", " ").Trim()
   if ($s.TrimEnd(";").Contains(";")) { return $false }
   $first = ($s -split "\s+")[0].ToUpperInvariant()
+  $bare = $s -replace "'(?:[^']|'')*'|""(?:[^""]|"""")*""|``(?:[^``]|````)*``", "''"
+  if ($bare -match '\b(insert|update|delete|merge|upsert|truncate|drop|alter|create|grant|revoke|into)\b') { return $false }
   return ($first -eq "SELECT" -or $first -eq "WITH" -or $first -eq "VALUES")
+}
+
+# A message without the source's password (and the Pwd of a connection string): a driver may repeat what it was given.
+function Remove-Secret([string]$text, $source) {
+  if ($null -eq $source) { return $text }
+  $values = @([string]$source.password)
+  foreach ($m in [regex]::Matches([string]$source.connectionString, '(?i)(?:^|;)\s*(?:pwd|password)\s*=\s*(\{(?:[^}]|\}\})*\}|[^;]*)')) { $values += $m.Groups[1].Value }
+  foreach ($v in $values) { $v = $v.Trim(); if ($v.Length -ge 4) { $text = $text.Replace($v, "***") } }
+  return $text
+}
+
+# Tables of MySQL, MariaDB and PostgreSQL from information_schema, named as the Python bridge names them.
+function Get-DialectTables($cn, $source) {
+  $dialect = Get-Dialect $source
+  $r = Read-Table $cn "SELECT table_schema, table_name, table_type FROM information_schema.tables ORDER BY table_schema, table_name" 1000000
+  $out = @()
+  foreach ($row in $r.rows) {
+    $schema = [string]$row[0]; $name = [string]$row[1]; $type = ([string]$row[2]).ToUpperInvariant()
+    if ($type -eq "BASE TABLE") { $type = "TABLE" }
+    if ($type -ne "TABLE" -and $type -ne "VIEW") { continue }
+    if ($dialect -eq "postgres") {
+      if ($schema -match '^(pg_|information_schema$|crdb_internal$|_timescaledb|timescaledb_)') { continue }
+      if ($schema -ne "public") { $name = $schema + "." + $name }
+    } else {
+      if (@("mysql", "information_schema", "performance_schema", "sys") -contains $schema.ToLowerInvariant()) { continue }
+      if ($source.database) { if ($schema -ne [string]$source.database) { continue } } else { $name = $schema + "." + $name }
+    }
+    $out += @{ name = $name; type = $type }
+  }
+  return $out
 }
 
 function Convert-Value($v) {
@@ -211,9 +322,9 @@ function Read-Table($cn, $sql, $limit) {
   return @{ columns = $cols; rows = $rows; truncated = $truncated }
 }
 
-function Get-Columns($cn, $table) {
+function Get-Columns($cn, $table, $source = $null) {
   $cmd = $cn.CreateCommand()
-  $cmd.CommandText = "SELECT * FROM " + (Quote-Name $cn $table) + " WHERE 1 = 0"
+  $cmd.CommandText = "SELECT * FROM " + (Quote-Name $cn $table $source) + " WHERE 1 = 0"
   $rd = $cmd.ExecuteReader([System.Data.CommandBehavior]::SchemaOnly)
   $schema = $rd.GetSchemaTable()
   $out = @()
@@ -383,14 +494,17 @@ while ($listener.IsListening) {
       continue
     }
     switch ($path) {
-      "/" { Send-Json $ctx 200 @{ name = "Dataspatium-databasbrygga"; version = $Version; platform = "windows"; allowWrite = [bool]$AllowWrite; kinds = $Kinds; maxRows = $MaxRows; fetch = $true; commands = [bool]$AllowCommands; allowHosts = $AllowHosts } }
+      "/" { Send-Json $ctx 200 @{ name = "Dataspatium-databasbrygga"; version = $Version; platform = "windows"; allowWrite = [bool]$AllowWrite; kinds = $Kinds; drivers = $DriverInfo; maxRows = $MaxRows; fetch = $true; commands = [bool]$AllowCommands; allowHosts = $AllowHosts } }
       "/sources" { Send-Json $ctx 200 (Get-Sources) }
-      "/tables" { $cn = Open-Connection $body.source; try { $t = @(Get-Tables $cn); Send-Json $ctx 200 @{ tables = $t; count = $t.Count } } finally { $cn.Close() } }
-      "/columns" { $cn = Open-Connection $body.source; try { $c = @(Get-Columns $cn ([string]$body.table)); Send-Json $ctx 200 @{ columns = $c } } finally { $cn.Close() } }
+      "/tables" { $cn = Open-Connection $body.source; try { $t = @(if (Get-Dialect $body.source) { Get-DialectTables $cn $body.source } else { Get-Tables $cn }); Send-Json $ctx 200 @{ tables = $t; count = $t.Count } } finally { $cn.Close() } }
+      "/columns" { $cn = Open-Connection $body.source; try { $c = @(Get-Columns $cn ([string]$body.table) $body.source); Send-Json $ctx 200 @{ columns = $c } } finally { $cn.Close() } }
       "/rows" {
         $limit = $MaxRows; if ($body.limit) { $limit = [Math]::Min([int]$body.limit, $MaxRows) }
         $cn = Open-Connection $body.source
-        try { Send-Json $ctx 200 (Read-Table $cn ("SELECT * FROM " + (Quote-Name $cn ([string]$body.table))) $limit) } finally { $cn.Close() }
+        # MySQL, MariaDB and PostgreSQL are asked for one row more than the limit, so that a large table is not read whole.
+        $sql = "SELECT * FROM " + (Quote-Name $cn ([string]$body.table) $body.source)
+        if (Get-Dialect $body.source) { $sql += " LIMIT " + ($limit + 1) }
+        try { Send-Json $ctx 200 (Read-Table $cn $sql $limit) } finally { $cn.Close() }
         Add-Log @{ at = (Get-Date).ToString("s"); kind = [string]$body.source.kind; table = [string]$body.table; write = $false }
       }
       "/query" {
@@ -400,7 +514,7 @@ while ($listener.IsListening) {
         if ($write -and -not $AllowWrite) { Send-Json $ctx 403 @{ error = "Bryggan är skrivskyddad; starta med -AllowWrite för att tillåta ändringar" }; continue }
         if ($write -and -not $body.approved) { Send-Json $ctx 428 @{ error = "Skrivning kräver användarens godkännande (approved: true)"; sql = $sql }; continue }
         $limit = $MaxRows; if ($body.limit) { $limit = [Math]::Min([int]$body.limit, $MaxRows) }
-        $cn = Open-Connection $body.source
+        $cn = Open-Connection $body.source $write
         try {
           if ($write) { $cmd = $cn.CreateCommand(); $cmd.CommandText = $sql; $cmd.CommandTimeout = 120; $n = $cmd.ExecuteNonQuery(); Send-Json $ctx 200 @{ affected = $n } }
           else { Send-Json $ctx 200 (Read-Table $cn $sql $limit) }
@@ -421,7 +535,8 @@ while ($listener.IsListening) {
   } catch {
     $message = $_.Exception.Message
     if ($_.Exception.InnerException) { $message = $message + " " + $_.Exception.InnerException.Message }
-    try { Send-Json $ctx 500 @{ error = $message } } catch { }
+    $src = $null; if ($body) { $src = $body.source }
+    try { Send-Json $ctx 500 @{ error = (Remove-Secret $message $src) } } catch { }
   }
 }
 Write-Output "Bryggan har stoppats."

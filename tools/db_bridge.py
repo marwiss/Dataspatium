@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
-"""Dataspatium database bridge (Python 3, standard library; pyodbc is used when it is installed).
+"""Dataspatium database bridge (Python 3, standard library; its drivers are used when they are installed).
 
 The same service as tools/db-bridge.ps1, for macOS, Linux and Windows without PowerShell: a small local HTTP
-service that Dataspatium opens from Inhämta -> "Databas via bryggan". It serves SQLite files directly and, with
-pyodbc, every ODBC data source on the computer (PostgreSQL, MySQL/MariaDB, SQL Server, Oracle, Access ...).
+service that Dataspatium opens from Inhämta -> "Databas via bryggan". It serves SQLite files directly, connects itself to
+MySQL and MariaDB with PyMySQL (MIT), to PostgreSQL (and PostGIS, TimescaleDB, CockroachDB ...) with pg8000 (BSD-3-Clause) and
+to Oracle with python-oracledb in thin mode (Apache-2.0 or UPL-1.0), and with pyodbc to every ODBC data source on the computer
+(SQL Server, Access ...). None of the drivers ships with the app; `pip install pymysql pg8000 oracledb` installs them, and the
+bridge says so when one is missing. A password stays in this process: it is never written to the log, and an error that
+repeats it is answered without it.
 Nothing leaves the computer: it listens on 127.0.0.1 only, requires the token printed at start, answers CORS only
 for the app's origins (a page opened from a folder sends Origin "null") and is read-only unless --allow-write is
 given; even then every write needs the user's approval in the app (approved: true). Ctrl+C or POST /stop stops it.
@@ -24,13 +28,18 @@ Options: --port N (0 = random), --token T (default random), --allow-write, --max
 Protocol (JSON): GET / (info), GET /sources, POST /tables {source}, POST /columns {source, table},
   POST /rows {source, table, limit}, POST /query {source, sql, limit, approved}, GET /log, GET or POST /stop,
   POST /fetch {url, method, headers, body (base64)} -> {status, statusText, headers, body (base64)}.
-A source is {kind: sqlite|dsn|odbc|access|excel, ...} with path, dsn, user, password or connectionString.
+A source is {kind: sqlite|dsn|odbc|access|excel, ...} with path, dsn, user, password or connectionString, or
+{kind: mysql|mariadb|postgres|oracle, host, port, database, user, password} with tls (mysql, mariadb: disabled, preferred,
+required, verify_ca, verify_identity; oracle: disabled, verify_identity) or sslmode (postgres: disable, prefer, require,
+verify-ca, verify-full). GET / tells which drivers are installed (drivers: {kind: {name, ok, version, via, package}}).
 """
 import argparse
 import base64
 import datetime
 import decimal
+import importlib
 import json
+import math
 import re
 import secrets
 import socket
@@ -49,8 +58,7 @@ try:
 except ImportError:  # pragma: no cover - optional
     pyodbc = None
 
-VERSION = "2.6.0"
-KINDS = ["sqlite"] + (["dsn", "odbc", "access", "excel"] if pyodbc else [])
+VERSION = "2.7.0"
 
 
 def parse_args():
@@ -160,13 +168,41 @@ def relay(allow_hosts, max_bytes, request, timeout=60):
     raise RelayError(508, "För många omdirigeringar")
 
 
+# Words that make a statement that starts with SELECT or WITH write after all: a data-modifying WITH, SELECT ... INTO a new table
+# or a file on the server (INTO OUTFILE), SELECT ... FOR UPDATE. Text in quotes is left out before the words are looked for.
+WRITE_WORDS = re.compile(r"\b(insert|update|delete|merge|upsert|truncate|drop|alter|create|grant|revoke|into)\b", re.I)
+
+
 def read_only(sql):
     s = re.sub(r"/\*[\s\S]*?\*/", " ", sql)
     s = re.sub(r"--[^\r\n]*", " ", s).strip()
     if ";" in s.rstrip(";"):
         return False
     first = (s.split() or [""])[0].upper()
-    return first in ("SELECT", "WITH", "VALUES", "PRAGMA", "EXPLAIN")
+    bare = re.sub(r"'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|`(?:[^`]|``)*`", "''", s)
+    return first in ("SELECT", "WITH", "VALUES", "PRAGMA", "EXPLAIN") and not WRITE_WORDS.search(bare)
+
+
+def scrub(text, source):
+    """A message without the source's password: a driver may repeat what it was given, and nothing the bridge answers or logs
+    carries it (values shorter than four characters are left, as in the app's api/secrets)."""
+    out = str(text)
+    src = source if isinstance(source, dict) else {}
+    values = [str(src.get("password") or "")]
+    values += re.findall(r"(?i)(?:^|;)\s*(?:pwd|password)\s*=\s*(\{(?:[^}]|\}\})*\}|[^;]*)", str(src.get("connectionString") or ""))
+    for v in values:
+        v = v.strip()
+        if len(v) >= 4:
+            out = out.replace(v, "***")
+            if v.startswith("{") and v.endswith("}"):
+                out = out.replace(v[1:-1].replace("}}", "}"), "***")
+    return out
+
+
+def odbc_value(value):
+    """A value for an ODBC connection string: in braces when it holds a character that would end or change the attribute."""
+    v = str(value or "")
+    return "{" + v.replace("}", "}}") + "}" if re.search(r"[;{}]", v) or v != v.strip() else v
 
 
 def type_name(value):
@@ -189,16 +225,274 @@ def type_name(value):
 
 
 def convert(value):
+    """A driver's value -> JSON: times as ISO text (in UTC when the value knows its zone), bytes as base64, JSON and arrays as
+    JSON text, and whatever else a driver gives (UUID, interval, address, range) as its text."""
+    if value is None or isinstance(value, (bool, int, str)):
+        return value
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
     if isinstance(value, datetime.datetime):
+        if value.tzinfo is not None:
+            value = value.astimezone(datetime.timezone.utc).replace(tzinfo=None)
         return value.strftime("%Y-%m-%dT%H:%M:%S")
-    if isinstance(value, datetime.date):
+    if isinstance(value, (datetime.date, datetime.time)):
         return value.isoformat()
     if isinstance(value, decimal.Decimal):
-        return float(value)
+        return float(value) if value.is_finite() else None
     if isinstance(value, (bytes, bytearray, memoryview)):
-        import base64
         return base64.b64encode(bytes(value)).decode("ascii")
-    return value
+    if isinstance(value, (dict, list, tuple)):
+        return json.dumps(value, ensure_ascii=False, default=str)
+    return str(value)
+
+
+# ---- the bridge's own drivers: MySQL and MariaDB, PostgreSQL, Oracle ----
+# Each is imported only when it is installed (pip install pymysql pg8000 oracledb); without it the bridge says how to install it.
+# None ships with the app. Licences: PyMySQL MIT, pg8000 BSD-3-Clause, python-oracledb Apache-2.0 or UPL-1.0.
+
+def tls_context(mode):
+    """An ssl context for an encryption mode (MySQL's ssl-mode or libpq's sslmode names), or None for no TLS."""
+    m = str(mode or "").lower().replace("-", "_")
+    if m in ("disabled", "disable"):
+        return None
+    if m not in ("preferred", "prefer", "required", "require", "verify_ca", "verify_identity", "verify_full"):
+        raise ValueError("Okänt läge för kryptering: %s" % mode)
+    ctx = ssl.create_default_context()
+    if m in ("verify_identity", "verify_full"):
+        return ctx
+    ctx.check_hostname = False
+    if m != "verify_ca":
+        ctx.verify_mode = ssl.CERT_NONE
+    return ctx
+
+
+class SqlDriver:
+    """A database the bridge connects to itself with a DB-API 2.0 driver (PEP 249). A subclass names the driver and says how
+    to connect, list the tables, quote a name and limit a table; reading, writing and the answers are the same as for ODBC.
+    A read runs in a read-only transaction where the database has one, and is rolled back."""
+
+    kinds, module, package, title, label, port = (), "", "", "", "", 0
+    QUOTE = '"'
+    TYPES = {}
+    TABLES = ""
+    READ_ONLY = ""
+
+    def __init__(self):
+        self.mod, self.tried = None, False
+
+    def load(self):
+        """The driver's module, or None when it is not installed (tried once)."""
+        if not self.tried:
+            self.tried = True
+            try:
+                self.mod = importlib.import_module(self.module)
+            except ImportError:
+                self.mod = None
+        return self.mod
+
+    def require(self):
+        if self.load() is None:
+            raise ValueError("%s kräver drivrutinen %s, som inte är installerad: pip install %s (och starta om bryggan)" % (self.label, self.title, self.package))
+        return self.mod
+
+    def describe(self):
+        mod = self.load()
+        root = (sys.modules.get(self.module.split(".")[0]) or mod) if mod is not None else None
+        return {"name": self.title, "ok": mod is not None, "version": str(getattr(root, "__version__", "") or ""), "via": "python", "package": self.package}
+
+    @staticmethod
+    def endpoint(source, port):
+        host = str(source.get("host") or "").strip()
+        if not host:
+            raise ValueError("Ange värden (host).")
+        try:
+            return host, int(source.get("port") or port)
+        except (TypeError, ValueError):
+            raise ValueError("Porten måste vara ett tal.")
+
+    @staticmethod
+    def split(name):
+        """schema.table as the table list writes it -> [schema, table]; a plain name -> [name]."""
+        schema, dot, table = str(name).partition(".")
+        return [schema, table] if dot and schema and table else [str(name)]
+
+    def quote(self, name):
+        q = self.QUOTE
+        return ".".join(q + part.replace(q, q + q) + q for part in self.split(name))
+
+    def read_only(self, cn):
+        try:
+            cur = cn.cursor()
+            cur.execute(self.READ_ONLY)
+            cur.close()
+        except Exception:  # noqa: BLE001 - a server without it (CrateDB, QuestDB): the keyword check and the rollback remain
+            pass
+
+    def finish(self, cn):
+        try:
+            cn.rollback()
+        except Exception:  # noqa: BLE001 - nothing to roll back
+            pass
+
+    def listed(self, schema, name, source):
+        return name
+
+    def tables(self, cn, source):
+        cur = cn.cursor()
+        cur.execute(self.TABLES)
+        out = []
+        for schema, name, ttype in cur.fetchall():
+            shown = self.listed(str(schema or ""), str(name), source)
+            t = str(ttype or "").upper()
+            if shown and t in ("BASE TABLE", "TABLE", "VIEW", "FOREIGN", "FOREIGN TABLE"):
+                out.append({"name": shown, "type": "TABLE" if t == "BASE TABLE" else t})
+        return out
+
+    def coltype(self, d):
+        return self.TYPES.get(d[1], "String")
+
+    def select_all(self, cn, source, table, n):
+        return "SELECT * FROM %s LIMIT %d" % (self.quote(table), n)
+
+
+class MySql(SqlDriver):
+    kinds, module, package, title, label, port = ("mysql", "mariadb"), "pymysql", "pymysql", "PyMySQL", "MySQL och MariaDB", 3306
+    QUOTE = "`"
+    TYPES = {0: "Decimal", 246: "Decimal", 1: "Int64", 2: "Int64", 3: "Int64", 8: "Int64", 9: "Int64", 13: "Int64", 4: "Double", 5: "Double",
+             10: "Date", 14: "Date", 7: "DateTime", 12: "DateTime"}
+    TABLES = "SELECT table_schema, table_name, table_type FROM information_schema.tables ORDER BY table_schema, table_name"
+    READ_ONLY = "SET SESSION TRANSACTION READ ONLY"
+    SYSTEM = {"mysql", "information_schema", "performance_schema", "sys"}
+
+    def connect(self, source):
+        mod = self.require()
+        host, port = self.endpoint(source, self.port)
+        mode = str(source.get("tls") or "preferred").lower()
+        # An unbuffered cursor, so that a large answer is read row by row and stops at the limit.
+        cn = mod.connect(host=host, port=port, user=str(source.get("user") or ""), password=str(source.get("password") or ""),
+                         database=source.get("database") or None, ssl=tls_context(mode), connect_timeout=15, charset="utf8mb4",
+                         cursorclass=mod.cursors.SSCursor)
+        if mode not in ("preferred", "disabled"):
+            # PyMySQL goes on without TLS when the server offers none; a mode that requires it checks the session.
+            cur = cn.cursor()
+            cur.execute("SHOW SESSION STATUS LIKE 'Ssl_cipher'")
+            row = cur.fetchone()
+            cur.close()
+            if not row or not row[1]:
+                cn.close()
+                raise ValueError("Servern krypterar inte anslutningen (tls: %s), så bryggan avbröt den." % mode)
+        return cn
+
+    def finish(self, cn):
+        pass  # the connection closes without reading what is left of an answer; the server rolls back
+
+    def listed(self, schema, name, source):
+        if schema.lower() in self.SYSTEM:
+            return None
+        db = str(source.get("database") or "")
+        if db:
+            return name if schema.lower() == db.lower() else None
+        return schema + "." + name
+
+
+class Postgres(SqlDriver):
+    kinds, module, package, title, label, port = ("postgres",), "pg8000.dbapi", "pg8000", "pg8000", "PostgreSQL", 5432
+    TYPES = {16: "Boolean", 20: "Int64", 21: "Int64", 23: "Int64", 700: "Double", 701: "Double", 1700: "Decimal", 1082: "Date",
+             1114: "DateTime", 1184: "DateTime", 17: "Byte[]"}
+    TABLES = "SELECT table_schema, table_name, table_type FROM information_schema.tables ORDER BY table_schema, table_name"
+    READ_ONLY = "SET default_transaction_read_only = on"
+    SYSTEM = re.compile(r"^(pg_|information_schema$|crdb_internal$|_timescaledb|timescaledb_)")
+
+    def connect(self, source):
+        mod = self.require()
+        host, port = self.endpoint(source, self.port)
+        mode = str(source.get("sslmode") or "prefer").lower()
+        kw = {"user": str(source.get("user") or ""), "password": str(source.get("password") or ""), "host": host, "port": port,
+              "database": source.get("database") or None, "timeout": 120, "application_name": "Dataspatium-brygga"}
+        try:
+            return mod.connect(ssl_context=tls_context(mode), **kw)
+        except mod.InterfaceError as err:
+            if mode != "prefer" or "SSL" not in str(err):
+                raise
+            return mod.connect(ssl_context=None, **kw)  # prefer: plain when the server refuses TLS
+
+    def read_only(self, cn):
+        # Outside a transaction, so that the next one (the read) starts read-only.
+        cn.autocommit = True
+        try:
+            super().read_only(cn)
+        finally:
+            cn.autocommit = False
+
+    def listed(self, schema, name, source):
+        if self.SYSTEM.match(schema):
+            return None
+        return name if schema == "public" else schema + "." + name
+
+    def select_all(self, cn, source, table, n):
+        """PostGIS: geometry and geography columns come as WKT with their SRID (ST_AsEWKT), which the app draws on a map."""
+        parts = self.split(table)
+        schema, name = (parts[0], parts[1]) if len(parts) == 2 else ("public", parts[0])
+        cur = cn.cursor()
+        cur.execute("SELECT column_name, udt_name FROM information_schema.columns WHERE table_schema = %s AND table_name = %s ORDER BY ordinal_position", (schema, name))
+        cols = cur.fetchall()
+        cur.close()
+        q = lambda c: '"' + str(c).replace('"', '""') + '"'  # noqa: E731
+        spatial = [str(u) in ("geometry", "geography") for _c, u in cols]
+        listing = ", ".join("ST_AsEWKT(%s) AS %s" % (q(c), q(c)) if s else q(c) for (c, _u), s in zip(cols, spatial)) if any(spatial) else "*"
+        return "SELECT %s FROM %s LIMIT %d" % (listing, self.quote(table), n)
+
+
+class Oracle(SqlDriver):
+    kinds, module, package, title, label, port = ("oracle",), "oracledb", "oracledb", "python-oracledb", "Oracle", 1521
+    TABLES = "SELECT NULL, table_name, 'TABLE' FROM user_tables UNION ALL SELECT NULL, view_name, 'VIEW' FROM user_views ORDER BY 2"
+    READ_ONLY = "SET TRANSACTION READ ONLY"
+
+    def load(self):
+        mod = super().load()
+        if mod is not None and getattr(mod, "defaults", None) is not None:
+            mod.defaults.fetch_lobs = False  # CLOB as text and BLOB as bytes, not LOB objects
+        return mod
+
+    def connect(self, source):
+        mod = self.require()
+        host, port = self.endpoint(source, self.port)
+        if not source.get("database"):
+            raise ValueError("Ange tjänstnamnet (service name).")
+        mode = str(source.get("tls") or "disabled").lower()
+        if mode not in ("disabled", "verify_identity"):
+            raise ValueError("Okänt läge för kryptering: %s" % mode)
+        kw = {"user": str(source.get("user") or ""), "password": str(source.get("password") or ""), "host": host, "port": port,
+              "service_name": str(source["database"]), "tcp_connect_timeout": 15}
+        if mode == "verify_identity":
+            kw["protocol"] = "tcps"
+        return mod.connect(**kw)
+
+    def coltype(self, d):
+        code = str(getattr(d[1], "name", d[1]) or "").upper()
+        if "NUMBER" in code:
+            return "Int64" if len(d) > 5 and d[4] and d[5] == 0 else "Double"
+        if "BINARY_FLOAT" in code or "BINARY_DOUBLE" in code:
+            return "Double"
+        if "DATE" in code or "TIMESTAMP" in code:
+            return "DateTime"
+        if "BOOLEAN" in code:
+            return "Boolean"
+        if "RAW" in code or "BLOB" in code:
+            return "Byte[]"
+        return "String"
+
+    def select_all(self, cn, source, table, n):
+        return "SELECT * FROM %s FETCH FIRST %d ROWS ONLY" % (self.quote(table), n)
+
+
+DRIVERS = [MySql(), Postgres(), Oracle()]
+DRIVER_OF = {k: d for d in DRIVERS for k in d.kinds}
+
+
+def kinds():
+    """The kinds of source this bridge can open now."""
+    return ["sqlite"] + (["dsn", "odbc", "access", "excel"] if pyodbc else []) + [k for d in DRIVERS if d.load() is not None for k in d.kinds]
 
 
 class Commands:
@@ -334,13 +628,20 @@ class Bridge:
         self.lock = threading.Lock()
 
     # ---- connections ----
-    def connect(self, source):
+    def connect(self, source, write=False):
+        """(engine, connection): engine is "sqlite", "odbc" or the SqlDriver. Only a write that the bridge allows opens for writing."""
         kind = (source or {}).get("kind")
+        driver = DRIVER_OF.get(kind)
+        if driver:
+            cn = driver.connect(source)
+            if not write:
+                driver.read_only(cn)
+            return driver, cn
         if kind == "sqlite":
             path = source.get("path")
             if not path:
                 raise ValueError("Ange sökvägen till SQLite-filen.")
-            uri = "file:" + path.replace("\\", "/") + ("?mode=ro" if not self.allow_write else "")
+            uri = "file:" + path.replace("\\", "/") + ("" if self.allow_write and write else "?mode=ro")
             cn = sqlite3.connect(uri, uri=True, timeout=10)
             return "sqlite", cn
         if not pyodbc:
@@ -348,9 +649,9 @@ class Bridge:
         if kind == "dsn":
             if not source.get("dsn"):
                 raise ValueError("Ange DSN.")
-            cs = "DSN=%s;" % source["dsn"]
+            cs = "DSN=%s;" % odbc_value(source["dsn"])
             if source.get("user"):
-                cs += "UID=%s;PWD=%s;" % (source["user"], source.get("password", ""))
+                cs += "UID=%s;PWD=%s;" % (odbc_value(source["user"]), odbc_value(source.get("password", "")))
         elif kind == "odbc":
             cs = source.get("connectionString") or ""
             if not cs:
@@ -358,26 +659,38 @@ class Bridge:
         elif kind == "access":
             if not source.get("path"):
                 raise ValueError("Ange sökvägen till Access-filen.")
-            cs = "Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=%s;" % source["path"]
+            cs = "Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=%s;" % odbc_value(source["path"])
             if source.get("password"):
-                cs += "PWD=%s;" % source["password"]
+                cs += "PWD=%s;" % odbc_value(source["password"])
         elif kind == "excel":
             if not source.get("path"):
                 raise ValueError("Ange sökvägen till Excel-filen.")
-            cs = "Driver={Microsoft Excel Driver (*.xls, *.xlsx, *.xlsm, *.xlsb)};DBQ=%s;ReadOnly=1;" % source["path"]
+            cs = "Driver={Microsoft Excel Driver (*.xls, *.xlsx, *.xlsm, *.xlsb)};DBQ=%s;ReadOnly=1;" % odbc_value(source["path"])
         else:
             raise ValueError("Okänd källtyp: %s" % kind)
         return "odbc", pyodbc.connect(cs, timeout=15)
 
     @staticmethod
+    def close(engine, cn):
+        """A read is rolled back (a write has been committed before); the connection is closed."""
+        try:
+            if isinstance(engine, SqlDriver):
+                engine.finish(cn)
+        finally:
+            cn.close()
+
+    @staticmethod
     def quote(kind, source, name):
+        if isinstance(kind, SqlDriver):
+            return kind.quote(name)
         if kind == "odbc" and (source or {}).get("kind") in ("access", "excel"):
             return "[" + str(name).replace("]", "]]") + "]"
         return '"' + str(name).replace('"', '""') + '"'
 
     # ---- endpoints ----
     def info(self):
-        return {"name": "Dataspatium-databasbrygga", "version": VERSION, "platform": sys.platform, "allowWrite": self.allow_write, "kinds": KINDS, "maxRows": self.max_rows, "pyodbc": bool(pyodbc), "commands": bool(self.commands), "fetch": True, "allowHosts": self.allow_hosts}
+        return {"name": "Dataspatium-databasbrygga", "version": VERSION, "platform": sys.platform, "allowWrite": self.allow_write, "kinds": kinds(), "maxRows": self.max_rows, "pyodbc": bool(pyodbc),
+                "drivers": {k: d.describe() for d in DRIVERS for k in d.kinds}, "commands": bool(self.commands), "fetch": True, "allowHosts": self.allow_hosts}
 
     def fetch(self, request):
         """POST /fetch: the go-between. The log has the host and the path, never the query, headers or body."""
@@ -415,6 +728,8 @@ class Bridge:
     def tables(self, source):
         kind, cn = self.connect(source)
         try:
+            if isinstance(kind, SqlDriver):
+                return kind.tables(cn, source)
             if kind == "sqlite":
                 cur = cn.execute("select name, type from sqlite_master where type in ('table', 'view') and name not like 'sqlite_%' order by name")
                 return [{"name": r[0], "type": r[1].upper()} for r in cur.fetchall()]
@@ -428,7 +743,7 @@ class Bridge:
                 out.append({"name": name, "type": r.table_type})
             return out
         finally:
-            cn.close()
+            self.close(kind, cn)
 
     def columns(self, source, table):
         kind, cn = self.connect(source)
@@ -443,43 +758,50 @@ class Bridge:
             for d in cur.description or []:
                 name = d[0]
                 t = "String"
-                if kind == "sqlite":
+                if isinstance(kind, SqlDriver):
+                    t = kind.coltype(d)
+                elif kind == "sqlite":
                     decl = declared.get(name, "")
                     t = "Int64" if "INT" in decl else "Double" if any(k in decl for k in ("REAL", "FLOA", "DOUB", "NUM", "DEC")) else "Boolean" if "BOOL" in decl else "DateTime" if "TIME" in decl else "Date" if "DATE" in decl else "String"
                 elif d[1] is not None:
                     t = {int: "Int64", float: "Double", bool: "Boolean", decimal.Decimal: "Decimal", datetime.datetime: "DateTime", datetime.date: "Date", bytes: "Byte[]", bytearray: "Byte[]"}.get(d[1], "String")
                 cols.append({"name": name, "type": t, "nullable": d[6] if len(d) > 6 and d[6] is not None else True})
+            cur.close()
             return cols
         finally:
-            cn.close()
+            self.close(kind, cn)
 
     def read(self, kind, cn, sql, limit):
         cur = cn.cursor()
         cur.execute(sql)
-        names = [d[0] for d in (cur.description or [])]
+        desc = list(cur.description or [])
+        names = [d[0] for d in desc]
         rows = []
+        samples = [None] * len(names)
         truncated = False
         for r in cur:
             if len(rows) >= limit:
                 truncated = True
                 break
+            for i, v in enumerate(r):
+                if samples[i] is None and v is not None:
+                    samples[i] = v
             rows.append([convert(v) for v in r])
+        # The type of the first value that is not null, before it is converted; a column without values takes the driver's.
         types = []
         for i, name in enumerate(names):
-            sample = next((r[i] for r in rows if r[i] is not None), None)
-            # Values are already converted; take the type from the raw sample where it tells more than the text.
-            types.append({"name": name, "type": type_name(sample)})
-        if kind == "sqlite":
-            # typeof() per column on the result would need a second query; declared types come from /columns.
-            pass
+            t = type_name(samples[i]) if samples[i] is not None else (kind.coltype(desc[i]) if isinstance(kind, SqlDriver) else "String")
+            types.append({"name": name, "type": t})
         return {"columns": types, "rows": rows, "truncated": truncated}
 
     def rows(self, source, table, limit):
         kind, cn = self.connect(source)
         try:
-            return self.read(kind, cn, "SELECT * FROM %s" % self.quote(kind, source, table), limit)
+            # The bridge's own drivers ask for one row more than the limit, so that a large table is not read whole.
+            sql = kind.select_all(cn, source, table, limit + 1) if isinstance(kind, SqlDriver) else "SELECT * FROM %s" % self.quote(kind, source, table)
+            return self.read(kind, cn, sql, limit)
         finally:
-            cn.close()
+            self.close(kind, cn)
 
     def query(self, source, sql, limit, approved):
         write = not read_only(sql)
@@ -487,7 +809,7 @@ class Bridge:
             return 403, {"error": "Bryggan är skrivskyddad; starta med --allow-write för att tillåta ändringar"}
         if write and not approved:
             return 428, {"error": "Skrivning kräver användarens godkännande (approved: true)", "sql": sql}
-        kind, cn = self.connect(source)
+        kind, cn = self.connect(source, write)
         try:
             if write:
                 cur = cn.cursor()
@@ -498,8 +820,9 @@ class Bridge:
             else:
                 result = self.read(kind, cn, sql, limit)
         finally:
-            cn.close()
+            self.close(kind, cn)
         with self.lock:
+            # The kind and the start of the statement; never the source's address, user or password.
             self.log.append({"at": datetime.datetime.now().isoformat(timespec="seconds"), "kind": (source or {}).get("kind"), "sql": sql[:120], "write": write})
             del self.log[:-200]
         return 200, result
@@ -608,6 +931,7 @@ def make_handler(bridge, token, allow_origins, server_box):
         def do_POST(self):
             if not self.guard():
                 return
+            b = {}
             try:
                 b = self.body()
                 limit = min(int(b.get("limit") or bridge.max_rows), bridge.max_rows)
@@ -648,8 +972,8 @@ def make_handler(bridge, token, allow_origins, server_box):
                     threading.Thread(target=server_box[0].shutdown, daemon=True).start()
                 else:
                     self.send_json(404, {"error": "Okänd sökväg " + self.path})
-            except Exception as err:  # noqa: BLE001 - reported to the app
-                self.send_json(500, {"error": str(err)})
+            except Exception as err:  # noqa: BLE001 - reported to the app, without the source's password
+                self.send_json(500, {"error": scrub(err, b.get("source") if isinstance(b, dict) else None)})
 
     return Handler
 
@@ -677,7 +1001,10 @@ def main():
     if bridge.commands:
         print("Kommandon TILLÅTNA (--allow-commands): program på datorn kan köra appens kommandon när Styrning utifrån är på i appen.")
     if not pyodbc:
-        print("pyodbc saknas: bara SQLite-filer kan öppnas (pip install pyodbc för ODBC-källor).")
+        print("pyodbc saknas: ODBC-källor kräver det (pip install pyodbc).")
+    missing = [d for d in DRIVERS if d.load() is None]
+    if missing:
+        print("Drivrutiner som saknas: %s. Installera dem med: pip install %s" % (", ".join("%s (%s)" % (d.title, d.label) for d in missing), " ".join(d.package for d in missing)))
     sys.stdout.flush()
     try:
         server.serve_forever()
