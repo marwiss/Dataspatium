@@ -267,8 +267,7 @@ fer með þig í vistaða gagnasafnið.
 Forstilltar landupplýsingauppsprettur án lykils (CORS staðfest): opin landupplýsingagögn SCB, SGU, Havs- och
 vattenmyndigheten, fornminjar Riksantikvarieämbetet, Skogsstyrelsen, stjórnsýslueiningar og fasteignakort Kartverket
 (Noregur) auk Hagstofu Finnlands og SYKE (Finnland). Lögin eru lesin úr þjónustunni þegar uppsprettan er opnuð í fyrsta
-sinn og má lesa aftur með *Lesa lögin aftur*; listinn er vistaður í þínu eintaki af uppsprettunni. Landupplýsingavettvangur
-Lantmäteriet (deiliskipulag, byggingar, strandvernd, menningarsögulegar minjar og mörk fjallaskóga) er á stigi 2 með Bearer-lykli frá tengdri stofnun.
+sinn og má lesa aftur með *Lesa lögin aftur*; listinn er vistaður í þínu eintaki af uppsprettunni.
 
 **NVDB hjá Trafikverket** (*Trafikverket NVDB: vegagögn*) gefur 45 hlutategundir úr sænska landsvegagagnagrunninum, eins og
 hámarkshraða, vegnúmer, burðarþol, fjölda akreina, götuheiti, gatnamót og áningarstaði, með einum endapunkti fyrir hverja

@@ -177,7 +177,7 @@ Dataspatium.assets.addEntries({
  "presets/api/lantmateriet-ngp-detaljplan.api.json": {
   "file": "presets/api/lantmateriet-ngp-detaljplan.api.json.js",
   "encoding": "text",
-  "size": 4311,
+  "size": 4553,
   "library": "dataspatium"
  },
  "presets/api/lantmateriet-stac.api.json": {
@@ -801,7 +801,7 @@ Dataspatium.assets.addEntries({
  "docs/da/kallor.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 27990,
+  "size": 27791,
   "library": "dataspatium"
  },
  "docs/da/snabbstart.md": {
@@ -837,7 +837,7 @@ Dataspatium.assets.addEntries({
  "docs/da/planer.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 13150,
+  "size": 12936,
   "library": "dataspatium"
  },
  "docs/da/grafer.md": {
@@ -969,7 +969,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/kallor.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 27575,
+  "size": 27372,
   "library": "dataspatium"
  },
  "docs/nb/snabbstart.md": {
@@ -1005,7 +1005,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/planer.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 13037,
+  "size": 12814,
   "library": "dataspatium"
  },
  "docs/nb/grafer.md": {
@@ -1137,7 +1137,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/kallor.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 27959,
+  "size": 27753,
   "library": "dataspatium"
  },
  "docs/nn/snabbstart.md": {
@@ -1173,7 +1173,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/planer.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 13358,
+  "size": 13125,
   "library": "dataspatium"
  },
  "docs/nn/grafer.md": {
@@ -1305,7 +1305,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/kallor.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 29848,
+  "size": 29614,
   "library": "dataspatium"
  },
  "docs/fi/snabbstart.md": {
@@ -1341,7 +1341,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/planer.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 14246,
+  "size": 14028,
   "library": "dataspatium"
  },
  "docs/fi/grafer.md": {
@@ -1473,7 +1473,7 @@ Dataspatium.assets.addEntries({
  "docs/is/kallor.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 29584,
+  "size": 29400,
   "library": "dataspatium"
  },
  "docs/is/snabbstart.md": {
@@ -1509,7 +1509,7 @@ Dataspatium.assets.addEntries({
  "docs/is/planer.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 14064,
+  "size": 13845,
   "library": "dataspatium"
  },
  "docs/is/grafer.md": {

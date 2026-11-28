@@ -22,9 +22,6 @@ Koordinaatit SWEREF 99 TM:ssä ja paikallisissa SWEREF 99 -vyöhykkeissä (EPSG:
 päätteestä: pudota se Nouda-tilaan, niin kaavan tiedot ja painike *Tuo* tulevat näkyviin. ÖP-mallin
 GeoPackage-tiedosto saa valinnan *Koko yleiskaava kaavana*; pois päältä tuodaan yksi taulukko kerrallaan kuten ennen. GeoPackage-muotoinen asemakaava saa valinnan *Koko kaava kaavana*. GeoPackage-tiedoston koordinaattijärjestelmä luetaan tiedostosta, myös kun se on annettu vain nimellä (esimerkiksi *SWEREF99 15 00*).
 
-Lantmäterietin asemakaava-API:sta (lähde *Lantmäteriet geodataplattformen: detaljplaner*, vaatii avaimen liittyneeltä
-organisaatiolta) vastaus tallennetaan kaavana painikkeella *Tallenna kaavana* taulukon sijaan.
-
 ## Kaavakartta Muokkaa-tilassa
 
 Kaava avautuu kaavakarttana: käyttömääräykset täytettyinä Boverketin väreillä (asuminen keltainen, keskusta ruskea,

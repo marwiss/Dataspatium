@@ -273,8 +273,7 @@ datasettet.
 Førehandsinnstilte geodatakjelder utan nøkkel (CORS verifisert): SCB opne geodata, SGU, Havs- och vattenmyndigheten,
 kulturminna til Riksantikvarieämbetet, Skogsstyrelsen, dei administrative einingane og eigedomskartet frå Kartverket (Noreg) og dessutan
 Statistikcentralen og SYKE (Finland). Laga blir lesne frå tenesta første gongen kjelda blir opna og kan lesast på nytt med *Les
-laga på nytt*; lista blir lagra i din kopi av kjelda. Geodataplattforma til Lantmäteriet (reguleringsplanar, bygningar, strandvern, kulturhistoriske leivningar og grensa for fjellnær skog) finst som nivå 2
-med Bearer-nøkkel frå ein tilknytt organisasjon.
+laga på nytt*; lista blir lagra i din kopi av kjelda.
 
 **Trafikverkets NVDB** (*Trafikverket NVDB: vegdata*) gjev 45 objekttypar frå den svenske nasjonale vegdatabasen, som
 fartsgrenser, vegnummer, bereevne, tal på køyrefelt, gatenamn, kryss og rasteplassar, med eitt endepunkt per objekttype. Han

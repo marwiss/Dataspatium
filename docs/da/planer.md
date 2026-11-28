@@ -21,9 +21,6 @@ Mercator omregnes til WGS 84. En GeoJSON-fil genkendes på indholdet, ikke på f
 planens oplysninger og knappen *Importér*. En GeoPackage-fil i ÖP-modellen får valget *Hele kommuneplanen som plan*;
 slået fra importeres én tabel ad gangen som før. En detaljplan i GeoPackage får valget *Hele planen som plan*. Koordinatsystemet i en GeoPackage-fil læses fra filen, også når det kun står med navn (for eksempel *SWEREF99 15 00*).
 
-Fra Lantmäteriets lokalplan-API (kilden *Lantmäteriet geodataplattformen: detaljplaner*, kræver nøgle fra en
-tilsluttet organisation) gemmes et svar som plan med knappen *Gem som plan* i stedet for som tabel.
-
 ## Plankortet i Bearbejd
 
 En plan åbnes som plankort: anvendelsesbestemmelserne fyldt med Boverkets farver (boliger gul, centrum brun, industri

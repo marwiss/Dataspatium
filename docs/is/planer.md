@@ -22,9 +22,6 @@ Mercator eru umreiknuð í WGS 84. GeoJSON-skrá þekkist á innihaldinu, ekki e
 upplýsingar skipulagsins birtast með hnappinum *Flytja inn*. GeoPackage-skrá í ÖP-líkaninu fær valið *Allt
 aðalskipulagið sem skipulag*; slökkt er ein tafla flutt inn í einu eins og áður. Deiliskipulag í GeoPackage fær valið *Allt skipulagið sem skipulag*. Hnitakerfi GeoPackage-skrár er lesið úr skránni, einnig þegar það er aðeins gefið með heiti (til dæmis *SWEREF99 15 00*).
 
-Úr deiliskipulags-API Lantmäteriet (uppsprettan *Lantmäteriet geodataplattformen: detaljplaner*, krefst lykils frá
-tengdri stofnun) er svar vistað sem skipulag með hnappinum *Vista sem skipulag* í stað töflu.
-
 ## Skipulagskortið í Vinna
 
 Skipulag opnast sem skipulagskort: notkunarákvæði fyllt með litum Boverket (íbúðir gult, miðbær brúnt, iðnaður

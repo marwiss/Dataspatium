@@ -280,8 +280,7 @@ taso, rajaa mielellään alueella (bbox) ja nouda. Esikatselu näyttää vastauk
 Valmiit paikkatietolähteet ilman avainta (CORS tarkistettu): SCB:n avoin paikkatieto, SGU, Havs- och vattenmyndigheten,
 Riksantikvarieämbetetin muinaisjäännökset, Skogsstyrelsen, Kartverketin hallinnolliset yksiköt ja kiinteistökartta (Norja)
 sekä Tilastokeskus ja SYKE (Suomi). Tasot luetaan palvelusta, kun lähde avataan ensimmäisen kerran, ja ne voi lukea
-uudelleen painikkeella *Lue tasot uudelleen*; luettelo tallennetaan omaan kopioosi lähteestä. Lantmäterietin
-paikkatietoalusta (asemakaavat, rakennukset, rantojensuojelu, kulttuurihistorialliset jäännökset ja tunturien läheisen metsän raja) on tasolla 2 Bearer-avaimella, jonka saa alustaan liittyneeltä organisaatiolta.
+uudelleen painikkeella *Lue tasot uudelleen*; luettelo tallennetaan omaan kopioosi lähteestä.
 
 **Trafikverketin NVDB** (*Trafikverket NVDB: tietiedot*) antaa 45 kohdetyyppiä Ruotsin kansallisesta tietietokannasta, kuten
 nopeusrajoitukset, tienumerot, kantavuuden, kaistojen määrän, kadunnimet, liittymät ja levähdysalueet, yksi päätepiste
