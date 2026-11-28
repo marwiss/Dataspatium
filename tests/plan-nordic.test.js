@@ -213,9 +213,21 @@
       const meta = await detaljplanImp.importParsed(parsed, null, { kind: 'api', connector: connector.id });
       ids.push(meta.id);
       assert.equal(meta.kind, 'plan'); assert.equal(meta.name, 'Ferieboliger ved Røgeriet'); assert.equal(meta.plan.land, 'DK');
-      // API answers from one Plandata layer can be kept as a plan too (Spara som plan).
+      // API answers from one Plandata layer can be kept as a plan too (Spara som detaljplan): the button names the kind of plan.
       const table = { columns: ['planid', 'komnr', 'kommunenavn', 'objektkode', 'plantype', 'plannr', 'plannavn', 'anvgen', 'zone', 'status', 'geometri'], rows: [[11922461, 306, 'Odsherred', 20, 20.1, '2024-05', 'Ferieboliger', 51, 1, 'V', JSON.stringify(geo.toWgs84(sq(690000, 6180000, 400, 300), 'EPSG:25832'))]] };
       assert.ok(plan.detectTable(table.columns)); assert.equal(plan.tableFormat(table.columns), 'plandata');
+      assert.deepEqual(plan.tablePlan(table.columns, table.rows), { format: 'plandata', slag: 'detaljplan', plans: 1 });
+      assert.deepEqual(plan.tablePlan(['planid', 'komnr', 'komplan_id', 'anvgen', 'plannavn', 'geometri']), { format: 'plandata-kommuneplan', slag: 'oversiktsplan', plans: 1 });
+      assert.deepEqual(plan.tablePlan(['skipnr', 'audkenni', 'flokkur', 'geometry']), { format: 'skipulag-adal', slag: 'oversiktsplan', plans: 1 });
+      assert.equal(plan.tablePlan(['id', 'namn', 'geometri']), null, 'no plan, no button');
+      // One NGP plan (its area and provisions share the plan's identity) is a plan; the areas of many plans are a map of plans.
+      const ngp = ['id', 'feature:typ', 'detaljplan:objektidentitet', 'detaljplan:status', 'planbestammelse:bestammelseformulering', 'geometri'];
+      const onePlan = [['a', 'detaljplan', 'p1', 'gällande', null, null], ['b', 'användningsbestämmelse', 'p1', 'gällande', 'Bostäder', null]];
+      assert.deepEqual(plan.tablePlan(ngp, onePlan), { format: 'ngp', slag: 'detaljplan', plans: 1 });
+      const areas = [['a', 'detaljplan', 'p1', 'gällande', null, null], ['b', 'detaljplan', 'p2', 'gällande', null, null], ['c', 'detaljplan', 'p3', 'upphävd', null, null]];
+      assert.equal(plan.tablePlan(ngp, areas).plans, 3, 'three plans');
+      // A lokalplan's delområder name it by lokplan_id: one plan.
+      assert.equal(plan.tablePlan(['planid', 'lokplan_id', 'komnr', 'anvgen', 'geometri'], [[1, 9, 306, 51, null], [2, 9, 306, 51, null]]).plans, 1);
       const m2 = await detaljplanImp.importTable(table.columns, table.rows, 'Lokalplan via API', {});
       ids.push(m2.id);
       assert.equal(m2.rowCount, 2); assert.equal(m2.plan.format, 'plandata');
@@ -276,6 +288,32 @@
       return 'ok';
     } finally { if (meta) await datasets.remove(meta.id).catch(() => {}); }
   }, 60000);
+
+  test('plan: an API answer that is one plan is saved as a plan by default, the areas of many plans as a map with a note (F132 a)', async (assert) => {
+    const view = D.require('ui/api/api-view');
+    const ctx = { shell: { log() {}, activate() {} }, store: { get: () => ({ datasets: [] }), set() {} } };
+    const ngp = ['id', 'feature:typ', 'detaljplan:objektidentitet', 'detaljplan:status', 'planbestammelse:bestammelseformulering', 'geometri'];
+    const buttons = (v) => Array.from(v.el.querySelectorAll('.dm-api-save dm-button')).map((b) => [b.getAttribute('label'), b.getAttribute('variant') || '']);
+    const shown = (rows) => {
+      const v = view.create(ctx, { id: 'test-plan-view', name: 'Planprov', endpoints: [] });
+      v.state.result = { name: 'Planprov', table: { columns: ngp, rows } };
+      document.body.appendChild(v.el);
+      v.start();
+      return v;
+    };
+    const one = shown([['a', 'detaljplan', 'p1', 'gällande', null, null], ['b', 'användningsbestämmelse', 'p1', 'gällande', 'Bostäder', null]]);
+    try {
+      assert.deepEqual(buttons(one), [[t('plan.save.detaljplan'), 'primary'], [t('api.save.table'), '']], 'the plan first and primary, the table second');
+      assert.ok(!one.el.querySelector('[data-plan-many]'), 'no note for one plan');
+    } finally { one.destroy(); one.el.remove(); }
+    const many = shown([['a', 'detaljplan', 'p1', 'gällande', null, null], ['b', 'detaljplan', 'p2', 'gällande', null, null]]);
+    try {
+      assert.deepEqual(buttons(many), [[t('api.save'), 'primary']], 'only Spara som datamängd for the areas of two plans');
+      const note = many.el.querySelector('[data-plan-many]');
+      assert.ok(note && note.getAttribute('data-plan-many') === '2' && note.textContent === t('plan.many.detaljplan', { n: '2' }), 'the note says how many plans');
+    } finally { many.destroy(); many.el.remove(); }
+    return 'ok';
+  });
 
   test('plan-nordic: cleanup', async (assert) => {
     for (const n of names) D.net.unvirtual(n);

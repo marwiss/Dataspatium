@@ -15,6 +15,16 @@
   const datasets = D.require('data/datasets');
   const t = D.require('ui/i18n').t;
   const BASE = 'dataspatium-asset://tests/profile';
+  /** Wait up to five seconds for fn() to give something truthy, and return it (or the last falsy value). */
+  async function until(fn, ms = 5000) {
+    const end = Date.now() + ms;
+    for (;;) {
+      let v = null;
+      try { v = fn(); } catch (_e) { v = null; }
+      if (v || Date.now() > end) return v;
+      await new Promise((r) => setTimeout(r, 20));
+    }
+  }
   const json = (data) => ({ kind: 'text', data: JSON.stringify(data), status: 200 });
   const world = { calls: 0, script: [], bodies: [] };
   const toolUse = (name, input) => ({ id: 'm' + world.calls, content: [{ type: 'tool_use', id: 'tu' + world.calls, name, input }], stop_reason: 'tool_use', usage: { input_tokens: 50, output_tokens: 20 } });
@@ -111,14 +121,16 @@
       card.update({ projectId: '', files: [] });
       assert.ok(card.el.hidden, 'hidden without a project');
       card.update({ projectId: 'p1', projectName: 'Projektet', files: [{ filename: 'krav.ids', documentId: 'd1' }, { filename: 'hus.ifc', documentId: 'd2', model: true }] });
-      await new Promise((r) => setTimeout(r, 50));
-      assert.ok(!card.el.hidden && card.el.querySelector('[data-profile-ids-docs]').getAttribute('data-profile-ids-docs') === '1' && /krav\.ids/.test(card.el.textContent), 'one IDS document listed');
+      // The card draws after reading the kept dictionaries from IndexedDB, which takes longer under load than a fixed pause.
+      const listed = await until(() => card.el.querySelector('[data-profile-ids-docs]'));
+      assert.ok(!card.el.hidden && listed && listed.getAttribute('data-profile-ids-docs') === '1' && /krav\.ids/.test(card.el.textContent), 'one IDS document listed');
       assert.ok(card.el.querySelector('[data-profile-write-ids]'), 'the AI button');
       await card.addDictionary({ uri: 'https://identifier.buildingsmart.org/uri/test/test/1.0', name: 'Testordbok' });
-      assert.equal(card.el.querySelector('[data-profile-dictionaries]').getAttribute('data-profile-dictionaries'), '1');
+      const dicts = await until(() => { const el = card.el.querySelector('[data-profile-dictionaries]'); return el && el.getAttribute('data-profile-dictionaries') === '1' ? el : null; });
+      assert.ok(dicts, 'one dictionary chosen');
       const again = profileCard.create({ connector, log() {} });
       again.update({ projectId: 'p1', projectName: 'Projektet', files: [] });
-      await new Promise((r) => setTimeout(r, 80));
+      await until(() => again.state.dictionaries.length === 1);
       assert.equal(again.state.dictionaries.length, 1, 'kept in the browser for the server and project');
       again.update({ projectId: 'p2', projectName: 'Annat', files: [] });
       await new Promise((r) => setTimeout(r, 80));

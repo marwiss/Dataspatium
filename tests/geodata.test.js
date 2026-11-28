@@ -236,6 +236,7 @@
       buttonByText(t('api.fetch')).click();
       await waitFor(() => root.querySelector('.dm-api-map svg'), 15000, 'map preview of the answer');
       assert.equal(root.querySelectorAll('.dm-api-map svg path').length, 3, 'three polygons in the preview');
+      assert.ok(!buttonByText(t('plan.save.detaljplan')) && !buttonByText(t('plan.save.oversiktsplan')), 'no plan button for a layer that is no plan');
       buttonByText(t('api.save')).click();
       await waitFor(() => buttonByText(t('geodata.open.map')), 15000, 'saved with Öppna som karta');
       // The store learns about the new dataset asynchronously (slower over https than from file://).
