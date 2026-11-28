@@ -359,7 +359,12 @@ hela vägen till ett hämtat objekt med geometri, också Kartverkets WFS-tjänst
 tjänsten; filtrera på namn, land eller innehåll. Listan ligger i `presets/geodata/services.json`. En tjänst som inte står
 i listan lägger du till under *Egen geodatakälla* (se nedan).
 
-Tre källor hämtar planer: *Plandata.dk (WFS)* och *Skipulagsstofnun skipulagsgögn (ArcGIS)* har knappen **Hämta plan**
+Hela svenska detaljplaner hämtas med posten **Detaljplaner (hela planer)** överst i lagerlistan hos en WFS med
+Lantmäteriets NGP-lager (den färdiga källan *Sundsvall med grannkommuner: detaljplaner i NGP-form (WFS)*, utan nyckel) och
+hos *Lantmäteriet geodataplattformen: detaljplaner*: sök på namn eller beteckning och välj en plan, se
+[planer.md](planer.md#hela-detaljplaner-från-en-geodatakälla).
+
+Tre källor hämtar nordiska planer: *Plandata.dk (WFS)* och *Skipulagsstofnun skipulagsgögn (ArcGIS)* har knappen **Hämta plan**
 som läser en hel lokalplan respektive ett deiliskipulag (alla lager) med planens nummer och sparar den som plan, och
 *Ryhti kaavatiedot (OGC API Features)* ger Finlands planindex. Se [planer.md](planer.md#planer-från-andra-nordiska-länder).
 Boverkets Planbestämmelsekatalog finns som vanlig API-källa (*Boverket Planbestämmelsekatalogen*), se [planer.md](planer.md).
@@ -373,7 +378,7 @@ till den sparade datamängden.
 | Familj | Upptäckt | Hämtning | Nyckel |
 |---|---|---|---|
 | WFS 2.0 (GeoServer, MapServer, ArcGIS Server, Deegree) | GetCapabilities | GetFeature med det GeoJSON-format som kapabiliteterna anger (`application/json`, `GEOJSON` med flera) och `srsName=EPSG:4326`, eller med GML när tjänsten inte ger GeoJSON (se nedan); område (bbox), CQL-filter, kolumner; sidor med `startIndex`/`count`, aldrig större än tjänsten skickar (`CountDefault`) | Bearer (valfritt) |
-| OGC API Features | `/collections` | `/collections/{id}/items` med bbox, datetime och filter; next-länkar följs | Bearer (valfritt; krävs av Lantmäteriets geodataplattform) |
+| OGC API Features | `/collections` | `/collections/{id}/items` med bbox, datetime och filter; next-länkar följs; en samling som lagras i ett annat system och erbjuder CRS84 (Lantmäteriets geodataplattform) hämtas med `crs` och `bbox-crs` i CRS84 | Bearer (valfritt); OAuth2 för Lantmäteriets geodataplattform |
 | ArcGIS REST (FeatureServer, MapServer) | Tjänstens beskrivning eller hela katalogen med mapparna, och varje tjänsts lager utom grupp- och rasterlager | `/{lager}/query` med where, område, `f=geojson` och `outSR=4326`; sidor med `resultOffset`, aldrig större än `maxRecordCount`; en sida som tjänsten inte klarar (fel 500 för tunga ytor) hämtas igen en fjärdedel så stor | Token (valfritt) |
 
 Fel som tjänsten själv rapporterar visas med tjänstens text och felkod, till exempel *Service WFS is disabled
@@ -398,7 +403,7 @@ grundvattenmagasin finns i listan), Havs- och vattenmyndigheten, Riksantikvarie�
 Kartverkets administrativa enheter, fastighetskarta och ortnamn (Norge; GML) samt Statistikcentralen och
 SYKE:s skyddade områden (Finland). Lagren läses från tjänsten första gången källan öppnas och kan läsas om med
 *Läs om lagren*; listan sparas i din kopia av källan. Lantmäteriets geodataplattform (detaljplaner, byggnader, strandskydd, kulturhistoriska lämningar och gränsen för fjällnära skog) finns som nivå 2 med
-Bearer-nyckel från en ansluten organisation. Boverkets digitala planer får egna funktioner i en kommande version.
+en nyckel som alla kan få utan kostnad genom Geotorget, se [planer.md](planer.md#hela-detaljplaner-från-en-geodatakälla).
 
 **Trafikverkets NVDB** (*Trafikverket NVDB: vägdata*) ger 45 objekttyper ur Nationella vägdatabasen, som hastighetsgränser,
 vägnummer, bärighet, antal körfält, gatunamn, korsningar och rastplatser, med en ändpunkt per objekttyp. Den kräver en

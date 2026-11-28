@@ -1,0 +1,48 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "sundsvall-riges",
+  "name": "Sundsvall med grannkommuner: detaljplaner i NGP-form (WFS)",
+  "publisher": "Sundsvalls kommun",
+  "description": "Detaljplaner i Lantmäteriets NGP-form för Sundsvall, Örnsköldsvik, Härnösand, Timrå, Ånge, Kramfors och Sollefteå (arbetsytan RIGES i Sundsvalls GeoServer): planernas ytor, användnings-, egenskaps- och administrativa bestämmelser med Boverkets katalogreferens. Sök en plan på namn eller beteckning och hämta den hel som detaljplan, eller hämta ett lager som karta. Ingen nyckel.",
+  "docs": "https://karta.sundsvall.se/",
+  "license": {
+    "name": "Villkor anges inte av tjänsten",
+    "url": "https://karta.sundsvall.se/"
+  },
+  "level": 1,
+  "country": "SE",
+  "baseUrl": "https://karta.sundsvall.se/geoserver/RIGES/wfs",
+  "auth": {
+    "type": "none"
+  },
+  "cors": {
+    "file": true,
+    "web": true
+  },
+  "family": {
+    "type": "geodata",
+    "kind": "wfs"
+  },
+  "endpoints": [],
+  "notes": "Lagren läses från tjänsten när källan öppnas (GetCapabilities, cirka 36 lager). Överst i listan söker Detaljplaner (hela planer) bland cirka 2 100 planer och hämtar en plan ur alla NGP-lagren. CORS från file:// och webben verifierat 2026-11-28.",
+  "i18n": {
+    "en": {
+      "name": "Sundsvall and neighbouring municipalities: detailed plans in NGP form (WFS)",
+      "publisher": "Sundsvall municipality",
+      "description": "Detailed development plans in Lantmäteriet's NGP form for Sundsvall, Örnsköldsvik, Härnösand, Timrå, Ånge, Kramfors and Sollefteå (the workspace RIGES of Sundsvall's GeoServer): the plans' areas and their use, property and administrative provisions with Boverket's catalogue reference. Find a plan by name or designation and fetch it whole as a detailed plan, or fetch a layer as a map. No key.",
+      "notes": "The layers are read from the service when the source is opened (GetCapabilities, about 36 layers). At the top of the list, Detailed plans (whole plans) searches about 2,100 plans and fetches a plan from all the NGP layers. CORS from file:// and the web verified on 2026-11-28."
+    },
+    "da": {
+      "name": "Sundsvall and neighbouring municipalities: detailed plans in NGP form (WFS)"
+    },
+    "nb": {
+      "name": "Sundsvall and neighbouring municipalities: detailed plans in NGP form (WFS)"
+    },
+    "fi": {
+      "name": "Sundsvall and neighbouring municipalities: detailed plans in NGP form (WFS)"
+    },
+    "is": {
+      "name": "Sundsvall and neighbouring municipalities: detailed plans in NGP form (WFS)"
+    }
+  }
+}

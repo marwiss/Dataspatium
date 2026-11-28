@@ -87,6 +87,16 @@
     const GML_SRS = 'urn:ogc:def:crs:EPSG::4326';
     /** The box's system in a GML request: CRS84 (longitude first), since a service's own system may be another (Kartverket). */
     const GML_BBOX_CRS = 'urn:ogc:def:crs:OGC:1.3:CRS84';
+    const CRS84 = 'http://www.opengis.net/def/crs/OGC/1.3/CRS84';
+    /**
+     * True when an OGC API collection is stored in a system other than CRS84 and offers CRS84 (its own `crs` list, or the
+     * collections' list that '#/crs' points to): its items are then asked for in CRS84.
+     */
+    function asksCrs84(c, data) {
+      const own = Array.isArray(c && c.crs) ? c.crs : [];
+      const offered = own.flatMap((x) => (x === '#/crs' ? (Array.isArray(data && data.crs) ? data.crs : []) : [x]));
+      return !!(c && c.storageCrs) && !/CRS84h?$/i.test(String(c.storageCrs)) && offered.some((x) => /\/OGC\/1\.3\/CRS84$/i.test(String(x)));
+    }
     /** The number of features a WFS sends at most per request (the constraint CountDefault), or 0 when not stated. */
     function wfsCountDefault(doc) {
       const c = byLocal(doc, 'Constraint').find((el) => el.getAttribute('name') === 'CountDefault');
@@ -222,7 +232,7 @@
         normalize: (v) => Object.assign({}, v, { baseUrl: trimUrl(String(v.baseUrl || '').replace(/\/collections(\/.*)?$/i, '')) }),
         async discover(v, connector, get) {
           const data = await get(trimUrl(v.baseUrl) + '/collections?f=json');
-          const list = (data && Array.isArray(data.collections) ? data.collections : []).map((c) => ({ id: c.id, name: c.title || c.id, abstract: c.description || '' }));
+          const list = (data && Array.isArray(data.collections) ? data.collections : []).map((c) => Object.assign({ id: c.id, name: c.title || c.id, abstract: c.description || '' }, asksCrs84(c, data) ? { crs84: true } : {}));
           if (!list.length) throw new Error(t('geodata.err.nolayers'));
           return list;
         },
@@ -230,7 +240,10 @@
           const common = () => [P('f', { default: 'json', hidden: true }), P('limit', { type: 'number', default: PAGE, hidden: true }), bboxParam(), P('datetime', { label: t('geodata.param.datetime'), help: t('geodata.param.datetime.help'), example: '2024-01-01T00:00:00Z/..' }), P('filter', { label: t('geodata.param.filter'), help: t('geodata.param.filter.help') })];
           const pagination = { type: 'link-rel', path: 'links', rel: 'next', maxPages: 200 };
           const ids = endpointIds('collection-', entities);
-          const list = entities.map((e, i) => ({ id: ids[i], name: e.name, description: e.abstract || '', method: 'GET', path: '/collections/' + encodeURIComponent(e.id) + '/items', params: common(), pagination, response: { format: 'geojson' }, dataset: { name: e.name } }));
+          // A collection stored in another system that offers CRS84 (Lantmäteriet's NGP, in SWEREF 99 TM unless asked) is asked for
+          // CRS84 and given the box in it, so that the answer is in WGS 84 like the others (OGC API Features part 2).
+          const crs84 = () => [P('crs', { default: CRS84, hidden: true }), P('bbox-crs', { default: CRS84, hidden: true })];
+          const list = entities.map((e, i) => ({ id: ids[i], name: e.name, description: e.abstract || '', method: 'GET', path: '/collections/' + encodeURIComponent(e.id) + '/items', params: common().concat(e.crs84 ? crs84() : []), pagination, response: { format: 'geojson' }, dataset: { name: e.name } }));
           list.push({ id: 'collection', name: t('geodata.generic.collection'), method: 'GET', path: '/collections/{collection}/items', params: [{ name: 'collection', in: 'path', type: 'string', required: true, label: t('geodata.param.collection') }].concat(common()), pagination, response: { format: 'geojson' }, dataset: { name: '{collection}' } });
           return list;
         },

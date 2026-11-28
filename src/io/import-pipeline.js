@@ -88,8 +88,9 @@
       const importer = importerFor(file, forced);
       if (forced || (importer !== json && importer !== xml && importer !== geo)) return importer;
       const head = await file.slice(0, 65536).text();
-      // Digital plans (national specification, NGP reference objects, ÖP exchange model) are GeoJSON with markers.
-      if ((importer === json || importer === geo) && detaljplanImp.sniff(head)) return detaljplanImp;
+      // Digital plans (national specification, NGP reference objects, ÖP exchange model) are GeoJSON with markers; NGP reference
+      // objects of several plans (a municipality's plan areas) are a map of the plans, read as the GeoJSON they are (FU-3230).
+      if ((importer === json || importer === geo) && detaljplanImp.sniff(head)) return (await detaljplanImp.plansIn(file)) > 1 ? importer : detaljplanImp;
       // Graphs: node-link JSON, GraphML and GEXF (XML) are recognised by their contents.
       if ((importer === json || importer === xml) && graphImp.sniff(head)) return graphImp;
       if (importer === json && /"type"\s*:\s*"Topology"/.test(head)) return geo;
@@ -120,6 +121,8 @@
       // A file that only a feature of a higher tier reads (platform/tier, `import:<id>`: BCF files) is refused before it is read.
       tier.guard('import:' + importer.id);
       const p = await importer.preview(file, options);
+      // An NGP file of several plans, read as a map: the preview says how many plans it has and why it is no plan.
+      if (importer === json && detaljplanImp.plansCounted(file) > 1) p.planMany = detaljplanImp.plansCounted(file);
       // A GeoPackage in Boverket's ÖP model can be imported whole as a comprehensive plan.
       if (importer === sqliteImp && p.gpkg && plan.isOpGeoPackage(p.tables)) { p.oversiktsplan = true; p.planGpkg = 'oversiktsplan'; }
       // A detaljplan in Rita Detaljplan's GeoPackage, and the Nordic plan GeoPackages (Norwegian reguleringsplan/kommuneplan,

@@ -371,21 +371,58 @@
       plan.crs = crs || '';
       return finish(plan, rows);
     }
-    /** Rows and plan info from a flattened API table of NGP reference objects (columns `feature.typ`, `detaljplan.*`, `planbestammelse.*`). */
+    /** A list GeoServer has flattened into one value ("(1:Ånge kommun)"): its values without the count. */
+    function listValues(v) {
+      const s = str(v).trim();
+      const m = /^\((\d+):(.*)\)$/.exec(s);
+      if (!m) return s ? [s] : [];
+      return Number(m[1]) > 1 ? m[2].split(',').map((x) => x.trim()) : [m[2]];
+    }
+    /**
+     * Rows and plan info from a flattened API table of NGP reference objects (columns `feature.typ`, `detaljplan.*`, `planbestammelse.*`).
+     * A municipal WFS with the NGP layers (Sundsvall's RIGES) names the object by `ngp_id` (its own feature id is the layer's row) and
+     * the municipality by `providers.name` and `providers.kod`.
+     */
     function fromReferenceTable(columns, rows, options = {}) {
       const idx = new Map(columns.map((c, i) => [normalizeKey(c), i]));
       const get = (row, key) => { const i = idx.get(key); return i === undefined ? undefined : row[i]; };
+      const providersOf = (row) => {
+        const listed = parseMaybe(get(row, 'providers'));
+        if (Array.isArray(listed)) return listed;
+        const codes = listValues(get(row, 'providers.kod'));
+        return listValues(get(row, 'providers.name')).map((name, i) => ({ name, kod: codes[i] || '' }));
+      };
       const features = rows.map((row) => {
-        const props = { feature: { typ: get(row, 'feature.typ'), etikett: get(row, 'feature.etikett') }, title: get(row, 'title'), detaljplan: {}, planbestammelse: null, providers: parseMaybe(get(row, 'providers')) };
+        const props = { feature: { typ: get(row, 'feature.typ'), etikett: get(row, 'feature.etikett') }, title: get(row, 'title'), detaljplan: {}, planbestammelse: null, providers: providersOf(row) };
+        // The fields keep their own case (datumLagakraft, kvalitet.korrigeradeGranser), which the plan's facts are read by.
         for (const [key, i] of idx) {
-          if (key.startsWith('detaljplan.')) props.detaljplan[key.slice(11)] = row[i];
-          else if (key.startsWith('planbestammelse.')) { props.planbestammelse = props.planbestammelse || {}; setPath(props.planbestammelse, key.slice(16), parseMaybe(row[i])); }
+          const path = String(columns[i]).replace(/[_:]/g, '.');
+          if (key.startsWith('detaljplan.')) setPath(props.detaljplan, path.slice(11), row[i]);
+          else if (key.startsWith('planbestammelse.')) { props.planbestammelse = props.planbestammelse || {}; setPath(props.planbestammelse, path.slice(16), parseMaybe(row[i])); }
         }
-        if (props.planbestammelse && !Object.values(props.planbestammelse).some((v) => v !== null && v !== undefined && v !== '')) props.planbestammelse = null;
+        // The plan's own row has every provision field empty, also the nested ones (planbestammelse.bestammelsevarde.*).
+        const filled = (v) => v !== null && v !== undefined && v !== '' && (typeof v !== 'object' || Object.values(v).some(filled));
+        if (props.planbestammelse && !filled(props.planbestammelse)) props.planbestammelse = null;
         const geomText = get(row, 'geometri') || get(row, 'geometry');
-        return { id: get(row, 'id'), geometry: geomText ? geo.parseGeometry(geomText) : null, properties: props };
+        return { id: get(row, 'ngp.id') || get(row, 'id'), geometry: geomText ? geo.parseGeometry(geomText) : null, properties: props };
       });
       return fromNgp({ type: 'FeatureCollection', features }, options);
+    }
+    /**
+     * How many plans an NGP reference collection holds, by the plan's identity in each object (nested, or flattened as a WFS writes
+     * it); a file of the areas of many plans is a map of plans, not one plan (as an API answer, FU-3230). At least 1.
+     * @param {any} data
+     */
+    function planCount(data) {
+      const features = data && Array.isArray(data.features) ? data.features : [];
+      const ids = new Set();
+      for (const f of features) {
+        const p = (f && f.properties) || {};
+        const dp = asObject(p.detaljplan);
+        const id = dp ? dp.objektidentitet || dp.beteckning : p['detaljplan.objektidentitet'] || p['detaljplan.beteckning'];
+        if (str(id).trim()) ids.add(str(id).trim().toLowerCase());
+      }
+      return ids.size || 1;
     }
     function setPath(obj, path, value) {
       const parts = path.split('.');
@@ -893,6 +930,6 @@
       return lines.join('\n');
     }
 
-    return { DP_COLUMNS, OP_COLUMNS, OP_CATEGORIES, OBJECT_TYPES, USE_LETTERS, OP_THEME_COLORS, OP_USE_COLORS, nordic, detect, detectTable, tableFormat, tablePlan, featureType, objectType, colorNameForDesignation, fillOf, strokeOf, opFillOf, boverketColor, geometryOf, geometryText, crsOf, heightsOf, footprint, filledFormulation, fromNgp, fromReferenceTable, fromDetaljplan, fromDpTables, isDpGeoPackage, fromOversiktsplanGeoJson, fromOpTables, isOpGeoPackage, isContentTable, normId, contentId, sectionType, lookupWords, SECTION_TYPES, opTheme, decorate, toRows, fromRows, legend, grouped, areaM2, areasByUse, checkCatalog, templateMatches, provisionsMarkdown, themeKey };
+    return { DP_COLUMNS, OP_COLUMNS, OP_CATEGORIES, OBJECT_TYPES, USE_LETTERS, OP_THEME_COLORS, OP_USE_COLORS, nordic, detect, detectTable, tableFormat, tablePlan, featureType, objectType, colorNameForDesignation, fillOf, strokeOf, opFillOf, boverketColor, geometryOf, geometryText, crsOf, heightsOf, footprint, filledFormulation, fromNgp, fromReferenceTable, planCount, fromDetaljplan, fromDpTables, isDpGeoPackage, fromOversiktsplanGeoJson, fromOpTables, isOpGeoPackage, isContentTable, normId, contentId, sectionType, lookupWords, SECTION_TYPES, opTheme, decorate, toRows, fromRows, legend, grouped, areaM2, areasByUse, checkCatalog, templateMatches, provisionsMarkdown, themeKey };
   });
 })();

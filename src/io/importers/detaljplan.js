@@ -18,6 +18,27 @@
     const WORDS = /detaljplan|planbestammelse|oversiktsplan|innehallOP|innehallstyp|"komnr"|planRegulationGroups|geographicalArea|audkenni|skipStig|byggTeg|flokkur/i;
     const uiLang = () => { try { return D.require('ui/i18n').language(); } catch (_e) { return 'sv'; } };
 
+    /** How many plans each NGP file read so far holds (io/import asks while choosing the importer, the preview after it). */
+    const counted = new WeakMap();
+    /**
+     * How many plans a file of NGP reference objects holds, 0 for any other file; kept per file. A file with several is read as a
+     * map of the plans (io/import), as an API answer of many plans is (FU-3230). @param {File} file @returns {Promise<number>}
+     */
+    async function plansIn(file) {
+      if (counted.has(file)) return counted.get(file);
+      let n = 0;
+      try {
+        if (/"stac_version"/.test(await file.slice(0, 65536).text())) {
+          const data = JSON.parse((await encoding.readText(file)).text);
+          n = plan.detect(data) === 'ngp' ? plan.planCount(data) : 0;
+        }
+      } catch (_err) { n = 0; }
+      counted.set(file, n);
+      return n;
+    }
+    /** The count plansIn() found for a file, or 0 when it has not been asked. @param {File} file */
+    const plansCounted = (file) => counted.get(file) || 0;
+
     /** Never by extension; io/import calls sniff() on the file head instead. */
     function detect() { return false; }
     /** True when the first kilobytes of a JSON file look like a plan in one of the read formats. */
@@ -30,6 +51,9 @@
       try { data = JSON.parse(text); } catch (_err) { throw new Error(D.t('plan.err.json')); }
       const format = plan.detect(data);
       if (!format) throw new Error(D.t('plan.err.format'));
+      // Reference objects of several plans (a municipality's plan areas) are a map of plans, not one plan: io/import reads such a
+      // file as a map, and a plan is not made of it with the first plan's facts.
+      if (format === 'ngp') { const n = plan.planCount(data); if (n > 1) throw new Error(D.t('plan.err.many', { n })); }
       const swedish = format === 'ngp' || format === 'detaljplan' || format === 'oversiktsplan';
       const parsed = format === 'ngp' ? plan.fromNgp(data, options) : format === 'detaljplan' ? plan.fromDetaljplan(data, options) : format === 'oversiktsplan' ? plan.fromOversiktsplanGeoJson(data, options) : await plan.nordic.read(format, data, Object.assign({ lang: uiLang() }, options));
       if (swedish && parsed.plan.slag === 'detaljplan') await plan.decorate(parsed.rows);
@@ -65,14 +89,18 @@
       const columns = columnsFor(info);
       return dsFiles.createDataset({ name, kind: 'plan', columns, rows: plan.toRows(rows, columns), files: files || [], source, meta: { plan: info } });
     }
-    /** One plan file (GeoJSON per the specification or NGP reference objects) → one plan dataset. */
+    /**
+     * One plan file (GeoJSON per the specification or NGP reference objects) → one plan dataset. `options.source` adds to the
+     * dataset's source (a plan fetched from a service, api/ngp-plans).
+     */
     async function importFile(file, options = {}, name, progress) {
       if (progress) progress({ step: 'read', file: file.name });
       const r = await read(file, options);
       // An översiktsplan's rows name the file they came in (OP_COLUMNS `fil`); a GeoJSON file has no layers.
       if (r.plan.slag === 'oversiktsplan') for (const row of r.rows) row.fil = file.name;
       const original = { name: file.name, kind: 'original', type: file.type || 'application/geo+json', bytes: new Uint8Array(await file.arrayBuffer()) };
-      return createPlanDataset(r.plan, r.rows, name || defaultName(r.plan, file), { kind: 'file', fileName: file.name, size: file.size, lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null, format: 'detaljplan', planFormat: r.format }, [original]);
+      const source = Object.assign({ kind: 'file', fileName: file.name, size: file.size, lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null, format: 'detaljplan', planFormat: r.format }, options.source || {});
+      return createPlanDataset(r.plan, r.rows, name || defaultName(r.plan, file), source, [original]);
     }
     /** An API answer (flattened columns) with NGP reference objects or a Nordic plan layer → one plan dataset. */
     async function importTable(columns, rows, name, source) {
@@ -142,6 +170,6 @@
     /** Kept for callers of the 2.9.0 name. */
     const importOpGeoPackage = importGeoPackage;
 
-    return { id: 'detaljplan', kind: 'plan', detect, sniff, read, preview, parse, importFile, importTable, importParsed, importGeoPackage, importOpGeoPackage, readGeoPackage, gpkgKind, columnsFor, createPlanDataset, defaultName };
+    return { id: 'detaljplan', kind: 'plan', detect, sniff, plansIn, plansCounted, read, preview, parse, importFile, importTable, importParsed, importGeoPackage, importOpGeoPackage, readGeoPackage, gpkgKind, columnsFor, createPlanDataset, defaultName };
   });
 })();

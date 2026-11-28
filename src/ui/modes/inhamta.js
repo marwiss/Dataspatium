@@ -1234,6 +1234,8 @@
         if (sense) left.appendChild(sense);
         // A coordinate system the app cannot convert: said before the import (the places would otherwise land in the wrong place).
         if (p && p.crsUnknown) left.appendChild(h('p', { class: 'dm-error dm-small', 'data-import-crs-unknown': '', text: t('import.crs.unknown', { crs: p.crsUnknown }) }));
+        // Lantmäteriet's reference objects of several plans are a map of the plans, not one plan (as an API answer of many, FU-3230).
+        if (p && p.planMany) left.appendChild(h('p', { class: 'dm-help dm-small', 'data-plan-many-file': String(p.planMany), text: t('plan.many.file', { n: i18n.formatNumber(p.planMany) }) }));
         const collection = COLLECTIONS.includes(wiz.options.format);
         const format = select(t('import.format'), FORMATS.map((f) => ({ value: f, label: t('import.format.' + f) })), wiz.options.format, (v) => { wiz.options.format = v; wiz.options.header = undefined; wiz.options.recordTag = ''; wiz.options.table = ''; schedulePreview(); });
         // Several files are always one collection, so the format is fixed then.

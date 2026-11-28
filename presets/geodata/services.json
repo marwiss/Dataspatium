@@ -203,14 +203,10 @@
    "key": true,
    "url": "https://api.lantmateriet.se/distribution/geodatakatalog/sokning/v1/detaljplan/v2",
    "docs": "https://www.lantmateriet.se/sv/nationella-geodataplattformen/",
-   "license": "Kräver nyckel",
+   "license": "CC0 1.0 (kräver nyckel)",
    "about": {
-    "sv": "Digitala detaljplaner; kräver API-nyckel från en ansluten organisation.",
-    "en": "Digital detailed plans; requires an API key from a connected organisation.",
-    "da": "Digitale lokalplaner; kræver API-nøgle fra en tilsluttet organisation.",
-    "nb": "Digitale reguleringsplaner; krever API-nøkkel fra en tilknyttet organisasjon.",
-    "fi": "Digitaaliset asemakaavat; vaatii API-avaimen liittyneeltä organisaatiolta.",
-    "is": "Stafrænt deiliskipulag; krefst API-lykils frá tengdri stofnun."
+    "sv": "Digitala detaljplaner, hela planer med alla bestämmelser; nyckel som alla kan få utan kostnad genom Geotorget.",
+    "en": "Digital detailed plans, whole plans with every provision; a key anyone can get free of charge through Geotorget."
    }
   },
   {
@@ -223,15 +219,10 @@
    "key": true,
    "url": "https://api.lantmateriet.se/distribution/geodatakatalog/sokning/v1/byggnad/v1",
    "docs": "https://www.lantmateriet.se/sv/nationella-geodataplattformen/",
-   "license": "Kräver nyckel",
+   "license": "CC0 1.0 (kräver nyckel)",
    "about": {
-    "sv": "Byggnader ur den nationella geodataplattformen; kräver API-nyckel från en ansluten organisation.",
-    "en": "Buildings from the national geodata platform; requires an API key from a connected organisation.",
-    "da": "Bygninger fra den nationale geodataplatform; kræver API-nøgle fra en tilsluttet organisation.",
-    "nb": "Bygninger fra den nasjonale geodataplattformen; krever API-nøkkel fra en tilknyttet organisasjon.",
-    "nn": "Bygningar frå den nasjonale geodataplattforma; krev API-nøkkel frå ein tilknytt organisasjon.",
-    "fi": "Rakennukset kansallisesta paikkatietoalustasta; vaatii API-avaimen liittyneeltä organisaatiolta.",
-    "is": "Byggingar úr landsgagnagátt landupplýsinga; krefst API-lykils frá tengdri stofnun."
+    "sv": "Byggnader ur den nationella geodataplattformen; nyckel som alla kan få utan kostnad genom Geotorget.",
+    "en": "Buildings from the national geodata platform; a key anyone can get free of charge through Geotorget."
    }
   },
   {
@@ -244,15 +235,10 @@
    "key": true,
    "url": "https://api.lantmateriet.se/distribution/geodatakatalog/sokning/v1/strandskydd/v1",
    "docs": "https://www.lantmateriet.se/sv/nationella-geodataplattformen/",
-   "license": "Kräver nyckel",
+   "license": "CC0 1.0 (kräver nyckel)",
    "about": {
-    "sv": "Strandskyddsområden ur den nationella geodataplattformen; kräver API-nyckel från en ansluten organisation.",
-    "en": "Shore protection areas from the national geodata platform; requires an API key from a connected organisation.",
-    "da": "Strandbeskyttelsesområder fra den nationale geodataplatform; kræver API-nøgle fra en tilsluttet organisation.",
-    "nb": "Strandvernområder fra den nasjonale geodataplattformen; krever API-nøkkel fra en tilknyttet organisasjon.",
-    "nn": "Strandvernområde frå den nasjonale geodataplattforma; krev API-nøkkel frå ein tilknytt organisasjon.",
-    "fi": "Rantojensuojelualueet kansallisesta paikkatietoalustasta; vaatii API-avaimen liittyneeltä organisaatiolta.",
-    "is": "Strandverndarsvæði úr landsgagnagátt landupplýsinga; krefst API-lykils frá tengdri stofnun."
+    "sv": "Strandskyddsområden ur den nationella geodataplattformen; nyckel som alla kan få utan kostnad genom Geotorget.",
+    "en": "Shore protection areas from the national geodata platform; a key anyone can get free of charge through Geotorget."
    }
   },
   {
@@ -265,15 +251,10 @@
    "key": true,
    "url": "https://api.lantmateriet.se/distribution/geodatakatalog/sokning/v1/kulturhistorisklamning/v1",
    "docs": "https://www.lantmateriet.se/sv/nationella-geodataplattformen/",
-   "license": "Kräver nyckel",
+   "license": "CC0 1.0 (kräver nyckel)",
    "about": {
-    "sv": "Kulturhistoriska lämningar ur den nationella geodataplattformen; kräver API-nyckel från en ansluten organisation.",
-    "en": "Cultural heritage remains from the national geodata platform; requires an API key from a connected organisation.",
-    "da": "Kulturhistoriske levn fra den nationale geodataplatform; kræver API-nøgle fra en tilsluttet organisation.",
-    "nb": "Kulturhistoriske levninger fra den nasjonale geodataplattformen; krever API-nøkkel fra en tilknyttet organisasjon.",
-    "nn": "Kulturhistoriske leivningar frå den nasjonale geodataplattforma; krev API-nøkkel frå ein tilknytt organisasjon.",
-    "fi": "Kulttuurihistorialliset jäännökset kansallisesta paikkatietoalustasta; vaatii API-avaimen liittyneeltä organisaatiolta.",
-    "is": "Menningarsögulegar minjar úr landsgagnagátt landupplýsinga; krefst API-lykils frá tengdri stofnun."
+    "sv": "Kulturhistoriska lämningar ur den nationella geodataplattformen; nyckel som alla kan få utan kostnad genom Geotorget.",
+    "en": "Cultural heritage remains from the national geodata platform; a key anyone can get free of charge through Geotorget."
    }
   },
   {
@@ -286,15 +267,10 @@
    "key": true,
    "url": "https://api.lantmateriet.se/distribution/geodatakatalog/sokning/v1/gransforfjallnaraskog/v1",
    "docs": "https://www.lantmateriet.se/sv/nationella-geodataplattformen/",
-   "license": "Kräver nyckel",
+   "license": "CC0 1.0 (kräver nyckel)",
    "about": {
-    "sv": "Gränsen för fjällnära skog ur den nationella geodataplattformen; kräver API-nyckel från en ansluten organisation.",
-    "en": "The boundary of forest near the mountains from the national geodata platform; requires an API key from a connected organisation.",
-    "da": "Grænsen for fjeldnær skov fra den nationale geodataplatform; kræver API-nøgle fra en tilsluttet organisation.",
-    "nb": "Grensen for fjellnær skog fra den nasjonale geodataplattformen; krever API-nøkkel fra en tilknyttet organisasjon.",
-    "nn": "Grensa for fjellnær skog frå den nasjonale geodataplattforma; krev API-nøkkel frå ein tilknytt organisasjon.",
-    "fi": "Tunturien läheisen metsän raja kansallisesta paikkatietoalustasta; vaatii API-avaimen liittyneeltä organisaatiolta.",
-    "is": "Mörk fjallaskóga úr landsgagnagátt landupplýsinga; krefst API-lykils frá tengdri stofnun."
+    "sv": "Gränsen för fjällnära skog ur den nationella geodataplattformen; nyckel som alla kan få utan kostnad genom Geotorget.",
+    "en": "The boundary of forest near the mountains from the national geodata platform; a key anyone can get free of charge through Geotorget."
    }
   },
   {
@@ -335,6 +311,21 @@
     "nb": "Søk flere tjenester i den nasjonale katalogen.",
     "fi": "Hae lisää palveluja kansallisesta luettelosta.",
     "is": "Leita að fleiri þjónustum í landsskránni."
+   }
+  },
+  {
+   "id": "sundsvall-riges",
+   "preset": "sundsvall-riges",
+   "name": "Detaljplaner i Västernorrland (Sundsvall, RIGES)",
+   "publisher": "Sundsvalls kommun",
+   "country": "SE",
+   "kind": "wfs",
+   "url": "https://karta.sundsvall.se/geoserver/RIGES/wfs",
+   "docs": "https://karta.sundsvall.se/",
+   "license": "Villkor anges inte av tjänsten",
+   "about": {
+    "sv": "Hela detaljplaner i NGP-form för Sundsvall, Örnsköldsvik, Härnösand, Timrå, Ånge, Kramfors och Sollefteå, utan nyckel; sök på namn eller beteckning.",
+    "en": "Whole detailed plans in NGP form for Sundsvall, Örnsköldsvik, Härnösand, Timrå, Ånge, Kramfors and Sollefteå, without a key; search by name or designation."
    }
   },
   {

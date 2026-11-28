@@ -25,14 +25,58 @@ whole comprehensive plan as a plan*; switched off, one table at a time is import
 When an answer from an API or a geodata source is one plan the app reads, *Save as detailed development plan* or *Save as
 comprehensive plan* is the default, and *Save as table* saves the answer as an ordinary dataset instead; the plan button's
 tip names the format the answer was recognised as. Reference objects from Lantmäteriet's geodata platform (the source
-*Lantmäteriet geodataplattformen: detaljplaner*, which needs a key from a connected organisation), a lokalplan layer from
+*Lantmäteriet geodataplattformen: detaljplaner*, with a key anyone can get, see [Whole detailed plans from a geodata source](#whole-detailed-plans-from-a-geodata-source)), a lokalplan layer from
 Plandata.dk and a deiliskipulag from Skipulagsstofnun are saved as detailed development plans; Plandata.dk's
 kommuneplanrammer and an aðalskipulag as comprehensive plans.
 
 An answer with parts of several plans, such as a municipality's layer *NGP_Detaljplan_yta* with the areas of all its
 detailed plans, is no plan but a map of the plans. It is saved with *Save as dataset* and opens as a map, and a line above
-the buttons says how many plans the answer holds. Swedish comprehensive plans are not yet fetched from any API; they are
+the buttons says how many plans the answer holds; a whole plan from the layers is fetched with *Detailed plans (whole plans)*, see below. Swedish comprehensive plans are not yet fetched from any API; they are
 read from files (GeoPackage in Boverket's ÖP model, or GeoJSON).
+
+## Whole detailed plans from a geodata source
+
+A detailed plan in Lantmäteriet's NGP form lies in several layers: one with the plans' areas (a row per plan) and one per
+kind of provision. A geodata source with those layers, and the source *Lantmäteriet geodataplattformen: detaljplaner*,
+therefore has the entry **Detailed plans (whole plans)** at the top of its layer list, so that you need not choose the
+layers yourself:
+
+1. Choose **Detailed plans (whole plans)** and type part of the plan's name or designation, for example *Prästbordet* or
+   *22-HAV-1125*. Without text the first plans are listed.
+2. **Search** gives a short list with designation, name, status and date (in force, else started).
+3. Choose a plan. The plan area and every provision are fetched and kept as a detailed plan with Boverket's colours and
+   designations, and *Open in Process* shows the plan map. Progress is shown layer by layer, and **Cancel** stops the
+   fetch without saving anything.
+
+**A municipality's WFS.** The entry is there when the service has the layer `NGP_Detaljplan_yta` and one or more
+`NGP_…bestammelse…` layers (use, property and administrative provisions), in any workspace (`RIGES:NGP_Detaljplan_yta`).
+The plan is fetched from the plan layer and each provision layer with a filter on the plan's identity
+(`detaljplan.objektidentitet`): with `CQL_FILTER` on GeoServer and otherwise with an FES 2.0 filter. When the service refuses
+one, the other is tried, and when it takes neither the app says so. A layer that lacks the field is skipped and named in
+the card. In the search å, ä and ö match any character, since GeoServer can otherwise miss plans with those letters. The
+ready source *Sundsvall and neighbouring municipalities: detailed plans in NGP form (WFS)* (Sundsvall's GeoServer, the
+workspace RIGES) has about 2,100 plans for Sundsvall, Örnsköldsvik, Härnösand, Timrå, Ånge, Kramfors and Sollefteå and needs
+no key.
+
+**Lantmäteriet's geodata platform.** The source *Lantmäteriet geodataplattformen: detaljplaner* searches with `POST /search`
+among every municipality's plans or in the municipality you choose, with the answer in WGS 84. When the plan has its file
+according to the national specification (Detaljplan 4.1), that file is fetched and kept as the plan's original; otherwise,
+or when the file cannot be read, the plan's reference objects are fetched page by page. The key goes only to Lantmäteriet's
+own server, never to a file on another host.
+
+**A key to the geodata platform.** Anyone can become a consumer free of charge: a private person, company, association,
+municipality or authority. Create an account in Geotorget, apply under *Nationella geodataplattformen* to become a consumer
+and accept the terms (for an organisation the account takes about two working days), then create OAuth 2.0 keys in the API
+portal (apimanager.lantmateriet.se). Give the consumer key and consumer secret in the source's key fields; they are kept like
+other keys, in the session or encrypted with a passphrase. The app gets a token from `api.lantmateriet.se/token` with the key
+in the form body, since the token URL does not allow the Authorization header from the browser. Lantmäteriet recommends
+OAuth 2.0; a private person can also use Basic with the Geotorget login, but the source uses OAuth 2.0. The data are CC0.
+See Lantmäteriet's pages (in Swedish) [Bli konsument som privatperson](https://www.lantmateriet.se/sv/nationella-geodataplattformen/konsument/bli-konsument-som-privatperson/) and
+[Bli konsument som organisation](https://www.lantmateriet.se/sv/nationella-geodataplattformen/konsument/bli-konsument-som-organisation/).
+
+**A file with several plans.** Lantmäteriet's reference objects for several plans in one file, such as a municipality's plan
+areas, are no plan but a map of the plans. The file is imported as a map, and the preview says how many plans it holds; a
+file of one plan is imported as a detailed plan.
 
 ## The plan map in Process
 
@@ -440,7 +484,9 @@ provisions as codes and numbers, not as text.
 - Provision descriptions, planning materials and decision documents come along only as text (motives) or as facts in
   the plan's metadata; the documents are not fetched.
 - Areas are planar computations in SWEREF 99 TM; for plans in local zones the error is negligible.
-- Lantmäteriet's detailed-plan API requires a key; the app is tested against the documented model with its own test data.
+- Lantmäteriet's detailed-plan API requires a key; the search and the fetch from it are tested against the specification's
+  examples (version 2.2) with the app's own test data, not against the real service. Whole plans from Sundsvall's WFS are
+  tested against the service.
 - A section without a link gets no section type in an exported GeoPackage file, since the ÖP model keeps the type on the link;
   its heading and text are in the Word file.
 - The export writes the sections one after another; sections whose bookmarks overlapped in the original document then repeat text.

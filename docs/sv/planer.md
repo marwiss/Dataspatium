@@ -26,14 +26,55 @@ en tabell i taget som förut. Koordinatsystemet i en GeoPackage-fil läses ur fi
 När ett svar från ett API eller en geodatakälla är en enda plan som appen kan läsa är *Spara som detaljplan* eller *Spara
 som översiktsplan* förvald, och *Spara som tabell* sparar svaret som en vanlig datamängd i stället; tipset på planknappen
 säger vilket format svaret känns igen som. Som detaljplan sparas referensobjekt från Lantmäteriets geodataplattform (källan
-*Lantmäteriet geodataplattformen: detaljplaner*, som kräver nyckel från en ansluten organisation), ett lokalplanslager från
+*Lantmäteriet geodataplattformen: detaljplaner*, med en nyckel som alla kan få, se [Hela detaljplaner från en geodatakälla](#hela-detaljplaner-från-en-geodatakälla)), ett lokalplanslager från
 Plandata.dk och ett deiliskipulag från Skipulagsstofnun; som översiktsplan Plandata.dk:s kommuneplanrammer och ett
 aðalskipulag.
 
 Ett svar med delar av flera planer, till exempel en kommuns lager *NGP_Detaljplan_yta* med alla detaljplanernas ytor, är
 ingen plan utan en karta över planerna. Det sparas med *Spara som datamängd* och öppnas som karta, och en rad ovanför
-knapparna säger hur många planer svaret har. Svenska översiktsplaner hämtas ännu inte från något API; de läses från filer
+knapparna säger hur många planer svaret har; en hel plan ur lagren hämtas med *Detaljplaner (hela planer)*, se nedan. Svenska översiktsplaner hämtas ännu inte från något API; de läses från filer
 (GeoPackage enligt Boverkets ÖP-modell eller GeoJSON).
+
+## Hela detaljplaner från en geodatakälla
+
+En detaljplan i Lantmäteriets NGP-form ligger i flera lager: ett med planernas ytor (en rad per plan) och ett per slag av
+bestämmelse. En geodatakälla med de lagren, och källan *Lantmäteriet geodataplattformen: detaljplaner*, har därför posten
+**Detaljplaner (hela planer)** överst i lagerlistan, så att du inte behöver välja lagren själv:
+
+1. Välj **Detaljplaner (hela planer)** och skriv en del av planens namn eller beteckning, till exempel *Prästbordet* eller
+   *22-HAV-1125*. Utan text listas de första planerna.
+2. **Sök** ger en kort lista med beteckning, namn, status och datum (laga kraft, annars påbörjad).
+3. Välj en plan. Planområdet och alla bestämmelser hämtas och sparas som en detaljplan med Boverkets färger och
+   beteckningar, och *Öppna i Bearbeta* visar plankartan. Förloppet visas lager för lager, och **Avbryt** stoppar
+   hämtningen utan att något sparas.
+
+**En kommuns WFS.** Posten finns när tjänsten har lagret `NGP_Detaljplan_yta` och ett eller flera `NGP_…bestammelse…`-lager
+(användnings-, egenskaps- och administrativa bestämmelser), i vilken arbetsyta som helst (`RIGES:NGP_Detaljplan_yta`).
+Planen hämtas ur planlagret och varje bestämmelselager med ett filter på planens identitet (`detaljplan.objektidentitet`):
+med `CQL_FILTER` på GeoServer och annars med ett FES 2.0-filter. Tar tjänsten inte emot det ena prövas det andra, och tar
+den inget av dem säger appen det. Ett lager som saknar fältet hoppas över och nämns i kortet. I sökningen matchar å, ä och ö
+vilket tecken som helst, eftersom GeoServer annars kan missa planer med de bokstäverna. Den färdiga källan *Sundsvall med
+grannkommuner: detaljplaner i NGP-form (WFS)* (Sundsvalls GeoServer, arbetsytan RIGES) har cirka 2 100 planer för Sundsvall,
+Örnsköldsvik, Härnösand, Timrå, Ånge, Kramfors och Sollefteå och kräver ingen nyckel.
+
+**Lantmäteriets geodataplattform.** Källan *Lantmäteriet geodataplattformen: detaljplaner* söker med `POST /search` bland
+alla kommuners planer eller i den kommun du väljer, med svaret i WGS 84. Har planen sin fil enligt den nationella
+specifikationen (Detaljplan 4.1) hämtas den och sparas som planens original; annars, eller om filen inte går att läsa,
+hämtas planens referensobjekt sida för sida. Nyckeln skickas bara till Lantmäteriets egen server, aldrig till en fil på en
+annan värd.
+
+**Nyckel till geodataplattformen.** Alla kan bli konsument utan kostnad: privatperson, företag, förening, kommun eller
+myndighet. Skapa ett konto i Geotorget, ansök under *Nationella geodataplattformen* om att bli konsument och godkänn
+villkoren (för en organisation tar kontot cirka två arbetsdagar), och skapa sedan nycklar för OAuth 2.0 i API-portalen
+(apimanager.lantmateriet.se). Ange konsumentnyckeln och konsumenthemligheten i källans nyckelfält; de lagras som andra
+nycklar, i sessionen eller krypterade med en lösenfras. Appen hämtar en token från `api.lantmateriet.se/token` med nyckeln i
+formulärets kropp, eftersom tokenadressen inte tillåter rubriken Authorization från webbläsaren. Lantmäteriet rekommenderar
+OAuth 2.0; en privatperson kan också använda Basic med inloggningen till Geotorget, men källan använder OAuth 2.0. Data är
+CC0. Se [Bli konsument som privatperson](https://www.lantmateriet.se/sv/nationella-geodataplattformen/konsument/bli-konsument-som-privatperson/) och [Bli konsument som organisation](https://www.lantmateriet.se/sv/nationella-geodataplattformen/konsument/bli-konsument-som-organisation/).
+
+**En fil med flera planer.** Lantmäteriets referensobjekt för flera planer i en fil, till exempel en kommuns planytor, är
+ingen plan utan en karta över planerna. Filen läses in som karta, och förhandsgranskningen säger hur många planer den har;
+en fil med en plan läses in som detaljplan.
 
 ## Plankartan i Bearbeta
 
@@ -455,7 +496,8 @@ Plandata lagrar bestämmelser som koder och tal, inte som löptext.
 - Planbestämmelsebeskrivning, planeringsunderlag och beslutshandlingar följer bara med som text (motiv) respektive
   som uppgifter i planens metadata; dokumenten hämtas inte.
 - Areor är planära beräkningar i SWEREF 99 TM; för planer i lokala zoner är felet försumbart.
-- Lantmäteriets detaljplans-API kräver nyckel; appen är testad mot den dokumenterade modellen med egna testdata.
+- Lantmäteriets detaljplans-API kräver nyckel; sökningen och hämtningen därifrån är provade mot specifikationens exempel
+  (version 2.2) med egna testdata, inte mot den riktiga tjänsten. Hela planer ur Sundsvalls WFS är provade mot tjänsten.
 - Ett avsnitt utan koppling får ingen avsnittstyp i en exporterad GeoPackage-fil, eftersom ÖP-modellen har typen på kopplingen;
   rubriken och texten följer med i Word-filen.
 - Exporten skriver avsnitten efter varandra; avsnitt vars bokmärken överlappade i det ursprungliga dokumentet upprepar då text.

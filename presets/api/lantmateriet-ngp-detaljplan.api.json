@@ -3,46 +3,49 @@
   "id": "lantmateriet-ngp-detaljplan",
   "name": "Lantmäteriet geodataplattformen: detaljplaner (OGC API Features)",
   "publisher": "Lantmäteriet",
-  "description": "Digitala detaljplaner från den nationella geodataplattformen (NGP): planområden och planbestämmelser enligt den nationella specifikationen. Kräver API-nyckel från en organisation som är ansluten till plattformen; nyckeln sparas aldrig i klartext.",
-  "docs": "https://www.lantmateriet.se/sv/nationella-geodataplattformen/",
+  "description": "Digitala detaljplaner från den nationella geodataplattformen (NGP), en samling per kommun: sök en plan på namn eller beteckning och hämta den hel, med planområdet och alla bestämmelser enligt den nationella specifikationen. Alla kan bli konsument utan kostnad genom Geotorget (privatperson, företag, förening, kommun eller myndighet; för en organisation tar kontot cirka två arbetsdagar), och data är CC0. Nyckeln sparas aldrig i klartext.",
+  "docs": "https://www.lantmateriet.se/sv/nationella-geodataplattformen/konsument/",
+  "license": {
+    "name": "CC0 1.0",
+    "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
   "level": 2,
   "country": "SE",
   "baseUrl": "https://api.lantmateriet.se/distribution/geodatakatalog/sokning/v1/detaljplan/v2",
   "auth": {
-    "type": "bearer",
-    "help": "API-nyckeln från anslutningen till Nationella geodataplattformen skickas som Bearer-token."
+    "type": "oauth2_client_credentials",
+    "tokenUrl": "https://api.lantmateriet.se/token",
+    "clientAuth": "body",
+    "help": "Konsumentnyckel (consumer key) och konsumenthemlighet (consumer secret) från API-portalen (apimanager.lantmateriet.se). Bli konsument så här: skapa ett konto i Geotorget, ansök under Nationella geodataplattformen om att bli konsument och godkänn villkoren, och skapa sedan nycklarna för OAuth 2.0 i API-portalen. Lantmäteriet rekommenderar OAuth 2.0; en privatperson kan också använda Basic med inloggningen till Geotorget, men den här källan använder OAuth 2.0. Se Bli konsument som privatperson eller som organisation på lantmateriet.se.",
+    "signupUrl": "https://www.lantmateriet.se/sv/nationella-geodataplattformen/konsument/"
   },
   "family": {
     "type": "geodata",
-    "kind": "ogcapi"
+    "kind": "ogcapi",
+    "plans": "ngp"
   },
   "endpoints": [],
-  "notes": "Samlingarna hämtas från tjänsten när källan öppnas. CORS tillåter anrop från file://; utan nyckel svarar tjänsten 401.",
+  "notes": "Samlingarna (en per kommun) hämtas från tjänsten när källan öppnas, i WGS 84. Överst i listan söker Detaljplaner (hela planer) på namn eller beteckning. CORS tillåter anrop från file://; nyckeln ger en token från api.lantmateriet.se/token, med nyckeln i formulärets kropp eftersom tokenadressen inte tillåter rubriken Authorization från webbläsaren. Utan nyckel svarar tjänsten 401.",
   "i18n": {
     "en": {
       "name": "Lantmäteriet national geodata platform: detailed plans (OGC API Features)",
-      "description": "Digital detailed development plans from the national geodata platform (NGP): plan areas and provisions according to the national specification. Requires an API key from an organisation connected to the platform; the key is never stored in clear text.",
-      "notes": "The collections are read from the service when the source is opened. CORS allows file://; without a key the service answers 401."
+      "description": "Digital detailed development plans from the national geodata platform (NGP), one collection per municipality: find a plan by name or designation and fetch it whole, with the plan area and every provision according to the national specification. Anyone can become a consumer free of charge through Geotorget (a private person, company, association, municipality or authority; for an organisation the account takes about two working days), and the data are CC0. The key is never stored in clear text.",
+      "notes": "The collections (one per municipality) are read from the service when the source is opened, in WGS 84. At the top of the list, Detailed plans (whole plans) searches by name or designation. CORS allows file://; the key gives a token from api.lantmateriet.se/token, with the key in the form body since the token URL does not allow the Authorization header from the browser. Without a key the service answers 401.",
+      "auth": {
+        "help": "Consumer key and consumer secret from the API portal (apimanager.lantmateriet.se). To become a consumer: create an account in Geotorget, apply under the national geodata platform to become a consumer and accept the terms, then create the OAuth 2.0 keys in the API portal. Lantmäteriet recommends OAuth 2.0; a private person can also use Basic with the Geotorget login, but this source uses OAuth 2.0. See Become a consumer as a private person or as an organisation on lantmateriet.se."
+      }
     },
     "da": {
-      "name": "Lantmäteriet geodataplatformen: lokalplaner (OGC API Features)",
-      "description": "Digitale lokalplaner fra den nationale geodataplatform (NGP): planområder og planbestemmelser efter den nationale specifikation. Kræver API-nøgle fra en organisation, der er tilsluttet platformen; nøglen gemmes aldrig i klartekst.",
-      "notes": "Samlingerne hentes fra tjenesten, når kilden åbnes. CORS tillader kald fra file://; uden nøgle svarer tjenesten 401."
+      "name": "Lantmäteriet geodataplatformen: lokalplaner (OGC API Features)"
     },
     "nb": {
-      "name": "Lantmäteriet geodataplattformen: reguleringsplaner (OGC API Features)",
-      "description": "Digitale reguleringsplaner fra den nasjonale geodataplattformen (NGP): planområder og planbestemmelser etter den nasjonale spesifikasjonen. Krever API-nøkkel fra en organisasjon som er tilknyttet plattformen; nøkkelen lagres aldri i klartekst.",
-      "notes": "Samlingene hentes fra tjenesten når kilden åpnes. CORS tillater kall fra file://; uten nøkkel svarer tjenesten 401."
+      "name": "Lantmäteriet geodataplattformen: reguleringsplaner (OGC API Features)"
     },
     "fi": {
-      "name": "Lantmäteriet paikkatietoalusta: asemakaavat (OGC API Features)",
-      "description": "Digitaaliset asemakaavat kansallisesta paikkatietoalustasta (NGP): kaava-alueet ja kaavamääräykset kansallisen määrittelyn mukaan. Vaatii API-avaimen alustaan liittyneeltä organisaatiolta; avainta ei koskaan tallenneta selväkielisenä.",
-      "notes": "Kokoelmat noudetaan palvelusta, kun lähde avataan. CORS sallii kutsut file://-sivuilta; ilman avainta palvelu vastaa 401."
+      "name": "Lantmäteriet paikkatietoalusta: asemakaavat (OGC API Features)"
     },
     "is": {
-      "name": "Landupplýsingavettvangur Lantmäteriet: deiliskipulag (OGC API Features)",
-      "description": "Stafrænt deiliskipulag af landsvettvangi landupplýsinga (NGP): skipulagssvæði og skipulagsákvæði samkvæmt landsforskriftinni. Krefst API-lykils frá stofnun sem er tengd vettvanginum; lykillinn er aldrei vistaður í hreinum texta.",
-      "notes": "Söfnin eru sótt úr þjónustunni þegar uppsprettan er opnuð. CORS leyfir köll frá file://; án lykils svarar þjónustan 401."
+      "name": "Landupplýsingavettvangur Lantmäteriet: deiliskipulag (OGC API Features)"
     }
   }
 }

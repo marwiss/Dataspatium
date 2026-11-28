@@ -16,13 +16,16 @@
      */
     async function jsonRequest(connector, req, options) {
       const prepared = await auth.apply(connector, req, { ask: options.ask });
-      const res = await http.request(Object.assign(prepared, { rateKey: connector.id, rateLimit: connector.rateLimit, cors: connector.cors, signal: options.signal, ask: options.ask }));
+      const res = await http.request(Object.assign(prepared, { rateKey: connector.id, rateLimit: connector.rateLimit, cors: connector.cors, perHost: !!connector.perHost, signal: options.signal, ask: options.ask }));
       if (!res.ok) throw http.httpError(res, connector.name);
       try { return JSON.parse(res.text); } catch (_e) { throw new Error(D.t('api.err.notjson', { name: connector.name })); }
     }
-    /** GET as JSON. @param {any} connector @param {string} url @param {{signal?: AbortSignal}} [options] */
+    /**
+     * GET as JSON. `options.accept` names a JSON media type of the service's own (Lantmäteriet's application/vnd.lm.detaljplan.v4+json).
+     * @param {any} connector @param {string} url @param {{signal?: AbortSignal, accept?: string}} [options]
+     */
     function getJson(connector, url, options = {}) {
-      return jsonRequest(connector, { url, method: 'GET', headers: { Accept: 'application/json' } }, options);
+      return jsonRequest(connector, { url, method: 'GET', headers: { Accept: options.accept || 'application/json' } }, options);
     }
     /**
      * POST a JSON body. `options.contentType` is for services whose CORS preflight refuses application/json (PxWeb v1 takes the

@@ -367,7 +367,12 @@ the way to a fetched feature with geometry, Kartverket's WFS services too, which
 by name, country or contents. The list lives in `presets/geodata/services.json`. A service that is not in the list is
 added under *Your own geodata source* (see below).
 
-Three sources fetch plans: *Plandata.dk (WFS)* and *Skipulagsstofnun skipulagsgögn (ArcGIS)* have the button **Fetch
+Whole Swedish detailed plans are fetched with the entry **Detailed plans (whole plans)** at the top of the layer list of a
+WFS with Lantmäteriet's NGP layers (the ready source *Sundsvall and neighbouring municipalities: detailed plans in NGP form
+(WFS)*, no key) and of *Lantmäteriet geodataplattformen: detaljplaner*: search by name or designation and choose a plan, see
+[planer.md](planer.md#whole-detailed-plans-from-a-geodata-source).
+
+Three sources fetch Nordic plans: *Plandata.dk (WFS)* and *Skipulagsstofnun skipulagsgögn (ArcGIS)* have the button **Fetch
 plan**, which reads a whole local plan or deiliskipulag (every layer) by its plan number and keeps it as a plan, and
 *Ryhti kaavatiedot (OGC API Features)* gives Finland's plan index. See [planer.md](planer.md#plans-from-the-other-nordic-countries).
 Boverket's Planbestämmelsekatalog is an ordinary API source (*Boverket Planbestämmelsekatalogen*), see [planer.md](planer.md).
@@ -381,7 +386,7 @@ and *Open as map* takes you to the saved dataset.
 | Family | Discovery | Fetching | Key |
 |---|---|---|---|
 | WFS 2.0 (GeoServer, MapServer, ArcGIS Server, Deegree) | GetCapabilities | GetFeature in the GeoJSON format the capabilities name (`application/json`, `GEOJSON` and others) with `srsName=EPSG:4326`, or in GML when the service gives no GeoJSON (see below); area (bbox), CQL filter, columns; pages with `startIndex`/`count`, never larger than the service sends (`CountDefault`) | Bearer (optional) |
-| OGC API Features | `/collections` | `/collections/{id}/items` with bbox, datetime and filter; next links are followed | Bearer (optional; required by Lantmäteriet's geodata platform) |
+| OGC API Features | `/collections` | `/collections/{id}/items` with bbox, datetime and filter; next links are followed; a collection stored in another system that offers CRS84 (Lantmäteriet's geodata platform) is fetched with `crs` and `bbox-crs` in CRS84 | Bearer (optional); OAuth2 for Lantmäteriet's geodata platform |
 | ArcGIS REST (FeatureServer, MapServer) | The service description or a whole directory with its folders, and each service's layers except group and raster layers | `/{layer}/query` with where, area, `f=geojson` and `outSR=4326`; pages with `resultOffset`, never larger than `maxRecordCount`; a page the service cannot manage (error 500 for heavy polygons) is fetched again a quarter as large | Token (optional) |
 
 Errors the service reports itself are shown with the service's text and code, for example *Service WFS is disabled
@@ -407,7 +412,7 @@ aquifers are in the list), the Swedish Agency for Marine and Water Management, t
 remains, the Swedish Forest Agency, Kartverket's administrative units, cadastral map and place names (Norway; GML),
 Statistics Finland and SYKE's protected areas (Finland). The layers are read from the service the first time
 the source is opened and can be reread with *Reread layers*; the list is kept in your copy of the source. Lantmäteriet's
-geodata platform (detailed plans, buildings, shore protection, cultural heritage remains and the boundary of forest near the mountains) is a level 2 source with a Bearer key from a connected organisation.
+geodata platform (detailed plans, buildings, shore protection, cultural heritage remains and the boundary of forest near the mountains) is a level 2 source with a key anyone can get free of charge through Geotorget, see [planer.md](planer.md#whole-detailed-plans-from-a-geodata-source).
 
 **Trafikverket’s NVDB** (*Trafikverket NVDB: road data*) gives 45 object types from the Swedish national road database, such
 as speed limits, road numbers, bearing capacity, number of lanes, street names, junctions and rest areas, with one endpoint

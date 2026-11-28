@@ -4,14 +4,17 @@
  * Browser for a geodata source (WFS, OGC API Features, ArcGIS REST) in Inhämta: the layers of the service as a
  * filterable list (read from the service when the source has none yet, and again on request), and for the chosen
  * layer the ordinary endpoint form with area (bbox), filter and column choices. Results are GeoJSON tables that
- * open as maps.
+ * open as maps. A service with Lantmäteriet's NGP layers for detailed plans, and the NGP API itself, has the entry
+ * *Detaljplaner (hela planer)* at the top of the list: a search for one plan, fetched whole (ui/api/whole-plans).
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/geodata-view', ['ui/base', 'ui/basic', 'ui/icons', 'ui/api/endpoint-form', 'api/families/geodata', 'api/families/databases', 'data/plan-nordic', 'io/importers/detaljplan'], (base, basic, icons, endpointForm, geodata, databases, nordic, detaljplanImp) => {
+  D.define('ui/api/geodata-view', ['ui/base', 'ui/basic', 'ui/icons', 'ui/api/endpoint-form', 'api/families/geodata', 'api/families/databases', 'data/plan-nordic', 'io/importers/detaljplan', 'api/ngp-plans', 'ui/api/whole-plans'], (base, basic, icons, endpointForm, geodata, databases, nordic, detaljplanImp, ngp, wholePlans) => {
     const { h, t, i18n, replace } = base;
     const MAX_LIST = 400;
+    /** The list entry for whole detailed plans; never a layer's id. */
+    const WHOLE = '__plans';
 
     /** @param {{connector: any, runFetch: Function, log?: Function, onDataset?: Function}} api */
     function create(api) {
@@ -51,6 +54,9 @@
       }
       const el = h('div', { class: 'dm-stack' });
       let listEl = null; let formEl = null; let countEl = null;
+      /** The card for whole plans, made when the entry is first chosen. */
+      let whole = null;
+      const wholeView = () => whole || (whole = wholePlans.create(api));
 
       const layers = () => geodata.layerEndpoints(connector);
       const generic = () => geodata.genericEndpoint(connector);
@@ -95,6 +101,9 @@
         // The count says how many layers the filter leaves of all of them.
         if (countEl) replace(countEl, all.length ? h('dm-badge', { 'data-geo-count': String(shown.length), text: shown.length === all.length ? t('geodata.layers.count', { n: i18n.formatNumber(all.length) }) : t('geodata.layers.count.of', { shown: i18n.formatNumber(shown.length), n: i18n.formatNumber(all.length) }) }) : null);
         const nodes = [];
+        // Whole detailed plans first, before the layers they are made of.
+        if (ngp.kindOf(connector)) nodes.push(h('button', { type: 'button', class: 'dm-list-item dm-geo-layer', 'data-plan-whole': ngp.kindOf(connector), 'aria-current': state.selected === WHOLE ? 'true' : null, onclick: () => { state.selected = state.selected === WHOLE ? null : WHOLE; renderList(); renderForm(); showForm(); } },
+          icons.icon('layers', 16), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: t('plan.whole.title') }), h('span', { class: 'dm-list-sub dm-truncate', text: t('plan.whole.sub') }))));
         if (state.loading) nodes.push(h('p', { class: 'dm-help' }, h('dm-progress', { indeterminate: true, label: state.loading })));
         else if (!all.length) nodes.push(h('p', { class: 'dm-help', text: state.error ? '' : t('geodata.layers.none') }));
         else if (!shown.length) nodes.push(h('p', { class: 'dm-help', text: t('geodata.layers.nomatch') }));
@@ -107,6 +116,7 @@
       }
       function renderForm() {
         if (!formEl) return;
+        if (state.selected === WHOLE && ngp.kindOf(connector)) { replace(formEl, wholeView().el); wholeView().render(); return; }
         const ep = selectedEndpoint();
         if (!ep) { replace(formEl, h('p', { class: 'dm-help', text: layers().length ? t('geodata.pick') : '' })); return; }
         // The form for one endpoint: the connector with only this layer, so that the form shows its name, not a list.
@@ -134,7 +144,8 @@
       }
       /** Presets ship without layers: the first visit reads them from the service. */
       function start() { render(); if (!layers().length && !state.refreshed && !state.error) discover(); }
-      return { el, start, state, discover, fetchPlan };
+      function destroy() { if (whole) whole.destroy(); }
+      return { el, start, state, discover, fetchPlan, whole: wholeView, destroy };
     }
     return { create };
   });
