@@ -170,7 +170,8 @@
       const pick = /** @type {any} */ (form.querySelector('[data-boundaries-pick]'));
       assert.deepEqual(pick.options.map((o) => o.value), forms.boundaries().map((p) => p.id), 'every bundled set of boundaries');
       assert.equal(forms.boundaries().length, 8);
-      assert.ok(!forms.examples().some((p) => p.boundary) && !forms.boundaries().some((p) => !p.boundary), 'examples and boundaries apart');
+      assert.ok(!forms.examples().some((p) => p.boundary && !p.example) && !forms.boundaries().some((p) => !p.boundary), 'examples and boundaries apart, the municipal boundaries in both');
+      assert.ok(forms.examples().some((p) => p.id === 'kommuner-scb'), 'the municipal boundaries are the map layer among the examples');
       pick.value = 'lan-scb'; pick.dispatchEvent(new Event('change'));
       const card = await waitFor(() => form.querySelector('[data-boundary="lan-scb"]'), 2000, 'the chosen set');
       assert.ok(card.textContent.includes('CC0') && card.textContent.includes('SCB'), 'origin and licence: ' + card.textContent);

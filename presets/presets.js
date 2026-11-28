@@ -12,18 +12,78 @@
     // Names and descriptions are i18n keys (nameKey, descriptionKey; name and description are the Swedish
     // fallback). The short name is fixed so that charts, recipes and notebooks shared between users with
     // different UI languages still find the example data. A post with `boundary` is a set of boundaries for maps (Inhämta:
-    // Gränser för kartor); the others are the examples (Inhämta: Exempeldata), each with its source and licence.
+    // Gränser för kartor); the others are the examples (Inhämta: Exempeldata), each with its source and licence, and so is a set of
+    // boundaries with `example` (the map layer among the examples). `format` names the importer of a file that is read as itself
+    // (a plan, a model, a graph, JSON); `source.attribution` (an i18n key in `attributionKey`) is the credit a licence asks for and what
+    // Dataspatium changed.
     examples: [
       {
         id: 'befolkning-kommuner-2024',
         name: 'Befolkning per kommun 2024',
         nameKey: 'preset.befolkning.name',
         shortName: 'befolkning_2024',
-        description: 'Folkmängd 31 december 2024 för Sveriges 290 kommuner, med kommunkod, län och länskod.',
+        description: 'Folkmängd 31 december 2024 och landareal 1 januari 2025 i kvadratkilometer för Sveriges 290 kommuner, med kommunkod, län och länskod.',
         descriptionKey: 'preset.befolkning.description',
         asset: 'presets/exempeldata/befolkning-kommuner-2024.csv',
         options: { delimiter: ';', header: true, decimal: 'point' },
-        source: { kind: 'preset', publisher: 'SCB, Statistikdatabasen', table: 'BE0101N1 Folkmängden efter region, ålder och kön. År 1968–2024', url: 'https://www.statistikdatabasen.scb.se/', license: 'CC0' },
+        source: { kind: 'preset', publisher: 'SCB, Statistikdatabasen', table: 'BE0101N1 Folkmängden efter region, ålder och kön. År 1968–2024; MI0802 Land- och vattenareal per den 1 januari efter region och arealtyp. År 2025–2026', url: 'https://www.statistikdatabasen.scb.se/', license: 'CC0' },
+      },
+      // One place on purpose (PLAN 12 f): a house in a detailed plan in a comprehensive plan, all in Lomma; built from the sources by
+      // tools/build_examples.py, see presets/exempeldata/KALLA.md.
+      {
+        id: 'lomma-op-2020',
+        name: 'Översiktsplan Lomma 2020',
+        nameKey: 'preset.lomma-op.name',
+        shortName: 'lomma_op_2020',
+        descriptionKey: 'preset.lomma-op.description',
+        description: 'Lomma kommuns Översiktsplan 2020 med Plankarta 2030: utbyggnadsområden för bostäder och verksamheter, natur, kust, ekologiska korridorer och översvämningsrisk, i den nationella specifikationens utbytesformat för översiktsplaner (GeoJSON, SWEREF 99 13 30). Verkliga data; Dataspatium har fört in Lommas lager i ÖP-katalogens kategorier och lagt till kommungränsen från SCB som planens gräns.',
+        asset: 'presets/exempeldata/lomma-op-2020.geojson',
+        format: 'detaljplan',
+        source: { kind: 'preset', publisher: 'Lomma kommun, öppna data (Översiktsplan 2020 – Plankarta 2030)', url: 'https://www.dataportal.se/datasets/291_2923', license: 'CC0', crs: 'SWEREF 99 13 30 (EPSG:3008)', attributionKey: 'preset.lomma-op.attribution', attribution: 'Bearbetad av Dataspatium: ÖP-katalogens kategorier och SCB:s kommungräns (CC0) tillagda' },
+      },
+      {
+        id: 'lomma-dp-bjorreds-vangar',
+        name: 'Detaljplan Björreds vångar etapp I',
+        nameKey: 'preset.lomma-dp.name',
+        shortName: 'dp_bjorred',
+        descriptionKey: 'preset.lomma-dp.description',
+        description: 'Lomma kommuns detaljplan för del av Björred 9:1 m.fl. (Björreds vångar etapp I), på samråd i december 2022, i Detaljplan 4.1 (GeoJSON, SWEREF 99 13 30). Planområdet, namnet, syftet och diarienumret är verkliga; användningarna (bostäder, gata och natur) och egenskapsbestämmelserna är ett exempel som Dataspatium har ritat, inte kommunens planförslag. Planen ligger i översiktsplanens utbyggnadsområde för bostäder.',
+        asset: 'presets/exempeldata/lomma-dp-bjorreds-vangar.geojson',
+        format: 'detaljplan',
+        source: { kind: 'preset', publisher: 'Lomma kommun, öppna data (Pågående detaljplaner)', url: 'https://www.dataportal.se/datasets/291_4035', license: 'CC0', crs: 'SWEREF 99 13 30 (EPSG:3008)', attributionKey: 'preset.lomma-dp.attribution', attribution: 'Planområdet verkligt; bestämmelserna ett exempel av Dataspatium ur Boverkets planbestämmelsekatalog' },
+      },
+      {
+        id: 'bjorreds-vangar-hus',
+        name: 'Hus i Björreds vångar (IFC)',
+        nameKey: 'preset.hus.name',
+        shortName: 'hus_bjorred',
+        descriptionKey: 'preset.hus.description',
+        description: 'buildingSMART:s exempelhus (Sample-Test-Files, Simple-Scene, Building-Architecture, IFC4): ett litet enbostadshus med väggar, bjälklag, tak och rum. Dataspatium har placerat det på en tomt för bostäder i detaljplanen för Björreds vångar, med IfcMapConversion till SWEREF 99 13 30 och en ungefärlig höjd på 10 meter över havet, och tagit bort personnamnet i filens ägarhistorik.',
+        asset: 'presets/exempeldata/bjorreds-vangar-hus.ifc',
+        format: 'model',
+        source: { kind: 'preset', publisher: 'buildingSMART International, Sample-Test-Files', url: 'https://github.com/buildingSMART/Sample-Test-Files', license: 'CC BY 4.0', crs: 'SWEREF 99 13 30 (EPSG:3008)', attributionKey: 'preset.hus.attribution', attribution: '© buildingSMART International Ltd., bearbetad av Dataspatium (georefererad, personnamnet borttaget)' },
+      },
+      {
+        id: 'fardigstallda-lagenheter-2024',
+        name: 'Färdigställda lägenheter per kommun 2024 (JSON)',
+        nameKey: 'preset.lagenheter.name',
+        shortName: 'lagenheter_2024',
+        descriptionKey: 'preset.lagenheter.description',
+        description: 'SCB:s svar i JSON-stat 2.0 med antalet färdigställda lägenheter i nybyggda hus 2024 per kommun och hustyp (flerbostadshus och småhus), som API:t ger det. Blir en tabell med en rad per kommun och hustyp.',
+        asset: 'presets/exempeldata/fardigstallda-lagenheter-2024.json',
+        format: 'json',
+        source: { kind: 'preset', publisher: 'SCB, Statistikdatabasen', table: 'BO0101 Färdigställda lägenheter och rumsenheter i nybyggda hus efter region och hustyp. År 1938–2025', url: 'https://www.statistikdatabasen.scb.se/', license: 'CC0' },
+      },
+      {
+        id: 'kommungrannar',
+        name: 'Kommungrannar (graf för Neo4j)',
+        nameKey: 'preset.grannar.name',
+        shortName: 'kommungrannar',
+        descriptionKey: 'preset.grannar.description',
+        description: 'Sveriges 290 kommuner som noder och de 690 par som har en gemensam gräns, inte bara en punkt, som relationen GRANSAR_TILL med gränsens längd i kilometer, som ett Cypher-skript i APOC:s exportform som också går att köra i Neo4j. Uträknat av Dataspatium ur SCB:s förenklade kommungränser; kommuner som bara består av öar (Ekerö, Gotland, Lidingö, Tjörn och Öckerö) får inga grannar.',
+        asset: 'presets/exempeldata/kommungrannar.cypher',
+        format: 'graph',
+        source: { kind: 'preset', publisher: 'SCB, Digitala gränser', url: 'https://www.scb.se/hitta-statistik/regional-statistik-och-kartor/regionala-indelningar/digitala-granser/', license: 'CC0', attributionKey: 'preset.grannar.attribution', attribution: 'Grannskapen uträknade av Dataspatium' },
       },
       // County and municipality boundaries from SCB's "Digitala gränser" (CC0), converted to WGS 84 by
       // tools/build_boundaries.py. Simplified for thematic maps; see presets/geo/KALLA.md.
@@ -49,6 +109,7 @@
         asset: 'presets/geo/kommuner.geojson',
         format: 'geojson',
         boundary: true,
+        example: true,
         source: { kind: 'preset', publisher: 'SCB, Digitala gränser', url: 'https://www.scb.se/hitta-statistik/regional-statistik-och-kartor/regionala-indelningar/digitala-granser/', license: 'CC0', crs: 'WGS 84 (EPSG:4326)' },
       },
       // Denmark, Norway and Finland, built by tools/build_nordic_boundaries.py; see presets/geo/KALLA.md.

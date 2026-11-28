@@ -169,7 +169,7 @@
     created.push(meta.id);
     assert.equal(meta.rowCount, 290);
     const cols = await datasets.columns(meta.id);
-    assert.deepEqual(cols.map((c) => [c.name, c.type]), [['kommunkod', 'text'], ['kommun', 'text'], ['lanskod', 'text'], ['lan', 'text'], ['ar', 'integer'], ['folkmangd', 'integer']]);
+    assert.deepEqual(cols.map((c) => [c.name, c.type]), [['kommunkod', 'text'], ['kommun', 'text'], ['lanskod', 'text'], ['lan', 'text'], ['ar', 'integer'], ['folkmangd', 'integer'], ['landareal_km2', 'number']]);
     const stats = await datasets.columnStats(meta.id, 'folkmangd');
     assert.equal(stats.sum, 10587710);
     assert.equal(meta.source.publisher.slice(0, 3), 'SCB');

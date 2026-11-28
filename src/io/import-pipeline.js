@@ -310,12 +310,25 @@
       return datasets.create({ name: name || D.t('import.paste.name'), columns, rows, source: { kind: 'paste', format: 'text' }, importOptions: Object.assign({}, options, table.meta) });
     }
 
+    /** The formats of bundled examples that are read by their importer as the file itself would be: plans, models, graphs, JSON. */
+    const PRESET_FILES = new Set(['detaljplan', 'model', 'graph', 'json']);
     /**
-     * Import one of the bundled example datasets (see presets/presets.js).
-     * @param {{id: string, name: string, asset: string, options?: any, source?: any, description?: string}} preset
+     * Import one of the bundled example datasets (see presets/presets.js). A plan, a model, a graph or a JSON file goes through its
+     * importer as the file would, and keeps the example's short name, description and origin.
+     * @param {{id: string, name: string, asset: string, format?: string, options?: any, source?: any, description?: string}} preset
      */
     async function runPreset(preset) {
       const text = await D.assets.loadText(preset.asset);
+      if (preset.format && PRESET_FILES.has(preset.format)) {
+        const fileName = String(preset.asset).split('/').pop() || preset.id;
+        const title = preset.nameKey ? D.t(preset.nameKey) : preset.name;
+        const meta = await run(new File([text], fileName), Object.assign({ format: preset.format }, preset.options || {}), null, title);
+        return datasets.updateMeta(meta.id, {
+          shortName: await datasets.uniqueShortName(preset.shortName || title, meta.id),
+          description: preset.descriptionKey ? D.t(preset.descriptionKey) : (preset.description || ''),
+          source: Object.assign({}, meta.source || {}, { kind: 'preset', preset: preset.id }, preset.source || {}),
+        });
+      }
       const options = Object.assign({ header: true }, preset.options || {});
       let table;
       if (preset.format === 'geojson') {

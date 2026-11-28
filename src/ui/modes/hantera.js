@@ -71,10 +71,8 @@
         }
         replace(slots.center, h('dm-empty-state', { icon: 'database', heading: t('datasets.empty'), text: t('datasets.empty.hint') },
           ui.button({ label: t('mode.inhamta'), icon: 'download', variant: 'primary', onClick: () => shell.activate('inhamta') }),
-          ui.button({ label: t('presets.try'), icon: 'sparkles', onClick: async () => {
-            try { const meta = await services.importer.runPreset(D.require('presets').examples[0]); shell.log(t('presets.done', { name: meta.name }), 'ok'); }
-            catch (err) { shell.log(String((err && err.message) || err), 'error'); }
-          } }),
+          // The examples are a source of Inhämta (F128 a): the button opens it, where each example says what it is and its licence.
+          ui.button({ label: t('presets.try'), icon: 'sparkles', title: t('presets.try.hint'), 'data-try-examples': '', onClick: () => { store.set({ pendingImportSource: 'examples' }); shell.activate('inhamta'); } }),
           ui.button({ label: t('datasets.storage.title'), icon: 'hard-drive', onClick: () => store.set({ selectedId: WORKSPACE }) })));
       }
 

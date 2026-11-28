@@ -14,19 +14,21 @@
   const D = globalThis.Dataspatium;
   D.define('ui/import/source-forms', ['ui/base', 'ui/basic', 'ui/overlays', 'presets', 'api/connectors', 'data/kinds'], (base, basic, overlays, presets, connectors, kinds) => {
     const { h, t, i18n, replace } = base;
-    /** The bundled examples and boundaries, in the order of presets/presets.js. */
-    const examples = () => presets.examples.filter((p) => !p.boundary);
+    /** The bundled examples and boundaries, in the order of presets/presets.js; a set of boundaries with `example` is both. */
+    const examples = () => presets.examples.filter((p) => !p.boundary || p.example);
     const boundaries = () => presets.examples.filter((p) => p.boundary);
     const nameOf = (p) => (p.nameKey ? t(p.nameKey) : p.name);
     const descriptionOf = (p) => (p.descriptionKey ? t(p.descriptionKey) : p.description || '');
     const fail = (ctx, err) => { const m = String((err && err.message) || err); if (ctx.shell) ctx.shell.log(t('import.error', { message: m }), 'error'); overlays.toast.show(m, { kind: 'error', timeout: 12000 }); };
 
-    /** Where a bundled dataset comes from and under which licence, with a link to the source. */
+    /** Where a bundled dataset comes from, under which licence and with which credit and changes, with a link to the source. */
     function provenance(p) {
       const s = p.source || {};
       const parts = [s.publisher ? `${t('examples.source')}: ${s.publisher}` : '', s.license ? `${t('api.license')}: ${s.license}` : ''].filter(Boolean);
-      return h('p', { class: 'dm-help dm-small', 'data-provenance': '' }, parts.join(' · '),
-        s.url && /^https:\/\//.test(s.url) ? [' · ', h('a', { href: s.url, target: '_blank', rel: 'noopener', text: t('examples.link') })] : null);
+      return h('div', { class: 'dm-stack-sm' },
+        h('p', { class: 'dm-help dm-small', 'data-provenance': '' }, parts.join(' · '),
+          s.url && /^https:\/\//.test(s.url) ? [' · ', h('a', { href: s.url, target: '_blank', rel: 'noopener', text: t('examples.link') })] : null),
+        s.attribution ? h('p', { class: 'dm-help dm-small', 'data-attribution': '', text: `${t('examples.attribution')}: ${s.attributionKey ? t(s.attributionKey) : s.attribution}` }) : null);
     }
     /** The dataset the workspace has from a bundled post, the newest first, or null. @param {any} ctx @param {any} p */
     function importedOf(ctx, p) {
