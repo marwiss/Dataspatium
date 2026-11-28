@@ -1,5 +1,32 @@
 # Formats and import
 
+## Files and folders in Import
+
+Under *Files* in Import you drop one or several files on the area, or click it to choose. You can also drop one or several
+**folders**: the app then reads every file in them, in the folders further down too, and sorts them by what they are (see
+*Several different files* in [lagen.md](lagen.md)). The button *Choose a folder* under *More options* does the same with the
+keyboard. A shapefile in a folder is read together with the files of the same name beside it: the attributes in `.dbf`, the
+coordinate system in `.prj` and the code page in `.cpg`; the index files (`.shx` and the like) are not needed and are not shown
+as files the app does not read.
+
+Under the area are the formats the app reads, grouped by what they are used for:
+
+- **Building models and drawings**: IFC, IFCZIP and DXF (the kind model) and BCF issues (a table of issues).
+- **Plans**: detailed and comprehensive plans in GeoJSON and GeoPackage, archive packages with a plan and a comprehensive plan in
+  several files (the kind plan).
+- **Geodata and maps**: GeoJSON, GeoJSON Lines, TopoJSON, KML, KMZ, GPX, shapefile and GeoPackage (tables with geometry that the
+  map draws), GeoTIFF (the kind raster) and QGIS projects (a map view in Visualise).
+- **Tables**: CSV and other delimited text, TSV, fixed-width text, Excel, ODS, FODS, Excel 2003 XML, older spreadsheets, JSON,
+  JSON Lines, XML, tables in HTML and LaTeX, Parquet and data packages.
+- **Databases**: SQLite, SQL scripts and Access.
+- **Statistics**: SPSS, Stata, SAS, PC-Axis (PX), R (RDS, RData), JSON-stat and SDMX-JSON.
+- **Documents**: PDF, Word, OpenDocument and Markdown (the kind document).
+- **Images**: JPEG, PNG, WebP, GIF, BMP and AVIF (the kind images).
+- **Graphs**: GraphML, GEXF, Cypher and JSON with nodes and edges (the kind graph).
+
+The list and the file picker's filter come from the same table in the app that the import uses, so that they never differ. The
+table below says more about each format.
+
 ## Supported file formats
 
 | Format | Import | Export | Comment |
@@ -14,11 +41,11 @@
 | GPX (GPS tracks) | Yes | Yes | Choose a layer: waypoints, routes, tracks (with number of points and length in km) or track points (one row per point with time and elevation) |
 | TopoJSON | Yes | No | Each object in the topology is a layer; the arcs are decoded into ordinary GeoJSON geometries. Recognised by its content even when the file is called .json |
 | JSON | Yes | Yes | List of objects, an object containing a list (a path can be given), list of lists |
-| NDJSON, JSON Lines | Yes | No | One object per line |
+| NDJSON, JSON Lines | Yes | No | One object per line. GeoJSON Lines (`.geojsonl`, `.geojsons`, `.geojsonseq`), with one feature per line or with record separators as in RFC 8142, become one row per feature with the geometry as GeoJSON |
 | JSON-stat | Yes | No | Recognised automatically (`class: dataset`, versions 1.x and 2.0); one row per cell with codes, texts and value |
 | SDMX-JSON | Yes | No | Data messages in SDMX-JSON 1.0 and 2.0 (for example from the ECB and the OECD) are recognised automatically; one row per observation with a code and text column per dimension, the time period, the value and the attributes |
 | GeoJSON | Yes | Yes | One row per feature; the properties become columns, the geometry a text column with GeoJSON that the map chart draws (the map also reads WKT text in a column, for example from CSV). At export the geometry column (GeoJSON or WKT) becomes each feature's geometry and the other columns its properties |
-| Shapefile (ZIP with shp, dbf, prj, cpg, or shp alone) | Yes | No | The attributes become typed columns according to the dbf schema, the geometry GeoJSON in the column `geometry`. Choose the layer if the ZIP file has several, and simplify the geometry with a tolerance in map units. The coordinates are kept (for example SWEREF 99 TM or longitude/latitude) |
+| Shapefile (ZIP with shp, dbf, prj, cpg, shp with the other files beside it in a folder or a choice of files, or shp alone) | Yes | No | The attributes become typed columns according to the dbf schema, the geometry GeoJSON in the column `geometry`. Choose the layer if the ZIP file has several, and simplify the geometry with a tolerance in map units. The coordinates are kept (for example SWEREF 99 TM or longitude/latitude) |
 | XML | Yes | Yes | One row per repeated element (chosen in the import step); attributes and child elements become columns, nested elements get dotted names such as `lage.lan` |
 | SQLite | Yes | Yes | Dataspatium's own file is restored with types, labels and history; in other databases you choose a table and the types are taken from the schema |
 | SQL script (sql) | Yes | No | A script with `CREATE TABLE` and `INSERT`, for example a database dump, is run in an empty SQLite database and the tables are offered for selection. MySQL-specific lines (`SET`, `LOCK TABLES`, `USE`, `/*!…*/` and table options such as `ENGINE=`) are removed first; other dialects work as far as they follow SQLite's syntax |
@@ -35,7 +62,7 @@
 | PX (PC-Axis, used by the Nordic statistics offices) | Yes | No | Through the R package pxR; the character encoding is read from the file's CODEPAGE or CHARSET. The result is a long table with one value column |
 | Parquet | Yes | Yes | Through the R package nanoparquet; keeps types exactly |
 | RDS, RData | Yes | rds | R objects; an RData file must contain a data.frame |
-| Pasted text | Yes | | Tab-, semicolon- or comma-separated |
+| Pasted text | Yes | | The format is recognised as for a file without an extension; see [Pasted text](#pasted-text) |
 
 Delimited text files of 64 MB or more are read in chunks: the preview shows the first rows as usual, and at import
 the rows are written to the dataset while the file is read, so that the whole text never needs to be in memory. The
@@ -94,7 +121,8 @@ end), and the file is recognised by its contents when the signature is sure. The
 | JSON | `{` or `[` that holds as JSON through the whole start that is read; GeoJSON, TopoJSON, JSON Lines and the app's own formats (the field `format`, for example `dataspatium-viz/1`) | `.json`, `.geojson`, `.topojson`, `.ndjson` |
 | XML, HTML | The root element: KML, GPX, GraphML, GEXF, QGIS, HTML, FODS and Excel 2003 XML; other XML with an XML declaration or a namespace (GML and IDS are named) | the format's extension, otherwise `.xml` |
 | SQL, LaTeX, PC-Axis, Cypher | `CREATE TABLE` (after `PRAGMA`, `BEGIN` and the like), `\documentclass`, `CHARSET=` with `STUB=` or `HEADING=`, `CREATE (:…)` | `.sql`, `.tex`, `.px`, `.cypher` |
-| CSV, TSV (last) | The same number of one delimiter (tab, semicolon, comma or pipe) on every line | `.csv`, `.tsv` |
+| Markdown | A table with pipes and a line of dashes, a code block within three backticks, a heading (`# …`) first with an empty line or another mark of Markdown after it, or three kinds of marks (headings, lists, quotes, links, bold text) | `.md` |
+| CSV, TSV (last) | The same number of one delimiter (tab, semicolon, comma or pipe) on every line, on at least three lines or with at least two delimiters; with tabs two lines are enough | `.csv`, `.tsv` |
 
 The file gets the extension in the app (`export` becomes `export.gpkg`), and the preview says *Recognised by its contents
 as …*; the file on the computer is not changed. The name changes only when the format is sure. A text that no signature
@@ -104,6 +132,27 @@ app asks you to rename it with the right extension; in a choice of several files
 file from a web address without an extension gets one only when the server names the format (JSON, CSV, XML, ZIP, Excel or
 GeoPackage); otherwise the contents decide. In the file picker, files without an extension show under
 *All files*; dragging the file onto the area always works.
+
+## Pasted text
+
+Under *Paste* in Import any text can be pasted. The format is recognised in the same way as for a file without an extension (see
+above), and the view lists what the app recognises, grouped as the list under the file area and from the same table that the
+recognition uses:
+
+- **Building models and drawings**: IFC (STEP text with a `FILE_SCHEMA` that is IFC) and DXF.
+- **Plans**: detailed and comprehensive plans in GeoJSON.
+- **Geodata and maps**: GeoJSON, TopoJSON, KML, GPX and QGIS projects.
+- **Tables**: CSV, TSV, FODS, Excel 2003 XML, JSON, JSON Lines, XML (GML and IDS too, which are read as XML), tables in HTML and
+  LaTeX.
+- **Databases**: SQL scripts.
+- **Statistics**: PC-Axis (PX), JSON-stat and SDMX-JSON.
+- **Documents**: Markdown.
+- **Graphs**: GraphML, GEXF, Cypher and JSON with nodes and edges.
+
+The options step says *The text is recognised as …*, and the format can be changed there. A table (CSV or TSV) is read as
+before, with the choice of delimiter, and a text that none of the formats fits becomes a text document, paragraph by paragraph.
+A pasted table, JSON or XML gets the source *Paste*; a model, a document or a graph becomes a dataset of its kind as if the text
+were a file named *Pasted*.
 
 ## Character encoding
 

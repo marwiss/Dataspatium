@@ -1,5 +1,31 @@
 # Format och import
 
+## Filer och mappar i Inhämta
+
+Under *Filer* i Inhämta släpper du en eller flera filer på ytan, eller klickar på den för att välja. Du kan också släppa en
+eller flera **mappar**: appen läser då alla filer i dem, också i mapparna längre ned, och sorterar dem efter vad de är (se
+*Flera olika filer* i [lagen.md](lagen.md)). Knappen *Välj en mapp* under *Fler alternativ* gör detsamma med tangentbordet.
+En shapefil i en mapp läses tillsammans med filerna bredvid den med samma namn: attributen i `.dbf`, koordinatsystemet i
+`.prj` och teckentabellen i `.cpg`; indexfilerna (`.shx` och liknande) behövs inte och visas inte som filer appen inte läser.
+
+Under ytan står formaten som appen läser, grupperade efter vad de används till:
+
+- **Byggnadsmodeller och ritningar**: IFC, IFCZIP och DXF (slaget modell) och BCF-ärenden (en tabell med ärenden).
+- **Planer**: detaljplaner och översiktsplaner i GeoJSON och GeoPackage, arkivpaket med plan och en översiktsplan i flera filer
+  (slaget plan).
+- **Geodata och kartor**: GeoJSON, GeoJSON Lines, TopoJSON, KML, KMZ, GPX, shapefile och GeoPackage (tabeller med geometri som
+  ritas på kartan), GeoTIFF (slaget raster) och QGIS-projekt (blir en kartvy i Visualisera).
+- **Tabeller**: CSV och annan avgränsad text, TSV, text med fasta kolumnbredder, Excel, ODS, FODS, Excel 2003 XML, äldre
+  kalkylblad, JSON, JSON Lines, XML, tabeller i HTML och LaTeX, Parquet och datapaket.
+- **Databaser**: SQLite, SQL-skript och Access.
+- **Statistik**: SPSS, Stata, SAS, PC-Axis (PX), R (RDS, RData), JSON-stat och SDMX-JSON.
+- **Dokument**: PDF, Word, OpenDocument och Markdown (slaget dokument).
+- **Bilder**: JPEG, PNG, WebP, GIF, BMP och AVIF (slaget bilder).
+- **Grafer**: GraphML, GEXF, Cypher och JSON med noder och kanter (slaget graf).
+
+Listan och filväljarens filter kommer ur samma tabell i appen som importen använder, så att de aldrig skiljer sig. Tabellen nedan
+säger mer om varje format.
+
 ## Filformat som stöds
 
 | Format | Import | Export | Kommentar |
@@ -14,11 +40,11 @@
 | GPX (GPS-spår) | Ja | Ja | Välj lager: vägpunkter, rutter, spår (med antal punkter och längd i km) eller spårpunkter (en rad per punkt med tid och höjd) |
 | TopoJSON | Ja | Nej | Varje objekt i topologin är ett lager; bågarna avkodas till vanliga GeoJSON-geometrier. Känns igen på innehållet även om filen heter .json |
 | JSON | Ja | Ja | Lista med objekt, objekt som innehåller en lista (sökväg kan anges), lista med listor |
-| NDJSON, JSON Lines | Ja | Nej | Ett objekt per rad |
+| NDJSON, JSON Lines | Ja | Nej | Ett objekt per rad. GeoJSON Lines (`.geojsonl`, `.geojsons`, `.geojsonseq`), med en feature per rad eller med postavskiljare enligt RFC 8142, blir en rad per feature med geometrin som GeoJSON |
 | JSON-stat | Ja | Nej | Känns igen automatiskt (`class: dataset`, version 2.0); en rad per cell med koder, texter och värde |
 | SDMX-JSON | Ja | Nej | Datameddelanden i SDMX-JSON 1.0 och 2.0 (till exempel från ECB och OECD) känns igen automatiskt; en rad per observation med kod- och textkolumn per dimension, tidsperiod, värde och attribut |
 | GeoJSON | Ja | Ja | En rad per feature; egenskaperna blir kolumner, geometrin en textkolumn med GeoJSON som kartdiagrammet ritar (kartan läser även WKT-text i en kolumn, till exempel från CSV). Vid export blir geometrikolumnen (GeoJSON eller WKT) varje features geometri och övriga kolumner dess egenskaper |
-| Shapefile (ZIP med shp, dbf, prj, cpg, eller bara shp) | Ja | Nej | Attributen blir typade kolumner enligt dbf-schemat, geometrin GeoJSON i kolumnen `geometry`. Välj lager om ZIP-filen har flera, och förenkla geometrin med en tolerans i kartenheter. Koordinaterna behålls (SWEREF99 TM eller longitud/latitud) |
+| Shapefile (ZIP med shp, dbf, prj, cpg, shp med de andra filerna bredvid i en mapp eller ett val av filer, eller bara shp) | Ja | Nej | Attributen blir typade kolumner enligt dbf-schemat, geometrin GeoJSON i kolumnen `geometry`. Välj lager om ZIP-filen har flera, och förenkla geometrin med en tolerans i kartenheter. Koordinaterna behålls (SWEREF99 TM eller longitud/latitud) |
 | XML | Ja | Ja | En rad per upprepat element (väljs i importsteget); attribut och underelement blir kolumner, nästlade element får punktnamn som `lage.lan` |
 | SQLite | Ja | Ja | Dataspatiums egen fil återställs med typer, etiketter och historik; i andra databaser väljer du tabell och typerna tas från schemat |
 | SQL-skript (sql) | Ja | Nej | Ett skript med `CREATE TABLE` och `INSERT`, till exempel en databasdump, körs i en tom SQLite-databas och tabellerna visas för val. MySQL-specifika rader (`SET`, `LOCK TABLES`, `USE`, `/*!…*/` och tabellval som `ENGINE=`) tas bort först; andra dialekter fungerar så långt de följer SQLite:s syntax |
@@ -35,7 +61,7 @@
 | PX (PC-Axis, SCB) | Ja | Nej | Via R-paketet pxR; teckenkodningen läses ur filens CODEPAGE eller CHARSET. Resultatet är en lång tabell med en värdekolumn |
 | Parquet | Ja | Ja | Via R-paketet nanoparquet; behåller typer exakt |
 | RDS, RData | Ja | rds | R-objekt; en RData-fil måste innehålla en data.frame |
-| Inklistrad text | Ja | | Tabb-, semikolon- eller kommaavgränsad |
+| Inklistrad text | Ja | | Formatet känns igen som för en fil utan filändelse; se [Inklistrad text](#inklistrad-text) |
 
 Textfiler med avgränsare som är 64 MB eller större läses in i omgångar: förhandsgranskningen visar de första
 raderna som vanligt, och vid importen skrivs raderna till datamängden medan filen läses, så att hela texten
@@ -94,7 +120,8 @@ känns igen på innehållet när kännetecknet är säkert. Formaten prövas i d
 | JSON | `{` eller `[` som håller som JSON i hela den lästa början; GeoJSON, TopoJSON, JSON Lines och appens egna format (fältet `format`, till exempel `dataspatium-viz/1`) | `.json`, `.geojson`, `.topojson`, `.ndjson` |
 | XML, HTML | Rotelementet: KML, GPX, GraphML, GEXF, QGIS, HTML, FODS och Excel 2003 XML; annan XML med XML-deklaration eller namnrymd (GML och IDS nämns vid namn) | formatets ändelse, annars `.xml` |
 | SQL, LaTeX, PC-Axis, Cypher | `CREATE TABLE` (efter `PRAGMA`, `BEGIN` och liknande), `\documentclass`, `CHARSET=` med `STUB=` eller `HEADING=`, `CREATE (:…)` | `.sql`, `.tex`, `.px`, `.cypher` |
-| CSV, TSV (sist) | Samma antal av en avgränsare (tabb, semikolon, komma eller lodstreck) på varje rad | `.csv`, `.tsv` |
+| Markdown | En tabell med lodstreck och en rad med streck, ett kodblock inom tre grav-accenter, en rubrik (`# …`) först med en tom rad eller ett annat Markdown-tecken efter, eller tre slags tecken (rubriker, listor, citat, länkar, fetstil) | `.md` |
+| CSV, TSV (sist) | Samma antal av en avgränsare (tabb, semikolon, komma eller lodstreck) på varje rad, på minst tre rader eller med minst två avgränsare; med tabb räcker två rader | `.csv`, `.tsv` |
 
 Filen får ändelsen i appen (`export` blir `export.gpkg`), och förhandsgranskningen säger *Känd igen på innehållet som …*;
 filen på datorn ändras inte. Namnet ändras bara när formatet är säkert. En text som inget kännetecken passar, inte heller CSV
@@ -103,6 +130,27 @@ formatet kan väljas i importsteget. En fil som varken är text eller ett känt 
 namn på filen med rätt ändelse; i ett val av flera filer står den bland dem som appen inte läser. En fil från en
 webbadress utan ändelse får en ändelse bara när servern anger formatet (JSON, CSV, XML, ZIP, Excel eller GeoPackage), annars
 avgör innehållet. I filväljaren visas filer utan ändelse under *Alla filer*; att dra filen till ytan går alltid.
+
+## Inklistrad text
+
+Under *Klistra in* i Inhämta går det att klistra in vilken text som helst. Formatet känns igen på samma sätt som för en fil utan
+filändelse (se ovan), och vyn räknar upp vad appen känner igen, grupperat som listan under filytan och ur samma tabell som
+igenkänningen använder:
+
+- **Byggnadsmodeller och ritningar**: IFC (STEP-text med en `FILE_SCHEMA` som är IFC) och DXF.
+- **Planer**: detaljplaner och översiktsplaner i GeoJSON.
+- **Geodata och kartor**: GeoJSON, TopoJSON, KML, GPX och QGIS-projekt.
+- **Tabeller**: CSV, TSV, FODS, Excel 2003 XML, JSON, JSON Lines, XML (också GML och IDS, som läses som XML), tabeller i HTML och
+  LaTeX.
+- **Databaser**: SQL-skript.
+- **Statistik**: PC-Axis (PX), JSON-stat och SDMX-JSON.
+- **Dokument**: Markdown.
+- **Grafer**: GraphML, GEXF, Cypher och JSON med noder och kanter.
+
+Inställningssteget säger *Texten känns igen som …*, och formatet kan bytas där. En tabell (CSV eller TSV) läses som förut, med
+valet av avgränsare, och en text som inget av formaten passar blir ett textdokument, stycke för stycke. En inklistrad tabell, JSON
+eller XML får källan *Klistra in*; en modell, ett dokument eller en graf blir en datamängd av sitt slag som om texten vore en fil
+med namnet *Inklistrat*.
 
 ## Teckenkodning
 
