@@ -10,7 +10,8 @@
  * become a flow afterwards (`toFlow`). The conversation is remembered between sessions (decision F37 b, on trial) as the notebook
  * *AI-assistent* in the workspace: Markdown cells the person can read, change or delete, never part of a bundle for others; the
  * last exchanges go to the provider as earlier turns. Nothing here runs code from the AI: commands are looked up by name and
- * checked against their schemas, and tool results are marked as data.
+ * checked against their schemas, and tool results are marked as data. The answer's pieces, each command before it runs and the
+ * tokens after each turn go to `onEvent` as the model's panel gets them (ai/agent, B-83).
  */
 (function () {
   'use strict';
@@ -88,13 +89,15 @@
         for (let turn = 0; turn < budget.turns; turn++) {
           if (signal.aborted) { stopped = 'cancelled'; break; }
           emit({ type: 'thinking', turn });
-          const res = await providers.chat(input.provider, { system: system(lang), messages, tools, maxTokens: 2000, signal, timeoutMs: input.timeoutMs || 180000 });
+          const res = await providers.chat(input.provider, { system: system(lang), messages, tools, maxTokens: 2000, signal, timeoutMs: input.timeoutMs || 180000, onDelta: (delta) => emit({ type: 'delta', delta }) });
           usage.input += res.usage.input; usage.output += res.usage.output;
+          emit({ type: 'usage', usage: Object.assign({}, usage) });
           messages.push({ role: 'assistant', content: res.content.length ? res.content : [{ type: 'text', text: res.text }] });
           if (!res.toolCalls.length) { answer = res.text; break; }
           const results = [];
           for (const call of res.toolCalls) {
             const t0 = performance.now();
+            emit({ type: 'tool-start', name: call.name, args: call.args });
             let result;
             if (call.name === ASK_TOOL.name && input.ask) {
               const a = call.args || {};

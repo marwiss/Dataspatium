@@ -18,6 +18,8 @@
  * tools find the element each photo shows, record_finding (ai/check-tools) fills the panel's list of findings, and set_properties on
  * Pset_Condition, the only write it is offered, puts each element's condition into the change set that the person approves.
  * With a kit (B-78: ai/plan-tools for a digital comprehensive plan) the same loop runs another dataset's system prompt and tools.
+ * While it runs the loop tells the panel what happens (B-83): the answer's pieces as they are written (delta), each tool before it
+ * runs (tool-start) and after (tool), and the tokens after each turn (usage); its time limit stands still while the person answers.
  */
 (function () {
   'use strict';
@@ -224,7 +226,12 @@
       const findings = checking ? input.findings || checkTools.create(input.datasetId) : null;
       const emit = (ev) => { if (input.onEvent) { try { input.onEvent(ev); } catch (err) { console.error(err); } } };
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), input.timeoutMs || (kit && kit.timeoutMs) || (building ? 900000 : checking ? 600000 : 180000));
+      // The time limit counts the AI's time: it stands still while a question waits for the person (B-83).
+      let left = input.timeoutMs || (kit && kit.timeoutMs) || (building ? 900000 : checking ? 600000 : 180000);
+      let since = Date.now();
+      let timer = setTimeout(() => controller.abort(), left);
+      const pause = () => { clearTimeout(timer); left = Math.max(0, left - (Date.now() - since)); };
+      const resume = () => { since = Date.now(); timer = setTimeout(() => controller.abort(), left); };
       if (input.signal) input.signal.addEventListener('abort', () => controller.abort(), { once: true });
       // Pictures and drawings go with the first message as image blocks (the providers put them in their own form).
       const images = Array.isArray(input.images) ? input.images.filter((im) => im && im.data) : [];
@@ -243,15 +250,17 @@
           const system = kit ? kit.system : building ? SYSTEM_BUILD : checking ? `${SYSTEM_CHECK} Today is ${checkTools.today()}.` : changing ? SYSTEM_CHANGE : SYSTEM;
           const own = kit ? kit.tools : tools.offered();
           const offered = kit ? own : checking ? own.concat(checkTools.TOOLS, checkTools.WRITES, [PREVIEW_TOOL]) : changing ? own.concat(writeTools.TOOLS, [PREVIEW_TOOL]) : own;
-          const res = await providers.chat(input.provider, { system, messages, tools: offered.concat(askTools), maxTokens: kit ? kit.maxTokens || 1500 : building || checking ? 4000 : 1500, signal: controller.signal, timeoutMs: input.timeoutMs || 180000 });
+          const res = await providers.chat(input.provider, { system, messages, tools: offered.concat(askTools), maxTokens: kit ? kit.maxTokens || 1500 : building || checking ? 4000 : 1500, signal: controller.signal, timeoutMs: input.timeoutMs || 180000, onDelta: (delta) => emit({ type: 'delta', delta }) });
           usage.input += res.usage.input; usage.output += res.usage.output;
+          emit({ type: 'usage', usage: Object.assign({}, usage) });
           messages.push({ role: 'assistant', content: res.content.length ? res.content : [{ type: 'text', text: res.text }] });
           if (!res.toolCalls.length) { answer = res.text; break; }
           const results = [];
           for (const call of res.toolCalls) {
             const t0 = performance.now();
+            emit({ type: 'tool-start', name: call.name, args: call.args });
             const result = input.ask && call.name === ASK_TOOL.name
-              ? await askPerson(input.ask, call.args, controller.signal)
+              ? await askPerson(input.ask, call.args, controller.signal, { pause, resume })
               : kit ? await kitCall(kit, call)
               : checking && checkTools.has(call.name)
               ? await checkTools.call(findings, call.args, { datasetId: input.datasetId, photos: images })
@@ -284,11 +293,16 @@
       if (!kit.tools.some((tool) => tool.name === call.name)) return { error: 'no such tool: ' + String(call.name).slice(0, 60) };
       try { return await kit.call(call.name, call.args || {}); } catch (err) { return { error: String((err && err.message) || err) }; }
     }
-    /** A question to the person through the panel's asker; a closed question is an answer the AI can read. */
-    async function askPerson(ask, args, signal) {
+    /**
+     * A question to the person through the panel's asker; a closed question is an answer the AI can read. `clock` stops the time
+     * limit while the question waits.
+     */
+    async function askPerson(ask, args, signal, clock) {
       const a = args || {};
       const options = (Array.isArray(a.options) ? a.options : []).slice(0, 6).map((o) => ({ label: String((o && o.label) || '').slice(0, 80), description: o && o.description ? String(o.description).slice(0, 200) : '' })).filter((o) => o.label);
-      const got = await ask({ question: String(a.question || '').slice(0, 500), options, free: !!a.allow_free, signal });
+      if (clock) clock.pause();
+      let got;
+      try { got = await ask({ question: String(a.question || '').slice(0, 500), options, free: !!a.allow_free, signal }); } finally { if (clock) clock.resume(); }
       return got ? { answer: got.answer, index: got.index, own_text: !!got.free } : { error: 'the person closed the question without answering' };
     }
     return { ask, previewFor, topologyBrief, rulesBrief, idsBrief, SYSTEM, SYSTEM_CHANGE, SYSTEM_BUILD, SYSTEM_CHECK, ASK_TOOL, MAX_RESULT_CHARS, MAX_PREVIEWS, MAX_PREVIEWS_BUILD, PREVIEW_TOOL };

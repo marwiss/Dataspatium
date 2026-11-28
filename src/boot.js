@@ -437,6 +437,7 @@
     ] },
     { name: 'ai-tools', needs: ['families'], scripts: [
       'src/api/bsdd.js',
+      'src/ai/stream.js',
       'src/ai/providers.js',
       'src/ai/model-tools.js',
       'src/ai/ids-writer.js',

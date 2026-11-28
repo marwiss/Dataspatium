@@ -67,10 +67,12 @@
 
     /**
      * Perform a request.
-     * @param {{url: string, method?: string, headers?: Record<string, string>, body?: any, signal?: AbortSignal, timeoutMs?: number, notModifiedOk?: boolean, rateKey?: string, rateLimit?: {requests: number, perSeconds: number}, retries?: number, responseType?: 'text'|'arraybuffer', ask?: boolean, cors?: {file?: boolean, web?: boolean}, perHost?: boolean}} req
+     * @param {{url: string, method?: string, headers?: Record<string, string>, body?: any, signal?: AbortSignal, timeoutMs?: number, notModifiedOk?: boolean, rateKey?: string, rateLimit?: {requests: number, perSeconds: number}, retries?: number, responseType?: 'text'|'arraybuffer'|'stream', ask?: boolean, cors?: {file?: boolean, web?: boolean}, perHost?: boolean}} req
      *   `cors`: what was measured for the source (api/reach), so that a refused request names the bridge; `perHost`: the address
-     *   came from content (a source added from a catalogue post), so consent is asked for its host (F102 a, F103 a)
-     * @returns {Promise<{ok: boolean, status: number, statusText: string, headers: Headers, url: string, text: string, buffer: ArrayBuffer|null, contentType: string, ms: number}>}
+     *   came from content (a source added from a catalogue post), so consent is asked for its host (F102 a, F103 a); `responseType:
+     *   'stream'` hands a good answer's body over unread (`body`, a ReadableStream that `signal` still aborts; the timeout ends with
+     *   the headers), and a refused one's as text
+     * @returns {Promise<{ok: boolean, status: number, statusText: string, headers: Headers, url: string, text: string, buffer: ArrayBuffer|null, body?: ReadableStream|null, contentType: string, ms: number}>}
      */
     async function request(req) {
       // Real servers are contacted only with the user's consent for API fetches (asked once); the app's own
@@ -88,17 +90,20 @@
         const onAbort = () => controller.abort();
         if (req.signal) { if (req.signal.aborted) { clearTimeout(timer); throw new ApiError('Avbrutet.', { kind: 'aborted' }); } req.signal.addEventListener('abort', onAbort, { once: true }); }
         const t0 = performance.now();
+        // A streamed body is read after this returns: the caller's signal must still reach it.
+        const streaming = req.responseType === 'stream';
         let res;
         try {
           res = await fetch(url, { method: req.method || 'GET', headers: req.headers || {}, body: req.body === undefined ? undefined : req.body, signal: controller.signal, cache: 'no-store', credentials: 'omit' });
         } catch (err) {
           clearTimeout(timer);
+          if (req.signal) req.signal.removeEventListener('abort', onAbort);
           if (req.signal && req.signal.aborted) throw new ApiError('Avbrutet.', { kind: 'aborted' });
           if (controller.signal.aborted) throw new ApiError(D.t('api.err.timeout', { host: hostOf(req.url) }), { kind: 'timeout', url: req.url });
           res = url === req.url ? await viaBridge(req) : null;
           if (!res) throw networkError(req, err, url !== req.url);
         } finally {
-          if (req.signal) req.signal.removeEventListener('abort', onAbort);
+          if (req.signal && !(streaming && res && res.ok)) req.signal.removeEventListener('abort', onAbort);
         }
         clearTimeout(timer);
         const ms = performance.now() - t0;
@@ -114,6 +119,7 @@
         // 304 means "what you have is still right": a good answer for a caller that asked with If-None-Match.
         const out = { ok: res.ok || (res.status === 304 && !!req.notModifiedOk), status: res.status, statusText: res.statusText, headers: res.headers, url: res.url || url, text: '', buffer: null, contentType, ms };
         if (req.responseType === 'arraybuffer') out.buffer = await res.arrayBuffer();
+        else if (streaming && res.ok) out.body = res.body;
         else out.text = await res.text();
         return out;
       }
