@@ -123,14 +123,23 @@
     function detectTable(columns) { return !!tableFormat(columns); }
     /** The kind of plan each table format holds: a Danish kommuneplanramme and an Icelandic aðalskipulag are comprehensive plans. */
     const TABLE_SLAG = { ngp: 'detaljplan', plandata: 'detaljplan', 'plandata-kommuneplan': 'oversiktsplan', skipulag: 'detaljplan', 'skipulag-adal': 'oversiktsplan' };
+    /** The columns that name the plan a row belongs to, per table format, the first one present counting (a delområde names its lokalplan). */
+    const TABLE_PLAN_KEYS = { ngp: ['detaljplan.objektidentitet', 'detaljplan.beteckning'], plandata: ['lokplan_id', 'planid'], 'plandata-kommuneplan': ['komplan_id', 'planid'], skipulag: ['skipnr', 'audkenni'], 'skipulag-adal': ['skipnr', 'audkenni'] };
     /**
-     * The plan an API table holds, for the button that keeps it as a plan: its format and whether it is a detaljplan or an
-     * översiktsplan, or null when the columns are no plan the app reads.
-     * @param {Array<string|{name: string}>} columns @returns {{format: string, slag: 'detaljplan'|'oversiktsplan'}|null}
+     * The plan an API table holds, for the button that keeps it as a plan: its format, whether it is a detaljplan or an översiktsplan,
+     * and how many plans the rows belong to (1 when no column names the plan), or null when the columns are no plan the app reads.
+     * A layer with the areas of many plans (a municipality's NGP_Detaljplan_yta) is a map of plans, not one plan: `plans` > 1.
+     * @param {Array<string|{name: string}>} columns @param {any[][]} [rows]
+     * @returns {{format: string, slag: 'detaljplan'|'oversiktsplan', plans: number}|null}
      */
-    function tablePlan(columns) {
+    function tablePlan(columns, rows) {
       const format = tableFormat(columns);
-      return format ? { format, slag: TABLE_SLAG[format] || 'detaljplan' } : null;
+      if (!format) return null;
+      const out = { format, slag: TABLE_SLAG[format] || 'detaljplan', plans: 1 };
+      const names = (columns || []).map((c) => (typeof c === 'string' ? c : c.name)).map(format === 'ngp' ? normalizeKey : lower);
+      const at = (TABLE_PLAN_KEYS[format] || []).map((k) => names.indexOf(k)).find((i) => i >= 0);
+      if (at !== undefined && rows && rows.length) out.plans = new Set(rows.map((r) => str(r[at]).trim()).filter(Boolean)).size || 1;
+      return out;
     }
     const normalizeKey = (k) => lower(k).replace(/[_:]/g, '.');
 

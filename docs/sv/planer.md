@@ -23,13 +23,17 @@ Inhämta så visas planens uppgifter och knappen *Importera*. En GeoPackage-fil 
 en tabell i taget som förut. Koordinatsystemet i en GeoPackage-fil läses ur filen, även när det bara står med namn
 (till exempel *SWEREF99 15 00*).
 
-När ett svar från ett API eller en geodatakälla är en plan som appen kan läsa visas knappen *Spara som detaljplan* eller
-*Spara som översiktsplan* bredvid *Spara som datamängd*; tipset på knappen säger vilket format svaret känns igen som.
-Knappen visas bara när kolumnerna är en plan: referensobjekt från Lantmäteriets geodataplattform (till exempel lagret
-*NGP_Detaljplan_yta* eller källan *Lantmäteriet geodataplattformen: detaljplaner*, som kräver nyckel från en ansluten
-organisation) och ett lokalplanslager från Plandata.dk eller ett deiliskipulag från Skipulagsstofnun sparas som detaljplan,
-Plandata.dk:s kommuneplanrammer och ett aðalskipulag som översiktsplan. Svenska översiktsplaner hämtas ännu inte från
-något API; de läses från filer (GeoPackage enligt Boverkets ÖP-modell eller GeoJSON).
+När ett svar från ett API eller en geodatakälla är en enda plan som appen kan läsa är *Spara som detaljplan* eller *Spara
+som översiktsplan* förvald, och *Spara som tabell* sparar svaret som en vanlig datamängd i stället; tipset på planknappen
+säger vilket format svaret känns igen som. Som detaljplan sparas referensobjekt från Lantmäteriets geodataplattform (källan
+*Lantmäteriet geodataplattformen: detaljplaner*, som kräver nyckel från en ansluten organisation), ett lokalplanslager från
+Plandata.dk och ett deiliskipulag från Skipulagsstofnun; som översiktsplan Plandata.dk:s kommuneplanrammer och ett
+aðalskipulag.
+
+Ett svar med delar av flera planer, till exempel en kommuns lager *NGP_Detaljplan_yta* med alla detaljplanernas ytor, är
+ingen plan utan en karta över planerna. Det sparas med *Spara som datamängd* och öppnas som karta, och en rad ovanför
+knapparna säger hur många planer svaret har. Svenska översiktsplaner hämtas ännu inte från något API; de läses från filer
+(GeoPackage enligt Boverkets ÖP-modell eller GeoJSON).
 
 ## Plankartan i Bearbeta
 

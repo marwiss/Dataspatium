@@ -22,13 +22,17 @@ as Web Mercator are converted to WGS 84. A GeoJSON file is recognised by its con
 Acquire and the plan's facts appear with the button *Import*. A GeoPackage in the ÖP model gets the choice *The
 whole comprehensive plan as a plan*; switched off, one table at a time is imported as before. A detailed development plan in GeoPackage gets the choice *The whole plan as a plan*. The coordinate system of a GeoPackage is read from the file, also when it is given only by name (for example *SWEREF99 15 00*).
 
-When an answer from an API or a geodata source is a plan the app reads, the button *Save as detailed development plan* or
-*Save as comprehensive plan* appears next to *Save as dataset*; its tip names the format the answer was recognised as.
-The button appears only when the columns are a plan: reference objects from Lantmäteriet's geodata platform (for example
-the layer *NGP_Detaljplan_yta* or the source *Lantmäteriet geodataplattformen: detaljplaner*, which needs a key from a
-connected organisation), a lokalplan layer from Plandata.dk and a deiliskipulag from Skipulagsstofnun are saved as detailed
-development plans, Plandata.dk's kommuneplanrammer and an aðalskipulag as comprehensive plans. Swedish comprehensive plans
-are not yet fetched from any API; they are read from files (GeoPackage in Boverket's ÖP model, or GeoJSON).
+When an answer from an API or a geodata source is one plan the app reads, *Save as detailed development plan* or *Save as
+comprehensive plan* is the default, and *Save as table* saves the answer as an ordinary dataset instead; the plan button's
+tip names the format the answer was recognised as. Reference objects from Lantmäteriet's geodata platform (the source
+*Lantmäteriet geodataplattformen: detaljplaner*, which needs a key from a connected organisation), a lokalplan layer from
+Plandata.dk and a deiliskipulag from Skipulagsstofnun are saved as detailed development plans; Plandata.dk's
+kommuneplanrammer and an aðalskipulag as comprehensive plans.
+
+An answer with parts of several plans, such as a municipality's layer *NGP_Detaljplan_yta* with the areas of all its
+detailed plans, is no plan but a map of the plans. It is saved with *Save as dataset* and opens as a map, and a line above
+the buttons says how many plans the answer holds. Swedish comprehensive plans are not yet fetched from any API; they are
+read from files (GeoPackage in Boverket's ÖP model, or GeoJSON).
 
 ## The plan map in Process
 

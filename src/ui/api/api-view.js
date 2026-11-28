@@ -107,11 +107,14 @@
           target.options = [{ value: '', label: '–' }].concat(existing.map((d) => ({ value: d.id, label: d.name })));
           const mode = /** @type {any} */ (h('dm-select', { label: t('api.into.mode') }));
           mode.options = [{ value: 'append', label: t('api.into.mode.append') }, { value: 'replace', label: t('api.into.mode.replace') }];
-          const saveBtn = basic.button({ label: t('api.save'), icon: 'save', variant: 'primary', loading: state.saving, onClick: () => save(nameInput.value.trim()) });
-          // A plan the app reads (NGP reference objects from Lantmäteriet, a Danish or Icelandic plan layer) can be kept as a plan:
-          // the button names the kind of plan and its tip the format, and it is not shown for anything else.
-          const found = plan.tablePlan(r.table.columns);
-          const planBtn = found ? basic.button({ label: t('plan.save.' + found.slag), icon: 'layers', loading: state.saving, title: t('plan.save.' + found.slag + '.hint', { format: t('plan.format.' + found.format) }), onClick: () => saveAsPlan(nameInput.value.trim(), found.slag) }) : null;
+          // One plan the app reads (NGP reference objects from Lantmäteriet, a Danish or Icelandic plan layer) is kept as a plan by
+          // the primary button, which names the kind of plan (its tip the format), and the table is the other choice (F132 a). The
+          // areas of many plans (a municipality's NGP_Detaljplan_yta) are a map of plans, not one plan: no plan button, a note why.
+          const found = plan.tablePlan(r.table.columns, r.table.rows);
+          const asPlan = !!found && found.plans === 1;
+          const saveBtn = basic.button({ label: t(asPlan ? 'api.save.table' : 'api.save'), icon: 'save', variant: asPlan ? undefined : 'primary', loading: state.saving, title: asPlan ? t('api.save.table.hint') : undefined, onClick: () => save(nameInput.value.trim()) });
+          const planBtn = asPlan ? basic.button({ label: t('plan.save.' + found.slag), icon: 'layers', variant: 'primary', loading: state.saving, title: t('plan.save.' + found.slag + '.hint', { format: t('plan.format.' + found.format) }), onClick: () => saveAsPlan(nameInput.value.trim(), found.slag) }) : null;
+          const manyNote = found && found.plans > 1 ? h('p', { class: 'dm-help', 'data-plan-many': String(found.plans), text: t('plan.many.' + found.slag, { n: i18n.formatNumber(found.plans) }) }) : null;
           const intoBtn = basic.button({ label: t('api.into.run'), icon: 'rows-3', loading: state.saving, onClick: () => { if (target.value) into(target.value, mode.value); else overlays.toast.show(t('api.into.pick'), { kind: 'warn' }); } });
           // Geodata answers are shown as a small map above the table (the saved dataset opens as a map).
           const mapSvg = leaflet.tableSvg(r.table, { width: 640, height: 300, limit: 5000 });
@@ -128,7 +131,8 @@
             h('div', { class: 'dm-table-wrap' }, table),
             state.saved ? h('div', { class: 'dm-success' }, h('span', { text: state.saved.text }), h('div', { class: 'dm-row' }, basic.button({ label: t(mapEl ? 'geodata.open.map' : 'import.open.bearbeta'), icon: mapEl ? 'map' : 'pencil', variant: 'primary', onClick: () => { store.set({ selectedId: state.saved.id }); shell.activate('bearbeta'); } })))
               : h('div', { class: 'dm-stack-sm' },
-                h('div', { class: 'dm-row-wrap dm-api-save' }, nameInput, saveBtn, planBtn),
+                manyNote,
+                h('div', { class: 'dm-row-wrap dm-api-save' }, nameInput, planBtn, saveBtn),
                 existing.length ? h('details', { class: 'dm-more' }, h('summary', { text: t('api.into') }), h('div', { class: 'dm-row-wrap dm-api-save' }, target, mode, intoBtn)) : null)));
           requestAnimationFrame(() => table.setData({
             columns: r.table.columns.map((c) => ({ key: c, label: c, type: (r.table.types && r.table.types[c]) || guessType(rows, r.table.columns.indexOf(c)) })),
