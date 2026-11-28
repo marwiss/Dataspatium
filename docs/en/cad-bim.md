@@ -584,8 +584,8 @@ Export › Documents, in Word, PDF and the other formats (see [dokumentmallar.md
 
 The button *Ask AI* in the model view opens a panel in the inspector where you ask a question about the open IFC model, for example
 "which doors lack a fire rating on storey 2?". The AI model reads with tools (the model's overview, the storeys, elements by class, storey,
-name and property, one element with all its properties, what you marked in the 3D view and, for a model fetched from Dataregium, the
-server's named queries) and answers with the elements it rests on.
+name and property, one element with all its properties, what you marked in the 3D view, pictures of the model in 3D, in plan and in
+section and, for a model fetched from Dataregium, the server's named queries) and answers with the elements it rests on.
 *Mark n elements* puts the answer's elements in the selection, which the 3D view, the table and the other modes follow. The panel shows
 every tool call and the tokens spent. The AI can only read: nothing is changed, saved or published, and the next question continues the
 conversation.
@@ -595,6 +595,22 @@ llama.cpp and others), with address, model and API key. The key is kept in the s
 text and never in the question. *Policy* decides what may be called: *Ask* asks for consent per provider the first time, *Cloud* allows
 cloud services, and *Local only* allows only models on your own computer. What is sent is your question and the tool answers the model
 asks for; the tool answers are data from the model, never instructions, and are cut when large.
+
+### Pictures of the model
+
+Two of the tools draw pictures of the model. With them the AI sees the shape and how the parts meet, which the tables do not tell.
+
+- **render_view** draws the model as the 3D view does, from a named view (iso, from above, from the front and the others) or from an
+  angle. The picture shows the whole model, a storey, an IFC class or chosen elements, alone or marked among the others.
+- **plan_or_section** draws a storey in plan, cut at a height above the floor (1.2 m unless another is given), or a vertical section
+  along an axis or a line. It uses the 3D view's own clipping and an orthographic camera.
+
+The picture is drawn in the browser and is at most 1,024 × 768 pixels and about 300 kB. It goes with the tool's answer only to a model
+that sees pictures: Anthropic's models and the OpenAI-compatible models that take pictures (for example GPT-4o and later, Gemini and
+models with vision or VL in the name). Other models get a short text saying that no picture can be shown. The picture is sent only with
+the question you send yourself, after the same consent as the question, and at most six pictures go with a question. The panel shows
+the picture the AI asked for as a small picture in the tool call's line, and a press shows it at full size. The pictures show the model
+as it is, without the changes of an open change set.
 
 ### The key and the model
 

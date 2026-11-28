@@ -81,6 +81,8 @@
       'source:newmodel': 'source.newmodel', 'source:geodata': 'source.geodata',
       // A new map layer is drawn in the map view (DS-35); a new detailed plan and a new table stay in Dokument.
       'source:newlayer': 'map.view',
+      // The AI's picture tools (ai/view-tools) are the model tools' and the panel's tier.
+      'tool:render_view': 'ai.panel', 'tool:plan_or_section': 'ai.panel',
       'tool:server_query': 'ai.server-query', 'status:assistant': 'assistant', 'command:assistant': 'assistant',
       // The maps among the commands (DS-27) and the BCF topics (DS-39); the charts, the documents and the CDE's files stay in Dokument.
       'cmd:create_map': 'map.view', 'cmd:add_map_layer': 'map.view',

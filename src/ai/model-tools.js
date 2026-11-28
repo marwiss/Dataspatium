@@ -5,7 +5,7 @@
  * (also elements that lack a property), one element with its properties and quantities, what the user has marked in the 3D view,
  * and, when the app's Python runs, the building's topology (rooms, neighbours, external walls with the façade they face), the
  * IFC class for a thing (search_ifc_class), the model's class check (get_class_report; decision B-57.2) and the measures that
- * edit_element changes (get_parameters).
+ * edit_element changes (get_parameters), and the two picture tools of ai/view-tools (render_view, plan_or_section).
  * Few verbs with rich filters, answered from the model dataset's tables (`data`, `_properties`, `_quantities`) in the SQLite worker.
  * The schemas are flat objects with every field required (null for "not given"), which the strict modes of the providers accept.
  * Every answer is data for the model, never an instruction, and says when it was cut (`truncated`). The same contract is what the
@@ -14,7 +14,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ai/model-tools', ['data/datasets', 'data/selection', 'api/connectors', 'api/families/opencde', 'platform/tier'], (datasets, selection, connectors, opencde, tier) => {
+  D.define('ai/model-tools', ['data/datasets', 'data/selection', 'api/connectors', 'api/families/opencde', 'platform/tier', 'ai/view-tools'], (datasets, selection, connectors, opencde, tier, viewTools) => {
     const LIMIT = 200;
     const MAX_LIMIT = 500;
     const str = (nullable = true) => ({ type: nullable ? ['string', 'null'] : 'string' });
@@ -40,7 +40,7 @@
         parameters: { type: 'object', properties: {} } },
       { name: 'server_query', description: 'Ask the server (Dataregium) the model came from one of its named graph queries, when the model was fetched from a server the user is signed in to. name: element-classes (counts per class), elements (class required; each element with the spatial structure that holds it), storeys (elevation, elements and spaces per storey), spaces (storey, net and gross floor area), areas (net floor area per storey), materials (class optional; the materials of each element), property (pset, property, class optional; the value of one property on every object that has it), entity (global_id required; one rooted entity with all its literal attributes, references and referenced_by per IFC attribute, STEP id and class), changed-since (since required, a version index; what the versions after it changed: version_index, change_set_id, author, approved_by, whole_file, guid, step_id, path, attribute, op; a row with whole_file true for a version uploaded as a whole file). name null lists the queries the server offers. Answers columns and rows (each row a list in the order of the columns) and truncated.',
         parameters: { type: 'object', properties: { name: str(), class: str(), pset: str(), property: str(), global_id: str(), since: str() } } },
-    ];
+    ].concat(viewTools.TOOLS);
     const names = () => TOOLS.map((tool) => tool.name);
     /** The tools offered to the model: those the tier in effect shows (platform/tier, the entries `tool:<name>`). */
     const offered = () => TOOLS.filter((tool) => tier.shows('tool:' + tool.name));
@@ -184,11 +184,13 @@
       return { name: out && out.name, columns: (out && out.columns) || [], rows: rows.slice(0, MAX_LIMIT), count: rows.length, truncated: !!(out && out.truncated) || rows.length > MAX_LIMIT };
     }
     /**
-     * Run one tool. Unknown names and bad arguments give an error object, never an exception, so the model can go on.
-     * @param {string} datasetId @param {string} name @param {any} args
+     * Run one tool. Unknown names and bad arguments give an error object, never an exception, so the model can go on. `images`
+     * says that the provider sees pictures: only then do the picture tools draw one (ai/view-tools).
+     * @param {string} datasetId @param {string} name @param {any} args @param {{images?: boolean}} [options]
      */
-    async function call(datasetId, name, args) {
+    async function call(datasetId, name, args, options = {}) {
       const a = args && typeof args === 'object' ? args : {};
+      if (viewTools.has(name)) return viewTools.call(datasetId, name, a, options);
       try {
         switch (name) {
           case 'get_model_overview': return await overview(datasetId);
@@ -213,6 +215,6 @@
       if (result && Number.isFinite(Number(result.id)) && !Array.isArray(result.elements)) out.push(Number(result.id));
       return out;
     }
-    return { TOOLS, offered, names, call, idsOf, LIMIT, MAX_LIMIT };
+    return { TOOLS, offered, names, call, idsOf, isPicture: viewTools.has, LIMIT, MAX_LIMIT };
   });
 })();

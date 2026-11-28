@@ -25,7 +25,8 @@
  * While the AI works a status line above the answer says what it does, with the text as it is written, the AI's time and the tokens
  * (ui/bearbeta/ai-run, B-83); a question from the AI comes first in the panel and the run button waits for the answer instead of
  * spinning; a change or build that proposed nothing says so, with Fråga igen and Ändra frågan. The model is chosen in the panel, and
- * the providers' dialog (ui/bearbeta/ai-providers) says where each key is and can try it.
+ * the providers' dialog (ui/bearbeta/ai-providers) says where each key is and can try it. A picture the AI asked for with
+ * render_view or plan_or_section (ai/view-tools) is shown small in its step, and whole on a press, so that the person sees what it saw.
  */
 (function () {
   'use strict';
@@ -546,7 +547,13 @@
         function stepLine(step) {
           const args = Object.entries(step.args || {}).filter(([, v]) => v !== null && v !== undefined && v !== '').map(([k, v]) => `${k}=${typeof v === 'string' ? v : JSON.stringify(v)}`).join(', ');
           const tail = step.error ? t('ai.step.error', { error: step.error }) : (step.count !== null && step.count !== undefined ? t('ai.step.count', { n: i18n.formatNumber(step.count) }) : '');
-          return h('li', { class: 'dm-small', text: `${step.name}(${args}) ${tail} · ${step.ms} ms` });
+          // The picture a picture tool drew is shown small, so that the person sees what the AI saw; a press shows it whole.
+          const src = step.picture ? D.require('platform/text').imageSource(step.picture) : '';
+          const alt = t('ai.picture.alt', { tool: step.name });
+          return h('li', { class: 'dm-small' }, h('span', { text: `${step.name}(${args}) ${tail} · ${step.ms} ms` }),
+            src ? h('button', { type: 'button', class: 'dm-ai-picture', 'data-ai-picture': step.name, 'aria-label': t('ai.picture.open'), 'data-tip': t('ai.picture.open'),
+              onclick: () => overlays.dialog.open({ title: t('ai.picture.title'), size: 'lg', body: h('div', { class: 'dm-photos-preview' }, h('img', { src, alt })), actions: [{ label: t('common.close'), value: true, primary: true }] }) },
+            h('img', { src, alt })) : null);
         }
         let stepsEl = null;
         function renderSteps() { if (stepsEl) replace(stepsEl, s.steps.length ? h('ol', { class: 'dm-list dm-xs', 'data-ai-steps': '' }, s.steps.map(stepLine)) : null); }
