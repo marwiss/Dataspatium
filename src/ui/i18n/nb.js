@@ -190,8 +190,6 @@
     'datasets.columns': 'Kolonner',
     'datasets.log': 'Historikk',
     'datasets.rows': 'Rader',
-    'datasets.delete.confirm': 'Slette datasettet {name}? Dette kan ikke angres.',
-    'datasets.deleted': 'Datasettet {name} er slettet.',
     'datasets.renamed': 'Navnet er endret.',
     'datasets.saved': 'Datasettet er lagret.',
     'datasets.storage.title': 'Arbeidsområde',

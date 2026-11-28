@@ -50,12 +50,16 @@
         }).catch((err) => D.log('bundle', err));
         return line;
       };
-      const switches = list.map((d) => {
+      const switchOf = (d) => {
         const sw = /** @type {any} */ (h('dm-switch', { label: `${d.name} (${kinds.summary(d)})` }));
         sw.checked = chosen.has(d.id);
         sw.addEventListener('change', () => { if (sw.checked) chosen.add(d.id); else chosen.delete(d.id); });
         return h('div', { class: 'dm-stack-xs' }, sw, filesChoice(d));
-      });
+      };
+      const switches = list.map(switchOf);
+      // What lies in the trash goes only when chosen here, one by one (F131 b).
+      const trash = store.get().trash || [];
+      const trashSwitches = trash.map(switchOf);
       const inc = { charts: true, dashboards: true, documents: true, notebooks: true, scripts: true };
       const incSwitches = Object.keys(inc).map((k) => {
         const sw = /** @type {any} */ (h('dm-switch', { label: t('bundle.include.' + k) }));
@@ -69,6 +73,7 @@
       const body = h('div', { class: 'dm-stack' },
         h('p', { class: 'dm-help', text: t('bundle.help') }), name, message, authorIn,
         h('h4', { text: t('shell.datasets') }), onlySwitch, list.length ? h('div', { class: 'dm-stack-sm' }, switches) : h('p', { class: 'dm-help', text: t('datasets.empty') }),
+        trash.length ? h('details', { class: 'dm-more', 'data-bundle-trash': '' }, h('summary', { text: t('bundle.trash', { n: trash.length }) }), h('p', { class: 'dm-help', text: t('bundle.trash.help') }), h('div', { class: 'dm-stack-sm' }, trashSwitches)) : null,
         h('h4', { text: t('bundle.include') }), h('div', { class: 'dm-row-wrap' }, incSwitches));
       const ok = await ui.dialog.open({ title: t('bundle.title'), help: 'dela#paket', body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('bundle.create'), variant: 'primary', value: true, primary: true }] });
       if (ok !== true) return null;

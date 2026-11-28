@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * Actions on one or several datasets: organise (folder and tags), move by drag and drop, the tools of the dataset tree, which
- * only Hantera shows (delete folders and datasets, cut, copy and paste, rename; ui/dataset-list), and, in Hantera, the batch
+ * only Hantera shows (move folders and datasets to the trash and back, remove them for good, cut, copy and paste, rename;
+ * ui/dataset-list), and, in Hantera, the batch
  * dialog for the selected datasets: what they can do together (one map, one table, one collection), organise, delete, export each in
  * its own form, bundle, refresh from the API and run another dataset's recipe on them.
  */
@@ -67,32 +68,100 @@
     }
 
     /**
-     * Delete folders with everything in them and datasets, after one question that says how many folders and datasets go.
-     * Each dataset is deleted the usual way (data/datasets.remove), so the store, the log and other tabs follow.
-     * @param {any} ctx @param {{ids: string[], folders: string[]}} units @returns {Promise<boolean>} whether anything was deleted
+     * Ta bort: folders with everything in them and datasets go to the trash of the place where they lie, without a question
+     * (F131 b). The data stays, marked with the time and the folder (data/datasets.trash); the log says what went, and the toast's
+     * Ångra puts it all back where it was, as Återställ does.
+     * @param {any} ctx @param {{ids: string[], folders: string[]}} units @returns {Promise<boolean>} whether anything was moved
      */
     async function removeUnits(ctx, units) {
-      const { ui, services, store } = ctx;
+      const { ui, services, store, shell } = ctx;
       const list = store.get().datasets;
-      const ids = new Set(units.ids);
-      for (const d of list) if (units.folders.some((f) => within(d.folder || '', f))) ids.add(d.id);
-      const chosen = list.filter((d) => ids.has(d.id));
+      const inFolder = (d) => units.folders.find((f) => within(d.folder || '', f));
+      const alone = list.filter((d) => units.ids.includes(d.id) && !inFolder(d));
+      const withFolder = list.filter((d) => inFolder(d));
       const gone = takenFolders(ctx, list).filter((p) => units.folders.some((f) => within(p, f)));
-      if (!chosen.length && !gone.length) return false;
-      let question;
-      if (units.folders.length === 1 && !units.ids.length) {
-        const what = amount([['subfolders', gone.length - 1], ['datasets', chosen.length]]);
-        question = what ? t('datasets.tree.delete.folder', { name: units.folders[0], what }) : t('datasets.tree.delete.folder.empty', { name: units.folders[0] });
-      } else if (!units.folders.length && chosen.length === 1) question = t('datasets.delete.confirm', { name: chosen[0].name });
-      else question = t('datasets.tree.delete.confirm', { what: amount([['folders', gone.length], ['datasets', chosen.length]]) });
-      if (!(await ui.dialog.confirm(question, { okLabel: t('common.delete'), danger: true }))) return false;
+      if (!alone.length && !withFolder.length && !gone.length) return false;
+      const batch = 'tr_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const at = new Date().toISOString();
       let n = 0;
-      for (const d of chosen) {
-        try { await services.datasets.remove(d.id); n++; } catch (err) { fail(ctx, err); }
-      }
-      for (const f of units.folders) tree.folders.removeUnder(f);
-      store.set({ selectedIds: (store.get().selectedIds || []).filter((id) => !ids.has(id)) });
-      done(ctx, t('datasets.tree.deleted', { what: amount([['folders', gone.length], ['datasets', n]]) }));
+      try {
+        for (const f of units.folders) {
+          n += (await services.datasets.trash(withFolder.filter((d) => inFolder(d) === f).map((d) => d.id), { batch, at, root: f })).length;
+          tree.folders.trash(f, batch, at);
+        }
+        n += (await services.datasets.trash(alone.map((d) => d.id), { batch, at, root: '' })).length;
+      } catch (err) { fail(ctx, err); }
+      const moved = new Set(alone.concat(withFolder).map((d) => d.id));
+      store.set({ selectedIds: (store.get().selectedIds || []).filter((id) => !moved.has(id)) });
+      const what = amount([['folders', units.folders.length], ['datasets', n]]);
+      const names = units.folders.concat(alone.map((d) => d.name));
+      const inside = amount([['subfolders', gone.length - 1], ['datasets', n]]);
+      const text = units.folders.length === 1 && !alone.length ? (inside ? t('datasets.trash.moved.folder', { name: units.folders[0], what: inside }) : t('datasets.trash.moved.folder.empty', { name: units.folders[0] }))
+        : !units.folders.length && n === 1 ? t('datasets.trash.moved.one', { name: alone[0].name })
+          : t('datasets.trash.moved', { what, names: names.join(', ') });
+      shell.log(text, 'ok');
+      ui.toast.show(text, { kind: 'ok', timeout: 10000, action: { label: t('common.undo'), onClick: () => { undoRemove(ctx, batch).catch((err) => fail(ctx, err)); } } });
+      return true;
+    }
+    /** Ångra after Ta bort: what that removal moved to the trash comes back where it was. @param {any} ctx @param {string} batch */
+    async function undoRemove(ctx, batch) {
+      const ids = (await ctx.services.datasets.list('trash')).filter((d) => d.trashed && d.trashed.batch === batch).map((d) => d.id);
+      const back = await ctx.services.datasets.restore(ids);
+      tree.folders.untrash(batch, null, true);
+      done(ctx, back.length ? t('datasets.trash.undone', { what: amount([['datasets', back.length]]) }) : t('datasets.trash.undone.folders'));
+      return back.length;
+    }
+    /** What a unit in the trash holds: the datasets in it, and how many folders it is. @param {any} ctx @param {{ids: string[], roots: Array<{batch: string, path: string}>}} unit */
+    async function trashContents(ctx, unit) {
+      const trash = await ctx.services.datasets.list('trash');
+      const ids = new Set(unit.ids);
+      for (const r of unit.roots) for (const d of trash) { const m = d.trashed || {}; if (m.batch === r.batch && m.root && within(d.folder || '', r.path)) ids.add(d.id); }
+      return trash.filter((d) => ids.has(d.id));
+    }
+    /**
+     * Återställ: datasets and folders from the trash back in the folder they lay in (the folder comes back if it is gone).
+     * @param {any} ctx @param {{ids: string[], roots: Array<{batch: string, path: string}>}} unit @returns {Promise<boolean>}
+     */
+    async function restoreUnits(ctx, unit) {
+      const chosen = await trashContents(ctx, unit);
+      let back = [];
+      try { back = await ctx.services.datasets.restore(chosen.map((d) => d.id)); } catch (err) { fail(ctx, err); }
+      for (const r of unit.roots) tree.folders.untrash(r.batch, r.path, true);
+      const one = !unit.roots.length && back.length === 1 ? back[0] : null;
+      done(ctx, one ? t('datasets.trash.restored.one', { name: one.name, folder: one.folder || t('datasets.storage.title') })
+        : t('datasets.trash.restored', { what: amount([['folders', unit.roots.length], ['datasets', back.length]]) }));
+      return true;
+    }
+    /**
+     * Ta bort för gott: from the trash, after a question that says what goes. Each dataset is deleted the usual way
+     * (data/datasets.remove), so the store, the log and other tabs follow.
+     * @param {any} ctx @param {{ids: string[], roots: Array<{batch: string, path: string}>}} unit @returns {Promise<boolean>}
+     */
+    async function purgeUnits(ctx, unit) {
+      const { ui, services } = ctx;
+      const chosen = await trashContents(ctx, unit);
+      const what = unit.roots.length === 1 && !unit.ids.length ? leafOf(unit.roots[0].path) : chosen.length === 1 && !unit.roots.length ? chosen[0].name : amount([['folders', unit.roots.length], ['datasets', chosen.length]]);
+      if (!(await ui.dialog.confirm(t('datasets.trash.purge.confirm', { what }), { okLabel: t('datasets.trash.purge'), danger: true }))) return false;
+      let n = 0;
+      for (const d of chosen) { try { await services.datasets.remove(d.id); n++; } catch (err) { fail(ctx, err); } }
+      for (const r of unit.roots) tree.folders.untrash(r.batch, r.path, false);
+      done(ctx, t('datasets.trash.purged', { what }));
+      return n > 0 || unit.roots.length > 0;
+    }
+    /** Töm papperskorgen: everything in it goes for good, after a question that says how much. @param {any} ctx @returns {Promise<boolean>} */
+    async function emptyTrash(ctx) {
+      const { ui, services } = ctx;
+      const trash = await services.datasets.list('trash');
+      const roots = new Set(trash.filter((d) => d.trashed && d.trashed.root).map((d) => d.trashed.batch + '|' + d.trashed.root));
+      for (const r of tree.folders.trashed()) roots.add(r.batch + '|' + r.root);
+      if (!trash.length && !roots.size) return false;
+      const size = trash.reduce((n, d) => n + services.datasets.storedBytes(d), 0);
+      const what = amount([['folders', roots.size], ['datasets', trash.length]]);
+      if (!(await ui.dialog.confirm(t('datasets.trash.empty.confirm', { what, size: i18n.formatBytes(size) }), { okLabel: t('datasets.trash.empty.action'), danger: true }))) return false;
+      let n = 0;
+      for (const d of trash) { try { await services.datasets.remove(d.id); n++; } catch (err) { fail(ctx, err); } }
+      tree.folders.untrash(null, null, false);
+      done(ctx, t('datasets.trash.emptied', { what: amount([['folders', roots.size], ['datasets', n]]), size: i18n.formatBytes(size) }));
       return true;
     }
 
@@ -160,7 +229,12 @@
     const actionsOf = new WeakMap();
     /** The work behind the tree's tools for this context (ui/dataset-list `actions`), which Hantera alone gives its tree. */
     function treeActions(ctx) {
-      if (!actionsOf.has(ctx)) actionsOf.set(ctx, { remove: (units) => removeUnits(ctx, units), paste: (clip, target) => paste(ctx, clip, target), rename: (unit, name) => renameUnit(ctx, unit, name) });
+      if (!actionsOf.has(ctx)) {
+        actionsOf.set(ctx, {
+          remove: (units) => removeUnits(ctx, units), paste: (clip, target) => paste(ctx, clip, target), rename: (unit, name) => renameUnit(ctx, unit, name),
+          restore: (unit) => restoreUnits(ctx, unit), purge: (unit) => purgeUnits(ctx, unit), empty: () => emptyTrash(ctx),
+        });
+      }
       return actionsOf.get(ctx);
     }
     /**
@@ -169,7 +243,7 @@
      * keys, the snabbmeny and dragging) are Hantera's alone, which adds `actions` and `onMove` (Martin, 2026-11-28).
      */
     function treeOptions(ctx) {
-      return { multi: true, selectedIds: ctx.store.get().selectedIds || [], onToggle: (ids) => ctx.store.set({ selectedIds: ids }) };
+      return { multi: true, selectedIds: ctx.store.get().selectedIds || [], onToggle: (ids) => ctx.store.set({ selectedIds: ids }), trash: ctx.store.get().trash || [] };
     }
 
     /** Asking more datasets than this what they can do takes longer than it is worth. */
@@ -349,7 +423,7 @@
       try {
         if (choice === 'organize') await organize(ctx, ids);
         else if (choice === 'bundle') await share.shareBundle(ctx, { datasetIds: ids });
-        // Folders chosen whole go with their subfolders, empty ones too, after the tree's own question.
+        // Folders chosen whole go to the trash with their subfolders, empty ones too, as with the tree's own Ta bort.
         else if (choice === 'delete') await removeUnits(ctx, tree.selectionUnits(store.get().datasets, ids));
         else if (choice === 'export') {
           const files = {};
@@ -398,6 +472,6 @@
       done(ctx, t('datasets.batch.recipe.done', { ok: good, n: targets.length }));
     }
 
-    return { abilities, open, organize, move, removeUnits, paste, renameUnit, pastePlan, treeActions, treeOptions };
+    return { abilities, open, organize, move, removeUnits, undoRemove, restoreUnits, purgeUnits, emptyTrash, paste, renameUnit, pastePlan, treeActions, treeOptions };
   });
 })();

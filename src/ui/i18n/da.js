@@ -190,8 +190,6 @@
     'datasets.columns': 'Kolonner',
     'datasets.log': 'Historik',
     'datasets.rows': 'Rækker',
-    'datasets.delete.confirm': 'Slet datasættet {name}? Dette kan ikke fortrydes.',
-    'datasets.deleted': 'Datasættet {name} er slettet.',
     'datasets.renamed': 'Navnet er ændret.',
     'datasets.saved': 'Datasættet er gemt.',
     'datasets.storage.title': 'Arbejdsområde',

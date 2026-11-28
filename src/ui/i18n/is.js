@@ -190,8 +190,6 @@
     'datasets.columns': 'Dálkar',
     'datasets.log': 'Saga',
     'datasets.rows': 'Raðir',
-    'datasets.delete.confirm': 'Eyða gagnasafninu {name}? Þetta er ekki hægt að afturkalla.',
-    'datasets.deleted': 'Gagnasafninu {name} hefur verið eytt.',
     'datasets.renamed': 'Heitinu hefur verið breytt.',
     'datasets.saved': 'Gagnasafnið hefur verið vistað.',
     'datasets.storage.title': 'Vinnusvæði',

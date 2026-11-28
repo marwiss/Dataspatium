@@ -190,8 +190,6 @@
     'datasets.columns': 'Sarakkeet',
     'datasets.log': 'Historia',
     'datasets.rows': 'Rivit',
-    'datasets.delete.confirm': 'Poistetaanko aineisto {name}? Tätä ei voi kumota.',
-    'datasets.deleted': 'Aineisto {name} on poistettu.',
     'datasets.renamed': 'Nimi on vaihdettu.',
     'datasets.saved': 'Aineisto on tallennettu.',
     'datasets.storage.title': 'Työtila',
