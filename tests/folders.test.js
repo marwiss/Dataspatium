@@ -284,7 +284,7 @@
     } finally { f.done(); }
   });
 
-  test('hantera: a folder chosen whole is deleted with its subfolders and datasets after one question that says how many', async (assert) => {
+  test('hantera: a folder chosen whole goes to the trash with its subfolders and datasets at once, without a question, and Ångra brings it back (F131 b)', async (assert) => {
     const root = document.createElement('div');
     root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
     document.body.appendChild(root);
@@ -305,25 +305,26 @@
       box.click();
       assert.deepEqual(shell.store.get().selectedIds.slice().sort(), [a.id, b.id].sort(), 'the folder chooses both');
       const what = t('datasets.tree.and', { a: t('datasets.tree.n.subfolders', { n: '1' }), b: t('datasets.tree.n.datasets', { n: '2' }) });
-      // Avbryt changes nothing.
       /** @type {HTMLElement} */ (root.querySelector('.dm-left [data-tool="delete"] button')).click();
-      let dlg = await waitFor(() => document.querySelector('dialog[open]'), 3000, 'the question');
-      assert.ok(dlg.querySelector('.dm-dialog-body').textContent.includes(t('datasets.tree.delete.folder', { name: 'Provmapp', what })), 'how many go, and that it cannot be undone');
-      /** @type {HTMLElement} */ (Array.from(dlg.querySelectorAll('.dm-dialog-actions dm-button')).find((x) => x.getAttribute('label') === t('common.cancel')).querySelector('button')).click();
-      await waitFor(() => !document.querySelector('dialog[open]'), 3000, 'the question closed');
-      await wait(200);
-      assert.ok((await svc.get(a.id)) && (await svc.get(b.id)), 'nothing deleted');
-      assert.deepEqual(shell.store.get().selectedIds.slice().sort(), [a.id, b.id].sort(), 'still chosen');
-      assert.ok(root.querySelector('.dm-left [data-folder-row="Provmapp/Under"]'), 'the folders stay');
-      /** @type {HTMLElement} */ (await waitFor(() => { const el = root.querySelector('.dm-left [data-tool="delete"] button'); return el && !(/** @type {any} */ (el)).disabled ? el : null; }, 3000, 'Ta bort on again')).click();
-      dlg = await waitFor(() => document.querySelector('dialog[open]'), 3000, 'the question again');
-      assert.equal(dlg.querySelector('.dm-dialog-body').textContent, t('datasets.tree.delete.folder', { name: 'Provmapp', what }));
-      /** @type {HTMLElement} */ (dlg.querySelector('.dm-dialog-actions dm-button[variant="danger"] button')).click();
-      await waitFor(() => !shell.store.get().datasets.some((d) => d.id === a.id || d.id === b.id), 5000, 'both gone');
-      assert.ok(!(await svc.get(a.id)) && !(await svc.get(b.id)), 'deleted from storage');
-      assert.ok(await svc.get(c.id), 'the dataset outside the folder stays');
-      await waitFor(() => !root.querySelector('.dm-left [data-folder-row="Provmapp"]'), 3000, 'the folder leaves the tree');
-      assert.ok(!document.querySelector('dialog[open]'), 'one question only');
+      await waitFor(() => !shell.store.get().datasets.some((d) => d.id === a.id || d.id === b.id), 5000, 'both gone from Arbetsyta');
+      assert.ok(!document.querySelector('dialog[open]'), 'no question');
+      const ra = await svc.get(a.id); const rb = await svc.get(b.id);
+      assert.ok(ra && ra.trashed && rb && rb.trashed, 'in the trash, the data kept');
+      assert.equal(ra.trashed.root, 'Provmapp', 'went with the folder');
+      assert.equal(rb.trashed.folder, 'Provmapp/Under', 'where it lay');
+      assert.equal(ra.trashed.batch, rb.trashed.batch, 'one removal');
+      assert.ok(!(await svc.get(c.id)).trashed, 'the dataset outside the folder stays');
+      await waitFor(() => !root.querySelector('.dm-left [data-folder-row="Provmapp"]'), 3000, 'the folder leaves Arbetsyta');
+      const said = t('datasets.trash.moved.folder', { name: 'Provmapp', what });
+      assert.ok(root.querySelector('.dm-log').textContent.includes(said), 'the log says what went');
+      // Ångra in the message puts it all back in the same place.
+      const toast = await waitFor(() => Array.from(document.querySelectorAll('.dm-toast')).find((x) => x.textContent.includes(said)), 3000, 'the message');
+      /** @type {HTMLElement} */ (Array.from(toast.querySelectorAll('dm-button')).find((x) => x.getAttribute('label') === t('common.undo')).querySelector('button')).click();
+      await waitFor(() => shell.store.get().datasets.filter((d) => d.id === a.id || d.id === b.id).length === 2, 5000, 'both back');
+      assert.equal((await svc.get(a.id)).folder, 'Provmapp');
+      assert.equal((await svc.get(b.id)).folder, 'Provmapp/Under');
+      assert.ok(!(await svc.get(a.id)).trashed && !(await svc.get(b.id)).trashed, 'out of the trash');
+      await waitFor(() => root.querySelector('.dm-left [data-folder-row="Provmapp/Under"]'), 3000, 'the folders back in the tree');
       return 'ok';
     } finally {
       for (const d of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (d).close();
@@ -333,7 +334,7 @@
     }
   }, 30000);
 
-  test('hantera: a folder chosen whole gives the batch actions everything in it, and their Ta bort deletes it with its subfolders, the empty one too; the filter lies right under the pane head', async (assert) => {
+  test('hantera: a folder chosen whole gives the batch actions everything in it, and their Ta bort moves it to the trash with its subfolders, the empty one too; the filter lies right under the pane head', async (assert) => {
     const list = D.require('ui/dataset-list');
     const root = document.createElement('div');
     root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
@@ -372,34 +373,25 @@
       assert.ok(!box('Batchmapp/Under').checked && !box('Batchmapp/Under').indeterminate, 'the subfolder not chosen');
       box('Batchmapp').click();
       await waitFor(() => box('Batchmapp').checked && !box('Batchmapp').indeterminate, 3000, 'all again');
-      // Åtgärder för markerade: both datasets; Ta bort asks the tree's question, and Avbryt keeps everything.
-      const openBatch = async () => {
-        /** @type {HTMLElement} */ ((await waitFor(() => root.querySelector('.dm-left [data-course="batch"] button'), 3000, 'the batch button')).click());
-        const dlg = await waitFor(() => document.querySelector('dialog[open]'), 3000, 'the batch dialog');
-        assert.equal(dlg.querySelector('.dm-dialog-head h2').textContent, t('datasets.batch.title', { n: 2 }));
-        button(dlg, t('datasets.batch.delete')).click();
-        return waitFor(() => { const d = document.querySelector('dialog[open]'); return d && d !== dlg ? d : null; }, 3000, 'the question');
-      };
-      const what = t('datasets.tree.and', { a: t('datasets.tree.n.subfolders', { n: '2' }), b: t('datasets.tree.n.datasets', { n: '2' }) });
-      let ask = await openBatch();
-      assert.equal(ask.querySelector('.dm-dialog-body').textContent, t('datasets.tree.delete.folder', { name: 'Batchmapp', what }));
-      button(ask, t('common.cancel')).click();
-      await waitFor(() => !document.querySelector('dialog[open]'), 3000, 'closed');
-      await wait(200);
-      assert.ok((await svc.get(a.id)) && (await svc.get(b.id)) && list.folders.list().includes('Batchmapp/Tom'), 'nothing deleted');
-      ask = await openBatch();
-      /** @type {HTMLElement} */ (ask.querySelector('.dm-dialog-actions dm-button[variant="danger"] button')).click();
+      // Åtgärder för markerade: both datasets; Ta bort moves them to the trash as the tree's tool does, without a question.
+      /** @type {HTMLElement} */ ((await waitFor(() => root.querySelector('.dm-left [data-course="batch"] button'), 3000, 'the batch button')).click());
+      const dlg = await waitFor(() => document.querySelector('dialog[open]'), 3000, 'the batch dialog');
+      assert.equal(dlg.querySelector('.dm-dialog-head h2').textContent, t('datasets.batch.title', { n: 2 }));
+      button(dlg, t('datasets.batch.delete')).click();
       await waitFor(() => !store.get().datasets.some((d) => d.id === a.id || d.id === b.id), 5000, 'both gone');
-      assert.ok(!(await svc.get(a.id)) && !(await svc.get(b.id)), 'deleted from storage');
-      assert.ok(await svc.get(c.id), 'the dataset outside the folder stays');
+      assert.ok(!document.querySelector('dialog[open]'), 'no question');
+      assert.ok((await svc.get(a.id)).trashed && (await svc.get(b.id)).trashed, 'in the trash');
+      assert.ok(!(await svc.get(c.id)).trashed, 'the dataset outside the folder stays');
       assert.ok(!list.folders.list().some((p) => p.startsWith('Batchmapp')), 'the empty subfolder goes too');
-      await waitFor(() => !root.querySelector('.dm-left [data-folder-row="Batchmapp"]'), 3000, 'the folder leaves the tree');
+      assert.ok(list.folders.trashed().some((r) => r.root === 'Batchmapp' && r.paths.includes('Batchmapp/Tom')), 'into the trash with its folder');
+      await waitFor(() => !root.querySelector('.dm-left [data-folder-row="Batchmapp"]'), 3000, 'the folder leaves Arbetsyta');
       assert.deepEqual(store.get().selectedIds, [], 'nothing chosen any more');
       return 'ok';
     } finally {
       for (const d of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (d).close();
       for (const d of [a, b, c]) await svc.remove(d.id).catch(() => {});
       list.folders.removeUnder('Batchmapp');
+      list.folders.untrash(null, 'Batchmapp', false);
       store.set({ selectedIds: [] });
       root.remove();
     }
@@ -433,7 +425,7 @@
         // The keys of the tools do nothing.
         for (const [k, extra] of [['Delete'], ['F2'], ['x', { ctrlKey: true }], ['c', { ctrlKey: true }]]) key(main(`.dm-tree-row[data-id="${a.id}"]`), k, extra);
         await wait(300);
-        assert.ok(!document.querySelector('dialog[open]') && (await svc.get(a.id)), mode + ': Delete asks nothing and deletes nothing');
+        assert.ok(!document.querySelector('dialog[open]') && !(await svc.get(a.id)).trashed, mode + ': Delete asks nothing and moves nothing');
         assert.ok(!root.querySelector('.dm-left dm-input.dm-tree-edit'), mode + ': F2 names nothing');
         assert.equal(list.clip.get(), null, mode + ': Ctrl+X and Ctrl+C take nothing');
         // No snabbmeny, and a drop on a folder moves nothing.

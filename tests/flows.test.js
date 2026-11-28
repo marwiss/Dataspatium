@@ -162,7 +162,8 @@
       /** @type {HTMLElement} */ (Array.from(root.querySelectorAll('.dm-center dm-tabs [role="tab"]')).find((b) => b.textContent.includes(t('comments.title')))).click();
       await waitFor(() => toolbar(root, t('comments.add')), 5000, 'comments tab');
       area('hantera comments');
-      /** @type {HTMLElement} */ (Array.from(root.querySelectorAll('.dm-left .dm-list-item')).find((b) => b.textContent.includes(t('datasets.storage.title')))).click();
+      // The tree's node Arbetsyta opens the workspace view (F131 b).
+      /** @type {HTMLElement} */ (root.querySelector('.dm-left [data-node="workspace"] [data-part="main"]')).click();
       await waitFor(() => toolbar(root, t('datasets.backup')), 5000, 'workspace view');
       area('hantera workspace');
       // Dela: every tab, and the bundle dialog from Paket.
