@@ -53,7 +53,7 @@
       delete all[id];
       if (Object.keys(entry).some((k) => k !== 'at')) all[id] = Object.assign(entry, { at: Date.now() });
       let ids = null;
-      try { ids = new Set((await datasets.list()).map((d) => d.id)); } catch (err) { D.log('basemaps', err); }
+      try { ids = new Set((await datasets.list('all')).map((d) => d.id)); } catch (err) { D.log('basemaps', err); }
       const next = trim(all, ids);
       stored = Promise.resolve(next);
       await idb.setSetting(SETTING, next);

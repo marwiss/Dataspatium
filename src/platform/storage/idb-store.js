@@ -50,6 +50,8 @@
       await d.transaction('rw', d.datasets, d.blobs, d.lists, async () => {
         await d.datasets.delete(id);
         await d.blobs.where('parent').equals('ds:' + id).delete();
+        // Its versions (ds:<id>:v<n>) go with it: removed for good is removed from the browser's database.
+        await d.blobs.where('parent').startsWith('ds:' + id + ':v').delete();
         await d.lists.where('datasetId').equals(id).delete();
       });
     }

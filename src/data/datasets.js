@@ -95,7 +95,7 @@
     }
     /** A short name not used by any other dataset (suffix _2, _3, ... when needed). */
     async function uniqueShortName(base, excludeId) {
-      const taken = new Set((await list()).filter((d) => d.id !== excludeId).map((d) => d.shortName).filter(Boolean));
+      const taken = new Set((await list('all')).filter((d) => d.id !== excludeId).map((d) => d.shortName).filter(Boolean));
       const root = SHORT_NAME.test(String(base || '')) && !RESERVED_SHORT.has(base) ? base : shortNameFrom(base);
       if (!taken.has(root)) return root;
       for (let i = 2; ; i++) {
@@ -113,7 +113,7 @@
     }
     /** Give datasets from older versions a short name (stored in the IndexedDB record; the file follows on the next save). */
     async function ensureShortNames() {
-      const all = await list();
+      const all = await list('all');
       let changed = 0;
       for (const record of all) {
         if (record.shortName) continue;
@@ -237,7 +237,7 @@
     sync.on((msg) => {
       if (msg.kind !== 'datasets') return;
       const id = msg.payload && msg.payload.id;
-      if (id && (msg.action === 'saved' || msg.action === 'deleted') && openHandles.has(id)) {
+      if (id && ['saved', 'deleted', 'trashed', 'restored'].includes(msg.action) && openHandles.has(id)) {
         if (saveTimers.has(id)) D.log('datasets', 'remote change to a dataset with unsaved edits here; the last save wins', id);
         else close(id);
       }
@@ -253,7 +253,15 @@
       }
       return record;
     }
-    async function list() { return (await idb.listDatasets()).map(healRecord); }
+    /**
+     * The datasets of the workspace, newest first. What lies in the trash (`trashed` in the record) is left out unless asked for:
+     * 'trash' gives only that, 'all' everything.
+     * @param {'live'|'trash'|'all'} [which]
+     */
+    async function list(which = 'live') {
+      const all = (await idb.listDatasets()).map(healRecord);
+      return which === 'all' ? all : all.filter((d) => (which === 'trash') === !!d.trashed);
+    }
     async function get(id) { return healRecord(await idb.getDataset(id)); }
 
     /** Opens in progress: callers that ask for the same dataset at the same time share one handle. */
@@ -650,7 +658,7 @@
       const handle = await ensureOpen(id);
       if (patch.shortName !== undefined) {
         const s = validateShortName(patch.shortName);
-        if ((await list()).some((d) => d.id !== id && d.shortName === s)) throw new Error(D.t('datasets.shortname.taken', { name: s }));
+        if ((await list('all')).some((d) => d.id !== id && d.shortName === s)) throw new Error(D.t('datasets.shortname.taken', { name: s }));
         patch = Object.assign({}, patch, { shortName: s });
       }
       if (patch.folder !== undefined) patch = Object.assign({}, patch, { folder: normalizeFolder(patch.folder) });
@@ -674,6 +682,60 @@
       if (!options.quiet) notify('deleted', { id });
       if (!options.quiet) sync.broadcast('datasets', 'deleted', { id });
     }
+
+    // ---- the trash: Ta bort marks the catalogue record, so that no file is written; the data stays until it is removed for good ----
+    /** Set or clear the trash mark of one dataset, in its record and in its open handle (whose next save writes the record). */
+    async function mark(id, value) {
+      return sync.withLock('ds:' + id, async () => {
+        const record = await idb.getDataset(id);
+        if (!record) return null;
+        const next = Object.assign({}, record);
+        if (value) next.trashed = value; else delete next.trashed;
+        await idb.putDataset(next);
+        const open = openHandles.get(id);
+        if (open) { if (value) open.meta.trashed = value; else delete open.meta.trashed; }
+        return next;
+      });
+    }
+    /**
+     * Move datasets to the trash. Each one is marked with the time, the folder it lay in, the removal it belongs to (`batch`, for
+     * Ångra) and the folder removed whole that it went with (`root`, '' when it went on its own). Pending edits are saved first.
+     * @param {string[]} ids @param {{batch?: string, root?: string, at?: string}} [options]
+     * @returns {Promise<any[]>} the records moved
+     */
+    async function trash(ids, options = {}) {
+      const at = options.at || new Date().toISOString();
+      const batch = options.batch || 'tr_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const out = [];
+      for (const id of ids) {
+        const pending = saveTimers.get(id);
+        if (pending) { clearTimeout(pending); saveTimers.delete(id); await save(id); }
+        const record = await get(id);
+        if (!record || record.trashed) continue;
+        const next = await mark(id, { at, batch, folder: record.folder || '', root: normalizeFolder(options.root) });
+        if (!next) continue;
+        out.push(next);
+        sync.broadcast('datasets', 'trashed', { id, name: record.name });
+      }
+      if (out.length) notify('trashed', { id: out[0].id, ids: out.map((d) => d.id) });
+      return out;
+    }
+    /** Put datasets back from the trash, in the folder they lay in. @param {string[]} ids @returns {Promise<any[]>} */
+    async function restore(ids) {
+      const out = [];
+      for (const id of ids) {
+        const record = await get(id);
+        if (!record || !record.trashed) continue;
+        const next = await mark(id, null);
+        if (!next) continue;
+        out.push(next);
+        sync.broadcast('datasets', 'restored', { id, name: record.name });
+      }
+      if (out.length) notify('restored', { id: out[0].id, ids: out.map((d) => d.id) });
+      return out;
+    }
+    /** What a dataset takes in storage: its file and its versions. @param {any} record @returns {number} */
+    const storedBytes = (record) => (record.byteSize || 0) + (record.versions || []).reduce((n, v) => n + (v.byteSize || 0), 0);
 
     /** @returns {Promise<ArrayBuffer>} the SQLite file */
     async function exportBytes(id) { const handle = await ensureOpen(id); return handle.engine.export(); }
@@ -787,7 +849,7 @@
       replaceBytes, rebuild, snapshot, listVersions, restoreVersion, deleteVersion, compareVersion, createFromQuery, copyInto, appendRows,
       createEmpty, appendImportRows, finishImport, abortImport,
       shortNameFrom, uniqueShortName, validateShortName, ensureShortNames, bytesOf, version, normalizeFolder, normalizeTags, folderPaths, KINDS,
-      updateMeta, remove, exportBytes, exportBytesTransformed, allRows, columns, importBytes, duplicate, close, subscribe, quoteIdent: q, ensureIndex, dropIndexes, indexing, valueLabelsText,
+      updateMeta, remove, trash, restore, storedBytes, exportBytes, exportBytesTransformed, allRows, columns, importBytes, duplicate, close, subscribe, quoteIdent: q, ensureIndex, dropIndexes, indexing, valueLabelsText,
     };
   });
 })();

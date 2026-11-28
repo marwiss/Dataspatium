@@ -72,7 +72,7 @@
       delete all[mapId];
       if (ids.length) all[mapId] = { at: Date.now(), ids };
       let existing = null;
-      try { existing = new Set((await datasets.list()).map((d) => d.id)); } catch (err) { D.log('overlays', err); }
+      try { existing = new Set((await datasets.list('all')).map((d) => d.id)); } catch (err) { D.log('overlays', err); }
       const next = trim(all, existing);
       stored = Promise.resolve(next);
       await idb.setSetting(SETTING, next);
