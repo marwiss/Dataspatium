@@ -87,7 +87,7 @@
       let others = [];
       if (options.include) { try { others = await shareScan.extras(ids, options.include); } catch (err) { D.log('review', 'extras failed', err); } }
       if (!found.size && !others.length) return { transform: {}, extras: {}, findings: found };
-      const names = new Map(ctx.store.get().datasets.map((d) => [d.id, d.name]));
+      const names = new Map(ctx.store.get().datasets.concat(ctx.store.get().trash || []).map((d) => [d.id, d.name]));
       /** @type {Map<string, string>} */
       const choices = new Map();
       /** The parts by key, for what a choice carries along (the pieces of a model's free text). */
@@ -159,7 +159,7 @@
     async function warn(ctx, ids) {
       const found = await scan(ids);
       if (!found.size) return true;
-      const names = new Map(ctx.store.get().datasets.map((d) => [d.id, d.name]));
+      const names = new Map(ctx.store.get().datasets.concat(ctx.store.get().trash || []).map((d) => [d.id, d.name]));
       const body = h('div', { class: 'dm-stack' },
         h('p', { text: t('review.warn.help') }),
         h('ul', { class: 'dm-stack-xs' }, Array.from(found, ([id, list]) => h('li', { text: `${names.get(id) || id}: ${list.columns.map((f) => f.column).concat(list.parts.map(partLabel)).join(', ')}` }))));

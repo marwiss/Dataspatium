@@ -67,8 +67,9 @@ visas i mitten med en hjälptext ovanför.
   Insamling i fält, formuläret som telefonen fyller i; se [insamling.md](insamling.md)).
 - *Databaskällor*: Extern databas, Databas via bryggan och Neo4j.
 - *API-källor*: Öppna API:er och API från fil.
-- *Geodatakällor*: Geodatakälla och Gränser för kartor, med kommun- och regiongränser för Sverige, Danmark, Norge och
-  Finland som följer med appen.
+- *Geodatakällor*: Geodatakälla (färdiga öppna tjänster), Egen geodatakälla (en tjänst du anger adressen till),
+  Geodataportalen och Gränser för kartor, med kommun- och regiongränser för Sverige, Danmark, Norge och Finland som följer
+  med appen.
 - *Tillagda källor*: det du har lagt till, varje rad med en ta bort-knapp.
 - *Övriga källor*: Sparade hämtningar, Exempeldata (små öppna datamängder som följer med appen, var och en med ursprung och
   licens, och en knapp som importerar alla) och Guider.
@@ -188,13 +189,17 @@ Edge och Chrome kan arbetsytan dessutom speglas till en portabel mapp på disk, 
 Objektpanelen i Hantera, och i de andra lägena utom Inhämta, är ett träd med mappar (med undermappar, som
 `Ekonomi/2026`). Filterfältet söker på namn, kortnamn, tagg och mapp, och listan kan sorteras på ändrad, namn eller
 rader. Kryssrutorna markerar datamängder (Skift markerar ett spann; på en pekskärm visas de med *Välj*), och kryssrutan
-för en mapp, eller ett klick på mappen, markerar allt i den och dess undermappar. Direkt ovanför trädet ligger verktygen
+för en mapp, eller ett klick på mappen, markerar allt i den och dess undermappar. Mapparna ändras bara i Hantera, där
+verktygen ligger direkt ovanför trädet:
 *Ny mapp*, *Byt namn*, *Klipp ut*, *Kopiera*, *Klistra in*, *Flytta* och *Ta bort* som ikoner (det som inte får plats
 under *Fler alternativ*), samma åtgärder finns i snabbmenyn (högerklick eller ett långt tryck), och i trädet gäller
-tangenterna Delete, Ctrl+C, Ctrl+X, Ctrl+V och F2. *Ta bort* på en mapp tar bort den med allt i den efter en enda fråga som säger hur mycket det är; *Kopiera* och
+tangenterna Delete, Ctrl+C, Ctrl+X, Ctrl+V och F2. Trädet börjar med lagringsplatsen, *Webbläsaren* på den här datorn,
+med *Arbetsyta* och *Papperskorg* under sig. *Ta bort* flyttar datamängder och mappar med allt i dem till papperskorgen
+utan fråga, och *Ångra* eller *Återställ* lägger tillbaka dem där de låg; *Töm papperskorgen* tar bort för gott efter en
+fråga. Det som ligger i papperskorgen syns bara där. *Kopiera* och
 *Klistra in* gör kopior av datamängderna med allt i dem, och *Klipp ut* och *Klistra in* flyttar. Namn skrivs direkt
 i trädet. Datamängder och mappar kan också dras in i, ut ur och mellan mappar, också med finger. *Ordna* ger en datamängd en mapp och taggar, och
-knappen *Åtgärder (n)* gör samma sak med alla markerade på en gång: ordna, paketera, exportera som ZIP med CSV-filer,
+knappen *Åtgärder för markerade (n)* gör samma sak med alla markerade på en gång, också allt i en markerad mapp: ordna, paketera, exportera som ZIP med CSV-filer,
 hämta igen från API, köra ett recept eller ta bort. Se [lagen.md](lagen.md#hantera). Mapp och taggar sparas i datamängdens fil och
 följer med i paket, säkerhetskopior och GitHub; i R visar `dm_list()` mappen och `dm_read("Mapp/Namn")` läser en
 datamängd i en mapp.

@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * The form that adds a source of a family: an external database (api/families/databases: PostgREST, OData, ...), an OpenCDE
- * server, a Neo4j database or a geodata service (api/families/geodata). Enter the address and the key, and get a connector with
- * one endpoint per discovered table or layer plus a generic one. The geodata form also lists the ready-made open geodata services
- * (presets/geodata/services.json, all verified to allow requests from the browser): a preset opens, any other is added with one
- * click. The CORS requirement and the documentation link of the family are shown; keys stay in the session (api/secrets).
+ * server, a Neo4j database or a geodata service of the user's own (api/families/geodata, Egen geodatakälla). Enter the address
+ * and the key, and get a connector with one endpoint per discovered table or layer plus a generic one. The CORS requirement and
+ * the documentation link of the family are shown; keys stay in the session (api/secrets). With `ready` the geodata form is the
+ * list of ready-made open geodata services instead (Geodatakälla; presets/geodata/services.json, all verified to allow requests
+ * from the browser): a preset opens, any other is added with one click.
  *
  * The form is built once and shown in one of two places (F126 a): in Inhämta's workspace (`form`), or as a dialog (`open`) when
  * it is opened from somewhere else, such as a card in a source's view.
@@ -36,27 +37,36 @@
     const aboutOf = (svc) => { const a = svc.about || {}; return a[i18n.language()] || a.en || a.sv || ''; };
     /** @param {{family?: string, group?: string}} options */
     const groupOf = (options) => options.group || (geodata.byId(options.family || '') ? 'geodata' : 'databases');
-    /** The form's title: Lägg till geodatakälla, the name of a family with an entry of its own, or Lägg till extern databas. */
+    /** @param {{family?: string, group?: string, ready?: boolean}} options the list of ready-made geodata services */
+    const readyOf = (options) => groupOf(options) === 'geodata' && !!options.ready;
+    /**
+     * The form's title: Lägg till geodatakälla (the ready-made services), Lägg till egen geodatakälla, the name of a family with
+     * an entry of its own, or Lägg till extern databas.
+     */
     function titleOf(options) {
-      if (groupOf(options) === 'geodata') return t('geodata.add.title');
+      if (groupOf(options) === 'geodata') return t(readyOf(options) ? 'geodata.add.title' : 'geodata.own.add');
       return OWN.includes(options.family || '') ? t('families.' + options.family + '.add') : t('families.title');
     }
 
     /**
      * The form's element; `finish(connector)` is called with the saved connector.
      * @param {any} ctx the mode context (shell for the log)
-     * @param {{family?: string, values?: Record<string, string>, group?: 'databases'|'geodata', perHost?: boolean}} options `perHost`: the
-     *   address was filled in from content (a post in Geodataportalen), so the source asks consent for its host (F102 a, F103 a)
+     * @param {{family?: string, values?: Record<string, string>, group?: 'databases'|'geodata', ready?: boolean, perHost?: boolean}} options
+     *   `ready`: the list of ready-made geodata services (Geodatakälla) in place of the fields for an address of one's own;
+     *   `perHost`: the address was filled in from content (a post in Geodataportalen), so the source asks consent for its host
+     *   (F102 a, F103 a)
      * @param {(connector: any) => void} finish
      */
     function build(ctx, options, finish) {
       const group = groupOf(options);
+      const ready = readyOf(options);
       const own = OWN.includes(options.family || '') ? options.family : '';
       const list = () => (group === 'geodata' ? geodata.FAMILIES : own ? [byId(own)] : families.FAMILIES.filter((f) => !OWN.includes(f.id)));
       const state = { family: options.family || list()[0].id, values: Object.assign({}, options.values || {}), busy: false, error: '', filter: '', services: null, adding: '' };
-      const body = h('div', { class: 'dm-stack', 'data-family-form': own || group });
+      const body = h('div', { class: 'dm-stack', 'data-family-form': own || (ready ? 'geodata-ready' : group) });
 
       function render() {
+        if (ready) { replace(body, readyServices(), state.error ? h('p', { class: 'dm-error', text: state.error }) : null); return; }
         const fam = list().find((f) => f.id === state.family) || list()[0];
         state.family = fam.id;
         const sel = /** @type {any} */ (h('dm-select', { label: t('families.family') }));
@@ -80,8 +90,6 @@
         const fields = fam.fields.filter((f) => !f.advanced).map(fieldEl);
         const advanced = fam.fields.filter((f) => f.advanced).map(fieldEl);
         replace(body,
-          group === 'geodata' ? readyServices() : null,
-          group === 'geodata' ? h('h3', { class: 'dm-small', text: t('geodata.own.title') }) : null,
           list().length > 1 ? sel : null,
           h('p', { class: 'dm-help', text: t('families.' + fam.id + '.desc') }),
           h('div', { class: 'dm-form-grid' }, fields),
@@ -171,7 +179,7 @@
 
     /**
      * The form in a workspace (Inhämta's centre): `done` resolves with the first connector it saves.
-     * @param {any} ctx @param {{family?: string, values?: Record<string, string>, group?: 'databases'|'geodata', perHost?: boolean}} [options]
+     * @param {any} ctx @param {{family?: string, values?: Record<string, string>, group?: 'databases'|'geodata', ready?: boolean, perHost?: boolean}} [options]
      * @returns {{el: HTMLElement, done: Promise<any>, title: string}}
      */
     function form(ctx, options = {}) {
@@ -183,11 +191,12 @@
     /**
      * The same form as a dialog, for another mode or a card.
      * @param {any} ctx the mode context (shell for the log)
-     * @param {{family?: string, values?: Record<string, string>, group?: 'databases'|'geodata', perHost?: boolean}} [options]
+     * @param {{family?: string, values?: Record<string, string>, group?: 'databases'|'geodata', ready?: boolean, perHost?: boolean}} [options]
      * @returns {Promise<any|null>} the saved connector, or null when cancelled
      */
     function open(ctx, options = {}) {
-      return overlays.dialog.open({ title: titleOf(options), help: groupOf(options) === 'geodata' ? 'kallor#öppna-geodata' : 'kallor', size: 'lg', body: (done) => build(ctx, options, done), actions: [{ label: t('common.cancel'), value: null }] })
+      const help = groupOf(options) !== 'geodata' ? 'kallor' : readyOf(options) ? 'kallor#öppna-geodata' : 'kallor#egen-geodatakälla';
+      return overlays.dialog.open({ title: titleOf(options), help, size: 'lg', body: (done) => build(ctx, options, done), actions: [{ label: t('common.cancel'), value: null }] })
         .then((result) => (result && typeof result === 'object' ? result : null));
     }
     return { open, form, ALL, OWN, byId, services, setServices, SERVICES_ASSET };

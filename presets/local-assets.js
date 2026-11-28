@@ -567,13 +567,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/anvandarguide.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 25475,
+  "size": 25941,
   "library": "dataspatium"
  },
  "docs/sv/lagen.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 34014,
+  "size": 37376,
   "library": "dataspatium"
  },
  "docs/sv/soka.md": {
@@ -621,7 +621,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kallor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 45757,
+  "size": 46348,
   "library": "dataspatium"
  },
  "docs/sv/snabbstart.md": {
@@ -651,7 +651,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kartor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 23751,
+  "size": 23808,
   "library": "dataspatium"
  },
  "docs/sv/raster.md": {
@@ -717,7 +717,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/faq.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 22192,
+  "size": 22346,
   "library": "dataspatium"
  },
  "docs/sv/licenser.md": {
@@ -729,7 +729,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/sakerhet.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 53914,
+  "size": 54916,
   "library": "dataspatium"
  },
  "docs/da/kom-igang.md": {
@@ -1581,13 +1581,13 @@ Dataspatium.assets.addEntries({
  "docs/en/anvandarguide.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 25292,
+  "size": 25749,
   "library": "dataspatium"
  },
  "docs/en/lagen.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 33814,
+  "size": 37056,
   "library": "dataspatium"
  },
  "docs/en/soka.md": {
@@ -1635,7 +1635,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kallor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 45800,
+  "size": 46419,
   "library": "dataspatium"
  },
  "docs/en/snabbstart.md": {
@@ -1665,7 +1665,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kartor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 23790,
+  "size": 23860,
   "library": "dataspatium"
  },
  "docs/en/raster.md": {
@@ -1731,7 +1731,7 @@ Dataspatium.assets.addEntries({
  "docs/en/faq.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 22222,
+  "size": 22366,
   "library": "dataspatium"
  },
  "docs/en/licenser.md": {
@@ -1743,7 +1743,7 @@ Dataspatium.assets.addEntries({
  "docs/en/sakerhet.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 53648,
+  "size": 54616,
   "library": "dataspatium"
  }
 });

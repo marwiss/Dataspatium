@@ -42,7 +42,7 @@ samt via R: SPSS, Stata, SAS, PX, Parquet, RDS och RData (se
 Vänsterkolumnen har rubriken Källor i panelhuvudet, som i alla lägen. Grupperna fälls ut och
 in med pilen framför rubriken, och webbläsaren minns hur de stod. *Skapa källor*: Ny byggnadsmodell, Ny översiktsplan, Ny detaljplan, Nytt kartlager och Ny tabell.
 *Vanliga källor*: Filer, Klistra in, Webbadress, OpenCDE och Mobilen. *Databaskällor*: Extern databas, Databas via bryggan
-och Neo4j. *API-källor*: Öppna API:er och API från fil. *Geodatakällor*: Geodatakälla och Gränser för kartor. *Tillagda
+och Neo4j. *API-källor*: Öppna API:er och API från fil. *Geodatakällor*: Geodatakälla, Egen geodatakälla, Geodataportalen och Gränser för kartor. *Tillagda
 källor*: det du lagt till, varje rad med en ta bort-knapp; från start ligger SCB:s och Boverkets öppna API:er där. *Övriga
 källor*: Sparade hämtningar, Exempeldata och Guider. Allt öppnas i mitten, också formulären som lägger till en källa, med
 hjälptexten ovanför; samma formulär visas som dialog när det öppnas från ett annat läge eller ett kort. Varje källa har en
@@ -69,9 +69,9 @@ och i Chrome och Edge kan en fil länkas så att datamängden läses in igen fr�
 
 QGIS-projekt (.qgs, .qgz) blir kartvyer: lagerordning, synlighet och symboler följer med, lagren kopplas till datamängder med samma filnamn och datafiler som släpps tillsammans med projektet importeras först (se [kartor.md](kartor.md)).
 
-*Geodatakälla* under Geodatakällor: en WFS-, OGC API Features- eller ArcGIS-tjänst blir en källa vars
-lager hämtas som GeoJSON och öppnas som kartor, och källan *Geodataportalen (sök geodata)* söker i den nationella
-geodatakatalogen och lägger till tjänster med ett klick. Förinställda geodatakällor finns för SCB, SGU, Havs- och
+*Geodatakälla* under Geodatakällor listar färdiga öppna geodatatjänster, och *Egen geodatakälla* bredvid gör en källa av
+adressen till en annan WFS-, OGC API Features- eller ArcGIS-tjänst. Lagren hämtas som GeoJSON och öppnas som kartor, och
+källan *Geodataportalen (sök geodata)* söker i den nationella geodatakatalogen och lägger till tjänster med ett klick. Förinställda geodatakällor finns för SCB, SGU, Havs- och
 vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Statistikcentralen och SYKE, samt Lantmäteriets
 geodataplattform för den som har nyckel. Se [kallor.md](kallor.md#öppna-geodata). *Gränser för kartor* bredvid är
 kommun- och regiongränser för Norden som följer med appen, var och en med ursprung och licens, och *Exempeldata* under
@@ -117,6 +117,29 @@ träffarna med sina mappar, och listan kan sorteras på ändrad, namn eller rade
 radhöjd; en datamängd har kortnamnet och storleken på en andra rad (den döljs i fönster smalare än 760 px). Pilen framför
 en mapp fäller ihop och ut den, och trädet minns vilka mappar som är ihopfällda. Ett klick på en datamängd öppnar den.
 
+**Lagringsplatsen.** Överst i trädet står var arbetsytan ligger: *Webbläsaren*, med raden *på den här datorn*, eller
+mappens namn när arbetsytan sparas i en portabel mapp efter varje ändring. Under den ligger två noder: *Arbetsyta* med
+mapparna och datamängderna, med indrag så att det syns vad som ligger var, och *Papperskorg* med det som tagits bort.
+Trädet minns om noderna är ut- eller ihopfällda; papperskorgen är ihopfälld från början. Samma struktur syns i alla
+lägen utom Inhämta, men den ändras bara i Hantera. I Hantera öppnar ett klick på *Arbetsyta* eller *Webbläsaren*
+arbetsytans sida. Datan lagras i webbläsarens databas på den här datorn och följer inte med till en annan dator eller
+en annan webbläsare, utom genom en säkerhetskopia, ett paket eller en portabel mapp.
+
+**Papperskorgen.** *Ta bort* flyttar datamängder och hela mappar med allt i dem till papperskorgen, utan någon fråga.
+Datan ligger kvar, märkt med när den togs bort och var den låg. Loggen säger vad som flyttades, och *Ångra* i
+meddelandet lägger tillbaka allt på samma plats. I papperskorgen står varje borttagen mapp med det den innehöll och varje
+datamängd som togs bort för sig, den senaste överst, med var den låg och när. *Återställ* (knappen på raden, eller
+snabbmenyn) lägger tillbaka den där den låg, också när mappen inte längre finns. *Ta bort för gott* i snabbmenyn, eller
+Delete, tar bort en post efter en fråga. *Töm papperskorgen* (knappen på raden *Papperskorg*, snabbmenyn där eller
+arbetsytans sida) tar bort allt efter en fråga som säger hur mycket det gäller; det går inte att ångra. Du kan också dra
+datamängder och mappar till papperskorgen.
+
+Det som ligger i papperskorgen syns inte i lägenas listor och val, i sökning, SQL, R, kartor och liknande, bara i
+papperskorgen. Det räknas inte in i arbetsytans storlek i statusraden, som visar papperskorgens storlek för sig. En
+säkerhetskopia tar med papperskorgen bara om du slår på *Ta med papperskorgen*, och då hamnar det i papperskorgen igen
+när kopian återställs; i ett paket väljer du datamängder ur papperskorgen under *Papperskorgen* i dialogen. Den
+portabla mappen har papperskorgen med sig.
+
 **Markera.** Kryssrutorna markerar datamängder. Kryssrutan för en mapp, eller ett klick på mappen, markerar allt i mappen
 och dess undermappar; en mapp där bara en del är markerad visar ett streck i rutan. Ctrl och ett klick markerar en rad
 till, och Skift och ett klick markerar alla rader från den förra. På en pekskärm visas kryssrutorna först när du trycker
@@ -125,10 +148,12 @@ på *Välj* i panelens överkant; då markerar ett tryck i stället för att öp
 **Verktygen direkt ovanför trädet**: *Ny mapp*, *Byt namn*, *Klipp ut*, *Kopiera*, *Klistra in*, *Flytta* och *Ta bort*,
 som ikoner på en rad med namnet i tipset. Det som inte får plats i en smal panel ligger under *Fler alternativ* (de tre
 punkterna). Verktygen gäller det som är markerat, eller den valda datamängden när inget är markerat, och är tända när de
-går att använda.
+går att använda. Mapparna ändras bara i Hantera: verktygen, snabbmenyn, tangenterna för dem och dra och släpp finns bara
+här. I de andra lägena visar trädet datamängderna och mapparna med filter, sortering och kryssrutor för lägets egna
+åtgärder.
 
-- *Ta bort* på en mapp tar bort mappen med alla dess undermappar och datamängder på en gång, efter en enda fråga som
-  säger hur många undermappar och datamängder det gäller.
+- *Ta bort* på en mapp flyttar mappen med allt i den, också undermapparna (tomma eller inte) och deras datamängder, till
+  papperskorgen på en gång (se *Papperskorgen* ovan).
 - *Kopiera* och sedan *Klistra in* gör kopior av datamängderna med allt i dem (rader, kolumner, filer, uppgifter och
   historik); en kopia i samma mapp heter *(kopia)*, och en kopierad mapp får sina undermappar med sig. *Klipp ut* och
   sedan *Klistra in* flyttar i stället. Det som är urklippt visas blekt tills det klistras in.
@@ -143,7 +168,8 @@ verktygen. Menyn gäller raden du tryckte på, eller allt som är markerat när 
 den med menytangenten eller Skift+F10.
 
 **Dra och släpp.** Datamängder och mappar kan dras in i en mapp, ut ur den till en annan nivå eller till roten (släpp
-på rubriken överst i panelen), med samma resultat som *Klipp ut* och *Klistra in*. Släpper du på en datamängd hamnar
+på *Arbetsyta*, eller överst i panelen på filterfältet), med samma resultat som *Klipp ut* och *Klistra in*. Släpper du
+på *Papperskorg* tas det du drar bort. Släpper du på en datamängd hamnar
 det du drar i dess mapp. Den mapp som tar emot ramas in. En mapp kan inte dras in i sig själv. Med finger: håll kvar på
 raden tills den markeras, och dra sedan; nära panelens över- eller underkant rullar den. *Flytta till …* i snabbmenyn
 gör samma sak utan att dra.
@@ -151,21 +177,29 @@ gör samma sak utan att dra.
 **Tangenter i trädet** (som i andra träd, enligt WAI-ARIA): pil upp och ned går mellan raderna, Home och End till den
 första och sista, pil höger fäller ut en mapp och går sedan in i den, pil vänster fäller ihop den eller går till mappen
 ovanför, Enter öppnar, mellanslag markerar, Skift+pil upp och ned markerar medan du går, Ctrl+A markerar allt, `*`
-fäller ut mapparna bredvid, och en bokstav hoppar till nästa namn som börjar på den. Delete tar bort, Ctrl+C kopierar,
-Ctrl+X klipper ut, Ctrl+V klistrar in i mappen där markören står (eller bredvid datamängden) och F2 byter namn.
-Skärmläsare får trädet som ett träd med nivå, plats och ihop- eller utfällt läge; på pekskärmar, där skärmläsarna läser
+fäller ut mapparna bredvid, och en bokstav hoppar till nästa namn som börjar på den. Delete flyttar till papperskorgen
+(i papperskorgen tar Delete bort för gott, efter en fråga), Ctrl+C kopierar,
+Ctrl+X klipper ut, Ctrl+V klistrar in i mappen där markören står (eller bredvid datamängden) och F2 byter namn, i
+Hantera. Skärmläsare får trädet som ett träd med nivå, plats och ihop- eller utfällt läge; på pekskärmar, där skärmläsarna läser
 träd ojämnt, är varje rad en knapp som säger om den är utfälld.
 
 Stora träd (tusentals rader) ritar bara de rader som syns, så att rullningen går lika fort med 20 000 rader.
 
-Knappen *Åtgärder (n)* i Hantera öppnar batchåtgärderna för de markerade: ordna (mapp och taggar), paketera,
-exportera som ZIP med CSV-filer, hämta igen från API, köra ett recept och ta bort. Mapp och taggar följer
+Knappen *Åtgärder för markerade (n)* i Hantera öppnar batchåtgärderna för de markerade: ordna (mapp och taggar),
+paketera, exportera som ZIP med CSV-filer, hämta igen från API, köra ett recept och ta bort. En markerad mapp ger
+åtgärderna allt i den, också i undermapparna, och *Ta bort* där gör detsamma som verktyget: en mapp som är markerad i
+sin helhet flyttas till papperskorgen med sina undermappar. Mapp och taggar följer
 datamängden i dess fil, i paket och i säkerhetskopior.
+
+Filterfältet ligger direkt under panelens rubrik. Under trädet står hur många som är markerade och vad som är urklippt
+eller kopierat, så att ingen rad flyttar sig när du markerar.
 
 Översikten för en datamängd visar metadata, kolumnlista, kommentarer, historik över det som gjorts med
 datamängden och versioner, och här byter du namn och kortnamn (kortnamnet används i SQL, R och diagramfiler),
-ordnar, tar bort och hämtar igen från API. Under *Arbetsyta* finns hur mycket lagring som används, beständig
-lagring, säkerhetskopiering till ZIP och återställning, i Edge och Chrome en portabel mapp (arbetsytan sparas som
+ordnar, tar bort och hämtar igen från API. Arbetsytans sida (ett klick på *Arbetsyta* i trädet) säger var arbetsytan
+lagras och vad det innebär, och visar hur mycket lagring som används (papperskorgen för sig), beständig
+lagring, säkerhetskopiering till ZIP (med papperskorgen om du väljer det) och återställning, *Töm papperskorgen*, i
+Edge och Chrome en portabel mapp (arbetsytan sparas som
 vanliga filer i en mapp du väljer, automatiskt efter varje ändring om du vill, och kan läsas in på en annan
 dator), *Internetåtkomst* (vilka ändamål som får kontakta internet, de värdar som Python-kod och plotly-figurer har fått
 svar för, var och en med en knapp som tar bort svaret, och loggen över anrop) och *Komponenter* (delar

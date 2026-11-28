@@ -607,12 +607,14 @@
     list.render(container, { datasets: ds, selectedId: null, onSelect() {}, multi: true, selectedIds: [], onToggle() {}, onMove: (ids, folder) => moved.push([ids, folder]) });
     try {
       const main = (sel) => /** @type {HTMLElement} */ (container.querySelector(sel + ' [data-part="main"]'));
-      const head = /** @type {HTMLElement} */ (container.querySelector('.dm-list-head'));
+      // The heading takes no room but on touch screens (B-81.3): the filter row at the top of the panel is the top level.
+      assert.equal(getComputedStyle(container.querySelector('.dm-list-head')).display, 'none');
+      const top = /** @type {HTMLElement} */ (container.querySelector('.dm-list-tools'));
       pointer(main('.dm-tree-row[data-id="pa"]'), 'pointerdown', centre(main('.dm-tree-row[data-id="pa"]')), 11);
       await wait(650);
-      pointer(main('.dm-tree-row[data-id="pa"]'), 'pointermove', centre(head), 11);
-      assert.ok(head.classList.contains('dm-drop-target'), 'the heading is the top level');
-      pointer(main('.dm-tree-row[data-id="pa"]'), 'pointerup', centre(head), 11);
+      pointer(main('.dm-tree-row[data-id="pa"]'), 'pointermove', centre(top), 11);
+      assert.ok(top.classList.contains('dm-drop-target'), 'the top of the panel is the top level');
+      pointer(main('.dm-tree-row[data-id="pa"]'), 'pointerup', centre(top), 11);
       assert.deepEqual(moved.pop(), [['pa'], ''], 'out of the folder');
       await wait(650);
       pointer(main('.dm-tree-row[data-id="pc"]'), 'pointerdown', centre(main('.dm-tree-row[data-id="pc"]')), 12);

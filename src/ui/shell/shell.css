@@ -154,12 +154,17 @@ dm-table .dm-td-active { outline: 2px solid var(--dm-accent); outline-offset: -2
 dm-table .dm-cell-editor { width: 100%; height: 28px; margin: 0; padding: 0 var(--dm-s-2); border: 2px solid var(--dm-accent); border-radius: 3px; font: inherit; background: var(--dm-surface); color: var(--dm-text); box-sizing: border-box; }
 
 /* The dataset list in the object panel (ui/dataset-list): the heading with Välj, filter and sort, the tools above the tree on one
-   line (icons; what does not fit is under Fler alternativ) and the move picker. The tree itself is ui/tree (components.css). */
+   line (icons; what does not fit is under Fler alternativ), the move picker, and under the tree how many are checked and what is
+   on the clipboard. The heading holds only Välj, for touch screens; elsewhere it takes no room, so that the filter lies right
+   under the pane head (B-81.3). The tree itself is ui/tree (components.css). */
 .dm-tree-panel { display: contents; }
-.dm-list-head { display: flex; align-items: center; justify-content: space-between; gap: var(--dm-s-2); min-height: var(--dm-s-6); border-radius: var(--dm-radius-sm); }
+.dm-list-head { display: none; align-items: center; justify-content: space-between; gap: var(--dm-s-2); min-height: var(--dm-s-6); border-radius: var(--dm-radius-sm); }
+@media (pointer: coarse) { .dm-list-head:has(> .dm-tree-select) { display: flex; } }
 .dm-list-head.dm-drop-target { outline: 2px dashed var(--dm-accent); outline-offset: -2px; background: var(--dm-accent-soft); }
 .dm-list-head .dm-tree-select { margin-left: auto; }
-.dm-list-tools { display: flex; gap: var(--dm-s-2); align-items: center; }
+.dm-list-status { display: flex; flex-wrap: wrap; gap: var(--dm-s-1) var(--dm-s-3); margin: 0; }
+.dm-list-tools { display: flex; gap: var(--dm-s-2); align-items: center; border-radius: var(--dm-radius-sm); }
+.dm-list-tools.dm-drop-target { outline: 2px dashed var(--dm-accent); outline-offset: 2px; }
 .dm-list-tools dm-input { flex: 1 1 auto; }
 .dm-list-tools .dm-field, .dm-tree-move .dm-field { height: 30px; font-size: var(--dm-text-sm); }
 .dm-list-tools dm-select { flex: 0 0 auto; }

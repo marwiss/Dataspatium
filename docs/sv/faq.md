@@ -5,7 +5,8 @@
 I webbläsarens egen databas (IndexedDB) på den dator och i den webbläsarprofil du använder. Ingenting skickas
 någonstans. Rensar du webbplatsdata, byter profil eller avinstallerar webbläsaren försvinner datan. Ta därför
 säkerhetskopior under *Hantera → Arbetsyta*, eller använd en portabel mapp i Edge och Chrome så att arbetsytan
-även ligger som vanliga filer på disk (se [kom-igang.md](kom-igang.md)).
+även ligger som vanliga filer på disk (se [kom-igang.md](kom-igang.md)). Överst i trädet står var arbetsytan ligger, och
+det du tar bort ligger kvar i dess papperskorg tills du tömmer den (se [lagen.md](lagen.md#hantera)).
 
 ## Behöver jag internet?
 

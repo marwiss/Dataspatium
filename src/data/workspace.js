@@ -41,11 +41,12 @@
 
     /**
      * Everything that makes up the workspace as path -> bytes|string.
-     * @param {{datasetIds?: string[], listAll?: boolean, include?: {charts?: boolean, dashboards?: boolean, documents?: boolean, notebooks?: boolean, scripts?: boolean}, kind?: string, name?: string, extra?: Record<string, any>}} [options]
-     *   datasetIds: datasets whose bytes are included (default all); listAll=false also limits the manifest to them
+     * @param {{datasetIds?: string[], listAll?: boolean, trash?: boolean, include?: {charts?: boolean, dashboards?: boolean, documents?: boolean, notebooks?: boolean, scripts?: boolean}, kind?: string, name?: string, extra?: Record<string, any>}} [options]
+     *   datasetIds: datasets whose bytes are included (default all); listAll=false also limits the manifest to them; trash: the
+     *   datasets in the trash come too (a bundle takes those chosen), marked as such in the manifest of a backup or a folder
      */
     async function collect(options = {}) {
-      const list = await datasets.list();
+      const list = await datasets.list(options.trash || options.kind === 'bundle' ? 'all' : 'live');
       const only = options.datasetIds ? new Set(options.datasetIds) : null;
       const listed = only && options.listAll === false ? list.filter((m) => only.has(m.id)) : list;
       const inc = Object.assign({ charts: true, dashboards: true, documents: true, notebooks: true, scripts: true }, options.include || {});
@@ -63,7 +64,7 @@
         const dropped = tr ? (tr.drop || []).length : 0;
         // A name with personal data in it is masked in the list too, when the review chose so.
         const shownName = tr && tr.filename && meta.name ? await D.require('data/share-scan').maskText(meta.name) : meta.name;
-        entries.push({ id: meta.id, kind: meta.kind, name: shownName, rowCount: meta.rowCount, columnCount: Math.max(0, (meta.columnCount || 0) - dropped), updatedAt: meta.updatedAt, folder: meta.folder || '', tags: meta.tags || [], file: path, review: tr ? { hash: tr.hash || [], drop: tr.drop || [] } : undefined });
+        entries.push({ id: meta.id, kind: meta.kind, name: shownName, rowCount: meta.rowCount, columnCount: Math.max(0, (meta.columnCount || 0) - dropped), updatedAt: meta.updatedAt, folder: meta.folder || '', tags: meta.tags || [], file: path, review: tr ? { hash: tr.hash || [], drop: tr.drop || [] } : undefined, trashed: meta.trashed && options.kind !== 'bundle' ? meta.trashed : undefined });
       }
       // A bundle leaves the app: charts, dashboards and notebooks follow only for the chosen datasets, and the review's choices
       // for what they hold (options.extras: path -> keep, mask, strip or drop) are applied to the copies.
@@ -159,9 +160,12 @@
       return Object.entries(res.files).filter(([path]) => kindOf[path.split('/')[0]] && typeof res.files[path] === 'string').map(([path, text]) => ({ path, kind: kindOf[path.split('/')[0]], name: names.get(path) || path, text: String(text) }));
     }
 
-    /** @returns {Promise<{blob: Blob, count: number, charts: number, documents: number}>} */
-    async function backup() {
-      const { files, counts } = await collect();
+    /**
+     * The whole workspace as a ZIP; the trash comes only when asked for, and comes back into the trash.
+     * @param {{trash?: boolean}} [options] @returns {Promise<{blob: Blob, count: number, charts: number, documents: number}>}
+     */
+    async function backup(options = {}) {
+      const { files, counts } = await collect({ trash: !!options.trash });
       const blob = await zip.createZip(files, { level: 6 });
       await markBackedUp();
       return { blob, count: counts.datasets, charts: counts.charts, documents: counts.documents };
@@ -235,7 +239,8 @@
     }
     /** Datasets in the entries that already exist here, with their name in the entries and here. */
     async function existingIn(entries, manifest) {
-      const local = new Map((await datasets.list()).map((m) => [m.id, m]));
+      // What lies in the trash is here too: it is not brought in a second time.
+      const local = new Map((await datasets.list('all')).map((m) => [m.id, m]));
       const named = new Map(((manifest && manifest.datasets) || []).map((d) => [d.id, d.name]));
       const out = [];
       for (const path of Object.keys(entries)) {
@@ -257,6 +262,8 @@
     async function restoreEntries(entries, options = {}) {
       const manifest = entries[MANIFEST] ? JSON.parse(zip.text(entries[MANIFEST])) : null;
       const imported = []; const replaced = []; const skipped = [];
+      // A backup or a folder with the trash in it: those datasets go back into the trash (a bundle never carries the mark).
+      const trashMarks = new Map(manifest && manifest.kind !== 'bundle' ? (manifest.datasets || []).filter((e) => e && e.trashed && typeof e.trashed === 'object').map((e) => [e.id, e.trashed]) : []);
       let existing = 0;
       for (const [path, bytes] of Object.entries(entries)) {
         if (!/\.sqlite$/i.test(path)) continue;
@@ -271,7 +278,7 @@
             continue;
           }
           if (options.skipIds && options.skipIds.has(id)) { existing++; continue; }
-          imported.push(await datasets.importBytes(buffer));
+          imported.push(await datasets.importBytes(buffer, trashMarks.has(id) ? { trashed: trashMarks.get(id) } : {}));
         } catch (err) {
           skipped.push(path + ': ' + ((err && err.message) || err));
         }
@@ -320,7 +327,7 @@
       const opened = source && /** @type {any} */ (source).entries ? /** @type {any} */ (source) : await inspect(/** @type {any} */ (source));
       const { entries, manifest } = opened;
       if (manifest && manifest.kind === 'bundle') {
-        const existing = new Set((await datasets.list()).map((m) => m.id));
+        const existing = new Set((await datasets.list('all')).map((m) => m.id));
         const received = { name: manifest.name || '', author: manifest.author || '', message: manifest.message || '' };
         return restoreEntries(entries, { skipIds: existing, dedupe: true, replaceIds: new Set(options.replaceIds || []), received });
       }
@@ -334,8 +341,9 @@
     function emitFolder() { for (const fn of Array.from(fs.listeners)) { try { fn(folderStatus()); } catch (err) { console.error(err); } } }
 
     /**
-     * Write the workspace into a folder. Datasets unchanged since the last write are skipped unless
-     * `force`; files of removed datasets, charts, dashboards, templates and notebooks are deleted.
+     * Write the workspace into a folder, the trash too (the folder is where the workspace lies, see the dataset tree). Datasets
+     * unchanged since the last write are skipped unless `force`; files of datasets removed for good, charts, dashboards,
+     * templates and notebooks are deleted.
      * @param {any} root directory handle
      * @param {{force?: boolean}} [options]
      * @returns {Promise<{written: number, removed: number, datasets: number}>}
@@ -344,7 +352,7 @@
       if (!root) throw new Error(D.t('folder.err.none'));
       fs.busy = true; emitFolder();
       try {
-        const list = await datasets.list();
+        const list = await datasets.list('all');
         let written = 0; let removed = 0;
         for (const meta of list) {
           if (!options.force && fs.written.get(meta.id) === meta.updatedAt) continue;
@@ -357,7 +365,7 @@
           if (m && !ids.has(m[1])) { await folder.removeFile(root, path); fs.written.delete(m[1]); removed++; }
         }
         // The manifest and the small JSON files are always rewritten.
-        const { files } = await collect({ datasetIds: [] });
+        const { files } = await collect({ datasetIds: [], trash: true });
         for (const [path, data] of Object.entries(files)) await folder.writeFile(root, path, data);
         for (const prefix of PREFIXES) {
           for (const path of await folder.listFiles(root, prefix)) if (!(path in files)) { await folder.removeFile(root, path); removed++; }
@@ -376,7 +384,7 @@
       /** @type {Record<string, Uint8Array>} */
       const entries = {};
       for (const path of await folder.listFiles(root)) if (isWorkspaceFile(path)) entries[path] = await folder.readFile(root, path);
-      const existing = new Set((await datasets.list()).map((m) => m.id));
+      const existing = new Set((await datasets.list('all')).map((m) => m.id));
       const res = await restoreEntries(entries, { skipIds: existing, dedupe: true });
       for (const meta of res.imported) fs.written.set(meta.id, meta.updatedAt);
       return res;
@@ -389,7 +397,7 @@
       clearTimeout(fs.timer);
       if (fs.enabled) {
         fs.unsubscribe = datasets.subscribe((type) => {
-          if (type !== 'saved' && type !== 'created' && type !== 'deleted') return;
+          if (!['saved', 'created', 'deleted', 'trashed', 'restored'].includes(type)) return;
           clearTimeout(fs.timer);
           fs.timer = setTimeout(() => autoSaveNow().catch((err) => D.log('folder', 'autosave failed', err)), AUTOSAVE_DELAY);
         });
@@ -463,7 +471,7 @@
      * @param {{replaceIds?: string[]}} [options]
      */
     async function restoreFromGitHub(fetched, options = {}) {
-      const existing = new Set((await datasets.list()).map((m) => m.id));
+      const existing = new Set((await datasets.list('all')).map((m) => m.id));
       const cfg = await githubConfig();
       const res = await restoreEntries(fetched.entries, { skipIds: existing, dedupe: true, replaceIds: new Set(options.replaceIds || []), received: { name: cfg.repo, author: (fetched.manifest && fetched.manifest.author) || '' } });
       await setGithubConfig({ lastPull: new Date().toISOString(), lastCommit: fetched.commit });

@@ -40,10 +40,13 @@
         const selectedIds = state.selectedIds || [];
         ui.datasetList.render(slots.left, {
           datasets: state.datasets, selectedId: state.selectedId, onSelect: (id) => store.set({ selectedId: id }),
-          extra: [{ id: WORKSPACE, label: t('datasets.storage.title'), icon: 'hard-drive', sub: t('datasets.backup') }, { id: FLOWS, label: t('flows.title'), icon: 'play', sub: t('flows.sub') }, { id: LIBRARY, label: t('library.title'), icon: 'book-open', sub: t('library.sub') }],
-          // Several datasets at once: check boxes, drag and drop into folders, and the batch actions.
+          // The tree's place and Arbetsyta open the workspace's page (storage, backup, the portable folder).
+          workspaceId: WORKSPACE,
+          extra: [{ id: FLOWS, label: t('flows.title'), icon: 'play', sub: t('flows.sub') }, { id: LIBRARY, label: t('library.title'), icon: 'book-open', sub: t('library.sub') }],
+          // Several datasets at once: check boxes, the batch actions, and the folders changed here alone: the tools above the tree,
+          // their keys and the snabbmeny, and drag and drop into folders.
           multi: true, selectedIds, onToggle: (ids) => store.set({ selectedIds: ids }),
-          onMove: (ids, path) => batch.move(ctx, ids, path),
+          onMove: (ids, path) => batch.move(ctx, ids, path), actions: batch.treeActions(ctx),
           tools: selectedIds.length ? [
             ui.button({ label: t('datasets.batch.button', { n: selectedIds.length }), icon: 'list-checks', variant: 'primary', 'data-course': 'batch', onClick: () => batch.open(ctx, selectedIds) }),
             ui.button({ label: t('datasets.batch.clear'), variant: 'ghost', size: 'sm', onClick: () => store.set({ selectedIds: [] }) }),
@@ -357,18 +360,25 @@
         try { await services.datasets.updateMeta(ds.id, patch); shell.log(t('datasets.renamed'), 'ok'); }
         catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
       }
-      async function remove(ds) {
-        if (await ui.dialog.confirm(t('datasets.delete.confirm', { name: ds.name }), { okLabel: t('common.delete'), danger: true })) {
-          await services.datasets.remove(ds.id);
-          shell.log(t('datasets.deleted', { name: ds.name }), 'ok');
-          ui.toast.show(t('datasets.deleted', { name: ds.name }), { kind: 'ok' });
-        }
+      /** Ta bort moves the dataset to the trash, as the tree's tool does (F131 b). */
+      async function remove(ds) { await batch.removeUnits(ctx, { ids: [ds.id], folders: [] }); }
+
+      /** Where the workspace lies and what that means, for the page and the inspector: the browser, or the portable folder. */
+      async function placeText() {
+        const root = await folder.current().catch(() => null);
+        const inFolder = services.workspace.folderStatus().enabled && root && root.name;
+        return inFolder ? { where: t('datasets.storage.where.folder', { name: root.name }), text: t('datasets.storage.text.folder', { name: root.name }) } : { where: t('datasets.storage.where.browser'), text: t('datasets.storage.text') };
       }
 
       async function renderWorkspace() {
         const est = await services.idb.estimate();
         const persisted = await services.idb.persisted();
         const folderEl = await folderCard();
+        const where = await placeText();
+        const trash = store.get().trash || [];
+        const trashBytes = trash.reduce((n, d) => n + services.datasets.storedBytes(d), 0);
+        // The backup leaves the trash out unless it is asked for.
+        const withTrash = /** @type {any} */ (h('dm-switch', { label: t('datasets.backup.trash', { n: trash.length }), 'data-backup-trash': '' }));
         const restoreZone = h('dm-dropzone', { text: t('datasets.restore'), hint: t('datasets.restore.hint'), accept: '.zip', icon: 'package' });
         restoreZone.addEventListener('dm-files', async (e) => {
           const file = /** @type {any} */ (e).detail.files[0];
@@ -386,19 +396,24 @@
         });
         replace(slots.center,
           h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('hard-drive', 20), t('datasets.storage.title'))),
-          h('div', { class: 'dm-card dm-stack' },
-            h('p', { text: t('datasets.storage.text') }),
+          h('div', { class: 'dm-card dm-stack', 'data-storage-card': '' },
+            h('h3', { text: where.where }),
+            h('p', { text: where.text }),
             h('div', { class: 'dm-stats-grid' },
-              stat(i18n.formatBytes(est && est.usage || 0), t('datasets.storage.used')),
+              // The trash is counted apart, as in the status bar.
+              stat(i18n.formatBytes(Math.max(0, (est && est.usage || 0) - trashBytes)), t('datasets.storage.used')),
               stat(est && est.quota ? i18n.formatBytes(est.quota) : '–', t('datasets.storage.quota')),
               stat(String(store.get().datasets.length), t('shell.datasets')),
+              stat(trash.length ? i18n.formatBytes(trashBytes) : t('datasets.trash.none'), t('datasets.trash')),
               stat(persisted ? t('datasets.persist.granted') : t('datasets.persist.denied'), t('datasets.persist.label'))),
             h('div', { class: 'dm-row-wrap' },
               persisted ? null : ui.button({ label: t('datasets.persist.request'), icon: 'lock', onClick: async () => { const ok = await services.idb.requestPersist(); shell.log(t('datasets.persist', { state: ok ? t('datasets.persist.granted') : t('datasets.persist.denied') }), ok ? 'ok' : 'warn'); render(); } }),
-              apiDatasets().length ? ui.button({ label: t('api.refresh.all', { n: apiDatasets().length }), icon: 'refresh-cw', onClick: refreshAllApi }) : null)),
+              apiDatasets().length ? ui.button({ label: t('api.refresh.all', { n: apiDatasets().length }), icon: 'refresh-cw', onClick: refreshAllApi }) : null,
+              trash.length || ui.datasetList.folders.trashed().length ? ui.button({ label: t('datasets.trash.empty.action'), icon: 'trash-2', variant: 'danger', title: t('datasets.trash.empty.tip'), 'data-empty-trash': '', onClick: () => batch.emptyTrash(ctx) }) : null)),
           h('div', { class: 'dm-form-grid' },
             h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('datasets.backup') }), h('p', { class: 'dm-help', text: t('datasets.backup.hint') }),
-              h('div', null, ui.button({ label: t('datasets.backup'), icon: 'download', variant: 'primary', onClick: backup })),
+              trash.length ? withTrash : null,
+              h('div', null, ui.button({ label: t('datasets.backup'), icon: 'download', variant: 'primary', onClick: () => backup(!!withTrash.checked) })),
               backupInfo()),
             h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('datasets.restore') }), restoreZone)),
           folderEl,
@@ -467,10 +482,11 @@
 
       function stat(value, label) { return h('div', { class: 'dm-stat' }, h('span', { class: 'dm-stat-value', text: value }), h('span', { class: 'dm-stat-label', text: label })); }
 
-      async function backup() {
+      /** @param {boolean} [withTrash] the trash too (it comes back into the trash) */
+      async function backup(withTrash) {
         try {
           shell.setStatus('saving');
-          const { blob, count } = await services.workspace.backup();
+          const { blob, count } = await services.workspace.backup({ trash: !!withTrash });
           const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
           services.files.download(blob, t('datasets.backup.file', { stamp }));
           shell.log(t('datasets.backup.done') + ' ' + t('datasets.backup.stats', { count, size: i18n.formatBytes(blob.size) }), 'ok');
@@ -493,8 +509,12 @@
         return el;
       }
 
-      function renderWorkspaceInspector() {
+      async function renderWorkspaceInspector() {
         const c = D.capabilities;
+        const where = await placeText();
+        if (!slots || store.get().selectedId !== WORKSPACE) return;
+        const place = /** @type {any} */ (h('dm-kv'));
+        place.items = [{ label: t('datasets.storage.place'), value: where.where }];
         const kv = /** @type {any} */ (h('dm-kv'));
         kv.items = [
           { label: t('env.protocol'), value: c.protocol },
@@ -503,7 +523,7 @@
           { label: t('env.folder'), value: c.fileSystemAccess ? t('common.yes') : t('common.no') },
           { label: t('env.sab'), value: c.sharedArrayBuffer ? t('common.yes') : t('common.no') },
         ];
-        replace(slots.right, h('h4', { text: t('env.title') }), kv);
+        replace(slots.right, h('h4', { text: t('datasets.storage.place') }), place, h('p', { class: 'dm-help', text: where.text }), h('h4', { text: t('env.title') }), kv);
       }
 
       // Command palette: re-fetch API datasets (sharing lives in Dela).

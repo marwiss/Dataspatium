@@ -5,7 +5,8 @@
 In the browser's own database (IndexedDB) on the computer and in the browser profile you use. Nothing is sent
 anywhere. If you clear site data, switch profile or uninstall the browser, the data disappears. So take backups
 under *Manage → Workspace*, or use a portable folder in Edge and Chrome so that the workspace also lives as
-ordinary files on disk (see [kom-igang.md](kom-igang.md)).
+ordinary files on disk (see [kom-igang.md](kom-igang.md)). The top of the tree says where the workspace lies, and what
+you delete stays in its trash until you empty it (see [lagen.md](lagen.md#manage)).
 
 ## Do I need internet?
 

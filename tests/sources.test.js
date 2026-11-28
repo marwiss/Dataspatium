@@ -64,7 +64,7 @@
         assert.deepEqual(groups.common, ['file', 'paste', 'url', 'opencde', 'mobile'], 'Vanliga källor');
         assert.deepEqual(groups.databases, ['database', 'bridge', 'neo4j'], 'Databaskällor');
         assert.deepEqual(groups.apis, ['catalog', 'apifile'], 'API-källor');
-        assert.deepEqual(groups.geodata, ['geodata', 'geoportal', 'boundaries'], 'Geodatakällor: Geodataportalen beside the form (PLAN 12 a4)');
+        assert.deepEqual(groups.geodata, ['geodata', 'owngeodata', 'geoportal', 'boundaries'], 'Geodatakällor: Egen geodatakälla after the ready-made ones (B-81.3), Geodataportalen beside them (PLAN 12 a4)');
         assert.deepEqual(groups.other, ['saved', 'examples', 'guides'], 'Övriga källor: Insamling i fält is a part of Mobilen');
         for (const id of connectors.DEFAULT_ADDED) assert.ok(groups.added.includes('api:' + id), 'added from the start: ' + id);
         const all = await connectors.list();
@@ -123,7 +123,7 @@
       const pane = root.querySelector('.dm-left');
       const center = root.querySelector('.dm-center');
       await waitFor(() => pane.querySelector('[data-source="database"]'), 5000, 'the tree');
-      for (const id of ['database', 'opencde', 'neo4j', 'geodata', 'apifile', 'boundaries']) {
+      for (const id of ['database', 'opencde', 'neo4j', 'geodata', 'owngeodata', 'apifile', 'boundaries']) {
         /** @type {HTMLElement} */ (pane.querySelector(`[data-source="${id}"]`)).click();
         const form = await waitFor(() => center.querySelector(`[data-source-form="${id}"]`), 8000, 'the form ' + id);
         assert.ok(!document.querySelector('dialog[open]'), id + ': no dialog');
@@ -146,7 +146,7 @@
       assert.ok(cde.querySelector('[data-family-field="baseUrl"]'), 'the address');
       // The same forms as dialogs, from another mode or a card: the same builder, so the same parts.
       shell.activate('hantera');
-      for (const [open, sel] of [[() => D.require('ui/api/family-dialog').open(shell.ctx, { family: 'neo4j' }), '[data-family-form="neo4j"]'], [() => D.require('ui/api/family-dialog').open(shell.ctx, { group: 'geodata' }), '[data-family-form="geodata"]'], [() => forms.boundariesForm.open(shell.ctx), '[data-boundaries]'], [() => forms.apiFileForm.open(shell.ctx), '[data-api-file]']]) {
+      for (const [open, sel] of [[() => D.require('ui/api/family-dialog').open(shell.ctx, { family: 'neo4j' }), '[data-family-form="neo4j"]'], [() => D.require('ui/api/family-dialog').open(shell.ctx, { group: 'geodata', ready: true }), '[data-family-form="geodata-ready"]'], [() => D.require('ui/api/family-dialog').open(shell.ctx, { group: 'geodata' }), '[data-family-form="geodata"]'], [() => forms.boundariesForm.open(shell.ctx), '[data-boundaries]'], [() => forms.apiFileForm.open(shell.ctx), '[data-api-file]']]) {
         const done = open();
         const dlg = await waitFor(() => document.querySelector('dialog[open]'), 3000, 'the dialog for ' + sel);
         assert.ok(dlg.querySelector(sel), 'the form in the dialog: ' + sel);
@@ -269,6 +269,8 @@
       await waitFor(() => center.querySelector('[data-source-form="boundaries"]'), 5000, 'the link at the start');
       await shell.openRoute({ mode: 'inhamta', object: 'examples' });
       await waitFor(() => center.querySelector('[data-examples]'), 3000, 'Exempeldata from a link');
+      await shell.openRoute({ mode: 'inhamta', object: 'owngeodata' });
+      await waitFor(() => center.querySelector('[data-source-form="owngeodata"] [data-family-field="baseUrl"]'), 8000, 'Egen geodatakälla from a link');
       await shell.openRoute({ mode: 'inhamta', object: 'field' });
       await waitFor(() => center.querySelector('[data-mobile-tab="field"]'), 5000, 'Insamling i fält, now in Mobilen');
       await shell.openRoute({ mode: 'inhamta', object: 'ingen-sådan' });
@@ -282,7 +284,8 @@
       // The palette: one command per source the tier shows, in a group of its own.
       const cmds = await shell.palette.collect();
       const ids = cmds.filter((c) => c.id.startsWith('source:')).map((c) => c.id.slice(7));
-      for (const id of ['file', 'mobile', 'database', 'neo4j', 'catalog', 'apifile', 'geodata', 'boundaries', 'examples', 'guides']) assert.ok(ids.includes(id), 'in the palette: ' + id);
+      for (const id of ['file', 'mobile', 'database', 'neo4j', 'catalog', 'apifile', 'geodata', 'owngeodata', 'boundaries', 'examples', 'guides']) assert.ok(ids.includes(id), 'in the palette: ' + id);
+      assert.equal(cmds.find((c) => c.id === 'source:owngeodata').label, t('geodata.own.short'), 'Egen geodatakälla by its name');
       assert.ok(cmds.filter((c) => c.id.startsWith('source:')).every((c) => c.group === t('palette.group.sources')));
       await shell.activate('hantera');
       await shell.palette.run(cmds.find((c) => c.id === 'source:mobile'));

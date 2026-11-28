@@ -9,7 +9,7 @@ dataset is read again from disk with one click. Everything happens in the browse
 to the database you name yourself.
 
 In Import the sources are in groups in the left column: *Create sources* (see below), *Database sources* (External database, Database through the bridge
-and Neo4j), *API sources*, *Geodata sources* (Geodata source and Boundaries for maps) and more, with OpenCDE and Phone under
+and Neo4j), *API sources*, *Geodata sources* (Geodata source, Your own geodata source, Geodataportalen and Boundaries for maps) and more, with OpenCDE and Phone under
 *Common sources*. What you choose is shown in the middle. The forms that add a source have their help text above them, and
 the new source opens there once it is saved. The same form is shown as a dialog when it is opened from somewhere else, such
 as Neo4j from an OpenCDE server's card.
@@ -359,22 +359,21 @@ Dataregium opens in a popup (sign-in, upload, document selection) appear in the 
 
 ## Open geodata
 
-The form for *Geodata source* under *Geodata sources* starts with a list of **ready-made geodata sources**: open WFS, OGC API Features and
+*Geodata source* under *Geodata sources* is a list of **ready-made geodata sources**: open WFS, OGC API Features and
 ArcGIS services of Nordic agencies and municipalities (SCB, SGU, Naturvårdsverket, SLU Artdatabanken, Riksantikvarieämbetet,
 Skogsstyrelsen, Sundsvalls kommun, Kartverket, Miljødirektoratet, Riksantikvaren, Statistics Finland, SYKE, Helsinki, Väylävirasto,
 Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands and others), all tried from the browser all
 the way to a fetched feature with geometry, Kartverket's WFS services too, which give only GML. A preset source opens, the others are added with one click and their layers read from the service; filter
-by name, country or contents. The list lives in `presets/geodata/services.json`. Below the list are the fields for a
+by name, country or contents. The list lives in `presets/geodata/services.json`. A service that is not in the list is
+added under *Your own geodata source* (see below).
 
 Three sources fetch plans: *Plandata.dk (WFS)* and *Skipulagsstofnun skipulagsgögn (ArcGIS)* have the button **Fetch
 plan**, which reads a whole local plan or deiliskipulag (every layer) by its plan number and keeps it as a plan, and
 *Ryhti kaavatiedot (OGC API Features)* gives Finland's plan index. See [planer.md](planer.md#plans-from-the-other-nordic-countries).
-service of your own. Boverket's Planbestämmelsekatalog is an ordinary API source (*Boverket Planbestämmelsekatalogen*),
-see [planer.md](planer.md).
+Boverket's Planbestämmelsekatalog is an ordinary API source (*Boverket Planbestämmelsekatalogen*), see [planer.md](planer.md).
 
-The way **Geodata source** under *Geodata sources* in Import makes an ordinary API source of the address of a geodata
-service, just like the database sources. The app reads the service's layers and adds one endpoint per layer plus a
-generic one where you name the layer yourself. The answers are read in WGS 84: the dataset gets a geometry column
+A geodata source, ready-made or your own, is an ordinary API source. The app reads the service's layers and adds one
+endpoint per layer plus a generic one where you name the layer yourself. The answers are read in WGS 84: the dataset gets a geometry column
 and opens as a map in Process (see [kartor.md](kartor.md)). The source shows the layers as a filterable list; choose a
 layer, limit by an area (bbox) when you can, and fetch. The preview shows the answer as a small map above the table,
 and *Open as map* takes you to the saved dataset.
@@ -428,6 +427,15 @@ consumer secret from a free account in [Geotorget](https://geotorget.lantmaterie
 them, and it is sent only to Lantmäteriet’s API and the file server dl1.lantmateriet.se.
 A height profile along a line is drawn by Visualise (*New chart* → *Height profile along a line*).
 
+### Your own geodata source
+
+**Your own geodata source**, right below *Geodata source* in *Geodata sources*, makes a source of the address of a
+geodata service that is not among the ready-made ones, just like the database sources. Choose the family (WFS, OGC API
+Features or ArcGIS REST), enter the address and, if the service requires one, the key (it is kept in the session only),
+and choose *Add source*. The new source appears under *Added sources* and opens with its layers. The form is shown in
+the middle in Import and as a dialog when it is opened from another mode, and it has the address
+`#/inhamta/owngeodata` and a command in the palette.
+
 ### Geodataportalen
 
 **Geodataportalen** (geodata.se) is Sweden's national catalogue of the geodata of agencies, regions and municipalities.
@@ -435,7 +443,7 @@ The view *Geodataportalen* under *Geodata sources* in Acquire searches the catal
 title, organisation, abstract and what the post links to. The switch *Only what can be fetched* (on from the start)
 shows only posts with a service or file the app can fetch. Each post has an action per kind of link:
 
-- **Add as a geodata source** for a WFS, OGC API Features or ArcGIS service: the form of a geodata source opens in the
+- **Add as a geodata source** for a WFS, OGC API Features or ArcGIS service: the form *Your own geodata source* opens in the
   workspace with the service and the address filled in, and *Add* makes the source.
 - **Get the file** for a download (ZIP, GeoPackage, GeoJSON, GML): the file is fetched and read in as a file from an
   address, with preview and columns. When the link is an INSPIRE ATOM feed the app reads the feed first and lists its

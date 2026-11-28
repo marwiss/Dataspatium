@@ -1,28 +1,35 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * The dataset list shown in the object panel of most modes: a tree (ui/tree) of folders (each dataset's `folder` path, and the
- * empty folders made with Ny mapp) with the datasets inside, a filter box and a sort order when there are several datasets, and,
+ * The dataset list shown in the object panel of most modes: a tree (ui/tree) whose top node is the place where the workspace lies
+ * (Webbläsaren, on this computer, or the portable folder it is saved to as it changes; F131 b), with two children: Arbetsyta, the
+ * folders (each dataset's `folder` path, and the empty folders made with Ny mapp) with the datasets inside, and Papperskorg, what
+ * Ta bort moved there (each folder removed whole with what it held, and each dataset removed on its own). A filter box and a sort
+ * order when there are several datasets, and,
  * where the mode asks for it, check boxes for datasets and whole folders, the tools right above the tree (Ny mapp, Byt namn,
  * Klipp ut, Kopiera, Klistra in, Flytta, Ta bort: icons with tips, and those that do not fit under Fler alternativ) with their
  * keys and the same in the snabbmeny, and drag and drop into, out of and between folders. Selecting an item updates
- * `store.selectedId`, which every mode reacts to. The shell gives every mode the same tree (`withDefaults`, ui/batch-actions).
+ * `store.selectedId`, which every mode reacts to. The shell gives every mode the same tree with check boxes (`withDefaults`,
+ * ui/batch-actions); the tools, their keys, the snabbmeny and dragging come with `actions` and `onMove`, which only Hantera gives.
  *
  *   datasetList.render(container, {datasets, selectedId, onSelect, extra?, emptyHint?,
  *                                  multi?, selectedIds?, onToggle?(ids), onMove?(ids, folder), tools?,
- *                                  actions?, itemTrailing?(d)})
+ *                                  actions?, itemTrailing?(d), trash?, workspaceId?})
  *
- * `actions` does the work and resolves when it is done: remove(units) (asks first), paste(clip, target) (the ids pasted) and
- * rename(unit, name). Units are {ids, folders}: the folders chosen whole and the datasets chosen one by one outside them; a
- * clip is units with a mode, 'copy' or 'cut'. `itemTrailing(d)` is a control after a dataset's row (Bearbeta's map: Visa i
- * kartan), or null.
+ * `actions` does the work and resolves when it is done: remove(units) (to the trash), paste(clip, target) (the ids pasted),
+ * rename(unit, name), and for the trash restore(tunit), purge(tunit) (for good, asks first) and empty() (asks first). Units are
+ * {ids, folders}: the folders chosen whole and the datasets chosen one by one outside them; a clip is units with a mode, 'copy'
+ * or 'cut'; a unit in the trash is {ids, roots: [{batch, path}]}. `itemTrailing(d)` is a control after a dataset's row
+ * (Bearbeta's map: Visa i kartan), or null. `trash` are the datasets in the trash (the shell's store), and with `workspaceId`
+ * (Hantera) the place and Arbetsyta open the workspace's page through onSelect(workspaceId).
  * Keys on the tree: Delete, Ctrl+C, Ctrl+X, Ctrl+V, F2, and those of ui/tree (the arrows, Home, End, Enter, Space, a letter).
+ * In the trash Delete removes for good.
  * A dataset chosen in the tree sends `dm-choose` (the shell closes the panel when it is a sheet).
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/dataset-list', ['ui/base', 'ui/icons', 'ui/basic', 'ui/tree', 'ui/menu', 'platform/storage/idb', 'data/kinds', 'data/datasets'], (base, icons, basic, treeMod, menuMod, idb, kinds, datasets) => {
+  D.define('ui/dataset-list', ['ui/base', 'ui/icons', 'ui/basic', 'ui/tree', 'ui/menu', 'platform/storage/idb', 'platform/storage/folder', 'data/kinds', 'data/datasets', 'data/workspace'], (base, icons, basic, treeMod, menuMod, idb, folderStore, kinds, datasets, workspace) => {
     const { h, t, i18n, replace } = base;
     /** The mark of a kind; the kinds themselves are described in data/kinds. */
     function kindIcon(kind) { return kinds.of(kind).icon; }
@@ -30,6 +37,14 @@
     const kindSummary = (ds) => kinds.summary(ds);
     const COLLAPSED_SETTING = 'ui.folders.collapsed';
     const EMPTY_SETTING = 'ui.folders.empty';
+    const TRASH_SETTING = 'ui.folders.trash';
+    const NODES_SETTING = 'ui.tree.nodes';
+    /** The nodes above the folders: the place, its workspace and its trash. Arbetsyta's id gives '' (the top level) as a folder's does. */
+    const PLACE = 'p:local';
+    const WORKSPACE_NODE = 'w:';
+    const TRASH_NODE = 't:';
+    /** How they start: the place and the workspace open, the trash closed. Folders in the trash start closed too. */
+    const NODE_DEFAULT = { [PLACE]: true, [WORKSPACE_NODE]: true, [TRASH_NODE]: false };
     const SORTS = ['updated', 'name', 'rows'];
     /** Folders the user has collapsed; shared by all modes and kept between sessions. */
     const collapsed = new Set();
@@ -39,11 +54,44 @@
     idb.getSetting(EMPTY_SETTING, []).then((v) => { if (Array.isArray(v)) for (const p of v) { const n = datasets.normalizeFolder(p); if (n) empty.add(n); } }).catch(() => {});
     const persistCollapsed = () => { idb.setSetting(COLLAPSED_SETTING, Array.from(collapsed)).catch(() => {}); };
     const persistEmpty = () => { idb.setSetting(EMPTY_SETTING, Array.from(empty)).catch(() => {}); };
+    /** Empty folders that went to the trash with a folder removed whole: {batch, root, at, paths}, kept like the empty folders. */
+    let trashedFolders = [];
+    idb.getSetting(TRASH_SETTING, []).then((v) => {
+      if (Array.isArray(v)) trashedFolders = v.filter((r) => r && typeof r.batch === 'string' && typeof r.root === 'string' && Array.isArray(r.paths)).map((r) => ({ batch: r.batch, root: r.root, at: String(r.at || ''), paths: r.paths.map(String) }));
+    }).catch(() => {});
+    const persistTrash = () => { idb.setSetting(TRASH_SETTING, trashedFolders).catch(() => {}); };
+    /** The folds of the place, Arbetsyta and Papperskorg (kept between sessions) and of the folders in the trash (this session). */
+    const nodeOpen = new Map();
+    idb.getSetting(NODES_SETTING, {}).then((v) => { if (v && typeof v === 'object') for (const k of Object.keys(NODE_DEFAULT)) if (typeof v[k] === 'boolean') nodeOpen.set(k, v[k]); }).catch(() => {});
+    const persistNodes = () => { const o = {}; for (const k of Object.keys(NODE_DEFAULT)) if (nodeOpen.has(k)) o[k] = nodeOpen.get(k); idb.setSetting(NODES_SETTING, o).catch(() => {}); };
     /** The folds as ui/tree reads and sets them: a folder row's id is 'f:' and its path. */
     const expansion = {
-      isOpen: (id) => !(id.startsWith('f:') && collapsed.has(id.slice(2))),
-      setOpen: (id, open) => { if (!id.startsWith('f:')) return; if (open) collapsed.delete(id.slice(2)); else collapsed.add(id.slice(2)); persistCollapsed(); },
+      isOpen: (id) => {
+        if (id.startsWith('f:')) return !collapsed.has(id.slice(2));
+        if (nodeOpen.has(id)) return nodeOpen.get(id);
+        return id in NODE_DEFAULT ? NODE_DEFAULT[id] : !id.startsWith('r:');
+      },
+      setOpen: (id, open) => {
+        if (id.startsWith('f:')) { if (open) collapsed.delete(id.slice(2)); else collapsed.add(id.slice(2)); persistCollapsed(); return; }
+        nodeOpen.set(id, !!open);
+        if (id in NODE_DEFAULT) persistNodes();
+      },
     };
+
+    /** Where the workspace lies: the browser on this computer, or the portable folder it is saved to as it changes (data/workspace). */
+    let place = { kind: 'browser', name: '' };
+    /** The panels drawn, so that a new place draws them again. */
+    const drawnStates = new Set();
+    function refreshPlace() {
+      const on = !!workspace.folderStatus().enabled;
+      (on ? folderStore.current().catch(() => null) : Promise.resolve(null)).then((handle) => {
+        const next = handle && handle.name ? { kind: 'folder', name: String(handle.name) } : { kind: 'browser', name: '' };
+        if (next.kind === place.kind && next.name === place.name) return;
+        place = next;
+        for (const s of Array.from(drawnStates)) { if (s.root.isConnected && s.options) draw(s.root, s); else drawnStates.delete(s); }
+      });
+    }
+    workspace.onFolder(() => refreshPlace());
     /** The empty folders that are checked (a folder with datasets is checked through them). Shared by all modes, like the selection. */
     const markedFolders = new Set();
     /** What Klipp ut or Kopiera took, for Klistra in: {mode, ids, folders}, or null. Shared by all modes. */
@@ -78,6 +126,34 @@
       move(from, to) { renameIn(empty, from, to); renameIn(markedFolders, from, to); renameIn(collapsed, from, to); persistEmpty(); persistCollapsed(); },
       /** A folder copied: its empty folders are copied too. @param {string} from @param {string} to */
       copy(from, to) { for (const p of Array.from(empty)) if (within(p, from)) empty.add(to + p.slice(from.length)); persistEmpty(); },
+      /**
+       * A folder removed whole: the empty folders at and below it go into the trash with it.
+       * @param {string} root @param {string} batch the removal (Ångra) @param {string} at when
+       */
+      trash(root, batch, at) {
+        const paths = Array.from(empty).filter((p) => within(p, root));
+        for (const p of paths) empty.delete(p);
+        for (const p of Array.from(markedFolders)) if (within(p, root)) markedFolders.delete(p);
+        if (paths.length) trashedFolders.push({ batch, root, at, paths });
+        persistEmpty(); persistTrash();
+      },
+      /** The empty folders in the trash. @returns {Array<{batch: string, root: string, at: string, paths: string[]}>} */
+      trashed: () => trashedFolders.map((r) => ({ batch: r.batch, root: r.root, at: r.at, paths: r.paths.slice() })),
+      /**
+       * Take empty folders out of the trash: those of a removal (null: every one) at or below a path (null: all of them), back
+       * in their place with `back`, else gone for good.
+       * @param {string|null} batch @param {string|null} path @param {boolean} back
+       */
+      untrash(batch, path, back) {
+        for (const r of trashedFolders) {
+          if (batch !== null && r.batch !== batch) continue;
+          const take = r.paths.filter((p) => path === null || within(p, path));
+          if (back) for (const p of take) empty.add(p);
+          r.paths = r.paths.filter((p) => !take.includes(p));
+        }
+        trashedFolders = trashedFolders.filter((r) => r.paths.length);
+        persistEmpty(); persistTrash();
+      },
     };
 
     function sortDatasets(list, sort) {
@@ -233,7 +309,9 @@
       state.renders++;
       if (!state.focus) state.focus = focusOf(state.root, state);
       if (state.root.parentNode !== container || container.childNodes.length !== 1) replace(container, state.root);
+      drawnStates.add(state);
       draw(state.root, state);
+      refreshPlace();
     }
 
     function draw(container, state) {
@@ -244,6 +322,7 @@
       const view = state.view;
       const redraw = () => draw(container, state);
       const all = options.datasets;
+      const trash = options.trash || [];
       const byId = new Map(all.map((d) => [d.id, d]));
       const marks = folders.list();
       const full = buildTree(all, marks);
@@ -263,14 +342,16 @@
       function targets(key) {
         const u = units();
         if (count(u)) return u;
-        if (key && key !== 'new') return unitOfKey(key);
+        if (key && (key.startsWith('d:') || key.startsWith('f:'))) return unitOfKey(key);
         const cur = byId.get(options.selectedId);
         return cur ? { ids: [cur.id], folders: [] } : { ids: [], folders: [] };
       }
       /** What the snabbmeny and a drag act on: the checked items when the row is one of them, else the row alone. */
       function unitsFor(key) { const u = units(); return count(u) && inUnits(u, key) ? u : unitOfKey(key); }
       const current = byId.get(options.selectedId);
-      const isCut = (path, id) => !!clipboard && clipboard.mode === 'cut' && ((id && clipboard.ids.includes(id)) || clipboard.folders.some((f) => within(path, f)));
+      // The clipboard is Hantera's (the tools come with `actions`): other modes neither fade nor mention what is on it.
+      const shownClip = actions ? clipboard : null;
+      const isCut = (path, id) => !!shownClip && shownClip.mode === 'cut' && ((id && shownClip.ids.includes(id)) || shownClip.folders.some((f) => within(path, f)));
       function select(next) {
         state.selected = next;
         const before = state.renders;
@@ -313,7 +394,8 @@
         if (!actions || !clipboard) return;
         const clip = clipboard;
         let target;
-        if (key && key.startsWith('f:')) target = key.slice(2);
+        if (key === WORKSPACE_NODE || key === PLACE) target = '';
+        else if (key && key.startsWith('f:')) target = key.slice(2);
         else if (key && key.startsWith('d:') && byId.get(key.slice(2))) target = byId.get(key.slice(2)).folder || '';
         else target = targetOf(units(), byId, current);
         if (clip.folders.includes(target)) target = parentOf(target);
@@ -323,7 +405,12 @@
           if (ids && ids.length && multi) { markedFolders.clear(); select(new Set(ids)); }
         });
       }
-      function reveal(path) { let changed = false; for (let p = path; p; p = parentOf(p)) if (collapsed.delete(p)) changed = true; if (changed) persistCollapsed(); }
+      function reveal(path) {
+        let changed = false;
+        for (let p = path; p; p = parentOf(p)) if (collapsed.delete(p)) changed = true;
+        if (changed) persistCollapsed();
+        if (!expansion.isOpen(PLACE) || !expansion.isOpen(WORKSPACE_NODE)) { nodeOpen.set(PLACE, true); nodeOpen.set(WORKSPACE_NODE, true); persistNodes(); }
+      }
       function doRename(u) {
         if (!actions || count(u) !== 1) return;
         const key = u.folders.length ? 'f:' + u.folders[0] : 'd:' + u.ids[0];
@@ -381,17 +468,36 @@
         }
         select(next);
       }
+      // ---- the trash: Återställ, Ta bort för gott and Töm papperskorgen are Hantera's (with `actions`) ----
+      /** A row in the trash as a unit: a dataset ('x:' and its id), or a folder that went whole or one inside it ('r:' batch|path). */
+      function trashUnitOf(key) {
+        if (key.startsWith('x:')) return { ids: [key.slice(2)], roots: [] };
+        if (!key.startsWith('r:')) return null;
+        const rest = key.slice(2);
+        const bar = rest.indexOf('|');
+        return { ids: [], roots: [{ batch: rest.slice(0, bar), path: rest.slice(bar + 1) }] };
+      }
+      const inTrash = (key) => key === TRASH_NODE || key.startsWith('x:') || key.startsWith('r:');
+      const hasTrash = trash.length > 0 || folders.trashed().length > 0;
+      function doRestore(u) { if (actions && actions.restore && u) run(() => actions.restore(u)); }
+      function doPurge(u) { if (actions && actions.purge && u) run(() => actions.purge(u)); }
+      function doEmpty() { if (actions && actions.empty && hasTrash) run(() => actions.empty()); }
+      const restoreButton = (key, name) => (actions && actions.restore ? basic.button({ label: t('datasets.trash.restore'), icon: 'history', 'icon-only': true, size: 'sm', variant: 'ghost', title: t('datasets.trash.restore.tip', { name }), 'data-restore': key, disabled: state.busy, onClick: () => doRestore(trashUnitOf(key)) }) : null);
+
       const checkState = (n) => {
         if (n.id.startsWith('d:')) return selected.has(n.id.slice(2)) ? 'all' : 'none';
         const f = n.id.startsWith('f:') ? findNode(full, n.id.slice(2)) : null;
         return f ? folderState(f, selected, markedFolders) : 'none';
       };
 
+      // The heading holds Välj for touch screens, as in the phones' file apps: the check boxes show and a tap checks. Elsewhere
+      // it takes no room, so that the filter lies right under the pane head (B-81.3).
       const header = h('div', { class: 'dm-list-head' },
-        multi && selected.size ? h('span', { class: 'dm-help', text: t('datasets.selected.count', { n: selected.size }) }) : null,
-        clipboard ? h('span', { class: 'dm-help', 'data-clip': clipboard.mode, text: t('datasets.tree.clip.' + clipboard.mode, { n: count(clipboard) }) }) : null,
-        // Välj on touch screens, as in the phones' file apps: the check boxes show and a tap checks.
         multi && options.onToggle ? basic.button({ label: t(state.selecting ? 'tree.select.done' : 'tree.select'), title: t('tree.select.tip'), icon: 'list-checks', size: 'sm', variant: 'ghost', class: 'dm-tree-select', pressed: String(!!state.selecting), onClick: () => { state.selecting = !state.selecting; redraw(); } }) : null);
+      // How many are checked and what is on the clipboard, under the tree, so that checking moves no row.
+      const status = (multi && selected.size) || shownClip ? h('p', { class: 'dm-help dm-list-status' },
+        multi && selected.size ? h('span', { text: t('datasets.selected.count', { n: selected.size }) }) : null,
+        shownClip ? h('span', { 'data-clip': shownClip.mode, text: t('datasets.tree.clip.' + shownClip.mode, { n: count(shownClip) }) }) : null) : null;
       const canMove = !!(options.onMove || actions);
       if (canMove) view.dropZone(header, null);
       const items = [header];
@@ -409,7 +515,10 @@
         sortSel.options = SORTS.map((s) => ({ value: s, label: t('datasets.sort.' + s) }));
         sortSel.value = state.sort;
         sortSel.addEventListener('change', () => { state.sort = sortSel.value; redraw(); });
-        items.push(h('div', { class: 'dm-list-tools' }, filterIn, sortSel));
+        const row = h('div', { class: 'dm-list-tools' }, filterIn, sortSel);
+        // The top of the panel is the top level, also when the heading is hidden.
+        if (canMove) view.dropZone(row, null);
+        items.push(row);
       }
       if (state.overflow) { state.overflow.disconnect(); state.overflow = null; }
       if (actions && anything) items.push(toolbar());
@@ -459,8 +568,23 @@
       }
       /** The snabbmeny: the tools, on the row pressed (or on the checked items when it is one of them). */
       function menuOf(node) {
-        if (!actions || node.id === 'new') return [];
+        if (!actions || node.id === 'new' || node.id === PLACE) return [];
         const key = node.id;
+        if (key === TRASH_NODE) return hasTrash && actions.empty ? [{ id: 'empty-trash', label: t('datasets.trash.empty.action'), icon: 'trash-2', danger: true, onSelect: doEmpty }] : [];
+        const tu = trashUnitOf(key);
+        if (tu) {
+          return [
+            actions.restore ? { id: 'restore', label: t('datasets.trash.restore'), icon: 'history', onSelect: () => doRestore(tu) } : null,
+            { separator: true },
+            actions.purge ? { id: 'purge', label: t('datasets.trash.purge'), icon: 'trash-2', hint: 'Delete', danger: true, onSelect: () => doPurge(tu) } : null,
+          ].filter(Boolean);
+        }
+        if (key === WORKSPACE_NODE) {
+          return [
+            { id: 'newfolder', label: t('datasets.tree.newfolder'), icon: 'folder-plus', onSelect: () => doNewFolder('') },
+            { id: 'paste', label: t('datasets.tree.paste'), icon: 'clipboard-paste', hint: 'Ctrl+V', disabled: !clipboard, onSelect: () => doPaste(key) },
+          ];
+        }
         const u = unitsFor(key);
         return [
           { id: 'newfolder', label: t('datasets.tree.newfolder'), icon: 'folder-plus', onSelect: () => doNewFolder(pathOfKey(key)) },
@@ -501,11 +625,57 @@
         for (const ds of f.datasets) kids.push(datasetNode(ds));
         return kids;
       }
-      const nodes = childrenOf(buildTree(sorted, needle ? marks.filter((p) => p.toLowerCase().includes(needle)) : marks));
+      const inWorkspace = childrenOf(buildTree(sorted, needle ? marks.filter((p) => p.toLowerCase().includes(needle)) : marks));
       // A new folder whose parent the filter hides is named at the top.
-      if (editingNew && !placed) nodes.unshift(newNode());
+      if (editingNew && !placed) inWorkspace.unshift(newNode());
+
+      // The trash: each removal of a folder whole with what it held (and the empty folders in it), and each dataset removed on its
+      // own, newest first; it says where each one lay and when it went.
+      const fixed = { checkable: false, draggable: false, renamable: false };
+      const workspaceName = t('datasets.storage.title');
+      const fromLine = (folder, at) => [t('datasets.trash.from', { folder: folder || workspaceName }), at ? i18n.formatDateTime(at) : ''].filter(Boolean).join(' · ');
+      const trashShown = needle ? trash.filter((d) => d.name.toLowerCase().includes(needle) || String(d.folder || '').toLowerCase().includes(needle)) : trash;
+      const removals = new Map();
+      const removalOf = (batch, root, at) => { const k = batch + '|' + root; if (!removals.has(k)) removals.set(k, { batch, root, at: at || '', datasets: [], paths: [] }); return removals.get(k); };
+      for (const r of folders.trashed()) {
+        const paths = needle ? r.paths.filter((p) => p.toLowerCase().includes(needle)) : r.paths;
+        if (paths.length) removalOf(r.batch, r.root, r.at).paths.push(...paths);
+      }
+      const alone = [];
+      for (const d of trashShown) { const m = d.trashed || {}; if (m.root) removalOf(String(m.batch || ''), String(m.root), m.at).datasets.push(d); else alone.push(d); }
+      function trashDatasetNode(d, top) {
+        const m = d.trashed || {};
+        return Object.assign({ id: 'x:' + d.id, label: d.name, icon: kindIcon(d.kind), sub: top ? fromLine(m.folder !== undefined ? m.folder : d.folder, m.at) : kindSummary(d), rowAttrs: { 'data-trash-id': d.id }, trailing: top ? restoreButton('x:' + d.id, d.name) : null }, fixed);
+      }
+      function trashFolderNode(n, x, top) {
+        const key = 'r:' + x.batch + '|' + n.path;
+        const kids = Array.from(n.folders.values()).sort(byName).map((c) => trashFolderNode(c, x, false)).concat(sortDatasets(n.datasets, state.sort).map((d) => trashDatasetNode(d, false)));
+        return Object.assign({ id: key, label: n.name, count: n.count, children: kids, sub: top ? fromLine(parentOf(x.root), x.at) : undefined, rowAttrs: { 'data-trash-folder': n.path }, trailing: top ? restoreButton(key, n.name) : null }, fixed);
+      }
+      const inTrashNodes = Array.from(removals.values()).map((x) => ({ at: x.at, name: leafOf(x.root), node: trashFolderNode(findNode(buildTree(x.datasets, x.paths.concat([x.root])), x.root), x, true) }))
+        .concat(alone.map((d) => ({ at: (d.trashed && d.trashed.at) || '', name: d.name, node: trashDatasetNode(d, true) })))
+        .sort((a, b) => String(b.at).localeCompare(String(a.at)) || a.name.localeCompare(b.name, i18n.locale()))
+        .map((x) => x.node);
+      const trashBytes = trash.reduce((n, d) => n + datasets.storedBytes(d), 0);
+      const workspaceNode = Object.assign({
+        id: WORKSPACE_NODE, label: workspaceName, icon: 'database', iconOpen: 'database', count: all.length, children: inWorkspace,
+        current: !!options.workspaceId && options.selectedId === options.workspaceId, rowAttrs: { 'data-node': 'workspace' },
+      }, fixed);
+      const trashNode = Object.assign({
+        id: TRASH_NODE, label: t('datasets.trash'), icon: 'trash-2', iconOpen: 'trash-2', children: inTrashNodes, droppable: !!actions,
+        sub: trash.length ? t('datasets.trash.sub', { n: i18n.formatNumber(trash.length), size: i18n.formatBytes(trashBytes) }) : hasTrash ? t('datasets.trash.folders') : t('datasets.trash.none'),
+        rowAttrs: { 'data-node': 'trash' },
+        trailing: actions && actions.empty && hasTrash ? basic.button({ label: t('datasets.trash.empty.action'), icon: 'trash-2', 'icon-only': true, size: 'sm', variant: 'ghost', title: t('datasets.trash.empty.tip'), 'data-empty-trash': '', disabled: state.busy, onClick: doEmpty }) : null,
+      }, fixed);
+      const folderPlace = place.kind === 'folder';
+      const nodes = [Object.assign({
+        id: PLACE, label: folderPlace ? place.name : t('datasets.place.browser'), sub: t(folderPlace ? 'datasets.place.folder.sub' : 'datasets.place.browser.sub'),
+        icon: folderPlace ? 'hard-drive' : 'globe', iconOpen: folderPlace ? 'hard-drive' : 'globe', children: [workspaceNode, trashNode], droppable: false,
+        rowAttrs: { 'data-node': 'place', 'data-place': place.kind },
+      }, fixed)];
 
       items.push(view.el);
+      if (status) items.push(status);
       if (options.extra && options.extra.length) {
         items.push(h('hr'));
         items.push(h('div', { class: 'dm-list' }, options.extra.map((x) => item(Object.assign({ current: x.id === options.selectedId, onSelect: options.onSelect }, x)))));
@@ -522,7 +692,14 @@
             view.el.dispatchEvent(new CustomEvent('dm-choose', { bubbles: true, detail: { id: node.id.slice(2) } }));
             return true;
           }
-          if (multi) { setChecked([node], checkState(node) !== 'all'); return true; }
+          // What lies in the trash is chosen nowhere; the place and Arbetsyta open the workspace's page where there is one (Hantera).
+          if (node.id.startsWith('x:')) return true;
+          if ((node.id === PLACE || node.id === WORKSPACE_NODE) && options.workspaceId) {
+            options.onSelect(options.workspaceId);
+            view.el.dispatchEvent(new CustomEvent('dm-choose', { bubbles: true, detail: { id: options.workspaceId } }));
+            return true;
+          }
+          if (multi && node.id.startsWith('f:')) { setChecked([node], checkState(node) !== 'all'); return true; }
           return false;
         },
         onKey: (e, node) => {
@@ -531,6 +708,16 @@
           const mod = (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey;
           const letter = e.key.length === 1 ? e.key.toLowerCase() : '';
           const plain = !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey;
+          if (inTrash(key)) {
+            if (!(e.key === 'Delete' && plain)) return false;
+            if (key === TRASH_NODE) doEmpty(); else doPurge(trashUnitOf(key));
+            return true;
+          }
+          if (key === PLACE || key === WORKSPACE_NODE) {
+            if (!(mod && letter === 'v')) return false;
+            doPaste(key);
+            return true;
+          }
           if (e.key === 'Delete' && plain) doRemove(targets(key));
           else if (mod && letter === 'c') doClip('copy', targets(key));
           else if (mod && letter === 'x') doClip('cut', targets(key));
@@ -542,6 +729,8 @@
         onDrop: canMove ? (payload, target) => {
           const data = carried(payload);
           if (!data) return;
+          // Into the trash is Ta bort.
+          if (target && inTrash(target.id)) { if (actions) doRemove({ ids: data.ids, folders: data.folders }); return; }
           const path = target ? target.id.slice(2) : '';
           if (data.folders.length && actions) run(() => actions.paste({ mode: 'cut', ids: data.ids, folders: data.folders }, path));
           else if (options.onMove) options.onMove(data.ids, path);
@@ -550,7 +739,13 @@
         // A drag from a row carries the selection when the row is part of it, else the row alone.
         dragData: (node) => { if (node.id === 'new') return null; const u = unitsFor(node.id); return { dataspatium: 'datasets', ids: u.ids, folders: u.folders }; },
         // A folder cannot go into itself or below itself.
-        canDrop: (payload, target) => { const data = carried(payload); if (!data) return false; const path = target ? target.id.slice(2) : ''; return !data.folders.some((f) => within(path, f)); },
+        canDrop: (payload, target) => {
+          const data = carried(payload);
+          if (!data) return false;
+          if (target && inTrash(target.id)) return !!actions;
+          const path = target ? target.id.slice(2) : '';
+          return !data.folders.some((f) => within(path, f));
+        },
         onRename: actions ? renamed : undefined,
         onRenameCancel: notRenamed,
         menu: actions ? menuOf : undefined,
@@ -573,7 +768,14 @@
     /** The clipboard of the tree (Klipp ut, Kopiera): {mode, ids, folders}, or null; `set` takes null to empty it. */
     const clip = { get: () => (clipboard ? { mode: clipboard.mode, ids: clipboard.ids.slice(), folders: clipboard.folders.slice() } : null), set: (v) => { clipboard = v ? { mode: v.mode, ids: (v.ids || []).slice(), folders: (v.folders || []).slice() } : null; } };
 
-    const api = { render, buildTree, sortDatasets, kindIcon, kindSummary, SORTS, folders, clip, folderState, unitsOf, targetOf, contents, findNode, withDefaults };
+    /**
+     * The checked datasets (the store's selectedIds) with the empty folders checked in the tree, as units: what the batch
+     * dialog's Ta bort deletes, as the tree's own tool does (a folder chosen whole goes with everything in it).
+     * @param {any[]} list all datasets @param {string[]} ids @returns {{ids: string[], folders: string[]}}
+     */
+    const selectionUnits = (list, ids) => unitsOf(buildTree(list, folders.list()), new Set(ids), markedFolders);
+
+    const api = { render, buildTree, sortDatasets, kindIcon, kindSummary, SORTS, folders, clip, folderState, unitsOf, selectionUnits, targetOf, contents, findNode, withDefaults, PLACE, WORKSPACE_NODE, TRASH_NODE };
     /**
      * The same list with defaults that every render gets unless it gives its own (the shell: check boxes, tools and moves).
      * @param {() => Record<string, any>} defaults

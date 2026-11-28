@@ -33,7 +33,7 @@
           this.wanted = null;
           this.pending = null;
           this.active = null;
-          this.store = stateMod.createStore({ mode: null, datasets: [], selectedId: null, selectedIds: [], status: 'saved', pendingCode: null, openChartId: null, lastRun: null, lastExport: null, pendingSearch: null, lastSearch: null, pendingDocument: null });
+          this.store = stateMod.createStore({ mode: null, datasets: [], trash: [], selectedId: null, selectedIds: [], status: 'saved', pendingCode: null, openChartId: null, lastRun: null, lastExport: null, pendingSearch: null, lastSearch: null, pendingDocument: null });
           this.ctx = {
             store: this.store,
             shell: this,
@@ -637,26 +637,35 @@
           if (type === 'dirty') { this.setStatus('unsaved'); return; }
           if (type === 'saving') { this.setStatus('saving'); return; }
           if (type === 'saved') { this.setStatus(datasets.hasPendingSaves() ? 'unsaved' : 'saved'); return; }
-          if (type === 'remote') this.log(t('sync.' + (payload.action === 'deleted' ? 'deleted' : payload.action === 'created' ? 'created' : 'saved'), { name: payload.name || payload.id || '' }));
+          if (type === 'remote') this.log(t('sync.' + (['deleted', 'created', 'trashed', 'restored'].includes(payload.action) ? payload.action : 'saved'), { name: payload.name || payload.id || '' }));
           await this.reloadDatasets();
-          if ((type === 'deleted' || (type === 'remote' && payload.action === 'deleted')) && this.store.get().selectedId === payload.id) this.store.set({ selectedId: null });
-          if (type === 'created') this.store.set({ selectedId: payload.id });
+          // What went to the trash is gone from every mode, as what was deleted.
+          const gone = type === 'deleted' || type === 'trashed' || (type === 'remote' && (payload.action === 'deleted' || payload.action === 'trashed'));
+          if (gone && ((payload.ids || [payload.id]).includes(this.store.get().selectedId))) this.store.set({ selectedId: null });
+          // A dataset that comes back into the trash (a backup with the trash in it) is not chosen.
+          if (type === 'created' && !payload.trashed) this.store.set({ selectedId: payload.id });
           this.updateStorage();
         }
 
         async reloadDatasets() {
-          const list = await datasets.list();
+          // One read gives the workspace and its trash; the modes see only the workspace (the tree shows the trash apart).
+          const all = await datasets.list('all');
+          const list = all.filter((d) => !d.trashed);
+          const trash = all.filter((d) => d.trashed);
           // Multi-selection (Hantera) keeps only datasets that still exist.
           const ids = new Set(list.map((d) => d.id));
           const current = this.store.get().selectedIds || [];
           const kept = current.filter((id) => ids.has(id));
-          this.store.set(kept.length === current.length ? { datasets: list } : { datasets: list, selectedIds: kept });
+          this.store.set(kept.length === current.length ? { datasets: list, trash } : { datasets: list, trash, selectedIds: kept });
           return list;
         }
 
+        /** The storage in the status bar: what the workspace takes, without the trash, which says its own size after it. */
         async updateStorage() {
           const est = await idb.estimate();
-          this.storageEl.textContent = est && est.usage ? t('shell.storage', { used: i18n.formatBytes(est.usage) }) : '';
+          const inTrash = (this.store.get().trash || []).reduce((n, d) => n + datasets.storedBytes(d), 0);
+          const used = est && est.usage ? Math.max(0, est.usage - inTrash) : 0;
+          this.storageEl.textContent = (used ? t('shell.storage', { used: i18n.formatBytes(used) }) : '') + (inTrash ? (used ? ' · ' : '') + t('shell.storage.trash', { size: i18n.formatBytes(inTrash) }) : '');
         }
 
         /**
