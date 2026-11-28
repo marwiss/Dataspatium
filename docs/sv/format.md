@@ -42,7 +42,7 @@ raderna som vanligt, och vid importen skrivs raderna till datamängden medan fil
 aldrig behöver ligga i minnet. Kolumntyperna tas från kolumnsteget eller gissas ur den första omgången.
 Förloppet visas i raderna som lästs in.
 
-Alla filformat kan också hämtas från en webbadress under *Från webbadress* i Inhämta, om servern tillåter
+Alla filformat kan också hämtas från en webbadress under *Webbadress* i Inhämta, om servern tillåter
 anrop från webbläsaren (CORS). Dataspatiums egna konfigurationsfiler (API-källa, diagram, dashboard, dokumentmall,
 anteckningsbok) känns igen på fältet `format` och läggs till direkt.
 

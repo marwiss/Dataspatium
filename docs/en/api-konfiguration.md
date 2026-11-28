@@ -44,7 +44,7 @@ All have been checked for CORS (requests with an `Origin` header) in November 20
 | Country | Source | What | How to fetch |
 |---|---|---|---|
 | Denmark | Statistics Denmark StatBank | Official statistics (api.statbank.dk) | Browse the subject tree, choose a table and values per variable; variables left out are summed away |
-| Denmark | Open Data DK | The data portal of Danish municipalities and regions | Search datasets, one row per file, import the file through From web address |
+| Denmark | Open Data DK | The data portal of Danish municipalities and regions | Search datasets, one row per file, import the file through Web address |
 | Norway | Statistics Norway StatBank (API v1 and v2) | Official statistics, Norwegian and English | Browse the subject tree or search for a table, choose values; 800,000 cells per request |
 | Norway | FHI Statistics | Public health statistics from the Norwegian Institute of Public Health's registers and statistics banks | Choose source, table and values per dimension (the measures in MEASURE_TYPE) |
 | Norway | Central Coordinating Register for Legal Entities (Brønnøysund) | Companies and organisations | Search by name, municipality, organisation form or industry code |

@@ -162,7 +162,7 @@ Kursen fortsätter där du slutade; har du gått igenom den börjar den om från
 
 ## Finns det källor från andra nordiska länder?
 
-Ja. Under *Lägg till källor* → *Öppna API:er* i Inhämta finns statistikbyråerna i Danmark, Norge, Finland, Island, Grönland,
+Ja. Under *API-källor* → *Öppna API:er* i Inhämta finns statistikbyråerna i Danmark, Norge, Finland, Island, Grönland,
 Färöarna och Åland, Nordic Statistics, Folkehelseinstituttet, Enhetsregisteret, Kartverket, MET Norway, THL:s
 Sotkanet, PRH:s företagsregister, Digitraffic, Meteorologiska institutet, Veðurstofa Íslands och de danska och
 finländska dataportalerna. Landsknapparna ovanför listan väljer vilka länders källor som visas; valet sparas i
@@ -257,8 +257,8 @@ förväg eller ta bort dem.
 
 Hela appen är gjord för datorer, men telefonen kan vara med: Dataspatium Mobil
 (<https://marwiss.github.io/Dataspatium/m/>) tar emot paket och filer från datorn över det lokala nätverket, visar
-tabellerna, skickar dem vidare och lämnar dem till en annan dator. Öppna *Dela → Enheter* på datorn och skanna
-QR-koden; se [mobil.md](mobil.md). På surfplattor i serverläge går hela appen att använda: i smala fönster visar
+tabellerna, skickar dem vidare och lämnar dem till en annan dator. Öppna *Inhämta → Mobilen* (eller *Dela → Enheter* för att skicka) på datorn
+och skanna QR-koden; se [mobil.md](mobil.md). På surfplattor i serverläge går hela appen att använda: i smala fönster visar
 lägesväxlaren ikoner och panelerna öppnas som flak över arbetsytan.
 
 ## Hur för jag över data till en telefon utan internet?

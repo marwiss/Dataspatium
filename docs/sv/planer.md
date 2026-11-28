@@ -272,7 +272,7 @@ Planer som ritas i ett planeringsverktyg läses som alla planer av samma slag, v
 | Översiktsplan i GeoPackage (Boverkets databasmodell 0.4) | Översiktsplan per tema med beslut, kopplingar och planhandlingens avsnitt |
 | Arkivpaket (mapp eller ZIP-fil med `metadata/PREMIS.xml`) | Planen ur mappen `content` med handlingarna, och kontrollen av filerna |
 
-Släpp filen i Inhämta, eller hämta den med *Från webbadress* när den finns på webben (till exempel en plan som kommunen publicerar); en fil utan filändelse känns igen på sin innehållstyp. Ett arkivpaket släpps som mapp eller som ZIP-fil: appen läser planen ur mappen `content`
+Släpp filen i Inhämta, eller hämta den med *Webbadress* när den finns på webben (till exempel en plan som kommunen publicerar); en fil utan filändelse känns igen på sin innehållstyp. Ett arkivpaket släpps som mapp eller som ZIP-fil: appen läser planen ur mappen `content`
 (GeoPackage-filen i första hand, annars leveransfilen), sparar paketets filer med planen och jämför varje fil med
 kontrollsumman (SHA-256) i `PREMIS.xml`. Inspektören visar under *Arkivpaket* om filerna stämmer, vilka som har ändrats
 eller saknas, och öppnar handlingarna (plankarta och planbeskrivning) i en ny flik. Bara PDF-filer och bilder (PNG, JPEG) vars filändelse

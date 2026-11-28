@@ -7,6 +7,12 @@ lokal brygga, och **databastjänster över HTTP** (PostgREST, OData, GraphQL med
 Inhämta. Filer som valts med datorns filväljare kan dessutom **länkas**, så att datamängden läses in igen från
 disken med ett klick. Allt sker i webbläsaren; inget skickas någon annanstans än till den databas du själv anger.
 
+I Inhämta ligger källorna i grupper i vänsterkolumnen: *Databaskällor* (Extern databas, Databas via bryggan och Neo4j),
+*API-källor*, *Geodatakällor* (Geodatakälla och Gränser för kartor) med flera, och OpenCDE och Mobilen under *Vanliga
+källor*. Det du väljer visas i mitten. Formulären som lägger till en källa har sin hjälptext ovanför, och den nya källan
+öppnas där när den är sparad. Samma formulär visas som dialog när det öppnas från ett annat ställe, till exempel Neo4j
+från en OpenCDE-servers kort.
+
 ## Access-filer (mdb, accdb)
 
 Släpp filen på ytan i Inhämta som vilken fil som helst. Filen läses av mdb-reader direkt i webbläsaren, utan att
@@ -16,9 +22,13 @@ inte läsas på det här sättet; använd då bryggan nedan. dBase-filer (.dbf) 
 
 ## Databasbryggan
 
-Bryggan är ett litet skript som du startar på datorn när du behöver det, i samma anda som en lokal webbserver. Den
-lyssnar bara på den egna datorn (127.0.0.1), kräver en token som visas i fönstret och är skrivskyddad om du inte
-startar den med skrivning tillåten. Appen hämtar tabeller genom bryggan; inget lämnar datorn.
+Varför bryggan behövs: webbläsaren får inte öppna en anslutning till en databas, och inte läsa filer på datorn som du
+inte själv har valt. Bryggan är ett litet skript som du startar på datorn när du behöver det, i samma anda som en lokal
+webbserver. Den lyssnar bara på den egna datorn (127.0.0.1), kräver en token som visas i fönstret, är skrivskyddad om du
+inte startar den med skrivning tillåten och låter dig godkänna varje skrivning. Appen hämtar tabeller genom bryggan; inget
+lämnar datorn. Den används för Access, Excel, SQL Server, SQLite, MySQL, MariaDB, PostgreSQL och andra ODBC-källor, och
+för att hämta från en adress som stänger ute webbläsare (se *Hämta via bryggan* nedan). Vyn i Inhämta säger detsamma
+överst.
 
 ### Starta bryggan
 
@@ -37,7 +47,7 @@ appens adress på GitHub Pages. Stäng fönstret, eller tryck Ctrl+C, för att s
 
 ### Använda bryggan i appen
 
-1. Välj *Databas via bryggan* under *Databaser* i Inhämta, klistra in adressen och token och tryck på **Anslut**.
+1. Välj *Databas via bryggan* under *Databaskällor* i Inhämta, klistra in adressen och token och tryck på **Anslut**.
    Token gäller för sessionen; *Spara krypterat* lagrar den med samma lösenfras som API-nycklarna.
 2. Beskriv källan: Access- eller Excel-fil (sökväg på datorn), SQL Server (server, databas och användare, eller
    Windows-inloggning), ODBC-datakälla (välj bland datorns DSN) eller en anslutningssträng. Tryck på
@@ -119,8 +129,9 @@ godkänt eller det gått fem minuter.
 
 ## Databaskällor över HTTP
 
-Valet **Databaskälla** under *Lägg till källor* i Inhämta skapar en vanlig API-källa av en adress och en
-nyckel. Appen frågar tjänsten efter dess tabeller (schemaupptäckt) och lägger en ändpunkt per tabell plus en allmän
+Valet **Extern databas** under *Databaskällor* i Inhämta öppnar ett formulär i mitten som skapar en vanlig API-källa av en
+adress och en nyckel. Det gäller databaser som svarar över HTTP; MySQL, MariaDB och PostgreSQL nås genom bryggan, eftersom
+webbläsaren inte kan öppna en anslutning till dem, och formuläret har en knapp dit. Appen frågar tjänsten efter dess tabeller (schemaupptäckt) och lägger en ändpunkt per tabell plus en allmän
 där du anger tabellen själv. Källan fungerar sedan som de förinställda API:erna: parametrar, förhandsgranskning,
 sidor som följs automatiskt och sparade hämtningar som uppdateras med ett klick.
 
@@ -148,7 +159,7 @@ kolumner) beskrivs i [api-konfiguration.md](api-konfiguration.md) och kan använ
 
 ### Neo4j över Bolt
 
-Valet **Neo4j** under *Lägg till källor* (familjen **Neo4j (Bolt)**, som också finns i *Databaskälla*) ansluter till Neo4j Aura eller en egen server med Neo4j:s
+Valet **Neo4j** under *Databaskällor* ansluter till Neo4j Aura eller en egen server med Neo4j:s
 drivrutin över WebSocket (`neo4j+s://…`, databas, användarnamn och lösenord; lösenordet sparas aldrig i klartext). Källan
 öppnar en Cypher-redigerare: resultatet blir en tabell, eller en grafdatamängd när svaret innehåller noder och
 relationer; frågor kan sparas på källan. Anslutningen kräver samtycke (ändamålet Neo4j) och omfattas inte av CORS; en
@@ -156,7 +167,7 @@ egen server utan TLS (`bolt://`) nås bara från en sida över http://. Se [graf
 
 ### OpenCDE-server (BCF och Documents API)
 
-Valet **OpenCDE** under *Lägg till källor* (familjen **OpenCDE (BCF, Documents)**, som också finns i *Databaskälla*) ansluter till en server som följer buildingSMARTs
+Valet **OpenCDE** under *Vanliga källor* ansluter till en server som följer buildingSMARTs
 OpenCDE-API:er, till exempel [Dataregium](https://github.com/marwiss/Dataregium). Ange serverns adress. Lämna klient-id tomt när servern låter appen registrera sig själv (se nedan), annars det klient-id som
 serverns administratör har registrerat för Dataspatium (en publik klient med omdirigeringsadressen
 `http://127.0.0.1:8080/oauth-callback.html`, eller motsvarande för den adress appen servas på). Källan öppnar en vy där
@@ -245,7 +256,7 @@ sidor har formen `index.html#/inhamta/opencde?server=https://…` och öppnar di
 
 ## Öppna geodata
 
-Dialogen för *Geodatakälla* under *Lägg till källor* börjar med en lista över **färdiga geodatakällor**: öppna WFS-, OGC API Features-
+Formuläret för *Geodatakälla* under *Geodatakällor* börjar med en lista över **färdiga geodatakällor**: öppna WFS-, OGC API Features-
 och ArcGIS-tjänster från nordiska myndigheter och kommuner (SCB, SGU, Naturvårdsverket, SLU Artdatabanken, Riksantikvarieämbetet,
 Skogsstyrelsen, Sundsvalls kommun, Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsingfors, Väylävirasto,
 Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med flera), alla prövade från webbläsaren
@@ -258,7 +269,7 @@ som läser en hel lokalplan respektive ett deiliskipulag (alla lager) med planen
 fälten för en egen tjänst. Boverkets Planbestämmelsekatalog finns som vanlig API-källa (*Boverket
 Planbestämmelsekatalogen*), se [planer.md](planer.md).
 
-Valet **Geodatakälla** under *Lägg till källor* i Inhämta gör en vanlig API-källa av adressen till en geodatatjänst,
+Valet **Geodatakälla** under *Geodatakällor* i Inhämta gör en vanlig API-källa av adressen till en geodatatjänst,
 på samma sätt som databaskällorna. Appen läser tjänstens lager och lägger en ändpunkt per lager plus en allmän där du
 anger lagret själv. Svaren är GeoJSON i WGS 84: datamängden får en geometrikolumn och öppnas som karta i Bearbeta (se
 [kartor.md](kartor.md)). Källan visar lagren som en lista att filtrera i; välj ett lager, begränsa gärna med ett område
@@ -309,6 +320,23 @@ WMS-adress kopieras för att användas som bakgrundskarta eller WMS-lager i en k
 Geodatatjänster svarar ofta med många objekt: begränsa med ett område eller ett filter, och höj *Högsta antal sidor*
 under *Fler alternativ* bara när det behövs. En egen tjänst måste tillåta anrop från webbläsaren (CORS) på samma sätt som
 databaskällorna; de flesta myndigheters GeoServer och ArcGIS Server gör det.
+
+## Gränser för kartor
+
+*Gränser för kartor* under *Geodatakällor* är förenklade kommun- och regiongränser för tematiska kartor som följer med
+appen: län och kommuner i Sverige (SCB, Digitala gränser, CC0), regioner och kommuner i Danmark (DAGI), fylken och kommuner
+i Norge (Kartverket, CC BY 4.0) och landskap och kommuner i Finland (Statistikcentralen, CC BY 4.0). Välj en uppsättning,
+läs var den kommer ifrån och under vilken licens, och tryck på **Importera gränser**. Den blir en datamängd med kod, namn
+och geometri i longitud och latitud (WGS 84), som du kopplar till din statistik med koden och visar på en karta (se
+[visualisera.md](visualisera.md)). Ingenting hämtas från nätet.
+
+## Exempeldata
+
+*Exempeldata* under *Övriga källor* är små öppna datamängder som följer med appen, så att du kan prova lägena utan egna
+filer. Varje exempel säger vad det är, var det kommer ifrån och under vilken licens; **Importera** gör en ny datamängd av
+ett exempel och **Importera alla** av alla. Ett exempel som redan finns i arbetsytan märks och kan öppnas direkt. Vid
+första starten, när arbetsytan är tom, länkar Filer hit.
+
 ## Länkade filer
 
 I Chrome och Edge finns knappen **Länka en fil på datorn** i Inhämta. Filen väljs med datorns filväljare och

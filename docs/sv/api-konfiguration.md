@@ -48,7 +48,7 @@ Statistikcentralen, Hagstofa, Grønlands Statistik, ÅSUB) bläddras på appens 
 | Land | Källa | Vad | Så hämtar du |
 |---|---|---|---|
 | Danmark | Danmarks Statistik Statistikbanken | Officiell statistik (api.statbank.dk) | Bläddra i ämnesträdet, välj tabell och värden per variabel; variabler som inte väljs summeras bort |
-| Danmark | Open Data DK | Danska kommuners och regioners dataportal | Sök datamängder, en rad per fil, importera filen via Från webbadress |
+| Danmark | Open Data DK | Danska kommuners och regioners dataportal | Sök datamängder, en rad per fil, importera filen via Webbadress |
 | Norge | SSB Statistikkbanken (API v1 och v2) | Officiell statistik, norska och engelska | Bläddra i ämnesträdet eller sök tabell, välj värden; 800 000 celler per anrop |
 | Norge | FHI Statistikk | Folkhälsostatistik från Folkehelseinstituttets register och statistikbanker | Välj källa, tabell och värden per dimension (måtten i MEASURE_TYPE) |
 | Norge | Enhetsregisteret (Brønnøysundregistrene) | Företag och organisationer | Sök på namn, kommun, organisationsform eller näringsgrenskod |

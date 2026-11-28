@@ -1,14 +1,28 @@
 # Insamling i fält
 
-Med **Insamling i fält** fyller du i rader på telefonen, med eller utan nät, med foto och position. Formuläret bygger på en
-datamängds kolumner och regler, så en felaktig rad syns direkt där du står. Raderna kommer sedan tillbaka till datorn som en ny
-version av datamängden. Fotona blir en bildsamling och positionerna hamnar på kartan.
+Med **Insamling i fält** samlar du in rader där du är, utan dator: du fyller i dem på telefonen, med eller utan nät, med foto
+och position. Formuläret bygger på en datamängds kolumner och regler, så en felaktig rad syns direkt där du står. Raderna kommer
+sedan tillbaka till datorn som en ny version av datamängden. Fotona blir en bildsamling och positionerna hamnar på kartan.
+
+## Mobilen i Inhämta
+
+Allt som kommer från telefonen nås under **Mobilen** i *Vanliga källor* i Inhämta, eftersom datorn hämtar in det som telefonen
+ger. Mobilen har två flikar:
+
+- *Para och ta emot*: para telefonen med datorn en gång och ta sedan emot det som Dataspatium Mobil skickar direkt över det
+  lokala nätet, utan server. Du godkänner innan något tas emot. Insamlade rader blir en ny version av datamängden, fotona i dem
+  en bildsamling, och filer importeras som vanligt.
+- *Insamling i fält*: formuläret som telefonen fyller i.
+
+I Dataspatium Mobil heter knappen *Skicka till datorn*. Under **Enheter** i Dela skickar du i stället datamängder och filer
+till en telefon eller en annan dator, och **Ta emot** i Dela tar emot paket från andra människor.
 
 ## Så går det till
 
-1. I **Inhämta** väljer du *Insamling i fält*, och där en datamängd eller *Ny datamängd*.
+1. I **Inhämta** väljer du *Mobilen* och fliken *Insamling i fält*, och där en datamängd eller *Ny datamängd*.
 2. Bestäm vilka fält telefonen ska fråga efter, och tryck på *Skicka till mobilen*.
-3. Anslut telefonen under **Enheter** i Dela, och skicka formuläret. Telefonen behöver nät den här gången.
+3. Fliken *Para och ta emot* öppnas med formuläret valt. Anslut telefonen och skicka formuläret. Telefonen behöver nät den här
+   gången.
 4. På telefonen öppnar du formuläret och samlar in rader. Nu behövs inget nät.
 5. När du är tillbaka trycker du på *Skicka till datorn* och skannar datorns kod.
 6. Datorn visar vad som kommit, och du väljer *Lägg till*.
@@ -57,7 +71,7 @@ Saknar du anslutning till datorn kan du använda *Dela som fil* och skicka filen
 
 ## På datorn
 
-Raderna kommer via Enheter eller Ta emot, och du ser dem innan något läggs till.
+Raderna kommer via *Para och ta emot* i Mobilen eller via Ta emot i Dela, och du ser dem innan något läggs till.
 
 - Tabellen sparas först som en version, så att du kan gå tillbaka.
 - Kolumner som saknas läggs till: `falt_id`, `lat`, `lon`, `noggrannhet_m`, `foto`, `insamlad` och `insamlad_av`. Har datamängden redan

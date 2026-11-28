@@ -134,7 +134,7 @@ Boundaries for other countries are imported from GeoJSON, shapefile or GeoPackag
 ### Choropleth map (Map)
 
 1. Get the boundaries: choose for example **Swedish municipality boundaries (SCB)** or **Norwegian municipality
-   boundaries (Kartverket)** in the list *Boundaries for maps* in Import and press **Import boundaries**. They become
+   boundaries (Kartverket)** under *Boundaries for maps* (Geodata sources) in Import and press **Import boundaries**. They become
    datasets with code, name and a geometry column (`geometry`, GeoJSON in longitude and latitude). The codes are the
    official ones: four-digit municipality codes in Sweden, Denmark (DAGI, such as `0101`; Statistics Denmark writes
    `101`) and Norway, three digits in Finland (such as `091`; StatFin writes `KU091`). If the codes in the statistics

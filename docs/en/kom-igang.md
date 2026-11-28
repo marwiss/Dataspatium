@@ -57,7 +57,7 @@ widths are changed by dragging the edge towards the work area. Alt+1 to Alt+9 sw
    CSV, TSV and other delimited text files, Excel (xlsx, xls, xlsm, xlsb), ODS, JSON, NDJSON, JSON-stat,
    GeoJSON, XML, SQLite, GeoPackage, shapefile (ZIP with shp and dbf), fixed-width text and statistical files
    from SPSS (sav), Stata (dta), SAS (sas7bdat, xpt), SCB's PX format, Parquet and R (rds, RData). Files can also
-   be fetched straight from a web address under *From web address*. The statistical formats are read by R and
+   be fetched straight from a web address under *Web address*. The statistical formats are read by R and
    imported in one step without a preview; the first time this takes a few seconds while R starts. See
    [format.md](format.md).
 2. Check the settings. Dataspatium guesses the character encoding (UTF-8 or Windows-1252), the delimiter,

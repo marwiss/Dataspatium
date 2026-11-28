@@ -46,8 +46,8 @@ hemligheter lagras bara krypterade (AES-GCM).
 3. **Öppna.** Dubbelklicka på `index.html` i mappen, eller dra filen till ett webbläsarfönster. Om Windows frågar
    vilken app som ska användas väljer du Edge, Chrome eller Firefox. Första gången väljer du språk, och sedan erbjuds
    **Grundkursen**: en genomgång av alla lägen med exempeldata som tar ungefär tio minuter och kan öppnas igen från hjälpen (?).
-4. **Hämta in data.** I läget *Inhämta* släpper du en fil på ytan, eller klickar på *Prova med exempeldata*. Appen visar vad filen
-   innehåller; klicka på *Importera*. Datamängden sparas i webbläsaren på din dator.
+4. **Hämta in data.** I läget *Inhämta* släpper du en fil på ytan, eller väljer *Exempeldata* och klickar på *Importera*. Appen
+   visar vad filen innehåller; klicka på *Importera*. Datamängden sparas i webbläsaren på din dator.
 5. **Arbeta vidare.** Lägena högst upp är stegen i arbetet: *Hantera* håller ordning på dina datamängder, *Söka* hittar rader utan
    kod, *Bearbeta* visar tabellen, kartan eller modellen med knappar för att rätta och räkna, *Kontrollera* prövar tabeller och
    modeller mot krav, *Analysera* har statistik och kod (R, Python och SQL), *Visualisera* gör diagram och kartor, *Exportera*
@@ -69,7 +69,7 @@ skilda arbetsytor; flytta data mellan dem med en säkerhetskopia eller ett paket
   Linux).
 - **Med en server:** starta Dataregium med Docker eller Podman (`docker compose up -d --build --wait` och
   `docker compose exec api opencde seed` i Dataregiums repo), servera Dataspatium på port 8080 och lägg till servern under *Inhämta >
-  Lägg till källor > OpenCDE*. Klient-id kan lämnas tomt när servern tillåter självregistrering. Hela vägen på tjugo minuter:
+  Vanliga källor > OpenCDE*. Klient-id kan lämnas tomt när servern tillåter självregistrering. Hela vägen på tjugo minuter:
   [snabbstart.md](docs/sv/snabbstart.md).
 - **Grafen:** serverns IFC-graf (Neo4j eller Memgraph) frågas med Cypher från *Inhämta*, genom serverns graffråga eller direkt över
   Bolt; serverns namngivna frågor nås från AI-panelen.

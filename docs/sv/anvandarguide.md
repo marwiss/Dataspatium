@@ -56,14 +56,28 @@ behöver dem längre.
 Släpp en fil på ytan, klistra in en tabell eller hämta en fil från en webbadress (servern måste tillåta CORS; en
 delad Dataspatium-konfiguration läggs till direkt). Kontrollera förhandsgranskningen: teckenkodning, avgränsare,
 rubrikrad och decimaltecken gissas men kan ändras. I kolumnsteget får varje kolumn en typ; koder med inledande
-nollor (kommunkoder, personnummer) behålls som text. Ge datamängden ett namn och importera. Under ytan finns data
-som följer med appen: knappen för exempeldatan *Befolkning per kommun 2024* och listan *Gränser för kartor* med
-kommun- och regiongränser för Sverige, Danmark, Norge och Finland.
+nollor (kommunkoder, personnummer) behålls som text. Ge datamängden ett namn och importera.
 
-Vänsterkolumnen har fyra grupper: *Vanliga källor* (Filer, Klistra in, Från webbadress), *Lägg till källor*, *Tillagda
-källor* och *Övriga källor* (Sparade hämtningar, Insamling i fält, Guider). *Öppna API:er* under Lägg till källor visar
-förteckningen över förinställningar för SCB, Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat, SMHI,
-luftkvalitetsdata, Naturvårdsregistret, Lantmäteriets geodatakatalog och Sveriges dataportal, samt Boverket och
+Vänsterkolumnen har inget huvud med rubrik; den består av grupper som var och en fälls ut och in med pilen framför
+rubriken, och webbläsaren kommer ihåg vilka som är infällda. Allt du väljer, också formulären som lägger till en källa,
+visas i mitten med en hjälptext ovanför.
+
+- *Skapa källor*: Ny byggnadsmodell och Ny översiktsplan.
+- *Vanliga källor*: Filer, Klistra in, Webbadress, OpenCDE och Mobilen (para telefonen och ta emot det den samlat in, och
+  Insamling i fält, formuläret som telefonen fyller i; se [insamling.md](insamling.md)).
+- *Databaskällor*: Extern databas, Databas via bryggan och Neo4j.
+- *API-källor*: Öppna API:er och API från fil.
+- *Geodatakällor*: Geodatakälla och Gränser för kartor, med kommun- och regiongränser för Sverige, Danmark, Norge och
+  Finland som följer med appen.
+- *Tillagda källor*: det du har lagt till, varje rad med en ta bort-knapp.
+- *Övriga källor*: Sparade hämtningar, Exempeldata (små öppna datamängder som följer med appen, var och en med ursprung och
+  licens, och en knapp som importerar alla) och Guider.
+
+En tom arbetsyta visar vid första starten en länk till Exempeldata. Varje källa har också en egen adress, till exempel
+`#/inhamta/examples` för Exempeldata, och finns i kommandopaletten (Ctrl+K).
+
+*Öppna API:er* visar förteckningen över förinställningar för SCB, Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat,
+SMHI, luftkvalitetsdata, Naturvårdsregistret, Lantmäteriets geodatakatalog och Sveriges dataportal, samt Boverket och
 Lantmäteriet Direkt för den som har egna nycklar. Därtill statistikbyråerna och flera andra myndigheter i Danmark, Norge,
 Finland och Island, de självstyrande områdena och Nordic Statistics; landsknapparna och sökfältet ovanför listan väljer vad som
 visas. *Lägg till* lägger förinställningen under Tillagda källor och öppnar den; SCB och Boverket ligger där från start,
@@ -71,9 +85,10 @@ och det du tar bort går tillbaka till förteckningen. Bläddra eller sök fram 
 och hämta till en ny datamängd eller lägg till i en befintlig. En hämtad datamängd kommer ihåg sin fråga, så den kan
 hämtas igen från Hantera när källan uppdaterats.
 
-Databaser: Access-filer släpps på ytan som andra filer; databaser på datorn (SQL Server, ODBC, Excel, SQLite) nås
-genom *Databas via bryggan* (varje ansluten databas hamnar under Tillagda källor) och tjänster över HTTP (PostgREST, OData,
-GraphQL med flera) genom *Databaskälla*; OpenCDE och Neo4j har egna val under Lägg till källor. I Chrome och Edge kan en fil länkas och läsas in igen från disken. Se [kallor.md](kallor.md).
+Databaser: Access-filer släpps på ytan som andra filer; databaser på datorn (Access, Excel, SQL Server, SQLite, MySQL,
+MariaDB, PostgreSQL och ODBC-källor) nås genom *Databas via bryggan* (varje ansluten databas hamnar under Tillagda källor),
+och tjänster över HTTP (PostgREST, OData, GraphQL med flera) genom *Extern databas*. I Chrome och Edge kan en fil länkas och
+läsas in igen från disken. Se [kallor.md](kallor.md).
 
 ### 2. Granska och rätta (Bearbeta)
 

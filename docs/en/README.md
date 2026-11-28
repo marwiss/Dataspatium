@@ -49,8 +49,8 @@ documentation show the app in Swedish.
 3. **Open.** Double-click `index.html` in the folder, or drag the file into a browser window. If Windows asks which
    app to use, choose Edge, Chrome or Firefox. The first time you choose a language, and then the **beginner's course** is offered:
    a walkthrough of all the modes with example data that takes about ten minutes and can be reopened from the help (?).
-4. **Bring in data.** In *Import* mode, drop a file on the surface, or click *Try with example data*. The app shows what the file
-   contains; click *Import*. The dataset is stored in the browser on your computer.
+4. **Bring in data.** In *Import* mode, drop a file on the surface, or choose *Example data* and click *Import*. The app shows what
+   the file contains; click *Import*. The dataset is stored in the browser on your computer.
 5. **Carry on.** The modes at the top are the steps of the work: *Manage* keeps your datasets in order, *Search* finds rows without
    code, *Process* shows the table, the map or the model with buttons to correct and calculate, *Check* tries tables and models
    against requirements, *Analyse* has statistics and code (R, Python and SQL), *Visualise* makes charts and maps, *Export* saves
@@ -72,7 +72,7 @@ version and the folder version have separate workspaces; move data between them 
   and Linux).
 - **With a server:** start Dataregium with Docker or Podman (`docker compose up -d --build --wait` and
   `docker compose exec api opencde seed` in Dataregium's repository), serve Dataspatium on port 8080 and add the server under *Import >
-  Add sources > OpenCDE*. The client id can be left empty when the server allows self-registration. The whole way in twenty minutes:
+  Common sources > OpenCDE*. The client id can be left empty when the server allows self-registration. The whole way in twenty minutes:
   [snabbstart.md](snabbstart.md) (Quick start).
 - **The graph:** the server's IFC graph (Neo4j or Memgraph) is queried with Cypher from *Import*, through the server's graph query or
   directly over Bolt; the server's named queries are reached from the AI panel.

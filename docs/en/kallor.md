@@ -8,6 +8,12 @@ ordinary sources in Import. Files chosen with the computer's file picker can als
 dataset is read again from disk with one click. Everything happens in the browser; nothing is sent anywhere but
 to the database you name yourself.
 
+In Import the sources are in groups in the left column: *Database sources* (External database, Database through the bridge
+and Neo4j), *API sources*, *Geodata sources* (Geodata source and Boundaries for maps) and more, with OpenCDE and Phone under
+*Common sources*. What you choose is shown in the middle. The forms that add a source have their help text above them, and
+the new source opens there once it is saved. The same form is shown as a dialog when it is opened from somewhere else, such
+as Neo4j from an OpenCDE server's card.
+
 ## Access files (mdb, accdb)
 
 Drop the file on the surface in Import like any other file. It is read by mdb-reader directly in the browser,
@@ -17,9 +23,13 @@ files cannot be read this way; use the bridge below instead. dBase files (.dbf) 
 
 ## The database bridge
 
-The bridge is a small script you start on the computer when you need it, in the spirit of a local web server. It
-listens on your own computer only (127.0.0.1), requires a token shown in its window and is read-only unless you
-start it with writing allowed. The app fetches tables through the bridge; nothing leaves the computer.
+Why the bridge is needed: the browser may not open a connection to a database, nor read files on the computer that you
+have not chosen yourself. The bridge is a small script you start on the computer when you need it, in the spirit of a
+local web server. It listens on your own computer only (127.0.0.1), requires a token shown in its window, is read-only
+unless you start it with writing allowed and lets you approve every write. The app fetches tables through the bridge;
+nothing leaves the computer. It is used for Access, Excel, SQL Server, SQLite, MySQL, MariaDB, PostgreSQL and other ODBC
+sources, and to fetch from an address that shuts out browsers (see *Fetching through the bridge* below). Its view in Import
+says the same at the top.
 
 ### Starting the bridge
 
@@ -38,7 +48,7 @@ GitHub Pages. Close the window, or press Ctrl+C, to stop.
 
 ### Using the bridge in the app
 
-1. Choose *Database through the bridge* under *Databases* in Import, paste the address and the token and press
+1. Choose *Database through the bridge* under *Database sources* in Import, paste the address and the token and press
    **Connect**. The token lasts for the session; *Save encrypted* stores it with the same passphrase as the API keys.
 2. Describe the source: an Access or Excel file (path on the computer), SQL Server (server, database and user, or
    Windows sign-in), an ODBC data source (choose among the computer's DSNs) or a connection string. Press
@@ -123,8 +133,9 @@ browser.
 
 ## Database sources over HTTP
 
-The way **Database source** under *Add sources* in Import makes an ordinary API source out of an address
-and a key. The app asks the service for its tables (schema discovery) and adds one endpoint per table plus a
+The way **External database** under *Database sources* in Import opens a form in the middle that makes an ordinary API
+source out of an address and a key. It is for databases that answer over HTTP; MySQL, MariaDB and PostgreSQL are reached
+through the bridge, since the browser cannot open a connection to them, and the form has a button there. The app asks the service for its tables (schema discovery) and adds one endpoint per table plus a
 generic one where you name the table yourself. The source then works like the preset APIs: parameters, preview,
 pages followed automatically and saved fetches updated with one click.
 
@@ -153,7 +164,7 @@ configurations.
 
 ### Neo4j over Bolt
 
-The way **Neo4j** under *Add sources* (the family **Neo4j (Bolt)**, also in *Database source*) connects to Neo4j Aura or an own server with Neo4j's driver over
+The way **Neo4j** under *Database sources* connects to Neo4j Aura or an own server with Neo4j's driver over
 WebSocket (`neo4j+s://…`, database, user name and password; the password is never stored in clear text). The source opens
 a Cypher editor: the result becomes a table, or a graph dataset when the answer holds nodes and relationships; queries
 can be kept on the source. The connection needs consent (purpose Neo4j) and is not subject to CORS; an own server without
@@ -161,7 +172,7 @@ TLS (`bolt://`) is reached only from a page over http://. See [grafer.md](grafer
 
 ### OpenCDE server (BCF and Documents API)
 
-The way **OpenCDE** under *Add sources* (the family **OpenCDE (BCF, Documents)**, also in *Database source*) connects to a server that implements buildingSMART's
+The way **OpenCDE** under *Common sources* connects to a server that implements buildingSMART's
 OpenCDE APIs, for example [Dataregium](https://github.com/marwiss/Dataregium). Enter the server's address. Leave the client id empty when the server lets the app register itself (see below), otherwise the client id
 its administrator registered for Dataspatium (a public client with the redirect URI
 `http://127.0.0.1:8080/oauth-callback.html`, or the equivalent for the address the app is served from). The source opens
@@ -251,7 +262,7 @@ Dataregium opens in a popup (sign-in, upload, document selection) appear in the 
 
 ## Open geodata
 
-The dialog for *Geodata source* under *Add sources* starts with a list of **ready-made geodata sources**: open WFS, OGC API Features and
+The form for *Geodata source* under *Geodata sources* starts with a list of **ready-made geodata sources**: open WFS, OGC API Features and
 ArcGIS services of Nordic agencies and municipalities (SCB, SGU, Naturvårdsverket, SLU Artdatabanken, Riksantikvarieämbetet,
 Skogsstyrelsen, Sundsvalls kommun, Kartverket, Miljødirektoratet, Riksantikvaren, Statistics Finland, SYKE, Helsinki, Väylävirasto,
 Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands and others), all tried from the browser all
@@ -264,7 +275,7 @@ plan**, which reads a whole local plan or deiliskipulag (every layer) by its pla
 service of your own. Boverket's Planbestämmelsekatalog is an ordinary API source (*Boverket Planbestämmelsekatalogen*),
 see [planer.md](planer.md).
 
-The way **Geodata source** under *Add sources* in Acquire makes an ordinary API source of the address of a geodata
+The way **Geodata source** under *Geodata sources* in Import makes an ordinary API source of the address of a geodata
 service, just like the database sources. The app reads the service's layers and adds one endpoint per layer plus a
 generic one where you name the layer yourself. The answers are GeoJSON in WGS 84: the dataset gets a geometry column
 and opens as a map in Process (see [kartor.md](kartor.md)). The source shows the layers as a filterable list; choose a
@@ -315,6 +326,23 @@ metadata open in a new tab. The hit list can also be fetched as a table under th
 Geodata services often answer with many features: limit by an area or a filter, and raise *Maximum pages* under *More
 options* only when needed. Your own service must allow requests from the browser (CORS) just like the database sources;
 most agencies' GeoServer and ArcGIS Server do.
+
+## Boundaries for maps
+
+*Boundaries for maps* under *Geodata sources* are simplified municipality and region boundaries for thematic maps that ship
+with the app: counties and municipalities of Sweden (SCB, Digital boundaries, CC0), regions and municipalities of Denmark
+(DAGI), counties and municipalities of Norway (Kartverket, CC BY 4.0) and regions and municipalities of Finland (Statistics
+Finland, CC BY 4.0). Choose a set, read where it comes from and under which licence, and press **Import boundaries**. It
+becomes a dataset with a code, a name and a geometry in longitude and latitude (WGS 84), which you join to your statistics
+by the code and show on a map (see [visualisera.md](visualisera.md)). Nothing is fetched from the internet.
+
+## Example data
+
+*Example data* under *Other sources* are small open datasets that ship with the app, so that you can try the modes without
+files of your own. Each example says what it is, where it comes from and under which licence; **Import** makes a new dataset
+of one example and **Import all** of all of them. An example already in the workspace is marked and can be opened directly.
+At the first start, when the workspace is empty, Files links here.
+
 ## Linked files
 
 In Chrome and Edge, Import has the button **Link a file on this computer**. The file is chosen with the computer's

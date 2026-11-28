@@ -41,7 +41,7 @@ Delimited text files of 64 MB or more are read in chunks: the preview shows the 
 the rows are written to the dataset while the file is read, so that the whole text never needs to be in memory. The
 column types are taken from the column step or guessed from the first chunk. Progress is shown as the rows read.
 
-All file formats can also be fetched from a web address under *From web address* in Import, if the server allows
+All file formats can also be fetched from a web address under *Web address* in Import, if the server allows
 requests from the browser (CORS). Dataspatium's own configuration files (API source, chart, dashboard, document
 template, notebook) are recognised by the field `format` and added directly.
 

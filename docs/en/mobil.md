@@ -11,7 +11,8 @@ verification code. The same technique connects two computers with pasted codes.
 
 ## The first time: pair the phone
 
-1. On the computer: open *Share → Devices*, leave *Connect to* at *New device* and click *Show QR code*.
+1. On the computer: open *Import → Phone* (or *Share → Devices* when you are sending to the phone), leave *Connect to* at
+   *New device* and click *Show QR code*.
 2. On the phone: open the camera and point it at the QR code. The mobile page opens in the browser (the first
    time it is fetched from the web; afterwards it sits in the phone's cache). The phone shows a 52-character code.
 3. On the computer: type the phone's code into the field below the QR code and click *Connect*. A computer with a

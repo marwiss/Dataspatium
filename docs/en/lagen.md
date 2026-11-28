@@ -37,7 +37,7 @@ Here data comes in: files dropped on the surface, pasted text, web addresses and
 steps: file, settings with preview, columns with types, done. Formats: CSV and other delimited text, fixed-width
 text, Excel, ODS, JSON (including JSON-stat and GeoJSON), XML, SQLite, GeoPackage, shapefile and, via R, SPSS,
 Stata, SAS, PX, Parquet, RDS and RData (see [format.md](format.md)); the R formats are imported in one step without
-preview. The left column, headed *Sources* in the pane head, has four groups. *Common sources*: Files, Paste and From web address. *Add sources*: Database through the bridge, Open APIs, API from file, Database source, OpenCDE, Neo4j and Geodata source. *Added sources*: what you have added, each row with a remove button; from the start SCB's and Boverket's open APIs are there. *Other sources*: Saved fetches, Field collection and Guides. *Open APIs* shows the catalogue of presets for Statistics Sweden (browse the subject tree or search for a table), the
+preview. The left column has no heading in its pane head, since every group says that it holds sources. The groups fold in and out with the arrow in front of the heading, and the browser remembers how they were. *Create sources*: New building model and New comprehensive plan. *Common sources*: Files, Paste, Web address, OpenCDE and Phone. *Database sources*: External database, Database through the bridge and Neo4j. *API sources*: Open APIs and API from file. *Geodata sources*: Geodata source and Boundaries for maps. *Added sources*: what you have added, each row with a remove button; from the start SCB's and Boverket's open APIs are there. *Other sources*: Saved fetches, Example data and Guides. Everything opens in the middle, also the forms that add a source, with the help text above them; the same form is shown as a dialog when it is opened from another mode or a card. Each source has an address of its own (`#/inhamta/<source>`, such as `#/inhamta/examples`) and a command in the palette. *Open APIs* shows the catalogue of presets for Statistics Sweden (browse the subject tree or search for a table), the
 Public Health Agency of Sweden, the National Board of Health and Welfare, Kolada, Eurostat, SMHI, air quality data,
 the nature conservation register, Lantmäteriet's geodata catalogue and Sweden's data portal, as well as Boverket and
 Lantmäteriet Direkt for those who have keys, and in addition sources in Denmark, Norway, Finland, Iceland, Greenland,
@@ -46,15 +46,15 @@ that came from an API and updates them with one click, one at a time or all. The
 contact the internet for a purpose (APIs, web addresses, GitHub, components) it asks for permission; the answer can
 be remembered. See [api-konfiguration.md](api-konfiguration.md).
 
-*Database through the bridge* opens the bridge view (Access, Excel, SQL Server, SQLite and ODBC
-sources on the computer through a small local script); every database you connect appears under Added sources and opens the bridge view again with that database chosen. *Database source* makes a source of an address and a key (PostgREST, OData, GraphQL,
-CouchDB, ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets and Airtable over HTTP; OpenCDE and Neo4j too, which also have ways of their own in the list). Access files are also
+*Database through the bridge* opens the bridge view, which first says why the bridge is needed and what it is for (Access, Excel,
+SQL Server, SQLite, MySQL, MariaDB, PostgreSQL and ODBC sources on the computer through a small local script); every database you connect appears under Added sources and opens the bridge view again with that database chosen. *External database* makes a source of an address and a key (PostgREST, OData, GraphQL,
+CouchDB, ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets and Airtable over HTTP); MySQL, MariaDB and PostgreSQL are reached through the bridge. OpenCDE and Neo4j have ways of their own. Access files are also
 read directly as files, and in Chrome and Edge a file can be linked so that the dataset is read again from disk.
 See [kallor.md](kallor.md).
 
 QGIS projects (.qgs, .qgz) become map views: layer order, visibility and symbols come along, the layers are matched to datasets with the same file name and data files dropped with the project are imported first (see [kartor.md](kartor.md)).
 
-*Geodata source* under Add sources: a WFS, OGC API Features or ArcGIS service becomes a source whose
+*Geodata source* under Geodata sources: a WFS, OGC API Features or ArcGIS service becomes a source whose
 layers are fetched as GeoJSON and open as maps, and the source *Geodataportalen (sök geodata)* searches the Swedish
 national geodata catalogue and adds services with one click. Preset geodata sources exist for SCB, SGU, the Agency for
 Marine and Water Management, the National Heritage Board, the Forest Agency, Kartverket, Statistics Finland and SYKE,
@@ -72,8 +72,12 @@ Process (see [grafer.md](grafer.md)). Two tables become a graph with *Make graph
 Building models in IFC and drawings in DXF become datasets of the kind model. The facts of the file are shown and the model
 opens in 3D or as a drawing in Process (see [cad-bim.md](cad-bim.md)).
 
-**Field collection** in the list of sources builds a form on a dataset's columns and rules and sends it to the phone. The rows come back as a new version
-(see [insamling.md](insamling.md)).
+**Phone** in the list of sources gathers everything from the phone: the tab *Pair and receive* pairs the phone and receives
+collected rows, photos and files directly over the local network, and the tab *Field collection* builds a form on a dataset's
+columns and rules and sends it to the phone. The rows come back as a new version (see [insamling.md](insamling.md)).
+*Boundaries for maps* under Geodata sources are municipality and region boundaries of the Nordic countries that ship with the
+app, each with its origin and licence, and *Example data* under Other sources are small open datasets to try the app with (see
+[kallor.md](kallor.md#example-data)).
 
 All sources in the list look the same, with a mark for their type and a line under the name.
 

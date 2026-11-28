@@ -57,24 +57,39 @@ need them.
 Drop a file on the surface, paste a table or fetch a file from a web address (the server must allow CORS; a shared
 Dataspatium configuration is added directly). Check the preview: character encoding, delimiter, header row and
 decimal separator are guessed but can be changed. In the column step each column gets a type; codes with leading
-zeros (municipality codes, personal identity numbers) are kept as text. Give the dataset a name and import. The
-area below the surface has data that ships with the app: the button for the example data *Population per
-municipality 2024 (Sweden)* and the list *Boundaries for maps* with municipality and region boundaries for Sweden,
-Denmark, Norway and Finland.
+zeros (municipality codes, personal identity numbers) are kept as text. Give the dataset a name and import.
 
-Under *Add sources* → *Open APIs* there is the catalogue of presets (the ones you add come under *Added sources*; SCB and Boverket are there from the start) for SCB, the Public Health Agency of Sweden, the National Board of Health and
-Welfare, Kolada, Eurostat, SMHI, air quality data, the Nature Conservation Register, Lantmäteriet's geodata
-catalogue and Sweden's data portal, as well as Boverket and Lantmäteriet Direkt for those who have their own keys.
-In addition there are the statistics offices and several other agencies in Denmark, Norway, Finland and Iceland,
-the self-governing areas and Nordic Statistics; the country buttons above the list choose which countries'
-sources are shown. Browse or search for a table, choose variables, preview and fetch into a new dataset or add to an existing one. A
-fetched dataset remembers its query, so it can be fetched again from Manage when the source has been updated, and
-*Saved fetches* in Import updates such datasets with one click and replays their recipes.
+The left column has no heading in its head; it consists of groups that each fold in and out with the arrow in front of
+the heading, and the browser remembers which ones are folded. Everything you choose, also the forms that add a source, is
+shown in the middle with a help text above it.
 
-Databases: Access files are dropped on the surface like other files; databases on the computer (SQL Server, ODBC,
-Excel, SQLite) are reached through *Database through the bridge* and services over HTTP (PostgREST, OData, GraphQL
-and more) through *Database source*; OpenCDE and Neo4j have ways of their own under Add sources. In Chrome and Edge a file can be linked and read again from disk. See
-[kallor.md](kallor.md).
+- *Create sources*: New building model and New comprehensive plan.
+- *Common sources*: Files, Paste, Web address, OpenCDE and Phone (pair the phone and receive what it collected, and Field
+  collection, the form the phone fills in; see [insamling.md](insamling.md)).
+- *Database sources*: External database, Database through the bridge and Neo4j.
+- *API sources*: Open APIs and API from file.
+- *Geodata sources*: Geodata source and Boundaries for maps, with municipality and region boundaries for Sweden, Denmark,
+  Norway and Finland that ship with the app.
+- *Added sources*: what you have added, each row with a remove button.
+- *Other sources*: Saved fetches, Example data (small open datasets that ship with the app, each with its origin and
+  licence, and a button that imports them all) and Guides.
+
+An empty workspace shows a link to Example data at the first start. Each source also has an address of its own, such as
+`#/inhamta/examples` for Example data, and is in the command palette (Ctrl+K).
+
+*Open APIs* shows the catalogue of presets (the ones you add come under *Added sources*; SCB and Boverket are there from the
+start) for SCB, the Public Health Agency of Sweden, the National Board of Health and Welfare, Kolada, Eurostat, SMHI, air
+quality data, the Nature Conservation Register, Lantmäteriet's geodata catalogue and Sweden's data portal, as well as Boverket
+and Lantmäteriet Direkt for those who have their own keys. In addition there are the statistics offices and several other
+agencies in Denmark, Norway, Finland and Iceland, the self-governing areas and Nordic Statistics; the country buttons above
+the list choose which countries' sources are shown. Browse or search for a table, choose variables, preview and fetch into a
+new dataset or add to an existing one. A fetched dataset remembers its query, so it can be fetched again from Manage when the
+source has been updated, and *Saved fetches* in Import updates such datasets with one click and replays their recipes.
+
+Databases: Access files are dropped on the surface like other files; databases on the computer (Access, Excel, SQL Server,
+SQLite, MySQL, MariaDB, PostgreSQL and ODBC sources) are reached through *Database through the bridge* and services over HTTP
+(PostgREST, OData, GraphQL and more) through *External database*. In Chrome and Edge a file can be linked and read again from
+disk. See [kallor.md](kallor.md).
 
 ### 2. Review and correct (Process)
 

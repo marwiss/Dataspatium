@@ -158,7 +158,7 @@ only). The first time, the browser's language is loaded together with the few wo
 
 ## Are there sources from the other Nordic countries?
 
-Yes. Under *Add sources* → *Open APIs* in Import there are the statistics offices of Denmark, Norway, Finland, Iceland,
+Yes. Under *API sources* → *Open APIs* in Import there are the statistics offices of Denmark, Norway, Finland, Iceland,
 Greenland, the Faroe Islands and Åland, Nordic Statistics, the Norwegian Institute of Public Health, the
 Brønnøysund register, the Norwegian Mapping Authority, MET Norway, THL's Sotkanet, PRH's company register,
 Digitraffic, the Finnish Meteorological Institute, the Icelandic Met Office and the Danish and Finnish data
@@ -259,8 +259,8 @@ can fetch them in advance or remove them.
 
 The whole app is made for computers, but the phone can take part: Dataspatium Mobile
 (<https://marwiss.github.io/Dataspatium/m/>) receives bundles and files from the computer over the local network,
-shows the tables, forwards them and hands them to another computer. Open *Share → Devices* on the computer and scan
-the QR code; see [mobil.md](mobil.md). On tablets in server mode the whole app can be used: in narrow windows the
+shows the tables, forwards them and hands them to another computer. Open *Import → Phone* (or *Share → Devices* to send) on the computer
+and scan the QR code; see [mobil.md](mobil.md). On tablets in server mode the whole app can be used: in narrow windows the
 mode switcher shows icons and the panels open as sheets over the work area.
 
 ## How do I move data to a phone without the internet?

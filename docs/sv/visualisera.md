@@ -133,8 +133,8 @@ nedladdning.
 
 ### Koropletkarta (Karta)
 
-1. Hämta gränserna: välj till exempel **Kommungränser (SCB)** eller **Kommungränser Norge (Kartverket)** i listan
-   *Gränser för kartor* i Inhämta och tryck **Importera gränser**. De blir datamängder med kod, namn och en
+1. Hämta gränserna: välj till exempel **Kommungränser (SCB)** eller **Kommungränser Norge (Kartverket)** under
+   *Gränser för kartor* (Geodatakällor) i Inhämta och tryck **Importera gränser**. De blir datamängder med kod, namn och en
    geometrikolumn (`geometry`, GeoJSON i longitud och latitud). Koderna är de officiella: fyrsiffriga kommunkoder
    i Sverige, Danmark (DAGI, som `0101`; Danmarks Statistik skriver `101`) och Norge, tresiffriga i Finland (som
    `091`; StatFin skriver `KU091`). Skiljer sig koderna i statistiken går de att jämka i Bearbeta med *Fyll ut

@@ -108,10 +108,10 @@ does not read the file.
 
 ## 3. Sign in to Dataregium from Dataspatium
 
-1. Choose the mode *Import*. In the left column, under *Add sources*, choose
-   *OpenCDE*.
+1. Choose the mode *Import*. In the left column, under *Common sources*, choose
+   *OpenCDE*. The form opens in the middle.
 2. Under *Address*, write `http://127.0.0.1:8000`. **Leave *Client id* and the
-   secret empty**: the app registers itself, even though the text in the dialog
+   secret empty**: the app registers itself, even though the text in the form
    speaks of a client id from the administrator. Press *Add source*.
 3. The app asks *Allow internet access?* up to three times, once per purpose. Here
    it concerns only your own server: press *Allow* each time.

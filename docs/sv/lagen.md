@@ -39,10 +39,14 @@ text med fasta kolumnbredder, Excel, ODS, JSON (även JSON-stat och GeoJSON), XM
 samt via R: SPSS, Stata, SAS, PX, Parquet, RDS och RData (se
 [format.md](format.md)); R-formaten importeras i ett steg utan förhandsgranskning.
 
-Vänsterkolumnen, med rubriken *Källor* i panelhuvudet, har fyra grupper. *Vanliga källor*: Filer, Klistra in och Från
-webbadress. *Lägg till källor*: Databas via bryggan, Öppna API:er, API från fil, Databaskälla, OpenCDE, Neo4j och
-Geodatakälla. *Tillagda källor*: det du lagt till, varje rad med en ta bort-knapp; från start ligger SCB:s och Boverkets
-öppna API:er där. *Övriga källor*: Sparade hämtningar, Insamling i fält och Guider.
+Vänsterkolumnen har ingen rubrik i panelhuvudet, eftersom varje grupp säger att den håller källor. Grupperna fälls ut och
+in med pilen framför rubriken, och webbläsaren minns hur de stod. *Skapa källor*: Ny byggnadsmodell och Ny översiktsplan.
+*Vanliga källor*: Filer, Klistra in, Webbadress, OpenCDE och Mobilen. *Databaskällor*: Extern databas, Databas via bryggan
+och Neo4j. *API-källor*: Öppna API:er och API från fil. *Geodatakällor*: Geodatakälla och Gränser för kartor. *Tillagda
+källor*: det du lagt till, varje rad med en ta bort-knapp; från start ligger SCB:s och Boverkets öppna API:er där. *Övriga
+källor*: Sparade hämtningar, Exempeldata och Guider. Allt öppnas i mitten, också formulären som lägger till en källa, med
+hjälptexten ovanför; samma formulär visas som dialog när det öppnas från ett annat läge eller ett kort. Varje källa har en
+egen adress (`#/inhamta/<källa>`, till exempel `#/inhamta/examples`) och ett kommando i paletten.
 
 *Öppna API:er* visar förteckningen över förinställningar i arbetsytan, med landsknappar och sök: SCB (bläddra i
 ämnesträdet eller sök tabell), Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat, SMHI, luftkvalitetsdata,
@@ -55,20 +59,23 @@ från ett API och uppdaterar dem med ett klick, en i taget eller alla. Första g
 för ett ändamål (API:er, webbadresser, GitHub, komponenter) frågar den om lov; svaret kan sparas. Se
 [api-konfiguration.md](api-konfiguration.md).
 
-*Databas via bryggan* öppnar bryggvyn (Access, Excel, SQL Server, SQLite och ODBC-källor på datorn genom ett litet
-lokalt skript); varje databas du ansluter dyker upp under Tillagda källor och öppnar bryggvyn igen med den databasen vald.
-*Databaskälla* gör en källa av en adress och en nyckel (PostgREST, OData, GraphQL, CouchDB, ClickHouse, Elasticsearch,
-SPARQL, InfluxDB, Google Sheets och Airtable över HTTP; även OpenCDE och Neo4j, som dessutom har egna val i listan).
+*Databas via bryggan* öppnar bryggvyn, som först säger varför bryggan behövs och vad den används till (Access, Excel, SQL
+Server, SQLite, MySQL, MariaDB, PostgreSQL och ODBC-källor på datorn genom ett litet lokalt skript); varje databas du ansluter
+dyker upp under Tillagda källor och öppnar bryggvyn igen med den databasen vald. *Extern databas* gör en källa av en adress
+och en nyckel (PostgREST, OData, GraphQL, CouchDB, ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets och Airtable
+över HTTP); MySQL, MariaDB och PostgreSQL nås genom bryggan. OpenCDE och Neo4j har egna val.
 Access-filer läses dessutom direkt som filer,
 och i Chrome och Edge kan en fil länkas så att datamängden läses in igen från disken. Se [kallor.md](kallor.md).
 
 QGIS-projekt (.qgs, .qgz) blir kartvyer: lagerordning, synlighet och symboler följer med, lagren kopplas till datamängder med samma filnamn och datafiler som släpps tillsammans med projektet importeras först (se [kartor.md](kartor.md)).
 
-*Geodatakälla* under Lägg till källor: en WFS-, OGC API Features- eller ArcGIS-tjänst blir en källa vars
+*Geodatakälla* under Geodatakällor: en WFS-, OGC API Features- eller ArcGIS-tjänst blir en källa vars
 lager hämtas som GeoJSON och öppnas som kartor, och källan *Geodataportalen (sök geodata)* söker i den nationella
 geodatakatalogen och lägger till tjänster med ett klick. Förinställda geodatakällor finns för SCB, SGU, Havs- och
 vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Statistikcentralen och SYKE, samt Lantmäteriets
-geodataplattform för den som har nyckel. Se [kallor.md](kallor.md#öppna-geodata).
+geodataplattform för den som har nyckel. Se [kallor.md](kallor.md#öppna-geodata). *Gränser för kartor* bredvid är
+kommun- och regiongränser för Norden som följer med appen, var och en med ursprung och licens, och *Exempeldata* under
+Övriga källor är små öppna datamängder att prova appen med (se [kallor.md](kallor.md#exempeldata)).
 
 Digitala planer importeras som planer: en detaljplan enligt den nationella specifikationen (GeoJSON) eller
 Lantmäteriets referensobjekt, en översiktsplan enligt specifikationen eller Boverkets ÖP-modell (GeoPackage, valet
@@ -82,8 +89,9 @@ Cypher-skript; filen känns igen på innehållet, grafens uppgifter visas och gr
 Byggnadsmodeller i IFC och ritningar i DXF blir datamängder av slaget modell. Filens uppgifter visas och modellen öppnas i 3D
 eller som ritning i Bearbeta (se [cad-bim.md](cad-bim.md)).
 
-**Insamling i fält** i källistan bygger ett formulär på en datamängds kolumner och regler och skickar det till telefonen. Raderna kommer tillbaka som en ny
-version (se [insamling.md](insamling.md)).
+**Mobilen** i källistan samlar allt från telefonen: fliken *Para och ta emot* parar telefonen och tar emot insamlade rader,
+foton och filer direkt över det lokala nätet, och fliken *Insamling i fält* bygger ett formulär på en datamängds kolumner och
+regler och skickar det till telefonen. Raderna kommer tillbaka som en ny version (se [insamling.md](insamling.md)).
 
 Alla källor i listan ser likadana ut, med en symbol för sin typ och en rad under namnet.
 

@@ -105,10 +105,10 @@ läser inte filen.
 
 ## 3. Logga in i Dataregium från Dataspatium
 
-1. Välj läget *Inhämta*. I vänsterkolumnen, under *Lägg till källor*, väljer du
-   *OpenCDE*.
+1. Välj läget *Inhämta*. I vänsterkolumnen, under *Vanliga källor*, väljer du
+   *OpenCDE*. Formuläret öppnas i mitten.
 2. Under *Adress* skriver du `http://127.0.0.1:8000`. **Lämna *Klient-id* och
-   hemligheten tomma**: appen registrerar sig själv, även om texten i dialogen talar
+   hemligheten tomma**: appen registrerar sig själv, även om texten i formuläret talar
    om ett klient-id från administratören. Tryck *Lägg till källa*.
 3. Appen frågar *Tillåta internetåtkomst?* upp till tre gånger, en gång per ändamål.
    Här gäller det bara din egen server: tryck *Tillåt* varje gång.

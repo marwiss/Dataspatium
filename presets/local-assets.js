@@ -531,19 +531,19 @@ Dataspatium.assets.addEntries({
  "docs/sv/kom-igang.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 9322,
+  "size": 9316,
   "library": "dataspatium"
  },
  "docs/sv/anvandarguide.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 24553,
+  "size": 25414,
   "library": "dataspatium"
  },
  "docs/sv/lagen.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 32119,
+  "size": 33204,
   "library": "dataspatium"
  },
  "docs/sv/soka.md": {
@@ -561,7 +561,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/visualisera.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 16611,
+  "size": 16625,
   "library": "dataspatium"
  },
  "docs/sv/anteckningsbok.md": {
@@ -579,25 +579,25 @@ Dataspatium.assets.addEntries({
  "docs/sv/format.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 17768,
+  "size": 17762,
   "library": "dataspatium"
  },
  "docs/sv/api-konfiguration.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 21669,
+  "size": 21663,
   "library": "dataspatium"
  },
  "docs/sv/kallor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 29852,
+  "size": 32060,
   "library": "dataspatium"
  },
  "docs/sv/snabbstart.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 16263,
+  "size": 16293,
   "library": "dataspatium"
  },
  "docs/sv/r-guide.md": {
@@ -633,13 +633,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/planer.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 35334,
+  "size": 35328,
   "library": "dataspatium"
  },
  "docs/sv/grafer.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 15381,
+  "size": 15341,
   "library": "dataspatium"
  },
  "docs/sv/cad-bim.md": {
@@ -663,7 +663,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/insamling.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 5389,
+  "size": 6300,
   "library": "dataspatium"
  },
  "docs/sv/dokumentmallar.md": {
@@ -681,13 +681,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/mobil.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 5879,
+  "size": 5947,
   "library": "dataspatium"
  },
  "docs/sv/faq.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 22152,
+  "size": 22192,
   "library": "dataspatium"
  },
  "docs/sv/licenser.md": {
@@ -1545,19 +1545,19 @@ Dataspatium.assets.addEntries({
  "docs/en/kom-igang.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 9259,
+  "size": 9254,
   "library": "dataspatium"
  },
  "docs/en/anvandarguide.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 24218,
+  "size": 25224,
   "library": "dataspatium"
  },
  "docs/en/lagen.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 31842,
+  "size": 33005,
   "library": "dataspatium"
  },
  "docs/en/soka.md": {
@@ -1575,7 +1575,7 @@ Dataspatium.assets.addEntries({
  "docs/en/visualisera.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 16451,
+  "size": 16463,
   "library": "dataspatium"
  },
  "docs/en/anteckningsbok.md": {
@@ -1593,25 +1593,25 @@ Dataspatium.assets.addEntries({
  "docs/en/format.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 18233,
+  "size": 18228,
   "library": "dataspatium"
  },
  "docs/en/api-konfiguration.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 22295,
+  "size": 22290,
   "library": "dataspatium"
  },
  "docs/en/kallor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 29694,
+  "size": 31975,
   "library": "dataspatium"
  },
  "docs/en/snabbstart.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 15842,
+  "size": 15873,
   "library": "dataspatium"
  },
  "docs/en/r-guide.md": {
@@ -1647,13 +1647,13 @@ Dataspatium.assets.addEntries({
  "docs/en/planer.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 35555,
+  "size": 35550,
   "library": "dataspatium"
  },
  "docs/en/grafer.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 15435,
+  "size": 15412,
   "library": "dataspatium"
  },
  "docs/en/cad-bim.md": {
@@ -1677,7 +1677,7 @@ Dataspatium.assets.addEntries({
  "docs/en/insamling.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 5266,
+  "size": 6184,
   "library": "dataspatium"
  },
  "docs/en/dokumentmallar.md": {
@@ -1695,13 +1695,13 @@ Dataspatium.assets.addEntries({
  "docs/en/mobil.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 5953,
+  "size": 6014,
   "library": "dataspatium"
  },
  "docs/en/faq.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 22190,
+  "size": 22222,
   "library": "dataspatium"
  },
  "docs/en/licenser.md": {

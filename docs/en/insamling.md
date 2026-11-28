@@ -1,14 +1,29 @@
 # Field collection
 
-With **Field collection** you fill in rows on the phone, with or without a network, with photo and position. The form is built on a
-dataset's columns and rules, so a wrong row shows at once where you stand. The rows then come back to the computer as a new version
-of the dataset. The photos become an image collection and the positions end up on the map.
+With **Field collection** you collect rows where you are, without a computer: you fill them in on the phone, with or without a
+network, with photo and position. The form is built on a dataset's columns and rules, so a wrong row shows at once where you stand.
+The rows then come back to the computer as a new version of the dataset. The photos become an image collection and the positions end
+up on the map.
+
+## The phone in Import
+
+Everything that comes from the phone is under **Phone** in *Common sources* in Import, since the computer brings in what the phone
+gives. Phone has two tabs:
+
+- *Pair and receive*: pair the phone with the computer once, and then receive what Dataspatium Mobil sends directly over the
+  local network, without a server. You accept before anything is received. Collected rows become a new version of the dataset,
+  their photos an image collection, and files are imported as usual.
+- *Field collection*: the form the phone fills in.
+
+In Dataspatium Mobil the button is called *Send to the computer*. Under **Devices** in Share you send datasets and files to a
+phone or another computer instead, and **Receive** in Share receives bundles from other people.
 
 ## How it works
 
-1. In **Import**, choose *Field collection*, and there a dataset or *New dataset*.
+1. In **Import**, choose *Phone* and the tab *Field collection*, and there a dataset or *New dataset*.
 2. Decide which fields the phone should ask for, and press *Send to the phone*.
-3. Connect the phone under **Devices** in Share, and send the form. The phone needs a network this time.
+3. The tab *Pair and receive* opens with the form chosen. Connect the phone and send the form. The phone needs a network this
+   time.
 4. On the phone, open the form and collect rows. No network is needed now.
 5. When you are back, press *Send to the computer* and scan the computer's code.
 6. The computer shows what has arrived, and you choose *Add*.
@@ -57,7 +72,7 @@ If you have no connection to the computer you can use *Share as a file* and send
 
 ## On the computer
 
-The rows arrive through Devices or Receive, and you see them before anything is added.
+The rows arrive through *Pair and receive* in Phone or through Receive in Share, and you see them before anything is added.
 
 - The table is first saved as a version, so you can go back.
 - Missing columns are added: `falt_id`, `lat`, `lon`, `noggrannhet_m`, `foto`, `insamlad` and `insamlad_av`. If the dataset already has

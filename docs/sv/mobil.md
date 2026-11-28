@@ -11,7 +11,8 @@ kopplar ihop två datorer med koder som klistras in.
 
 ## Första gången: para telefonen
 
-1. På datorn: öppna *Dela → Enheter*, låt *Anslut till* stå på *Ny enhet* och klicka på *Visa QR-kod*.
+1. På datorn: öppna *Inhämta → Mobilen* (eller *Dela → Enheter* när du ska skicka till telefonen), låt *Anslut till* stå på
+   *Ny enhet* och klicka på *Visa QR-kod*.
 2. På telefonen: öppna kameran och rikta den mot QR-koden. Mobilsidan öppnas i webbläsaren (första gången hämtas
    den från webben; sedan ligger den i telefonens cache). Telefonen visar en kod på 52 tecken.
 3. På datorn: skriv in telefonens kod i fältet under QR-koden och klicka på *Anslut*. Har datorn kamera kan den i
