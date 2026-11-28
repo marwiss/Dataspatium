@@ -15,7 +15,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/map-view', ['ui/base', 'data/datasets', 'viz/leaflet', 'viz/charts', 'data/kinds', 'ui/viz/basemap-choice', 'ui/viz/basemap-memory', 'platform/tier'], (base, datasets, leaflet, charts, kinds, basemapChoice, memory, tier) => {
+  D.define('ui/bearbeta/map-view', ['ui/base', 'data/datasets', 'viz/leaflet', 'viz/charts', 'data/kinds', 'ui/viz/basemap-choice', 'ui/viz/basemap-memory', 'platform/tier', 'ui/bearbeta/layer-draw'], (base, datasets, leaflet, charts, kinds, basemapChoice, memory, tier, layerDraw) => {
     /** More marks than this say nothing that the list of rows does not say better. */
     const MAX_MARKS = 5000;
     const { h, t, i18n, replace } = base;
@@ -37,6 +37,13 @@
        * beside it that keeps the image shown as a raster (*Spara ortofotot*).
        */
       let orthoLoad = false; let orthoBtn = null; let orthoSave = null;
+      /** Drawing in a map layer made in Inhämta (ui/bearbeta/layer-draw): its button, its bar, the map's drawing and the inspector. */
+      const editor = layerDraw.create(ctx, {
+        dataset: () => ds,
+        changed: async () => { if (!ds || !slots) return; const fresh = await datasets.get(ds.id); if (fresh && slots) await render(fresh, slots); },
+        inspector: () => renderInspector(),
+        select: (sel) => { s.selected = sel; renderInspector(); },
+      });
       /** A raster saved from the map opens in Bearbeta. */
       const openSaved = (meta) => { store.set({ selectedId: meta.id }); shell.activate('bearbeta'); };
       /** Sweden's orthophoto for the map's view; read only with `load`, otherwise one read before for the same view. */
@@ -70,6 +77,9 @@
         slots = target;
         const my = ++seq;
         await load(dataset);
+        // Inhämta hands over a new map layer to draw in (Nytt kartlager > Rita i lagret).
+        const asked = store.get().openDrawing;
+        if (asked && asked.datasetId === dataset.id) { store.set({ openDrawing: null }); await editor.begin().catch((err) => shell.log(String((err && err.message) || err), 'error')); }
         const orthos = await basemapChoice.options();
         if (my !== seq || !slots) return;
         const basemapSel = /** @type {any} */ (h('dm-select', { 'aria-label': t('map.basemap'), inline: true, 'data-map-basemap': '' }));
@@ -101,8 +111,10 @@
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: fitAll }),
               tier.shows('chart:map') ? ui.button({ label: t('map.save.chart'), icon: 'save', title: t('map.save.chart.hint'), onClick: saveChart }) : null,
               ui.button({ label: t('selection.use.map'), icon: 'list-checks', title: t('selection.use.map.hint'), onClick: () => useWhatShows().catch((err) => shell.log(String((err && err.message) || err), 'error')) }),
+              ...editor.buttons(),
               options.onOwnView ? ui.button({ label: t('bearbeta.view.' + dataset.kind), icon: 'chevron-left', title: t('bearbeta.view.' + dataset.kind + '.hint'), onClick: options.onOwnView }) : null,
               ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('bearbeta.view.table.hint'), onClick: options.onTable }))),
+          editor.bar(),
           mapEl);
         await draw();
         renderInspector();
@@ -131,6 +143,7 @@
           if (hd.info.crsUnknown.length) ui.toast.show(t('map.crs.unknown', { crs: hd.info.crsUnknown.join(', ') }), { kind: 'warn', timeout: 9000 });
           await markSelection();
           await showPending();
+          editor.mapDrawn(hd, /** @type {any} */ (globalThis).L);
           renderInspector();
         } catch (err) {
           if (my !== seq) return;
@@ -206,6 +219,9 @@
           const pictures = h('div', { class: 'dm-photos dm-map-photos' });
           showPictures(pictures, props).catch((err) => D.log('map', err));
           items.push(pictures);
+          // While the layer is drawn in, the feature's values, shape and place can be changed (ui/bearbeta/layer-draw).
+          const own = editor.inspector(s.selected);
+          if (own) { items.push(h('h4', { text: t('map.selected') }), own); if (overlays) items.push(overlays.block()); replace(slots.right, items); return; }
           const kv2 = /** @type {any} */ (h('dm-kv'));
           kv2.items = Object.keys(props).filter((k) => k !== '_rowid').slice(0, 40).map((k) => ({ label: k, value: props[k] === null || props[k] === undefined ? '' : String(props[k]) }));
           items.push(h('h4', { text: t('map.selected') }), kv2,
@@ -299,8 +315,8 @@
         if (bounds.isValid()) handle.map.fitBounds(bounds.pad(file ? 0.1 : 0.5), { maxZoom: file ? 19 : 15 });
       }
 
-      function destroy() { seq++; if (overlays) overlays.detach(); if (handle) { handle.finalize(); handle = null; } mapEl = null; slots = null; }
-      return { render, destroy, state: s, get handle() { return handle; }, get marks() { return marks; } };
+      function destroy() { seq++; editor.destroy(); if (overlays) overlays.detach(); if (handle) { handle.finalize(); handle = null; } mapEl = null; slots = null; }
+      return { render, destroy, state: s, editor, get handle() { return handle; }, get marks() { return marks; } };
     }
     return { create };
   });

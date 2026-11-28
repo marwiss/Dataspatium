@@ -60,7 +60,7 @@
         assert.deepEqual(Array.from(pane.querySelectorAll('[data-source-group] .dm-tree-label')).map((e) => e.textContent),
           ['import.sources.create', 'import.sources.common', 'import.sources.databases', 'import.sources.apis', 'import.sources.geodata', 'import.sources.added', 'import.sources.other'].map((k) => t(k)));
         const groups = groupsOf(shell);
-        assert.deepEqual(groups.create, ['newmodel', 'newplan'], 'Skapa källor');
+        assert.deepEqual(groups.create, ['newmodel', 'newplan', 'newdetailplan', 'newlayer', 'newtable'], 'Skapa källor');
         assert.deepEqual(groups.common, ['file', 'paste', 'url', 'opencde', 'mobile'], 'Vanliga källor');
         assert.deepEqual(groups.databases, ['database', 'bridge', 'neo4j'], 'Databaskällor');
         assert.deepEqual(groups.apis, ['catalog', 'apifile'], 'API-källor');

@@ -142,7 +142,7 @@
       // Tier 2, the default.
       shell.activate('inhamta');
       await waitFor(() => has('[data-source="file"]'), 3000, 'the source list');
-      assert.ok(has('[data-source="geodata"]') && has('[data-source="newmodel"]'), 'geodata services and a new model in BIM och GIS');
+      assert.ok(has('[data-source="geodata"]') && has('[data-source="newmodel"]') && has('[data-source="newlayer"]'), 'geodata services, a new model and a new map layer in BIM och GIS');
       assert.ok(root.querySelector('.dm-sb-assistant').hidden, 'the assistant is Experimentell');
       assert.ok(!shell.builtinCommands().some((c) => c.id === 'assistant'), 'nor in the palette');
       assert.ok(ops('table').includes('geo_height') && ops('model').includes('ifc_python'), 'the heights and the model actions');
@@ -152,7 +152,8 @@
       // Tier 1: the same entry points are gone, the rest stays.
       await tier.set('documents');
       await waitFor(() => !has('[data-source="geodata"]'), 3000, 'Inhämta redrawn');
-      assert.ok(!has('[data-source="newmodel"]'), 'no new model');
+      assert.ok(!has('[data-source="newmodel"]') && !has('[data-source="newlayer"]'), 'no new model and no new map layer');
+      assert.ok(has('[data-source="newdetailplan"]') && has('[data-source="newtable"]'), 'a new detailed plan and a new table stay in Dokument');
       assert.ok(has('[data-source="opencde"]') && has('[data-source="neo4j"]'), 'OpenCDE and Neo4j stay in Dokument');
       const catalogue = D.require('api/connectors');
       const all = await catalogue.list();

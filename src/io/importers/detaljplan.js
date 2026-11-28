@@ -33,6 +33,13 @@
       const swedish = format === 'ngp' || format === 'detaljplan' || format === 'oversiktsplan';
       const parsed = format === 'ngp' ? plan.fromNgp(data, options) : format === 'detaljplan' ? plan.fromDetaljplan(data, options) : format === 'oversiktsplan' ? plan.fromOversiktsplanGeoJson(data, options) : await plan.nordic.read(format, data, Object.assign({ lang: uiLang() }, options));
       if (swedish && parsed.plan.slag === 'detaljplan') await plan.decorate(parsed.rows);
+      // The national specification names the municipality by its code: its name comes from the boundaries that ship with the app.
+      if (swedish && parsed.plan.kommunkod && (!parsed.plan.kommun || parsed.plan.kommun === parsed.plan.kommunkod)) {
+        try {
+          const hit = (await D.require('data/boundaries').features('kommuner')).find((f) => String(f.code) === parsed.plan.kommunkod);
+          if (hit && hit.name) parsed.plan.kommun = String(hit.name);
+        } catch (err) { D.log('detaljplan', 'municipality name', err); }
+      }
       return Object.assign({ format }, parsed);
     }
     const columnsFor = (info) => (info.slag === 'oversiktsplan' ? plan.OP_COLUMNS : plan.DP_COLUMNS);

@@ -108,11 +108,11 @@
       }
 
       /**
-       * An empty dataset to collect into, from one column per line: "name" or "name: type". Type names are the UI's or the
-       * internal ones, so "antal: heltal" and "antal: integer" mean the same.
-       * @param {string} name @param {string} text @returns {Promise<any>}
+       * Columns from one per line: "name" or "name: type". Type names are the UI's or the internal ones, so "antal: heltal" and
+       * "antal: integer" mean the same; the names are cleaned as an import cleans them. Empty lines are left out.
+       * @param {string} text @returns {Array<{name: string, type: string}>}
        */
-      async function createEmpty(name, text) {
+      function parseColumns(text) {
         const names = new Map(KNOWN_TYPES.flatMap((type) => [[type, type], [D.t('type.' + type).toLowerCase(), type]]));
         const columns = String(text || '').split('\n').map((line) => line.trim()).filter(Boolean).map((line) => {
           const at = line.lastIndexOf(':');
@@ -120,9 +120,17 @@
           const known = at > 0 && names.has(typeName);
           return { name: known ? line.slice(0, at).trim() : line, type: known ? names.get(typeName) : 'text' };
         });
-        if (!columns.length) throw new Error(D.t('field.err.nocolumns'));
         const cleaned = types.cleanColumnNames(columns.map((c) => c.name));
-        return datasets.create({ name, columns: columns.map((c, i) => ({ name: cleaned[i], type: c.type })), rows: [] });
+        return columns.map((c, i) => ({ name: cleaned[i], type: c.type }));
+      }
+      /**
+       * An empty dataset to collect into (or to fill in by hand, Inhämta's Ny tabell), from one column per line (parseColumns).
+       * @param {string} name @param {string} text @param {{source?: any, description?: string}} [options] @returns {Promise<any>}
+       */
+      async function createEmpty(name, text, options = {}) {
+        const columns = parseColumns(text);
+        if (!columns.length) throw new Error(D.t('field.err.nocolumns'));
+        return datasets.create({ name, columns, rows: [], source: options.source || null, description: options.description || '' });
       }
 
       /**
@@ -248,6 +256,6 @@
         return { datasetId: id, rows: added.rows, skipped: added.skipped + result.duplicates, photos: album.count, photosSkipped: album.skipped, imagesId: album.id, broken: check ? check.summary.failed : 0 };
       }
 
-      return { defaultForm, formFor, save, compile, packageForm, createEmpty, plan, apply, fieldFromColumn };
+      return { defaultForm, formFor, save, compile, packageForm, createEmpty, parseColumns, plan, apply, fieldFromColumn };
     });
 })();

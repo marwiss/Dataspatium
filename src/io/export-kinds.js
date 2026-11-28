@@ -338,7 +338,9 @@
     const toQuality = (id) => D.require('docgen/quality').toDocx(id);
     /** A comprehensive plan as a delivery (io/exporters/plan-delivery): its GeoPackage in Boverket's ÖP model, its plan description and its other files. */
     const toPlanDelivery = (id) => D.require('io/exporters/plan-delivery').toZip(id);
-    const MAKERS = { datapackage: toPackage, dcat: toDescription, quality: toQuality, kml: toKml, gpx: toGpx, gpkg: toGeoPackage, 'images-sheet': toContactSheet, 'plan-provisions': toProvisions, 'plan-sheet': toPlanSheet, 'plan-delivery': toPlanDelivery, 'model-quantities-xlsx': toQuantities, 'model-glb': toGlb, 'model-pdf': toDrawingPdf };
+    /** A Swedish detailed plan as the national specification's GeoJSON (io/exporters/detaljplan). */
+    const toDetailedPlan = (id) => D.require('io/exporters/detaljplan').toBlob(id);
+    const MAKERS = { datapackage: toPackage, dcat: toDescription, quality: toQuality, kml: toKml, gpx: toGpx, gpkg: toGeoPackage, 'images-sheet': toContactSheet, 'plan-provisions': toProvisions, 'plan-sheet': toPlanSheet, 'plan-delivery': toPlanDelivery, 'plan-detaljplan': toDetailedPlan, 'model-quantities-xlsx': toQuantities, 'model-glb': toGlb, 'model-pdf': toDrawingPdf };
     /** @param {string} format @returns {boolean} */
     const handles = (format) => Object.prototype.hasOwnProperty.call(MAKERS, format);
     /** @param {string} id @param {string} format @returns {Promise<Blob>} */

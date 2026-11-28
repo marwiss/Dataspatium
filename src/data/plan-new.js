@@ -7,7 +7,7 @@
  * zone) and the description the AI builds from. With a Swedish municipality chosen the plan may get the municipality's boundary
  * as its plan geometry (tema plangeometri), from the boundaries that ship with the app (data/boundaries, SCB's under CC0), so
  * that the map has its extent; nothing is fetched. The plan view, its edit mode, the AI panel and the delivery export take it as
- * they take a delivered plan.
+ * they take a delivered plan. A new detailed plan (createDetailed) is made here too, empty, to be drawn in the plan view.
  */
 (function () {
   'use strict';
@@ -81,6 +81,41 @@
       });
     }
 
-    return { CRS, DEFAULT_CRS, MAX_DESCRIPTION, municipalities, settings, create };
+    /**
+     * The settings of a new detailed plan with the defaults filled in, or an error the person can act on.
+     * @param {{name?: string, beteckning?: string, kommun?: string, kommunkod?: string, crs?: string|number, syfte?: string}} input
+     * @returns {{name: string, beteckning: string, kommun: string, kommunkod: string, crs: string, syfte: string}}
+     */
+    function detailedSettings(input = {}) {
+      const code = input.crs === undefined || input.crs === null || input.crs === '' ? DEFAULT_CRS : geo.crsCode(input.crs);
+      if (!code || !CRS.includes(code)) throw new Error(D.t('newplan.err.crs', { crs: String(input.crs) }));
+      const kommunkod = clean(input.kommunkod, 8);
+      if (kommunkod && !/^\d{4}$/.test(kommunkod)) throw new Error(D.t('newplan.err.code', { code: kommunkod }));
+      return { name: clean(input.name) || D.t('newdetailplan.default.name'), beteckning: clean(input.beteckning, 64), kommun: clean(input.kommun), kommunkod, crs: 'EPSG:' + code, syfte: String(input.syfte || '').replace(/\s+/g, ' ').trim().slice(0, 2000) };
+    }
+    /**
+     * Make a new, empty detailed plan as a dataset (PLAN 12 e): kind plan, slag detaljplan, the columns a detailed plan is read
+     * into (plan.DP_COLUMNS) and `_meta.plan` as data/plan's fromDetaljplan gives it (a new objektidentitet, designation, name,
+     * purpose, municipality, type, the day it was begun and the coordinate system). The plan boundary, the uses and the property
+     * areas are drawn in the plan view (ui/bearbeta/plan-edit) with provisions from Boverket's catalogue; the plan is exported as
+     * the national specification's GeoJSON (io/exporters/detaljplan), which the app reads back the same. Asks nothing, fetches nothing.
+     * @param {Parameters<typeof detailedSettings>[0]} input @returns {Promise<any>} the dataset's meta
+     */
+    async function createDetailed(input) {
+      const s = detailedSettings(input);
+      if (s.kommunkod && !s.kommun) { const m = (await municipalities()).find((x) => x.code === s.kommunkod); if (m) s.kommun = m.name; }
+      const info = {
+        slag: 'detaljplan', objektid: planEdit.newId(), beteckning: s.beteckning, namn: s.name, syfte: s.syfte, kommun: s.kommun, kommunkod: s.kommunkod, status: '', typ: 'detaljplan',
+        datumPaborjat: new Date().toISOString().slice(0, 10), format: 'detaljplan-ny', crs: s.crs, hojdsystem: '', antal: {},
+      };
+      return dsFiles.createDataset({
+        name: s.name, kind: 'plan', columns: plan.DP_COLUMNS, rows: [],
+        source: { kind: 'new', format: 'detaljplan', crs: s.crs, createdAt: new Date().toISOString() },
+        description: D.t('newdetailplan.description', { crs: geo.crsText(s.crs) }),
+        meta: { plan: info },
+      });
+    }
+
+    return { CRS, DEFAULT_CRS, MAX_DESCRIPTION, municipalities, settings, create, detailedSettings, createDetailed };
   });
 })();

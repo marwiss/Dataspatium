@@ -190,6 +190,8 @@
               searchInput, myLists.length || chosen ? listSel : null, countBadge, useBtn,
               ui.button({ label: t('bearbeta.actions'), icon: 'sparkles', variant: 'primary', 'data-course': 'actions', onClick: async () => dialogs.palette(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               undoBtn,
+              // A plain table is filled in by hand too (Inhämta's Ny tabell): a new, empty row at the end, its cells edited in place.
+              (ds.kind || 'table') === 'table' ? ui.button({ label: t('bearbeta.row.add'), icon: 'plus', title: t('bearbeta.row.add.hint'), 'data-row-add': '', onClick: () => addRow(ds) }) : null,
               // Back to the dataset's own view: documents, pictures, or the map for a table with geometry or coordinates.
               ownView ? ui.button({ label: t('bearbeta.view.' + ownView), icon: VIEW_ICONS[ownView], title: t('bearbeta.view.' + ownView + '.hint'), onClick: () => { viewId = ownView; showTable = false; const d = current(); if (d) renderMain(d); } }) : null,
               ui.button({ label: t('bearbeta.profile'), icon: 'circle-check', onClick: async () => dialogs.profileDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
@@ -252,6 +254,19 @@
         };
         // After the first load, keep the scroll position and selection (saves happen 1.5 s after an edit).
         if (table.loaded) table.updateData(data); else { table.setData(data); table.loaded = true; }
+      }
+
+      /** A new, empty row at the end of the table (a recipe step, undone with Ångra), chosen and in view. */
+      async function addRow(ds) {
+        try {
+          await recipes.apply(ds.id, 'add_row', { values: '{}' });
+          shell.log(t('bearbeta.row.added'), 'ok');
+          await refresh(current());
+          // The row is the last one, unless a filter hides it.
+          const n = search || listWhere ? 0 : await services.datasets.count(ds.id, {});
+          if (table && n) table.selectRow(n - 1, true);
+        } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+        updateUndo();
       }
 
       async function commitCell(ds, detail) {

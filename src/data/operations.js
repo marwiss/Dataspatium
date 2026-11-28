@@ -334,6 +334,53 @@
     });
 
     // ---- rows ------------------------------------------------------------------------------
+    /** A row's values as {column: value} from JSON text or an object; a column the table lacks is refused. */
+    function rowValues(ctx, v) {
+      let o = v;
+      if (typeof v === 'string') { try { o = v.trim() ? JSON.parse(v) : {}; } catch (_e) { throw new Error(D.t('op.err.row')); } }
+      if (!o || typeof o !== 'object' || Array.isArray(o)) throw new Error(D.t('op.err.row'));
+      for (const k of Object.keys(o)) if (!ctx.column(k)) throw new Error(D.t('op.err.unknown.column', { name: k }));
+      return o;
+    }
+    /** The rowid a new row gets: the one given (an undo puts a row back where it was), else the next. */
+    async function nextRowid(ctx, p) {
+      if (p.rowid !== undefined && p.rowid !== null && p.rowid !== '') return Number(p.rowid);
+      const r = await ctx.engine.exec('select coalesce(max(rowid), 0) + 1 from data');
+      return Number(r[0].values[0][0]);
+    }
+    define({
+      id: 'add_row', group: 'rows',
+      params: [{ name: 'values', type: 'lines' }, { name: 'rowid', type: 'number' }],
+      /** A hand edit (a new row in the table, a feature drawn on the map): its undo takes the row away again. */
+      async inverse(ctx, p) { return { op: 'delete_row', params: { rowid: await nextRowid(ctx, p) } }; },
+      async apply(ctx, p) {
+        const values = rowValues(ctx, p.values);
+        const rowid = await nextRowid(ctx, p);
+        const names = Object.keys(values);
+        const cells = names.map((n) => { const col = ctx.column(n); const v = values[n]; return v === null || v === undefined || v === '' ? null : typeof v === 'number' || typeof v === 'boolean' ? v : types.parseValue(String(v), col.type, { decimal: 'point' }); });
+        await ctx.engine.run(`insert into data (rowid${names.map((n) => ', ' + q(n)).join('')}) values (?${names.map(() => ', ?').join('')})`, [rowid].concat(cells));
+        return { rows: 1, rowid };
+      },
+      toSQL: (p) => { const o = typeof p.values === 'string' ? JSON.parse(p.values || '{}') : (p.values || {}); const names = Object.keys(o); return [names.length ? `INSERT INTO data (${names.map(q).join(', ')}) VALUES (${names.map((n) => lit(o[n])).join(', ')});` : 'INSERT INTO data DEFAULT VALUES;']; },
+      toR: () => `df[nrow(df) + 1, ] <- NA  # ${D.t('op.add_row')}`,
+    });
+    define({
+      id: 'delete_row', group: 'rows',
+      params: [{ name: 'rowid', type: 'number', required: true }],
+      /** The row's values, so that an undo puts it back with the same rowid. */
+      async inverse(ctx, p) {
+        const names = ctx.columns.map((c) => c.name);
+        const r = await ctx.engine.exec(`select ${names.map(q).join(', ')} from data where rowid = ?`, [Number(p.rowid)]);
+        const row = r[0] && r[0].values[0];
+        if (!row) throw new Error(D.t('op.err.rowid', { rowid: String(p.rowid) }));
+        const values = {};
+        names.forEach((n, i) => { if (row[i] !== null && row[i] !== undefined) values[n] = row[i]; });
+        return { op: 'add_row', params: { rowid: Number(p.rowid), values: JSON.stringify(values) } };
+      },
+      async apply(ctx, p) { return { rows: await ctx.engine.run('delete from data where rowid = ?', [Number(p.rowid)]) }; },
+      toSQL: (p) => [`DELETE FROM data WHERE rowid = ${Number(p.rowid)};`],
+      toR: (p) => `df <- df[-${Number(p.rowid)}, ]  # ${D.t('code.rowid')}`,
+    });
     define({
       id: 'delete_rows', group: 'rows',
       params: [{ name: 'where', type: 'expression', required: true }, { name: 'keep', type: 'switch', default: false }],

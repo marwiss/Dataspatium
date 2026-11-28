@@ -41,7 +41,10 @@
     const GROUPS = [
       { id: 'create', label: 'import.sources.create', items: [
         { id: 'newmodel', icon: 'box', label: 'import.sources.newmodel', sub: 'import.sources.newmodel.hint', feature: 'source:newmodel' },
-        { id: 'newplan', icon: 'layers', label: 'import.sources.newplan', sub: 'import.sources.newplan.hint' }] },
+        { id: 'newplan', icon: 'layers', label: 'import.sources.newplan', sub: 'import.sources.newplan.hint' },
+        { id: 'newdetailplan', icon: 'grid-2x2', label: 'import.sources.newdetailplan', sub: 'import.sources.newdetailplan.hint' },
+        { id: 'newlayer', icon: 'map', label: 'import.sources.newlayer', sub: 'import.sources.newlayer.hint', feature: 'source:newlayer' },
+        { id: 'newtable', icon: 'table', label: 'import.sources.newtable', sub: 'import.sources.newtable.hint' }] },
       { id: 'common', label: 'import.sources.common', items: [
         { id: 'file', icon: 'folder-open', label: 'import.sources.files', sub: 'import.sources.files.hint' },
         { id: 'paste', icon: 'clipboard-paste', label: 'import.sources.paste', sub: 'import.sources.paste.hint' },
@@ -359,13 +362,13 @@
       /**
        * The scripts a source's view needs, loaded ahead when the pointer or the focus reaches its item: the views of the sources
        * (the group 'sources', with the families it needs) for an API source, the forms that add one, the bridge and the guides, the
-       * families for the saved fetches, the group plan for a new plan and the group dela (the panel for devices) for Mobilen
+       * families for the saved fetches, the group plan for a new plan (either kind) and the group dela (the panel for devices) for Mobilen
        * (src/boot.js). Loading them asks nothing and sends nothing to a source.
        * @param {string} id
        */
       function loadAhead(id) {
         const sources = id.startsWith('api:') || id.startsWith('bridge') || id === 'guides' || !!FAMILY_FORMS[id];
-        const wanted = sources ? D.ensure(['sources']) : id === 'saved' ? D.ensure(['families']) : id === 'newplan' ? D.ensure(['plan']) : id === 'mobile' ? D.ensure(['dela']) : null;
+        const wanted = sources ? D.ensure(['sources']) : id === 'saved' ? D.ensure(['families']) : id === 'newplan' || id === 'newdetailplan' ? D.ensure(['plan']) : id === 'mobile' ? D.ensure(['dela']) : null;
         if (wanted) wanted.catch((err) => D.log('inhamta', 'load ahead', id, err));
       }
 
@@ -384,6 +387,9 @@
         if (source === 'guides') { renderGuides(); return; }
         if (source === 'newmodel') { renderNewModel(); return; }
         if (source === 'newplan') { renderNewPlan(); return; }
+        if (source === 'newdetailplan') { renderNewDetailPlan(); return; }
+        if (source === 'newlayer') { renderNewLayer(); return; }
+        if (source === 'newtable') { renderNewTable(); return; }
         if (source === 'examples') { renderExamples(); return; }
         if (source === 'boundaries' || source === 'apifile' || FAMILY_FORMS[source]) { renderForm(); return; }
         const stepper = /** @type {any} */ (h('dm-stepper'));
@@ -683,6 +689,111 @@
               h('div', { class: 'dm-row' },
                 tier.shows('ai.panel') ? ui.button({ label: t('newplan.build'), icon: 'cpu', title: t('newplan.build.hint'), 'data-newplan-build': '', onClick: () => { store.set({ selectedId: done.id, openPlanAi: { datasetId: done.id, mode: 'build', brief } }); shell.activate('bearbeta'); } }) : null,
                 ui.button({ label: t('newplan.open'), icon: 'pencil', title: t('newplan.open.hint'), 'data-newplan-open': '', onClick: () => { store.set({ selectedId: done.id }); shell.activate('bearbeta'); } }))) : null));
+      }
+
+      // ---- a new detailed plan, map layer and table (PLAN 12 e) ----
+      /**
+       * A form of Skapa källor: its fields (kept in its state's `values` while the source is shown), the button that makes the
+       * source and, once made, the buttons that take it on (`after`: {key, label, icon, store} opens Bearbeta with `store` set).
+       * @param {{id: string, icon: string, state: any, fields: any[], make: () => Promise<any>, after: (done: any) => any[]}} f
+       */
+      function createForm(f) {
+        const st = f.state;
+        const create = async () => {
+          if (st.busy) return;
+          st.busy = true; st.error = ''; st.result = null; renderCenter();
+          try {
+            st.result = await f.make();
+            const msg = t(f.id + '.done', { name: st.result.name });
+            shell.log(msg, 'ok'); ui.toast.show(msg, { kind: 'ok' });
+          } catch (err) {
+            st.error = (err && err.message) || String(err);
+            shell.log(t(f.id + '.error', { message: st.error }), 'error');
+          }
+          st.busy = false; renderCenter();
+        };
+        const done = st.result;
+        const open = (extra) => { store.set(Object.assign({ selectedId: done.id }, extra || {})); shell.activate('bearbeta'); };
+        const attr = (name) => ({ ['data-' + f.id + '-' + name]: '' });
+        replace(slots.center,
+          h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon(f.icon, 20), t(f.id + '.title'))),
+          h('div', Object.assign({ class: 'dm-stack' }, attr('form')),
+            h('p', { class: 'dm-help', text: t(f.id + '.lead') }),
+            ...f.fields,
+            st.error ? h('p', Object.assign({ class: 'dm-error dm-small', text: st.error }, attr('error'))) : null,
+            h('div', { class: 'dm-row' }, ui.button(Object.assign({ label: st.busy ? t(f.id + '.creating') : t(f.id + '.create'), icon: f.icon, variant: 'primary', loading: st.busy, title: t(f.id + '.create.hint'), onClick: create }, attr('create')))),
+            done ? h('div', Object.assign({ class: 'dm-success dm-stack' }, attr('done')),
+              h('p', { text: t(f.id + '.done', { name: done.name }) }),
+              h('div', { class: 'dm-row' }, ...f.after(done).map((b) => ui.button(Object.assign({ label: t(b.label), icon: b.icon, title: t(b.label + '.hint'), onClick: () => open(b.store) }, attr(b.key)))))) : null));
+      }
+      /** A field of a Skapa form: an input or a select (with `options`), kept in `values[key]` as it changes. */
+      function createField(id, values, key, attrs, options) {
+        const el = /** @type {any} */ (h(options ? 'dm-select' : 'dm-input', Object.assign({ ['data-' + id]: key }, attrs)));
+        if (options) el.options = options;
+        el.value = values[key] === undefined ? (options ? options[0].value : '') : values[key];
+        el.addEventListener(options ? 'change' : 'input', () => { values[key] = el.value; });
+        return el;
+      }
+      const newDetailPlan = { values: { crs: 'EPSG:3006' }, municipalities: /** @type {any[]|null} */ (null), busy: false, error: '', result: null };
+      function renderNewDetailPlan() {
+        // data/plan-new loads with the group 'plan' (src/boot.js).
+        if (!groupReady('plan', () => D.ensure(['plan']))) return;
+        const planNew = D.require('data/plan-new');
+        const geo = D.require('data/geo');
+        const st = newDetailPlan; const v = st.values;
+        // The municipalities ship with the app (data/boundaries); they are read once, then the form is drawn again.
+        if (!st.municipalities) {
+          st.municipalities = [];
+          planNew.municipalities().then((list) => { st.municipalities = list; if (source === 'newdetailplan' && slots) renderNewDetailPlan(); }).catch((err) => D.log('inhamta', 'municipalities', err));
+        }
+        const f = (key, attrs, options) => createField('newdetailplan', v, key, attrs, options);
+        createForm({
+          id: 'newdetailplan', icon: 'grid-2x2', state: st,
+          fields: [
+            f('name', { label: t('newdetailplan.name'), placeholder: t('newdetailplan.default.name') }),
+            f('beteckning', { label: t('plan.field.beteckning'), help: t('newdetailplan.beteckning.help') }),
+            f('kommunkod', { label: t('newplan.kommun'), help: t('newdetailplan.kommun.help') }, [{ value: '', label: t('newplan.kommun.none') }].concat(st.municipalities.map((m) => ({ value: m.code, label: `${m.name} (${m.code})` })))),
+            f('crs', { label: t('newplan.crs'), help: t('newdetailplan.crs.help') }, planNew.CRS.map((code) => ({ value: 'EPSG:' + code, label: geo.crsText(code) }))),
+            f('syfte', { label: t('newdetailplan.syfte'), type: 'textarea', rows: '3', placeholder: t('newdetailplan.syfte.placeholder') }),
+          ],
+          make: () => planNew.createDetailed(Object.assign({}, v, { kommun: ((st.municipalities || []).find((m) => m.code === v.kommunkod) || {}).name || '' })),
+          after: (done) => [{ key: 'draw', label: 'newdetailplan.draw', icon: 'pencil', store: { openDrawing: { datasetId: done.id } } }, { key: 'open', label: 'newplan.open', icon: 'layers', store: null }],
+        });
+      }
+      const newLayer = { values: { geometry: 'point', crs: 'EPSG:3006', columns: '' }, busy: false, error: '', result: null };
+      function renderNewLayer() {
+        const layerNew = D.require('data/layer-new');
+        const geo = D.require('data/geo');
+        const st = newLayer; const v = st.values;
+        const f = (key, attrs, options) => createField('newlayer', v, key, attrs, options);
+        const types = ['text', 'integer', 'number', 'date', 'boolean'].map((x) => t('type.' + x).toLowerCase()).join(', ');
+        createForm({
+          id: 'newlayer', icon: 'map', state: st,
+          fields: [
+            f('name', { label: t('common.name'), placeholder: t('newlayer.default.name.' + (v.geometry || 'point')) }),
+            f('geometry', { label: t('newlayer.geometry'), help: t('newlayer.geometry.help') }, layerNew.KINDS.map((k) => ({ value: k, label: t('newlayer.geometry.' + k) }))),
+            f('crs', { label: t('newplan.crs'), help: t('newlayer.crs.help') }, layerNew.CRS.map((code) => ({ value: 'EPSG:' + code, label: geo.crsText(code) }))),
+            f('columns', { label: t('newlayer.columns'), type: 'textarea', rows: '6', mono: true, placeholder: t('newlayer.columns.placeholder'), help: t('field.new.columns.help', { types }) }),
+          ],
+          make: () => layerNew.create(Object.assign({}, v)),
+          after: (done) => [{ key: 'draw', label: 'newlayer.draw', icon: 'pencil', store: { openDrawing: { datasetId: done.id } } }, { key: 'open', label: 'newlayer.open', icon: 'map', store: null }],
+        });
+      }
+      const newTable = { values: { columns: '' }, busy: false, error: '', result: null };
+      function renderNewTable() {
+        const collect = D.require('data/field-collect');
+        const st = newTable; const v = st.values;
+        const f = (key, attrs) => createField('newtable', v, key, attrs);
+        const types = ['text', 'integer', 'number', 'date', 'boolean'].map((x) => t('type.' + x).toLowerCase()).join(', ');
+        createForm({
+          id: 'newtable', icon: 'table', state: st,
+          fields: [
+            f('name', { label: t('common.name'), placeholder: t('newtable.default.name') }),
+            f('columns', { label: t('newtable.columns'), type: 'textarea', rows: '7', mono: true, placeholder: t('newtable.columns.placeholder'), help: t('field.new.columns.help', { types }) }),
+          ],
+          make: () => collect.createEmpty(String(v.name || '').trim() || t('newtable.default.name'), v.columns, { source: { kind: 'new', format: 'tabell', createdAt: new Date().toISOString() } }),
+          after: () => [{ key: 'open', label: 'newtable.open', icon: 'table', store: null }],
+        });
       }
 
       function renderGuides() {
@@ -1449,6 +1560,7 @@
         if (source === 'guides') { replace(slots.right, h('h4', { text: t('guides.title') }), h('p', { class: 'dm-help', text: t('guides.right') })); return; }
         if (source === 'newmodel') { replace(slots.right, h('h4', { text: t('newmodel.title') }), h('p', { class: 'dm-help', text: t('newmodel.right') })); return; }
         if (source === 'newplan') { replace(slots.right, h('h4', { text: t('newplan.title') }), h('p', { class: 'dm-help', text: t('newplan.right') })); return; }
+        if (source === 'newdetailplan' || source === 'newlayer' || source === 'newtable') { replace(slots.right, h('h4', { text: t(source + '.title') }), h('p', { class: 'dm-help', text: t(source + '.right') })); return; }
         if (source.startsWith('api:')) { if (apiUi) apiUi.renderRight(slots.right); else replace(slots.right); return; }
         if (source === 'saved') { replace(slots.right, h('h4', { text: t('api.saved.title') }), h('p', { class: 'dm-help', text: t('api.saved.help') })); return; }
         if (source === 'catalog') { replace(slots.right, h('h4', { text: t('api.sources') }), h('p', { class: 'dm-help', text: t('api.catalog.hint') })); return; }

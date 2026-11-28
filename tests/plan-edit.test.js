@@ -217,9 +217,9 @@
     info = (await datasets.ensureOpen(id)).meta.plan;
     assert.equal(info.antal.markochvattenanvandning, 3);
     assert.equal((await datasets.get(id)).rowCount, 6);
-    // A detailed plan has no themes to draw into.
+    // A detailed plan has no themes to draw into: its objects have object types (tests/create-sources.test.js).
     const dp = keep(await datasets.create({ name: 'DP', kind: 'plan', columns: plan.DP_COLUMNS, rows: [] }));
-    await assert.throws(() => edit.addArea(dp.id, { tema: 'omrade', geometry: wgsSquare(15, 59) }), new RegExp(t('plan.edit.err.notop').slice(0, 20)));
+    await assert.throws(() => edit.addArea(dp.id, { tema: 'omrade', geometry: wgsSquare(15, 59) }), new RegExp(t('plan.edit.err.notdp').slice(0, 20)));
     return 'ok';
   }, 60000);
 

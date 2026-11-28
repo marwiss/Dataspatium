@@ -79,6 +79,8 @@
       'geo:measure': 'map.view', 'geo:nearest': 'map.view', 'geo:buffer': 'map.view', 'geo:overlay': 'map.view', 'geo:dissolve': 'map.view', 'geo:simplify': 'map.view',
       'op:geo_height': 'geo.heights', 'op:geo_height_along': 'geo.heights', 'chart:profile': 'geo.heights',
       'source:newmodel': 'source.newmodel', 'source:geodata': 'source.geodata',
+      // A new map layer is drawn in the map view (DS-35); a new detailed plan and a new table stay in Dokument.
+      'source:newlayer': 'map.view',
       'tool:server_query': 'ai.server-query', 'status:assistant': 'assistant', 'command:assistant': 'assistant',
       // The maps among the commands (DS-27) and the BCF topics (DS-39); the charts, the documents and the CDE's files stay in Dokument.
       'cmd:create_map': 'map.view', 'cmd:add_map_layer': 'map.view',

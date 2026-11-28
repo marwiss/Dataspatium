@@ -16,7 +16,8 @@
  *
  * The view is built by three functions that other modules can hook into: `toolbar` (the page head's tools), the text pane
  * (plan-sections' `textPane`) and `renderInspector`. A comprehensive plan is edited through them (ui/bearbeta/plan-edit): its
- * areas, its plan description's sections and the links between them, and exported as a delivery.
+ * areas, its plan description's sections and the links between them, and exported as a delivery; a Swedish detailed plan's
+ * boundary, uses and property areas with their provisions, exported as the national specification's GeoJSON.
  */
 (function () {
   'use strict';
@@ -114,6 +115,9 @@
         // Inhämta hands over a new plan with its description (B-78): the AI panel opens in the mode Bygg från beskrivning with it.
         const askedAi = ctx.store.get().openPlanAi;
         if (askedAi && askedAi.datasetId === dataset.id) { ctx.store.set({ openPlanAi: null }); if (aiShown()) openAi({ mode: askedAi.mode || 'build', brief: askedAi.brief || '' }); }
+        // Inhämta hands over a new detailed plan to draw (Ny detaljplan > Rita planen): the plan opens in edit mode.
+        const askedDraw = ctx.store.get().openDrawing;
+        if (askedDraw && askedDraw.datasetId === dataset.id) { ctx.store.set({ openDrawing: null }); await editor.begin().catch((err) => shell.log(String((err && err.message) || err), 'error')); if (my !== seq || !slots) return; }
         const bar = await toolbar(dataset, target);
         if (my !== seq || !slots) return;
         mapEl = h('div', { class: 'dm-map-view dm-plan-view dm-center-fill', 'aria-label': t('plan.view') });

@@ -13,6 +13,10 @@
  * model's rule (OP-JSON-003: a letter, then at most 39 letters, digits or underscores), unique in the plan; a new area gets a new
  * objektidentitet (a UUID).
  *
+ * A detailed plan (PLAN 12 e, Inhämta's Ny detaljplan) is edited with the same area operations: its rows are its plan area,
+ * use areas and property areas (DP_COLUMNS), each provision from Boverket's catalogue (`provisionRow`); a plan area and a use
+ * take only areas, and a detailed plan has no plan description, so its areas have no links.
+ *
  * A change set (B-78: the edits the plan's AI proposes) is a list of those edits that is tried on a copy of the plan first
  * (`tryChanges`) and, once approved, applied as the one step plan_changeset (`applyChanges`): one entry in the log with its
  * provenance, and one undo, whose inverse is every step's own, taken in turn on a copy and run backwards.
@@ -39,6 +43,10 @@
     const DEFAULT_DOCUMENT = 'planbeskrivning.docx';
     /** The columns of an area that its attributes may change. */
     const AREA_FIELDS = ['innehallstyp', 'namn', 'precisering', 'anvandningsstatus', 'kompletterande', 'utbyggnadsordning'];
+    /** The columns of a detailed plan's provision that its attributes may change (data/plan DP_COLUMNS). */
+    const DP_FIELDS = ['beteckning', 'formulering', 'katalogreferens', 'kod', 'kategori', 'underkategori', 'anvandningsform', 'varde', 'vardetyp', 'enhet', 'farg', 'etikett', 'egenskaper'];
+    /** The object types of a detailed plan that take only areas: the plan area and the uses. */
+    const DP_AREA_ONLY = new Set(['planomrade', 'anvandning']);
     /** Themes whose content may only be areas (ÖP catalogue: Område; the plan's boundary). */
     const AREA_ONLY = new Set(['omrade', 'plangeometri']);
     const FAMILY = { Point: 'point', MultiPoint: 'point', LineString: 'line', MultiLineString: 'line', Polygon: 'polygon', MultiPolygon: 'polygon' };
@@ -152,7 +160,9 @@
       return used ? str(used[0]) : DEFAULT_DOCUMENT;
     }
     const hasColumn = (ctx, name) => ctx.columns.some((c) => c.name === name);
-    function requireArea(ctx) { if (!hasColumn(ctx, 'tema') || !hasColumn(ctx, 'innehallstyp') || !hasColumn(ctx, 'objektid')) throw new Error(t('plan.edit.err.notop')); }
+    /** True for a detailed plan's rows (data/plan DP_COLUMNS: an object type, no theme). */
+    const isDp = (ctx) => hasColumn(ctx, 'objekttyp') && hasColumn(ctx, 'objektid') && !hasColumn(ctx, 'tema');
+    function requireArea(ctx) { if (isDp(ctx)) return; if (!hasColumn(ctx, 'tema') || !hasColumn(ctx, 'innehallstyp') || !hasColumn(ctx, 'objektid')) throw new Error(t('plan.edit.err.notop')); }
     /** A plan row as an object, by its objektid in any form. */
     async function areaOf(ctx, objektid) {
       const names = ctx.columns.map((c) => c.name);
@@ -199,6 +209,11 @@
       const want = layerFamily(lager, tema);
       if (want && familyOf(g) !== want) throw new Error(t('plan.edit.err.geometry.layer', { mark: t('layers.mark.' + want) }));
     }
+    /** A geometry that fits a row: its layer's kind (a comprehensive plan), or an area for a detailed plan's plan area and uses. */
+    function fitsRow(ctx, g, row) {
+      if (!isDp(ctx)) { fitsLayer(g, row.lager, row.tema); return; }
+      if (DP_AREA_ONLY.has(str(row.objekttyp)) && familyOf(g) !== 'polygon') throw new Error(t('plan.edit.err.geometry.layer', { mark: t('layers.mark.polygon') }));
+    }
     /**
      * The layer (table) and file a new area of a theme and kind of geometry goes to in a plan whose rows name their layers:
      * `innehall_op_<tema>_<polygon|line|point>` (the area and the plan boundary have tables of their own), in the plan map's file.
@@ -222,7 +237,8 @@
     async function refreshMeta(ctx) {
       const info = await planInfo(ctx.engine);
       const antal = {};
-      for (const [tema, n] of rowsOf(await ctx.engine.exec("select coalesce(nullif(tema, ''), 'annan'), count(*) from data group by 1 order by 1"))) antal[str(tema)] = Number(n);
+      const by = isDp(ctx) ? 'objekttyp' : 'tema';
+      for (const [tema, n] of rowsOf(await ctx.engine.exec(`select coalesce(nullif(${by}, ''), 'annan'), count(*) from data group by 1 order by 1`))) antal[str(tema)] = Number(n);
       info.antal = antal;
       if (hasColumn(ctx, 'lager')) {
         const fil = hasColumn(ctx, 'fil') ? "coalesce(fil, '')" : "''";
@@ -274,6 +290,16 @@
       if (!hasColumn(ctx, 'egenskaper')) return undefined;
       for (const [id, text] of Object.entries(given)) await ctx.engine.run(`update data set egenskaper = ? where ${KEY('objektid')} = ?`, [text === undefined ? null : text, keyOf(id)]);
       return undefined;
+    }
+
+    /** The columns an area's attributes may change: a detailed plan's provision fields, else a comprehensive plan's. */
+    const fieldsOf = (ctx) => (isDp(ctx) ? DP_FIELDS : AREA_FIELDS);
+    /** An object's facts (`egenskaper`) as JSON text of an object, or '' when there are none; anything else is refused. */
+    function factsText(v) {
+      const o = typeof v === 'string' ? parse(v) : v;
+      if (o === '' || o === null || o === undefined) return '';
+      if (!o || typeof o !== 'object' || Array.isArray(o)) throw new Error(t('plan.edit.err.facts'));
+      return Object.keys(o).length ? JSON.stringify(o) : '';
     }
 
     // ---- operations: sections ---------------------------------------------------------------------------------
@@ -423,22 +449,25 @@
       async inverse(_ctx, p) { const row = parse(p.row) || {}; return { op: 'plan_area_delete', params: { objektid: str(row.objektid) } }; },
       async apply(ctx, p) {
         requireArea(ctx);
-        await ensureTables(ctx.engine);
+        // A detailed plan has no plan description, and so no side tables for it.
+        if (!isDp(ctx)) await ensureTables(ctx.engine);
         const row = Object.assign({}, parse(p.row) || {});
         const id = idOf(row.objektid);
         if (!id) throw new Error(t('plan.edit.err.id'));
+        // An object of a detailed plan has its object type (a comprehensive plan's area of a theme has none).
+        if (isDp(ctx) && !plan.OBJECT_TYPES.includes(str(row.objekttyp))) throw new Error(t('plan.edit.err.notdp'));
         if (await areaOf(ctx, id)) throw new Error(t('plan.edit.err.id.taken', { id }));
         row.objektid = id;
         if (row.geometri !== null && row.geometri !== undefined && row.geometri !== '') {
           const g = checkGeometry(row.geometri);
-          fitsLayer(g, row.lager, row.tema);
+          fitsRow(ctx, g, row);
           row.geometri = JSON.stringify(g);
           row.geometrityp = g.type;
         } else { row.geometri = null; row.geometrityp = row.geometrityp || ''; }
         if (row.ordning === undefined || row.ordning === null || row.ordning === '') row.ordning = Number(rowsOf(await ctx.engine.exec('select coalesce(max(ordning), -1) + 1 from data'))[0][0]) || 0;
         const names = ctx.columns.map((c) => c.name);
         await ctx.engine.run(`insert into data (${names.map(q).join(', ')}) values (${names.map(() => '?').join(', ')})`, names.map((n) => (row[n] === undefined || row[n] === '' ? null : row[n])));
-        const links = Array.isArray(parse(p.links)) ? parse(p.links) : [];
+        const links = Array.isArray(parse(p.links)) && !isDp(ctx) ? parse(p.links) : [];
         for (const l of links) await insertLink(ctx.engine, Object.assign({}, l, { objektid: l.objektid || id }));
         if (links.length) await areaFacts(ctx, [id], p);
         await refreshMeta(ctx);
@@ -454,16 +483,16 @@
         requireArea(ctx);
         const a = await areaOrFail(ctx, p.objektid);
         const fields = {};
-        for (const k of Object.keys(parse(p.fields) || {})) if (AREA_FIELDS.includes(k) && hasColumn(ctx, k)) fields[k] = a[k] === null || a[k] === undefined ? '' : a[k];
+        for (const k of Object.keys(parse(p.fields) || {})) if (fieldsOf(ctx).includes(k) && hasColumn(ctx, k)) fields[k] = a[k] === null || a[k] === undefined ? '' : a[k];
         return { op: 'plan_area_set', params: { objektid: str(a.objektid), fields: JSON.stringify(fields) } };
       },
       async apply(ctx, p) {
         requireArea(ctx);
         const a = await areaOrFail(ctx, p.objektid);
         const fields = parse(p.fields) || {};
-        const keys = Object.keys(fields).filter((k) => AREA_FIELDS.includes(k) && hasColumn(ctx, k));
+        const keys = Object.keys(fields).filter((k) => fieldsOf(ctx).includes(k) && hasColumn(ctx, k));
         if (!keys.length) return { rows: 0 };
-        const values = keys.map((k) => { const v = k === 'precisering' ? cleanText(fields[k]) : cleanLine(fields[k]); return v === '' ? null : v; });
+        const values = keys.map((k) => { const v = k === 'egenskaper' ? factsText(fields[k]) : k === 'precisering' || k === 'etikett' ? cleanText(fields[k]) : cleanLine(fields[k]); return v === '' ? null : v; });
         await ctx.engine.run(`update data set ${keys.map((k) => q(k) + ' = ?').join(', ')} where objektid = ?`, values.concat([a.objektid]));
         return { rows: 1 };
       },
@@ -482,8 +511,9 @@
         requireArea(ctx);
         const a = await areaOrFail(ctx, p.objektid);
         const g = checkGeometry(p.geometri);
-        fitsLayer(g, a.lager, a.tema);
-        await ctx.engine.run('update data set geometri = ?, geometrityp = ? where objektid = ?', [JSON.stringify(g), g.type, a.objektid]);
+        fitsRow(ctx, g, a);
+        if (hasColumn(ctx, 'geometrityp')) await ctx.engine.run('update data set geometri = ?, geometrityp = ? where objektid = ?', [JSON.stringify(g), g.type, a.objektid]);
+        else await ctx.engine.run('update data set geometri = ? where objektid = ?', [JSON.stringify(g), a.objektid]);
         return { rows: 1 };
       },
       toSQL: comment('plan_area_geometry'), toR: rComment('plan_area_geometry'),
@@ -494,16 +524,17 @@
       params: [{ name: 'objektid', type: 'text', required: true }],
       async inverse(ctx, p) {
         requireArea(ctx);
-        await ensureTables(ctx.engine);
         const a = await areaOrFail(ctx, p.objektid);
+        if (isDp(ctx)) return { op: 'plan_area_add', params: { row: JSON.stringify(a) } };
+        await ensureTables(ctx.engine);
         const links = rowsOf(await ctx.engine.exec(`select avsnitt, coalesce(dokument, ''), coalesce(typ, ''), coalesce(kalla, ''), objektid from ${LINKS} where ${KEY('objektid')} = ? order by rowid`, [keyOf(a.objektid)])).map((r) => ({ avsnitt: str(r[0]), dokument: str(r[1]), typ: str(r[2]), kalla: str(r[3]), objektid: str(r[4]) }));
         return { op: 'plan_area_add', params: { row: JSON.stringify(a), links: JSON.stringify(links), egenskaper: await factsOf(ctx, [idOf(a.objektid)]) } };
       },
       async apply(ctx, p) {
         requireArea(ctx);
-        await ensureTables(ctx.engine);
         const a = await areaOrFail(ctx, p.objektid);
-        const links = await ctx.engine.run(`delete from ${LINKS} where ${KEY('objektid')} = ?`, [keyOf(a.objektid)]);
+        let links = 0;
+        if (!isDp(ctx)) { await ensureTables(ctx.engine); links = await ctx.engine.run(`delete from ${LINKS} where ${KEY('objektid')} = ?`, [keyOf(a.objektid)]); }
         await ctx.engine.run('delete from data where objektid = ?', [a.objektid]);
         await refreshMeta(ctx);
         return { rows: 1, links };
@@ -660,6 +691,82 @@
       if (Number(files[0][0])) { const f = rowsOf(await handle.engine.exec("select name from _files where kind = 'plankarta' order by name limit 1"))[0]; if (f) mapFile = str(f[0]); }
       return tableFor(tema, family, mapFile || str(layers[0][1]));
     }
+    // ---- a detailed plan's provisions --------------------------------------------------------------------------
+    const VARIABLE = /\[([^\]:]+):([^\]]+)\]/g;
+    /** A provision's variables as the catalogue writes them in its formulation (`[höjd:decimaltal]`): [{name, type}]. */
+    const variablesOf = (template) => Array.from(str(template).matchAll(VARIABLE), (m) => ({ name: m[1].trim(), type: m[2].trim() }));
+    /** The units the catalogue's formulations name right after a value, as the national specification's `enhet`. */
+    const UNITS = [[/^\s*m²/, 'kvadratmeter'], [/^\s*meter/, 'meter'], [/^\s*grader/, 'grader'], [/^\s*%/, 'procent']];
+    function unitOf(template) {
+      const m = /\[[^\]:]+:decimaltal\]/.exec(str(template));
+      if (!m) return '';
+      const rest = str(template).slice(m.index + m[0].length);
+      const hit = UNITS.find(([re]) => re.test(rest));
+      return hit ? hit[1] : '';
+    }
+    /**
+     * The fields of a provision from its catalogue row, with its variables filled in from `values` ({name: value}): designation,
+     * formulation (the template kept in `egenskaper.formuleringsmall` when it has variables), the catalogue's reference, code,
+     * category, use form and colour, the value, its kind and unit. A variable without a value stays in the formulation.
+     * @param {any} entry a row of data/plan-catalog @param {Record<string, any>} [values] @param {Record<string, any>} [facts] the row's other facts
+     * @returns {Record<string, any>}
+     */
+    function provisionFields(entry, values = {}, facts = {}) {
+      const template = str(entry.formulering);
+      const vars = variablesOf(template);
+      const given = vars.map((v) => ({ beskrivning: v.name, variabelvarde: cleanLine(values[v.name]) }));
+      const filled = given.filter((v) => v.variabelvarde);
+      const text = plan.filledFormulation(template, filled);
+      // As the import keeps it: the template only when a value fills it, the kind and unit of a value only when there is one.
+      const e = Object.assign({}, facts);
+      if (text !== template) e.formuleringsmall = template; else delete e.formuleringsmall;
+      const farg = str(entry.farg);
+      return {
+        beteckning: str(entry.beteckning).replace(/#/g, '').trim(), formulering: text, katalogreferens: str(entry.uuid).toLowerCase(), kod: str(entry.kod),
+        kategori: str(entry.kategori), underkategori: str(entry.underkategori), anvandningsform: str(entry.form),
+        varde: filled.map((v) => v.variabelvarde).join('; '), vardetyp: filled.length ? str(entry.varde).toLowerCase() : '', enhet: filled.length ? unitOf(template) : '',
+        farg: farg ? farg.charAt(0).toUpperCase() + farg.slice(1) : '', egenskaper: Object.keys(e).length ? JSON.stringify(e) : '',
+      };
+    }
+    /**
+     * The values a provision's formulation gives its template's variables ({name: value}), read back from the text: what a
+     * variable that was never filled in shows is left out. @param {string} template @param {string} text
+     */
+    function valuesIn(template, text) {
+      const vars = variablesOf(template);
+      if (!vars.length) return {};
+      const parts = str(template).split(VARIABLE);
+      // split() keeps the two captures of each variable: literal, name, type, literal, …
+      let re = '^';
+      for (let i = 0; i < parts.length; i += 3) { re += parts[i].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); if (i + 1 < parts.length) re += '(.*?)'; }
+      const m = new RegExp(re + '$', 's').exec(str(text));
+      const out = {};
+      if (!m) return out;
+      vars.forEach((v, i) => { const x = m[i + 1]; if (x !== undefined && !/^\[[^\]]*\]$/.test(x)) out[v.name] = x; });
+      return out;
+    }
+    /**
+     * A new object of a detailed plan: the plan area (its objektidentitet is the plan's, its texts the plan's designation and
+     * name), or a use or property area with a provision from the catalogue (`entry`) and the values of its variables.
+     * @param {string} id @param {{objekttyp: string, geometry: any, entry?: any, values?: Record<string, any>, etikett?: string}} spec
+     * @returns {Promise<Record<string, any>>} the row
+     */
+    async function provisionRow(id, spec) {
+      const handle = await datasets.ensureOpen(id);
+      const info = handle.meta.plan || {};
+      const g = checkGeometry(spec.geometry);
+      const typ = str(spec.objekttyp);
+      if (typ === 'planomrade') return { objektid: idOf(info.objektid) || newId(), objekttyp: typ, beteckning: cleanLine(info.beteckning), formulering: cleanLine(info.namn), status: cleanLine(info.status), etikett: cleanLine(info.namn || info.beteckning), geometri: JSON.stringify(g) };
+      const fields = spec.entry ? provisionFields(spec.entry, spec.values || {}) : {};
+      return Object.assign({ objektid: newId(), objekttyp: typ, status: cleanLine(info.status) }, fields, { etikett: cleanText(spec.etikett), geometri: JSON.stringify(g) });
+    }
+    /** A new object of a detailed plan (provisionRow), added as a step. @returns {Promise<string>} its objektidentitet */
+    async function addProvision(id, spec) {
+      const row = await provisionRow(id, spec);
+      await run(id, 'plan_area_add', { row: JSON.stringify(row) });
+      return row.objektid;
+    }
+
     /** Change an area's attributes (innehållstyp, namn, precisering …). @param {string} id @param {string} objektid @param {Record<string, string>} fields */
     const editArea = (id, objektid, fields) => run(id, 'plan_area_set', { objektid, fields: JSON.stringify(fields) });
     /** Give an area a new geometry (its vertices edited, or moved). @param {string} id @param {string} objektid @param {any} geometry */
@@ -725,7 +832,8 @@
     }
 
     return {
-      SECTIONS, LINKS, BOOKMARK_NAME, STATEMENT, STATEMENT_UUID, DEFAULT_DOCUMENT, AREA_FIELDS, EDITED,
+      SECTIONS, LINKS, BOOKMARK_NAME, STATEMENT, STATEMENT_UUID, DEFAULT_DOCUMENT, AREA_FIELDS, DP_FIELDS, EDITED,
+      variablesOf, provisionFields, valuesIn, provisionRow, addProvision,
       validBookmark, bookmarkName, newId, cleanLine, cleanText, bodyOf, composeText, spansHeading, isStatement, checkGeometry, layerFamily, familyOf, tableFor,
       editSection, addSection, deleteSection, link, unlink, addArea, editArea, setGeometry, deleteArea, undo, catalogue,
       STEPS, areaRow, documentFor, tryChanges, applyChanges,

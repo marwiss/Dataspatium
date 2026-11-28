@@ -9,6 +9,11 @@
  * (ui/bearbeta/plan-sections). Every change goes through data/plan-edit, so it is logged and undone with the app's undo (*Ångra*
  * in the bar); the view draws the plan again afterwards. Texts are plain text and reach the page only as text.
  *
+ * A Swedish detailed plan (Inhämta's Ny detaljplan, or one read from a file) is drawn the same way (PLAN 12 e): the bar chooses
+ * the plan boundary, a use area or a property area and, for the last two, a provision from Boverket's catalogue (data/plan-catalog:
+ * the common ones, or any found with *Sök i katalogen*); the inspector changes an area's provision, the values of its variables,
+ * its designation and motive. It is exported as the national specification's GeoJSON (io/exporters/detaljplan).
+ *
  * The plan view hands over what it knows (`api`): its state (rows, `picked`, the area chosen last, the layers), the dataset, how to
  * choose areas, draw the plan again and draw the inspector again. The view calls `buttons`, `bar`, `mapDrawn`, `inspector` and
  * `selection`; the plan description calls `textHead`, `sectionTools` and `objectSectionTools`.
@@ -16,13 +21,17 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/plan-edit', ['ui/base', 'ui/basic', 'data/plan', 'data/plan-edit', 'data/plan-delivery', 'data/plan-links', 'data/recipes', 'data/geo', 'viz/leaflet', 'viz/theme', 'platform/files', 'ui/bearbeta/plan-layers'], (base, basic, plan, planEdit, delivery, planLinks, recipes, geo, leaflet, theme, files, planLayers) => {
+  D.define('ui/bearbeta/plan-edit', ['ui/base', 'ui/basic', 'data/plan', 'data/plan-edit', 'data/plan-delivery', 'data/plan-links', 'data/plan-catalog', 'data/recipes', 'data/geo', 'viz/leaflet', 'viz/theme', 'platform/files', 'ui/bearbeta/plan-layers'], (base, basic, plan, planEdit, delivery, planLinks, catalog, recipes, geo, leaflet, theme, files, planLayers) => {
     const { h, t, i18n, replace } = base;
     const GEOMAN = 'vendor/leaflet-geoman/';
     /** Geoman's names of the shapes drawn, by the kind of geometry. */
     const SHAPES = { polygon: 'Polygon', line: 'Line', point: 'CircleMarker' };
     const ICONS = { polygon: 'square', line: 'trending-up', point: 'map-pin' };
     const AREA_ONLY = new Set(['omrade', 'plangeometri']);
+    /** What a detailed plan's bar draws: its plan boundary, a use area or a property area (data/plan object types). */
+    const DP_TARGETS = ['planomrade', 'anvandning', 'egenskap'];
+    /** A catalogue provision as one line: its designation and formulation. @param {any} e */
+    const provisionLabel = (e) => [String(e.beteckning || '').replace(/#/g, '').trim(), e.formulering].filter(Boolean).join(' ');
     /** @type {Promise<any>|null} */ let loading = null;
     let cssLinked = false;
     const str = (v) => (v === null || v === undefined ? '' : String(v));
@@ -61,11 +70,15 @@
      */
     function create(ctx, api) {
       const { ui, shell } = ctx;
-      const st = { editing: false, target: '', drawing: '', shape: /** @type {any} */ (null), pending: '', catalogue: /** @type {Map<string, string[]>|null} */ (null), catalogueFor: '' };
+      const st = { editing: false, target: '', drawing: '', shape: /** @type {any} */ (null), pending: '', catalogue: /** @type {Map<string, string[]>|null} */ (null), catalogueFor: '',
+        /** A detailed plan's provisions to draw with: the common ones per type, those found in the catalogue, the one chosen per type. */
+        common: /** @type {Record<string, any[]>} */ ({ anvandning: [], egenskap: [] }), found: /** @type {Record<string, any[]>} */ ({ anvandning: [], egenskap: [] }), provision: /** @type {Record<string, string>} */ ({}) };
       let map = null; let L = null; let groups = []; let copy = null; let barEl = null;
       const ds = () => api.dataset();
       const view = () => api.state();
-      const available = () => { const d = ds(); return !!(d && d.kind === 'plan' && view().slag === 'oversiktsplan'); };
+      /** A detailed plan in the view (a Swedish one: a Nordic plan has its own model). */
+      const isDp = () => view().slag === 'detaljplan';
+      const available = () => { const d = ds(); const info = view().info || {}; return !!(d && d.kind === 'plan' && (view().slag === 'oversiktsplan' || (isDp() && (!info.land || info.land === 'SE')))); };
       const rowOf = (id) => view().rows.find((r) => idOf(r.objektid) === idOf(id)) || null;
       /** The areas chosen on the map (the plan view's `picked`) and their ids. */
       const picked = () => (view().picked || []).filter(Boolean);
@@ -81,18 +94,23 @@
         if (!available()) return [];
         const toggle = basic.button({ label: t(st.editing ? 'plan.edit.done' : 'plan.edit.start'), icon: st.editing ? 'check' : 'pencil', title: t(st.editing ? 'plan.edit.done.hint' : 'plan.edit.start.hint'), 'data-plan-edit': st.editing ? 'done' : 'start',
           onClick: guard(async () => { toggle.setAttribute('loading', ''); try { await (st.editing ? stop() : start()); } finally { toggle.removeAttribute('loading'); } }) });
-        return [toggle, basic.button({ label: t('plan.edit.export'), icon: 'package', title: t('plan.edit.export.hint'), 'data-plan-export': '', onClick: guard(exportDelivery) })];
+        const exported = isDp()
+          ? basic.button({ label: t('plan.dp.export'), icon: 'package', title: t('plan.dp.export.hint'), 'data-plan-export': 'detaljplan', onClick: guard(exportDetailed) })
+          : basic.button({ label: t('plan.edit.export'), icon: 'package', title: t('plan.edit.export.hint'), 'data-plan-export': '', onClick: guard(exportDelivery) });
+        return [toggle, exported];
       }
-      async function start() {
+      /** Edit mode on, without drawing the plan again (the view draws it next): the drawing library and the plan's value lists. */
+      async function begin() {
         await ensureLibrary();
         st.editing = true; st.target = '';
         const id = ds().id;
         if (st.catalogueFor !== id) {
-          st.catalogue = null; st.catalogueFor = id;
-          planEdit.catalogue(id).then((c) => { if (st.catalogueFor === id) { st.catalogue = c; api.inspector(); } }).catch((err) => D.log('plan-edit', err));
+          st.catalogue = null; st.catalogueFor = id; st.provision = {}; st.found = { anvandning: [], egenskap: [] };
+          if (isDp()) Promise.all([catalog.common('anvandning'), catalog.common('egenskap')]).then(([a, e]) => { if (st.catalogueFor === id) { st.common = { anvandning: a, egenskap: e }; fillBar(); api.inspector(); } }).catch((err) => D.log('plan-edit', err));
+          else planEdit.catalogue(id).then((c) => { if (st.catalogueFor === id) { st.catalogue = c; api.inspector(); } }).catch((err) => D.log('plan-edit', err));
         }
-        api.changed();
       }
+      async function start() { await begin(); api.changed(); }
       async function stop() {
         stopDrawing(); dropShape();
         st.editing = false; st.shape = null;
@@ -107,6 +125,15 @@
         shell.log(t('plan.edit.exported', { name }) + ` (${i18n.formatBytes(blob.size)})`, 'ok');
         ui.toast.show(t('plan.edit.exported', { name }), { kind: 'ok' });
       }
+      /** A detailed plan as the national specification's GeoJSON (io/exporters/detaljplan), downloaded. */
+      async function exportDetailed() {
+        const d = ds();
+        const blob = await D.require('io/exporters/detaljplan').toBlob(d.id);
+        const name = files.safeName(d.name, 'geojson');
+        files.download(blob, name);
+        shell.log(t('plan.edit.exported', { name }) + ` (${i18n.formatBytes(blob.size)})`, 'ok');
+        ui.toast.show(t('plan.edit.exported', { name }), { kind: 'ok' });
+      }
       async function undo() {
         stopDrawing(); dropShape();
         const label = await planEdit.undo(ds().id);
@@ -117,6 +144,7 @@
       // ---- the bar -----------------------------------------------------------------------------------------------
       /** The layers and themes to draw into: the plan map's layers (not the underlag), then every theme of the ÖP model. */
       function targets() {
+        if (isDp()) return DP_TARGETS.map((typ) => ({ value: 'dp:' + typ, label: t('plan.dp.target.' + typ) }));
         const out = [];
         for (const l of view().layers || []) {
           if (l.tema === 'underlag' || !l.lager) continue;
@@ -128,6 +156,7 @@
       const layerOf = (value) => (value.startsWith('layer:') ? (view().layers || []).find((l) => 'layer:' + l.key === value) || null : null);
       /** The kind of geometry a target takes: a layer's own, an area-only theme's, else any (''). */
       function familyOf(value) {
+        if (value.startsWith('dp:')) return value === 'dp:egenskap' ? '' : 'polygon';
         const l = layerOf(value);
         if (l) return planEdit.layerFamily(l.lager, l.tema) || l.mark || '';
         const tema = value.replace(/^theme:/, '');
@@ -135,6 +164,8 @@
       }
       function defaultTarget(list) {
         const s = view();
+        // A detailed plan starts with its boundary, then its uses.
+        if (isDp()) return s.rows.some((r) => r.objekttyp === 'planomrade') ? 'dp:anvandning' : 'dp:planomrade';
         const own = s.selected && (view().layers || []).find((l) => l.rows && l.rows.includes(s.selected));
         if (own && list.some((o) => o.value === 'layer:' + own.key)) return 'layer:' + own.key;
         return (list.find((o) => o.value.startsWith('layer:')) || list.find((o) => o.value === 'theme:markochvattenanvandning') || list[0] || { value: '' }).value;
@@ -164,8 +195,57 @@
         const can = recipes.canUndo(id);
         const undoBtn = basic.button({ label: t('common.undo'), icon: 'history', size: 'sm', disabled: can && !busy ? null : true, title: can ? t('bearbeta.undo.title', { label: recipes.undoLabel(id) }) : t('bearbeta.undo.none'), 'data-plan-edit-undo': '', onClick: guard(undo) });
         replace(barEl,
-          h('div', { class: 'dm-toolbar' }, sel, draw('polygon'), draw('line'), draw('point'), ...drawing, undoBtn),
-          h('p', { class: 'dm-help dm-small', text: t(st.drawing ? 'plan.edit.drawing.hint' : st.shape ? 'plan.edit.shape.hint' : 'plan.edit.hint') }));
+          h('div', { class: 'dm-toolbar' }, sel, ...provisionPicker(), draw('polygon'), draw('line'), draw('point'), ...drawing, undoBtn),
+          h('p', { class: 'dm-help dm-small', text: t(st.drawing ? (isDp() ? 'plan.dp.drawing.hint' : 'plan.edit.drawing.hint') : st.shape ? 'plan.edit.shape.hint' : isDp() ? 'plan.dp.hint' : 'plan.edit.hint') }));
+      }
+
+      /** The provisions of a type to choose from: the one an area has, the common ones, then those found in the catalogue. */
+      function provisionOptions(typ, current) {
+        const seen = new Set();
+        const out = [];
+        for (const [list, group] of [[current ? [current] : [], ''], [st.common[typ] || [], t('plan.dp.common')], [st.found[typ] || [], t('plan.dp.found')]]) {
+          for (const e of list) { if (!e || seen.has(e.uuid)) continue; seen.add(e.uuid); out.push({ value: e.uuid, label: provisionLabel(e), group: group || e.form || '' }); }
+        }
+        return out;
+      }
+      const entryOf = (typ, uuid) => [].concat(st.common[typ] || [], st.found[typ] || []).find((e) => e.uuid === uuid) || null;
+      /** A detailed plan's provision for the next use or property area, and *Sök i katalogen*; nothing for the plan boundary. */
+      function provisionPicker() {
+        const typ = st.target.replace(/^dp:/, '');
+        if (!isDp() || typ === 'planomrade') return [];
+        const options = provisionOptions(typ, null);
+        if (!st.provision[typ] && options.length) st.provision[typ] = options[0].value;
+        const sel = /** @type {any} */ (h('dm-select', { 'aria-label': t('plan.dp.provision'), inline: true, title: t('plan.dp.provision'), 'data-plan-dp-provision': '' }));
+        sel.options = options; sel.value = st.provision[typ] || '';
+        sel.addEventListener('change', () => { st.provision[typ] = sel.value; });
+        return [sel, basic.button({ label: t('plan.dp.search'), icon: 'search', size: 'sm', title: t('plan.dp.search.hint'), 'data-plan-dp-search': '', onClick: guard(async () => {
+          const e = await searchDialog(typ);
+          if (e) { st.provision[typ] = e.uuid; fillBar(); }
+        }) })];
+      }
+      /**
+       * Boverket's catalogue as the app ships it, searched for a provision of a type in force; the one chosen is kept with those
+       * found. @param {string} typ @returns {Promise<any|null>}
+       */
+      async function searchDialog(typ) {
+        const cat = await catalog.load();
+        const input = /** @type {any} */ (h('dm-input', { type: 'search', label: t('plan.dp.search.label'), placeholder: t('plan.dp.search.placeholder'), 'data-plan-dp-query': '' }));
+        const list = h('div', { class: 'dm-list', 'data-plan-dp-results': '' });
+        let done = null;
+        const draw = async () => {
+          const found = await catalog.search(input.value, { typ, current: true, limit: 60 });
+          replace(list, found.length ? found.map((e) => h('button', { type: 'button', class: 'dm-list-item', 'data-plan-dp-result': e.uuid, onclick: () => { if (done) done(e); } },
+            h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: provisionLabel(e) }), h('span', { class: 'dm-list-sub dm-truncate', text: [e.form, e.kategori, e.underkategori].filter(Boolean).join(' · ') })))) : h('p', { class: 'dm-help', text: t('plan.dp.search.none') }));
+        };
+        input.addEventListener('input', () => { draw().catch((err) => D.log('plan-edit', err)); });
+        const chosen = await ui.dialog.open({
+          title: t('plan.dp.search.title', { type: t('plan.type.' + typ) }), help: 'planer#en-ny-detaljplan', size: 'lg',
+          body: (finish) => { done = finish; draw().catch((err) => D.log('plan-edit', err)); return h('div', { class: 'dm-stack', 'data-plan-dp-search-dialog': '' }, h('p', { class: 'dm-help dm-small', text: t('plan.dp.search.release', { release: cat.release || '' }) }), input, list); },
+          actions: [{ label: t('common.cancel'), value: null }],
+        });
+        if (!chosen || typeof chosen !== 'object') return null;
+        if (!st.found[typ].some((e) => e.uuid === chosen.uuid)) st.found[typ].push(chosen);
+        return chosen;
       }
 
       // ---- the map -----------------------------------------------------------------------------------------------
@@ -224,6 +304,7 @@
         if (layer && layer.remove) layer.remove();
         stopDrawing();
         if (!g) return;
+        if (isDp()) { await createProvision(g); return; }
         const target = layerOf(st.target);
         const tema = target ? target.tema || 'omrade' : st.target.replace(/^theme:/, '') || 'omrade';
         const types = (st.catalogue && st.catalogue.get(tema)) || [];
@@ -233,6 +314,19 @@
         const objektid = await planEdit.addArea(ds().id, area);
         st.pending = objektid;
         shell.log(t('plan.edit.area.added', { layer: target ? target.label : planLayers.themeLabel(tema) }), 'ok');
+        api.changed();
+      }
+
+      /** A shape drawn in a detailed plan: the plan boundary (the one there is gets the new shape), or an area with its provision. */
+      async function createProvision(g) {
+        const id = ds().id;
+        const typ = st.target.replace(/^dp:/, '') || 'anvandning';
+        const boundary = typ === 'planomrade' ? view().rows.find((r) => r.objekttyp === 'planomrade') : null;
+        if (boundary) { await planEdit.setGeometry(id, boundary.objektid, g); st.pending = String(boundary.objektid); }
+        else st.pending = await planEdit.addProvision(id, { objekttyp: typ, geometry: g, entry: typ === 'planomrade' ? null : entryOf(typ, st.provision[typ]) });
+        // With its boundary drawn the plan gets its uses next.
+        if (typ === 'planomrade') st.target = 'dp:anvandning';
+        shell.log(t('plan.edit.area.added', { layer: t('plan.dp.target.' + typ) }), 'ok');
         api.changed();
       }
 
@@ -283,7 +377,7 @@
       /** The areas chosen, in edit mode: *Koppla till ställningstagande*; null outside edit mode or with none chosen. */
       function selection() {
         const n = pickedIds().length;
-        if (!st.editing || !available() || !n) return null;
+        if (!st.editing || !available() || isDp() || !n) return null;
         return h('div', { class: 'dm-row-wrap', 'data-plan-edit-selection': String(n) },
           basic.button({ label: t('plan.edit.link'), icon: 'link', size: 'sm', title: t('plan.edit.link.hint'), 'data-plan-link': '', onClick: guard(linkDialog) }));
       }
@@ -293,6 +387,7 @@
        */
       function inspector(row) {
         if (!st.editing || !row || !available()) return null;
+        if (isDp()) return provisionInspector(row);
         const id = ds().id;
         const objektid = str(row.objektid).trim();
         const kv = /** @type {any} */ (h('dm-kv'));
@@ -330,12 +425,81 @@
           h('details', { class: 'dm-more' }, h('summary', { text: t('common.more') }), other),
           name, prec, h('div', { class: 'dm-row-wrap' }, save), h('div', { class: 'dm-row-wrap' }, ...shapeButtons, remove));
       }
+      /** The shape buttons of the area chosen (*Redigera formen*, *Flytta*, or *Spara formen* and *Avbryt*) and *Ta bort området*. */
+      function shapeTools(row, label) {
+        const id = ds().id;
+        const objektid = str(row.objektid).trim();
+        const mine = st.shape && st.shape.objektid === idOf(objektid);
+        const shapeButtons = mine
+          ? [basic.button({ label: t('plan.edit.shape.save'), icon: 'check', size: 'sm', 'data-plan-shape-save': '', onClick: guard(saveShape) }),
+            basic.button({ label: t('common.cancel'), icon: 'x', size: 'sm', variant: 'ghost', 'data-plan-shape-cancel': '', onClick: () => { dropShape(); fillBar(); api.inspector(); } })]
+          : [basic.button({ label: t('plan.edit.shape.edit'), icon: 'pencil', size: 'sm', title: t('plan.edit.shape.edit.hint'), disabled: row.geometri && !st.drawing ? null : true, 'data-plan-shape-edit': 'vertices', onClick: guard(() => editShape(row, 'vertices')) }),
+            basic.button({ label: t('plan.edit.shape.move'), icon: 'arrow-right-left', size: 'sm', title: t('plan.edit.shape.move.hint'), disabled: row.geometri && !st.drawing ? null : true, 'data-plan-shape-edit': 'move', onClick: guard(() => editShape(row, 'move')) })];
+        const remove = basic.button({ label: t('plan.edit.area.delete'), icon: 'trash-2', size: 'sm', variant: 'danger', title: t('plan.edit.area.delete.hint'), 'data-plan-area-delete': '', onClick: guard(async () => {
+          if (!(await ui.dialog.confirm(t('plan.edit.area.delete.confirm', { name: label || objektid }), { okLabel: t('common.delete'), danger: true }))) return;
+          await planEdit.deleteArea(id, objektid);
+          if (st.shape && st.shape.objektid === idOf(objektid)) dropShape();
+          api.pick([]);
+          ui.toast.show(t('plan.edit.area.deleted'), { kind: 'ok' });
+          api.changed();
+        }) });
+        return h('div', { class: 'dm-row-wrap' }, ...shapeButtons, remove);
+      }
+      /**
+       * A detailed plan's area in edit mode: its provision (the catalogue's, chosen as in the bar), the values of the provision's
+       * variables, its designation and motive (a provision outside the catalogue: its formulation), *Spara*, its shape and place.
+       * The plan boundary has only its shape: the plan's name and designation are the plan's facts. @param {any} row
+       */
+      function provisionInspector(row) {
+        const id = ds().id;
+        const objektid = str(row.objektid).trim();
+        const typ = str(row.objekttyp);
+        const kv = /** @type {any} */ (h('dm-kv'));
+        kv.items = [{ label: t('plan.field.objekttyp'), value: t('plan.type.' + (typ || 'annan')) }, { label: t('plan.field.objektid'), value: objektid }];
+        const box = h('div', { class: 'dm-stack-sm', 'data-plan-area-edit': objektid }, kv);
+        if (typ === 'planomrade' || !(typ in st.common)) { box.appendChild(shapeTools(row, row.formulering || t('plan.type.planomrade'))); return box; }
+        const fields = h('div', { class: 'dm-stack-sm' });
+        box.appendChild(fields);
+        box.appendChild(shapeTools(row, [row.beteckning, row.formulering].filter(Boolean).join(' ')));
+        let facts = {};
+        try { facts = row.egenskaper ? JSON.parse(row.egenskaper) : {}; } catch (_e) { facts = {}; }
+        /** The fields for a provision: `entry` the catalogue's (null outside it); `values` its variables' values. */
+        const fill = (entry, values) => {
+          const sel = /** @type {any} */ (h('dm-select', { label: t('plan.dp.provision'), 'data-plan-area-provision': '' }));
+          sel.options = provisionOptions(typ, entry).concat(entry ? [] : [{ value: '', label: t('plan.dp.provision.none') }]);
+          sel.value = entry ? entry.uuid : '';
+          sel.addEventListener('change', () => fill(entryOf(typ, sel.value) || (entry && entry.uuid === sel.value ? entry : null), {}));
+          const search = basic.button({ label: t('plan.dp.search'), icon: 'search', size: 'sm', title: t('plan.dp.search.hint'), onClick: guard(async () => { const e = await searchDialog(typ); if (e) fill(e, {}); }) });
+          const vars = entry ? planEdit.variablesOf(entry.formulering) : [];
+          const inputs = vars.map((v) => { const el = /** @type {any} */ (h('dm-input', { label: v.name, help: t('plan.dp.variable.' + (v.type === 'decimaltal' ? 'number' : 'text')), 'data-plan-area-variable': v.name })); el.value = values[v.name] === undefined ? '' : values[v.name]; return el; });
+          const mark = /** @type {any} */ (h('dm-input', { label: t('plan.field.beteckning'), help: t('plan.dp.beteckning.help'), 'data-plan-area-designation': '' }));
+          mark.value = entry && entry.uuid !== str(row.katalogreferens) ? String(entry.beteckning || '').replace(/#/g, '').trim() : row.beteckning || '';
+          const text = entry ? null : /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '3', label: t('plan.field.formulering'), 'data-plan-area-formulation': '' }));
+          if (text) text.value = row.formulering || '';
+          const motive = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '3', label: t('plan.field.motiv'), 'data-plan-area-motive': '' }));
+          motive.value = row.etikett || '';
+          const save = basic.button({ label: t('common.save'), icon: 'save', variant: 'primary', size: 'sm', title: t('plan.edit.area.save.hint'), 'data-plan-area-save': '', onClick: guard(async () => {
+            const given = {};
+            vars.forEach((v, i) => { given[v.name] = inputs[i].value; });
+            const next = entry ? planEdit.provisionFields(entry, given, facts) : { formulering: text.value };
+            next.beteckning = mark.value; next.etikett = motive.value;
+            await planEdit.editArea(id, objektid, next);
+            ui.toast.show(t('plan.edit.area.saved'), { kind: 'ok' });
+            api.changed();
+          }) });
+          replace(fields, h('div', { class: 'dm-row-end' }, sel, search), entry ? h('p', { class: 'dm-help dm-small', text: entry.formulering }) : null, ...inputs, mark, text, motive, h('div', { class: 'dm-row-wrap' }, save));
+        };
+        const ref = str(row.katalogreferens);
+        if (!ref) fill(null, {});
+        else catalog.get(ref).then((entry) => fill(entry, entry ? planEdit.valuesIn(entry.formulering, row.formulering) : {})).catch(() => fill(null, {}));
+        return box;
+      }
       /**
        * *Ta bort koppling* beside a section that concerns the areas chosen: the links of those areas to the section go.
        * @param {any} section @param {any[]} rows the chosen areas the section covers
        */
       function objectSectionTools(section, rows) {
-        if (!st.editing || !available()) return null;
+        if (!st.editing || !available() || isDp()) return null;
         const ids = (rows || []).map((r) => str(r && r.objektid)).filter((x) => idOf(x));
         if (!ids.length) return null;
         return basic.button({ label: t('plan.edit.unlink'), icon: 'x', size: 'sm', variant: 'ghost', title: t('plan.edit.unlink.hint'), 'data-plan-unlink': section.avsnitt, onClick: guard(async () => {
@@ -371,7 +535,7 @@
       // ---- the plan description's sections -------------------------------------------------------------------------
       /** *Nytt ställningstagande* and *Nytt avsnitt* at the top of the tab Ställningstaganden; null outside edit mode. */
       function textHead() {
-        if (!st.editing || !available()) return null;
+        if (!st.editing || !available() || isDp()) return null;
         return h('div', { class: 'dm-stack-sm', 'data-plan-text-edit': '' },
           h('div', { class: 'dm-row-wrap' },
             basic.button({ label: t('plan.edit.section.add.statement'), icon: 'plus', title: t('plan.edit.section.add.hint'), 'data-plan-section-add': 'statement', onClick: guard(() => sectionDialog(planEdit.STATEMENT)) }),
@@ -423,7 +587,7 @@
        * kopplingen till markerade* and *Ta bort*; null outside edit mode. @param {any} section
        */
       function sectionTools(section) {
-        if (!st.editing || !available()) return null;
+        if (!st.editing || !available() || isDp()) return null;
         return h('div', { class: 'dm-row-wrap', 'data-plan-section-tools': section.avsnitt },
           basic.button({ label: t('common.edit'), icon: 'pencil', size: 'sm', title: t('plan.edit.section.edit.hint'), 'data-plan-section-edit': section.avsnitt, onClick: (e) => editInPlace(/** @type {any} */ (e.currentTarget).closest('article'), section) }),
           basic.button({ label: t('plan.edit.link.selected'), icon: 'link', size: 'sm', title: t('plan.edit.link.selected.hint'), 'data-plan-section-link': section.avsnitt, onClick: guard(() => linkSelected(section, true)) }),
@@ -469,7 +633,7 @@
       }
 
       function destroy() { stopDrawing(); removeCopy(); map = null; groups = []; barEl = null; }
-      return { buttons, bar, mapDrawn, selection, inspector, objectSectionTools, textHead, sectionTools, destroy, start, stop, state: st, get editing() { return st.editing && available(); } };
+      return { buttons, bar, mapDrawn, selection, inspector, objectSectionTools, textHead, sectionTools, destroy, begin, start, stop, state: st, get editing() { return st.editing && available(); } };
     }
     return { create, ensureLibrary, combine };
   });
