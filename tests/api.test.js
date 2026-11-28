@@ -640,7 +640,8 @@
     try {
       const shell = await D.require('app').start(root);
       shell.activate('inhamta');
-      await wait2(() => Array.from(root.querySelectorAll('.dm-left .dm-list-item')).some((b) => b.textContent.includes('UI-testtjänst')), 5000, 'connector in source list');
+      // The start of the app and Inhämta's groups take longer than 5 s in Firefox when Edge runs beside it (-Jobs 2).
+      await wait2(() => Array.from(root.querySelectorAll('.dm-left .dm-list-item')).some((b) => b.textContent.includes('UI-testtjänst')), 15000, 'connector in source list');
       assert.ok(Array.from(root.querySelectorAll('.dm-left .dm-list-item')).some((b) => b.textContent.includes('SCB Statistikdatabasen')), 'presets listed');
       /** @type {HTMLElement} */ (Array.from(root.querySelectorAll('.dm-left .dm-list-item')).find((b) => b.textContent.includes('UI-testtjänst'))).click();
       await wait2(() => root.querySelector('.dm-api-view dm-input'), 3000, 'endpoint form');
