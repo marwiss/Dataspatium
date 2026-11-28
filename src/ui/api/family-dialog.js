@@ -137,7 +137,9 @@
         if (!geodata.byId(svc.kind)) { state.error = t('geodata.ready.unsupported'); render(); return; }
         state.adding = svc.id; state.error = ''; render();
         try {
-          const res = await createFor(svc.kind, { baseUrl: svc.url, name: svc.name });
+          // A service that logs in like a preset (`authFrom`, NGP's other datasets) becomes its own source with that login.
+          const authFrom = svc.authFrom ? await connectors.get(svc.authFrom) : null;
+          const res = authFrom ? await geodata.createConnector(svc.kind, { baseUrl: svc.url, name: svc.name }, { authFrom }) : await createFor(svc.kind, { baseUrl: svc.url, name: svc.name });
           announce(res);
           state.adding = '';
           finish(res.connector);

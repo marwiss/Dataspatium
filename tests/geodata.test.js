@@ -285,6 +285,28 @@
     }
   }, 120000);
 
+  test('geodata: NGP\'s other datasets are sources of their own that take the plan source\'s login and the keys given there', async (assert) => {
+    const list = JSON.parse(await D.assets.loadText('presets/geodata/services.json')).services;
+    const others = list.filter((s) => /^lantmateriet-ngp-/.test(s.id) && s.id !== 'lantmateriet-ngp-detaljplan');
+    assert.equal(others.length, 4, 'buildings, shore protection, cultural remains and the near-mountain forest line');
+    assert.ok(others.every((s) => !s.preset && s.authFrom === 'lantmateriet-ngp-detaljplan'), 'none opens the plan source; all log in like it');
+    const secrets = D.require('api/secrets');
+    const from = { id: 'test-ngp-login', auth: { type: 'oauth2_client_credentials', tokenUrl: 'https://apimanager.lantmateriet.se/oauth2/token', clientAuth: 'body' } };
+    secrets.set(from.id, { clientId: 'konsumentnyckel', clientSecret: 'konsumenthemlighet' });
+    let made = null;
+    try {
+      const res = await geodata.createConnector('ogcapi', { baseUrl: BASE + '/ngp-byggnad', name: 'Byggnader (prov)' }, { authFrom: from, discover: false });
+      made = res.connector;
+      assert.deepEqual([made.auth.type, made.auth.tokenUrl, made.auth.clientAuth], ['oauth2_client_credentials', 'https://apimanager.lantmateriet.se/oauth2/token', 'body'], 'the login copied');
+      assert.deepEqual(secrets.get(made.id), { clientId: 'konsumentnyckel', clientSecret: 'konsumenthemlighet' }, 'the session\'s keys copied');
+      assert.notEqual(made.auth, from.auth, 'a copy, not the same object');
+    } finally {
+      await secrets.forget(from.id);
+      if (made) { await secrets.forget(made.id); await connectors.remove(made.id).catch(() => {}); }
+    }
+    return 'ok';
+  });
+
   test('ui: Egen geodatakälla is a source of its own in Geodatakällor whose form saves an address as a source, and Geodatakälla lists only the ready-made services', async (assert) => {
     const root = document.createElement('div');
     root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';

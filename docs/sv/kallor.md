@@ -403,7 +403,9 @@ grundvattenmagasin finns i listan), Havs- och vattenmyndigheten, Riksantikvarie�
 Kartverkets administrativa enheter, fastighetskarta och ortnamn (Norge; GML) samt Statistikcentralen och
 SYKE:s skyddade områden (Finland). Lagren läses från tjänsten första gången källan öppnas och kan läsas om med
 *Läs om lagren*; listan sparas i din kopia av källan. Lantmäteriets geodataplattform (detaljplaner, byggnader, strandskydd, kulturhistoriska lämningar och gränsen för fjällnära skog) finns som nivå 2 med
-en nyckel som alla kan få utan kostnad genom Geotorget, se [planer.md](planer.md#hela-detaljplaner-från-en-geodatakälla).
+en nyckel som alla kan få utan kostnad genom Geotorget, se [planer.md](planer.md#hela-detaljplaner-från-en-geodatakälla). Detaljplanerna öppnas som en
+förinställd källa; byggnaderna, strandskyddet, lämningarna och gränsen för fjällnära skog läggs till som egna källor med samma
+inloggning, och nycklarna du angett för detaljplanerna i sessionen följer med.
 
 **Trafikverkets NVDB** (*Trafikverket NVDB: vägdata*) ger 45 objekttyper ur Nationella vägdatabasen, som hastighetsgränser,
 vägnummer, bärighet, antal körfält, gatunamn, korsningar och rastplatser, med en ändpunkt per objekttyp. Den kräver en

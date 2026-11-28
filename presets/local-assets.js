@@ -423,7 +423,7 @@ Dataspatium.assets.addEntries({
  "presets/geodata/services.json": {
   "file": "presets/geodata/services.json.js",
   "encoding": "text",
-  "size": 31004,
+  "size": 31012,
   "library": "dataspatium"
  },
  "presets/ids/SE-Dataspatium_Avfallshantering.ids": {
@@ -627,7 +627,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kallor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 46916,
+  "size": 47164,
   "library": "dataspatium"
  },
  "docs/sv/snabbstart.md": {
@@ -1641,7 +1641,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kallor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 47087,
+  "size": 47319,
   "library": "dataspatium"
  },
  "docs/en/snabbstart.md": {

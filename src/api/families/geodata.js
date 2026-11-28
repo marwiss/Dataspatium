@@ -320,6 +320,12 @@
       if (options.perHost) connector.perHost = true;
       const creds = fam.secrets ? fam.secrets(v) : null;
       if (creds) secrets.set(connector.id, creds);
+      // A service that logs in like another source (NGP's other datasets like its detailed plans) takes that source's login, and
+      // the keys already given there for this session, so that one consumer key serves all of them.
+      if (options.authFrom) {
+        connector.auth = JSON.parse(JSON.stringify(options.authFrom.auth || { type: 'none' }));
+        if (!creds && secrets.has(options.authFrom.id)) secrets.set(connector.id, secrets.get(options.authFrom.id));
+      }
       let entities = []; let discoveryError = null;
       if (fam.discover && options.discover !== false) {
         try { entities = (await fam.discover(v, connector, (url, headers) => databases.getJson(connector, url, headers))) || []; }
