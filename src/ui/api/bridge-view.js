@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * "Databas via bryggan" in Inhämta: connect to the local database bridge (address and token from its window),
- * describe a source (Access or Excel file, SQL Server, ODBC DSN or connection string, SQLite file), list its
- * tables, preview one and import it with types, or run own SQL and import the result. Writes through the bridge
- * are shown and approved statement by statement when the bridge was started with write access.
+ * describe a source (Access or Excel file, SQL Server, ODBC DSN or connection string, SQLite file, or MySQL, MariaDB,
+ * PostgreSQL and Oracle with host, port, database, user, password and encryption), list its tables, preview one and import it
+ * with types, or run own SQL and import the result. The bridge tells which of its drivers are installed, and the form says how
+ * to install one that is missing. Writes through the bridge are shown and approved statement by statement when the bridge was
+ * started with write access.
  */
 (function () {
   'use strict';
@@ -12,7 +14,16 @@
   D.define('ui/api/bridge-view', ['ui/base', 'ui/basic', 'ui/icons', 'ui/overlays', 'api/bridge', 'api/secrets'], (base, basic, icons, overlays, bridge, secrets) => {
     const { h, t, i18n, replace } = base;
     const PREVIEW = 100;
-    /** Fields per source kind: [name, label key, placeholder]. */
+    /** Encryption modes, safest that still works with most servers first: MySQL's ssl-mode and libpq's sslmode names. */
+    const TLS = {
+      mysql: ['preferred', 'required', 'verify_identity', 'verify_ca', 'disabled'],
+      postgres: ['prefer', 'require', 'verify-full', 'verify-ca', 'disable'],
+      oracle: ['disabled', 'verify_identity'],
+    };
+    /** The label of a mode (bridge.tls.<key>). */
+    const TLS_LABEL = { preferred: 'prefer', prefer: 'prefer', required: 'require', require: 'require', verify_identity: 'verify', 'verify-full': 'verify', verify_ca: 'verifyca', 'verify-ca': 'verifyca', disabled: 'off', disable: 'off' };
+    const server = (port, tls, tlsField = 'tls', dbLabel = 'bridge.field.database') => [['host', 'bridge.field.host', 'localhost'], ['port', 'bridge.field.port', port], ['database', dbLabel, ''], ['user', 'bridge.field.user', ''], ['password', 'bridge.field.password', ''], [tlsField, 'bridge.field.tls', '', tls]];
+    /** Fields per source kind: [name, label key, placeholder, options of a choice]. */
     const FIELDS = {
       access: [['path', 'bridge.field.path', 'C:\\Data\\register.accdb'], ['password', 'bridge.field.password', '']],
       excel: [['path', 'bridge.field.path', 'C:\\Data\\tabell.xlsx']],
@@ -21,8 +32,14 @@
       dsn: [['dsn', 'bridge.field.dsn', ''], ['user', 'bridge.field.user', ''], ['password', 'bridge.field.password', '']],
       odbc: [['connectionString', 'bridge.field.connection', 'Driver={...};Server=...;Database=...;Uid=...;Pwd=...;']],
       oledb: [['connectionString', 'bridge.field.connection', 'Provider=...;Data Source=...;']],
+      mysql: server('3306', TLS.mysql),
+      mariadb: server('3306', TLS.mysql),
+      postgres: server('5432', TLS.postgres, 'sslmode'),
+      oracle: server('1521', TLS.oracle, 'tls', 'bridge.field.service'),
     };
     const SECRET = new Set(['password', 'connectionString']);
+    /** A new source of a kind, with the first choice of each choice field. */
+    const blank = (kind) => { const src = { kind }; for (const [name, , , options] of FIELDS[kind] || []) if (options) src[name] = options[0]; return src; };
 
     /**
      * @param {any} ctx the mode context
@@ -34,7 +51,12 @@
       const el = h('div', { class: 'dm-stack dm-bridge' });
       let unsub = null; let destroyed = false;
       const fail = (err) => { state.error = (err && err.message) || String(err); state.busy = ''; shell.log(state.error, 'error'); render(); };
-      const kinds = () => (state.info && Array.isArray(state.info.kinds) ? state.info.kinds : Object.keys(FIELDS)).filter((k) => FIELDS[k]);
+      /** The kinds the bridge opens now, then those it has a driver for that is not installed (the form says how to install it). */
+      const kinds = () => {
+        const info = state.info || {};
+        const list = Array.isArray(info.kinds) ? info.kinds.concat(Object.keys(info.drivers || {})) : Object.keys(FIELDS);
+        return Array.from(new Set(list)).filter((k) => FIELDS[k]);
+      };
 
       /** @type {Promise<void>|null} the start in flight, so that a database chosen from the left column waits for it */
       let ready = null;
@@ -60,7 +82,7 @@
         try {
           state.info = await bridge.connect(url, token);
           state.busy = '';
-          if (!kinds().includes(state.source.kind)) state.source = { kind: kinds()[0] || 'access' };
+          if (!kinds().includes(state.source.kind)) state.source = blank(kinds()[0] || 'access');
           shell.log(t('bridge.connected', { name: state.info.name || '', version: state.info.version || '' }), 'ok');
           render();
         } catch (err) { state.info = null; fail(err); }
@@ -144,8 +166,16 @@
       }
 
       // ---- rendering ----
-      function field(obj, name, labelKey, placeholder) {
-        const inp = /** @type {any} */ (h('dm-input', { label: t(labelKey), type: SECRET.has(name) ? 'password' : 'text', placeholder }));
+      function field(obj, name, labelKey, placeholder, options) {
+        if (options) {
+          const sel = /** @type {any} */ (h('dm-select', { label: t(labelKey), 'data-bridge-field': name }));
+          sel.options = options.map((v) => ({ value: v, label: `${t('bridge.tls.' + TLS_LABEL[v])} (${v})` }));
+          if (!obj[name]) obj[name] = options[0];
+          sel.value = obj[name];
+          sel.addEventListener('change', () => { obj[name] = sel.value; });
+          return sel;
+        }
+        const inp = /** @type {any} */ (h('dm-input', { label: t(labelKey), type: SECRET.has(name) ? 'password' : 'text', placeholder, 'data-bridge-field': name }));
         inp.value = obj[name] || '';
         inp.addEventListener('input', () => { obj[name] = inp.value; });
         inp.addEventListener('change', () => { obj[name] = inp.value; });
@@ -162,7 +192,7 @@
               h('dm-badge', { kind: info.allowWrite ? 'warn' : null, text: info.allowWrite ? t('bridge.writable') : t('bridge.readonly') }),
               h('code', { class: 'dm-list-code', text: bridge.connection().url })),
             h('div', { class: 'dm-row-wrap' },
-              state.persisted ? null : basic.button({ label: t('api.key.save'), icon: 'save', size: 'sm', onClick: persist }),
+              state.persisted && !bridge.unsaved() ? null : basic.button({ label: t('api.key.save'), icon: 'save', size: 'sm', title: t('bridge.save.hint'), onClick: persist }),
               basic.button({ label: t('bridge.disconnect'), icon: 'x', size: 'sm', variant: 'ghost', onClick: disconnect })));
         }
         const urlIn = /** @type {any} */ (h('dm-input', { label: t('bridge.url'), placeholder: 'http://127.0.0.1:PORT' }));
@@ -176,18 +206,30 @@
           h('p', { class: 'dm-help', text: t('bridge.start.hint') }),
           h('pre', { class: 'dm-help-code', text: t('bridge.start.windows') }),
           h('pre', { class: 'dm-help-code', text: t('bridge.start.python') }),
+          h('p', { class: 'dm-help', text: t('bridge.start.drivers') }),
+          h('pre', { class: 'dm-help-code', 'data-bridge-pip': '', text: t('bridge.start.pip') }),
           h('div', { class: 'dm-form-grid' }, urlIn, tokenIn),
           h('div', { class: 'dm-row-wrap' },
             basic.button({ label: t('bridge.connect'), icon: 'database', variant: 'primary', loading: state.busy === 'connect', onClick: go }),
             state.persisted && !secrets.isUnlocked() ? basic.button({ label: t('api.key.unlock'), icon: 'lock', onClick: unlock }) : null));
       }
+      /** What the bridge says about the driver of a kind: the one it connects with, or how to install the one that is missing. */
+      function driverNote(kind) {
+        const d = state.info && state.info.drivers ? state.info.drivers[kind] : null;
+        if (!d) return null;
+        const odbc = d.via === 'odbc';
+        const command = 'pip install ' + (d.package || '');
+        const text = d.ok ? (odbc ? t('bridge.driver.ok.odbc', { driver: d.version || d.name }) : t('bridge.driver.ok', { name: d.name, version: d.version ? ' ' + d.version : '' }))
+          : t(odbc ? 'bridge.driver.odbc' : 'bridge.driver.pip', { name: d.name, command });
+        return h('p', { class: d.ok ? 'dm-help' : 'dm-warn', 'data-bridge-driver': d.ok ? 'ok' : 'missing', text });
+      }
       function sourceCard() {
         const src = state.source;
-        const kindSel = /** @type {any} */ (h('dm-select', { label: t('bridge.kind') }));
+        const kindSel = /** @type {any} */ (h('dm-select', { label: t('bridge.kind'), 'data-bridge-kind': '' }));
         kindSel.options = kinds().map((k) => ({ value: k, label: t('bridge.kind.' + k) }));
         kindSel.value = src.kind;
-        kindSel.addEventListener('change', () => { state.source = { kind: kindSel.value }; state.tables = null; state.preview = null; render(); });
-        const inputs = (FIELDS[src.kind] || []).map(([name, labelKey, placeholder]) => {
+        kindSel.addEventListener('change', () => { state.source = blank(kindSel.value); state.tables = null; state.preview = null; render(); });
+        const inputs = (FIELDS[src.kind] || []).map(([name, labelKey, placeholder, options]) => {
           if (name === 'dsn' && state.sources && state.sources.dsns && state.sources.dsns.length) {
             const sel = /** @type {any} */ (h('dm-select', { label: t(labelKey) }));
             sel.options = [{ value: '', label: '–' }].concat(state.sources.dsns.map((d) => ({ value: d.name, label: d.driver ? `${d.name} (${d.driver})` : d.name })));
@@ -195,12 +237,13 @@
             sel.addEventListener('change', () => { src.dsn = sel.value; });
             return sel;
           }
-          return field(src, name, labelKey, placeholder);
+          return field(src, name, labelKey, placeholder, options);
         });
         return h('div', { class: 'dm-card dm-stack' },
           h('h2', { text: t('bridge.source.title') }),
           h('div', { class: 'dm-form-grid' }, kindSel, inputs),
-          src.kind === 'sqlserver' ? h('p', { class: 'dm-help', text: t('bridge.field.user.hint') }) : null,
+          driverNote(src.kind),
+          src.kind === 'sqlserver' && state.info && state.info.platform === 'windows' ? h('p', { class: 'dm-help', text: t('bridge.field.user.hint') }) : null,
           src.kind === 'dsn' && !state.sources ? h('div', null, basic.button({ label: t('bridge.load.sources'), icon: 'list', size: 'sm', loading: state.busy === 'sources', onClick: loadSources })) : null,
           h('div', { class: 'dm-row-wrap' },
             basic.button({ label: t('bridge.tables.load'), icon: 'table', variant: state.preview ? 'default' : 'primary', loading: state.busy === 'tables', onClick: loadTables })));

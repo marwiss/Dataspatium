@@ -132,6 +132,134 @@
     }
   }, 30000);
 
+  /** The Python bridge 2.7 with pg8000 installed and PyMySQL missing: drivers in GET /, a PostGIS table, and a driver that repeats the password. */
+  function driverBridge(password) {
+    const srv = { token: 'hemlig-token', calls: [] };
+    const json = (status, obj) => ({ ok: status >= 200 && status < 300, status, json: async () => obj });
+    const columns = [{ name: 'kod', type: 'String' }, { name: 'namn', type: 'String' }, { name: 'folkmangd', type: 'Int64' }, { name: 'geom', type: 'String' }];
+    const rows = [['0180', 'Stockholm', 984748, 'SRID=4326;POINT(18.07 59.33)'], ['1280', 'Malmö', 362133, 'SRID=4326;POINT(13.0 55.6)']];
+    const drivers = {
+      mysql: { name: 'PyMySQL', ok: false, version: '', via: 'python', package: 'pymysql' }, mariadb: { name: 'PyMySQL', ok: false, version: '', via: 'python', package: 'pymysql' },
+      postgres: { name: 'pg8000', ok: true, version: '1.31.2', via: 'python', package: 'pg8000' }, oracle: { name: 'python-oracledb', ok: false, version: '', via: 'python', package: 'oracledb' },
+    };
+    srv.transport = async (url, init) => {
+      const u = new URL(url);
+      const body = init.body ? JSON.parse(init.body) : {};
+      srv.calls.push({ path: u.pathname, body });
+      if ((init.headers || {}).Authorization !== 'Bearer ' + srv.token) return json(401, { error: 'Fel eller saknad token' });
+      const src = body.source || {};
+      if (u.pathname === '/') return json(200, { name: 'Dataspatium-databasbrygga', version: '2.7.0', platform: 'linux', allowWrite: false, kinds: ['sqlite', 'postgres'], drivers, maxRows: 100000 });
+      if (src.kind === 'mysql' || src.kind === 'mariadb') return json(500, { error: 'MySQL och MariaDB kräver drivrutinen PyMySQL, som inte är installerad: pip install pymysql (och starta om bryggan)' });
+      if (src.host === 'fel.example') return json(500, { error: `could not connect to fel.example as ${src.user} with password ${src.password}` });
+      if (src.password !== password) return json(500, { error: 'password authentication failed' });
+      if (u.pathname === '/tables') return json(200, { tables: [{ name: 'kommuner', type: 'TABLE' }, { name: 'plan.omraden', type: 'TABLE' }], count: 2 });
+      if (u.pathname === '/rows') return json(200, { columns, rows: rows.slice(0, body.limit || 100000), truncated: false });
+      return json(404, { error: 'Okänd sökväg ' + u.pathname });
+    };
+    return srv;
+  }
+
+  test('bridge: MySQL, MariaDB and PostgreSQL in the form with host, port, database and encryption; the password goes only to the bridge, is kept in api/secrets and never stored, logged or shown', async (assert) => {
+    const PW = 'pg-Hemligt-4711';
+    const idb = D.require('platform/storage/idb');
+    const secrets = D.require('api/secrets');
+    const root = document.createElement('div');
+    root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
+    document.body.appendChild(root);
+    history.replaceState(null, '', location.pathname + location.search);
+    const shell = await D.require('app').start(root);
+    const srv = driverBridge(PW);
+    bridge.setTransport(srv.transport);
+    const created = [];
+    const printed = [];
+    const real = { log: console.log, error: console.error, warn: console.warn, info: console.info };
+    const check = await idb.getSetting('api:secretcheck', null);
+    let label = '';
+    try {
+      for (const k of Object.keys(real)) console[k] = (...a) => { printed.push(a.map((x) => (x && x.message) || String(x)).join(' ')); real[k](...a); };
+      await bridge.disconnect();
+      shell.activate('inhamta');
+      const item = await waitFor(() => Array.from(root.querySelectorAll('.dm-pane-body .dm-list-item')).find((b) => b.textContent.includes(t('bridge.title'))), 5000, 'bridge source in the list');
+      /** @type {HTMLElement} */ (item).click();
+      const view = await waitFor(() => shell.modes.get('inhamta').bridgeView, 5000, 'bridge view');
+      await waitFor(() => root.querySelector('.dm-center [data-bridge-pip]'), 3000, 'the drivers to install, before connecting');
+      assert.equal(root.querySelector('.dm-center [data-bridge-pip]').textContent, 'pip install pymysql pg8000 oracledb');
+      await view.connect('http://127.0.0.1:8731', 'hemlig-token');
+      const center = /** @type {HTMLElement} */ (root.querySelector('.dm-center'));
+      const kindSel = /** @type {any} */ (await waitFor(() => center.querySelector('[data-bridge-kind]'), 3000, 'the kind of source'));
+      const values = kindSel.options.map((o) => o.value);
+      assert.deepEqual(values, ['sqlite', 'postgres', 'mysql', 'mariadb', 'oracle'], 'MySQL and MariaDB offered although their driver is missing: ' + values.join(','));
+      const choose = async (kind) => { kindSel.value = kind; kindSel.dispatchEvent(new Event('change')); return waitFor(() => center.querySelector('[data-bridge-kind]') !== kindSel || view.state.source.kind === kind, 2000, kind); };
+      await choose('mysql');
+      let note = center.querySelector('[data-bridge-driver]');
+      assert.ok(note && note.getAttribute('data-bridge-driver') === 'missing' && note.textContent === t('bridge.driver.pip', { name: 'PyMySQL', command: 'pip install pymysql' }), 'the missing driver and how to install it: ' + (note && note.textContent));
+      assert.equal(view.state.source.tls, 'preferred', 'MySQL encrypts when the server can, by default');
+      const sel = /** @type {any} */ (center.querySelector('[data-bridge-kind]'));
+      sel.value = 'postgres'; sel.dispatchEvent(new Event('change'));
+      await waitFor(() => view.state.source.kind === 'postgres', 2000, 'postgres chosen');
+      note = center.querySelector('[data-bridge-driver]');
+      assert.equal(note && note.textContent, t('bridge.driver.ok', { name: 'pg8000', version: ' 1.31.2' }));
+      const fieldsShown = Array.from(center.querySelectorAll('[data-bridge-field]')).map((e) => e.getAttribute('data-bridge-field'));
+      assert.deepEqual(fieldsShown, ['host', 'port', 'database', 'user', 'password', 'sslmode']);
+      assert.equal(/** @type {any} */ (center.querySelector('[data-bridge-field="password"]')).getAttribute('type'), 'password', 'the password is a password field');
+      assert.deepEqual(/** @type {any} */ (center.querySelector('[data-bridge-field="sslmode"]')).options.map((o) => o.value), ['prefer', 'require', 'verify-full', 'verify-ca', 'disable']);
+      const type = (name, value) => { const inp = /** @type {any} */ (center.querySelector(`[data-bridge-field="${name}"]`)); inp.value = value; inp.dispatchEvent(new Event('input')); };
+      type('host', 'db.example'); type('port', '5432'); type('database', 'kommun'); type('user', 'läsare'); type('password', PW);
+      await view.loadTables();
+      assert.equal(root.querySelectorAll('.dm-center .dm-bridge-tables .dm-list-item').length, 2, 'two tables listed');
+      const sent = srv.calls.filter((c) => c.path === '/tables').pop().body.source;
+      assert.deepEqual(sent, { kind: 'postgres', sslmode: 'prefer', host: 'db.example', port: '5432', database: 'kommun', user: 'läsare', password: PW }, 'the source as the bridge reads it');
+      label = bridge.sourceLabel(sent);
+      assert.equal(label, 'db.example/kommun');
+      assert.ok(secrets.get(bridge.secretId(sent)) && secrets.get(bridge.secretId(sent)).password === PW, 'the password is in api/secrets for the session');
+      await view.selectTable('kommuner');
+      const meta = await view.importSelected('Kommuner i PostGIS');
+      created.push(meta.id);
+      assert.equal(meta.rowCount, 2);
+      assert.equal(meta.source.source.host, 'db.example');
+      assert.ok(meta.source.source.hasSecrets && !('password' in meta.source.source), 'the dataset notes that a password is needed, without it');
+      // The password is shown nowhere, stored nowhere in clear text and logged nowhere; a driver that repeats it is cut.
+      view.state.source.host = 'fel.example';
+      await view.loadTables();
+      assert.ok(view.state.error.includes('***') && !view.state.error.includes(PW), 'the error without the password: ' + view.state.error);
+      view.state.source.host = 'db.example';
+      assert.ok(bridge.unsaved(), 'a password typed this session is not yet saved');
+      await idb.deleteSetting('api:secretcheck');
+      await bridge.persist('lösenfras-prov');
+      assert.ok(await secrets.isPersisted(bridge.secretId(sent)), 'saved with the connection, encrypted');
+      assert.ok(!bridge.unsaved());
+      const settings = JSON.stringify(await idb.listSettings(''));
+      const everything = [settings, JSON.stringify(await datasets.get(meta.id)), JSON.stringify(await bridge.remembered()), shell.logList.textContent, root.textContent, printed.join('\n')].join('\n');
+      assert.ok(!everything.includes(PW), 'the password is in no setting, dataset, list, log, page or console line');
+      assert.ok(srv.calls.some((c) => c.body.source && c.body.source.password === PW), 'and it did go to the bridge');
+      // The next session: the dataset is fetched again once the saved passwords are unlocked.
+      secrets.lock();
+      assert.ok(!secrets.get(bridge.secretId(sent)), 'locked: nothing in the session');
+      let e1 = null;
+      try { await runner.refreshDataset(meta.id); } catch (e) { e1 = e; }
+      assert.ok(e1, 'without the password the refresh stops');
+      await secrets.unlock('lösenfras-prov');
+      const res = await runner.refreshDataset(meta.id);
+      assert.equal(res.rows, 2, 'unlocked: fetched again with the saved password');
+      // Disconnecting forgets the database passwords too, saved ones included.
+      await bridge.disconnect();
+      assert.ok(!(await secrets.isPersisted(bridge.secretId(sent))) && !secrets.get(bridge.secretId(sent)), 'forgotten on disconnect');
+      return 'ok';
+    } finally {
+      Object.assign(console, real);
+      bridge.setTransport(null);
+      await bridge.disconnect();
+      await idb.deleteSetting('api:secretcheck');
+      if (check) await idb.setSetting('api:secretcheck', check);
+      if (label) await bridge.forget(label);
+      shell.activate('hantera');
+      for (const id of created) await datasets.remove(id);
+      for (const el of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (el).close();
+      history.replaceState(null, '', location.pathname + location.search);
+      root.remove();
+    }
+  }, 60000);
+
   test('bridge: a refresh nobody watches (ask: false) asks nothing: refused unasked without the consent for databases kept, and run with it', async (assert) => {
     const srv = fakeBridge();
     bridge.setTransport(srv.transport);

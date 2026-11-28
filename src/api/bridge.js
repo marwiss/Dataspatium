@@ -3,10 +3,12 @@
 /**
  * Client for the local database bridge (tools/db-bridge.ps1 on Windows, tools/db_bridge.py elsewhere): a small
  * HTTP service on 127.0.0.1 that lists data sources, tables and columns and runs queries through ODBC, OLE DB,
- * SqlClient or sqlite3, so that Access, Excel, SQL Server, SQLite and every ODBC source on the computer can be
- * imported. The address and token live in the session (api/secrets; persisted encrypted on request), every call
- * needs the 'databases' consent, and passwords never reach a dataset's metadata: they are kept for the session
- * only, keyed by the rest of the source. Datasets imported here carry source.kind 'bridge' and are refreshed
+ * SqlClient or sqlite3, and through its own drivers (PyMySQL, pg8000, python-oracledb in the Python bridge), so that Access,
+ * Excel, SQL Server, SQLite, MySQL, MariaDB, PostgreSQL, Oracle and every ODBC source on the computer can be imported. The
+ * address and token live in the session (api/secrets; persisted encrypted on request), every call needs the 'databases'
+ * consent, and passwords never reach a dataset's metadata, the list of databases or a log: they live in api/secrets under the
+ * rest of the source (the session, or encrypted with the passphrase when the user saves), travel only in the call to the bridge,
+ * and are cut out of the bridge's error messages. Datasets imported here carry source.kind 'bridge' and are refreshed
  * through api/runner like API datasets. As a go-between (F14.1, off until the user turns it on in Internetåtkomst) the
  * bridge fetches an https address for api/http when the service does not let the browser read its answer; the bridge
  * itself decides which hosts it reaches (--allow-host / -AllowHosts).
@@ -26,8 +28,11 @@
       String: 'text', Guid: 'text', Char: 'text',
     };
     const listeners = new Set();
-    /** @type {Map<string, {password?: string, connectionString?: string}>} source signature -> secrets given this session */
-    const sessionSecrets = new Map();
+    /** The secrets of a source live in api/secrets under this prefix and the source without them. */
+    const SOURCE_PREFIX = ID + ':source:';
+    /** @type {Set<string>} ids of source secrets typed this session; `saved` holds those kept encrypted since */
+    const typed = new Set();
+    const saved = new Set();
     let transport = null;
     let infoCache = null;
     let current = null;
@@ -70,7 +75,11 @@
       try { res = await (transport || fetch)(conn.url + path, init); } catch (err) { throw new BridgeError(D.t('bridge.err.unreachable', { url: conn.url }), 0, { cause: String((err && err.message) || err) }); }
       let data = null;
       try { data = await res.json(); } catch (_e) { data = null; }
-      if (!res.ok) throw new BridgeError(messageFor(res.status, data), res.status, data);
+      if (!res.ok) {
+        // A driver may repeat the password it was given; the message the app shows and logs never carries it.
+        const clean = data && typeof data.error === 'string' ? Object.assign({}, data, { error: scrub(data.error, body && body.source) }) : data;
+        throw new BridgeError(messageFor(res.status, clean), res.status, clean);
+      }
       return data;
     }
 
@@ -88,14 +97,24 @@
       notify();
       return infoCache;
     }
-    async function disconnect() { await secrets.forget(ID); infoCache = null; current = null; sessionSecrets.clear(); notify(); }
-    /** Keep address and token encrypted with the passphrase shared by all saved keys (api/secrets). */
+    /** Forget the connection and every database password, in the session and saved. */
+    async function disconnect() {
+      await secrets.forget(ID);
+      const ids = new Set([...typed, ...(await secrets.persistedIds()).filter((id) => id.startsWith(SOURCE_PREFIX))]);
+      for (const id of ids) await secrets.forget(id);
+      typed.clear(); saved.clear();
+      infoCache = null; current = null; notify();
+    }
+    /** Keep address and token, and the database passwords typed this session, encrypted with the passphrase of all saved keys. */
     async function persist(passphrase) {
       const conn = connection();
       if (!conn) throw new BridgeError(D.t('bridge.err.notconnected'), 0);
       await secrets.persist(ID, conn, passphrase);
+      for (const id of typed) { const values = secrets.get(id); if (values) { await secrets.persist(id, values, passphrase); saved.add(id); } }
       notify();
     }
+    /** True when a database password typed this session is not yet kept encrypted. */
+    function unsaved() { return [...typed].some((id) => !saved.has(id) && secrets.has(id)); }
     async function rememberedUrl() { return (await idb.getSetting(URL_KEY, '')) || ''; }
     // ---- databases opened through the bridge, kept without secrets so that Inhämta can list them among the added sources ----
     const SOURCES_KEY = 'bridge.sources';
@@ -138,16 +157,41 @@
     }
     function signature(source) { const s = sanitize(source); delete s.hasSecrets; return JSON.stringify(s); }
     function hasSecretValues(source) { return !!((source.password) || (source.connectionString && !source.connectionString.includes(MASK))); }
-    /** The source with the secrets given earlier this session filled in; secrets given now are remembered for the session. */
+    /** The id in api/secrets of a source's password: the source without its secrets. */
+    function secretId(source) { return SOURCE_PREFIX + signature(source); }
+    /**
+     * The source with the secrets given earlier filled in (this session, or unlocked from the encrypted store); secrets typed now
+     * go to api/secrets for the session, like the keys of other sources.
+     */
     function withSecrets(source) {
       const src = Object.assign({}, source || {});
       delete src.hasSecrets;
-      const key = signature(src);
-      const given = sessionSecrets.get(key) || {};
+      const id = secretId(src);
+      const given = secrets.get(id) || {};
       if (!src.password && given.password) src.password = given.password;
       if (src.connectionString && src.connectionString.includes(MASK) && given.connectionString) src.connectionString = given.connectionString;
-      if (hasSecretValues(src)) sessionSecrets.set(key, { password: src.password, connectionString: src.connectionString });
+      if (hasSecretValues(src) && (src.password !== given.password || src.connectionString !== given.connectionString)) {
+        const values = {};
+        if (src.password) values.password = String(src.password);
+        if (src.connectionString) values.connectionString = String(src.connectionString);
+        secrets.set(id, values);
+        typed.add(id); saved.delete(id);
+      }
       return src;
+    }
+    /** The secret values of a source: its password and the Pwd of its connection string. */
+    function secretValues(source) {
+      const s = source || {};
+      const out = [s.password];
+      const re = /(?:^|;)\s*(?:pwd|password)\s*=\s*(\{(?:[^}]|\}\})*\}|[^;]*)/gi;
+      for (let m = re.exec(String(s.connectionString || '')); m; m = re.exec(String(s.connectionString || ''))) out.push(m[1]);
+      return out.map((v) => String(v || '').trim()).filter((v) => v.length >= 4 && v !== MASK);
+    }
+    /** Text without the source's secrets (values shorter than four characters are left, as in api/secrets). */
+    function scrub(text, source) {
+      let out = String(text || '');
+      for (const v of secretValues(source)) out = out.split(v).join(MASK);
+      return out;
     }
 
     // ---- tables and datasets ----
@@ -165,6 +209,7 @@
       switch (s.kind) {
         case 'access': case 'excel': case 'sqlite': return file(s.path);
         case 'sqlserver': return [s.server, s.database].filter(Boolean).join('/');
+        case 'mysql': case 'mariadb': case 'postgres': case 'oracle': return [s.host, s.database].filter(Boolean).join('/');
         case 'dsn': return s.dsn || 'DSN';
         default: return s.kind ? String(s.kind).toUpperCase() : '';
       }
@@ -246,6 +291,6 @@
     /** Tests replace the network with a function (url, init) => Response-like {ok, status, json()}. */
     function setTransport(fn) { transport = fn || null; infoCache = null; }
 
-    return { ID, TYPES, BridgeError, call, relayEnabled, setRelay, canRelay, relay, connect, disconnect, persist, rememberedUrl, remembered, remember, forget, isConnected, connection, info, sources, tables, columns, rows, query, importTable, refetch, toTable, sanitize, sourceLabel, setCurrent, getCurrent, subscribe, setTransport };
+    return { ID, TYPES, BridgeError, call, relayEnabled, setRelay, canRelay, relay, connect, disconnect, persist, unsaved, rememberedUrl, remembered, remember, forget, isConnected, connection, info, sources, tables, columns, rows, query, importTable, refetch, toTable, sanitize, secretId, scrub, sourceLabel, setCurrent, getCurrent, subscribe, setTransport };
   });
 })();
