@@ -454,26 +454,36 @@
     /**
      * The bytes that leave the app. Without choices this is the dataset as it is, vacuumed, so that rows deleted earlier
      * do not follow in the free pages of the file, nor the files of a raster's deleted rows.
-     * @param {string} id @param {any} [tr] from the review @returns {Promise<Uint8Array>}
+     * @param {string} id @param {any} [tr] from the review @param {{model?: {bytes: Uint8Array, name?: string}}} [options]
+     * @returns {Promise<Uint8Array>}
      */
-    async function copy(id, tr = {}) {
+    async function copy(id, tr = {}, options = {}) {
       // The model's file is cleaned first, with the salt the hashed columns use, so that a name gives the same code in both.
       const scrub = ifcScrubs(tr.ifc);
       const work = scrub ? Object.assign({}, tr, { salt: tr.salt || randomSalt() }) : tr;
+      // A model file in place of the dataset's own (an AI's candidate, decision F124 a): the copy's tables are built from it first,
+      // so that the review's choices apply to the file that leaves.
+      const model = options.model && options.model.bytes ? options.model : null;
+      const before = scrub || model ? async (engine) => {
+        if (model) await D.require('data/model').replaceOriginal({ engine }, model.bytes, String(model.name || 'model.ifc'));
+        if (scrub) await scrubModel(engine, work, scrub);
+      } : null;
       // Without changes, a raster's copy still leaves out the files its table no longer lists.
-      return datasets.exportBytesTransformed(id, Object.assign({}, work, { before: scrub ? (engine) => scrubModel(engine, work, scrub) : null, after: changes(work) ? (engine) => applyParts(engine, work) : (engine) => pruneRaster(engine) }));
+      return datasets.exportBytesTransformed(id, Object.assign({}, work, { before, after: changes(work) ? (engine) => applyParts(engine, work) : (engine) => pruneRaster(engine) }));
     }
 
     /**
      * A dataset in a file format, written from a copy with the given changes. The copy exists only for that moment and never
-     * shows in the list.
+     * shows in the list. `options.model` ({bytes, name}) puts another model file in the copy before the changes (see copy); the
+     * other options go to the exporter.
      * @param {any} ds @param {string} format @param {any} tr @param {any} [options] @returns {Promise<{blob: Blob, filename: string}>}
      */
     async function exportCopy(ds, format, tr, options = {}) {
       const exporter = D.require('io/export');
       const fmt = exporter.FORMATS.find((f) => f.id === format) || {};
-      const temp = await datasets.importBytes(await copy(ds.id, tr), { name: ds.name }, { quiet: true });
-      try { return await exporter.exportDataset(temp.id, format, Object.assign({ filename: D.require('platform/files').safeName(ds.name, fmt.ext) }, options)); }
+      const { model, ...rest } = options;
+      const temp = await datasets.importBytes(await copy(ds.id, tr, { model }), { name: ds.name }, { quiet: true });
+      try { return await exporter.exportDataset(temp.id, format, Object.assign({ filename: D.require('platform/files').safeName(ds.name, fmt.ext) }, rest)); }
       finally { await datasets.remove(temp.id, { quiet: true }); }
     }
 
