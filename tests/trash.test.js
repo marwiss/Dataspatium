@@ -145,7 +145,8 @@
       await waitFor(() => root.querySelector('.dm-left [data-folder-row="Korgmapp/Under"]') && root.querySelector('.dm-left [data-folder-row="Korgmapp/Tom"]'), 5000, 'the folders');
       fold(root.querySelector('.dm-left'), 'trash', true);
       // Arbetsyta opens the workspace's page, and the entry under the tree is gone.
-      assert.ok(!Array.from(root.querySelectorAll('.dm-left .dm-list-item')).some((x) => x.textContent.includes(t('datasets.storage.title'))), 'no Arbetsyta under the tree');
+      assert.ok(!root.querySelector('.dm-left .dm-list-item[data-id="__workspace"]'), 'no Arbetsyta under the tree');
+      assert.ok(root.querySelector('.dm-left .dm-list-item[data-id="__flows"]') && root.querySelector('.dm-left .dm-list-item[data-id="__library"]'), 'Flöden and Bibliotek stay there');
       /** @type {HTMLElement} */ (root.querySelector('.dm-left [data-node="workspace"] [data-part="main"]')).click();
       assert.equal(store.get().selectedId, '__workspace');
       await waitFor(() => root.querySelector('.dm-center [data-storage-card]'), 5000, 'the workspace page');
