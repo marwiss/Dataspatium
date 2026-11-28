@@ -2135,8 +2135,6 @@
     'datasets.batch.button': 'Toiminnot valituille ({n})',
     'datasets.batch.clear': 'Poista valinnat',
     'datasets.batch.delete': 'Poista',
-    'datasets.batch.delete.confirm': 'Poistetaanko {n} aineistoa? Tätä ei voi kumota.',
-    'datasets.batch.deleted': '{n} aineistoa poistettu.',
     'datasets.batch.export': 'Vie ZIP-tiedostona, kukin omassa muodossaan',
     'datasets.batch.export.file': 'aineistot',
     'datasets.batch.exported': 'Vietiin {n} aineistoa ZIP-tiedostona.',

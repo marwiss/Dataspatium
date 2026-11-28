@@ -2268,8 +2268,6 @@
     'datasets.batch.button': 'Åtgärder för markerade ({n})',
     'datasets.batch.clear': 'Avmarkera alla',
     'datasets.batch.delete': 'Ta bort',
-    'datasets.batch.delete.confirm': 'Ta bort {n} datamängder? Det går inte att ångra.',
-    'datasets.batch.deleted': '{n} datamängder borttagna.',
     'datasets.batch.export': 'Exportera som ZIP, var och en i sin form',
     'datasets.batch.export.file': 'datamangder',
     'datasets.batch.exported': 'Exporterade {n} datamängder som ZIP.',

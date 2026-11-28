@@ -1,9 +1,9 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Actions on one or several datasets: organise (folder and tags), move by drag and drop, the tools of the dataset tree in
- * every mode (delete folders and datasets, cut, copy and paste, rename; ui/dataset-list) and, in Hantera, the batch dialog for
- * the selected datasets: what they can do together (one map, one table, one collection), organise, delete, export each in
+ * Actions on one or several datasets: organise (folder and tags), move by drag and drop, the tools of the dataset tree, which
+ * only Hantera shows (delete folders and datasets, cut, copy and paste, rename; ui/dataset-list), and, in Hantera, the batch
+ * dialog for the selected datasets: what they can do together (one map, one table, one collection), organise, delete, export each in
  * its own form, bundle, refresh from the API and run another dataset's recipe on them.
  */
 (function () {
@@ -158,17 +158,18 @@
     }
 
     const actionsOf = new WeakMap();
-    /** The work behind the tree's tools for this context (ui/dataset-list `actions`). */
+    /** The work behind the tree's tools for this context (ui/dataset-list `actions`), which Hantera alone gives its tree. */
     function treeActions(ctx) {
       if (!actionsOf.has(ctx)) actionsOf.set(ctx, { remove: (units) => removeUnits(ctx, units), paste: (clip, target) => paste(ctx, clip, target), rename: (unit, name) => renameUnit(ctx, unit, name) });
       return actionsOf.get(ctx);
     }
-    /** The tree every mode shows (the shell's defaults for ui/dataset-list): check boxes on the store's selection, tools and moves. */
+    /**
+     * The tree every mode shows (the shell's defaults for ui/dataset-list): check boxes on the store's selection, for the mode's
+     * own actions. The tools that change the folders (Ny mapp, Byt namn, Klipp ut, Kopiera, Klistra in, Flytta, Ta bort, their
+     * keys, the snabbmeny and dragging) are Hantera's alone, which adds `actions` and `onMove` (Martin, 2026-11-28).
+     */
     function treeOptions(ctx) {
-      return {
-        multi: true, selectedIds: ctx.store.get().selectedIds || [], onToggle: (ids) => ctx.store.set({ selectedIds: ids }),
-        onMove: (ids, path) => move(ctx, ids, path), actions: treeActions(ctx),
-      };
+      return { multi: true, selectedIds: ctx.store.get().selectedIds || [], onToggle: (ids) => ctx.store.set({ selectedIds: ids }) };
     }
 
     /** Asking more datasets than this what they can do takes longer than it is worth. */
@@ -348,12 +349,9 @@
       try {
         if (choice === 'organize') await organize(ctx, ids);
         else if (choice === 'bundle') await share.shareBundle(ctx, { datasetIds: ids });
-        else if (choice === 'delete') {
-          if (!(await ui.dialog.confirm(t('datasets.batch.delete.confirm', { n: chosen.length }), { okLabel: t('common.delete'), danger: true }))) return;
-          for (const d of chosen) await services.datasets.remove(d.id);
-          store.set({ selectedIds: [] });
-          done(ctx, t('datasets.batch.deleted', { n: chosen.length }));
-        } else if (choice === 'export') {
+        // Folders chosen whole go with their subfolders, empty ones too, after the tree's own question.
+        else if (choice === 'delete') await removeUnits(ctx, tree.selectionUnits(store.get().datasets, ids));
+        else if (choice === 'export') {
           const files = {};
           for (const d of chosen) await exportWhole(ctx, d, files);
           const blob = await D.require('platform/storage/zip').createZip(files, { level: 6 });

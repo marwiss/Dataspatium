@@ -2135,8 +2135,6 @@
     'datasets.batch.button': 'Handlingar for merkte ({n})',
     'datasets.batch.clear': 'Fjern merkinga',
     'datasets.batch.delete': 'Slett',
-    'datasets.batch.delete.confirm': 'Slette {n} datasett? Det kan ikkje angrast.',
-    'datasets.batch.deleted': '{n} datasett sletta.',
     'datasets.batch.export': 'Eksporter som ZIP, kvart i si form',
     'datasets.batch.export.file': 'datasett',
     'datasets.batch.exported': 'Eksporterte {n} datasett som ZIP.',

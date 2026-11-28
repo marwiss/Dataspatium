@@ -112,10 +112,13 @@ after you tap *Select* at the top of the panel; a tap then selects instead of op
 **The tools right above the tree**: *New folder*, *Rename*, *Cut*, *Copy*, *Paste*, *Move* and *Delete*, as icons on
 one line with the name in the tip. What does not fit in a narrow panel is under *More options* (the three dots). The
 tools act on what is selected, or on the current dataset when nothing is selected, and they are on when they can be
-used.
+used. The folders are changed in Manage only: the tools, the context menu, their keys and drag and drop are here alone.
+In the other modes the tree shows the datasets and the folders with the filter, the sort order and checkboxes for the
+mode's own actions.
 
-- *Delete* on a folder deletes the folder with all its subfolders and datasets at once, after one question that says how
-  many subfolders and datasets it concerns.
+- *Delete* on a folder deletes the folder with everything in it, its subfolders too (empty or not) and their datasets,
+  at once, after one question that says how many subfolders and datasets it concerns. It cannot be undone: there is no
+  wastebasket. *Cancel* in the question changes nothing.
 - *Copy* and then *Paste* make copies of the datasets with everything in them (rows, columns, files, details and
   history); a copy in the same folder is called *(copy)*, and a copied folder takes its subfolders along. *Cut* and then
   *Paste* move instead. What is cut is shown faded until it is pasted.
@@ -129,8 +132,8 @@ used.
 the tools. The menu acts on the row you pressed, or on everything selected when the row is one of them. With the
 keyboard it opens with the menu key or Shift+F10.
 
-**Drag and drop.** Datasets and folders can be dragged into a folder, out of it to another level or to the root (drop on
-the heading at the top of the panel), with the same result as *Cut* and *Paste*. Dropped on a dataset, what you drag
+**Drag and drop.** Datasets and folders can be dragged into a folder, out of it to another level or to the root (drop at
+the top of the panel, on the filter field), with the same result as *Cut* and *Paste*. Dropped on a dataset, what you drag
 lands in its folder. The folder that receives it is outlined. A folder cannot be dragged into itself. With a finger:
 hold the row until it is marked, then drag; near the top or bottom of the panel it scrolls. *Move to …* in the context
 menu does the same without dragging.
@@ -139,15 +142,20 @@ menu does the same without dragging.
 the first and last, arrow right expands a folder and then goes into it, arrow left collapses it or goes to the folder
 above, Enter opens, space selects, Shift+arrow up and down select while moving, Ctrl+A selects everything, `*` expands
 the folders beside, and a letter jumps to the next name that starts with it. Delete deletes, Ctrl+C copies, Ctrl+X
-cuts, Ctrl+V pastes into the folder where the cursor is (or beside the dataset) and F2 renames. Screen readers get the
+cuts, Ctrl+V pastes into the folder where the cursor is (or beside the dataset) and F2 renames, in Manage. Screen readers get the
 tree as a tree with level, position and collapsed or expanded state; on touch screens, where screen readers read trees
 unevenly, each row is a button that says whether it is expanded.
 
 Large trees (thousands of rows) draw only the rows in view, so that scrolling is as quick with 20,000 rows.
 
-The button *Actions (n)* in Manage opens the batch actions for the selected: organise (folder and tags), bundle, export
-as ZIP with CSV files, re-fetch from API, run a recipe and delete. Folder and tags travel with the dataset in its file,
-in bundles and in backups.
+The button *Actions for selected (n)* in Manage opens the batch actions for the selected: organise (folder and tags),
+bundle, export as ZIP with CSV files, re-fetch from API, run a recipe and delete. A selected folder gives the actions
+everything in it, in its subfolders too, and *Delete* there does the same as the tool: the question says how much goes,
+and a folder selected as a whole is deleted with its subfolders. Folder and tags travel with the dataset in its file, in
+bundles and in backups.
+
+The filter field lies right under the panel's heading. Below the tree it says how many are selected and what is cut
+or copied, so that no row moves when you select.
 
 The overview of a dataset shows metadata, the column list, comments, a history of what has been done with the
 dataset and versions, and here you rename and change the short name (the short name is used in SQL, R and chart

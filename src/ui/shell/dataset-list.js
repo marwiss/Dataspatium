@@ -6,7 +6,8 @@
  * where the mode asks for it, check boxes for datasets and whole folders, the tools right above the tree (Ny mapp, Byt namn,
  * Klipp ut, Kopiera, Klistra in, Flytta, Ta bort: icons with tips, and those that do not fit under Fler alternativ) with their
  * keys and the same in the snabbmeny, and drag and drop into, out of and between folders. Selecting an item updates
- * `store.selectedId`, which every mode reacts to. The shell gives every mode the same tree (`withDefaults`, ui/batch-actions).
+ * `store.selectedId`, which every mode reacts to. The shell gives every mode the same tree with check boxes (`withDefaults`,
+ * ui/batch-actions); the tools, their keys, the snabbmeny and dragging come with `actions` and `onMove`, which only Hantera gives.
  *
  *   datasetList.render(container, {datasets, selectedId, onSelect, extra?, emptyHint?,
  *                                  multi?, selectedIds?, onToggle?(ids), onMove?(ids, folder), tools?,
@@ -270,7 +271,9 @@
       /** What the snabbmeny and a drag act on: the checked items when the row is one of them, else the row alone. */
       function unitsFor(key) { const u = units(); return count(u) && inUnits(u, key) ? u : unitOfKey(key); }
       const current = byId.get(options.selectedId);
-      const isCut = (path, id) => !!clipboard && clipboard.mode === 'cut' && ((id && clipboard.ids.includes(id)) || clipboard.folders.some((f) => within(path, f)));
+      // The clipboard is Hantera's (the tools come with `actions`): other modes neither fade nor mention what is on it.
+      const shownClip = actions ? clipboard : null;
+      const isCut = (path, id) => !!shownClip && shownClip.mode === 'cut' && ((id && shownClip.ids.includes(id)) || shownClip.folders.some((f) => within(path, f)));
       function select(next) {
         state.selected = next;
         const before = state.renders;
@@ -387,11 +390,14 @@
         return f ? folderState(f, selected, markedFolders) : 'none';
       };
 
+      // The heading holds Välj for touch screens, as in the phones' file apps: the check boxes show and a tap checks. Elsewhere
+      // it takes no room, so that the filter lies right under the pane head (B-81.3).
       const header = h('div', { class: 'dm-list-head' },
-        multi && selected.size ? h('span', { class: 'dm-help', text: t('datasets.selected.count', { n: selected.size }) }) : null,
-        clipboard ? h('span', { class: 'dm-help', 'data-clip': clipboard.mode, text: t('datasets.tree.clip.' + clipboard.mode, { n: count(clipboard) }) }) : null,
-        // Välj on touch screens, as in the phones' file apps: the check boxes show and a tap checks.
         multi && options.onToggle ? basic.button({ label: t(state.selecting ? 'tree.select.done' : 'tree.select'), title: t('tree.select.tip'), icon: 'list-checks', size: 'sm', variant: 'ghost', class: 'dm-tree-select', pressed: String(!!state.selecting), onClick: () => { state.selecting = !state.selecting; redraw(); } }) : null);
+      // How many are checked and what is on the clipboard, under the tree, so that checking moves no row.
+      const status = (multi && selected.size) || shownClip ? h('p', { class: 'dm-help dm-list-status' },
+        multi && selected.size ? h('span', { text: t('datasets.selected.count', { n: selected.size }) }) : null,
+        shownClip ? h('span', { 'data-clip': shownClip.mode, text: t('datasets.tree.clip.' + shownClip.mode, { n: count(shownClip) }) }) : null) : null;
       const canMove = !!(options.onMove || actions);
       if (canMove) view.dropZone(header, null);
       const items = [header];
@@ -409,7 +415,10 @@
         sortSel.options = SORTS.map((s) => ({ value: s, label: t('datasets.sort.' + s) }));
         sortSel.value = state.sort;
         sortSel.addEventListener('change', () => { state.sort = sortSel.value; redraw(); });
-        items.push(h('div', { class: 'dm-list-tools' }, filterIn, sortSel));
+        const row = h('div', { class: 'dm-list-tools' }, filterIn, sortSel);
+        // The top of the panel is the top level, also when the heading is hidden.
+        if (canMove) view.dropZone(row, null);
+        items.push(row);
       }
       if (state.overflow) { state.overflow.disconnect(); state.overflow = null; }
       if (actions && anything) items.push(toolbar());
@@ -506,6 +515,7 @@
       if (editingNew && !placed) nodes.unshift(newNode());
 
       items.push(view.el);
+      if (status) items.push(status);
       if (options.extra && options.extra.length) {
         items.push(h('hr'));
         items.push(h('div', { class: 'dm-list' }, options.extra.map((x) => item(Object.assign({ current: x.id === options.selectedId, onSelect: options.onSelect }, x)))));
@@ -573,7 +583,14 @@
     /** The clipboard of the tree (Klipp ut, Kopiera): {mode, ids, folders}, or null; `set` takes null to empty it. */
     const clip = { get: () => (clipboard ? { mode: clipboard.mode, ids: clipboard.ids.slice(), folders: clipboard.folders.slice() } : null), set: (v) => { clipboard = v ? { mode: v.mode, ids: (v.ids || []).slice(), folders: (v.folders || []).slice() } : null; } };
 
-    const api = { render, buildTree, sortDatasets, kindIcon, kindSummary, SORTS, folders, clip, folderState, unitsOf, targetOf, contents, findNode, withDefaults };
+    /**
+     * The checked datasets (the store's selectedIds) with the empty folders checked in the tree, as units: what the batch
+     * dialog's Ta bort deletes, as the tree's own tool does (a folder chosen whole goes with everything in it).
+     * @param {any[]} list all datasets @param {string[]} ids @returns {{ids: string[], folders: string[]}}
+     */
+    const selectionUnits = (list, ids) => unitsOf(buildTree(list, folders.list()), new Set(ids), markedFolders);
+
+    const api = { render, buildTree, sortDatasets, kindIcon, kindSummary, SORTS, folders, clip, folderState, unitsOf, selectionUnits, targetOf, contents, findNode, withDefaults };
     /**
      * The same list with defaults that every render gets unless it gives its own (the shell: check boxes, tools and moves).
      * @param {() => Record<string, any>} defaults

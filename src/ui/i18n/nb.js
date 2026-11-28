@@ -2135,8 +2135,6 @@
     'datasets.batch.button': 'Handlinger for merkede ({n})',
     'datasets.batch.clear': 'Fjern merkingen',
     'datasets.batch.delete': 'Slett',
-    'datasets.batch.delete.confirm': 'Slette {n} datasett? Det kan ikke angres.',
-    'datasets.batch.deleted': '{n} datasett slettet.',
     'datasets.batch.export': 'Eksporter som ZIP, hver i sin form',
     'datasets.batch.export.file': 'datasett',
     'datasets.batch.exported': 'Eksporterte {n} datasett som ZIP.',

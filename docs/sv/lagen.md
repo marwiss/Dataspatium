@@ -125,10 +125,13 @@ på *Välj* i panelens överkant; då markerar ett tryck i stället för att öp
 **Verktygen direkt ovanför trädet**: *Ny mapp*, *Byt namn*, *Klipp ut*, *Kopiera*, *Klistra in*, *Flytta* och *Ta bort*,
 som ikoner på en rad med namnet i tipset. Det som inte får plats i en smal panel ligger under *Fler alternativ* (de tre
 punkterna). Verktygen gäller det som är markerat, eller den valda datamängden när inget är markerat, och är tända när de
-går att använda.
+går att använda. Mapparna ändras bara i Hantera: verktygen, snabbmenyn, tangenterna för dem och dra och släpp finns bara
+här. I de andra lägena visar trädet datamängderna och mapparna med filter, sortering och kryssrutor för lägets egna
+åtgärder.
 
-- *Ta bort* på en mapp tar bort mappen med alla dess undermappar och datamängder på en gång, efter en enda fråga som
-  säger hur många undermappar och datamängder det gäller.
+- *Ta bort* på en mapp tar bort mappen med allt i den, också undermapparna (tomma eller inte) och deras datamängder, på en
+  gång, efter en enda fråga som säger hur många undermappar och datamängder det gäller. Det går inte att ångra: det finns
+  ingen papperskorg. *Avbryt* i frågan ändrar ingenting.
 - *Kopiera* och sedan *Klistra in* gör kopior av datamängderna med allt i dem (rader, kolumner, filer, uppgifter och
   historik); en kopia i samma mapp heter *(kopia)*, och en kopierad mapp får sina undermappar med sig. *Klipp ut* och
   sedan *Klistra in* flyttar i stället. Det som är urklippt visas blekt tills det klistras in.
@@ -143,7 +146,7 @@ verktygen. Menyn gäller raden du tryckte på, eller allt som är markerat när 
 den med menytangenten eller Skift+F10.
 
 **Dra och släpp.** Datamängder och mappar kan dras in i en mapp, ut ur den till en annan nivå eller till roten (släpp
-på rubriken överst i panelen), med samma resultat som *Klipp ut* och *Klistra in*. Släpper du på en datamängd hamnar
+överst i panelen, på filterfältet), med samma resultat som *Klipp ut* och *Klistra in*. Släpper du på en datamängd hamnar
 det du drar i dess mapp. Den mapp som tar emot ramas in. En mapp kan inte dras in i sig själv. Med finger: håll kvar på
 raden tills den markeras, och dra sedan; nära panelens över- eller underkant rullar den. *Flytta till …* i snabbmenyn
 gör samma sak utan att dra.
@@ -152,15 +155,20 @@ gör samma sak utan att dra.
 första och sista, pil höger fäller ut en mapp och går sedan in i den, pil vänster fäller ihop den eller går till mappen
 ovanför, Enter öppnar, mellanslag markerar, Skift+pil upp och ned markerar medan du går, Ctrl+A markerar allt, `*`
 fäller ut mapparna bredvid, och en bokstav hoppar till nästa namn som börjar på den. Delete tar bort, Ctrl+C kopierar,
-Ctrl+X klipper ut, Ctrl+V klistrar in i mappen där markören står (eller bredvid datamängden) och F2 byter namn.
-Skärmläsare får trädet som ett träd med nivå, plats och ihop- eller utfällt läge; på pekskärmar, där skärmläsarna läser
+Ctrl+X klipper ut, Ctrl+V klistrar in i mappen där markören står (eller bredvid datamängden) och F2 byter namn, i
+Hantera. Skärmläsare får trädet som ett träd med nivå, plats och ihop- eller utfällt läge; på pekskärmar, där skärmläsarna läser
 träd ojämnt, är varje rad en knapp som säger om den är utfälld.
 
 Stora träd (tusentals rader) ritar bara de rader som syns, så att rullningen går lika fort med 20 000 rader.
 
-Knappen *Åtgärder (n)* i Hantera öppnar batchåtgärderna för de markerade: ordna (mapp och taggar), paketera,
-exportera som ZIP med CSV-filer, hämta igen från API, köra ett recept och ta bort. Mapp och taggar följer
+Knappen *Åtgärder för markerade (n)* i Hantera öppnar batchåtgärderna för de markerade: ordna (mapp och taggar),
+paketera, exportera som ZIP med CSV-filer, hämta igen från API, köra ett recept och ta bort. En markerad mapp ger
+åtgärderna allt i den, också i undermapparna, och *Ta bort* där gör detsamma som verktyget: frågan säger hur mycket som
+försvinner, och en mapp som är markerad i sin helhet tas bort med sina undermappar. Mapp och taggar följer
 datamängden i dess fil, i paket och i säkerhetskopior.
+
+Filterfältet ligger direkt under panelens rubrik. Under trädet står hur många som är markerade och vad som är urklippt
+eller kopierat, så att ingen rad flyttar sig när du markerar.
 
 Översikten för en datamängd visar metadata, kolumnlista, kommentarer, historik över det som gjorts med
 datamängden och versioner, och här byter du namn och kortnamn (kortnamnet används i SQL, R och diagramfiler),

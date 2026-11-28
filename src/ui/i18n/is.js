@@ -2135,8 +2135,6 @@
     'datasets.batch.button': 'Aðgerðir fyrir valin ({n})',
     'datasets.batch.clear': 'Afvelja öll',
     'datasets.batch.delete': 'Eyða',
-    'datasets.batch.delete.confirm': 'Eyða {n} gagnasöfnum? Það er ekki hægt að afturkalla.',
-    'datasets.batch.deleted': '{n} gagnasöfnum eytt.',
     'datasets.batch.export': 'Flytja út sem ZIP, hvert á sínu sniði',
     'datasets.batch.export.file': 'gagnasofn',
     'datasets.batch.exported': 'Flutti út {n} gagnasöfn sem ZIP.',

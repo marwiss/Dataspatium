@@ -41,9 +41,10 @@
         ui.datasetList.render(slots.left, {
           datasets: state.datasets, selectedId: state.selectedId, onSelect: (id) => store.set({ selectedId: id }),
           extra: [{ id: WORKSPACE, label: t('datasets.storage.title'), icon: 'hard-drive', sub: t('datasets.backup') }, { id: FLOWS, label: t('flows.title'), icon: 'play', sub: t('flows.sub') }, { id: LIBRARY, label: t('library.title'), icon: 'book-open', sub: t('library.sub') }],
-          // Several datasets at once: check boxes, drag and drop into folders, and the batch actions.
+          // Several datasets at once: check boxes, the batch actions, and the folders changed here alone: the tools above the tree,
+          // their keys and the snabbmeny, and drag and drop into folders.
           multi: true, selectedIds, onToggle: (ids) => store.set({ selectedIds: ids }),
-          onMove: (ids, path) => batch.move(ctx, ids, path),
+          onMove: (ids, path) => batch.move(ctx, ids, path), actions: batch.treeActions(ctx),
           tools: selectedIds.length ? [
             ui.button({ label: t('datasets.batch.button', { n: selectedIds.length }), icon: 'list-checks', variant: 'primary', 'data-course': 'batch', onClick: () => batch.open(ctx, selectedIds) }),
             ui.button({ label: t('datasets.batch.clear'), variant: 'ghost', size: 'sm', onClick: () => store.set({ selectedIds: [] }) }),

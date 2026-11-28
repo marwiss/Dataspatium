@@ -2246,8 +2246,6 @@
     'datasets.batch.button': 'Actions for selected ({n})',
     'datasets.batch.clear': 'Clear selection',
     'datasets.batch.delete': 'Delete',
-    'datasets.batch.delete.confirm': 'Delete {n} datasets? This cannot be undone.',
-    'datasets.batch.deleted': '{n} datasets deleted.',
     'datasets.batch.export': 'Export as a ZIP, each in its own form',
     'datasets.batch.export.file': 'datasets',
     'datasets.batch.exported': 'Exported {n} datasets as a ZIP.',

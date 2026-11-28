@@ -304,9 +304,19 @@
       const box = /** @type {HTMLInputElement} */ (await waitFor(() => root.querySelector('.dm-left [data-folder-row="Provmapp"] input[type="checkbox"]'), 5000, 'the folder row'));
       box.click();
       assert.deepEqual(shell.store.get().selectedIds.slice().sort(), [a.id, b.id].sort(), 'the folder chooses both');
-      /** @type {HTMLElement} */ (root.querySelector('.dm-left [data-tool="delete"] button')).click();
-      const dlg = await waitFor(() => document.querySelector('dialog[open]'), 3000, 'the question');
       const what = t('datasets.tree.and', { a: t('datasets.tree.n.subfolders', { n: '1' }), b: t('datasets.tree.n.datasets', { n: '2' }) });
+      // Avbryt changes nothing.
+      /** @type {HTMLElement} */ (root.querySelector('.dm-left [data-tool="delete"] button')).click();
+      let dlg = await waitFor(() => document.querySelector('dialog[open]'), 3000, 'the question');
+      assert.ok(dlg.querySelector('.dm-dialog-body').textContent.includes(t('datasets.tree.delete.folder', { name: 'Provmapp', what })), 'how many go, and that it cannot be undone');
+      /** @type {HTMLElement} */ (Array.from(dlg.querySelectorAll('.dm-dialog-actions dm-button')).find((x) => x.getAttribute('label') === t('common.cancel')).querySelector('button')).click();
+      await waitFor(() => !document.querySelector('dialog[open]'), 3000, 'the question closed');
+      await wait(200);
+      assert.ok((await svc.get(a.id)) && (await svc.get(b.id)), 'nothing deleted');
+      assert.deepEqual(shell.store.get().selectedIds.slice().sort(), [a.id, b.id].sort(), 'still chosen');
+      assert.ok(root.querySelector('.dm-left [data-folder-row="Provmapp/Under"]'), 'the folders stay');
+      /** @type {HTMLElement} */ (await waitFor(() => { const el = root.querySelector('.dm-left [data-tool="delete"] button'); return el && !(/** @type {any} */ (el)).disabled ? el : null; }, 3000, 'Ta bort on again')).click();
+      dlg = await waitFor(() => document.querySelector('dialog[open]'), 3000, 'the question again');
       assert.equal(dlg.querySelector('.dm-dialog-body').textContent, t('datasets.tree.delete.folder', { name: 'Provmapp', what }));
       /** @type {HTMLElement} */ (dlg.querySelector('.dm-dialog-actions dm-button[variant="danger"] button')).click();
       await waitFor(() => !shell.store.get().datasets.some((d) => d.id === a.id || d.id === b.id), 5000, 'both gone');
@@ -322,6 +332,135 @@
       root.remove();
     }
   }, 30000);
+
+  test('hantera: a folder chosen whole gives the batch actions everything in it, and their Ta bort deletes it with its subfolders, the empty one too; the filter lies right under the pane head', async (assert) => {
+    const list = D.require('ui/dataset-list');
+    const root = document.createElement('div');
+    root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
+    document.body.appendChild(root);
+    history.replaceState(null, '', location.pathname + location.search);
+    const shell = await D.require('app').start(root);
+    const svc = shell.ctx.services.datasets;
+    const store = shell.store;
+    const a = await shell.ctx.services.importer.run(csv('Batchmapp A'), {}, null, 'Batchmapp A');
+    const b = await shell.ctx.services.importer.run(csv('Batchmapp B'), {}, null, 'Batchmapp B');
+    const c = await shell.ctx.services.importer.run(csv('Batchmapp C'), {}, null, 'Batchmapp C');
+    const box = (path) => /** @type {HTMLInputElement} */ (root.querySelector(`.dm-left [data-folder-row="${path}"] input[type="checkbox"]`));
+    const button = (dlg, label) => /** @type {HTMLElement} */ (Array.from(dlg.querySelectorAll('dm-button')).find((x) => x.getAttribute('label') === label).querySelector('button'));
+    try {
+      await svc.updateMeta(a.id, { folder: 'Batchmapp' });
+      await svc.updateMeta(b.id, { folder: 'Batchmapp/Under' });
+      list.folders.add('Batchmapp/Tom');
+      store.set({ selectedIds: [], selectedId: null });
+      shell.activate('hantera');
+      await waitFor(() => root.querySelector('.dm-left [data-folder-row="Batchmapp/Under"]') && root.querySelector('.dm-left [data-folder-row="Batchmapp/Tom"]'), 5000, 'the folders');
+      // The heading takes no room (it holds Välj on touch screens), and the filter lies right under the pane head.
+      const head = /** @type {HTMLElement} */ (root.querySelector('.dm-left .dm-list-head'));
+      const body = root.querySelector('.dm-left .dm-pane-body');
+      assert.equal(getComputedStyle(head).display, 'none', 'no empty heading');
+      const gap = root.querySelector('.dm-left .dm-list-tools').getBoundingClientRect().top - body.getBoundingClientRect().top;
+      assert.ok(gap <= parseFloat(getComputedStyle(body).paddingTop) + 1, 'the filter first in the panel: ' + gap);
+      // The folder's box chooses everything below it; a part shows as mixed.
+      box('Batchmapp').click();
+      assert.deepEqual(store.get().selectedIds.slice().sort(), [a.id, b.id].sort(), 'the datasets of the folder and its subfolder');
+      await waitFor(() => box('Batchmapp').checked && box('Batchmapp/Under').checked && box('Batchmapp/Tom').checked, 3000, 'the folders checked');
+      assert.equal(getComputedStyle(root.querySelector('.dm-left .dm-list-head')).display, 'none', 'still no heading: checking moves no row');
+      const status = root.querySelector('.dm-left .dm-list-status');
+      assert.ok(status && status.previousElementSibling === root.querySelector('.dm-left .dm-tree') && status.textContent === t('datasets.selected.count', { n: 2 }), 'how many, under the tree');
+      /** @type {HTMLElement} */ (root.querySelector(`.dm-left .dm-tree-row[data-id="${b.id}"] input`)).click();
+      await waitFor(() => box('Batchmapp').indeterminate && !box('Batchmapp').checked, 3000, 'mixed');
+      assert.ok(!box('Batchmapp/Under').checked && !box('Batchmapp/Under').indeterminate, 'the subfolder not chosen');
+      box('Batchmapp').click();
+      await waitFor(() => box('Batchmapp').checked && !box('Batchmapp').indeterminate, 3000, 'all again');
+      // Åtgärder för markerade: both datasets; Ta bort asks the tree's question, and Avbryt keeps everything.
+      const openBatch = async () => {
+        /** @type {HTMLElement} */ ((await waitFor(() => root.querySelector('.dm-left [data-course="batch"] button'), 3000, 'the batch button')).click());
+        const dlg = await waitFor(() => document.querySelector('dialog[open]'), 3000, 'the batch dialog');
+        assert.equal(dlg.querySelector('.dm-dialog-head h2').textContent, t('datasets.batch.title', { n: 2 }));
+        button(dlg, t('datasets.batch.delete')).click();
+        return waitFor(() => { const d = document.querySelector('dialog[open]'); return d && d !== dlg ? d : null; }, 3000, 'the question');
+      };
+      const what = t('datasets.tree.and', { a: t('datasets.tree.n.subfolders', { n: '2' }), b: t('datasets.tree.n.datasets', { n: '2' }) });
+      let ask = await openBatch();
+      assert.equal(ask.querySelector('.dm-dialog-body').textContent, t('datasets.tree.delete.folder', { name: 'Batchmapp', what }));
+      button(ask, t('common.cancel')).click();
+      await waitFor(() => !document.querySelector('dialog[open]'), 3000, 'closed');
+      await wait(200);
+      assert.ok((await svc.get(a.id)) && (await svc.get(b.id)) && list.folders.list().includes('Batchmapp/Tom'), 'nothing deleted');
+      ask = await openBatch();
+      /** @type {HTMLElement} */ (ask.querySelector('.dm-dialog-actions dm-button[variant="danger"] button')).click();
+      await waitFor(() => !store.get().datasets.some((d) => d.id === a.id || d.id === b.id), 5000, 'both gone');
+      assert.ok(!(await svc.get(a.id)) && !(await svc.get(b.id)), 'deleted from storage');
+      assert.ok(await svc.get(c.id), 'the dataset outside the folder stays');
+      assert.ok(!list.folders.list().some((p) => p.startsWith('Batchmapp')), 'the empty subfolder goes too');
+      await waitFor(() => !root.querySelector('.dm-left [data-folder-row="Batchmapp"]'), 3000, 'the folder leaves the tree');
+      assert.deepEqual(store.get().selectedIds, [], 'nothing chosen any more');
+      return 'ok';
+    } finally {
+      for (const d of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (d).close();
+      for (const d of [a, b, c]) await svc.remove(d.id).catch(() => {});
+      list.folders.removeUnder('Batchmapp');
+      store.set({ selectedIds: [] });
+      root.remove();
+    }
+  }, 40000);
+
+  test('dataset tree: the tools that change the folders are Hantera\'s alone; in Bearbeta and Visualisera the tree filters, sorts and checks, but its keys, snabbmeny and dragging do nothing', async (assert) => {
+    const list = D.require('ui/dataset-list');
+    const root = document.createElement('div');
+    root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
+    document.body.appendChild(root);
+    history.replaceState(null, '', location.pathname + location.search);
+    const shell = await D.require('app').start(root);
+    const svc = shell.ctx.services.datasets;
+    const store = shell.store;
+    const a = await shell.ctx.services.importer.run(csv('Lägesmapp A'), {}, null, 'Lägesmapp A');
+    const b = await shell.ctx.services.importer.run(csv('Lägesmapp B'), {}, null, 'Lägesmapp B');
+    const main = (sel) => /** @type {HTMLElement} */ (root.querySelector(`.dm-left ${sel} [data-part="main"]`));
+    try {
+      await svc.updateMeta(a.id, { folder: 'Lägesmapp' });
+      store.set({ selectedIds: [], selectedId: null });
+      list.clip.set(null);
+      await shell.activate('hantera');
+      await waitFor(() => root.querySelector('.dm-left [data-folder-row="Lägesmapp"]') && root.querySelector('.dm-left .dm-tree-toolbar'), 5000, 'the tools in Hantera');
+      assert.equal(main('[data-folder-row="Lägesmapp"]').getAttribute('draggable'), 'true', 'a folder is dragged in Hantera');
+      for (const mode of ['bearbeta', 'visualisera']) {
+        await shell.activate(mode);
+        await waitFor(() => store.get().mode === mode && root.querySelector(`.dm-left .dm-tree-row[data-id="${a.id}"]`) && !root.querySelector('.dm-left .dm-tree-toolbar'), 8000, 'the tree without tools in ' + mode);
+        assert.ok(!root.querySelector('.dm-left [data-tool]'), mode + ': no tools');
+        assert.ok(root.querySelector('.dm-left .dm-list-filter') && root.querySelector('.dm-left .dm-list-sort'), mode + ': the filter and the sort order');
+        assert.ok(!main('[data-folder-row="Lägesmapp"]').hasAttribute('draggable') && !main(`.dm-tree-row[data-id="${a.id}"]`).hasAttribute('draggable'), mode + ': nothing to drag');
+        // The keys of the tools do nothing.
+        for (const [k, extra] of [['Delete'], ['F2'], ['x', { ctrlKey: true }], ['c', { ctrlKey: true }]]) key(main(`.dm-tree-row[data-id="${a.id}"]`), k, extra);
+        await wait(300);
+        assert.ok(!document.querySelector('dialog[open]') && (await svc.get(a.id)), mode + ': Delete asks nothing and deletes nothing');
+        assert.ok(!root.querySelector('.dm-left dm-input.dm-tree-edit'), mode + ': F2 names nothing');
+        assert.equal(list.clip.get(), null, mode + ': Ctrl+X and Ctrl+C take nothing');
+        // No snabbmeny, and a drop on a folder moves nothing.
+        main(`.dm-tree-row[data-id="${a.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }));
+        await wait(100);
+        assert.ok(!document.querySelector('.dm-menu'), mode + ': no snabbmeny');
+        const dt = new DataTransfer();
+        dt.setData('text/plain', JSON.stringify({ dataspatium: 'datasets', ids: [b.id], folders: [] }));
+        main('[data-folder-row="Lägesmapp"]').dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }));
+        await wait(300);
+        assert.equal((await svc.get(b.id)).folder, '', mode + ': the drop moves nothing');
+        // The check boxes choose for the mode's own actions.
+        /** @type {HTMLElement} */ (root.querySelector(`.dm-left [data-folder-row="Lägesmapp"] input[type="checkbox"]`)).click();
+        assert.deepEqual(store.get().selectedIds, [a.id], mode + ': the folder chooses its dataset');
+        store.set({ selectedIds: [] });
+      }
+      await shell.activate('hantera');
+      await waitFor(() => root.querySelector('.dm-left .dm-tree-toolbar'), 5000, 'the tools back in Hantera');
+      return 'ok';
+    } finally {
+      for (const d of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (d).close();
+      for (const m of Array.from(document.querySelectorAll('.dm-menu'))) m.remove();
+      for (const d of [a, b]) await svc.remove(d.id).catch(() => {});
+      store.set({ selectedIds: [] });
+      root.remove();
+    }
+  }, 40000);
 
   test('hantera: copy and paste make a copy of a folder with its datasets, cut and paste moves it, and Ny mapp and Byt namn work in place', async (assert) => {
     const list = D.require('ui/dataset-list');
