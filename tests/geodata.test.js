@@ -228,24 +228,26 @@
       await waitFor(() => itemByText(r.connector.name), 5000, 'the WFS source in the list');
       itemByText(r.connector.name).click();
       await waitFor(() => root.querySelectorAll('.dm-geo-layer').length === 3, 8000, 'two layers and the generic entry');
-      assert.ok(!root.querySelector('.dm-api-view dm-tabs'), 'no endpoint tab for a geodata source');
+      assert.ok(!root.querySelector('.dm-api-view dm-tabs'), 'no endpoint tab and, without plans, no mode switch for a geodata source');
       // The count says how many layers the filter leaves of all of them.
       assert.equal(root.querySelector('[data-geo-count]').textContent, t('geodata.layers.count', { n: '2' }));
       const filterInput = /** @type {any} */ (root.querySelector('.dm-geo-head dm-input'));
       filterInput.value = 'Kommun'; filterInput.dispatchEvent(new Event('input', { bubbles: true }));
       assert.equal(root.querySelector('[data-geo-count]').textContent, t('geodata.layers.count.of', { shown: '1', n: '2' }), 'one of two after filtering');
       filterInput.value = ''; filterInput.dispatchEvent(new Event('input', { bubbles: true }));
-      // A long list in the work area takes the window's height less the reserve, at least the least height (.dm-fill).
-      const listStyle = getComputedStyle(/** @type {Element} */ (root.querySelector('.dm-center .dm-geo-layers')));
-      assert.equal(Math.round(parseFloat(listStyle.maxHeight)), Math.max(300, window.innerHeight - 400), 'the list fills the window: ' + listStyle.maxHeight);
-      assert.equal(listStyle.overflowY, 'auto');
-      /** @type {any} */ (Array.from(root.querySelectorAll('.dm-geo-layer')).find((e) => e.textContent.includes('Kommuner'))).click();
-      await waitFor(() => buttonByText(t('api.fetch')), 5000, 'fetch button for the layer');
-      assert.ok(Array.from(root.querySelectorAll('.dm-geo-form dm-input')).some((i) => (i.getAttribute('label') || '').includes(t('geodata.param.bbox'))), 'the bbox field');
+      assert.ok(root.querySelector('.dm-right [data-geo-pick]'), 'the inspector asks for a layer');
+      // A layer chosen: its form is in the inspector, above the facts about the service.
+      /** @type {any} */ (Array.from(root.querySelectorAll('.dm-center .dm-geo-layer')).find((e) => e.textContent.includes('Kommuner'))).click();
+      const formEl = await waitFor(() => root.querySelector('.dm-right .dm-geo-form'), 5000, 'the layer\'s form in the inspector');
+      assert.ok(formEl.compareDocumentPosition(Array.from(root.querySelectorAll('.dm-right h4')).find((x) => x.textContent === t('api.info'))) & Node.DOCUMENT_POSITION_FOLLOWING, 'above Om tjänsten');
+      assert.ok(Array.from(formEl.querySelectorAll('dm-input')).some((i) => (i.getAttribute('label') || '').includes(t('geodata.param.bbox'))), 'the bbox field');
       const before = new Set(shell.store.get().datasets.map((d) => d.id));
       buttonByText(t('api.fetch')).click();
-      await waitFor(() => root.querySelector('.dm-api-map svg'), 15000, 'map preview of the answer');
+      // The answer takes the list's place in the work area, with the way back.
+      await waitFor(() => root.querySelector('.dm-center .dm-geo-result .dm-api-map svg'), 15000, 'map preview of the answer in the work area');
       assert.equal(root.querySelectorAll('.dm-api-map svg path').length, 3, 'three polygons in the preview');
+      assert.ok(!root.querySelector('.dm-center .dm-geo-layers') && root.querySelector('.dm-center [data-geo-back]'), 'the list gives way to the answer, with Alla lager');
+      assert.ok(root.querySelector('.dm-right .dm-geo-form') === formEl, 'the form stays in the inspector');
       assert.ok(!buttonByText(t('plan.save.detaljplan')) && !buttonByText(t('plan.save.oversiktsplan')), 'no plan button for a layer that is no plan');
       buttonByText(t('api.save')).click();
       await waitFor(() => buttonByText(t('geodata.open.map')), 15000, 'saved with Öppna som karta');
@@ -253,6 +255,11 @@
       const ds = await waitFor(() => shell.store.get().datasets.find((d) => !before.has(d.id)), 10000, 'the new dataset in the store');
       savedId = ds.id;
       assert.ok(leaflet.mapDefault(await datasets.columns(ds.id)), 'the dataset opens as a map');
+      // Alla lager: back to the list, with the layer still chosen and its form in the inspector.
+      /** @type {HTMLElement} */ (root.querySelector('.dm-center [data-geo-back] button')).click();
+      assert.equal(root.querySelectorAll('.dm-center .dm-geo-layer').length, 3, 'the list again');
+      assert.ok(!root.querySelector('.dm-center .dm-geo-result') && root.querySelector('.dm-right .dm-geo-form') === formEl, 'the form kept');
+      assert.ok(root.querySelector('.dm-center .dm-geo-layer[aria-current="true"]').textContent.includes('Kommuner'), 'the layer still chosen');
       // The catalogue: search, one card with the organisation and the service buttons, add the WFS as a source.
       itemByText('Testkatalog').click();
       const input = await waitFor(() => root.querySelector('.dm-geoportal-search dm-input'), 5000, 'search field');
@@ -284,6 +291,68 @@
       root.remove();
     }
   }, 120000);
+
+  test('ui: a geodata source fills the work area: Valfritt lager above a list that alone scrolls, the arrow keys in it, and the inspector shown on choosing (a sheet below 1100 px)', async (assert) => {
+    const root = document.createElement('div');
+    root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
+    document.body.appendChild(root);
+    const ids = [];
+    const many = '<?xml version="1.0"?><wfs:WFS_Capabilities xmlns:wfs="http://www.opengis.net/wfs/2.0" version="2.0.0"><wfs:FeatureTypeList>'
+      + Array.from({ length: 80 }, (_, i) => `<wfs:FeatureType><wfs:Name>stat:lager${String(i).padStart(2, '0')}</wfs:Name><wfs:Title>Lager ${String(i).padStart(2, '0')}</wfs:Title></wfs:FeatureType>`).join('') + '</wfs:FeatureTypeList></wfs:WFS_Capabilities>';
+    try {
+      history.replaceState(null, '', location.pathname + location.search);
+      const shell = await D.require('app').start(root);
+      serve('tests/geo/ui-many', (u) => (u.searchParams.get('request') === 'GetCapabilities' ? many : { type: 'FeatureCollection', numberMatched: ALL.length, features: ALL }));
+      const r = await geodata.createConnector('wfs', { baseUrl: BASE + '/ui-many' });
+      ids.push(r.connector.id);
+      shell.activate('inhamta');
+      const source = await waitFor(() => root.querySelector(`[data-source="api:${r.connector.id}"]`), 5000, 'the source in the list');
+      /** @type {HTMLElement} */ (source).click();
+      await waitFor(() => root.querySelectorAll('.dm-center [data-geo-layer]').length === 81, 8000, 'eighty layers and Valfritt lager');
+      assert.ok(!root.querySelector('[data-geo-modes]'), 'no mode switch without plans');
+      const center = /** @type {HTMLElement} */ (root.querySelector('.dm-center'));
+      const list = /** @type {HTMLElement} */ (root.querySelector('.dm-center .dm-geo-layers'));
+      const generic = /** @type {HTMLElement} */ (root.querySelector('.dm-center .dm-geo-generic'));
+      assert.ok(generic && generic.textContent.includes(t('geodata.generic.layer')), 'Valfritt lager');
+      assert.ok(generic.getBoundingClientRect().bottom <= list.getBoundingClientRect().top, 'above the list');
+      // One scrollbar: the list scrolls, the work area does not.
+      assert.ok(list.scrollHeight > list.clientHeight + 40, `the list scrolls: ${list.scrollHeight} > ${list.clientHeight}`);
+      assert.ok(center.scrollHeight <= center.clientHeight + 1, `the work area does not: ${center.scrollHeight} <= ${center.clientHeight}`);
+      assert.ok(list.getBoundingClientRect().bottom <= center.getBoundingClientRect().bottom + 1, 'the list ends inside the work area');
+      // The arrow keys: Down from the search box to the first layer, on to the next; Escape empties the box.
+      const box = /** @type {any} */ (root.querySelector('.dm-center [data-geo-search="layers"]'));
+      const control = box.querySelector('input');
+      control.focus();
+      control.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      assert.equal(document.activeElement && document.activeElement.getAttribute('data-geo-layer'), list.querySelector('[data-geo-layer]').getAttribute('data-geo-layer'), 'Down: the first layer');
+      document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+      assert.equal(document.activeElement, Array.from(list.querySelectorAll('[data-geo-layer]')).pop(), 'End: the last layer');
+      box.value = 'Lager 1'; box.dispatchEvent(new Event('input', { bubbles: true }));
+      assert.equal(list.querySelectorAll('[data-geo-layer]').length, 10, 'filtered as one types');
+      control.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      assert.equal(box.value, ''); assert.equal(list.querySelectorAll('[data-geo-layer]').length, 80, 'Escape empties the box');
+      // Choosing a layer shows the inspector: the column on a wide window, a sheet over the work area below 1100 px.
+      const shellEl = /** @type {HTMLElement} */ (root.querySelector('.dm-shell'));
+      const narrow = matchMedia('(max-width: 1099px)').matches;
+      if (narrow) assert.equal(shellEl.getAttribute('data-right'), 'closed', 'the sheet starts closed');
+      const fifth = /** @type {HTMLElement} */ (list.querySelectorAll('[data-geo-layer]')[4]);
+      fifth.focus(); fifth.click();
+      assert.equal(shellEl.getAttribute('data-right'), narrow ? 'sheet' : 'open', 'the inspector shown on choosing');
+      assert.equal(root.querySelector('.dm-right .dm-geo-form').getAttribute('data-geo-form'), fifth.getAttribute('data-geo-layer'), 'with the layer\'s form');
+      assert.equal(document.activeElement, fifth, 'the list keeps the focus');
+      if (narrow) {
+        // Hämta in the sheet: the sheet closes, so that the answer in the work area is seen.
+        Array.from(root.querySelectorAll('.dm-right dm-button')).find((b) => b.textContent.trim() === t('api.fetch')).click();
+        await waitFor(() => root.querySelector('.dm-center .dm-geo-result .dm-api-map svg'), 15000, 'the answer');
+        assert.equal(shellEl.getAttribute('data-right'), 'closed', 'the sheet closed for the answer');
+      }
+      return narrow ? 'narrow: the inspector as a sheet' : 'wide: the inspector as a column';
+    } finally {
+      D.net.unvirtual('tests/geo/ui-many');
+      for (const id of ids) await connectors.remove(id).catch(() => {});
+      root.remove();
+    }
+  }, 60000);
 
   test('geodata: NGP\'s other datasets are sources of their own that take the plan source\'s login and the keys given there', async (assert) => {
     const list = JSON.parse(await D.assets.loadText('presets/geodata/services.json')).services;

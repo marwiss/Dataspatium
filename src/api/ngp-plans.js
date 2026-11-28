@@ -90,8 +90,10 @@
     const refused = (err) => !!err && !aborted(err) && (err.status === 400 || err.kind === 'service');
     /** The rows of a table as objects by column. */
     function records(table) { return table.rows.map((r) => { const o = {}; table.columns.forEach((c, i) => { o[c] = r[i]; }); return o; }); }
+    /** The first value of a list GeoServer has flattened into one ("(1:Ånge kommun)"), or the value itself. */
+    const firstListed = (v) => { const m = /^\((\d+):(.*)\)$/.exec(str(v).trim()); return (m ? (Number(m[1]) > 1 ? m[2].split(',')[0] : m[2]) : str(v)).trim(); };
     /** A search hit from the flattened plan row. */
-    const hitOf = (o) => ({ id: str(o[ID]), beteckning: str(o['detaljplan.beteckning']), namn: str(o['detaljplan.namn']), status: str(o['detaljplan.status']), datum: dateOf(o['detaljplan.datumLagakraft'] || o['detaljplan.datumPaborjat'] || o['detaljplan.datumStatusforandring']) });
+    const hitOf = (o) => ({ id: str(o[ID]), beteckning: str(o['detaljplan.beteckning']), namn: str(o['detaljplan.namn']), status: str(o['detaljplan.status']), datum: dateOf(o['detaljplan.datumLagakraft'] || o['detaljplan.datumPaborjat'] || o['detaljplan.datumStatusforandring']), kommun: firstListed(o['providers.name']) });
     /** Whether a hit matches the term as the filter would (wildcards and letters outside ASCII any character): a service that ignored the filter does not. */
     function matches(hit, text) {
       const pattern = Array.from(str(text).trim().toLowerCase()).map((ch) => (/[^\x20-\x7e]/.test(ch) || ch === '%' || ch === '_' || ch === '*' ? '.' : ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))).join('');
@@ -103,7 +105,7 @@
      * Plans whose name or designation holds `text` (every plan, the first ones, without it), from the plan layer of a WFS. The filter
      * language that the service takes is tried first; a refused or ignored filter tries the other.
      * @param {any} connector @param {string} text @param {{signal?: AbortSignal}} [options]
-     * @returns {Promise<{plans: Array<{id: string, beteckning: string, namn: string, status: string, datum: string}>, total: number, mode: string}>}
+     * @returns {Promise<{plans: Array<{id: string, beteckning: string, namn: string, status: string, datum: string, kommun: string}>, total: number, mode: string}>}
      */
     async function searchWfs(connector, text, options = {}) {
       const layers = wfsLayers(connector);
@@ -183,7 +185,8 @@
     /** A search hit from an NGP plan item. */
     function apiHit(item) {
       const dp = (item.properties && item.properties.detaljplan) || {};
-      return { id: str(dp.objektidentitet || item.id), beteckning: str(dp.beteckning), namn: str(dp.namn), status: str(dp.status), datum: dateOf(dp.datumLagakraft || dp.datumPaborjat || dp.datumStatusforandring), collection: str(item.collection), asset: assetOf(item) };
+      const providers = item.properties && Array.isArray(item.properties.providers) ? item.properties.providers : [];
+      return { id: str(dp.objektidentitet || item.id), beteckning: str(dp.beteckning), namn: str(dp.namn), status: str(dp.status), datum: dateOf(dp.datumLagakraft || dp.datumPaborjat || dp.datumStatusforandring), kommun: str(providers[0] && providers[0].name), collection: str(item.collection), asset: assetOf(item) };
     }
     /**
      * Plans of the NGP API whose name or designation holds `text` (the query extension's case-insensitive `contains`, one search

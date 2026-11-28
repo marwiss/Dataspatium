@@ -63,6 +63,13 @@ dm-splitter:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--dm-
    dialog or a panel the least height. */
 .dm-fill { max-height: var(--dm-fill-min-h); overflow: auto; }
 .dm-center .dm-fill { max-height: max(var(--dm-fill-min-h), calc(100vh - var(--dm-fill-reserve-h))); }
+/* A column that fills the work area (or the column it sits in): its parts keep their height, and the part marked .dm-fill-rest
+   takes what is left and is the only one that scrolls, so that a long list never makes the work area scroll too (F137 c). Every
+   part keeps flex-shrink 0, since one that may shrink and hides its overflow shrinks to nothing (LD-93). */
+.dm-fill-column { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: var(--dm-s-3); }
+.dm-fill-column > * { flex-shrink: 0; }
+.dm-fill-column > .dm-fill-column { flex: 1 1 0; }
+.dm-fill-column > .dm-fill-rest { flex: 1 1 0; min-height: calc(var(--dm-fill-min-h) / 2); overflow: auto; }
 
 .dm-drawer { position: relative; grid-area: drawer; display: flex; flex-direction: column; background: var(--dm-surface); border-top: 1px solid var(--dm-border); min-height: 0; }
 .dm-drawer .dm-log { height: var(--dm-drawer-h); overflow: auto; padding: var(--dm-s-2) var(--dm-s-4); font-family: var(--dm-font-mono); font-size: var(--dm-text-xs); }
@@ -273,10 +280,17 @@ dm-table .dm-cell-editor { width: 100%; height: 28px; margin: 0; padding: 0 var(
 .dm-geodata-ready-item { align-items: center; }
 .dm-geodata-ready-item .dm-list-main { white-space: normal; }
 .dm-geodata-ready-item .dm-list-sub { white-space: normal; }
-/* Geodata sources: the layer list, the map preview of an answer and the catalogue cards. */
+/* Geodata sources (ui/api/geodata-view): the mode switch, the search box, Valfritt lager and the list of layers or plans that takes
+   the rest of the work area, the map preview of an answer and the catalogue cards. */
 .dm-geo-head { align-items: flex-end; }
 .dm-geo-head dm-input { flex: 1 1 240px; min-width: 200px; }
-.dm-geo-layers { border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); padding: var(--dm-s-1); }
+.dm-geo-head .dm-label { white-space: nowrap; }
+.dm-geo-list, .dm-geo-generic { border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); padding: var(--dm-s-1); }
+.dm-geo-list .dm-list-item:focus-visible, .dm-geo-generic .dm-list-item:focus-visible { outline-offset: -2px; }
+.dm-geo-empty { padding: var(--dm-s-2) var(--dm-s-3); }
+@media (max-width: 1099px) {
+  .dm-geo-list .dm-list-item, .dm-geo-generic .dm-list-item, .dm-geo-modes [role="tab"] { min-height: 44px; }
+}
 .dm-api-map { border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); overflow: hidden; max-width: 640px; }
 .dm-api-map svg { display: block; width: 100%; height: auto; }
 .dm-sense-head { display: flex; align-items: center; gap: var(--dm-s-2); }

@@ -3,14 +3,16 @@
 /**
  * The workspace view for one API connector in Inhämta: header, credentials, the family browser or
  * the generic endpoint form, progress, result preview and saving (new dataset or into an existing
- * one). `renderRight` fills the inspector with facts about the service and the latest requests.
+ * one). `renderRight` fills the inspector with facts about the service and the latest requests, below the browser's own part
+ * (`browser.inspector()`). A geodata source's browser fills the work area and places the progress and the answer itself
+ * (`api.output`), in its list's place.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('ui/api/api-view', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ui/api/auth-panel', 'ui/api/endpoint-form', 'ui/api/pxweb-view', 'ui/api/sos-view', 'ui/api/geodata-view', 'ui/api/geoportal-view', 'ui/api/neo4j-view', 'ui/api/opencde-view', 'api/runner', 'api/connectors', 'api/auth', 'api/http', 'platform/files', 'data/datasets', 'viz/leaflet', 'data/plan', 'io/importers/detaljplan'],
     (base, basic, overlays, icons, authPanel, endpointForm, pxwebView, sosView, geodataView, geoportalView, neo4jView, opencdeView, runner, connectors, auth, http, files, datasets, leaflet, plan, detaljplanImp) => {
-      const { h, t, i18n, replace } = base;
+      const { h, t, i18n, replace, append } = base;
     /** A badge when the source does not work where the app runs (api/reach), with the reason as its tip. */
     const reachBadge = (c) => { const reach = D.require('api/reach'); const why = reach.blocked(c); return why ? h('dm-badge', { kind: 'warn', text: reach.label(why), 'data-tip': reach.hint(why), 'data-reach': why }) : null; };
       const PREVIEW_ROWS = 2000;
@@ -29,10 +31,13 @@
         const el = h('div', { class: 'dm-stack dm-api-view' });
         const resultEl = h('div', { class: 'dm-stack' });
         const progressEl = h('div');
-        const api = { ctx, connector, runFetch, refreshRight: () => renderRight(), log: (m, k) => shell.log(m, k), onConnector: (c) => { if (hooks.onConnector) hooks.onConnector(c); }, actions: hooks.geoportal || null, onDataset: (m) => { if (hooks.onDataset) hooks.onDataset(m); } };
+        // output: the progress and the answer, which a browser that lays out the work area itself (geodata) places where it wants.
+        const api = { ctx, connector, runFetch, refreshRight: () => renderRight(), log: (m, k) => shell.log(m, k), onConnector: (c) => { if (hooks.onConnector) hooks.onConnector(c); }, actions: hooks.geoportal || null, onDataset: (m) => { if (hooks.onDataset) hooks.onDataset(m); }, output: { progress: progressEl, result: resultEl } };
         const authUi = auth.needsCredentials(connector) ? authPanel.create(connector) : null;
         const family = connector.family && connector.family.type;
         const isGeodata = family === 'geodata';
+        // A geodata source fills the work area: its list, or the answer in the list's place, takes the height the head leaves (F137 c).
+        if (isGeodata) el.classList.add('dm-fill-column');
         const isNeo4j = family === 'neo4j';
         const isOpenCde = family === 'opencde';
         // Statistics Denmark (statbank) and FHI browse like PxWeb v1: folders, tables, a variable picker.
@@ -64,9 +69,9 @@
             connector.description ? h('p', { class: 'dm-help', text: connector.description }) : null,
             authUi ? authUi.el : null,
             tabs,
-            h('div', { class: 'dm-card dm-stack' }, tab === 'browse' && browser ? browser.el : (form ? form.el : null)),
-            progressEl,
-            resultEl);
+            isGeodata ? browser.el : h('div', { class: 'dm-card dm-stack' }, tab === 'browse' && browser ? browser.el : (form ? form.el : null)),
+            isGeodata ? null : progressEl,
+            isGeodata ? null : resultEl);
           renderProgress();
           renderResult();
         }
@@ -201,13 +206,16 @@
           const proxyInput = /** @type {any} */ (h('dm-input', { label: t('api.proxy'), help: t('api.proxy.help'), placeholder: 'https://…/?url={url}' }));
           http.getProxy().then((p) => { proxyInput.value = p; });
           proxyInput.addEventListener('change', async () => { await http.setProxy(proxyInput.value); overlays.toast.show(t('api.proxy.saved'), { kind: 'ok' }); });
-          replace(rightEl,
-            browser && typeof browser.inspector === 'function' ? browser.inspector() : null,
+          const top = browser && typeof browser.inspector === 'function' ? browser.inspector() : null;
+          const rest = [
             h('h4', { text: t('api.info') }), kv,
             connector.notes ? h('p', { class: 'dm-help', text: connector.notes }) : null,
             h('h4', { text: t('api.requests') }), reqs,
             h('details', { class: 'dm-more' }, h('summary', { text: t('common.more') }), h('div', { class: 'dm-stack-sm' }, proxyInput,
-              !connector.preset ? basic.button({ label: t('api.remove'), icon: 'trash-2', variant: 'danger', size: 'sm', onClick: async () => { if (await overlays.dialog.confirm(t('api.remove.confirm', { name: connector.name }), { danger: true, okLabel: t('common.delete') })) { await connectors.remove(connector.id); await D.require('api/secrets').forget(connector.id); if (hooks.onRemoved) hooks.onRemoved(connector); } } }) : null)));
+              !connector.preset ? basic.button({ label: t('api.remove'), icon: 'trash-2', variant: 'danger', size: 'sm', onClick: async () => { if (await overlays.dialog.confirm(t('api.remove.confirm', { name: connector.name }), { danger: true, okLabel: t('common.delete') })) { await connectors.remove(connector.id); await D.require('api/secrets').forget(connector.id); if (hooks.onRemoved) hooks.onRemoved(connector); } } }) : null))];
+          // The browser's part already at the top stays in place (a form in it keeps its focus); only the facts below are drawn anew.
+          if (top && rightEl.firstChild === top) { while (top.nextSibling) top.nextSibling.remove(); append(rightEl, rest); }
+          else replace(rightEl, top, rest);
         }
 
         function start() { render(); if (browser) browser.start(); }

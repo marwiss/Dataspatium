@@ -1,7 +1,8 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Tests for whole detailed plans from geodata sources (api/ngp-plans, ui/api/whole-plans, F133 a): a municipal WFS with the NGP
+ * Tests for whole detailed plans from geodata sources (api/ngp-plans, ui/api/whole-plans, F133 a, F137 c: the mode Hela detaljplaner
+ * with its live search and the chosen plan's card in the inspector): a municipal WFS with the NGP
  * layers (simulated after Sundsvall's RIGES, with GeoServer's CQL and with FES 2.0), Lantmäteriet's NGP API (simulated from the
  * examples of its specification 2.2: POST /search, the national specification's file as an asset, reference objects page by page),
  * OAuth2 client credentials in the form body, the presets, and an NGP file of several plans read as a map. Nothing touches the net;
@@ -21,6 +22,8 @@
   const t = D.require('ui/i18n').t;
   const BASE = 'dataspatium-asset://tests/geo';
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  /** A host for a view in the page, out of sight, so that its components are drawn. */
+  function offscreen() { const el = document.createElement('div'); el.style.cssText = 'position:absolute; left:-10000px; top:0; width:1000px; height:800px;'; document.body.appendChild(el); return el; }
 
   // Requests as the virtual services saw them, with the body of each (a POST's JSON, a token request's form).
   const served = [];
@@ -115,7 +118,7 @@
   const getFeatures = (list, layer) => list.filter((s) => /request=GetFeature/.test(s.url) && (!layer || new URL(s.url).searchParams.get('typeNames') === layer));
 
   test('plan-whole: a WFS with the NGP layers offers whole plans; a plan found by name with CQL is fetched from every layer and kept as a detaljplan, a layer without the field is skipped', async (assert) => {
-    const ids = []; const conns = [];
+    const ids = []; const conns = []; const host = offscreen();
     const path = 'tests/geo/geoserver/RIGES/wfs';
     try {
       serve(path, (u) => wfs(u, LAYERS()));
@@ -128,15 +131,21 @@
       assert.deepEqual(layers.provisions.map((e) => e.name).sort(), ['NGP_Administrativbestammelse_yta', 'NGP_Anvandningsbestammelse_yta', 'NGP_Egenskapsbestammelse_linje', 'NGP_Egenskapsbestammelse_punkt', 'NGP_Egenskapsbestammelse_yta'], 'the provision layers of the plan layer\'s workspace');
       assert.equal(ngp.kindOf(Object.assign({}, connector, { endpoints: connector.endpoints.filter((e) => !/Detaljplan_yta/.test(e.name)) })), '', 'no plan layer, no entry');
       assert.deepEqual(ngp.filterModes(connector), ['cql', 'fes'], 'GeoServer: CQL first');
-      // The entry at the top of the layer list opens the search card.
+      // The mode switch Lager / Hela detaljplaner is there because the source offers whole plans; the plan mode has its list in
+      // the work area and the chosen plan's card in the inspector.
       const view = D.require('ui/api/geodata-view').create({ connector, runFetch() {}, log() {}, onDataset(m) { ids.push(m.id); } });
+      host.append(view.el, view.inspector());
       view.start();
-      const entry = view.el.querySelector('.dm-geo-layers').parentElement.querySelector('[data-plan-whole]');
-      assert.ok(entry && view.el.querySelector('.dm-geo-layer') === entry, 'the entry is first in the list');
-      assert.equal(entry.textContent.includes(t('plan.whole.title')), true);
-      /** @type {any} */ (entry).click();
-      const card = view.el.querySelector('[data-plan-whole-card="wfs"]');
-      assert.ok(card, 'the card is shown');
+      const tabs = view.el.querySelectorAll('[data-geo-modes] [role="tab"]');
+      assert.deepEqual(Array.from(tabs).map((b) => b.textContent.trim()), [t('geodata.mode.layers'), t('plan.whole.title')], 'Lager and Hela detaljplaner');
+      assert.ok(Array.from(tabs).every((b) => b.getAttribute('data-tip')), 'each mode has a tip');
+      /** @type {HTMLElement} */ (tabs[1]).click();
+      assert.equal(view.state.mode, 'plans');
+      assert.ok(view.el.querySelector('[data-geo-search="plans"]') && !view.el.querySelector('.dm-geo-generic'), 'the search box searches the plans; no Valfritt lager');
+      const list = view.el.querySelector('[data-plan-whole-list="wfs"]');
+      assert.ok(list && list.querySelector('[data-plan-whole-start]'), 'the plan list says what to type');
+      const card = view.inspector().querySelector('[data-plan-whole-card="wfs"]');
+      assert.ok(card && card.querySelector('[data-plan-whole-pick]'), 'the card is in the inspector and asks for a plan');
       const whole = view.whole();
       // A search by name: å, ä and ö become the single-character wildcard (a GeoServer ILIKE misses them).
       served.length = 0;
@@ -148,8 +157,8 @@
       assert.equal(asked.get('CQL_FILTER'), `"detaljplan.namn" ILIKE '%pr_stbordet%' OR "detaljplan.beteckning" ILIKE '%pr_stbordet%'`);
       assert.equal(asked.get('typeNames'), 'RIGES:NGP_Detaljplan_yta'); assert.equal(asked.get('count'), String(ngp.LIST));
       assert.equal(whole.state.mode, 'cql');
-      assert.ok(card.querySelectorAll('[data-plan-whole-hit]').length === 1 && card.querySelector('.dm-geo-whole-list.dm-fill'), 'one hit in a list that fills the window');
-      assert.ok(card.querySelector('[data-plan-whole-hit]').getAttribute('data-tip'), 'the hit has a tip');
+      assert.ok(list.querySelectorAll('[data-plan-whole-hit]').length === 1 && list.classList.contains('dm-fill-rest'), 'one hit in the list that takes the rest of the work area');
+      assert.ok(list.querySelector('[data-plan-whole-hit]').getAttribute('data-tip'), 'the hit has a tip');
       // A quote in a designation is doubled, and a designation is found too.
       assert.equal(ngp.searchValues('cql', "O'Hara").CQL_FILTER, `"detaljplan.namn" ILIKE '%O''Hara%' OR "detaljplan.beteckning" ILIKE '%O''Hara%'`);
       whole.state.query = "o'hara"; await whole.search();
@@ -157,10 +166,18 @@
       // Every plan without a term: the first ones and how many there are.
       whole.state.query = ''; await whole.search();
       assert.equal(whole.state.plans.length, 3); assert.equal(whole.state.total, 3);
-      // The plan whole: the plan layer, then each provision layer, filtered on the plan's identity.
+      assert.equal(view.el.querySelector('[data-plan-whole-count]').getAttribute('data-plan-whole-count'), '3', 'the count above the list');
+      // Choosing a plan shows its facts in the inspector's card; Hämta hela planen fetches it: the plan layer, then each provision
+      // layer, filtered on the plan's identity.
+      /** @type {HTMLElement} */ (list.querySelector(`[data-plan-whole-hit="${P1.id}"]`)).click();
+      assert.equal(list.querySelector('[aria-current="true"]').getAttribute('data-plan-whole-hit'), P1.id, 'the chosen hit is marked');
+      const facts = card.querySelector('dm-kv').textContent;
+      assert.ok(card.querySelector('h3').textContent.includes('22-HAV-1125') && facts.includes('laga kraft') && facts.includes('1968-11-28') && facts.includes('Ånge kommun'), 'designation, status, date and municipality: ' + facts);
       served.length = 0;
-      await whole.fetchPlan({ id: P1.id, beteckning: P1.beteckning, namn: P1.namn });
-      assert.equal(whole.state.error, '', whole.state.error);
+      /** @type {HTMLElement} */ (card.querySelector(`[data-plan-whole-fetch="${P1.id}"] button`)).click();
+      for (let i = 0; i < 250 && !whole.state.saved && !whole.state.fetchError; i++) await wait(20);
+      for (let i = 0; i < 50 && whole.state.fetching; i++) await wait(20);
+      assert.equal(whole.state.fetchError, '', whole.state.fetchError);
       assert.equal(ids.length, 1, 'one plan saved');
       const asks = getFeatures(served);
       assert.equal(asks.length, 6, 'the plan layer and five provision layers: ' + asks.map((s) => new URL(s.url).searchParams.get('typeNames')).join(', '));
@@ -168,6 +185,7 @@
       assert.ok(!getFeatures(served, 'OTHER:NGP_Egenskapsbestammelse_yta').length && !getFeatures(served, 'RIGES:NGP_Anvandningsbeteckning_punkt').length, 'not the other workspace, not the designation points');
       assert.deepEqual(whole.state.skipped, ['NGP_Egenskapsbestammelse_punkt'], 'the layer without the field is skipped');
       assert.ok(card.querySelector('[data-plan-whole-skipped="NGP_Egenskapsbestammelse_punkt"]') && card.querySelector('[data-plan-whole-saved]'), 'the card says what was saved and skipped');
+      assert.ok(view.inspector().contains(card), 'still in the inspector');
       const meta = await datasets.get(ids[0]);
       assert.equal(meta.kind, 'plan'); assert.equal(meta.rowCount, 5, 'plan area, two uses, two properties');
       assert.equal(meta.name, P1.namn);
@@ -185,14 +203,86 @@
       const running = whole.fetchPlan({ id: P1.id, beteckning: P1.beteckning, namn: P1.namn });
       for (let i = 0; i < 250 && !release; i++) await wait(20);
       assert.ok(release, 'the slow layer was asked for');
-      assert.ok(whole.el.querySelector('[data-plan-whole-progress]'), 'progress while fetching');
+      assert.ok(card.querySelector('[data-plan-whole-progress]'), 'progress while fetching');
+      assert.ok(Array.from(list.querySelectorAll('[data-plan-whole-hit]')).every((b) => /** @type {HTMLButtonElement} */ (b).disabled), 'no other plan is chosen meanwhile');
       whole.cancel(); release();
       await running;
-      assert.equal(whole.state.error, t('api.aborted')); assert.equal(ids.length, 1, 'nothing more saved');
+      assert.equal(whole.state.fetchError, t('api.aborted')); assert.equal(ids.length, 1, 'nothing more saved');
       return 'ok';
     } finally {
       D.net.unvirtual(path);
+      host.remove();
       for (const id of ids) await datasets.remove(id).catch(() => {});
+      for (const id of conns) await connectors.remove(id).catch(() => {});
+    }
+  }, 30000);
+
+  test('plan-whole: the search runs as one types: from two characters, once after the pause, a new key stops the search before it, and Escape empties it', async (assert) => {
+    const conns = []; const host = offscreen();
+    const path = 'tests/geo/geoserver/LIVE/wfs';
+    /** The searches the service holds until the test lets them answer. */
+    const held = [];
+    const real = globalThis.fetch;
+    /** The signal of each GetFeature request, as api/http hands it to fetch. */
+    const signals = [];
+    try {
+      serve(path, (u) => (u.searchParams.get('request') === 'GetFeature' && /ILIKE/.test(u.searchParams.get('CQL_FILTER') || '') ? new Promise((res) => { held.push(() => res(wfs(u, LAYERS()))); }) : wfs(u, LAYERS())));
+      const r = await geodata.createConnector('wfs', { baseUrl: BASE + '/geoserver/LIVE/wfs' });
+      conns.push(r.connector.id);
+      const view = D.require('ui/api/geodata-view').create({ connector: r.connector, runFetch() {}, log() {}, onDataset() {} });
+      host.append(view.el, view.inspector());
+      view.start();
+      /** @type {HTMLElement} */ (view.el.querySelectorAll('[data-geo-modes] [role="tab"]')[1]).click();
+      const box = /** @type {any} */ (view.el.querySelector('[data-geo-search="plans"]'));
+      const type = (value) => { box.value = value; box.dispatchEvent(new Event('input', { bubbles: true })); };
+      const searches = () => getFeatures(served).filter((s) => /ILIKE/.test(new URL(s.url).searchParams.get('CQL_FILTER') || ''));
+      globalThis.fetch = /** @type {any} */ ((input, init) => { if (/request=GetFeature/.test(String(input))) signals.push(init && init.signal); return real(input, init); });
+      const pause = view.whole().PAUSE_MS;
+      served.length = 0;
+      type('m');
+      await wait(pause + 200);
+      assert.equal(searches().length, 0, 'one character: no search');
+      // Three keys within the pause: one search, with the last term, once the typing stops.
+      type('ma'); type('mas'); type('mass');
+      assert.equal(searches().length, 0, 'nothing while typing');
+      await wait(pause + 200);
+      assert.equal(searches().length, 1, 'one search after the pause');
+      assert.ok(new URL(searches()[0].url).searchParams.get('CQL_FILTER').includes("'%mass%'"), 'with the last term');
+      // A new key stops the search that is still running, and its answer is never shown.
+      type('präst');
+      assert.ok(signals[0] && signals[0].aborted, 'the search before it is aborted at the key');
+      await wait(pause + 200);
+      assert.equal(searches().length, 2, 'the new search');
+      held[1]();
+      for (let i = 0; i < 100 && !view.whole().state.plans; i++) await wait(20);
+      assert.deepEqual(view.whole().state.plans.map((p) => p.id), [P1.id, P3.id], 'the plans of the new term');
+      held[0]();
+      await wait(100);
+      assert.deepEqual(view.whole().state.plans.map((p) => p.id), [P1.id, P3.id], 'the stopped answer is not shown');
+      assert.equal(view.el.querySelectorAll('[data-plan-whole-hit]').length, 2);
+      // Down from the search box goes to the first hit, and Up from it back; Escape empties the box and the list.
+      const control = box.querySelector('input');
+      control.focus();
+      control.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      assert.equal(document.activeElement && document.activeElement.getAttribute('data-plan-whole-hit'), P1.id, 'Down: the first hit');
+      document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      assert.equal(document.activeElement && document.activeElement.getAttribute('data-plan-whole-hit'), P3.id, 'Down: the next hit');
+      document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+      document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+      assert.equal(document.activeElement, control, 'Up from the first hit: the search box');
+      control.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      assert.equal(box.value, ''); assert.equal(view.whole().state.plans, null);
+      assert.ok(view.el.querySelector('[data-plan-whole-start]'), 'the list says what to type again');
+      // Enter searches at once, also without text (the first plans).
+      control.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      for (let i = 0; i < 100 && !view.whole().state.plans; i++) await wait(20);
+      assert.equal(view.whole().state.plans.length, 3, 'every plan, the first ones');
+      return 'ok';
+    } finally {
+      globalThis.fetch = real;
+      for (const f of held) f();
+      D.net.unvirtual(path);
+      host.remove();
       for (const id of conns) await connectors.remove(id).catch(() => {});
     }
   }, 30000);
