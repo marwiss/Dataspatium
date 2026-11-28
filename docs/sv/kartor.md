@@ -17,8 +17,13 @@ Datamängder med en geometrikolumn eller kolumner som heter longitud och latitud
 koordinatkolumner (till exempel `x` och `y`) väljer du *Visa som karta* i tabellens verktygsrad.
 
 Geodata kan också hämtas direkt från öppna tjänster: *Lägg till geodatakälla* i Inhämta gör en källa av en WFS-, OGC API
-Features- eller ArcGIS-tjänst, och källan *Geodataportalen* söker fram tjänster i den nationella katalogen. Svaren får en
+Features- eller ArcGIS-tjänst, också en WFS som bara ger GML, och vyn *Geodataportalen* söker i den nationella katalogen och
+hämtar det som listas: en tjänst blir en geodatakälla, en fil läses in och en WMS visas på kartan. Svaren får en
 geometrikolumn och öppnas som karta. Se [kallor.md](kallor.md#öppna-geodata).
+
+En GML-fil (.gml, eller GML sparad som .xml) läses in som en tabell med en rad per objekt och geometrin som GeoJSON, en
+objekttyp i taget, i filens eget koordinatsystem. Axelordningen följer filens `srsName`, så att koordinaterna blir östlig
+och nordlig koordinat (eller longitud och latitud) även när filen skriver dem i EPSG:s ordning.
 
 Namnen räcker inte. Appen kontrollerar också värdena: en geometrikolumn måste innehålla en geometri, och koordinater måste ligga i grader eller i ett projicerat system. Kolumner som bara heter x och y räknas som koordinater när värdena är projicerade, eftersom små tal under de namnen oftast är något annat. En tabell med koordinater kan exporteras som GeoJSON med punkter.
 

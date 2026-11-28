@@ -282,7 +282,7 @@ Formuläret för *Geodatakälla* under *Geodatakällor* börjar med en lista öv
 och ArcGIS-tjänster från nordiska myndigheter och kommuner (SCB, SGU, Naturvårdsverket, SLU Artdatabanken, Riksantikvarieämbetet,
 Skogsstyrelsen, Sundsvalls kommun, Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsingfors, Väylävirasto,
 Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med flera), alla prövade från webbläsaren
-hela vägen till ett hämtat objekt. Kartverkets WFS-tjänster ger bara GML och kan inte läsas ännu. En förinställd källa öppnas, övriga läggs till med ett klick och lagren läses från
+hela vägen till ett hämtat objekt med geometri, också Kartverkets WFS-tjänster, som bara ger GML. En förinställd källa öppnas, övriga läggs till med ett klick och lagren läses från
 tjänsten; filtrera på namn, land eller innehåll. Listan ligger i `presets/geodata/services.json`. Under listan finns
 
 Tre källor hämtar planer: *Plandata.dk (WFS)* och *Skipulagsstofnun skipulagsgögn (ArcGIS)* har knappen **Hämta plan**
@@ -293,24 +293,37 @@ Planbestämmelsekatalogen*), se [planer.md](planer.md).
 
 Valet **Geodatakälla** under *Geodatakällor* i Inhämta gör en vanlig API-källa av adressen till en geodatatjänst,
 på samma sätt som databaskällorna. Appen läser tjänstens lager och lägger en ändpunkt per lager plus en allmän där du
-anger lagret själv. Svaren är GeoJSON i WGS 84: datamängden får en geometrikolumn och öppnas som karta i Bearbeta (se
+anger lagret själv. Svaren läses i WGS 84: datamängden får en geometrikolumn och öppnas som karta i Bearbeta (se
 [kartor.md](kartor.md)). Källan visar lagren som en lista att filtrera i; välj ett lager, begränsa gärna med ett område
 (bbox) och hämta. Förhandsgranskningen visar svaret som en liten karta ovanför tabellen, och *Öppna som karta* tar dig
 till den sparade datamängden.
 
 | Familj | Upptäckt | Hämtning | Nyckel |
 |---|---|---|---|
-| WFS 2.0 (GeoServer, MapServer, ArcGIS Server, Deegree) | GetCapabilities | GetFeature med det GeoJSON-format som kapabiliteterna anger (`application/json`, `GEOJSON` med flera) och `srsName=EPSG:4326`; område (bbox), CQL-filter, kolumner; sidor med `startIndex`/`count`, aldrig större än tjänsten skickar (`CountDefault`) | Bearer (valfritt) |
+| WFS 2.0 (GeoServer, MapServer, ArcGIS Server, Deegree) | GetCapabilities | GetFeature med det GeoJSON-format som kapabiliteterna anger (`application/json`, `GEOJSON` med flera) och `srsName=EPSG:4326`, eller med GML när tjänsten inte ger GeoJSON (se nedan); område (bbox), CQL-filter, kolumner; sidor med `startIndex`/`count`, aldrig större än tjänsten skickar (`CountDefault`) | Bearer (valfritt) |
 | OGC API Features | `/collections` | `/collections/{id}/items` med bbox, datetime och filter; next-länkar följs | Bearer (valfritt; krävs av Lantmäteriets geodataplattform) |
 | ArcGIS REST (FeatureServer, MapServer) | Tjänstens beskrivning eller hela katalogen med mapparna, och varje tjänsts lager utom grupp- och rasterlager | `/{lager}/query` med where, område, `f=geojson` och `outSR=4326`; sidor med `resultOffset`, aldrig större än `maxRecordCount`; en sida som tjänsten inte klarar (fel 500 för tunga ytor) hämtas igen en fjärdedel så stor | Token (valfritt) |
 
 Fel som tjänsten själv rapporterar visas med tjänstens text och felkod, till exempel *Service WFS is disabled
-(ServiceUnavailable)* från en avstängd WFS eller ett ArcGIS-fel, och en WFS som inte ger GeoJSON säger vilka format den
-ger. Appen läser inte GML än; välj då en annan tjänst för samma data, till exempel en OGC API Features-tjänst.
+(ServiceUnavailable)* från en avstängd WFS eller ett ArcGIS-fel, och en WFS som varken ger GeoJSON eller GML säger vilka
+format den ger.
+
+**GML.** En WFS som bara ger GML (Kartverket och andra INSPIRE- och deegree-tjänster) läses med appens egen GML-läsare. Den
+klarar GML 3.2 (som WFS 2.0 skickar), GML 3.1.1 och GML 2.1.2 med enkla objekt: punkter, linjer, ytor och deras
+multiformer, och de vanliga kurvorna förenklade (bågar och cirklar ritas som korta raka sträckor). Egenskaperna blir
+kolumner; en egenskap som innehåller ett objekt ger kolumner med punkt i namnet, till exempel `identifikasjon.lokalId`,
+och upprepade värden sätts ihop med semikolon. Appen ber om svaret i `urn:ogc:def:crs:EPSG::4326` och skickar området med
+sitt system (`…,urn:ogc:def:crs:OGC:1.3:CRS84`), eftersom tjänstens eget system kan vara ett annat. Axelordningen följer
+`srsName`: en EPSG-kod som URN (`urn:ogc:def:crs:EPSG::4326`) eller som `http://www.opengis.net/def/crs/EPSG/0/…` läses i
+EPSG:s ordning, alltså latitud före longitud och nordlig före östlig koordinat i de system som EPSG definierar så (SWEREF 99,
+RT 90, ETRS-TM), medan CRS84, `EPSG:4326` och `http://www.opengis.net/gml/srs/epsg.xml#4326` läses som x och y, som
+deegree, GeoServer och MapServer skriver dem. En första koordinat som inte kan ligga i sitt system på det angivna sättet
+läses åt andra hållet. Koordinaterna blir appens vanliga: longitud och latitud, eller östlig och nordlig koordinat.
+Samma läsare läser en .gml-fil i Inhämta (se [format.md](format.md)).
 
 Förinställda geodatakällor utan nyckel (CORS verifierat): SCB öppna geodata, SGU:s jordarter (berggrund, brunnar och
 grundvattenmagasin finns i listan), Havs- och vattenmyndigheten, Riksantikvarieämbetets fornlämningar, Skogsstyrelsen,
-Kartverkets administrativa enheter och fastighetskarta (Norge; bara GML, kan inte läsas än) samt Statistikcentralen och
+Kartverkets administrativa enheter, fastighetskarta och ortnamn (Norge; GML) samt Statistikcentralen och
 SYKE:s skyddade områden (Finland). Lagren läses från tjänsten första gången källan öppnas och kan läsas om med
 *Läs om lagren*; listan sparas i din kopia av källan. Lantmäteriets geodataplattform (detaljplaner, byggnader, strandskydd, kulturhistoriska lämningar och gränsen för fjällnära skog) finns som nivå 2 med
 Bearer-nyckel från en ansluten organisation. Boverkets digitala planer får egna funktioner i en kommande version.
@@ -333,11 +346,27 @@ Nyckeln är konsumentnyckeln och konsumenthemligheten från ett kostnadsfritt ko
 Lantmäteriets API och filservern dl1.lantmateriet.se.
 En höjdprofil längs en linje ritar Visualisera (*Nytt diagram* → *Höjdprofil längs en linje*).
 
-**Geodataportalen** (geodata.se) är den nationella katalogen över myndigheters, regioners och kommuners geodata. Källan
-*Geodataportalen (sök geodata)* söker i katalogen och visar en post per träff med titel, organisation, beskrivning och
-tjänster: en WFS-, OGC API- eller ArcGIS-tjänst läggs till som geodatakälla med ett klick och öppnas direkt, en
-WMS-adress kopieras för att användas som bakgrundskarta eller WMS-lager i en kartvy, och nedladdningsfiler och metadata
-öppnas i en ny flik. Träfflistan kan också hämtas som tabell under fliken *Ändpunkter*.
+### Geodataportalen
+
+**Geodataportalen** (geodata.se) är den nationella katalogen över myndigheters, regioners och kommuners geodata. Vyn
+*Geodataportalen* under *Geodatakällor* i Inhämta söker i katalogen och visar en post per träff med titel, organisation,
+beskrivning och det posten länkar till. Brytaren *Bara det som går att hämta* (på från början) visar bara poster med en
+tjänst eller fil som appen kan hämta. Varje post har en åtgärd per slag av länk:
+
+- **Lägg till som geodatakälla** för en WFS-, OGC API Features- eller ArcGIS-tjänst: formuläret för en geodatakälla öppnas i
+  arbetsytan med tjänsten och adressen ifyllda, och *Lägg till* gör källan.
+- **Hämta filen** för en nedladdning (ZIP, GeoPackage, GeoJSON, GML): filen hämtas och läses in som en fil från en adress,
+  med förhandsgranskning och kolumner. Är länken ett INSPIRE ATOM-flöde läser appen flödet först och listar dess filer, och
+  flöden för enskilda datamängder öppnas med *Öppna flödet*.
+- **Visa på kartan** för en WMS: appen läser tjänstens lager och ritar det första som ett WMS-lager på en karta i posten,
+  ovanpå länsgränserna; välj ett annat lager i listan. *Kopiera WMS-adress* ger adressen till en kartvy i Visualisera.
+
+Adresserna kommer från katalogen och inte från dig, så appen frågar innan den kontaktar varje ny värd (samtycke per värd),
+också för varje senare hämtning från en källa som lagts till härifrån. Poster vars villkor kräver en nyckel, en licens eller ett
+avtal (till exempel Lantmäteriets produkter eller INSPIRE:s begränsningar enligt artikel 13) märks *Kräver nyckel eller avtal*
+med villkoren. Stänger en tjänst ute webbläsare (CORS, som många nedladdningar och ATOM-flöden gör) säger posten det och hur
+bryggan på den egna datorn kan hämta det, med en knapp till bryggan. Träfflistan kan också hämtas som tabell under fliken
+*Ändpunkter* i källan *Geodataportalen (sök geodata)*.
 
 Geodatatjänster svarar ofta med många objekt: begränsa med ett område eller ett filter, och höj *Högsta antal sidor*
 under *Fler alternativ* bara när det behövs. En egen tjänst måste tillåta anrop från webbläsaren (CORS) på samma sätt som

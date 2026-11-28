@@ -289,7 +289,7 @@ The form for *Geodata source* under *Geodata sources* starts with a list of **re
 ArcGIS services of Nordic agencies and municipalities (SCB, SGU, Naturvårdsverket, SLU Artdatabanken, Riksantikvarieämbetet,
 Skogsstyrelsen, Sundsvalls kommun, Kartverket, Miljødirektoratet, Riksantikvaren, Statistics Finland, SYKE, Helsinki, Väylävirasto,
 Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands and others), all tried from the browser all
-the way to a fetched feature. Kartverket's WFS services give only GML and cannot be read yet. A preset source opens, the others are added with one click and their layers read from the service; filter
+the way to a fetched feature with geometry, Kartverket's WFS services too, which give only GML. A preset source opens, the others are added with one click and their layers read from the service; filter
 by name, country or contents. The list lives in `presets/geodata/services.json`. Below the list are the fields for a
 
 Three sources fetch plans: *Plandata.dk (WFS)* and *Skipulagsstofnun skipulagsgögn (ArcGIS)* have the button **Fetch
@@ -300,25 +300,39 @@ see [planer.md](planer.md).
 
 The way **Geodata source** under *Geodata sources* in Import makes an ordinary API source of the address of a geodata
 service, just like the database sources. The app reads the service's layers and adds one endpoint per layer plus a
-generic one where you name the layer yourself. The answers are GeoJSON in WGS 84: the dataset gets a geometry column
+generic one where you name the layer yourself. The answers are read in WGS 84: the dataset gets a geometry column
 and opens as a map in Process (see [kartor.md](kartor.md)). The source shows the layers as a filterable list; choose a
 layer, limit by an area (bbox) when you can, and fetch. The preview shows the answer as a small map above the table,
 and *Open as map* takes you to the saved dataset.
 
 | Family | Discovery | Fetching | Key |
 |---|---|---|---|
-| WFS 2.0 (GeoServer, MapServer, ArcGIS Server, Deegree) | GetCapabilities | GetFeature in the GeoJSON format the capabilities name (`application/json`, `GEOJSON` and others) with `srsName=EPSG:4326`; area (bbox), CQL filter, columns; pages with `startIndex`/`count`, never larger than the service sends (`CountDefault`) | Bearer (optional) |
+| WFS 2.0 (GeoServer, MapServer, ArcGIS Server, Deegree) | GetCapabilities | GetFeature in the GeoJSON format the capabilities name (`application/json`, `GEOJSON` and others) with `srsName=EPSG:4326`, or in GML when the service gives no GeoJSON (see below); area (bbox), CQL filter, columns; pages with `startIndex`/`count`, never larger than the service sends (`CountDefault`) | Bearer (optional) |
 | OGC API Features | `/collections` | `/collections/{id}/items` with bbox, datetime and filter; next links are followed | Bearer (optional; required by Lantmäteriet's geodata platform) |
 | ArcGIS REST (FeatureServer, MapServer) | The service description or a whole directory with its folders, and each service's layers except group and raster layers | `/{layer}/query` with where, area, `f=geojson` and `outSR=4326`; pages with `resultOffset`, never larger than `maxRecordCount`; a page the service cannot manage (error 500 for heavy polygons) is fetched again a quarter as large | Token (optional) |
 
 Errors the service reports itself are shown with the service's text and code, for example *Service WFS is disabled
-(ServiceUnavailable)* from a switched-off WFS or an ArcGIS error, and a WFS that gives no GeoJSON says which formats it
-gives. The app does not read GML yet; choose another service for the same data then, for example an OGC API Features service.
+(ServiceUnavailable)* from a switched-off WFS or an ArcGIS error, and a WFS that gives neither GeoJSON nor GML says which
+formats it gives.
+
+**GML.** A WFS that gives only GML (Kartverket and other INSPIRE and deegree services) is read with the app's own GML
+reader. It reads GML 3.2 (as WFS 2.0 sends it), GML 3.1.1 and GML 2.1.2 with simple features: points, lines, surfaces and
+their multi forms, and the usual curves simplified (arcs and circles are drawn as short straight segments). The properties
+become columns; a property that holds an object gives columns with a dot in their names, for example
+`identifikasjon.lokalId`, and repeated values are joined with semicolons. The app asks for the answer in
+`urn:ogc:def:crs:EPSG::4326` and sends the area with its system (`…,urn:ogc:def:crs:OGC:1.3:CRS84`), since the service's own
+system may be another one. The axis order follows `srsName`: an EPSG code as a URN (`urn:ogc:def:crs:EPSG::4326`) or as
+`http://www.opengis.net/def/crs/EPSG/0/…` is read in EPSG's order, that is latitude before longitude and northing before
+easting in the systems EPSG defines so (SWEREF 99, RT 90, ETRS-TM), while CRS84, `EPSG:4326` and
+`http://www.opengis.net/gml/srs/epsg.xml#4326` are read as x and y, as deegree, GeoServer and MapServer write them. A first
+position that cannot lie in its system the way it is declared is read the other way. The coordinates become the app's
+usual ones: longitude and latitude, or easting and northing. The same reader reads a .gml file in Acquire (see
+[format.md](format.md)).
 
 Preset geodata sources without a key (CORS verified): SCB open geodata, SGU's soils (bedrock, wells and groundwater
 aquifers are in the list), the Swedish Agency for Marine and Water Management, the National Heritage Board's ancient
-remains, the Swedish Forest Agency, Kartverket's administrative units and cadastral map (Norway; GML only, cannot be read
-yet), Statistics Finland and SYKE's protected areas (Finland). The layers are read from the service the first time
+remains, the Swedish Forest Agency, Kartverket's administrative units, cadastral map and place names (Norway; GML),
+Statistics Finland and SYKE's protected areas (Finland). The layers are read from the service the first time
 the source is opened and can be reread with *Reread layers*; the list is kept in your copy of the source. Lantmäteriet's
 geodata platform (detailed plans, buildings, shore protection, cultural heritage remains and the boundary of forest near the mountains) is a level 2 source with a Bearer key from a connected organisation.
 
@@ -340,11 +354,28 @@ consumer secret from a free account in [Geotorget](https://geotorget.lantmaterie
 them, and it is sent only to Lantmäteriet’s API and the file server dl1.lantmateriet.se.
 A height profile along a line is drawn by Visualise (*New chart* → *Height profile along a line*).
 
+### Geodataportalen
+
 **Geodataportalen** (geodata.se) is Sweden's national catalogue of the geodata of agencies, regions and municipalities.
-The source *Geodataportalen (sök geodata)* searches the catalogue and shows one record per hit with title,
-organisation, abstract and services: a WFS, OGC API or ArcGIS service is added as a geodata source with one click and
-opened at once, a WMS address is copied for use as a background map or WMS layer in a map view, and download files and
-metadata open in a new tab. The hit list can also be fetched as a table under the *Endpoints* tab.
+The view *Geodataportalen* under *Geodata sources* in Acquire searches the catalogue and shows one post per hit with
+title, organisation, abstract and what the post links to. The switch *Only what can be fetched* (on from the start)
+shows only posts with a service or file the app can fetch. Each post has an action per kind of link:
+
+- **Add as a geodata source** for a WFS, OGC API Features or ArcGIS service: the form of a geodata source opens in the
+  workspace with the service and the address filled in, and *Add* makes the source.
+- **Get the file** for a download (ZIP, GeoPackage, GeoJSON, GML): the file is fetched and read in as a file from an
+  address, with preview and columns. When the link is an INSPIRE ATOM feed the app reads the feed first and lists its
+  files, and the feeds of single datasets open with *Open the feed*.
+- **Show on the map** for a WMS: the app reads the service's layers and draws the first as a WMS layer on a map in the
+  post, over the county boundaries; choose another layer in the list. *Copy WMS address* gives the address to a map view
+  in Visualise.
+
+The addresses come from the catalogue and not from you, so the app asks before it contacts each new host (consent per
+host), also for every later fetch from a source added from here. Posts whose conditions need a key, a licence or an
+agreement (for example Lantmäteriet's products or INSPIRE's limitations under article 13) are marked *Needs a key or an
+agreement* with the conditions. When a service shuts browsers out (CORS, as many downloads and ATOM feeds do) the post
+says so and how the bridge on your own computer can fetch it, with a button to the bridge. The hit list can also be
+fetched as a table under the *Endpoints* tab of the source *Geodataportalen (sök geodata)*.
 
 Geodata services often answer with many features: limit by an area or a filter, and raise *Maximum pages* under *More
 options* only when needed. Your own service must allow requests from the browser (CORS) just like the database sources;

@@ -14,7 +14,7 @@ Under the area are the formats the app reads, grouped by what they are used for:
 - **Building models and drawings**: IFC, IFCZIP and DXF (the kind model) and BCF issues (a table of issues).
 - **Plans**: detailed and comprehensive plans in GeoJSON and GeoPackage, archive packages with a plan and a comprehensive plan in
   several files (the kind plan).
-- **Geodata and maps**: GeoJSON, GeoJSON Lines, TopoJSON, KML, KMZ, GPX, shapefile and GeoPackage (tables with geometry that the
+- **Geodata and maps**: GeoJSON, GeoJSON Lines, TopoJSON, KML, KMZ, GPX, GML, shapefile and GeoPackage (tables with geometry that the
   map draws), GeoTIFF (the kind raster) and QGIS projects (a map view in Visualise).
 - **Tables**: CSV and other delimited text, TSV, fixed-width text, Excel, ODS, FODS, Excel 2003 XML, older spreadsheets, JSON,
   JSON Lines, XML, tables in HTML and LaTeX, Parquet and data packages.
@@ -39,6 +39,7 @@ table below says more about each format.
 | Tables in documents: HTML (html, htm, xhtml), Markdown (md), Word (docx), LaTeX (tex) | Yes | No | All tables in the file are listed with their heading or caption and their number of rows and columns. Merged cells (colspan and rowspan, Word's merged cells, `\multicolumn`) are filled in on every row and column they cover. The header row comes from `th`, `thead`, Markdown's delimiter row, Word's header row or `booktabs` (`\midrule`) |
 | KML and KMZ (Google Earth) | Yes | Yes | One row per place with name, description, folder path, time and extended data as columns; points, lines, polygons and multi-geometries become GeoJSON |
 | GPX (GPS tracks) | Yes | Yes | Choose a layer: waypoints, routes, tracks (with number of points and length in km) or track points (one row per point with time and elevation) |
+| GML (gml; GML 3.2, 3.1.1 and 2.1.2, for example an answer from a WFS) | Yes | No | One row per feature with its properties as columns (a property holding an object gives names with a dot) and the geometry as GeoJSON: points, lines, surfaces, multi-geometries and simplified curves. Choose the feature type when the file has several. The coordinate system is kept and the axis order follows `srsName` (see [kallor.md](kallor.md#open-geodata)). Recognised by its content even when the file is called .xml |
 | TopoJSON | Yes | No | Each object in the topology is a layer; the arcs are decoded into ordinary GeoJSON geometries. Recognised by its content even when the file is called .json |
 | JSON | Yes | Yes | List of objects, an object containing a list (a path can be given), list of lists |
 | NDJSON, JSON Lines | Yes | No | One object per line. GeoJSON Lines (`.geojsonl`, `.geojsons`, `.geojsonseq`), with one feature per line or with record separators as in RFC 8142, become one row per feature with the geometry as GeoJSON |
@@ -119,7 +120,7 @@ end), and the file is recognised by its contents when the signature is sure. The
 | SPSS, Stata, SAS, Parquet, RData | `$FL2`, `<stata_dta>`, the SAS file's signature, `HEADER RECORD` (transport file), `PAR1` at both ends, `RDX3` | the format's extension |
 | IFC, DXF | `ISO-10303-21;` with a `FILE_SCHEMA` that is IFC; `0 SECTION 2 HEADER` (or another section) | `.ifc`, `.dxf` |
 | JSON | `{` or `[` that holds as JSON through the whole start that is read; GeoJSON, TopoJSON, JSON Lines and the app's own formats (the field `format`, for example `dataspatium-viz/1`) | `.json`, `.geojson`, `.topojson`, `.ndjson` |
-| XML, HTML | The root element: KML, GPX, GraphML, GEXF, QGIS, HTML, FODS and Excel 2003 XML; other XML with an XML declaration or a namespace (GML and IDS are named) | the format's extension, otherwise `.xml` |
+| XML, HTML | The root element: KML, GPX, GraphML, GEXF, QGIS, HTML, FODS and Excel 2003 XML; GML with features (a FeatureCollection or features with `gml:id`); other XML with an XML declaration or a namespace (IDS is named) | the format's extension (`.gml` for GML), otherwise `.xml` |
 | SQL, LaTeX, PC-Axis, Cypher | `CREATE TABLE` (after `PRAGMA`, `BEGIN` and the like), `\documentclass`, `CHARSET=` with `STUB=` or `HEADING=`, `CREATE (:…)` | `.sql`, `.tex`, `.px`, `.cypher` |
 | Markdown | A table with pipes and a line of dashes, a code block within three backticks, a heading (`# …`) first with an empty line or another mark of Markdown after it, or three kinds of marks (headings, lists, quotes, links, bold text) | `.md` |
 | CSV, TSV (last) | The same number of one delimiter (tab, semicolon, comma or pipe) on every line, on at least three lines or with at least two delimiters; with tabs two lines are enough | `.csv`, `.tsv` |
@@ -141,8 +142,8 @@ recognition uses:
 
 - **Building models and drawings**: IFC (STEP text with a `FILE_SCHEMA` that is IFC) and DXF.
 - **Plans**: detailed and comprehensive plans in GeoJSON.
-- **Geodata and maps**: GeoJSON, TopoJSON, KML, GPX and QGIS projects.
-- **Tables**: CSV, TSV, FODS, Excel 2003 XML, JSON, JSON Lines, XML (GML and IDS too, which are read as XML), tables in HTML and
+- **Geodata and maps**: GeoJSON, TopoJSON, KML, GPX, GML and QGIS projects.
+- **Tables**: CSV, TSV, FODS, Excel 2003 XML, JSON, JSON Lines, XML (IDS too, which is read as XML), tables in HTML and
   LaTeX.
 - **Databases**: SQL scripts.
 - **Statistics**: PC-Axis (PX), JSON-stat and SDMX-JSON.

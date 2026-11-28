@@ -17,8 +17,13 @@ Datasets with a geometry column or columns named longitude and latitude open as 
 columns (such as `x` and `y`) choose *Show as map* in the table's toolbar.
 
 Geodata can also be fetched straight from open services: *Add geodata source* in Acquire makes a source of a WFS, OGC
-API Features or ArcGIS service, and the source *Geodataportalen* finds services in the national catalogue. The answers
-get a geometry column and open as maps. See [kallor.md](kallor.md#open-geodata).
+API Features or ArcGIS service, also a WFS that gives only GML, and the view *Geodataportalen* searches the national
+catalogue and fetches what it lists: a service becomes a geodata source, a file is read in and a WMS is shown on the map.
+The answers get a geometry column and open as maps. See [kallor.md](kallor.md#open-geodata).
+
+A GML file (.gml, or GML saved as .xml) is read in as a table with one row per feature and the geometry as GeoJSON, one
+feature type at a time, in the file's own coordinate system. The axis order follows the file's `srsName`, so that the
+coordinates become easting and northing (or longitude and latitude) even when the file writes them in EPSG's order.
 
 Names are not enough. The app also checks the values: a geometry column must hold a geometry, and coordinates must lie in degrees or in a projected system. Columns called only x and y count as coordinates when the values are projected, since small numbers under those names are usually something else. A table with coordinates can be exported as GeoJSON with points.
 

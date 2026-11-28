@@ -13,7 +13,7 @@ Under ytan står formaten som appen läser, grupperade efter vad de används til
 - **Byggnadsmodeller och ritningar**: IFC, IFCZIP och DXF (slaget modell) och BCF-ärenden (en tabell med ärenden).
 - **Planer**: detaljplaner och översiktsplaner i GeoJSON och GeoPackage, arkivpaket med plan och en översiktsplan i flera filer
   (slaget plan).
-- **Geodata och kartor**: GeoJSON, GeoJSON Lines, TopoJSON, KML, KMZ, GPX, shapefile och GeoPackage (tabeller med geometri som
+- **Geodata och kartor**: GeoJSON, GeoJSON Lines, TopoJSON, KML, KMZ, GPX, GML, shapefile och GeoPackage (tabeller med geometri som
   ritas på kartan), GeoTIFF (slaget raster) och QGIS-projekt (blir en kartvy i Visualisera).
 - **Tabeller**: CSV och annan avgränsad text, TSV, text med fasta kolumnbredder, Excel, ODS, FODS, Excel 2003 XML, äldre
   kalkylblad, JSON, JSON Lines, XML, tabeller i HTML och LaTeX, Parquet och datapaket.
@@ -38,6 +38,7 @@ säger mer om varje format.
 | Tabeller i dokument: HTML (html, htm, xhtml), Markdown (md), Word (docx), LaTeX (tex) | Ja | Nej | Alla tabeller i filen visas i en lista med rubrik eller bildtext, antal rader och kolumner. Sammanslagna celler (colspan och rowspan, Words sammanfogade celler, `\multicolumn`) fylls i på alla rader och kolumner de täcker. Rubrikraden tas från `th`, `thead`, Markdowns avgränsningsrad, Words rubrikrad eller `booktabs` (`\midrule`) |
 | KML och KMZ (Google Earth) | Ja | Ja | En rad per plats med namn, beskrivning, mappsökväg, tid och utökade data som kolumner; punkter, linjer, polygoner och sammansatta geometrier blir GeoJSON |
 | GPX (GPS-spår) | Ja | Ja | Välj lager: vägpunkter, rutter, spår (med antal punkter och längd i km) eller spårpunkter (en rad per punkt med tid och höjd) |
+| GML (gml; GML 3.2, 3.1.1 och 2.1.2, till exempel ett svar från en WFS) | Ja | Nej | En rad per objekt med egenskaperna som kolumner (en egenskap med ett objekt i ger namn med punkt) och geometrin som GeoJSON: punkter, linjer, ytor, multigeometrier och förenklade kurvor. Välj objekttyp när filen har flera. Koordinatsystemet behålls och axelordningen följer `srsName` (se [kallor.md](kallor.md#öppna-geodata)). Känns igen på innehållet även om filen heter .xml |
 | TopoJSON | Ja | Nej | Varje objekt i topologin är ett lager; bågarna avkodas till vanliga GeoJSON-geometrier. Känns igen på innehållet även om filen heter .json |
 | JSON | Ja | Ja | Lista med objekt, objekt som innehåller en lista (sökväg kan anges), lista med listor |
 | NDJSON, JSON Lines | Ja | Nej | Ett objekt per rad. GeoJSON Lines (`.geojsonl`, `.geojsons`, `.geojsonseq`), med en feature per rad eller med postavskiljare enligt RFC 8142, blir en rad per feature med geometrin som GeoJSON |
@@ -118,7 +119,7 @@ känns igen på innehållet när kännetecknet är säkert. Formaten prövas i d
 | SPSS, Stata, SAS, Parquet, RData | `$FL2`, `<stata_dta>`, SAS-filens kännetecken, `HEADER RECORD` (transportfil), `PAR1` i båda ändar, `RDX3` | formatets ändelse |
 | IFC, DXF | `ISO-10303-21;` med en `FILE_SCHEMA` som är IFC; `0 SECTION 2 HEADER` (eller en annan sektion) | `.ifc`, `.dxf` |
 | JSON | `{` eller `[` som håller som JSON i hela den lästa början; GeoJSON, TopoJSON, JSON Lines och appens egna format (fältet `format`, till exempel `dataspatium-viz/1`) | `.json`, `.geojson`, `.topojson`, `.ndjson` |
-| XML, HTML | Rotelementet: KML, GPX, GraphML, GEXF, QGIS, HTML, FODS och Excel 2003 XML; annan XML med XML-deklaration eller namnrymd (GML och IDS nämns vid namn) | formatets ändelse, annars `.xml` |
+| XML, HTML | Rotelementet: KML, GPX, GraphML, GEXF, QGIS, HTML, FODS och Excel 2003 XML; GML med objekt (en FeatureCollection eller objekt med `gml:id`); annan XML med XML-deklaration eller namnrymd (IDS nämns vid namn) | formatets ändelse (`.gml` för GML), annars `.xml` |
 | SQL, LaTeX, PC-Axis, Cypher | `CREATE TABLE` (efter `PRAGMA`, `BEGIN` och liknande), `\documentclass`, `CHARSET=` med `STUB=` eller `HEADING=`, `CREATE (:…)` | `.sql`, `.tex`, `.px`, `.cypher` |
 | Markdown | En tabell med lodstreck och en rad med streck, ett kodblock inom tre grav-accenter, en rubrik (`# …`) först med en tom rad eller ett annat Markdown-tecken efter, eller tre slags tecken (rubriker, listor, citat, länkar, fetstil) | `.md` |
 | CSV, TSV (sist) | Samma antal av en avgränsare (tabb, semikolon, komma eller lodstreck) på varje rad, på minst tre rader eller med minst två avgränsare; med tabb räcker två rader | `.csv`, `.tsv` |
@@ -139,8 +140,8 @@ igenkänningen använder:
 
 - **Byggnadsmodeller och ritningar**: IFC (STEP-text med en `FILE_SCHEMA` som är IFC) och DXF.
 - **Planer**: detaljplaner och översiktsplaner i GeoJSON.
-- **Geodata och kartor**: GeoJSON, TopoJSON, KML, GPX och QGIS-projekt.
-- **Tabeller**: CSV, TSV, FODS, Excel 2003 XML, JSON, JSON Lines, XML (också GML och IDS, som läses som XML), tabeller i HTML och
+- **Geodata och kartor**: GeoJSON, TopoJSON, KML, GPX, GML och QGIS-projekt.
+- **Tabeller**: CSV, TSV, FODS, Excel 2003 XML, JSON, JSON Lines, XML (också IDS, som läses som XML), tabeller i HTML och
   LaTeX.
 - **Databaser**: SQL-skript.
 - **Statistik**: PC-Axis (PX), JSON-stat och SDMX-JSON.
