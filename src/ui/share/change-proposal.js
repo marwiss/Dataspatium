@@ -5,7 +5,9 @@
  * F123 a): the words of the topic asked in a dialog, the change set sent as a BCF topic whose snippet is in the server's form
  * (DataregiumIfcChangeSet: the base version, the provenance, the changes), the server's trial polled until it is final and shown
  * under the topic, a manager's approval as the document's next version (OB-27 on the server's side), and against a stale base the
- * collisions with what came between, decided per key before the proposal goes again (OB-19 d). The host keeps the state (`cde`,
+ * collisions with what came between, decided per key before the proposal goes again (OB-19 d). When the change set cannot express
+ * what changed, the whole file goes instead (decision F124 a, the server's F204 a): tried and approved the same way, its collisions
+ * shown but not chosen one by one, since a file has no changes to keep or give up. The host keeps the state (`cde`,
  * `proposed`, `approvingServer`, `error`), so that its view and its tests read it where they did; the server's rows are rendered as
  * text, never as markup.
  */
@@ -36,8 +38,12 @@
       return ok === true ? { title: String(title.value || '').trim(), description: String(description.value || '') } : null;
     }
 
-    /** The server's trial in words. @param {any} trial */
-    const trialText = (trial) => t('ai.change.trial.' + (trial.state === 'running' ? 'queued' : trial.state), { applied: i18n.formatNumber(trial.applied || 0), n: i18n.formatNumber(trial.count || 0), issues: i18n.formatNumber(trial.issues || 0), errors: i18n.formatNumber(trial.errors || 0), error: trial.error || '' });
+    /** The server's trial in words; a whole file has nothing applied, so its trial tells only the findings. @param {any} trial */
+    const trialText = (trial) => {
+      const state = trial.state === 'running' ? 'queued' : trial.state;
+      const key = trial.kind === 'file' && (state === 'clean' || state === 'issues') ? 'ai.change.trial.file.' + state : 'ai.change.trial.' + state;
+      return t(key, { applied: i18n.formatNumber(trial.applied || 0), n: i18n.formatNumber(trial.count || 0), issues: i18n.formatNumber(trial.issues || 0), errors: i18n.formatNumber(trial.errors || 0), error: trial.error || '' });
+    };
 
     /**
      * @param {{state: any, log: (msg: string, kind?: string) => void, fail: (err: any) => void, render: () => void, busy?: () => boolean}} host
@@ -58,13 +64,17 @@
        * @param {any} connector
        * @param {{title: string, description: string, changes: any[], aiModel?: string|null, toolCall?: string|null, ops?: any[]}} options
        */
+      /** Signed in first when the source is not, and the project's topic type for proposals. */
+      async function ready(connector) {
+        if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
+        const ext = (await opencde.extensions(connector, s.cde.projectId).catch(() => null)) || {};
+        const types = Array.isArray(ext.topic_type) ? ext.topic_type : [];
+        return types.find((x) => PROPOSAL_TYPE.test(String(x))) || types[0] || null;
+      }
       async function send(connector, options) {
         const cde = s.cde;
-        if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
+        const topicType = await ready(connector);
         const me = await opencde.currentUser(connector).catch(() => null);
-        const ext = (await opencde.extensions(connector, cde.projectId).catch(() => null)) || {};
-        const types = Array.isArray(ext.topic_type) ? ext.topic_type : [];
-        const topicType = types.find((x) => PROPOSAL_TYPE.test(String(x))) || types[0] || null;
         const changeSet = {
           base: { document_id: String(cde.documentId || ''), version_index: Number(cde.versionIndex) || 1 },
           provenance: { user: String((me && (me.name || me.id)) || 'Dataspatium'), ai_model: options.aiModel || null, tool_call: options.toolCall ? String(options.toolCall).slice(0, 200) : null, created_at: new Date().toISOString() },
@@ -79,13 +89,34 @@
         if (out.tried) trial(connector, out.proposalUrl, s.proposed);
         return s.proposed;
       }
+      /**
+       * A whole IFC file as the proposal (decision F124 a, Dataregium's F204 a), when the change set cannot express what changed: the
+       * file, already through the review, goes as the topic's own snippet on the base version, with how it was made in the query; the
+       * server tries it and a manager approves it as a change set. Sets `state.proposed` (kind 'file') and starts polling the trial.
+       * @param {any} connector
+       * @param {{title: string, description: string, bytes: Uint8Array, fileName?: string, aiModel?: string|null, toolCall?: string|null}} options
+       */
+      async function sendFile(connector, options) {
+        const cde = s.cde;
+        const topicType = await ready(connector);
+        const base = { document_id: String(cde.documentId || ''), version_index: Number(cde.versionIndex) || 1 };
+        const out = await opencde.proposeFile(connector, cde.projectId, { title: options.title, description: options.description, topicType, bytes: options.bytes, fileName: options.fileName, base, aiModel: options.aiModel || null, toolCall: options.toolCall || null });
+        if (!out) throw new Error(t('ai.change.propose.file.unsupported'));
+        s.proposed = { kind: 'file', guid: out.topic.guid, title: options.title, fileName: out.fileName, trial: out.tried ? { state: 'queued', kind: 'file' } : null, approveUrl: out.approveUrl || null, approved: null,
+          proposalUrl: out.proposalUrl || null, changeSet: null, details: null, picks: [] };
+        const msg = t('ai.change.propose.file.done', { title: s.proposed.title, project: projectOf(cde) });
+        host.log(msg, 'ok'); overlays.toast.show(msg, { kind: 'ok', timeout: 8000 });
+        if (out.tried) trial(connector, out.proposalUrl, s.proposed);
+        return s.proposed;
+      }
       /** The server's trial of the proposal, polled until it is final; its failure is a line under the topic, not an error. */
       async function trial(connector, proposalUrl, mine) {
         try {
-          const report = await opencde.proposalTrial(connector, proposalUrl, { onStatus: (state) => { if (s.proposed === mine) { mine.trial = { state }; render(); } } });
+          const report = await opencde.proposalTrial(connector, proposalUrl, { onStatus: (state) => { if (s.proposed === mine) { mine.trial = { state, kind: mine.kind || 'change_set' }; render(); } } });
           if (s.proposed !== mine) return;
           const state = report && TRIAL_STATES.includes(report.state) ? report.state : 'failed';
-          mine.trial = { state, applied: Number(report && report.applied) || 0, count: Number(report && report.change_count) || 0, issues: Number(report && report.issue_count) || 0, errors: Number(report && report.error_count) || 0, error: (report && report.error) || '', list: Array.isArray(report && report.issues) ? report.issues : [],
+          // Dataregium's F204 a: the trial is of a whole file (kind file, nothing applied) or of a change set, on a commit of its own.
+          mine.trial = { state, kind: report && report.kind === 'file' ? 'file' : mine.kind === 'file' ? 'file' : 'change_set', commit: report && typeof report.commit === 'string' ? report.commit : null, applied: Number(report && report.applied) || 0, count: Number(report && report.change_count) || 0, issues: Number(report && report.issue_count) || 0, errors: Number(report && report.error_count) || 0, error: (report && report.error) || '', list: Array.isArray(report && report.issues) ? report.issues : [],
             // Dataregium 3.0.0: the teams whose part the change set touches; one team's part is approved by its responsible.
             teams: Array.isArray(report && report.teams) ? report.teams.map((x) => ({ id: String(x.team_id || ''), name: String(x.name || x.team_id || '') })) : [], teamsError: String((report && report.teams_error) || '') };
           host.log(trialText(mine.trial), state === 'clean' ? 'ok' : 'warn');
@@ -120,7 +151,9 @@
             // With the three values per key the person decides each collision here; the merge itself stays on the server (OB-19 d).
             mine.details = !err.conflicts.includes('*') && Array.isArray(err.conflictDetails) && err.conflictDetails.length ? err.conflictDetails : null;
             mine.picks = (mine.details || []).map(() => 'ours');
+            // A whole file has no changes to keep or give up one by one: the collisions are shown, and the file is made again.
             s.error = err.conflicts.includes('*') ? t('ai.change.approve.server.conflict.all')
+              : mine.details && mine.kind === 'file' ? t('ai.change.approve.server.conflict.file', { k: i18n.formatNumber(mine.details.length) })
               : mine.details ? t('ai.change.approve.server.conflict.choose', { k: i18n.formatNumber(mine.details.length) })
                 : t('ai.change.approve.server.conflict', { k: i18n.formatNumber(err.conflicts.length), keys: err.conflicts.slice(0, 10).join(', ') + (err.conflicts.length > 10 ? ' …' : '') });
           } else if (s.proposed === mine && err && err.status === 409 && mine.approveUrl && mine.trial) {
@@ -160,6 +193,12 @@
         s.approvingServer = false; render();
       }
       function conflictsView(mine) {
+        if (mine.kind === 'file') {
+          return h('div', { class: 'dm-stack-sm', 'data-ai-conflicts': String(mine.details.length), 'data-ai-conflicts-file': '' },
+            h('strong', { class: 'dm-small', text: t('ai.change.conflict.title') }),
+            h('ul', { class: 'dm-list dm-xs' }, mine.details.slice(0, 100).map((d, i) => h('li', { class: 'dm-small', 'data-ai-conflict': String(i), text: t('ai.change.conflict.line', { key: String(d.key || ''), base: conflictValue(d.base), theirs: conflictValue(d.theirs), ours: conflictValue(d.ours), n: String(d.version_index || '–') }) }))),
+            h('p', { class: 'dm-help dm-xs', text: t('ai.change.conflict.file') }));
+        }
         return h('div', { class: 'dm-stack-sm', 'data-ai-conflicts': String(mine.details.length) },
           h('strong', { class: 'dm-small', text: t('ai.change.conflict.title') }),
           mine.details.slice(0, 100).map((d, i) => {
@@ -179,7 +218,7 @@
         if (!p) return [];
         const tr = p.trial;
         return [
-          h('p', { class: 'dm-small', 'data-ai-proposed': p.guid, text: t('ai.change.proposed', { title: p.title }) }),
+          h('p', { class: 'dm-small', 'data-ai-proposed': p.guid, 'data-ai-proposed-kind': p.kind || 'change_set', text: p.kind === 'file' ? t('ai.change.proposed.file', { title: p.title, file: p.fileName || '' }) : t('ai.change.proposed', { title: p.title }) }),
           tr ? h('p', { class: tr.state === 'issues' || tr.state === 'failed' ? 'dm-error dm-small' : 'dm-help dm-xs', 'data-ai-trial': tr.state, text: trialText(tr) }) : null,
           tr && (tr.teams || []).length ? h('p', { class: 'dm-help dm-xs', 'data-ai-trial-teams': String(tr.teams.length), text: t(tr.teams.length === 1 ? 'ai.change.trial.team' : 'ai.change.trial.teams', { names: tr.teams.map((x) => x.name).join(', ') }) }) : null,
           tr && tr.teamsError ? h('p', { class: 'dm-help dm-xs', 'data-ai-trial-teams-error': '', text: t('ai.change.trial.teams.error', { error: tr.teamsError }) }) : null,
@@ -190,7 +229,7 @@
             : p.conflicts ? h('ul', { class: 'dm-list dm-xs', 'data-ai-approve-conflicts': String(p.conflicts.length) }, p.conflicts.slice(0, 10).map((k) => h('li', { class: 'dm-xs', text: k }))) : null,
         ];
       }
-      return { send, trial, approve, resolve, view };
+      return { send, sendFile, trial, approve, resolve, view };
     }
 
     /** A value of the change set's form in words, for the collisions. */

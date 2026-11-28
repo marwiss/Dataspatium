@@ -35,7 +35,7 @@
       const s = { connectors: [], connector: null, projects: null, projectId: '', what: 'dataset', format: '', how: 'documents', busy: '', error: '', progress: null, done: '', message: '', messageMax: opencde.MESSAGE_MAX, conflict: null,
         // The change proposal (F123 a): whether the server takes them, the model's own steps since it was fetched (for `stepsFor`,
         // read again when `stepsKey` changes), the last proposal computed with its note when it cannot go, and the one sent.
-        takesChanges: false, steps: null, stepsKey: '', stepsFor: '', proposal: null, proposalNote: '', cde: null, proposed: null, approvingServer: false };
+        takesChanges: false, takesFiles: false, steps: null, stepsKey: '', stepsFor: '', proposal: null, proposalNote: '', cde: null, proposed: null, approvingServer: false };
       const el = h('div', { class: 'dm-stack' });
       const fail = (err) => { s.error = String((err && err.message) || err); shell.log(s.error, 'error'); };
       const ds = () => hooks.dataset();
@@ -51,6 +51,7 @@
       async function loadLimits() {
         s.messageMax = await opencde.messageMax(s.connector);
         s.takesChanges = await opencde.takesChanges(s.connector);
+        s.takesFiles = s.takesChanges && await opencde.takesFiles(s.connector);
         render();
       }
       async function signIn() {
@@ -224,11 +225,17 @@
         if (un.created && !un.deleted && !un.geometry) return t('cde.propose.none.created', { n: i18n.formatNumber(un.created), button });
         return t('cde.propose.none.unexpressed', { created: i18n.formatNumber(un.created), deleted: i18n.formatNumber(un.deleted), relations: i18n.formatNumber(un.relations), geometry: i18n.formatNumber(un.geometry), button });
       }
+      /** Whether the change set cannot carry what changed: new or deleted elements, relationships, shapes, or more than it holds. */
+      const beyondChanges = (p) => { const un = p.unexpressed; return !!(p.truncated || un.created || un.deleted || un.relations || un.geometry); };
+      /** Whether the proposal goes as the whole file (decision F124 a): the change set does not express everything and the server takes files. */
+      const asFile = (p) => s.takesFiles && beyondChanges(p);
       /** What the proposal carries, and what only its description can tell. */
       function proposalLines(p) {
         const un = p.unexpressed;
+        const counts = { created: i18n.formatNumber(un.created), deleted: i18n.formatNumber(un.deleted), relations: i18n.formatNumber(un.relations), geometry: i18n.formatNumber(un.geometry) };
+        if (asFile(p)) return [t('cde.propose.file.lines', Object.assign({ n: i18n.formatNumber(p.changes.length) }, counts))];
         const lines = [t('ai.change.propose.summary', { n: i18n.formatNumber(p.changes.length), m: i18n.formatNumber(p.instances) })];
-        if (un.created || un.deleted || un.relations || un.geometry) lines.push(t('cde.propose.unexpressed', { created: i18n.formatNumber(un.created), deleted: i18n.formatNumber(un.deleted), relations: i18n.formatNumber(un.relations), geometry: i18n.formatNumber(un.geometry) }));
+        if (un.created || un.deleted || un.relations || un.geometry) lines.push(t('cde.propose.unexpressed', counts));
         return lines;
       }
       /**
@@ -248,14 +255,24 @@
           if (!(await opencde.canPropose(s.connector, cde.projectId).catch(() => true))) throw new Error(t('ai.change.propose.role.none'));
           const proposal = await ifcOps.proposalBetween(d.id, await opencde.baseFile(s.connector, cde));
           s.proposal = proposal;
-          s.proposalNote = whyNot(proposal, cde);
+          const whole = asFile(proposal);
+          s.proposalNote = whole ? '' : whyNot(proposal, cde);
           if (s.proposalNote) return;
           const project = cde.projectName || cde.projectId;
           const lines = proposalLines(proposal);
           const defaults = { title: t('cde.propose.default.title', { name: d.name }).slice(0, 120), description: s.steps.descriptions.slice(0, 20).concat([''], lines).join('\n').trim() };
           const how = s.steps.steps.map((op) => t('op.' + op)).join(', ');
-          const values = given || await D.require('ui/share/change-proposal').askWords(Object.assign({ hint: t('cde.propose.dialog.hint', { project, version: String(cde.versionIndex), how }), lines, help: 'dela#till-cde' }, defaults));
+          const values = given || await D.require('ui/share/change-proposal').askWords(Object.assign({ hint: t(whole ? 'cde.propose.file.dialog.hint' : 'cde.propose.dialog.hint', { project, version: String(cde.versionIndex), how }), lines, help: 'dela#till-cde' }, defaults));
           if (!values) return;
+          if (whole) {
+            // The whole file goes through the review as an upload's does, and only the reviewed copy leaves.
+            const file = await reviewedModel(d);
+            if (!file) return;
+            s.cde = cde; s.proposed = null;
+            await flow.sendFile(s.connector, { title: values.title || defaults.title, description: values.description || defaults.description, bytes: new Uint8Array(await file.arrayBuffer()), fileName: file.name, aiModel: s.steps.aiModel, toolCall: s.steps.steps.join(',') });
+            try { await datasets.appendLog(await datasets.ensureOpen(d.id), 'shared', { name: t('cde.propose.file.log', { host: opencde.hostOf(s.connector.baseUrl) }) }); datasets.scheduleSave(d.id); } catch (err) { D.log('cde', err); }
+            return;
+          }
           const reviewed = await review.changeSet(ctx, { changes: proposal.changes, server: s.connector.name, project });
           if (!reviewed) return;
           if (!reviewed.changes.length) throw new Error(t('cde.propose.none.left'));
@@ -290,7 +307,7 @@
           const sel = /** @type {any} */ (h('dm-select', { label: t('issues.source') }));
           sel.options = s.connectors.map((c) => ({ value: c.id, label: c.name }));
           sel.value = s.connector ? s.connector.id : '';
-          sel.addEventListener('change', () => { s.connector = s.connectors.find((c) => c.id === sel.value) || null; s.projects = null; s.projectId = ''; s.messageMax = opencde.MESSAGE_MAX; s.takesChanges = false; render(); if (s.connector && opencde.signedIn(s.connector)) loadLimits().then(loadProjects); });
+          sel.addEventListener('change', () => { s.connector = s.connectors.find((c) => c.id === sel.value) || null; s.projects = null; s.projectId = ''; s.messageMax = opencde.MESSAGE_MAX; s.takesChanges = false; s.takesFiles = false; render(); if (s.connector && opencde.signedIn(s.connector)) loadLimits().then(loadProjects); });
           nodes.push(sel);
         }
         const signed = s.connector && opencde.signedIn(s.connector);
