@@ -22,8 +22,13 @@ as Web Mercator are converted to WGS 84. A GeoJSON file is recognised by its con
 Acquire and the plan's facts appear with the button *Import*. A GeoPackage in the ÖP model gets the choice *The
 whole comprehensive plan as a plan*; switched off, one table at a time is imported as before. A detailed development plan in GeoPackage gets the choice *The whole plan as a plan*. The coordinate system of a GeoPackage is read from the file, also when it is given only by name (for example *SWEREF99 15 00*).
 
-From Lantmäteriet's detailed-plan API (the source *Lantmäteriet geodataplattformen: detaljplaner*, a key from a
-connected organisation required) an answer is saved as a plan with the button *Save as plan* instead of as a table.
+When an answer from an API or a geodata source is a plan the app reads, the button *Save as detailed development plan* or
+*Save as comprehensive plan* appears next to *Save as dataset*; its tip names the format the answer was recognised as.
+The button appears only when the columns are a plan: reference objects from Lantmäteriet's geodata platform (for example
+the layer *NGP_Detaljplan_yta* or the source *Lantmäteriet geodataplattformen: detaljplaner*, which needs a key from a
+connected organisation), a lokalplan layer from Plandata.dk and a deiliskipulag from Skipulagsstofnun are saved as detailed
+development plans, Plandata.dk's kommuneplanrammer and an aðalskipulag as comprehensive plans. Swedish comprehensive plans
+are not yet fetched from any API; they are read from files (GeoPackage in Boverket's ÖP model, or GeoJSON).
 
 ## The plan map in Process
 

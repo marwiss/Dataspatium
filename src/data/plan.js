@@ -121,6 +121,17 @@
     }
     /** True when an API table holds a plan the app can keep as a plan dataset. */
     function detectTable(columns) { return !!tableFormat(columns); }
+    /** The kind of plan each table format holds: a Danish kommuneplanramme and an Icelandic aðalskipulag are comprehensive plans. */
+    const TABLE_SLAG = { ngp: 'detaljplan', plandata: 'detaljplan', 'plandata-kommuneplan': 'oversiktsplan', skipulag: 'detaljplan', 'skipulag-adal': 'oversiktsplan' };
+    /**
+     * The plan an API table holds, for the button that keeps it as a plan: its format and whether it is a detaljplan or an
+     * översiktsplan, or null when the columns are no plan the app reads.
+     * @param {Array<string|{name: string}>} columns @returns {{format: string, slag: 'detaljplan'|'oversiktsplan'}|null}
+     */
+    function tablePlan(columns) {
+      const format = tableFormat(columns);
+      return format ? { format, slag: TABLE_SLAG[format] || 'detaljplan' } : null;
+    }
     const normalizeKey = (k) => lower(k).replace(/[_:]/g, '.');
 
     // ---- object types and colours -----------------------------------------------------------------------------
@@ -873,6 +884,6 @@
       return lines.join('\n');
     }
 
-    return { DP_COLUMNS, OP_COLUMNS, OP_CATEGORIES, OBJECT_TYPES, USE_LETTERS, OP_THEME_COLORS, OP_USE_COLORS, nordic, detect, detectTable, tableFormat, featureType, objectType, colorNameForDesignation, fillOf, strokeOf, opFillOf, boverketColor, geometryOf, geometryText, crsOf, heightsOf, footprint, filledFormulation, fromNgp, fromReferenceTable, fromDetaljplan, fromDpTables, isDpGeoPackage, fromOversiktsplanGeoJson, fromOpTables, isOpGeoPackage, isContentTable, normId, contentId, sectionType, lookupWords, SECTION_TYPES, opTheme, decorate, toRows, fromRows, legend, grouped, areaM2, areasByUse, checkCatalog, templateMatches, provisionsMarkdown, themeKey };
+    return { DP_COLUMNS, OP_COLUMNS, OP_CATEGORIES, OBJECT_TYPES, USE_LETTERS, OP_THEME_COLORS, OP_USE_COLORS, nordic, detect, detectTable, tableFormat, tablePlan, featureType, objectType, colorNameForDesignation, fillOf, strokeOf, opFillOf, boverketColor, geometryOf, geometryText, crsOf, heightsOf, footprint, filledFormulation, fromNgp, fromReferenceTable, fromDetaljplan, fromDpTables, isDpGeoPackage, fromOversiktsplanGeoJson, fromOpTables, isOpGeoPackage, isContentTable, normId, contentId, sectionType, lookupWords, SECTION_TYPES, opTheme, decorate, toRows, fromRows, legend, grouped, areaM2, areasByUse, checkCatalog, templateMatches, provisionsMarkdown, themeKey };
   });
 })();

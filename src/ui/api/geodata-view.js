@@ -28,7 +28,7 @@
         try {
           const parsed = await nordic.fetchPlan(kind, connector.baseUrl, id, (url) => databases.getJson(connector, url));
           const meta = await detaljplanImp.importParsed(parsed, parsed.plan.namn || parsed.plan.beteckning || id, { kind: 'api', connector: connector.id, connectorName: connector.name, planId: id, fetchedAt: new Date().toISOString() });
-          state.planMsg = t('plan.saved', { name: meta.name, n: i18n.formatNumber(meta.rowCount) });
+          state.planMsg = t('plan.saved.' + (parsed.plan.slag === 'oversiktsplan' ? 'oversiktsplan' : 'detaljplan'), { name: meta.name, n: i18n.formatNumber(meta.rowCount) });
           if (api.log) api.log(state.planMsg, 'ok');
           if (api.onDataset) api.onDataset(meta);
         } catch (err) {

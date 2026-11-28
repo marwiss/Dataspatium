@@ -108,8 +108,10 @@
           const mode = /** @type {any} */ (h('dm-select', { label: t('api.into.mode') }));
           mode.options = [{ value: 'append', label: t('api.into.mode.append') }, { value: 'replace', label: t('api.into.mode.replace') }];
           const saveBtn = basic.button({ label: t('api.save'), icon: 'save', variant: 'primary', loading: state.saving, onClick: () => save(nameInput.value.trim()) });
-          // NGP reference objects (Lantmäteriet's detaljplan service) can be kept as a plan: drawn with Boverket's colours, provisions listed.
-          const planBtn = plan.detectTable(r.table.columns) ? basic.button({ label: t('plan.save'), icon: 'layers', loading: state.saving, title: t('plan.save.hint'), onClick: () => saveAsPlan(nameInput.value.trim()) }) : null;
+          // A plan the app reads (NGP reference objects from Lantmäteriet, a Danish or Icelandic plan layer) can be kept as a plan:
+          // the button names the kind of plan and its tip the format, and it is not shown for anything else.
+          const found = plan.tablePlan(r.table.columns);
+          const planBtn = found ? basic.button({ label: t('plan.save.' + found.slag), icon: 'layers', loading: state.saving, title: t('plan.save.' + found.slag + '.hint', { format: t('plan.format.' + found.format) }), onClick: () => saveAsPlan(nameInput.value.trim(), found.slag) }) : null;
           const intoBtn = basic.button({ label: t('api.into.run'), icon: 'rows-3', loading: state.saving, onClick: () => { if (target.value) into(target.value, mode.value); else overlays.toast.show(t('api.into.pick'), { kind: 'warn' }); } });
           // Geodata answers are shown as a small map above the table (the saved dataset opens as a map).
           const mapSvg = leaflet.tableSvg(r.table, { width: 640, height: 300, limit: 5000 });
@@ -146,13 +148,13 @@
           } catch (err) { overlays.toast.show(String((err && err.message) || err), { kind: 'error' }); }
           state.saving = false; renderResult();
         }
-        /** The answer as a plan dataset (kind plan) instead of a table. */
-        async function saveAsPlan(name) {
+        /** The answer as a plan dataset (kind plan) instead of a table. @param {string} name @param {string} slag */
+        async function saveAsPlan(name, slag) {
           if (!state.result || state.saving) return;
           state.saving = true; renderResult();
           try {
             const meta = await detaljplanImp.importTable(state.result.table.columns, state.result.table.rows, name || state.result.name || connector.name, Object.assign({ description: descriptionFor(state.result) }, state.result.source || {}));
-            state.saved = { id: meta.id, text: t('plan.saved', { name: meta.name, n: i18n.formatNumber(meta.rowCount) }) };
+            state.saved = { id: meta.id, text: t('plan.saved.' + slag, { name: meta.name, n: i18n.formatNumber(meta.rowCount) }) };
             shell.log(state.saved.text, 'ok');
             if (hooks.onDataset) hooks.onDataset(meta);
           } catch (err) { overlays.toast.show(String((err && err.message) || err), { kind: 'error' }); }

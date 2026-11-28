@@ -23,8 +23,13 @@ Inhämta så visas planens uppgifter och knappen *Importera*. En GeoPackage-fil 
 en tabell i taget som förut. Koordinatsystemet i en GeoPackage-fil läses ur filen, även när det bara står med namn
 (till exempel *SWEREF99 15 00*).
 
-Från Lantmäteriets detaljplans-API (källan *Lantmäteriet geodataplattformen: detaljplaner*, kräver nyckel från en
-ansluten organisation) sparas ett svar som plan med knappen *Spara som plan* i stället för som tabell.
+När ett svar från ett API eller en geodatakälla är en plan som appen kan läsa visas knappen *Spara som detaljplan* eller
+*Spara som översiktsplan* bredvid *Spara som datamängd*; tipset på knappen säger vilket format svaret känns igen som.
+Knappen visas bara när kolumnerna är en plan: referensobjekt från Lantmäteriets geodataplattform (till exempel lagret
+*NGP_Detaljplan_yta* eller källan *Lantmäteriet geodataplattformen: detaljplaner*, som kräver nyckel från en ansluten
+organisation) och ett lokalplanslager från Plandata.dk eller ett deiliskipulag från Skipulagsstofnun sparas som detaljplan,
+Plandata.dk:s kommuneplanrammer och ett aðalskipulag som översiktsplan. Svenska översiktsplaner hämtas ännu inte från
+något API; de läses från filer (GeoPackage enligt Boverkets ÖP-modell eller GeoJSON).
 
 ## Plankartan i Bearbeta
 

@@ -213,9 +213,14 @@
       const meta = await detaljplanImp.importParsed(parsed, null, { kind: 'api', connector: connector.id });
       ids.push(meta.id);
       assert.equal(meta.kind, 'plan'); assert.equal(meta.name, 'Ferieboliger ved Røgeriet'); assert.equal(meta.plan.land, 'DK');
-      // API answers from one Plandata layer can be kept as a plan too (Spara som plan).
+      // API answers from one Plandata layer can be kept as a plan too (Spara som detaljplan): the button names the kind of plan.
       const table = { columns: ['planid', 'komnr', 'kommunenavn', 'objektkode', 'plantype', 'plannr', 'plannavn', 'anvgen', 'zone', 'status', 'geometri'], rows: [[11922461, 306, 'Odsherred', 20, 20.1, '2024-05', 'Ferieboliger', 51, 1, 'V', JSON.stringify(geo.toWgs84(sq(690000, 6180000, 400, 300), 'EPSG:25832'))]] };
       assert.ok(plan.detectTable(table.columns)); assert.equal(plan.tableFormat(table.columns), 'plandata');
+      assert.deepEqual(plan.tablePlan(table.columns), { format: 'plandata', slag: 'detaljplan' });
+      assert.deepEqual(plan.tablePlan(['planid', 'komnr', 'komplan_id', 'anvgen', 'plannavn', 'geometri']), { format: 'plandata-kommuneplan', slag: 'oversiktsplan' });
+      assert.deepEqual(plan.tablePlan(['skipnr', 'audkenni', 'flokkur', 'geometry']), { format: 'skipulag-adal', slag: 'oversiktsplan' });
+      assert.deepEqual(plan.tablePlan(['feature.typ', 'detaljplan.status', 'geometri']), { format: 'ngp', slag: 'detaljplan' });
+      assert.equal(plan.tablePlan(['id', 'namn', 'geometri']), null, 'no plan, no button');
       const m2 = await detaljplanImp.importTable(table.columns, table.rows, 'Lokalplan via API', {});
       ids.push(m2.id);
       assert.equal(m2.rowCount, 2); assert.equal(m2.plan.format, 'plandata');
