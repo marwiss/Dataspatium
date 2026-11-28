@@ -83,7 +83,8 @@ shows the labels as text (the default) or keeps the codes; the labels are kept e
 and swapped for the codes in Process, are shown in the codebook, reach R as `haven::labelled` and are written to .sav
 and .dta, where a column with the labels as text gets its codes back.
 
-Data that is added in Import also ships with the app: the example data *Population per municipality 2024 (Sweden)*
+Data that is added in Import also ships with the app: the example data (a table, a comprehensive plan, a detailed
+plan, a building model, a JSON file and a graph, see [kallor.md](kallor.md#example-data) and `presets/exempeldata/KALLA.md`)
 and boundaries for maps as GeoJSON in longitude and latitude: municipalities and counties in Sweden (SCB, CC0),
 municipalities and regions in Denmark (DAGI), municipalities and counties in Norway (Kartverket, CC BY 4.0) and
 municipalities and regions in Finland (Statistics Finland, CC BY 4.0). Sources and licences are in

@@ -72,7 +72,15 @@ boundaries in `presets/geo/` are SCB's *Digitala gränser* under CC0 1.0, conver
 Danish boundaries are DAGI 1:500 000 from Geodatastyrelsen (now Klimadatastyrelsen), free data that may be used and
 shared with attribution; the Norwegian ones come from Kartverket's N1000 Kartdata and the Finnish ones from Statistics
 Finland, both under CC BY 4.0 (attribution "© Kartverket" and "Tilastokeskus / Statistics Finland"). See
-`presets/geo/KALLA.md`. Data fetched from the open APIs is covered by each publisher's licence, which is shown
+`presets/geo/KALLA.md`.
+
+The examples in `presets/exempeldata/` (Import: Example data) are SCB's statistics under CC0, Lomma municipality's open
+data (Översiktsplan 2020 and the detailed plans in progress) under CC0 and buildingSMART's sample model
+*Building-Architecture* from Sample-Test-Files under CC BY 4.0 with the attribution "© buildingSMART International Ltd.".
+Dataspatium has adapted them: the comprehensive plan's layers placed in the categories of the ÖP catalogue, the detailed
+plan's provisions drawn as an example in the real plan area, and the model georeferenced to a lot in the plan with the
+person's name removed; the model's geometry is unchanged. The graph of neighbouring municipalities is computed from SCB's
+boundaries. The sources, the changes and the checksums are in `presets/exempeldata/KALLA.md`. Data fetched from the open APIs is covered by each publisher's licence, which is shown
 with the source in the app.
 
 The orthophotos in the choice of background map are not shipped with the app: your browser fetches the images from the providers'

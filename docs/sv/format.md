@@ -83,7 +83,8 @@ etiketterna som text (standard) eller behålla koderna; etiketterna sparas i bå
 bytas mot koderna i Bearbeta, visas i kodboken, följer med till R som `haven::labelled` och skrivs till .sav och
 .dta, där en kolumn med etiketterna som text får tillbaka sina koder.
 
-Med appen följer också data som läggs till i Inhämta: exempeldatan *Befolkning per kommun 2024* och gränser för
+Med appen följer också data som läggs till i Inhämta: exempeldatan (en tabell, en översiktsplan, en detaljplan, en
+byggnadsmodell, en JSON-fil och en graf, se [kallor.md](kallor.md#exempeldata) och `presets/exempeldata/KALLA.md`) och gränser för
 kartor som GeoJSON i longitud och latitud: kommuner och län i Sverige (SCB, CC0), kommuner och regioner i Danmark
 (DAGI), kommuner och fylken i Norge (Kartverket, CC BY 4.0) samt kommuner och landskap i Finland
 (Statistikcentralen, CC BY 4.0). Källor och licenser står i `presets/geo/KALLA.md`. Ingenting hämtas från nätet.

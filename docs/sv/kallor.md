@@ -384,9 +384,28 @@ och geometri i longitud och latitud (WGS 84), som du kopplar till din statistik 
 ## Exempeldata
 
 *Exempeldata* under *Övriga källor* är små öppna datamängder som följer med appen, så att du kan prova lägena utan egna
-filer. Varje exempel säger vad det är, var det kommer ifrån och under vilken licens; **Importera** gör en ny datamängd av
-ett exempel och **Importera alla** av alla. Ett exempel som redan finns i arbetsytan märks och kan öppnas direkt. Vid
-första starten, när arbetsytan är tom, länkar Filer hit.
+filer. Varje exempel säger vad det är, var det kommer ifrån, under vilken licens och vad som är ändrat; **Importera** gör
+en ny datamängd av ett exempel och **Importera alla** av alla. Ett exempel som redan finns i arbetsytan märks och kan
+öppnas direkt. Vid första starten, när arbetsytan är tom, länkar Filer hit, och i Hantera gör **Prova med exempeldata**
+det. Ingenting hämtas från nätet.
+
+Översiktsplanen, detaljplanen och huset ligger på samma plats, i Björred i Lomma kommun: huset står i detaljplanens
+bostadsområde, och detaljplanen ligger i översiktsplanens utbyggnadsområde för bostäder.
+
+| Exempel | Slag | Källa och licens | Verkligt eller exempel |
+|---|---|---|---|
+| Befolkning per kommun 2024 | Tabell: folkmängd och landareal för Sveriges 290 kommuner | SCB, Statistikdatabasen, CC0 | Verkligt |
+| Översiktsplan Lomma 2020 | Plan (översiktsplan) i utbytesformatet för översiktsplaner (GeoJSON) | Lomma kommun, öppna data, CC0; kommungränsen från SCB, CC0 | Verkligt; Lommas lager är förda till ÖP-katalogens kategorier av Dataspatium |
+| Detaljplan Björreds vångar etapp I | Plan (detaljplan) i Detaljplan 4.1 (GeoJSON) | Lomma kommun, öppna data, CC0 | Planområdet, namnet, syftet och diarienumret är verkliga; användningarna och bestämmelserna är ett exempel, inte kommunens planförslag |
+| Hus i Björreds vångar (IFC) | Byggnadsmodell (IFC4) | buildingSMART International, Sample-Test-Files, CC BY 4.0 (© buildingSMART International Ltd.) | Verklig exempelmodell, georefererad på tomten av Dataspatium och utan personnamn |
+| Färdigställda lägenheter per kommun 2024 (JSON) | Tabell ur SCB:s svar i JSON-stat 2.0 | SCB, Statistikdatabasen, CC0 | Verkligt |
+| Kommungrannar (graf för Neo4j) | Graf: kommunerna och vilka som delar en gräns, som Cypher-skript | Uträknat ur SCB:s Digitala gränser, CC0 | Uträknat av Dataspatium |
+| Kommungränser (SCB) | Kartlager: kommunernas ytor i WGS 84 | SCB, Digitala gränser, CC0 | Verkligt, förenklat för tematiska kartor |
+
+Grafen räknar två kommuner som grannar när de delar en sträcka av gränsen, inte när de bara möts i en punkt. Gränserna
+är förenklade och följer land, så kommuner som bara består av öar får inga grannar. Skriptet går också att köra i Neo4j,
+och tabellerna går att koppla till gränserna med kommunkoden för en karta. Källorna, ändringarna och hur filerna byggs
+står i `presets/exempeldata/KALLA.md`.
 
 ## Länkade filer
 

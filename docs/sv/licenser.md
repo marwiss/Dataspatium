@@ -74,6 +74,14 @@ och spridas med källangivelse; de norska kommer ur Kartverkets N1000 Kartdata o
 båda under CC BY 4.0 (källangivelse "© Kartverket" respektive "Tilastokeskus / Statistikcentralen"). Se
 `presets/geo/KALLA.md`.
 
+Exemplen i `presets/exempeldata/` (Inhämta: Exempeldata) är SCB:s statistik under CC0, Lomma kommuns öppna data
+(Översiktsplan 2020 och pågående detaljplaner) under CC0 och buildingSMART:s exempelmodell *Building-Architecture* ur
+Sample-Test-Files under CC BY 4.0 med källangivelsen "© buildingSMART International Ltd.". Dataspatium har bearbetat
+dem: översiktsplanens lager förda till ÖP-katalogens kategorier, detaljplanens bestämmelser ritade som exempel i det
+verkliga planområdet, och modellen georefererad till en tomt i planen med personnamnet borttaget; geometrin i modellen är
+oförändrad. Grafen över kommungrannar är uträknad ur SCB:s gränser. Källorna, ändringarna och kontrollsummorna står i
+`presets/exempeldata/KALLA.md`.
+
 Ortofotona i valet av bakgrundskarta följer inte med i appen: din webbläsare hämtar bilderna från utgivarnas tjänster när du väljer
 dem, efter samtycke. Alla tre är CC BY 4.0: GeoDanmark ortofoto forår från Klimadatastyrelsen (källangivelse "GeoDanmark ortofoto
 forår © Klimadatastyrelsen"), Ortokuva från Maanmittauslaitos ("Ortokuva © Maanmittauslaitos") och Grunnkort – Loftmynd från

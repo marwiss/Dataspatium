@@ -393,9 +393,28 @@ by the code and show on a map (see [visualisera.md](visualisera.md)). Nothing is
 ## Example data
 
 *Example data* under *Other sources* are small open datasets that ship with the app, so that you can try the modes without
-files of your own. Each example says what it is, where it comes from and under which licence; **Import** makes a new dataset
-of one example and **Import all** of all of them. An example already in the workspace is marked and can be opened directly.
-At the first start, when the workspace is empty, Files links here.
+files of your own. Each example says what it is, where it comes from, under which licence and what has been changed;
+**Import** makes a new dataset of one example and **Import all** of all of them. An example already in the workspace is
+marked and can be opened directly. At the first start, when the workspace is empty, Files links here, and in Manage
+**Try with example data** does. Nothing is fetched from the internet.
+
+The comprehensive plan, the detailed plan and the house lie in the same place, in Björred in Lomma municipality: the house
+stands in the detailed plan's residential area, and the detailed plan lies in the comprehensive plan's area for new housing.
+
+| Example | Kind | Source and licence | Real or example |
+|---|---|---|---|
+| Population per municipality 2024 | Table: population and land area of Sweden's 290 municipalities | SCB, Statistikdatabasen, CC0 | Real |
+| Comprehensive plan Lomma 2020 | Plan (comprehensive plan) in the exchange format for comprehensive plans (GeoJSON) | Lomma municipality, open data, CC0; the municipal boundary from SCB, CC0 | Real; Lomma's layers placed in the ÖP catalogue's categories by Dataspatium |
+| Detailed plan Björreds vångar stage I | Plan (detailed plan) as Detaljplan 4.1 (GeoJSON) | Lomma municipality, open data, CC0 | The plan area, name, purpose and case number are real; the uses and provisions are an example, not the municipality's proposal |
+| House in Björreds vångar (IFC) | Building model (IFC4) | buildingSMART International, Sample-Test-Files, CC BY 4.0 (© buildingSMART International Ltd.) | A real sample model, georeferenced on the lot by Dataspatium and without a person's name |
+| Dwellings completed per municipality 2024 (JSON) | Table from SCB's answer in JSON-stat 2.0 | SCB, Statistikdatabasen, CC0 | Real |
+| Neighbouring municipalities (graph for Neo4j) | Graph: the municipalities and which share a border, as a Cypher script | Computed from SCB's Digitala gränser, CC0 | Computed by Dataspatium |
+| Swedish municipality boundaries (SCB) | Map layer: the municipalities' areas in WGS 84 | SCB, Digitala gränser, CC0 | Real, simplified for thematic maps |
+
+The graph counts two municipalities as neighbours when they share a stretch of border, not when they only meet in a point.
+The boundaries are simplified and follow land, so municipalities made up of islands only get no neighbours. The script also
+runs in Neo4j, and the tables can be joined to the boundaries by the municipality code for a map. The sources, the changes
+and how the files are built are in `presets/exempeldata/KALLA.md`.
 
 ## Linked files
 
