@@ -16,8 +16,8 @@
     let refocus = null;
 
     /**
-     * <dm-tabs> with `tabs = [{id, label, icon?}]` and `active`; emits `dm-change` {id}. Arrow keys, Home and
-     * End move between the tabs and keep the keyboard focus on the active one.
+     * <dm-tabs> with `tabs = [{id, label, icon?, hint?}]` and `active`; emits `dm-change` {id}. Arrow keys, Home and
+     * End move between the tabs and keep the keyboard focus on the active one. `hint` is the tab's tip.
      */
     class DmTabs extends DmElement {
       connectedCallback() {
@@ -44,7 +44,7 @@
       render() {
         const active = this.active;
         replace(this.list, this.tabs.map((t) => h('button', {
-          role: 'tab', type: 'button', 'aria-selected': t.id === active ? 'true' : 'false', tabindex: t.id === active ? '0' : '-1',
+          role: 'tab', type: 'button', 'aria-selected': t.id === active ? 'true' : 'false', tabindex: t.id === active ? '0' : '-1', 'data-tip': t.hint || null,
           onclick: () => this.select(t.id),
         }, t.icon ? icons.icon(t.icon, 14) : null, t.label)));
         const r = refocus;

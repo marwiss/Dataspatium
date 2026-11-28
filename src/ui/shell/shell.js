@@ -375,6 +375,15 @@
         closeSheets() {
           for (const side of ['left', 'right']) if (this.el.getAttribute('data-' + side) === 'sheet') this.el.setAttribute('data-' + side, 'closed');
         }
+        /**
+         * Show the inspector when something chosen in the workspace has its details there (a geodata source's layer or plan): as a
+         * sheet over the workspace on narrow windows, where it starts closed, and as the column on wide ones.
+         */
+        showInspector() {
+          const current = this.el.getAttribute('data-right');
+          if (current === 'open' || current === 'sheet') return;
+          this.el.setAttribute('data-right', matchMedia(SHEET_BREAKPOINT.right).matches ? 'sheet' : 'open');
+        }
 
         registerMode(mode) { this.modes.set(mode.id, mode); }
         /**

@@ -108,6 +108,27 @@
       return el;
     }
 
-    return { DmButton, DmBadge, DmProgress, button, select };
+    /**
+     * Arrow keys in a list of buttons (`.dm-list` with `.dm-list-item`): Up and Down move the focus between the items, Home and End
+     * to the first and the last; Enter and Space choose, as on any button. `onTop` is called by Up on the first item (back to a
+     * search box above the list).
+     * @param {HTMLElement} list @param {() => void} [onTop] @returns {HTMLElement} the list
+     */
+    function listKeys(list, onTop) {
+      list.addEventListener('keydown', (e) => {
+        const items = /** @type {HTMLElement[]} */ (Array.from(list.querySelectorAll('.dm-list-item:not([disabled])')));
+        const i = items.indexOf(/** @type {HTMLElement} */ (document.activeElement));
+        if (i < 0) return;
+        const k = e.key;
+        if (k === 'ArrowUp' && i === 0 && onTop) { e.preventDefault(); onTop(); return; }
+        const next = k === 'ArrowDown' ? i + 1 : k === 'ArrowUp' ? i - 1 : k === 'Home' ? 0 : k === 'End' ? items.length - 1 : -1;
+        if (next < 0 || next >= items.length) return;
+        e.preventDefault();
+        items[next].focus();
+      });
+      return list;
+    }
+
+    return { DmButton, DmBadge, DmProgress, button, select, listKeys };
   });
 })();
