@@ -444,6 +444,19 @@
       }
       await shell.activate('hantera');
       await waitFor(() => root.querySelector('.dm-left .dm-tree-toolbar'), 5000, 'the tools back in Hantera');
+      // A panel lower than its tree scrolls; it never squeezes the tools to a strip under the filter. The same tools are moved into
+      // a panel body of 160 px with a tall tree under them, and put back.
+      const bar = /** @type {HTMLElement} */ (root.querySelector('.dm-left .dm-tree-toolbar'));
+      const home = bar.parentNode; const next = bar.nextSibling;
+      const low = document.createElement('div'); low.className = 'dm-pane-body'; low.style.height = '160px';
+      const tall = document.createElement('div'); tall.style.height = '2000px';
+      root.querySelector('.dm-left').appendChild(low);
+      low.append(bar, tall);
+      try {
+        await wait(50);
+        const btn = /** @type {HTMLElement} */ (bar.querySelector('dm-button > button'));
+        assert.ok(bar.getBoundingClientRect().height >= btn.getBoundingClientRect().height, 'the tools keep their height in a low panel: ' + Math.round(bar.getBoundingClientRect().height) + ' px for ' + Math.round(btn.getBoundingClientRect().height) + ' px buttons');
+      } finally { home.insertBefore(bar, next); low.remove(); }
       return 'ok';
     } finally {
       for (const d of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (d).close();

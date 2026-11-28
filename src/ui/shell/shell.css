@@ -172,7 +172,8 @@ dm-table .dm-cell-editor { width: 100%; height: 28px; margin: 0; padding: 0 var(
 .dm-list-tools dm-input { flex: 1 1 auto; }
 .dm-list-tools .dm-field, .dm-tree-move .dm-field { height: 30px; font-size: var(--dm-text-sm); }
 .dm-list-tools dm-select { flex: 0 0 auto; }
-.dm-tree-toolbar { display: flex; flex-wrap: nowrap; align-items: center; gap: var(--dm-s-1); min-width: 0; overflow: hidden; padding-bottom: var(--dm-s-1); border-bottom: 1px solid var(--dm-border); }
+/* The tools keep their height: the panel scrolls when the tree is long (overflow: hidden would let the column squeeze them). */
+.dm-tree-toolbar { display: flex; flex-wrap: nowrap; flex-shrink: 0; align-items: center; gap: var(--dm-s-1); min-width: 0; overflow: hidden; padding-bottom: var(--dm-s-1); border-bottom: 1px solid var(--dm-border); }
 .dm-tree-toolbar > dm-button, .dm-tree-toolbar > dm-menu-button { flex: 0 0 auto; }
 /* The tools are icons: the name stays for screen readers and the tip shows it. */
 .dm-tree-toolbar > dm-button > button, .dm-tree-toolbar > dm-menu-button > button { width: 32px; min-height: 32px; padding: 0; }
