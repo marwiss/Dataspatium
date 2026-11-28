@@ -272,10 +272,8 @@ dm-input input[type="range"].dm-field { padding: 0; border: none; background: no
   .dm-layer-list dm-button > button { min-height: 44px; }
   .dm-layer-list dm-button[icon-only] > button { width: 44px; }
 }
-/* Visa i kartan beside a dataset in the list while Bearbeta shows a map (ui/viz/map-overlays): the row keeps the indentation of
-   the rows without it, and the eye is in the accent colour while the dataset shows. */
-.dm-tree .dm-tree-row.dm-tree-row-trailing { padding-left: 0; }
-.dm-tree .dm-tree-row.dm-tree-row-trailing > .dm-list-item { padding-left: calc(var(--dm-s-2) + var(--dm-depth, 0) * var(--dm-s-5)); }
+/* Visa i kartan beside a dataset in the list while Bearbeta shows a map (ui/viz/map-overlays): the eye is in the accent colour
+   while the dataset shows. */
 .dm-overlay-toggle { flex: 0 0 auto; }
 .dm-overlay-toggle > button[aria-pressed="true"] { color: var(--dm-accent); }
 .dm-map-overlays .dm-layer-list { margin-bottom: var(--dm-s-2); }

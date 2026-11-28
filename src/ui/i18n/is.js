@@ -2120,8 +2120,6 @@
     'datasets.sort.name': 'Heiti',
     'datasets.sort.rows': 'Fjöldi raða',
     'datasets.selected.count': '{n} valin',
-    'datasets.select': 'Velja {name}',
-    'datasets.tree.folder.toggle': 'Fella möppuna saman eða út',
     'datasets.folder': 'Mappa',
     'datasets.folder.root': 'Engin mappa (rót)',
     'datasets.folder.new': 'Ný mappa…',

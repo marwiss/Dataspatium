@@ -1,10 +1,11 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * The dataset list shown in the object panel of most modes: a tree of folders (each dataset's `folder` path, and the empty
- * folders made with Ny mapp) with the datasets inside, a filter box and a sort order when there are several datasets, and,
+ * The dataset list shown in the object panel of most modes: a tree (ui/tree) of folders (each dataset's `folder` path, and the
+ * empty folders made with Ny mapp) with the datasets inside, a filter box and a sort order when there are several datasets, and,
  * where the mode asks for it, check boxes for datasets and whole folders, the tools right above the tree (Ny mapp, Byt namn,
- * Klipp ut, Kopiera, Klistra in, Flytta, Ta bort) with their keys, and drag and drop into folders. Selecting an item updates
+ * Klipp ut, Kopiera, Klistra in, Flytta, Ta bort: icons with tips, and those that do not fit under Fler alternativ) with their
+ * keys and the same in the snabbmeny, and drag and drop into, out of and between folders. Selecting an item updates
  * `store.selectedId`, which every mode reacts to. The shell gives every mode the same tree (`withDefaults`, ui/batch-actions).
  *
  *   datasetList.render(container, {datasets, selectedId, onSelect, extra?, emptyHint?,
@@ -15,12 +16,13 @@
  * rename(unit, name). Units are {ids, folders}: the folders chosen whole and the datasets chosen one by one outside them; a
  * clip is units with a mode, 'copy' or 'cut'. `itemTrailing(d)` is a control after a dataset's row (Bearbeta's map: Visa i
  * kartan), or null.
- * Keys on the tree: Delete, Ctrl+C, Ctrl+X, Ctrl+V, F2, the arrows, Home and End.
+ * Keys on the tree: Delete, Ctrl+C, Ctrl+X, Ctrl+V, F2, and those of ui/tree (the arrows, Home, End, Enter, Space, a letter).
+ * A dataset chosen in the tree sends `dm-choose` (the shell closes the panel when it is a sheet).
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/dataset-list', ['ui/base', 'ui/icons', 'ui/basic', 'platform/storage/idb', 'data/kinds', 'data/datasets'], (base, icons, basic, idb, kinds, datasets) => {
+  D.define('ui/dataset-list', ['ui/base', 'ui/icons', 'ui/basic', 'ui/tree', 'ui/menu', 'platform/storage/idb', 'data/kinds', 'data/datasets'], (base, icons, basic, treeMod, menuMod, idb, kinds, datasets) => {
     const { h, t, i18n, replace } = base;
     /** The mark of a kind; the kinds themselves are described in data/kinds. */
     function kindIcon(kind) { return kinds.of(kind).icon; }
@@ -29,7 +31,6 @@
     const COLLAPSED_SETTING = 'ui.folders.collapsed';
     const EMPTY_SETTING = 'ui.folders.empty';
     const SORTS = ['updated', 'name', 'rows'];
-    const DRAG_TYPE = 'text/plain';
     /** Folders the user has collapsed; shared by all modes and kept between sessions. */
     const collapsed = new Set();
     /** Folders made with Ny mapp that hold no dataset yet; a folder exists otherwise only through its datasets' paths. */
@@ -38,11 +39,16 @@
     idb.getSetting(EMPTY_SETTING, []).then((v) => { if (Array.isArray(v)) for (const p of v) { const n = datasets.normalizeFolder(p); if (n) empty.add(n); } }).catch(() => {});
     const persistCollapsed = () => { idb.setSetting(COLLAPSED_SETTING, Array.from(collapsed)).catch(() => {}); };
     const persistEmpty = () => { idb.setSetting(EMPTY_SETTING, Array.from(empty)).catch(() => {}); };
+    /** The folds as ui/tree reads and sets them: a folder row's id is 'f:' and its path. */
+    const expansion = {
+      isOpen: (id) => !(id.startsWith('f:') && collapsed.has(id.slice(2))),
+      setOpen: (id, open) => { if (!id.startsWith('f:')) return; if (open) collapsed.delete(id.slice(2)); else collapsed.add(id.slice(2)); persistCollapsed(); },
+    };
     /** The empty folders that are checked (a folder with datasets is checked through them). Shared by all modes, like the selection. */
     const markedFolders = new Set();
     /** What Klipp ut or Kopiera took, for Klistra in: {mode, ids, folders}, or null. Shared by all modes. */
     let clipboard = null;
-    /** Filter, sort, the last toggled id, the inline edit, the move picker and the options per panel (the container). */
+    /** Filter, sort, the selection, the move picker, Välj, the tree and the options per panel (the container). */
     const panelState = new WeakMap();
 
     const within = (path, folder) => path === folder || path.startsWith(folder + '/');
@@ -161,46 +167,49 @@
     }
     const count = (u) => u.ids.length + u.folders.length;
 
-    /** Ids and folders carried by a drag that started in the tree, or null. */
-    function dragged(e) {
-      try {
-        const data = JSON.parse(e.dataTransfer.getData(DRAG_TYPE) || 'null');
-        return data && data.dataspatium === 'datasets' && Array.isArray(data.ids) ? { ids: data.ids, folders: Array.isArray(data.folders) ? data.folders : [] } : null;
-      } catch (_e) { return null; }
+    /** Ids and folders carried by a drag from the tree (ui/tree's payload), or null. */
+    function carried(payload) {
+      return payload && payload.dataspatium === 'datasets' && Array.isArray(payload.ids) ? { ids: payload.ids, folders: Array.isArray(payload.folders) ? payload.folders : [] } : null;
     }
 
     /** Where the focus is in a panel, so that it can come back after the panel is drawn again. */
-    function focusOf(container) {
+    function focusOf(container, state) {
       const a = /** @type {HTMLElement|null} */ (document.activeElement);
       if (!a || !container.contains(a)) return null;
       if (a.closest('.dm-list-filter')) return { filter: true };
       const tool = a.closest('[data-tool]');
       if (tool) return { tool: tool.getAttribute('data-tool') };
       const row = a.closest('[data-key]');
-      if (!row) return null;
+      if (!row || !state.view) return null;
       const part = a.closest('[data-part]');
-      const rows = Array.from(container.querySelectorAll('.dm-tree [data-key]'));
-      return { key: row.getAttribute('data-key'), part: part ? part.getAttribute('data-part') : 'main', index: rows.indexOf(row) };
+      const key = row.getAttribute('data-key');
+      return { key, part: part ? part.getAttribute('data-part') : 'main', index: state.view.rows().findIndex((r) => r.id === key) };
     }
-    function focusEl(el, selectAll) {
+    function focusEl(el) {
       if (!el) return false;
       const control = /** @type {any} */ (el).control || el;
       if (control.disabled) return false;
       control.focus();
-      if (control.setSelectionRange && typeof control.value === 'string') { if (selectAll) control.select(); else control.setSelectionRange(control.value.length, control.value.length); }
+      if (control.setSelectionRange && typeof control.value === 'string') control.setSelectionRange(control.value.length, control.value.length);
       return true;
     }
-    function restoreFocus(container, f) {
+    function restoreFocus(container, state, f) {
       if (!f) return;
-      if (f.filter) { focusEl(container.querySelector('.dm-list-filter'), false); return; }
+      if (f.filter) { focusEl(container.querySelector('.dm-list-filter')); return; }
       if (f.tool) {
         const el = container.querySelector(`[data-tool="${CSS.escape(f.tool)}"]`);
-        if (el && focusEl(el.tagName === 'DM-BUTTON' ? el.querySelector('button') : el, false)) return;
+        if (el && focusEl(el.tagName === 'DM-BUTTON' ? el.querySelector('button') : el)) return;
       }
-      if (f.key && focusEl(container.querySelector(`.dm-tree [data-key="${CSS.escape(f.key)}"] [data-part="${f.part || 'main'}"]`), !!f.select)) return;
+      if (f.key && state.view.focus(f.key, f.part)) return;
       // The row is gone (deleted, moved): the one now in its place, else the first.
-      const mains = Array.from(container.querySelectorAll('.dm-tree [data-part="main"]'));
-      if (mains.length) focusEl(mains[Math.max(0, Math.min(f.index === undefined || f.index < 0 ? 0 : f.index, mains.length - 1))], false);
+      state.view.focusIndex(f.index === undefined || f.index < 0 ? 0 : f.index);
+    }
+    /** Put a panel's parts in order around the tree without taking the tree out (it keeps its focus and scroll). */
+    function placeAround(container, items, keep) {
+      for (const c of Array.from(container.childNodes)) if (c !== keep) c.remove();
+      if (keep.parentNode !== container) container.appendChild(keep);
+      const at = items.indexOf(keep);
+      for (let i = 0; i < items.length; i++) if (i < at) container.insertBefore(items[i], keep); else if (i > at) container.appendChild(items[i]);
     }
 
     /**
@@ -215,14 +224,15 @@
       if (!state) {
         // The tree draws itself again in its own element (a box that does not take part in the layout), so that what a mode
         // adds to the panel below it (Visualisera's charts, Analysera's notebooks) stays when only the tree changes.
-        state = { filter: '', sort: 'updated', last: null, renders: 0, editing: null, moving: null, busy: false, focus: null, root: h('div', { class: 'dm-tree-panel' }) };
+        state = { filter: '', sort: 'updated', renders: 0, editing: null, moving: null, busy: false, focus: null, selecting: false, overflow: null, view: null, root: h('div', { class: 'dm-tree-panel' }) };
         panelState.set(container, state);
       }
+      if (!state.view) state.view = treeMod.create({ label: t('datasets.tree.label'), expansion });
       state.options = options;
       state.selected = new Set(options.selectedIds || []);
       state.renders++;
-      if (!state.focus) state.focus = focusOf(state.root);
-      replace(container, state.root);
+      if (!state.focus) state.focus = focusOf(state.root, state);
+      if (state.root.parentNode !== container || container.childNodes.length !== 1) replace(container, state.root);
       draw(state.root, state);
     }
 
@@ -231,6 +241,7 @@
       const multi = !!options.multi;
       const actions = options.actions || null;
       const selected = state.selected;
+      const view = state.view;
       const redraw = () => draw(container, state);
       const all = options.datasets;
       const byId = new Map(all.map((d) => [d.id, d]));
@@ -238,20 +249,26 @@
       const full = buildTree(all, marks);
       const knownFolders = new Set(folderPathsOf(full));
       for (const p of Array.from(markedFolders)) if (!knownFolders.has(p)) markedFolders.delete(p);
-      const focus = state.focus || focusOf(container);
+      const focus = state.focus || focusOf(container, state);
       state.focus = null;
+      if (state.editing && state.editing.kind === 'rename' && !(state.editing.key.startsWith('f:') ? knownFolders.has(state.editing.key.slice(2)) : byId.has(state.editing.key.slice(2)))) state.editing = null;
 
       // ---- the selection, and what the tools act on ----
       const units = () => (multi ? unitsOf(full, selected, markedFolders) : { ids: [], folders: [] });
       const unitOfKey = (key) => (key.startsWith('f:') ? { ids: [], folders: [key.slice(2)] } : { ids: [key.slice(2)], folders: [] });
+      const pathOfKey = (key) => (key.startsWith('f:') ? key.slice(2) : ((byId.get(key.slice(2)) || {}).folder || ''));
+      /** Whether a row is part of the checked units. */
+      const inUnits = (u, key) => (key.startsWith('d:') ? u.ids.includes(key.slice(2)) : false) || u.folders.some((f) => within(pathOfKey(key), f));
       /** The checked items, else the row with the focus (keys), else the current dataset. */
       function targets(key) {
         const u = units();
         if (count(u)) return u;
         if (key && key !== 'new') return unitOfKey(key);
-        const current = byId.get(options.selectedId);
-        return current ? { ids: [current.id], folders: [] } : { ids: [], folders: [] };
+        const cur = byId.get(options.selectedId);
+        return cur ? { ids: [cur.id], folders: [] } : { ids: [], folders: [] };
       }
+      /** What the snabbmeny and a drag act on: the checked items when the row is one of them, else the row alone. */
+      function unitsFor(key) { const u = units(); return count(u) && inUnits(u, key) ? u : unitOfKey(key); }
       const current = byId.get(options.selectedId);
       const isCut = (path, id) => !!clipboard && clipboard.mode === 'cut' && ((id && clipboard.ids.includes(id)) || clipboard.folders.some((f) => within(path, f)));
       function select(next) {
@@ -263,7 +280,7 @@
       function run(task) {
         if (state.busy) return Promise.resolve();
         // Where the focus goes when the work is done: where it was asked to go, else where it is.
-        const back = state.focus || focusOf(container);
+        const back = state.focus || focusOf(container, state);
         state.busy = true; redraw();
         return Promise.resolve().then(task).catch((err) => D.log('dataset-list', err)).finally(() => {
           state.busy = false;
@@ -274,8 +291,7 @@
       }
 
       // ---- the tools ----
-      function doRemove(key) {
-        const u = targets(key);
+      function doRemove(u) {
         if (!actions || !count(u)) return;
         run(async () => {
           if (!(await actions.remove(u))) return;
@@ -287,16 +303,15 @@
           }
         });
       }
-      function doClip(mode, key) {
-        const u = targets(key);
+      function doClip(mode, u) {
         if (!actions || !count(u)) return;
         clipboard = { mode, ids: u.ids.slice(), folders: u.folders.slice() };
         redraw();
       }
+      /** Klistra in: with a row (keys, the snabbmeny) into that folder or beside that dataset; with the tool where the selection is. */
       function doPaste(key) {
         if (!actions || !clipboard) return;
         const clip = clipboard;
-        // Keys paste where the focus is (into a folder, beside a dataset); the tool where the selection is.
         let target;
         if (key && key.startsWith('f:')) target = key.slice(2);
         else if (key && key.startsWith('d:') && byId.get(key.slice(2))) target = byId.get(key.slice(2)).folder || '';
@@ -309,55 +324,76 @@
         });
       }
       function reveal(path) { let changed = false; for (let p = path; p; p = parentOf(p)) if (collapsed.delete(p)) changed = true; if (changed) persistCollapsed(); }
-      function doRename(key) {
-        const u = targets(key);
+      function doRename(u) {
         if (!actions || count(u) !== 1) return;
-        const editKey = u.folders.length ? 'f:' + u.folders[0] : 'd:' + u.ids[0];
-        const original = u.folders.length ? leafOf(u.folders[0]) : (byId.get(u.ids[0]) || {}).name || '';
+        const key = u.folders.length ? 'f:' + u.folders[0] : 'd:' + u.ids[0];
+        const name = u.folders.length ? leafOf(u.folders[0]) : (byId.get(u.ids[0]) || {}).name || '';
         reveal(u.folders.length ? parentOf(u.folders[0]) : ((byId.get(u.ids[0]) || {}).folder || ''));
-        state.editing = { kind: 'rename', key: editKey, unit: u, value: original, original };
-        state.focus = { key: editKey, part: 'edit', select: true };
-        redraw();
+        state.editing = { kind: 'rename', key, unit: u, original: name };
+        view.edit(key, { value: name, original: name, label: t('tree.rename.field', { name }) });
       }
-      function doNewFolder() {
-        const parent = targetOf(units(), byId, current);
+      function doNewFolder(parent) {
         const node = findNode(full, parent);
         const names = new Set(node ? Array.from(node.folders.keys()) : []);
         let name = t('datasets.tree.newfolder.name');
         for (let n = 2; names.has(name); n++) name = t('datasets.tree.newfolder.name.n', { n });
         reveal(parent);
-        state.editing = { kind: 'new', key: 'new', parent, value: name, original: '' };
-        state.focus = { key: 'new', part: 'edit', select: true };
+        state.editing = { kind: 'new', key: 'new', parent, original: '', value: name };
         redraw();
+        view.edit('new', { value: name, original: '', label: t('datasets.tree.newfolder.field') });
       }
-      function finishEdit(save) {
+      function renamed(node, value) {
         const edit = state.editing;
-        if (!edit) return;
         state.editing = null;
-        const value = String(edit.value || '').trim();
-        if (!save || !value || value === edit.original) { state.focus = edit.kind === 'new' ? null : { key: edit.key, part: 'main' }; redraw(); return; }
-        if (edit.kind === 'new') {
+        if (edit && edit.kind === 'new') {
           const path = datasets.normalizeFolder(joinPath(edit.parent, value.replace(/\//g, ' ')));
           if (path && !knownFolders.has(path)) folders.add(path);
           state.focus = { key: 'f:' + path, part: 'main' };
           redraw();
           return;
         }
+        if (!edit || edit.key !== node.id || !actions) { redraw(); return; }
         state.focus = { key: edit.key, part: 'main' };
         run(() => actions.rename(edit.unit, value));
       }
-      function openMove() {
-        const u = targets(null);
+      function notRenamed() {
+        const edit = state.editing;
+        state.editing = null;
+        if (edit && edit.kind === 'new') redraw();
+      }
+      function openMove(u) {
         if (!actions || !count(u)) return;
         state.moving = u;
         state.focus = { tool: 'move-to' };
         redraw();
       }
+      function setChecked(nodes, on) {
+        if (!options.onToggle) return;
+        const next = new Set(selected);
+        for (const n of nodes) {
+          if (n.id.startsWith('d:')) { const id = n.id.slice(2); if (on) next.add(id); else next.delete(id); continue; }
+          if (!n.id.startsWith('f:')) continue;
+          const f = findNode(full, n.id.slice(2));
+          if (!f) continue;
+          const c = contents(f);
+          for (const id of c.ids) { if (on) next.add(id); else next.delete(id); }
+          for (const p of c.marks) { if (on) markedFolders.add(p); else markedFolders.delete(p); }
+        }
+        select(next);
+      }
+      const checkState = (n) => {
+        if (n.id.startsWith('d:')) return selected.has(n.id.slice(2)) ? 'all' : 'none';
+        const f = n.id.startsWith('f:') ? findNode(full, n.id.slice(2)) : null;
+        return f ? folderState(f, selected, markedFolders) : 'none';
+      };
 
       const header = h('div', { class: 'dm-list-head' },
         multi && selected.size ? h('span', { class: 'dm-help', text: t('datasets.selected.count', { n: selected.size }) }) : null,
-        clipboard ? h('span', { class: 'dm-help', 'data-clip': clipboard.mode, text: t('datasets.tree.clip.' + clipboard.mode, { n: count(clipboard) }) }) : null);
-      dropTarget(header, '');
+        clipboard ? h('span', { class: 'dm-help', 'data-clip': clipboard.mode, text: t('datasets.tree.clip.' + clipboard.mode, { n: count(clipboard) }) }) : null,
+        // Välj on touch screens, as in the phones' file apps: the check boxes show and a tap checks.
+        multi && options.onToggle ? basic.button({ label: t(state.selecting ? 'tree.select.done' : 'tree.select'), title: t('tree.select.tip'), icon: 'list-checks', size: 'sm', variant: 'ghost', class: 'dm-tree-select', pressed: String(!!state.selecting), onClick: () => { state.selecting = !state.selecting; redraw(); } }) : null);
+      const canMove = !!(options.onMove || actions);
+      if (canMove) view.dropZone(header, null);
       const items = [header];
       const anything = all.length > 0 || marks.length > 0;
       if (!all.length) items.push(h('p', { class: 'dm-help', text: options.emptyHint || t('shell.no.datasets.hint') }));
@@ -375,32 +411,30 @@
         sortSel.addEventListener('change', () => { state.sort = sortSel.value; redraw(); });
         items.push(h('div', { class: 'dm-list-tools' }, filterIn, sortSel));
       }
+      if (state.overflow) { state.overflow.disconnect(); state.overflow = null; }
       if (actions && anything) items.push(toolbar());
       if (actions && state.moving) items.push(movePicker());
-
-      const needle = state.filter.trim().toLowerCase();
-      const shown = needle
-        ? all.filter((d) => d.name.toLowerCase().includes(needle) || String(d.shortName || '').includes(needle) || (d.tags || []).some((x) => String(x).toLowerCase().includes(needle)) || String(d.folder || '').toLowerCase().includes(needle))
-        : all;
-      const sorted = sortDatasets(shown, state.sort);
-      const visibleOrder = sorted.map((d) => d.id);
-      const list = h('div', { class: 'dm-list dm-tree' });
 
       function toolbar() {
         const u = targets(null);
         const n = count(u);
         const where = (p) => p || t('datasets.tree.root');
-        const tool = (id, label, tip, enabled, onClick, variant) => basic.button({
-          label, title: tip, size: 'sm', variant: variant || 'ghost', 'data-tool': id, disabled: !enabled || state.busy, onClick,
+        // Icons with the name for screen readers and the tip, on one line; what does not fit is under Fler alternativ.
+        const tool = (id, icon, label, tip, enabled, onClick, variant) => basic.button({
+          label, icon, title: tip, size: 'sm', variant: variant || 'ghost', 'data-tool': id, disabled: !enabled || state.busy, onClick,
         });
-        return h('div', { class: 'dm-tree-toolbar', role: 'group', 'aria-label': t('datasets.tree.tools') },
-          tool('newfolder', t('datasets.tree.newfolder'), t('datasets.tree.newfolder.tip', { folder: where(targetOf(units(), byId, current)) }), true, doNewFolder),
-          tool('rename', t('common.rename'), t('datasets.tree.rename.tip'), n === 1, () => doRename(null)),
-          tool('cut', t('datasets.tree.cut'), t('datasets.tree.cut.tip'), n > 0, () => doClip('cut', null)),
-          tool('copy', t('common.copy'), t('datasets.tree.copy.tip'), n > 0, () => doClip('copy', null)),
-          tool('paste', t('datasets.tree.paste'), t('datasets.tree.paste.tip', { folder: where(targetOf(units(), byId, current, clipboard)) }), !!clipboard, () => doPaste(null)),
-          tool('move', t('datasets.tree.move'), t('datasets.tree.move.tip'), n > 0, openMove),
-          tool('delete', t('common.delete'), t('datasets.tree.delete.tip'), n > 0, () => doRemove(null), 'danger'));
+        const more = /** @type {any} */ (h('dm-menu-button', { label: t('common.more'), icon: 'more-horizontal', 'icon-only': true, size: 'sm', variant: 'ghost', class: 'dm-tree-more', hidden: true }));
+        const bar = h('div', { class: 'dm-tree-toolbar', role: 'group', 'aria-label': t('datasets.tree.tools') },
+          tool('newfolder', 'folder-plus', t('datasets.tree.newfolder'), t('datasets.tree.newfolder.tip', { folder: where(targetOf(units(), byId, current)) }), true, () => doNewFolder(targetOf(units(), byId, current))),
+          tool('rename', 'pencil', t('common.rename'), t('datasets.tree.rename.tip'), n === 1, () => doRename(targets(null))),
+          tool('cut', 'scissors', t('datasets.tree.cut'), t('datasets.tree.cut.tip'), n > 0, () => doClip('cut', targets(null))),
+          tool('copy', 'copy', t('common.copy'), t('datasets.tree.copy.tip'), n > 0, () => doClip('copy', targets(null))),
+          tool('paste', 'clipboard-paste', t('datasets.tree.paste'), t('datasets.tree.paste.tip', { folder: where(targetOf(units(), byId, current, clipboard)) }), !!clipboard, () => doPaste(null)),
+          tool('move', 'folder-input', t('datasets.tree.move'), t('datasets.tree.move.tip'), n > 0, () => openMove(targets(null))),
+          tool('delete', 'trash-2', t('common.delete'), t('datasets.tree.delete.tip'), n > 0, () => doRemove(targets(null)), 'danger'),
+          more);
+        state.overflow = menuMod.overflow(bar, more);
+        return bar;
       }
       function movePicker() {
         const u = state.moving;
@@ -423,195 +457,106 @@
         panel.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } });
         return panel;
       }
-
-      // Drop targets: a folder row or the heading (the root).
-      function dropTarget(el, folderPath) {
-        if (!options.onMove && !actions) return;
-        el.addEventListener('dragover', (e) => { if (e.dataTransfer && Array.from(e.dataTransfer.types).includes(DRAG_TYPE)) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; el.classList.add('dm-drop-target'); } });
-        el.addEventListener('dragleave', () => el.classList.remove('dm-drop-target'));
-        el.addEventListener('drop', (e) => {
-          el.classList.remove('dm-drop-target');
-          const data = dragged(e);
-          if (!data) return;
-          e.preventDefault();
-          if (data.folders.length && actions) run(() => actions.paste({ mode: 'cut', ids: data.ids, folders: data.folders }, folderPath));
-          else if (options.onMove) options.onMove(data.ids, folderPath);
-          else if (actions) run(() => actions.paste({ mode: 'cut', ids: data.ids, folders: [] }, folderPath));
-        });
-      }
-      /** A drag from a row carries the selection when the row is part of it, else the row alone. */
-      function draggable(el, key, path) {
-        if (!options.onMove && !actions) return;
-        if (key.startsWith('f:') && !actions) return;
-        el.draggable = true;
-        el.addEventListener('dragstart', (e) => {
-          const u = units();
-          const id = key.startsWith('d:') ? key.slice(2) : null;
-          const inside = id ? u.ids.includes(id) || u.folders.some((f) => within(path, f)) : u.folders.some((f) => within(path, f));
-          const carried = inside ? u : unitOfKey(key);
-          e.dataTransfer.setData(DRAG_TYPE, JSON.stringify({ dataspatium: 'datasets', ids: carried.ids, folders: carried.folders }));
-          e.dataTransfer.effectAllowed = 'move';
-        });
+      /** The snabbmeny: the tools, on the row pressed (or on the checked items when it is one of them). */
+      function menuOf(node) {
+        if (!actions || node.id === 'new') return [];
+        const key = node.id;
+        const u = unitsFor(key);
+        return [
+          { id: 'newfolder', label: t('datasets.tree.newfolder'), icon: 'folder-plus', onSelect: () => doNewFolder(pathOfKey(key)) },
+          { id: 'rename', label: t('common.rename'), icon: 'pencil', hint: 'F2', disabled: count(u) !== 1, onSelect: () => doRename(u) },
+          { id: 'cut', label: t('datasets.tree.cut'), icon: 'scissors', hint: 'Ctrl+X', onSelect: () => doClip('cut', u) },
+          { id: 'copy', label: t('common.copy'), icon: 'copy', hint: 'Ctrl+C', onSelect: () => doClip('copy', u) },
+          { id: 'paste', label: t('datasets.tree.paste'), icon: 'clipboard-paste', hint: 'Ctrl+V', disabled: !clipboard, onSelect: () => doPaste(key) },
+          { id: 'move', label: t('tree.move.to'), icon: 'folder-input', onSelect: () => openMove(u) },
+          { separator: true },
+          { id: 'delete', label: t('common.delete'), icon: 'trash-2', hint: 'Delete', danger: true, onSelect: () => doRemove(u) },
+        ];
       }
 
-      function toggle(id, shiftKey) {
-        if (!options.onToggle) return;
-        const next = new Set(selected);
-        if (shiftKey && state.last && visibleOrder.includes(state.last)) {
-          const a = visibleOrder.indexOf(state.last); const b = visibleOrder.indexOf(id);
-          const [from, to] = a < b ? [a, b] : [b, a];
-          const on = !next.has(id);
-          for (const x of visibleOrder.slice(from, to + 1)) { if (on) next.add(x); else next.delete(x); }
-        } else if (next.has(id)) next.delete(id); else next.add(id);
-        state.last = id;
-        select(next);
+      // ---- the tree's rows ----
+      const needle = state.filter.trim().toLowerCase();
+      const shown = needle
+        ? all.filter((d) => d.name.toLowerCase().includes(needle) || String(d.shortName || '').includes(needle) || (d.tags || []).some((x) => String(x).toLowerCase().includes(needle)) || String(d.folder || '').toLowerCase().includes(needle))
+        : all;
+      const sorted = sortDatasets(shown, state.sort);
+      const editingNew = state.editing && state.editing.kind === 'new' ? state.editing : null;
+      let placed = false;
+      const newNode = () => ({ id: 'new', label: editingNew.value, icon: 'folder-plus', checkable: false, draggable: false, droppable: false });
+      const byName = (a, b) => a.name.localeCompare(b.name, i18n.locale());
+      function datasetNode(ds) {
+        return {
+          id: 'd:' + ds.id, label: ds.name, icon: kindIcon(ds.kind),
+          // The short name is what SQL, R and chart files use to refer to the dataset.
+          code: ds.shortName || '', sub: kindSummary(ds), current: ds.id === options.selectedId, cut: isCut(ds.folder || '', ds.id),
+          trailing: options.itemTrailing ? options.itemTrailing(ds) : null, rowAttrs: { 'data-id': ds.id }, mainAttrs: { 'data-id': ds.id },
+        };
       }
-      function toggleFolder(path) {
-        const node = findNode(full, path);
-        if (!node || !options.onToggle) return;
-        const c = contents(node);
-        const on = folderState(node, selected, markedFolders) !== 'all';
-        const next = new Set(selected);
-        for (const id of c.ids) { if (on) next.add(id); else next.delete(id); }
-        for (const p of c.marks) { if (on) markedFolders.add(p); else markedFolders.delete(p); }
-        select(next);
-      }
-      function checkbox(label, st, onClick) {
-        const box = h('input', { type: 'checkbox', 'data-part': 'box', 'aria-label': label, checked: st === 'all' ? true : null, props: { checked: st === 'all', indeterminate: st === 'some' } });
-        box.addEventListener('click', onClick);
-        return h('label', { class: 'dm-tree-check' }, box);
-      }
-      function editor(label) {
-        const edit = state.editing;
-        const input = /** @type {any} */ (h('dm-input', { 'aria-label': label, class: 'dm-tree-edit', 'data-part': 'edit' }));
-        input.value = edit.value;
-        input.addEventListener('input', () => { edit.value = input.value; });
-        input.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') { e.preventDefault(); finishEdit(true); }
-          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finishEdit(false); }
-        });
-        // Leaving the field keeps what was typed, as in a file manager; a field taken away by a new drawing does not count.
-        input.addEventListener('focusout', () => { setTimeout(() => { if (input.isConnected && state.editing === edit && !input.contains(document.activeElement)) finishEdit(true); }, 0); });
-        return input;
-      }
-      const spacer = () => h('span', { class: 'dm-tree-spacer', 'aria-hidden': 'true' });
-
-      function datasetRow(ds, depth) {
-        const key = 'd:' + ds.id;
-        const editing = state.editing && state.editing.kind === 'rename' && state.editing.key === key;
-        let main;
-        if (editing) main = editor(t('datasets.tree.rename.field', { name: ds.name }));
-        else {
-          main = item({
-            id: ds.id, icon: kindIcon(ds.kind), label: ds.name,
-            // The short name is what SQL, R and chart files use to refer to the dataset.
-            sub: `${ds.shortName ? ds.shortName + ' · ' : ''}${kindSummary(ds)}`,
-            code: ds.shortName || '', current: ds.id === options.selectedId, onSelect: options.onSelect,
-          });
-          main.setAttribute('data-part', 'main');
-          draggable(main, key, ds.folder || '');
+      function childrenOf(f) {
+        const kids = [];
+        if (editingNew && editingNew.parent === f.path) { kids.push(newNode()); placed = true; }
+        for (const c of Array.from(f.folders.values()).sort(byName)) {
+          kids.push({ id: 'f:' + c.path, label: c.name, count: c.count, children: childrenOf(c), cut: isCut(c.path, null), draggable: !!actions, mainClass: 'dm-tree-folder', rowAttrs: { 'data-folder-row': c.path }, mainAttrs: { 'data-folder': c.path } });
         }
-        const trailing = options.itemTrailing ? options.itemTrailing(ds) : null;
-        const row = h('div', { class: 'dm-tree-row' + (!multi && trailing ? ' dm-tree-row-trailing' : '') + (isCut(ds.folder || '', ds.id) ? ' dm-tree-cut' : ''), 'data-id': ds.id, 'data-key': key },
-          multi ? checkbox(t('datasets.select', { name: ds.name }), selected.has(ds.id) ? 'all' : 'none', (e) => toggle(ds.id, e.shiftKey)) : null,
-          spacer(), main, trailing || null);
-        row.style.setProperty('--dm-depth', String(depth));
-        return row;
+        for (const ds of f.datasets) kids.push(datasetNode(ds));
+        return kids;
       }
-      function newFolderRow(depth) {
-        const row = h('div', { class: 'dm-tree-folder-row dm-tree-new', 'data-key': 'new' },
-          multi ? h('span', { class: 'dm-tree-check', 'aria-hidden': 'true' }) : null, spacer(), icons.icon('folder-plus', 16), editor(t('datasets.tree.newfolder.field')));
-        row.style.setProperty('--dm-depth', String(depth));
-        state.editing.placed = true;
-        return row;
-      }
-      function folderRow(f, depth) {
-        const key = 'f:' + f.path;
-        const isCollapsed = collapsed.has(f.path) && !needle;
-        const flip = () => { if (collapsed.has(f.path)) collapsed.delete(f.path); else collapsed.add(f.path); persistCollapsed(); redraw(); };
-        const fullNode = findNode(full, f.path) || f;
-        const st = multi ? folderState(fullNode, selected, markedFolders) : 'none';
-        const chevron = h('button', {
-          type: 'button', class: 'dm-tree-toggle', 'data-part': 'toggle', 'aria-expanded': isCollapsed ? 'false' : 'true',
-          'aria-label': t(isCollapsed ? 'datasets.tree.folder.expand' : 'datasets.tree.folder.collapse', { name: f.name }), title: t('datasets.tree.folder.toggle'), onclick: flip,
-        }, icons.icon(isCollapsed ? 'chevron-right' : 'chevron-down', 14));
-        const editing = state.editing && state.editing.kind === 'rename' && state.editing.key === key;
-        let main;
-        if (editing) main = editor(t('datasets.tree.rename.field', { name: f.name }));
-        else {
-          // With check boxes a click on a folder chooses it whole and the chevron opens or closes it; without, a click opens or closes it.
-          main = h('button', {
-            type: 'button', class: 'dm-list-item dm-tree-folder', 'data-folder': f.path, 'data-part': 'main',
-            'aria-expanded': multi ? null : (isCollapsed ? 'false' : 'true'), 'aria-pressed': multi ? (st === 'all' ? 'true' : st === 'some' ? 'mixed' : 'false') : null,
-            title: multi ? t('datasets.tree.folder.choose', { name: f.path }) : t('datasets.tree.folder.toggle'),
-            onclick: multi ? () => toggleFolder(f.path) : flip,
-          }, icons.icon(isCollapsed ? 'folder' : 'folder-open', 16),
-          h('span', { class: 'dm-truncate', text: f.name }), h('span', { class: 'dm-tree-count', text: i18n.formatNumber(f.count) }));
-          draggable(main, key, f.path);
-        }
-        const row = h('div', { class: 'dm-tree-folder-row' + (isCut(f.path, null) ? ' dm-tree-cut' : ''), 'data-key': key, 'data-folder-row': f.path },
-          multi ? checkbox(t('datasets.tree.folder.select', { name: f.path }), st, () => toggleFolder(f.path)) : null, chevron, main);
-        row.style.setProperty('--dm-depth', String(depth));
-        dropTarget(row, f.path);
-        return row;
-      }
-      function renderNode(node, depth) {
-        if (state.editing && state.editing.kind === 'new' && state.editing.parent === node.path) list.appendChild(newFolderRow(depth));
-        const children = Array.from(node.folders.values()).sort((a, b) => a.name.localeCompare(b.name, i18n.locale()));
-        for (const f of children) {
-          list.appendChild(folderRow(f, depth));
-          if (!(collapsed.has(f.path) && !needle)) renderNode(f, depth + 1);
-        }
-        for (const ds of node.datasets) list.appendChild(datasetRow(ds, depth));
-      }
-      if (state.editing) state.editing.placed = false;
-      renderNode(buildTree(sorted, needle ? marks.filter((p) => p.toLowerCase().includes(needle)) : marks), 0);
+      const nodes = childrenOf(buildTree(sorted, needle ? marks.filter((p) => p.toLowerCase().includes(needle)) : marks));
       // A new folder whose parent the filter hides is named at the top.
-      if (state.editing && state.editing.kind === 'new' && !state.editing.placed) list.insertBefore(newFolderRow(0), list.firstChild);
+      if (editingNew && !placed) nodes.unshift(newNode());
 
-      // Keys on the tree: the tools, and moving between the rows.
-      list.addEventListener('keydown', (e) => {
-        const target = /** @type {HTMLElement} */ (e.target);
-        if (target.closest('dm-input')) return;
-        const rowEl = target.closest('[data-key]');
-        const key = rowEl ? rowEl.getAttribute('data-key') : null;
-        const mod = (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey;
-        const letter = e.key.length === 1 ? e.key.toLowerCase() : '';
-        const plain = !e.ctrlKey && !e.metaKey && !e.altKey;
-        if (actions && e.key === 'Delete' && plain && !e.shiftKey) doRemove(key);
-        else if (actions && mod && letter === 'c') doClip('copy', key);
-        else if (actions && mod && letter === 'x') doClip('cut', key);
-        else if (actions && mod && letter === 'v') doPaste(key);
-        else if (actions && e.key === 'F2' && plain) doRename(key);
-        else if (plain && ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) {
-          const mains = Array.from(list.querySelectorAll('[data-part="main"]'));
-          const at = rowEl ? mains.findIndex((m) => rowEl.contains(m)) : -1;
-          const to = e.key === 'Home' ? 0 : e.key === 'End' ? mains.length - 1 : e.key === 'ArrowDown' ? Math.min(at + 1, mains.length - 1) : Math.max(at - 1, 0);
-          focusEl(mains[to], false);
-        } else if (plain && key && key !== 'new' && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
-          const path = key.startsWith('f:') ? key.slice(2) : null;
-          const ds = path === null ? byId.get(key.slice(2)) : null;
-          const mains = Array.from(list.querySelectorAll('[data-part="main"]'));
-          const at = mains.findIndex((m) => rowEl.contains(m));
-          if (path !== null && e.key === 'ArrowRight' && collapsed.has(path)) { collapsed.delete(path); persistCollapsed(); state.focus = { key, part: 'main' }; redraw(); }
-          else if (path !== null && e.key === 'ArrowRight') focusEl(mains[at + 1] || null, false);
-          else if (path !== null && e.key === 'ArrowLeft' && !collapsed.has(path) && findNode(full, path) && (findNode(full, path).folders.size || findNode(full, path).datasets.length)) { collapsed.add(path); persistCollapsed(); state.focus = { key, part: 'main' }; redraw(); }
-          else if (e.key === 'ArrowLeft') {
-            const up = path !== null ? parentOf(path) : (ds ? ds.folder || '' : '');
-            if (up) focusEl(list.querySelector(`[data-key="${CSS.escape('f:' + up)}"] [data-part="main"]`), false);
-          } else return;
-        } else return;
-        e.preventDefault();
-        e.stopPropagation();
-      });
-      items.push(list);
+      items.push(view.el);
       if (options.extra && options.extra.length) {
         items.push(h('hr'));
         items.push(h('div', { class: 'dm-list' }, options.extra.map((x) => item(Object.assign({ current: x.id === options.selectedId, onSelect: options.onSelect }, x)))));
       }
       if (options.tools && options.tools.length) items.push(h('div', { class: 'dm-list-actions' }, options.tools));
-      replace(container, items);
-      restoreFocus(container, focus);
+      placeAround(container, items, view.el);
+      view.update({
+        nodes, openAll: !!needle, checkable: multi, checkState, selecting: !!state.selecting,
+        onCheck: (node, info) => setChecked(info.range || [node], info.on),
+        onActivate: (node, e) => {
+          if (node.id === 'new') return true;
+          if (node.id.startsWith('d:')) {
+            options.onSelect(node.id.slice(2));
+            view.el.dispatchEvent(new CustomEvent('dm-choose', { bubbles: true, detail: { id: node.id.slice(2) } }));
+            return true;
+          }
+          if (multi) { setChecked([node], checkState(node) !== 'all'); return true; }
+          return false;
+        },
+        onKey: (e, node) => {
+          if (!actions || node.id === 'new') return false;
+          const key = node.id;
+          const mod = (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey;
+          const letter = e.key.length === 1 ? e.key.toLowerCase() : '';
+          const plain = !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey;
+          if (e.key === 'Delete' && plain) doRemove(targets(key));
+          else if (mod && letter === 'c') doClip('copy', targets(key));
+          else if (mod && letter === 'x') doClip('cut', targets(key));
+          else if (mod && letter === 'v') doPaste(key);
+          else if (e.key === 'F2' && plain) doRename(targets(key));
+          else return false;
+          return true;
+        },
+        onDrop: canMove ? (payload, target) => {
+          const data = carried(payload);
+          if (!data) return;
+          const path = target ? target.id.slice(2) : '';
+          if (data.folders.length && actions) run(() => actions.paste({ mode: 'cut', ids: data.ids, folders: data.folders }, path));
+          else if (options.onMove) options.onMove(data.ids, path);
+          else if (actions) run(() => actions.paste({ mode: 'cut', ids: data.ids, folders: [] }, path));
+        } : undefined,
+        // A drag from a row carries the selection when the row is part of it, else the row alone.
+        dragData: (node) => { if (node.id === 'new') return null; const u = unitsFor(node.id); return { dataspatium: 'datasets', ids: u.ids, folders: u.folders }; },
+        // A folder cannot go into itself or below itself.
+        canDrop: (payload, target) => { const data = carried(payload); if (!data) return false; const path = target ? target.id.slice(2) : ''; return !data.folders.some((f) => within(path, f)); },
+        onRename: actions ? renamed : undefined,
+        onRenameCancel: notRenamed,
+        menu: actions ? menuOf : undefined,
+        rootLabel: t('datasets.folder.root'),
+      });
+      restoreFocus(container, state, focus);
     }
 
     function item({ id, icon, label, sub, code, current, onSelect }) {
@@ -620,7 +565,7 @@
         if (code) { subEl.appendChild(h('code', { class: 'dm-list-code', text: code })); subEl.appendChild(document.createTextNode(sub.slice(code.length))); }
         else subEl.textContent = sub;
       }
-      return h('button', { type: 'button', class: 'dm-list-item', 'data-id': id, 'aria-current': current ? 'true' : null, title: code ? `${label} (${code})` : label, onclick: () => onSelect(id) },
+      return h('button', { type: 'button', class: 'dm-list-item', 'data-id': id, 'aria-current': current ? 'true' : null, onclick: () => onSelect(id) },
         icons.icon(icon, 16),
         h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: label }), subEl));
     }

@@ -2120,8 +2120,6 @@
     'datasets.sort.name': 'Navn',
     'datasets.sort.rows': 'Antal rækker',
     'datasets.selected.count': '{n} markeret',
-    'datasets.select': 'Markér {name}',
-    'datasets.tree.folder.toggle': 'Fold mappen sammen eller ud',
     'datasets.folder': 'Mappe',
     'datasets.folder.root': 'Ingen mappe (roden)',
     'datasets.folder.new': 'Ny mappe…',

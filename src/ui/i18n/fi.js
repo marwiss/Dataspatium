@@ -2120,8 +2120,6 @@
     'datasets.sort.name': 'Nimi',
     'datasets.sort.rows': 'Rivimäärä',
     'datasets.selected.count': '{n} valittu',
-    'datasets.select': 'Valitse {name}',
-    'datasets.tree.folder.toggle': 'Supista tai laajenna kansio',
     'datasets.folder': 'Kansio',
     'datasets.folder.root': 'Ei kansiota (juuri)',
     'datasets.folder.new': 'Uusi kansio…',

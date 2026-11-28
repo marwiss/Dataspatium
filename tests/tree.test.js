@@ -502,4 +502,125 @@
       return `${n} nodes: drawn in ${Math.round(build)} ms (${drawn} rows in the DOM), End in ${Math.round(end)} ms, a fold in ${Math.round(fold)} ms, a filter in ${Math.round(filter)} ms`;
     } finally { view.destroy(); host.remove(); }
   }, 30000);
+
+  // ---- the dataset list on top of the tree ----
+  function listFixture(width) {
+    const list = D.require('ui/dataset-list');
+    const container = document.createElement('div');
+    container.style.cssText = `position:absolute; left:-10000px; top:0; width:${width || 320}px;`;
+    document.body.appendChild(container);
+    const calls = { toggled: [], removed: [], pasted: [], selected: [] };
+    const ds = [
+      { id: 'ta', name: 'Alfa', shortName: 'alfa', folder: 'X', rowCount: 1, columnCount: 1, updatedAt: '2026-01-03' },
+      { id: 'tb', name: 'Beta', shortName: 'beta', folder: 'X/Y', rowCount: 2, columnCount: 1, updatedAt: '2026-01-02' },
+      { id: 'tc', name: 'Gamma', shortName: 'gamma', folder: '', rowCount: 3, columnCount: 1, updatedAt: '2026-01-01' },
+    ];
+    const opts = {
+      datasets: ds, selectedId: null, onSelect: (id) => calls.selected.push(id), multi: true, selectedIds: [], onToggle: (ids) => { calls.toggled.push(ids.slice().sort()); },
+      actions: { remove: async (u) => { calls.removed.push(u); return true; }, paste: async (clip, target) => { calls.pasted.push({ clip, target }); return []; }, rename: async () => true },
+    };
+    list.render(container, opts);
+    return {
+      list, container, calls, again: (patch) => list.render(container, Object.assign(opts, patch)),
+      main: (sel) => /** @type {HTMLElement} */ (container.querySelector(sel + ' [data-part="main"]')),
+      done: () => { if (container.contains(document.activeElement)) /** @type {any} */ (document.activeElement).blur(); const m = menu.current(); if (m) m.close(false); list.clip.set(null); container.remove(); },
+    };
+  }
+
+  test('dataset list: one row height for folders and datasets, the focus ring inside the row, no tips on rows, and the tools as icons on one line', async (assert) => {
+    const f = listFixture();
+    try {
+      const folderRow = /** @type {HTMLElement} */ (f.container.querySelector('[data-folder-row="X"]'));
+      const dsRow = /** @type {HTMLElement} */ (f.container.querySelector('.dm-tree-row[data-id="ta"]'));
+      assert.equal(Math.round(folderRow.getBoundingClientRect().height), Math.round(dsRow.getBoundingClientRect().height), 'the same height');
+      assert.equal(getComputedStyle(folderRow).backgroundColor, getComputedStyle(dsRow).backgroundColor, 'the same background');
+      const main = f.main('[data-folder-row="X"]');
+      assert.ok(!main.hasAttribute('title') && !main.hasAttribute('data-tip'), 'no tip on a folder (it covered the next row)');
+      const ring = getComputedStyle(main);
+      main.focus();
+      key(main, 'ArrowDown'); key(document.activeElement, 'ArrowUp');
+      assert.equal(document.activeElement, f.main('[data-folder-row="X"]'));
+      assert.ok(parseFloat(getComputedStyle(document.activeElement).outlineOffset) <= 0, 'the focus ring lies inside the row: ' + ring.outlineOffset);
+      const bar = /** @type {HTMLElement} */ (f.container.querySelector('.dm-tree-toolbar'));
+      const tops = new Set(Array.from(bar.querySelectorAll('dm-button')).map((b) => Math.round(b.getBoundingClientRect().top)));
+      assert.equal(tops.size, 1, 'one line');
+      for (const b of Array.from(bar.querySelectorAll('dm-button'))) {
+        assert.ok(b.getAttribute('icon'), 'an icon on ' + b.getAttribute('data-tool'));
+        assert.ok(b.getBoundingClientRect().width < 50, 'an icon button: ' + b.getAttribute('data-tool'));
+      }
+      assert.ok(f.container.querySelector('.dm-tree-more').hidden, 'Fler alternativ only when the tools do not fit');
+      assert.equal(f.container.querySelector('.dm-tree').getAttribute('role'), 'tree');
+      assert.deepEqual(D.require('tests/a11y').audit(f.container), [], 'the accessibility check');
+      return 'ok';
+    } finally { f.done(); }
+  });
+
+  test('dataset list: in a narrow panel the tools that do not fit are under Fler alternativ, and Välj, the snabbmeny and dm-choose work', async (assert) => {
+    const f = listFixture(150);
+    try {
+      const more = /** @type {any} */ (await waitFor(() => { const m = f.container.querySelector('.dm-tree-more'); return m && !m.hidden ? m : null; }, 3000, 'Fler alternativ'));
+      const hidden = Array.from(f.container.querySelectorAll('.dm-tree-toolbar > dm-button')).filter((b) => /** @type {any} */ (b).hidden).map((b) => b.getAttribute('data-tool'));
+      assert.ok(hidden.length && hidden.includes('delete'), 'the last tools are hidden: ' + hidden.join(', '));
+      more.querySelector('button').click();
+      const el = await waitFor(() => document.querySelector('.dm-menu'), 2000, 'the menu');
+      assert.deepEqual(Array.from(el.querySelectorAll('[role="menuitem"]')).map((b) => b.getAttribute('data-menu-item')), hidden, 'they are in the menu');
+      assert.equal(el.querySelector('[data-menu-item="delete"]').getAttribute('aria-disabled'), 'true', 'disabled as the tool is');
+      key(document.activeElement, 'Escape');
+      // The snabbmeny on a row acts on that row.
+      f.main('.dm-tree-row[data-id="tc"]').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }));
+      const ctx = await waitFor(() => document.querySelector('.dm-menu'), 2000, 'the snabbmeny');
+      assert.deepEqual(Array.from(ctx.querySelectorAll('[role="menuitem"]')).map((b) => b.getAttribute('data-menu-item')), ['newfolder', 'rename', 'cut', 'copy', 'paste', 'move', 'delete'], 'the same as the tools');
+      /** @type {HTMLElement} */ (ctx.querySelector('[data-menu-item="cut"]')).click();
+      assert.deepEqual(f.list.clip.get(), { mode: 'cut', ids: ['tc'], folders: [] }, 'Klipp ut on the row');
+      f.main('[data-folder-row="X/Y"]').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }));
+      /** @type {HTMLElement} */ ((await waitFor(() => document.querySelector('.dm-menu [data-menu-item="paste"]'), 2000, 'Klistra in')).click());
+      await waitFor(() => f.calls.pasted.length, 2000, 'pasted');
+      assert.deepEqual(f.calls.pasted.pop(), { clip: { mode: 'cut', ids: ['tc'], folders: [] }, target: 'X/Y' }, 'into the folder pressed');
+      // Välj: a tap checks.
+      const select = /** @type {HTMLElement} */ (f.container.querySelector('.dm-list-head .dm-tree-select button'));
+      assert.ok(select, 'Välj in the heading (shown on touch screens)');
+      select.click();
+      assert.ok(f.container.querySelector('.dm-tree').hasAttribute('data-selecting'));
+      f.main('.dm-tree-row[data-id="ta"]').click();
+      assert.deepEqual(f.calls.toggled.pop(), ['ta'], 'a tap checks in Välj');
+      assert.deepEqual(f.calls.selected, [], 'and opens nothing');
+      /** @type {HTMLElement} */ (f.container.querySelector('.dm-list-head .dm-tree-select button')).click();
+      let chose = null;
+      f.container.addEventListener('dm-choose', (e) => { chose = /** @type {CustomEvent} */ (e).detail.id; });
+      f.main('.dm-tree-row[data-id="tb"]').click();
+      assert.deepEqual(f.calls.selected, ['tb'], 'a tap opens again');
+      assert.equal(chose, 'tb', 'and tells the panel (a sheet closes)');
+      return 'ok';
+    } finally { f.done(); }
+  });
+
+  test('dataset list: a drag with a finger moves a dataset out of its folder to the top level, as Klipp ut and Klistra in', async (assert) => {
+    const list = D.require('ui/dataset-list');
+    const container = document.createElement('div');
+    container.style.cssText = 'position:fixed; left:0; top:0; width:320px; z-index:9999; background:var(--dm-surface);';
+    document.body.appendChild(container);
+    const moved = [];
+    const ds = [
+      { id: 'pa', name: 'Alfa', shortName: 'alfa', folder: 'X', rowCount: 1, columnCount: 1, updatedAt: '2026-01-03' },
+      { id: 'pc', name: 'Gamma', shortName: 'gamma', folder: '', rowCount: 3, columnCount: 1, updatedAt: '2026-01-01' },
+    ];
+    list.render(container, { datasets: ds, selectedId: null, onSelect() {}, multi: true, selectedIds: [], onToggle() {}, onMove: (ids, folder) => moved.push([ids, folder]) });
+    try {
+      const main = (sel) => /** @type {HTMLElement} */ (container.querySelector(sel + ' [data-part="main"]'));
+      const head = /** @type {HTMLElement} */ (container.querySelector('.dm-list-head'));
+      pointer(main('.dm-tree-row[data-id="pa"]'), 'pointerdown', centre(main('.dm-tree-row[data-id="pa"]')), 11);
+      await wait(650);
+      pointer(main('.dm-tree-row[data-id="pa"]'), 'pointermove', centre(head), 11);
+      assert.ok(head.classList.contains('dm-drop-target'), 'the heading is the top level');
+      pointer(main('.dm-tree-row[data-id="pa"]'), 'pointerup', centre(head), 11);
+      assert.deepEqual(moved.pop(), [['pa'], ''], 'out of the folder');
+      await wait(650);
+      pointer(main('.dm-tree-row[data-id="pc"]'), 'pointerdown', centre(main('.dm-tree-row[data-id="pc"]')), 12);
+      await wait(650);
+      pointer(main('.dm-tree-row[data-id="pc"]'), 'pointermove', centre(main('[data-folder-row="X"]')), 12);
+      pointer(main('.dm-tree-row[data-id="pc"]'), 'pointerup', centre(main('[data-folder-row="X"]')), 12);
+      assert.deepEqual(moved.pop(), [['pc'], 'X'], 'into a folder');
+      return 'ok';
+    } finally { container.remove(); }
+  });
 })();

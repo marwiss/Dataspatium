@@ -131,6 +131,8 @@
           // A side panel shown as a sheet closes when the workspace behind it is used or Escape is pressed; the
           // sheets start closed and the columns start open, following the window width.
           this.slots.center.addEventListener('pointerdown', () => this.closeSheets());
+          // A choice in the object panel's tree (ui/dataset-list: dm-choose) closes the panel when it is a sheet.
+          this.slots.left.addEventListener('dm-choose', () => { if (this.el.getAttribute('data-left') === 'sheet') this.el.setAttribute('data-left', 'closed'); });
           this.el.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.closeSheets(); });
           for (const side of ['left', 'right']) {
             const mq = matchMedia(SHEET_BREAKPOINT[side]);

@@ -2120,8 +2120,6 @@
     'datasets.sort.name': 'Navn',
     'datasets.sort.rows': 'Antall rader',
     'datasets.selected.count': '{n} merket',
-    'datasets.select': 'Merk {name}',
-    'datasets.tree.folder.toggle': 'Fold mappen sammen eller ut',
     'datasets.folder': 'Mappe',
     'datasets.folder.root': 'Ingen mappe (roten)',
     'datasets.folder.new': 'Ny mappe…',

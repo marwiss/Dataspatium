@@ -2120,8 +2120,6 @@
     'datasets.sort.name': 'Namn',
     'datasets.sort.rows': 'Tal på rader',
     'datasets.selected.count': '{n} merkte',
-    'datasets.select': 'Merk {name}',
-    'datasets.tree.folder.toggle': 'Fald mappa saman eller ut',
     'datasets.folder': 'Mappe',
     'datasets.folder.root': 'Inga mappe (rota)',
     'datasets.folder.new': 'Ny mappe…',
