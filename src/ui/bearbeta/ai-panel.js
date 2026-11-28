@@ -388,6 +388,8 @@
           const connector = await connectors.get(cde.connectorId);
           if (!connector || !opencde.isOpenCde(connector) || !opencde.signedIn(connector)) return;
           s.opsForm = await opencde.opsForm(connector).catch(() => null);
+          // A server that takes a whole file gets one when the change set cannot express everything (decision F124 a).
+          s.takesFiles = await opencde.takesFiles(connector).catch(() => false);
           // Dataregium's floor for proposing is the role editor (its F35 a): without it the button is not offered.
           s.canPropose = await opencde.canPropose(connector, cde.projectId).catch(() => true);
           const mine = s.preview;
@@ -401,8 +403,15 @@
         }
         /** The proposal's form: the changes of existing instances, and what only the description can tell. */
         const proposalOf = (report) => (report && report.proposal && Array.isArray(report.proposal.changes) ? report.proposal : null);
+        /** Whether the proposal goes as the whole candidate file: the change set cannot express it all, and the server takes files. */
+        function asFile(proposal) {
+          const un = proposal.unexpressed || {};
+          const withOps = !!s.opsForm && s.changeset.ops.length > 0;
+          return !withOps && !!s.takesFiles && !!(s.preview && s.preview.bytes) && !!(proposal.truncated || un.created || un.deleted || un.relations || un.geometry);
+        }
         function proposalText(proposal) {
           const un = proposal.unexpressed || {};
+          if (asFile(proposal)) return t('ai.change.propose.file', { n: i18n.formatNumber(proposal.changes.length), created: i18n.formatNumber(un.created || 0), deleted: i18n.formatNumber(un.deleted || 0), relations: i18n.formatNumber(un.relations || 0) });
           const lines = [t('ai.change.propose.summary', { n: i18n.formatNumber(proposal.changes.length), m: i18n.formatNumber(Number(proposal.instances) || 0) })];
           if (s.opsForm && s.changeset.ops.length) lines.push(t('ai.change.propose.ops', { n: i18n.formatNumber(s.changeset.ops.length) }));
           else if (un.created || un.deleted || un.relations) lines.push(t('ai.change.propose.unexpressed', { created: i18n.formatNumber(un.created || 0), deleted: i18n.formatNumber(un.deleted || 0), relations: i18n.formatNumber(un.relations || 0) }));
@@ -419,7 +428,8 @@
           const cde = s.cde;
           if (s.proposing || s.busy || !proposal || !cde) return;
           const withOps = !!s.opsForm && s.changeset.ops.length > 0;
-          if (!proposal.changes.length && !withOps) { fail(new Error(t('ai.change.propose.none'))); render(); return; }
+          const whole = asFile(proposal);
+          if (!proposal.changes.length && !withOps && !whole) { fail(new Error(t('ai.change.propose.none'))); render(); return; }
           const connector = await connectors.get(cde.connectorId);
           if (!connector) { fail(new Error(t('cde.err.noconnector', { host: cde.host }))); render(); return; }
           const project = cde.projectName || cde.projectId;
@@ -427,6 +437,7 @@
           const defaults = { project, title: (last || t('ai.change.title')).replace(/\s+/g, ' ').slice(0, 120), description: s.changeset.ops.map((op) => writeTools.describe(op)).join('\n') + '\n\n' + proposalText(proposal) };
           const values = given || await changeProposal.askWords({ title: defaults.title, description: defaults.description, hint: t('ai.change.propose.hint.dialog', { project }), help: 'cad-bim#ändra-med-ai' });
           if (!values) return;
+          if (whole) { await proposeFile(connector, values, defaults); return; }
           // What leaves the app goes through the review (CLAUDE.md): new values that look like personal data are kept or struck.
           const reviewed = await review.changeSet(ctx, { changes: proposal.changes, server: connector.name, project });
           if (!reviewed) return;
@@ -437,6 +448,30 @@
             const p = provider();
             await flow.send(connector, { title: values.title || defaults.title, description: values.description || defaults.description, changes: reviewed.changes,
               aiModel: p ? p.model : null, toolCall: s.changeset.ops.map((op) => op.tool).join(',') || null, ops: withOps ? await guidOps(writeTools.toWheel(s.changeset)) : undefined });
+          } catch (err) { fail(err); if (err && err.status === 403) s.error = t('ai.change.propose.role'); }
+          s.proposing = false; render();
+        }
+        /**
+         * The candidate as a whole file on Dataregium (decision F124 a): through the review as an upload's file, where a choice to change
+         * something is made in a copy that holds the candidate, then sent as the topic's own snippet on the base version.
+         */
+        async function proposeFile(connector, values, defaults) {
+          const meta = await datasets.get(options.datasetId);
+          const name = (meta && meta.model && meta.model.file) || 'model.ifc';
+          const reviewed = await review.review(ctx, [options.datasetId]);
+          if (!reviewed) return;
+          s.proposing = true; s.error = ''; render();
+          try {
+            const tr = reviewed.transform[options.datasetId] || {};
+            const shareScan = D.require('data/share-scan');
+            let bytes = s.preview.bytes;
+            if (shareScan.changes(tr)) {
+              const out = await shareScan.exportCopy(meta, D.require('data/kinds').of(meta).wholeFormat, tr, { filename: null, model: { bytes, name } });
+              bytes = new Uint8Array(await out.blob.arrayBuffer());
+            }
+            const p = provider();
+            await flow.sendFile(connector, { title: values.title || defaults.title, description: values.description || defaults.description, bytes, fileName: name,
+              aiModel: p ? p.model : null, toolCall: s.changeset.ops.map((op) => op.tool).join(',') || null });
           } catch (err) { fail(err); if (err && err.status === 403) s.error = t('ai.change.propose.role'); }
           s.proposing = false; render();
         }
@@ -528,7 +563,7 @@
               basic.button({ label: t('ai.change.preview'), icon: 'eye', size: 'sm', loading: s.previewing, disabled: !cs.ops.length || s.busy, title: t('ai.change.preview.hint'), 'data-ai-preview': '', onClick: previewNow }),
               basic.button({ label: t('ai.change.approve'), icon: 'check', size: 'sm', loading: s.approving, disabled: !report || errors > 0 || s.busy, title: t('ai.change.approve.hint'), 'data-ai-approve': '', onClick: approveNow }),
               serverProposal && s.canPropose === false ? h('p', { class: 'dm-help dm-xs', 'data-ai-propose-role': '', text: t('ai.change.propose.role.none') }) : null,
-              serverProposal && s.canPropose !== false ? basic.button({ label: t('ai.change.propose'), icon: 'share-2', size: 'sm', loading: s.proposing, disabled: !(proposal.changes.length || (s.opsForm && cs.ops.length)) || s.busy || !!s.proposed, title: t('ai.change.propose.hint'), 'data-ai-propose': '', onClick: () => proposeNow() }) : null,
+              serverProposal && s.canPropose !== false ? basic.button({ label: t('ai.change.propose'), icon: 'share-2', size: 'sm', loading: s.proposing, disabled: !(proposal.changes.length || (s.opsForm && cs.ops.length) || asFile(proposal)) || s.busy || !!s.proposed, title: t('ai.change.propose.hint'), 'data-ai-propose': '', onClick: () => proposeNow() }) : null,
               basic.button({ label: t('ai.change.reject'), icon: 'x', size: 'sm', variant: 'ghost', disabled: !cs.ops.length || s.busy, title: t('ai.change.reject.hint'), 'data-ai-reject': '', onClick: rejectNow })),
             h('p', { class: 'dm-help dm-xs', text: t('ai.change.python') }));
         }

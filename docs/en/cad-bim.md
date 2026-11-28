@@ -806,6 +806,21 @@ approved. When an element is deleted or has changed class in the latest version,
 take what came between, all your changes of it are struck, and otherwise they are tried again on the latest version. The merge
 happens on the server; the browser handles only the collisions themselves.
 
+When the change set cannot express everything, such as new or deleted elements, new relationships or changed shapes, and the server
+takes whole files (Dataregium names `file_snippet_type`), the panel proposes the whole previewed file instead. The file first goes
+through the review before sharing, just as an upload does, and is then sent as the topic's own attachment against the base version,
+with the AI model and the tools as its provenance; the server sets the user and the time itself. The server tries the file and a
+manager approves it the same way as a change set. When the file collides with what came between, the panel lists the collisions, but
+a whole file has no changes to keep or drop one by one: fetch the latest version, redo the change there and propose again. When the
+change set expresses everything, as when the server takes the write tools' operations, the change set goes as before. The file may be
+at most as large as the server takes (`max_upload_bytes`); otherwise the app says so before anything is sent.
+
+A tried proposal on the card *Change proposals on the server* has the button *Show the difference* when the server compares two sides
+(Dataregium from phase 5.5): the app reads the trial, which says whether the proposal is a whole file or a change set and which commit
+it was made on, and the server compares the base version with that commit. The card shows how many elements are new, deleted and
+changed, and the first of them. A proposal as a whole file, from the app or from another client, says *Whole file* on its row and is
+approved as the others are.
+
 ## The right IFC class
 
 In IFC the class is the first classification: the most specific class with its PredefinedType, an ObjectType only when the
@@ -903,6 +918,13 @@ under which only instances changed, such as a point in a wall's profile, is amon
 such as an owner history, are under *Without an object*, and instances that more than 100 objects reach, such as a style or a unit,
 under *Shared instances*, marking no objects. When one version is a re-export, or you compare with another document, the panel says
 that the comparison was made by GlobalId.
+
+When the server keeps the document's history in the project's git (Dataregium from phase 5.5), *The server's versions* fetches the
+history instead, newest first and a hundred points at a time with *Newer* and *Older*: the versions, uploads as they came before the
+server merged them, the proposals' trials and uploads that could not be merged. Each point shows when it was made, by whom and its
+subject. The chosen point is compared with this version through the server's comparison of two sides, where a side is a version
+number or a commit, and shown as the lists and colours above. A conflict is kept only for a while; after that the panel says it is
+gone. Without the history on the server the button fetches the versions as before.
 
 ## Duplicates between models
 

@@ -161,9 +161,23 @@ ditt namn på servern och vilka steg som gjorde ändringen. Servern prövar för
 dokumentets nästa version. Har dokumentet fått nyare versioner avgör du krockarna per krock, på samma sätt som för förslag från
 AI-panelen (se [CAD och BIM](cad-bim.md#ändra-med-ai)). Modellen i appen ändras inte.
 
-Är modellen oförändrad mot basversionen, eller är ändringarna bara nya element, säger appen det vid knappen. Det gäller också när
-inget av det som ändrats kan uttryckas eller när ändringarna är fler än ett förslag kan bära. Använd då *Skicka som version*, så
-sammanfogar servern hela filen med det som kommit emellan.
+Kan ändringssetet inte bära allt som ändrats, alltså nya eller borttagna element, nya samband, ändrade former eller fler ändringar
+än ett förslag rymmer, och tar servern emot hela filer (Dataregium anger `file_snippet_type`), föreslår appen i stället hela
+modellfilen. Filen går genom granskningen före delning precis som vid en uppladdning, och det är den granskade kopian som skickas,
+som ärendets egen bilaga mot basversionen, med stegen som gjorde ändringen som proveniens. Filen får vara högst så stor som servern
+tar emot. Servern prövar den och en projektansvarig godkänner den som ett ändringsset. Krockar filen med en nyare version visar
+panelen krockarna, men de går inte att välja en och en för en hel fil: hämta den senaste versionen, gör om ändringarna och föreslå
+igen.
+
+Är modellen oförändrad mot basversionen säger appen det vid knappen. Tar servern inte emot hela filer säger appen det också när
+ändringarna bara är nya element, när inget av det som ändrats kan uttryckas eller när ändringarna är fler än ett förslag kan bära.
+Använd då *Skicka som version*, så sammanfogar servern hela filen med det som kommit emellan.
+
+Krockar en ny version med det som kommit emellan sedan basversionen, och sammanfogar servern med ifcmerge, listar panelen krockarna.
+Från Dataregiums fas 5.5 sparar servern din uppladdning en tid på en konfliktgren, och panelen säger till när. *Jämför i 3D* låter
+servern jämföra konfliktgrenen med den senaste versionen och öppnar *Jämför versioner* i Bearbeta, där skillnaderna färgas i modellen.
+När tiden har gått ut, eller servern redan har tagit bort grenen, säger panelen det; hämta då den senaste versionen och gör om dina
+ändringar där.
 
 ## Ta emot
 

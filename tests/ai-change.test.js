@@ -450,6 +450,74 @@
     return 'ok';
   }, 70000);
 
+  test('ai change: a change set the change form cannot carry goes as the whole previewed file, through the review (F124 a)', async (assert) => {
+    const CDE = 'dataspatium-asset://tests/ai-change-file';
+    const REDIRECT = 'http://127.0.0.1:8080/oauth-callback.html';
+    const sent = []; let trials = 0;
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (url, init) => { const u = String(url); if (u.startsWith(CDE) && init && init.body !== undefined) sent.push({ url: u, method: init.method, body: init.body, headers: init.headers || {} }); return realFetch(url, init); };
+    D.net.virtual('tests/ai-change-file/', (url) => {
+      const path = (url.startsWith(CDE) ? url.slice(CDE.length) : new URL(url).pathname).split('?')[0];
+      if (path === '/.well-known/dataregium') return Promise.resolve(json({ server: { name: 'Dataregium', version: '3.0.0' }, apis: { foundation: '1.0', bcf: '3.0', documents: '1.0' }, extensions: { ifc_changes: { enabled: true, schema: '/documents/1.0/ifc-changes/schema', snippet_type: 'DataregiumIfcChangeSet', file_snippet_type: 'DataregiumIfcFile', max_changes: 10000, proposal_url: '/bcf/3.0/projects/{project_id}/topics/{topic_guid}/ifc-proposal', approve_url: '/bcf/3.0/projects/{project_id}/topics/{topic_guid}/ifc-proposal/approve', tried: true } }, limits: { max_upload_bytes: 10 * 1024 * 1024 } }));
+      if (path === '/foundation/versions') return Promise.resolve(json({ versions: [{ api_id: 'foundation', version_id: '1.0' }, { api_id: 'bcf', version_id: '3.0' }, { api_id: 'documents', version_id: '1.0' }] }));
+      if (path === '/foundation/1.0/auth') return Promise.resolve(json({ oauth2_auth_url: CDE + '/foundation/oauth2/auth', oauth2_token_url: CDE + '/foundation/oauth2/token' }));
+      if (path === '/foundation/oauth2/token') return Promise.resolve(json({ access_token: 'tok', refresh_token: 'r', expires_in: 3600 }));
+      if (path === '/bcf/3.0/projects/p-1') return Promise.resolve(json({ project_id: 'p-1', name: 'Testprojekt', authorization: { project_actions: ['createTopic', 'createDocument'] } }));
+      if (path === '/bcf/3.0/projects/p-1/extensions') return Promise.resolve(json({ topic_type: ['Issue', 'Change proposal'] }));
+      if (path === '/bcf/3.0/projects/p-1/topics') return Promise.resolve(json({ guid: 't-7', title: 'x' }, 201));
+      if (path === '/bcf/3.0/projects/p-1/topics/t-7/snippet') return Promise.resolve({ kind: 'text', data: '' });
+      if (path === '/bcf/3.0/projects/p-1/topics/t-7/ifc-proposal') { trials++; return Promise.resolve(json(trials < 2 ? { state: 'queued', kind: 'file' } : { state: 'issues', kind: 'file', commit: 'f'.repeat(40), base: { document_id: 'doc-1', version_index: 2 }, issue_count: 2, error_count: 1, issues: [{ kind: 'schema', message: 'IfcWall without a placement' }] })); }
+      return Promise.resolve(json({ message: 'Not Found' }, 404));
+    });
+    const { connector } = await families.createConnector('opencde', { baseUrl: CDE, clientId: 'dataspatium', clientSecret: '' });
+    const meta = await datasets.get(ds.id);
+    const candidate = new TextEncoder().encode(fixtures.ifcText({ walls: 3 }));
+    const real = bridge.runIfcChangeset;
+    // New elements and a deletion only: nothing the change form can carry, so the whole previewed file goes.
+    const proposal = { changes: [], truncated: false, instances: 0, unexpressed: { created: 2, deleted: 1, relations: 2 } };
+    bridge.runIfcChangeset = async (changes) => ({ bytes: candidate, info: { elements: 7, entities: 1, file: 'testhus.ifc', operations: changes.length, created: [{ id: 200, ifc_class: 'IfcWall' }], changed: [], deleted: [], findings: [], errors: 0, proposal }, log: [] });
+    const reviewModule = D.require('ui/share/review'); const realReview = reviewModule.review; const realChangeSet = reviewModule.changeSet;
+    const reviewed = []; let changeSetReviewed = 0;
+    reviewModule.review = async (c, ids, options) => { reviewed.push(ids.slice()); return realReview(c, ids, options); };
+    reviewModule.changeSet = async (c, info) => { changeSetReviewed++; return realChangeSet(c, info); };
+    const ctx = { shell: { log: () => {} }, ui: { dialog: { open: async () => true } }, store: { get: () => ({ datasets: [] }) } };
+    const panel = D.require('ui/bearbeta/ai-panel').create(ctx, { datasetId: ds.id, preview: () => {} });
+    document.body.appendChild(panel.el);
+    try {
+      await datasets.updateMeta(ds.id, { source: Object.assign({}, meta.source || { kind: 'file' }, { cde: { connectorId: connector.id, connectorName: connector.name, host: 'tests', projectId: 'p-1', projectName: 'Testprojekt', documentId: 'doc-1', versionIndex: 2 } }) });
+      await opencde.login(connector, { popup: (url) => Promise.resolve(`${new URL(url).searchParams.get('redirect_uri')}?code=abc&state=${new URL(url).searchParams.get('state')}`), redirectUri: REDIRECT });
+      await waitFor(() => panel.state.providers.length, 3000, 'the providers loaded');
+      panel.state.providerId = provider.id; panel.setMode('change');
+      world.calls = 0;
+      await panel.ask('Lägg till två väggar och ta bort en');
+      await panel.preview();
+      await waitFor(() => panel.state.takesFiles === true, 3000, 'the server takes files');
+      const line = panel.el.querySelector('[data-ai-proposal]');
+      assert.ok(line && line.textContent === t('ai.change.propose.file', { n: '0', created: '2', deleted: '1', relations: '2' }), 'told it goes as a whole file: ' + (line && line.textContent));
+      const btn = /** @type {any} */ (panel.el.querySelector('[data-ai-propose]'));
+      assert.ok(btn && !btn.disabled, 'the button is offered without any change of the change form');
+      await panel.propose({ title: 'Två nya väggar', description: 'Och en borttagen.' });
+      assert.equal(panel.state.error, '', 'no error');
+      assert.ok(reviewed.some((ids) => ids.includes(ds.id)) && changeSetReviewed === 0, 'through the review of the model, as an upload');
+      const topic = JSON.parse(String(sent.find((r) => /\/topics$/.test(r.url)).body));
+      assert.deepEqual([topic.bim_snippet.snippet_type, topic.bim_snippet.is_external, topic.bim_snippet.reference], ['DataregiumIfcFile', false, 'testhus.ifc'], 'the topic\'s own file');
+      const put = sent.find((r) => /\/topics\/t-7\/snippet\?/.test(r.url));
+      const q = new URL(put.url).searchParams;
+      assert.deepEqual([q.get('base_document_id'), q.get('base_version_index'), q.get('ai_model')], ['doc-1', '2', 'claude-test'], 'the base and the AI model in the query');
+      assert.ok(String(q.get('tool_call')).includes('create_wall'), 'and the tools');
+      assert.equal(new TextDecoder().decode(put.body), new TextDecoder().decode(candidate), 'the previewed candidate, nothing else');
+      await waitFor(() => panel.state.proposed && panel.state.proposed.trial && panel.state.proposed.trial.state === 'issues', 8000, 'the trial');
+      assert.equal(panel.el.querySelector('[data-ai-trial]').textContent, t('ai.change.trial.file.issues', { issues: '2', errors: '1' }), 'the whole file\'s findings');
+      assert.ok(!panel.el.querySelector('[data-ai-approve-server]'), 'not approved with findings');
+    } finally {
+      globalThis.fetch = realFetch; reviewModule.review = realReview; reviewModule.changeSet = realChangeSet;
+      bridge.runIfcChangeset = real; panel.destroy(); panel.el.remove();
+      await datasets.updateMeta(ds.id, { source: meta.source || { kind: 'file' } });
+      await opencde.logout(connector).catch(() => {}); await connectors.remove(connector.id);
+    }
+    return 'ok';
+  }, 40000);
+
   test('ai change: cleanup', async () => {
     if (provider) await providers.remove(provider.id);
     if (ds) await datasets.remove(ds.id);

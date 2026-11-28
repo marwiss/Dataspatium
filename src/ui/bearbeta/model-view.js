@@ -71,6 +71,12 @@
         // Hantera asks for the issues of the model; the panel opens with the view.
         const askedIssues = ctx.store.get().openModelIssues;
         if (askedIssues && askedIssues.datasetId === dataset.id) { ctx.store.set({ openModelIssues: null }); if (!issues && !isDxf() && bcfShown()) openIssues(); }
+        // Dela hands over the branch of an upload the server could not merge (Dataregium's phase 5.5): Jämför versioner opens on it.
+        const askedCompare = ctx.store.get().openModelCompare;
+        if (askedCompare && askedCompare.datasetId === dataset.id) {
+          ctx.store.set({ openModelCompare: null });
+          if (!isDxf()) { if (compare) compare.destroy(); compare = D.require('ui/bearbeta/model-compare').create(ctx, ds, { preview: setPreview, conflict: askedCompare.conflict || undefined }); }
+        }
         // Inhämta hands over a brief for a new building (F43 a): the AI panel opens in the mode Bygg från beskrivning with it.
         const askedAi = ctx.store.get().openModelAi;
         if (askedAi && askedAi.datasetId === dataset.id) {

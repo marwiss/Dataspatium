@@ -90,7 +90,7 @@
       // Loaded while the page is read, so that a press of the card's buttons (a sign-in opens a window) finds the family there.
       openCde().catch((err) => D.log('cde', 'families', err));
       const el = h('div', { class: 'dm-card dm-stack-sm', 'data-card': 'cde' });
-      const state = { checking: false, result: null, error: '', fetching: false, pub: null, pubBusy: '', commit: null };
+      const state = { checking: false, result: null, error: '', fetching: false, pub: null, pubBusy: '', commit: null, commitInfo: null };
       const connectorOf = async () => (await D.require('api/connectors').get(cde.connectorId)) || null;
       /** What the tier in effect and the source's server show (platform/tier). @param {string} feature */
       const shows = (feature) => tier.shows(feature, { server: cde.connectorId });
@@ -102,8 +102,12 @@
           const opencde = await openCde();
           if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
           state.result = await opencde.newerVersion(connector, ds);
-          // The commit this version is in, when the server keeps a git history per project (Dataregium's phase 5.2).
-          if (cde.documentId && cde.versionIndex) state.commit = await opencde.gitCommit(connector, cde.documentId, Number(cde.versionIndex));
+          // The commit this version is in, when the server keeps a git history per project (Dataregium's phase 5.2), and from its
+          // phase 5.5 the commit itself: its message with the trailers, who committed it, the base and the sides it merged.
+          if (cde.documentId && cde.versionIndex) {
+            state.commitInfo = await opencde.versionCommit(connector, cde.documentId, Number(cde.versionIndex)).catch((err) => { D.log('cde', 'the version\'s commit not read', err); return null; });
+            state.commit = state.commitInfo ? state.commitInfo.commit : await opencde.gitCommit(connector, cde.documentId, Number(cde.versionIndex));
+          }
         } catch (err) { state.error = String((err && err.message) || err); }
         state.checking = false; draw();
       }
@@ -163,6 +167,26 @@
           p.sha256 ? h('span', { class: 'dm-help dm-small dm-mono', text: 'SHA-256 ' + p.sha256 }) : null,
           h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('cde.publication.download'), icon: 'download', size: 'sm', loading: state.pubBusy === 'download', title: t('cde.publication.download.hint'), 'data-cde-archive': '', onClick: saveArchive })));
       }
+      /** The version's commit (Dataregium's phase 5.5): its subject, who made and committed it, its base, what it merged and its trailers. */
+      function commitPart() {
+        const c = state.commitInfo;
+        if (!c) return null;
+        const short = (x) => String(x || '').slice(0, 12);
+        const kv = /** @type {any} */ (h('dm-kv'));
+        kv.items = [
+          c.subject ? { label: t('cde.commit.subject'), value: c.subject } : null,
+          c.author ? { label: t('cde.commit.author'), value: c.author } : null,
+          c.committer && c.committer !== c.author ? { label: t('cde.commit.committer'), value: c.committer } : null,
+          c.date ? { label: t('cde.commit.date'), value: i18n.formatDateTime(c.date) } : null,
+          c.baseVersionIndex ? { label: t('cde.commit.base'), value: String(c.baseVersionIndex) } : null,
+          c.mergedWith ? { label: t('cde.commit.merged'), value: String(c.mergedWith) } : null,
+          c.sideCommit ? { label: t('cde.commit.side'), value: short(c.sideCommit) } : null,
+          c.proposalCommit ? { label: t('cde.commit.proposal'), value: short(c.proposalCommit) } : null,
+        ].filter(Boolean);
+        return h('div', { class: 'dm-stack-xs', 'data-cde-commit': c.commit },
+          h('h4', { text: t('cde.commit.title', { commit: short(c.commit) }) }), kv,
+          c.trailers.length ? h('ul', { class: 'dm-list dm-xs', 'data-cde-commit-trailers': String(c.trailers.length) }, c.trailers.map((x) => h('li', { class: 'dm-help dm-xs', text: `${x.name.replace(/^Dataregium-/, '')}: ${x.value}` }))) : null);
+      }
       function draw() {
         const kv = /** @type {any} */ (h('dm-kv'));
         kv.items = [
@@ -185,6 +209,7 @@
             ds.kind === 'model' && !D.require('data/model').isDxf(ds) && shows('cde.ifc-graph') ? ui.button({ label: t('ifcgraph.title'), icon: 'network', size: 'sm', title: t('ifcgraph.open.hint'), 'data-cde-graph': '', onClick: async () => { if (!(await D.require('api/graph-source').open(ctx, ds))) ui.toast.show(t('cde.err.noconnector', { host: cde.host }), { kind: 'warn' }); } }) : null),
           r && r.newer ? h('div', { class: 'dm-row-wrap', 'data-cde-newer': '' }, h('span', { class: 'dm-warn', text: t('cde.newer', { have: String(r.have), latest: String(r.version.version_index) }) }), ui.button({ label: t('cde.fetch.version', { n: String(r.version.version_number || r.version.version_index) }), icon: 'download', size: 'sm', variant: 'primary', loading: state.fetching, onClick: fetchNew })) : null,
           r && !r.newer && r.version ? h('p', { class: 'dm-help dm-small', 'data-cde-current': '', text: t('cde.current') }) : null,
+          commitPart(),
           publicationPart(),
           state.error ? h('p', { class: 'dm-error dm-small', text: state.error }) : null);
       }

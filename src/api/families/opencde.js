@@ -446,11 +446,18 @@
       const req = { url, method: options.method || 'GET', headers, signal: options.signal, retries: 1, rateKey: connector.id, responseType: options.responseType, notModifiedOk: !!options.notModifiedOk };
       if (options.json !== undefined) { headers['Content-Type'] = 'application/json'; req.body = JSON.stringify(options.json); }
       else if (options.body !== undefined) req.body = options.body;
-      const res = await send(connector, req, { kind: options.responseType === 'arraybuffer' ? 'binary' : 'json' });
+      // A body that carries a secret (a forge's token on its way to the server) is never kept in the CDE log, as a token request's.
+      const res = await send(connector, req, { kind: options.secret ? 'token' : options.responseType === 'arraybuffer' ? 'binary' : 'json' });
       if (!res.ok) throw failure(connector, res, url);
       if (options.responseType === 'arraybuffer') return res.buffer;
       const text = (res.text || '').trim();
       const data = text ? JSON.parse(text) : null;
+      // One page of a list as it came, with the server's count and whether it names a next page, for a view that pages itself.
+      if (options.page) {
+        const header = (name) => (res.headers && res.headers.get ? res.headers.get(name) : null);
+        const total = Number(header('X-Total-Count'));
+        return { data, total: Number.isInteger(total) && total >= 0 && header('X-Total-Count') !== null ? total : null, more: !!http.linkHeader(header('Link'), 'next') };
+      }
       return req.method === 'GET' && Array.isArray(data) ? rest(connector, req, res, data) : data;
     }
     /** The error of an answer that is not OK, with the server's code, report and conflicts when it gives them. */
@@ -459,10 +466,16 @@
       try { data = JSON.parse(res.text); } catch (_e) { /* not JSON */ }
       return bodyError(connector, data, res.status, url);
     }
-    /** The error a body describes (`code`, `message`, `report`, `conflicts`), as the status says it or as the body came at 200. */
+    /**
+     * The error a body describes (`code`, `message`, `report`, `conflicts`), as the status says it or as the body came at 200. A 412 of
+     * Dataregium's ifcmerge also names the branch the upload that did not merge was kept on (`conflict_commit`, its phase 5.5) and until
+     * when (`conflict_expires_at`).
+     */
     function bodyError(connector, data, status, url) {
       const { code, message, text } = describeError(data);
-      return new http.ApiError(`${connector.name}: ${http.describeStatus(status)}${text ? ' ' + text : ''}`, { kind: 'http', status, url, detail: message, code, report: data && typeof data.report === 'string' ? data.report : undefined, conflicts: data && Array.isArray(data.conflicts) ? data.conflicts.map(String) : undefined, conflictDetails: data && Array.isArray(data.conflict_details) ? data.conflict_details : undefined, merge: data && data.merge && typeof data.merge === 'object' ? { baseVersionIndex: Number(data.merge.base_version_index) || null, latestVersionIndex: Number(data.merge.latest_version_index) || null } : undefined });
+      const branch = data && typeof data.conflict_commit === 'string' && /^[0-9a-f]{7,64}$/i.test(data.conflict_commit) ? data.conflict_commit.toLowerCase() : undefined;
+      return new http.ApiError(`${connector.name}: ${http.describeStatus(status)}${text ? ' ' + text : ''}`, { kind: 'http', status, url, detail: message, code, report: data && typeof data.report === 'string' ? data.report : undefined, conflicts: data && Array.isArray(data.conflicts) ? data.conflicts.map(String) : undefined, conflictDetails: data && Array.isArray(data.conflict_details) ? data.conflict_details : undefined, merge: data && data.merge && typeof data.merge === 'object' ? { baseVersionIndex: Number(data.merge.base_version_index) || null, latestVersionIndex: Number(data.merge.latest_version_index) || null } : undefined,
+        conflictCommit: branch, conflictExpiresAt: branch && typeof data.conflict_expires_at === 'string' ? data.conflict_expires_at : undefined });
     }
     /** The status of Dataregium's error codes (its opencde/errors.py), for a refusal that comes as 200 after the keep-alive. */
     const CODE_STATUS = { validation_error: 400, invalid_token: 401, unauthenticated: 401, forbidden: 403, insufficient_scope: 403, not_found: 404, conflict: 409, version_conflict: 412, payload_too_large: 413, upload_too_large: 413, ifc_validation_failed: 422, rate_limited: 429, internal_error: 500, unavailable: 503 };
@@ -1305,6 +1318,168 @@
       const query = options.otherDocumentId ? '?other_document_id=' + encode(options.otherDocumentId) : '';
       return api(connector, path + query, { signal: options.signal });
     }
+    // ---------------------------------------------------------------------------- the history in git (Dataregium's phase 5.5)
+    const HISTORY = '/documents/1.0/documents/{document_id}/history';
+    const COMMIT = '/documents/1.0/documents/{document_id}/versions/{version_index}/commit';
+    const SIDES = '/documents/1.0/documents/{document_id}/ifc-diff?a={a}&b={b}';
+    /** At most as many commits as Dataregium gives on a page of a history, and as many as it gives unasked. */
+    const HISTORY_MAX = 500;
+    const HISTORY_TOP = 100;
+    const HISTORY_KINDS = ['version', 'upload', 'proposal', 'conflict'];
+    const isCommit = (v) => typeof v === 'string' && /^[0-9a-f]{7,64}$/i.test(v);
+    const intOrNull = (v) => (Number.isInteger(Number(v)) && Number(v) > 0 && v !== null && v !== '' ? Number(v) : null);
+    /** Whether the server compares two sides that are each a version or a commit (`ifc_diff.sides_url`). @param {any} caps */
+    const canSides = (caps) => hasExtension(caps, 'ifc_diff') && typeof caps.extensions.ifc_diff.sides_url === 'string';
+    /** Whether the server lists a document's history and compares its points (`git.history_url` and `ifc_diff.sides_url`). @param {any} caps */
+    const canHistory = (caps) => hasExtension(caps, 'git') && typeof caps.extensions.git.history_url === 'string' && canSides(caps);
+    /**
+     * A page of a document's history in its project's repository (Dataregium's phase 5.5): the commits that change the document's
+     * file, newest first, each with `commit`, `parents`, `kind` (version, upload, proposal or conflict), `versionIndex`,
+     * `baseVersionIndex`, `mergedWith`, `expiresAt` (a conflict's), `author` (a user name), `date` and `subject`. `top` is at most 500
+     * (100 unless asked), `skip` where the page starts; `total` is the server's X-Total-Count and `more` whether it names a next page
+     * (Link rel="next"), both only when there is more than the page. Null when the server keeps no history.
+     * @param {any} connector @param {string} documentId @param {{top?: number, skip?: number, signal?: AbortSignal}} [options]
+     * @returns {Promise<{entries: any[], total: number|null, more: boolean, top: number, skip: number}|null>}
+     */
+    async function history(connector, documentId, options = {}) {
+      const caps = await capabilities(connector);
+      if (!canHistory(caps)) return null;
+      const top = Math.min(HISTORY_MAX, Math.max(1, Math.floor(Number(options.top) || HISTORY_TOP)));
+      const skip = Math.max(0, Math.floor(Number(options.skip) || 0));
+      const query = new URLSearchParams({ $top: String(top), $skip: String(skip) }).toString();
+      const page = await api(connector, capPath(caps, 'git', 'history_url', HISTORY, { document_id: documentId }) + '?' + query, { page: true, signal: options.signal });
+      const entries = (Array.isArray(page.data) ? page.data : []).filter((e) => e && isCommit(e.commit)).map((e) => ({
+        commit: String(e.commit).toLowerCase(), parents: Array.isArray(e.parents) ? e.parents.filter(isCommit).map(String) : [],
+        kind: HISTORY_KINDS.includes(e.kind) ? e.kind : 'upload', versionIndex: intOrNull(e.version_index), baseVersionIndex: intOrNull(e.base_version_index),
+        mergedWith: intOrNull(e.merged_with_version_index), expiresAt: typeof e.expires_at === 'string' ? e.expires_at : null,
+        author: String(e.author || ''), date: String(e.date || ''), subject: String(e.subject || '') }));
+      return { entries, total: page.total, more: page.more, top, skip };
+    }
+    /**
+     * The trailers of a commit's message (the last paragraph's "Name: value" lines, Dataregium's `Dataregium-` ones among them).
+     * @param {any} message @returns {Array<{name: string, value: string}>}
+     */
+    function trailersOf(message) {
+      const paragraphs = String(message || '').replace(/\r\n?/g, '\n').trim().split(/\n\s*\n/);
+      if (paragraphs.length < 2) return [];
+      const lines = paragraphs[paragraphs.length - 1].split('\n');
+      const out = [];
+      for (const line of lines) {
+        const m = /^([A-Za-z][A-Za-z0-9-]{0,63}):\s*(.*)$/.exec(line.trim());
+        if (!m) return [];
+        out.push({ name: m[1], value: m[2].slice(0, 200) });
+      }
+      return out;
+    }
+    /**
+     * A version's commit in its project's repository (Dataregium's phase 5.5, `git.commit_url`): `commit`, `parents`, `author` and
+     * `committer` (user names), `date`, the whole `message` with its trailers (`trailers`), `baseVersionIndex`, `mergedWith`,
+     * `sideCommit` (the upload as it came, when the version merged one) and `proposalCommit` (the trial it was approved from). Null when
+     * the server has no commits or the version none (404).
+     * @param {any} connector @param {string} documentId @param {number} versionIndex
+     */
+    async function versionCommit(connector, documentId, versionIndex) {
+      const caps = await capabilities(connector);
+      if (!hasExtension(caps, 'git') || typeof caps.extensions.git.commit_url !== 'string') return null;
+      let c = null;
+      try { c = await api(connector, capPath(caps, 'git', 'commit_url', COMMIT, { document_id: documentId, version_index: versionIndex })); }
+      catch (err) { if (err && err.status === 404) return null; throw err; }
+      if (!c || !isCommit(c.commit)) return null;
+      return { commit: String(c.commit).toLowerCase(), parents: Array.isArray(c.parents) ? c.parents.filter(isCommit).map(String) : [], author: String(c.author || ''), committer: String(c.committer || ''), date: String(c.date || ''),
+        message: String(c.message || ''), subject: String(c.message || '').split('\n')[0], trailers: trailersOf(c.message), baseVersionIndex: intOrNull(c.base_version_index), mergedWith: intOrNull(c.merged_with_version_index),
+        sideCommit: isCommit(c.side_commit) ? String(c.side_commit).toLowerCase() : null, proposalCommit: isCommit(c.proposal_commit) ? String(c.proposal_commit).toLowerCase() : null };
+    }
+    /**
+     * Dataregium's diff of two sides of a document (its phase 5.5, `ifc_diff.sides_url`), each a version's index or a commit of its
+     * history: what `b` has that `a` lacks (added), what it lacks (removed) and what differs, in the form of versionDiff. Null when the
+     * server has no such diff; 404 when a side is not the document's, such as a conflict's branch after the server took it away.
+     * @param {any} connector @param {string} documentId @param {number|string} a @param {number|string} b @param {{signal?: AbortSignal}} [options]
+     */
+    async function sidesDiff(connector, documentId, a, b, options = {}) {
+      const caps = await capabilities(connector);
+      if (!canSides(caps)) return null;
+      return api(connector, capPath(caps, 'ifc_diff', 'sides_url', SIDES, { document_id: documentId, a, b }), { signal: options.signal });
+    }
+    /** Whether a conflict's branch is past the time the server keeps it. @param {string|null|undefined} expiresAt @param {number} [now] */
+    function expired(expiresAt, now = Date.now()) {
+      const at = Date.parse(String(expiresAt || ''));
+      return Number.isFinite(at) && at <= now;
+    }
+
+    // ---------------------------------------------------------------------------- a whole file as a proposal (F204 a, F124 a)
+    /** The snippet type of a whole file the server takes, or '' (Dataregium's `ifc_changes.file_snippet_type`). @param {any} caps */
+    const fileSnippetType = (caps) => (hasExtension(caps, 'ifc_changes') && typeof caps.extensions.ifc_changes.file_snippet_type === 'string' ? caps.extensions.ifc_changes.file_snippet_type : '');
+    /** Whether the server takes a whole IFC file as a change proposal. @param {any} connector @returns {Promise<boolean>} */
+    async function takesFiles(connector) {
+      try { return !!fileSnippetType(await capabilities(connector)); } catch (_e) { return false; }
+    }
+    /** The provenance as Dataregium keeps it in the snippet's query: no control characters, at most 200 characters; null when empty. */
+    function provenanceValue(v) {
+      const text = String(v === null || v === undefined ? '' : v).replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim().slice(0, 200).trim();
+      return text || null;
+    }
+    /** The specification of an IFC file's schema, for the snippet's reference_schema (BCF requires one). */
+    const SCHEMA_URLS = { IFC2X3: 'https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/TC1/HTML/', IFC4: 'https://standards.buildingsmart.org/IFC/RELEASE/IFC4/ADD2_TC1/HTML/', IFC4X3: 'https://standards.buildingsmart.org/IFC/RELEASE/IFC4_3/HTML/' };
+    /** The file's schema from its header (FILE_SCHEMA), and whether it is STEP at all. @param {Uint8Array} bytes */
+    function stepHeader(bytes) {
+      const bom = bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf ? 3 : 0;
+      const head = new TextDecoder('latin1').decode(bytes.subarray(bom, Math.min(bytes.byteLength, 8192)));
+      const step = /^\s*ISO-10303-21;/.test(head);
+      const m = /FILE_SCHEMA\s*\(\s*\(\s*'([A-Za-z0-9_]+)'/i.exec(head);
+      const name = m ? m[1].toUpperCase() : '';
+      return { step, schema: name.startsWith('IFC4X3') ? 'IFC4X3' : name.startsWith('IFC4') ? 'IFC4' : name.startsWith('IFC2X3') ? 'IFC2X3' : '' };
+    }
+    /**
+     * A whole IFC file as a change proposal (Dataregium's F204 a, the app's F124 a): a BCF topic whose bim_snippet is the topic's own
+     * file ({snippet_type: DataregiumIfcFile, is_external: false, reference: the file's name}), the file uploaded with PUT …/snippet as
+     * application/octet-stream with its name in Content-Disposition, on the base version in the query (`base_document_id`,
+     * `base_version_index`) with `ai_model` and `tool_call` when given (at most 200 characters, no control characters); the server sets
+     * the user and the time. The server tries it and a manager approves it as a change set. Refused before anything goes when it is not
+     * STEP or larger than the server's `limits.max_upload_bytes`; a refused upload removes the topic again. Null when the server takes no
+     * whole files. Only paths go to the server's own address, so the token goes nowhere else.
+     * @param {any} connector @param {string} projectId
+     * @param {{title: string, description?: string, topicType?: string|null, bytes: Uint8Array|ArrayBuffer, fileName?: string, base: {document_id: string, version_index: number}, aiModel?: string|null, toolCall?: string|null}} options
+     * @returns {Promise<{topic: any, kind: 'file', snippetType: string, fileName: string, tried: boolean, proposalUrl: string|null, approveUrl: string|null}|null>}
+     */
+    async function proposeFile(connector, projectId, options) {
+      const caps = await capabilities(connector);
+      const snippetType = fileSnippetType(caps);
+      if (!snippetType) return null;
+      const ext = caps.extensions.ifc_changes;
+      const bytes = options.bytes instanceof Uint8Array ? options.bytes : new Uint8Array(options.bytes);
+      const header = stepHeader(bytes);
+      if (!header.step) throw new Error(t('opencde.err.file.step'));
+      const max = Number(caps.limits && caps.limits.max_upload_bytes) || 0;
+      if (max > 0 && bytes.byteLength > max) throw new Error(t('cde.err.toolarge', { max: D.require('ui/i18n').formatBytes(max) }));
+      if (!options.base || !options.base.document_id || !(Number(options.base.version_index) >= 1)) throw new Error(t('opencde.err.noreference'));
+      const plain = String(options.fileName || 'proposal.ifc').replace(/["\\\r\n/]/g, '_').replace(/\.ifc$/i, '').slice(0, 120) || 'proposal';
+      const fileName = plain + '.ifc';
+      const body = { title: String(options.title || '').trim() || snippetType, description: options.description || '',
+        bim_snippet: { snippet_type: snippetType, is_external: false, reference: fileName, reference_schema: SCHEMA_URLS[header.schema] || SCHEMA_URLS.IFC4 } };
+      if (options.topicType) body.topic_type = options.topicType;
+      const topic = await createTopic(connector, projectId, body);
+      try {
+        await putFile(connector, projectId, topic.guid, bytes, fileName, options);
+      } catch (err) {
+        await deleteTopic(connector, projectId, topic.guid).catch(() => {});
+        throw err;
+      }
+      const fill = (template) => (template ? String(template).replace('{project_id}', encode(projectId)).replace('{topic_guid}', encode(topic.guid)) : null);
+      const proposalUrl = fill(ext.proposal_url);
+      return { topic, kind: 'file', snippetType, fileName, tried: !!ext.tried && !!proposalUrl, proposalUrl, approveUrl: fill(ext.approve_url) };
+    }
+    /**
+     * The file of a whole-file proposal uploaded as its topic's snippet; a new one replaces the trial. @param {any} connector
+     * @param {string} projectId @param {string} topicGuid @param {Uint8Array} bytes @param {string} fileName
+     * @param {{base: {document_id: string, version_index: number}, aiModel?: string|null, toolCall?: string|null}} options
+     */
+    function putFile(connector, projectId, topicGuid, bytes, fileName, options) {
+      const q = new URLSearchParams({ base_document_id: String(options.base.document_id), base_version_index: String(Number(options.base.version_index)) });
+      const aiModel = provenanceValue(options.aiModel); if (aiModel) q.set('ai_model', aiModel);
+      const toolCall = provenanceValue(options.toolCall); if (toolCall) q.set('tool_call', toolCall);
+      return bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/snippet?${q.toString()}`, { method: 'PUT', body: bytes,
+        headers: { 'Content-Type': 'application/octet-stream', 'Content-Disposition': `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}` } });
+    }
     /**
      * Register this app as a client (Foundation API 2.2.3, RFC 7591) when the server allows it; the answer holds the client id
      * and, for a confidential client, the secret, which the caller keeps in api/secrets.
@@ -1377,7 +1552,7 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { addDeployed, ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, hasBcf, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, seedStepIds, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, versionMessage, MESSAGE_MAX, messageMax, gitCommit, renumbered, mergedOf, adoptStored, baseFile, takesChanges, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
+    return { history, trailersOf, versionCommit, sidesDiff, canSides, canHistory, expired, HISTORY_MAX, HISTORY_TOP, takesFiles, fileSnippetType, provenanceValue, proposeFile, putFile, addDeployed, ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, hasBcf, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, graphStore, graphStoreOf, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, seedStepIds, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, versionMessage, MESSAGE_MAX, messageMax, gitCommit, renumbered, mergedOf, adoptStored, baseFile, takesChanges, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference,
       topicMay, projectMay, topicFiles, filesBody, setTopicFiles, modelFile, linkTopic, attachDocument, identity };
   });
 })();
