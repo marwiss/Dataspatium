@@ -12,6 +12,7 @@
   "auth": {
     "type": "oauth2_client_credentials",
     "tokenUrl": "https://api.lantmateriet.se/token",
+    "clientAuth": "body",
     "help": "Skapa ett konto i Geotorget, lägg till produkten Ortnamn Direkt (öppna data) och skapa API-nycklar. Klient-id (consumer key) och klienthemlighet (consumer secret) anges här.",
     "signupUrl": "https://geotorget.lantmateriet.se/"
   },

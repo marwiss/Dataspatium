@@ -66,10 +66,20 @@ own server, never to a file on another host.
 
 **A key to the geodata platform.** Anyone can become a consumer free of charge: a private person, company, association,
 municipality or authority. Create an account in Geotorget, apply under *Nationella geodataplattformen* to become a consumer
-and accept the terms (for an organisation the account takes about two working days), then create OAuth 2.0 keys in the API
-portal (apimanager.lantmateriet.se). Give the consumer key and consumer secret in the source's key fields; they are kept like
-other keys, in the session or encrypted with a passphrase. The app gets a token from `api.lantmateriet.se/token` with the key
-in the form body, since the token URL does not allow the Authorization header from the browser. Lantmäteriet recommends
+and accept the terms (for an organisation the account takes about two working days). Then sign in to the API portal
+(apimanager.lantmateriet.se) with the same login (an organisation with its system account) and:
+
+1. Choose *Applications* and *ADD NEW APPLICATION*, name the application (for example *Dataspatium*), choose the quota
+   *Unlimited* and save.
+2. Choose *Subscriptions* and *SUBSCRIBE APIS*, and subscribe to *GeodatakatalogSökning* (the search) and
+   *GeodatakatalogNedladdning* (the plan's file).
+3. Choose *Application Keys* and *GENERATE KEYS*. *Consumer Key* and *Consumer Secret* are at the top of the page (the eye
+   icon shows the secret).
+
+Give the Consumer Key and Consumer Secret in the source's key fields; they are kept like other keys, in the session or
+encrypted with a passphrase. The app gets a token from the API portal's token URL (`apimanager.lantmateriet.se/oauth2/token`)
+and searches with it in GeodatakatalogSökning; the plan's file is fetched through GeodatakatalogNedladdning, which redirects
+to the file. Lantmäteriet recommends
 OAuth 2.0; a private person can also use Basic with the Geotorget login, but the source uses OAuth 2.0. The data are CC0.
 See Lantmäteriet's pages (in Swedish) [Bli konsument som privatperson](https://www.lantmateriet.se/sv/nationella-geodataplattformen/konsument/bli-konsument-som-privatperson/) and
 [Bli konsument som organisation](https://www.lantmateriet.se/sv/nationella-geodataplattformen/konsument/bli-konsument-som-organisation/).

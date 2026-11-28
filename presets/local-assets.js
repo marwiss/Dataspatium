@@ -165,7 +165,7 @@ Dataspatium.assets.addEntries({
  "presets/api/lantmateriet-direkt.api.json": {
   "file": "presets/api/lantmateriet-direkt.api.json.js",
   "encoding": "text",
-  "size": 6082,
+  "size": 6108,
   "library": "dataspatium"
  },
  "presets/api/lantmateriet-geodata.api.json": {
@@ -177,7 +177,7 @@ Dataspatium.assets.addEntries({
  "presets/api/lantmateriet-ngp-detaljplan.api.json": {
   "file": "presets/api/lantmateriet-ngp-detaljplan.api.json.js",
   "encoding": "text",
-  "size": 4553,
+  "size": 5000,
   "library": "dataspatium"
  },
  "presets/api/lantmateriet-stac.api.json": {
@@ -669,7 +669,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/planer.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 43840,
+  "size": 44390,
   "library": "dataspatium"
  },
  "docs/sv/grafer.md": {
@@ -1683,7 +1683,7 @@ Dataspatium.assets.addEntries({
  "docs/en/planer.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 44268,
+  "size": 44846,
   "library": "dataspatium"
  },
  "docs/en/grafer.md": {

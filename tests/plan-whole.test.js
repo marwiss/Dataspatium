@@ -394,7 +394,7 @@
 
   test('plan-whole: the NGP preset logs in with OAuth2 in the body and says anyone can become a consumer; Sundsvall\'s RIGES is a ready source without a key', async (assert) => {
     const preset = await connectors.get('lantmateriet-ngp-detaljplan');
-    assert.deepEqual([preset.auth.type, preset.auth.tokenUrl, preset.auth.clientAuth], ['oauth2_client_credentials', 'https://api.lantmateriet.se/token', 'body']);
+    assert.deepEqual([preset.auth.type, preset.auth.tokenUrl, preset.auth.clientAuth], ['oauth2_client_credentials', 'https://apimanager.lantmateriet.se/oauth2/token', 'body']);
     assert.equal(preset.family.plans, 'ngp'); assert.equal(preset.level, 2);
     assert.ok(/konsument/.test(preset.auth.signupUrl) && /konsument/.test(preset.docs), 'the Bli konsument pages');
     const raw = JSON.parse(await D.assets.loadText('presets/api/lantmateriet-ngp-detaljplan.api.json'));
