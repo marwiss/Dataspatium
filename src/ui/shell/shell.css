@@ -59,6 +59,10 @@ dm-splitter:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--dm-
 
 .dm-center { grid-area: center; min-width: 0; min-height: 0; overflow: auto; padding: var(--dm-s-5); display: flex; flex-direction: column; gap: var(--dm-s-4); }
 .dm-center-fill { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: var(--dm-s-3); }
+/* A long list scrolls by itself: in the work area it takes the window's height when its content needs it (Martin 2026-11-28), in a
+   dialog or a panel the least height. */
+.dm-fill { max-height: var(--dm-fill-min-h); overflow: auto; }
+.dm-center .dm-fill { max-height: max(var(--dm-fill-min-h), calc(100vh - var(--dm-fill-reserve-h))); }
 
 .dm-drawer { position: relative; grid-area: drawer; display: flex; flex-direction: column; background: var(--dm-surface); border-top: 1px solid var(--dm-border); min-height: 0; }
 .dm-drawer .dm-log { height: var(--dm-drawer-h); overflow: auto; padding: var(--dm-s-2) var(--dm-s-4); font-family: var(--dm-font-mono); font-size: var(--dm-text-xs); }
@@ -264,15 +268,14 @@ dm-table .dm-cell-editor { width: 100%; height: 28px; margin: 0; padding: 0 var(
   .dm-plan-file dm-button { grid-column: 1 / -1; justify-self: start; }
 }
 /* The ready-made geodata services in the dialog Lägg till geodatakälla. */
-.dm-geodata-ready-list { max-height: 300px; overflow: auto; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); padding: var(--dm-s-1); }
+.dm-geodata-ready-list { border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); padding: var(--dm-s-1); }
 .dm-geodata-ready-item { align-items: center; }
 .dm-geodata-ready-item .dm-list-main { white-space: normal; }
 .dm-geodata-ready-item .dm-list-sub { white-space: normal; }
 /* Geodata sources: the layer list, the map preview of an answer and the catalogue cards. */
 .dm-geo-head { align-items: flex-end; }
 .dm-geo-head dm-input { flex: 1 1 240px; min-width: 200px; }
-/* The layer list takes the height the window leaves below the form's head (a service can have hundreds of layers), at least 360px. */
-.dm-geo-layers { max-height: max(360px, calc(100vh - 400px)); overflow: auto; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); padding: var(--dm-s-1); }
+.dm-geo-layers { border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); padding: var(--dm-s-1); }
 .dm-api-map { border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); overflow: hidden; max-width: 640px; }
 .dm-api-map svg { display: block; width: 100%; height: auto; }
 .dm-sense-head { display: flex; align-items: center; gap: var(--dm-s-2); }
@@ -301,11 +304,11 @@ dm-table .dm-cell-editor { width: 100%; height: 28px; margin: 0; padding: 0 var(
 .dm-ds-page-text { padding: var(--dm-s-4); font-size: var(--dm-text-xs); overflow: hidden; max-height: calc(var(--dm-s-12) * 6); }
 .dm-geoportal-search { align-items: flex-end; }
 .dm-geoportal-search dm-input { flex: 1 1 320px; min-width: 200px; }
-.dm-geoportal-list { max-height: 60vh; overflow: auto; }
+
 .dm-geoportal-links { margin: 0; padding-left: var(--dm-s-4); font-size: var(--dm-text-xs); display: flex; flex-direction: column; gap: var(--dm-s-1); }
 .dm-geoportal-map { border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); overflow: hidden; width: 100%; max-width: 640px; }
 .dm-geoportal-feed { border-left: 2px solid var(--dm-border); padding-left: var(--dm-s-3); }
-.dm-api-list { max-height: 440px; overflow: auto; }
+
 .dm-api-requests { display: flex; flex-direction: column; gap: var(--dm-s-2); font-size: var(--dm-text-xs); }
 .dm-api-requests li { display: flex; flex-direction: column; gap: 2px; }
 .dm-break { overflow-wrap: anywhere; word-break: break-all; }
@@ -526,7 +529,7 @@ body.dm-presenting { overflow: hidden; }
 .dm-map-legend-list li { display: flex; align-items: center; gap: var(--dm-s-2); min-width: 0; }
 
 /* Import wizard: the files of a collection */
-.dm-import-files { max-height: 240px; overflow: auto; }
+
 
 /* Text and image tools (Analysera): settings above, the result below; duplicate groups as rows of thumbnails */
 .dm-tool-fields { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--dm-s-3); }

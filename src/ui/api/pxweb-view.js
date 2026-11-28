@@ -61,7 +61,7 @@
         filter.value = state.filter;
         let timer = 0;
         filter.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { state.filter = filter.value.trim().toLowerCase(); renderList(); }, 200); });
-        const list = h('div', { class: 'dm-list dm-api-list' });
+        const list = h('div', { class: 'dm-list dm-fill dm-api-list' });
         const renderList = () => {
           const entries = state.entries.filter((e) => !state.filter || e.text.toLowerCase().includes(state.filter) || e.id.toLowerCase().includes(state.filter));
           replace(list, state.loading ? h('p', { class: 'dm-help', text: t('common.loading') }) : (entries.length ? entries.map((e) => h('button', { type: 'button', class: 'dm-list-item', onclick: () => (e.type === 'folder' ? (state.path.push(e.id), state.crumbs.push(e), loadFolder()) : openTable(e)) },
@@ -76,7 +76,7 @@
         const input = /** @type {any} */ (h('dm-input', { type: 'search', placeholder: t('api.pxweb.search.placeholder'), 'aria-label': t('api.pxweb.search'), inline: true }));
         input.value = state.query;
         input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { state.query = input.value.trim(); search(1); } });
-        const list = h('div', { class: 'dm-list dm-api-list' }, state.loading && !state.results.length ? h('p', { class: 'dm-help', text: t('common.loading') }) : state.results.map((r) => h('button', { type: 'button', class: 'dm-list-item', onclick: () => openTable(r) },
+        const list = h('div', { class: 'dm-list dm-fill dm-api-list' }, state.loading && !state.results.length ? h('p', { class: 'dm-help', text: t('common.loading') }) : state.results.map((r) => h('button', { type: 'button', class: 'dm-list-item', onclick: () => openTable(r) },
           icons.icon('table', 16), h('span', { class: 'dm-list-main' }, h('span', { text: r.text }), h('span', { class: 'dm-list-sub', text: [r.id, r.path, r.firstPeriod && r.lastPeriod ? t('api.pxweb.period', { from: r.firstPeriod, to: r.lastPeriod }) : ''].filter(Boolean).join(' · ') })))));
         return h('div', { class: 'dm-stack' },
           h('div', { class: 'dm-row' }, input, basic.button({ label: t('common.search'), icon: 'search', variant: 'primary', onClick: () => { state.query = input.value.trim(); search(1); } })),

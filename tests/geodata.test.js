@@ -235,6 +235,10 @@
       filterInput.value = 'Kommun'; filterInput.dispatchEvent(new Event('input', { bubbles: true }));
       assert.equal(root.querySelector('[data-geo-count]').textContent, t('geodata.layers.count.of', { shown: '1', n: '2' }), 'one of two after filtering');
       filterInput.value = ''; filterInput.dispatchEvent(new Event('input', { bubbles: true }));
+      // A long list in the work area takes the window's height less the reserve, at least the least height (.dm-fill).
+      const listStyle = getComputedStyle(/** @type {Element} */ (root.querySelector('.dm-center .dm-geo-layers')));
+      assert.equal(Math.round(parseFloat(listStyle.maxHeight)), Math.max(300, window.innerHeight - 400), 'the list fills the window: ' + listStyle.maxHeight);
+      assert.equal(listStyle.overflowY, 'auto');
       /** @type {any} */ (Array.from(root.querySelectorAll('.dm-geo-layer')).find((e) => e.textContent.includes('Kommuner'))).click();
       await waitFor(() => buttonByText(t('api.fetch')), 5000, 'fetch button for the layer');
       assert.ok(Array.from(root.querySelectorAll('.dm-geo-form dm-input')).some((i) => (i.getAttribute('label') || '').includes(t('geodata.param.bbox'))), 'the bbox field');

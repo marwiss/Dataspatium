@@ -82,8 +82,12 @@
       function item(ep) {
         const kind = connector.family && connector.family.kind;
         const sub = ep.description || (kind === 'ogcapi' ? t('geodata.kind.collection') : t('geodata.kind.layer'));
-        return h('button', { type: 'button', class: 'dm-list-item dm-geo-layer', 'aria-current': state.selected === ep.id ? 'true' : null, onclick: () => { state.selected = state.selected === ep.id ? null : ep.id; renderList(); renderForm(); } },
+        return h('button', { type: 'button', class: 'dm-list-item dm-geo-layer', 'aria-current': state.selected === ep.id ? 'true' : null, onclick: () => { state.selected = state.selected === ep.id ? null : ep.id; renderList(); renderForm(); showForm(); } },
           icons.icon(kind === 'arcgis' ? 'layers' : 'map', 16), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: ep.name }), sub ? h('span', { class: 'dm-list-sub dm-truncate', text: sub }) : null));
+      }
+      /** The layer list may fill the window (.dm-fill), so the chosen layer's form below it is scrolled into view. */
+      function showForm() {
+        if (state.selected && formEl && typeof formEl.scrollIntoView === 'function') formEl.scrollIntoView({ block: 'nearest' });
       }
       function renderList() {
         if (!listEl) return;
@@ -94,10 +98,10 @@
         if (state.loading) nodes.push(h('p', { class: 'dm-help' }, h('dm-progress', { indeterminate: true, label: state.loading })));
         else if (!all.length) nodes.push(h('p', { class: 'dm-help', text: state.error ? '' : t('geodata.layers.none') }));
         else if (!shown.length) nodes.push(h('p', { class: 'dm-help', text: t('geodata.layers.nomatch') }));
-        nodes.push(h('div', { class: 'dm-list dm-geo-layers' }, shown.slice(0, MAX_LIST).map(item)));
+        nodes.push(h('div', { class: 'dm-list dm-fill dm-geo-layers' }, shown.slice(0, MAX_LIST).map(item)));
         if (shown.length > MAX_LIST) nodes.push(h('p', { class: 'dm-help dm-xs', text: t('geodata.layers.more', { n: i18n.formatNumber(shown.length - MAX_LIST) }) }));
         const g = generic();
-        if (g) nodes.push(h('button', { type: 'button', class: 'dm-list-item dm-geo-layer', 'aria-current': state.selected === g.id ? 'true' : null, onclick: () => { state.selected = state.selected === g.id ? null : g.id; renderList(); renderForm(); } },
+        if (g) nodes.push(h('button', { type: 'button', class: 'dm-list-item dm-geo-layer', 'aria-current': state.selected === g.id ? 'true' : null, onclick: () => { state.selected = state.selected === g.id ? null : g.id; renderList(); renderForm(); showForm(); } },
           icons.icon('braces', 16), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: g.name }), h('span', { class: 'dm-list-sub dm-truncate', text: t('geodata.generic.hint') }))));
         replace(listEl, nodes);
       }

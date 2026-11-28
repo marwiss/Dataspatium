@@ -129,6 +129,10 @@
   /* Trees (ui/tree): one row height for folders and items (two lines of text), and the indent of a level. */
   --dm-tree-row-h: 40px;
   --dm-tree-indent: var(--dm-s-4);
+  /* Long lists in the work area (.dm-fill): at least the least height, and in the work area up to the window's height less the
+     reserve (the top bar, the status bar and a view's head above the list). */
+  --dm-fill-min-h: 300px;
+  --dm-fill-reserve-h: 400px;
 }
 /* Touch targets of at least 44 px in the narrow layouts. */
 @media (max-width: 1099px) {

@@ -259,7 +259,7 @@
         if (state.error) nodes.push(h('p', { class: 'dm-error dm-small', text: state.error }));
         if (state.rows) {
           nodes.push(h('p', { class: 'dm-help', text: state.rows.length ? t('geoportal.result', { shown: i18n.formatNumber(state.rows.length), total: i18n.formatNumber(state.total) }) : t('geoportal.empty') }));
-          nodes.push(h('div', { class: 'dm-stack-sm dm-geoportal-list' }, state.rows.map(card)));
+          nodes.push(h('div', { class: 'dm-stack-sm dm-fill dm-geoportal-list' }, state.rows.map(card)));
         }
         replace(el, nodes);
         if (!state.rows && !state.loading) requestAnimationFrame(() => { try { input.focus(); } catch (_e) { /* ignore */ } });

@@ -105,7 +105,7 @@
         const filter = /** @type {any} */ (h('dm-input', { label: t('geodata.ready.filter'), placeholder: t('geodata.ready.filter.placeholder'), inline: true }));
         filter.value = state.filter;
         filter.addEventListener('input', () => { state.filter = filter.value; renderList(); });
-        const listEl = h('div', { class: 'dm-list dm-geodata-ready-list' });
+        const listEl = h('div', { class: 'dm-list dm-fill dm-geodata-ready-list' });
         const renderList = () => {
           const all = state.services || [];
           const q = state.filter.trim().toLowerCase();
