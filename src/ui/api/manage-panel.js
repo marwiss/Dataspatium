@@ -5,7 +5,9 @@
  * a project's manager, who need not be a server administrator. Shown when the capabilities announce `project_administration`; the
  * button "Logga in som projektansvarig" asks for the scope. Lists the projects the user manages and their members with roles, adds a
  * member by user name, changes a role, removes a member and renames the project. Every change is confirmed and written to the log;
- * the server's refusals (the last manager, a user who does not exist) are told in the user's words.
+ * the server's refusals (the last manager, a user who does not exist) are told in the user's words. When the server mirrors
+ * repositories to a forge (Dataregium's step 7, `git.remote`), the page also connects the project's mirror with an address and a
+ * token that goes once to the server and is never kept in the app, shows how the last push went, and stops the mirror.
  */
 (function () {
   'use strict';
@@ -16,7 +18,12 @@
     /** @param {{connector: any, log?: Function}} api */
     function create(api) {
       const { connector } = api;
-      const s = { on: null, ext: null, projects: [], projectId: '', members: [], busy: '', error: '', username: '', role: 'contributor', teams: [], idsDocs: [], team: { name: '', responsible: '', members: '', ids: '' } };
+      const s = { on: null, ext: null, projects: [], projectId: '', members: [], busy: '', error: '', username: '', role: 'contributor', teams: [], idsDocs: [], team: { name: '', responsible: '', members: '', ids: '' },
+        // The mirror at a forge (Dataregium's step 7): the extension, the project's status (undefined until read, null when none) and
+        // the form without the token, which lives only in its field until it goes.
+        remoteExt: null, remote: undefined, remoteForm: { url: '', expires: '', maxFileMib: '100', ack: false } };
+      /** The token's field: read once when the mirror is connected, then emptied; the token is never kept in the panel's state. */
+      let tokenField = null;
       const el = h('div', { class: 'dm-card dm-stack-sm', 'data-manage-panel': '' });
       /** Dataregium's teams (DS-49) belong to BIM och GIS, of the app and of the server (platform/tier); members and roles stay in Dokument. */
       const teamsShown = () => !!(s.ext && s.ext.teamsUrl) && tier.shows('cde.teams', { server: connector.id });
@@ -37,6 +44,7 @@
       /** The card appears when the server has the extension; the lists load when the session has the scope. */
       async function start() {
         try { s.ext = await manage.extension(connector); s.on = !!s.ext; } catch (_e) { s.on = false; }
+        if (s.on) s.remoteExt = await manage.remoteExtension(connector).catch(() => null);
         render();
         if (s.on && manage.hasScope(connector, s.ext.scope)) await loadProjects();
       }
@@ -61,9 +69,10 @@
         s.busy = 'members'; s.error = ''; render();
         try { s.members = (await manage.members(connector, s.ext, s.projectId)).items; } catch (err) { s.members = []; fail(err); }
         if (teamsShown()) await loadTeams();
+        if (s.remoteExt) await loadRemote();
         s.busy = ''; render();
       }
-      async function select(projectId) { s.projectId = projectId; s.members = []; await loadMembers(); }
+      async function select(projectId) { s.projectId = projectId; s.members = []; s.remote = undefined; await loadMembers(); }
       /** A change: run, logged, and the members read again. */
       async function change(fn, logText, extra) {
         if (s.busy) return false;
@@ -128,6 +137,85 @@
         if (!options.confirmed && !(await overlays.dialog.confirm(t('manage.team.remove.confirm', { name: String(team.name || '') }), { danger: true }))) return false;
         return change(() => manage.removeTeam(connector, s.ext, s.projectId, teamId), t('manage.team.remove.done', { name: String(team.name || '') }));
       }
+      /** The project's mirror at a forge, as the server tells it (undefined until read, null when there is none). */
+      async function loadRemote() {
+        if (!s.remoteExt || !s.projectId) return;
+        try { s.remote = await manage.remote(connector, s.remoteExt, s.projectId); } catch (err) { s.remote = undefined; fail(err); }
+      }
+      /**
+       * Connects the mirror after the manager has acknowledged that the project's files leave the server for the forge: the address,
+       * the token (sent once to the source's own server, never kept in the app and never in the log), the date it expires and the
+       * forge's file limit. The token's field is emptied whatever the answer.
+       * @param {{url?: string, token?: string, expires?: string, maxFileMib?: string|number, ack?: boolean}} [given] the form's values, for tests
+       */
+      async function connectRemote(given) {
+        if (!s.remoteExt || !s.projectId || s.busy) return false;
+        const form = Object.assign({}, s.remoteForm, given || {});
+        const token = given && given.token !== undefined ? String(given.token) : String((tokenField && tokenField.value) || '');
+        if (tokenField) tokenField.value = '';
+        if (!form.ack) { s.error = t('manage.remote.err.ack'); render(); return false; }
+        const made = manage.remoteBody({ url: form.url, token, expires: form.expires, maxFileMib: form.maxFileMib }, s.remoteExt);
+        if ('error' in made) { s.error = t(made.error, { hosts: s.remoteExt.hosts.join(', ') }); render(); return false; }
+        s.busy = 'remote'; s.error = ''; render();
+        let ok = false;
+        try {
+          s.remote = await manage.setRemote(connector, s.remoteExt, s.projectId, made.body);
+          s.remoteForm = { url: '', expires: '', maxFileMib: '100', ack: false };
+          log(t('manage.remote.done', { url: made.body.url, project: (project() || {}).name || s.projectId }));
+          ok = true;
+        } catch (err) { fail(err); }
+        s.busy = ''; render();
+        return ok;
+      }
+      async function removeRemote(options = {}) {
+        if (!s.remote || s.busy) return false;
+        if (!options.confirmed && !(await overlays.dialog.confirm(t('manage.remote.remove.confirm', { url: s.remote.url }), { danger: true }))) return false;
+        s.busy = 'remote'; s.error = ''; render();
+        let ok = false;
+        try { await manage.removeRemote(connector, s.remoteExt, s.projectId); log(t('manage.remote.removed', { url: s.remote.url })); s.remote = null; ok = true; } catch (err) { fail(err); }
+        s.busy = ''; render();
+        return ok;
+      }
+      /** The mirror's part of the page: its status and the way to stop it, or the form that connects one. */
+      function remoteNodes() {
+        const nodes = [h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t('manage.remote') })), h('p', { class: 'dm-help dm-xs', text: t('manage.remote.hint') })];
+        const r = s.remote;
+        if (r === undefined) return nodes;
+        if (r) {
+          const kv = /** @type {any} */ (h('dm-kv'));
+          kv.items = [
+            { label: t('manage.remote.url'), value: r.url },
+            { label: t('manage.remote.status'), value: t('manage.remote.state.' + r.status) },
+            r.pushedAt ? { label: t('manage.remote.pushedAt'), value: base.i18n.formatDateTime(r.pushedAt) } : null,
+            r.pushed.length ? { label: t('manage.remote.pushed'), value: r.pushed.join(', ') } : null,
+            r.expiresAt ? { label: t('manage.remote.expires'), value: base.i18n.formatDateTime(r.expiresAt) } : null,
+            r.maxFileBytes ? { label: t('manage.remote.maxFile'), value: base.i18n.formatBytes(r.maxFileBytes) } : null,
+          ].filter(Boolean);
+          const leftOut = r.leftOut.map((x) => (typeof x === 'string' ? x : String((x && (x.path || x.file || x.name)) || JSON.stringify(x))));
+          nodes.push(h('div', { class: 'dm-stack-xs', 'data-manage-remote': r.status }, kv,
+            r.error ? h('p', { class: 'dm-error dm-small', 'data-manage-remote-error': '', text: t('manage.remote.error', { error: r.error }) }) : null,
+            leftOut.length ? h('p', { class: 'dm-help dm-xs', 'data-manage-remote-left': String(leftOut.length), text: t('manage.remote.left', { n: base.i18n.formatNumber(leftOut.length), files: leftOut.slice(0, 10).join(', ') + (leftOut.length > 10 ? ' …' : '') }) }) : null,
+            h('div', { class: 'dm-row-wrap' },
+              basic.button({ label: t('manage.reload'), icon: 'refresh-cw', size: 'sm', variant: 'ghost', disabled: !!s.busy, title: t('manage.remote.reload.hint'), 'data-manage-remote-reload': '', onClick: async () => { await loadRemote(); render(); } }),
+              basic.button({ label: t('manage.remote.remove'), icon: 'trash-2', size: 'sm', variant: 'ghost', loading: s.busy === 'remote', disabled: !!s.busy, title: t('manage.remote.remove.hint'), 'data-manage-remote-remove': '', onClick: () => removeRemote() }))));
+          return nodes;
+        }
+        const field = (key, attrs) => { const f = /** @type {any} */ (h('dm-input', attrs)); f.value = s.remoteForm[key]; f.addEventListener('input', () => { s.remoteForm[key] = f.value; }); return f; };
+        // The same field across the page's redraws, so that a typed token stays in it (and only there) until it goes.
+        tokenField = tokenField || /** @type {any} */ (h('dm-input', { label: t('manage.remote.token'), type: 'password', help: t('manage.remote.token.help'), 'data-manage-remote-token': '' }));
+        const ack = /** @type {any} */ (h('dm-switch', { label: t('manage.remote.ack'), 'data-manage-remote-ack': '' }));
+        ack.checked = !!s.remoteForm.ack;
+        ack.addEventListener('change', () => { s.remoteForm.ack = !!ack.checked; render(); });
+        nodes.push(h('div', { class: 'dm-stack-sm', 'data-manage-remote': 'none' },
+          field('url', { label: t('manage.remote.url'), placeholder: 'https://github.com/owner/repository.git', help: s.remoteExt.hosts.length ? t('manage.remote.url.help', { hosts: s.remoteExt.hosts.join(', ') }) : '', 'data-manage-remote-url': '' }),
+          tokenField,
+          h('div', { class: 'dm-row-wrap' },
+            field('expires', { label: t('manage.remote.expires'), type: 'date', help: t('manage.remote.expires.help'), 'data-manage-remote-expires': '' }),
+            field('maxFileMib', { label: t('manage.remote.maxFile.mib'), type: 'number', min: '1', max: '5120', 'data-manage-remote-size': '' })),
+          ack,
+          h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('manage.remote.connect'), icon: 'git-branch', size: 'sm', loading: s.busy === 'remote', disabled: !!s.busy || !s.remoteForm.ack, title: t('manage.remote.connect.hint'), 'data-manage-remote-connect': '', onClick: () => connectRemote() }))));
+        return nodes;
+      }
       function roleSelect(value, attrs, onChange) {
         const sel = /** @type {any} */ (h('dm-select', Object.assign({ label: t('manage.role') }, attrs)));
         sel.options = (s.ext ? s.ext.roles : manage.DEFAULT.roles).map((r) => ({ value: r, label: roleName(r) }));
@@ -162,9 +250,11 @@
           nodes.push(h('div', { class: 'dm-row-wrap' }, who, roleSelect(s.role, { 'data-manage-new-role': '' }, (role) => { s.role = role; }),
             basic.button({ label: t('manage.add'), icon: 'plus', size: 'sm', disabled: !!s.busy, title: t('manage.add.hint'), 'data-manage-add': '', onClick: () => add(s.username, s.role) })));
           if (teamsShown()) nodes.push(...teamNodes());
+          if (s.remoteExt) nodes.push(...remoteNodes());
         }
         if (s.error) nodes.push(h('p', { class: 'dm-error', 'data-manage-error': '', text: s.error }));
         replace(el, nodes);
+        if (tokenField && tokenField.control) tokenField.control.setAttribute('autocomplete', 'off');
       }
       /** The teams and the form for one more: name, the responsible among the editors and managers, the members, the IDS document. */
       function teamNodes() {
@@ -187,7 +277,7 @@
           basic.button({ label: t('manage.team.add'), icon: 'plus', size: 'sm', disabled: !!s.busy, title: t('manage.team.add.hint'), 'data-manage-team-add': '', onClick: () => addTeam(s.team) })));
         return nodes;
       }
-      return { el, start, state: s, signIn, loadProjects, select, add, setRole, remove, rename, loadTeams, addTeam, removeTeam };
+      return { el, start, state: s, signIn, loadProjects, select, add, setRole, remove, rename, loadTeams, addTeam, removeTeam, loadRemote, connectRemote, removeRemote };
     }
     return { create };
   });
