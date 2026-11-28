@@ -11,7 +11,8 @@
   D.define('presets', [], () => ({
     // Names and descriptions are i18n keys (nameKey, descriptionKey; name and description are the Swedish
     // fallback). The short name is fixed so that charts, recipes and notebooks shared between users with
-    // different UI languages still find the example data.
+    // different UI languages still find the example data. A post with `boundary` is a set of boundaries for maps (Inhämta:
+    // Gränser för kartor); the others are the examples (Inhämta: Exempeldata), each with its source and licence.
     examples: [
       {
         id: 'befolkning-kommuner-2024',
@@ -35,6 +36,7 @@
         description: 'Sveriges 21 län som förenklade ytor för tematiska kartor, med länskod och länsnamn, i longitud och latitud (WGS 84). Källa: SCB, Digitala gränser (CC0), version februari 2026.',
         asset: 'presets/geo/lan.geojson',
         format: 'geojson',
+        boundary: true,
         source: { kind: 'preset', publisher: 'SCB, Digitala gränser', url: 'https://www.scb.se/hitta-statistik/regional-statistik-och-kartor/regionala-indelningar/digitala-granser/', license: 'CC0', crs: 'WGS 84 (EPSG:4326)' },
       },
       {
@@ -46,6 +48,7 @@
         description: 'Sveriges 290 kommuner som förenklade ytor för tematiska kartor, med kommunkod, kommunnamn, länskod och län, i longitud och latitud (WGS 84). Källa: SCB, Digitala gränser (CC0), version februari 2026.',
         asset: 'presets/geo/kommuner.geojson',
         format: 'geojson',
+        boundary: true,
         source: { kind: 'preset', publisher: 'SCB, Digitala gränser', url: 'https://www.scb.se/hitta-statistik/regional-statistik-och-kartor/regionala-indelningar/digitala-granser/', license: 'CC0', crs: 'WGS 84 (EPSG:4326)' },
       },
       // Denmark, Norway and Finland, built by tools/build_nordic_boundaries.py; see presets/geo/KALLA.md.
@@ -58,6 +61,7 @@
         description: 'Danmarks fem regioner som förenklade ytor för tematiska kartor, med regionskod och regionnamn, i longitud och latitud (WGS 84). Källa: Geodatastyrelsen (nu Klimadatastyrelsen), DAGI 1:500 000, februari 2014.',
         asset: 'presets/geo/regioner-dk.geojson',
         format: 'geojson',
+        boundary: true,
         source: { kind: 'preset', publisher: 'Geodatastyrelsen (nu Klimadatastyrelsen), DAGI 1:500 000', url: 'https://github.com/Neogeografen/dagi', license: 'Frie geografiske data (kildeangivelse)', crs: 'WGS 84 (EPSG:4326)' },
       },
       {
@@ -69,6 +73,7 @@
         description: 'Danmarks 98 kommuner och Christiansø som förenklade ytor för tematiska kartor, med kommunkod (fyra siffror, till exempel 0101), kommunnamn, regionskod och region, i longitud och latitud (WGS 84). Källa: Geodatastyrelsen (nu Klimadatastyrelsen), DAGI 1:500 000, februari 2014.',
         asset: 'presets/geo/kommuner-dk.geojson',
         format: 'geojson',
+        boundary: true,
         source: { kind: 'preset', publisher: 'Geodatastyrelsen (nu Klimadatastyrelsen), DAGI 1:500 000', url: 'https://github.com/Neogeografen/dagi', license: 'Frie geografiske data (kildeangivelse)', crs: 'WGS 84 (EPSG:4326)' },
       },
       {
@@ -80,6 +85,7 @@
         description: 'Norges 15 fylken som förenklade landytor för tematiska kartor, med fylkesnummer och fylkesnamn, i longitud och latitud (WGS 84). Källa: Kartverket, N1000 Kartdata (CC BY 4.0), klippt längs kusten.',
         asset: 'presets/geo/fylker-no.geojson',
         format: 'geojson',
+        boundary: true,
         source: { kind: 'preset', publisher: 'Kartverket, N1000 Kartdata', url: 'https://kartkatalog.geonorge.no/metadata/n1000-kartdata/aee42bb6-d0e9-4d70-86fe-6ea76c381055', license: 'CC BY 4.0', crs: 'WGS 84 (EPSG:4326)' },
       },
       {
@@ -91,6 +97,7 @@
         description: 'Norges 357 kommuner som förenklade landytor för tematiska kartor, med kommunnummer, kommunnamn, fylkesnummer och fylke, i longitud och latitud (WGS 84). Källa: Kartverket, N1000 Kartdata (CC BY 4.0), klippt längs kusten.',
         asset: 'presets/geo/kommuner-no.geojson',
         format: 'geojson',
+        boundary: true,
         source: { kind: 'preset', publisher: 'Kartverket, N1000 Kartdata', url: 'https://kartkatalog.geonorge.no/metadata/n1000-kartdata/aee42bb6-d0e9-4d70-86fe-6ea76c381055', license: 'CC BY 4.0', crs: 'WGS 84 (EPSG:4326)' },
       },
       {
@@ -102,6 +109,7 @@
         description: 'Finlands 19 landskap som förenklade ytor för tematiska kartor, med landskapskod och namn på finska och svenska, i longitud och latitud (WGS 84). Källa: Statistikcentralen, kommunbaserade statistiska indelningar 1:1 000 000, 2026 (CC BY 4.0).',
         asset: 'presets/geo/maakunnat-fi.geojson',
         format: 'geojson',
+        boundary: true,
         source: { kind: 'preset', publisher: 'Statistikcentralen (Tilastokeskus), maakunta1000k', url: 'https://geo.stat.fi/geoserver/tilastointialueet/wfs', license: 'CC BY 4.0', crs: 'WGS 84 (EPSG:4326)' },
       },
       {
@@ -113,6 +121,7 @@
         description: 'Finlands 308 kommuner 2026 som förenklade ytor för tematiska kartor, med kommunkod, kommunnamn på finska och svenska, landskapskod och landskap, i longitud och latitud (WGS 84). Källa: Statistikcentralen, kommunbaserade statistiska indelningar 1:1 000 000, 2026 (CC BY 4.0).',
         asset: 'presets/geo/kunnat-fi.geojson',
         format: 'geojson',
+        boundary: true,
         source: { kind: 'preset', publisher: 'Statistikcentralen (Tilastokeskus), kunta1000k', url: 'https://geo.stat.fi/geoserver/tilastointialueet/wfs', license: 'CC BY 4.0', crs: 'WGS 84 (EPSG:4326)' },
       },
     ],
