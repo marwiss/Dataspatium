@@ -165,6 +165,15 @@
     assert.deepEqual(err.merge, { baseVersionIndex: 1, latestVersionIndex: 3 }, 'with the versions merged against');
     assert.equal(err.conflictDetails.length, 1);
     assert.equal(err.conflictDetails[0].ours, 'C');
+    assert.equal(err.conflictCommit, undefined, 'no branch without ifcmerge\'s phase 5.5');
+    // From phase 5.5 the upload that did not merge is kept on a branch until a time; something that is not a commit is not taken.
+    world.completion = Object.assign({}, world.completion, { conflict_commit: 'ABCDEF0123456789abcdef0123456789abcdef01', conflict_expires_at: '2026-12-01T00:00:00Z' });
+    const kept = await upload(new File([local], 'hus.ifc'), { documentId: 'doc-r', baseVersionIndex: 1 }).catch((e) => e);
+    assert.equal(kept.conflictCommit, 'abcdef0123456789abcdef0123456789abcdef01', 'the branch\'s commit');
+    assert.equal(kept.conflictExpiresAt, '2026-12-01T00:00:00Z', 'and until when');
+    world.completion = Object.assign({}, world.completion, { conflict_commit: 'main; rm -rf' });
+    const odd = await upload(new File([local], 'hus.ifc'), { documentId: 'doc-r', baseVersionIndex: 1 }).catch((e) => e);
+    assert.ok(odd.conflictCommit === undefined && odd.conflictExpiresAt === undefined, 'not a commit, not a branch');
     return 'ok';
   }, 60000);
 

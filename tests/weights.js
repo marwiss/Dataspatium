@@ -119,6 +119,7 @@
     'model-navigation.test.js': 1.0,
     'model-compare.test.js': 0.3,
     'opencde7.test.js': 0.1,
+    'opencde8.test.js': 0.2,
     'model-material.test.js': 0.0,
     'manage.test.js': 0.1,
     'ifc-graph.test.js': 0.4,
