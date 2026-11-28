@@ -229,6 +229,12 @@
       itemByText(r.connector.name).click();
       await waitFor(() => root.querySelectorAll('.dm-geo-layer').length === 3, 8000, 'two layers and the generic entry');
       assert.ok(!root.querySelector('.dm-api-view dm-tabs'), 'no endpoint tab for a geodata source');
+      // The count says how many layers the filter leaves of all of them.
+      assert.equal(root.querySelector('[data-geo-count]').textContent, t('geodata.layers.count', { n: '2' }));
+      const filterInput = /** @type {any} */ (root.querySelector('.dm-geo-head dm-input'));
+      filterInput.value = 'Kommun'; filterInput.dispatchEvent(new Event('input', { bubbles: true }));
+      assert.equal(root.querySelector('[data-geo-count]').textContent, t('geodata.layers.count.of', { shown: '1', n: '2' }), 'one of two after filtering');
+      filterInput.value = ''; filterInput.dispatchEvent(new Event('input', { bubbles: true }));
       /** @type {any} */ (Array.from(root.querySelectorAll('.dm-geo-layer')).find((e) => e.textContent.includes('Kommuner'))).click();
       await waitFor(() => buttonByText(t('api.fetch')), 5000, 'fetch button for the layer');
       assert.ok(Array.from(root.querySelectorAll('.dm-geo-form dm-input')).some((i) => (i.getAttribute('label') || '').includes(t('geodata.param.bbox'))), 'the bbox field');

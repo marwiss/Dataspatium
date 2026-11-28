@@ -3342,6 +3342,7 @@
     'geodata.filter': 'Filtrera',
     'geodata.filter.placeholder': 'Sök bland lagren',
     'geodata.layers.count': '{n} lager',
+    'geodata.layers.count.of': '{shown} av {n} lager',
     'geodata.layers.none': 'Inga lager ännu. Läs lagren från tjänsten, eller ange ett lager själv under Valfritt lager.',
     'geodata.layers.nomatch': 'Inget lager matchar filtret.',
     'geodata.layers.more': '… och {n} till; filtrera listan för att se dem.',

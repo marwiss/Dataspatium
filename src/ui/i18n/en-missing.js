@@ -217,6 +217,7 @@
     'overlay.crs.unknown': '{name} is in the coordinate system {crs}, which cannot be converted. The dataset is not shown on the map, since it would land in the wrong place.',
     'overlay.raster.grid': 'The raster {name} shows in Web Mercator only, not in the plan\'s coordinate system.',
     'geodata.err.nojson': 'The service offers neither GeoJSON nor GML, only {formats}. Choose another service for the same data, for example an OGC API Features service.',
+    'geodata.layers.count.of': '{shown} of {n} layers',
     'geoportal.title': 'Geodataportalen',
     'geoportal.hint': 'Search the national geodata catalogue and fetch what it lists',
     'geoportal.lead': 'Search the geodata of Swedish agencies, regions and municipalities in Geodataportalen and fetch what can be fetched: a service becomes a geodata source, a file is read in and a WMS is shown on the map. The addresses come from the catalogue, so the app asks before it contacts each new host.',
