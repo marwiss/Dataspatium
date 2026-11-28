@@ -240,7 +240,7 @@
     /**
      * The tree every mode shows (the shell's defaults for ui/dataset-list): check boxes on the store's selection, for the mode's
      * own actions. The tools that change the folders (Ny mapp, Byt namn, Klipp ut, Kopiera, Klistra in, Flytta, Ta bort, their
-     * keys, the snabbmeny and dragging) are Hantera's alone, which adds `actions` and `onMove` (Martin, 2026-11-28).
+     * keys, the snabbmeny and dragging) are Hantera's alone, which adds `actions` and `onMove` (B-81.4).
      */
     function treeOptions(ctx) {
       return { multi: true, selectedIds: ctx.store.get().selectedIds || [], onToggle: (ids) => ctx.store.set({ selectedIds: ids }), trash: ctx.store.get().trash || [] };
