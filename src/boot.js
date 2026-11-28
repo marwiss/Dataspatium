@@ -222,6 +222,7 @@
     'src/data/dataset-files.js',
     // Import and export: the importers are the groups plan and import (below); io/import waits for them.
     'src/data/plan-links.js',
+    'src/io/formats.js',
     'src/io/import.js',
     'src/data/linked-files.js',
     'src/io/export.js',

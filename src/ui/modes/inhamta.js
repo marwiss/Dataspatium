@@ -11,7 +11,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/inhamta', ['ui/base', 'data/encoding', 'data/types', 'api/connectors', 'api/bridge', 'data/linked', 'data/kinds', 'viz/leaflet', 'ui/kinds/sketches', 'platform/tier', 'ui/settings/tier', 'ui/tree', 'ui/import/source-forms', 'ui/field/mobile-source'], (base, encoding, types, connectors, bridge, linked, kinds, leaflet, sketches, tier, tierUi, treeMod, sourceForms, mobileSource) => {
+  D.define('ui/modes/inhamta', ['ui/base', 'data/encoding', 'data/types', 'api/connectors', 'api/bridge', 'data/linked', 'data/kinds', 'viz/leaflet', 'ui/kinds/sketches', 'platform/tier', 'ui/settings/tier', 'ui/tree', 'ui/import/source-forms', 'ui/field/mobile-source', 'io/formats'], (base, encoding, types, connectors, bridge, linked, kinds, leaflet, sketches, tier, tierUi, treeMod, sourceForms, mobileSource, formats) => {
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
@@ -22,11 +22,17 @@
     const TYPED = ['sqlite', 'access', 'shapefile', 'raster', 'detaljplan', 'planarchive', 'opdelivery', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
     /** Formats with fixed columns where one or many files become one dataset (no column step): documents, rasters and pictures. */
     const COLLECTIONS = ['documents', 'raster', 'images'];
-    /** What the file picker offers: every extension an importer reads by the file's name (tests/io.test.js keeps them together). */
-    const ACCEPT = '.bcf,.bcfzip,.csv,.tsv,.txt,.tab,.dat,.fwf,.prn,.xlsx,.xlsm,.xls,.xlsb,.ods,.fods,.dbf,.slk,.sylk,.dif,.wk1,.wk3,.wk4,.wks,.wq1,.wq2,.wb1,.wb2,.wb3,.qpw,'
-      + '.html,.htm,.xhtml,.md,.markdown,.docx,.tex,.json,.ndjson,.jsonl,.geojson,.topojson,.kml,.kmz,.gpx,.xml,.sqlite,.sqlite3,.db,.s3db,.gpkg,.sql,'
-      + '.shp,.zip,.sav,.zsav,.por,.dta,.sas7bdat,.xpt,.px,.rds,.rda,.RData,.parquet,.mdb,.accdb,'
-      + '.pdf,.odt,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif,.tif,.tiff,.gtiff,.qgs,.qgz,.graphml,.gexf,.cypher,.cql,.cyp,.ifc,.ifczip,.dxf';
+    /** What the file picker offers: every extension of the table of formats (io/formats; tests/io.test.js keeps it with the importers). */
+    const ACCEPT = formats.accept();
+    /**
+     * Formats by group, as a list under the drop zone or the text box: the group's name, then its formats.
+     * @param {Array<{group: string, formats: any[]}>} groups @param {string} attr the list's data attribute
+     */
+    function formatList(groups, attr) {
+      const kv = /** @type {any} */ (h('dm-kv', { [attr]: '' }));
+      kv.items = groups.map((g) => ({ label: t('import.formats.group.' + g.group), value: g.formats.map(formats.nameOf).join(', ') }));
+      return kv;
+    }
     /**
      * The left column, group by group in this order (B-81): each source has an id (the deep link #/inhamta/<id>), an icon, its
      * name and the line under it (keys, or a function), and the tier's feature that shows it. Tillagda källor lists what the
@@ -97,7 +103,7 @@
        * `hidden`: the entry of a file the tier does not read (platform/tier), shown as the tier's notice in place of an error;
        * `refused`: the files of a raster that its preview passed over, with their words ({file, message}); the import leaves them out.
        */
-      function reset() { return { step: 'file', answers: {}, sorted: null, results: null, file: null, files: [], progress: null, project: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '', hidden: '', refused: [] }; }
+      function reset() { return { step: 'file', answers: {}, sorted: null, results: null, file: null, files: [], progress: null, project: null, handle: null, text: '', pasted: null, url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '', hidden: '', refused: [] }; }
       /** What went wrong with the file chosen: the tier's notice for a file the tier does not read, else the error. */
       const problem = () => (wiz.hidden ? tierUi.notice(ctx, wiz.hidden) : wiz.error ? h('p', { class: 'dm-error dm-small', text: wiz.error }) : null);
       function restart() { freeThumbs(); Object.assign(wiz, reset()); render(); }
@@ -710,7 +716,7 @@
               return;
             }
           }
-          wiz.file = file; wiz.files = []; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined;
+          wiz.file = file; wiz.files = []; wiz.text = ''; wiz.pasted = null; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined;
           wiz.busy = false;
           await runPreview();
           return;
@@ -746,7 +752,12 @@
             e.preventDefault();
             fromPicture(/** @type {any} */ (item).getAsFile());
           });
-          return h('div', { class: 'dm-stack' }, ta, h('div', { class: 'dm-row' }, ui.button({ label: t('import.paste.picture'), icon: 'scan-line', title: t('import.paste.picture.hint'), onClick: () => fromPicture(null) }), ui.button({ label: t('import.paste.use'), variant: 'primary', icon: 'check', onClick: async () => { wiz.text = ta.value; if (!wiz.text.trim()) return; wiz.file = null; await runPreview(); } })));
+          return h('div', { class: 'dm-stack' }, ta,
+            problem(),
+            h('div', { class: 'dm-row' }, ui.button({ label: t('import.paste.picture'), icon: 'scan-line', title: t('import.paste.picture.hint'), onClick: () => fromPicture(null) }), ui.button({ label: t('import.paste.use'), variant: 'primary', icon: 'check', loading: wiz.busy, onClick: () => usePasted(ta.value) })),
+            // The formats a text is recognised as, from the table that io/sniff recognises them by (io/formats pasted).
+            h('div', { class: 'dm-stack-sm' }, h('p', { class: 'dm-help', text: t('import.paste.formats') }), formatList(formats.grouped((f) => !!f.text), 'data-paste-formats'),
+              h('p', { class: 'dm-help dm-small', text: t('import.paste.formats.other') })));
         }
         const dz = h('dm-dropzone', { text: t('import.drop'), hint: t('import.drop.hint'), accept: ACCEPT, multiple: true });
         dz.addEventListener('dm-files', (e) => chooseFiles(/** @type {any} */ (e).detail.files));
@@ -754,21 +765,47 @@
         const first = store.get().datasets.length ? null : h('div', { class: 'dm-card dm-row-wrap', 'data-first-examples': '' },
           h('p', { class: 'dm-grow', text: t('examples.first') }),
           ui.button({ label: t('examples.first.open'), icon: 'sparkles', 'data-course': 'example', onClick: () => choose('examples') }));
+        // A folder is dropped like files; the button that picks one is for the keyboard, under Fler alternativ.
+        const more = h('details', { class: 'dm-more', 'data-import-more': '' }, h('summary', { text: t('common.more') }),
+          h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('import.folder'), icon: 'folder', title: t('import.folder.hint'), onClick: async () => chooseFiles(await services.files.pick({ directory: true })) })));
         return h('div', { class: 'dm-stack' }, first, dz,
           problem(),
-          h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('import.folder'), icon: 'folder', title: t('import.folder.hint'), onClick: async () => chooseFiles(await services.files.pick({ directory: true })) })),
-          linked.supported() ? h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('linked.pick'), icon: 'link', onClick: pickLinked }), h('span', { class: 'dm-help', text: t('linked.pick.hint') })) : null);
+          formatList(formats.grouped(), 'data-import-formats'),
+          linked.supported() ? h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('linked.pick'), icon: 'link', onClick: pickLinked }), h('span', { class: 'dm-help', text: t('linked.pick.hint') })) : null,
+          more);
+      }
+
+      /**
+       * A pasted text, recognised as a file without a name would be (io/import recognise and io/sniff, F83 a): a table goes on as a
+       * pasted table with its delimiter to choose; anything else goes on as a file of the format it is (JSON, XML, IFC, Markdown
+       * and the others of io/formats pasted), and a text that is none of them as a text document.
+       * @param {string} text
+       */
+      async function usePasted(text) {
+        wiz.text = text;
+        if (!text.trim() || wiz.busy || !(await importersReady())) return;
+        const file = await services.importer.recognise(new File([text], t('import.paste.file')));
+        const found = services.importer.recognisedAs(file) || { ext: 'txt', format: t('import.recognised.text.format'), document: true };
+        if (found.ext === 'csv' || found.ext === 'tsv') {
+          wiz.file = null; wiz.files = []; wiz.handle = null; wiz.pasted = found; wiz.name = ''; wiz.options.format = ''; wiz.options.header = undefined;
+          await runPreview();
+          return;
+        }
+        await chooseFiles([file], found);
       }
 
       /**
        * Files from the drop zone. Several documents, or several pictures, become one collection with fixed
-       * columns; any other choice of several files takes the first one through the wizard as before.
+       * columns; any other choice of several files takes the first one through the wizard as before. `pasted`: what a pasted text
+       * was recognised as, when the file is one (usePasted).
+       * @param {File[]} list @param {any} [pasted]
        */
-      async function chooseFiles(list) {
+      async function chooseFiles(list, pasted) {
         if (!list || !list.length || !(await importersReady())) return;
-        // A file whose name has no extension the app knows is recognised by its contents first (io/import recognise, F83 a);
-        // the files of an archive package keep their paths, which its checksums name (io/import sortFiles reads the rest).
-        if (!D.require('io/importers/plan-archive').isPackage(list)) list = await Promise.all(Array.from(list).map((f) => services.importer.recognise(f)));
+        // A file whose name has no extension the app knows is recognised by its contents first (io/import recognise, F83 a), after
+        // a shapefile's parts have gone with its .shp (io/importers/shapefile bundle: a .prj is no text document); the files of an
+        // archive package keep their paths, which its checksums name (io/import sortFiles reads the rest).
+        if (!D.require('io/importers/plan-archive').isPackage(list)) list = await Promise.all(D.require('io/importers/shapefile').bundle(Array.from(list)).map((f) => services.importer.recognise(f)));
         // A form or rows from the field are not a table to read: they go where bundles go.
         if (list.length === 1 && /\.(insamling|formular)\.zip$/i.test(list[0].name)) { await D.require('ui/share/bundle').receiveFile(ctx, list[0]); return; }
         // A QGIS project (with or without its data files) becomes a map view, not a dataset; the map view belongs to BIM och GIS.
@@ -781,9 +818,9 @@
         if (list.length === 1 && /\.zip$/i.test(list[0].name) && await deliveryImp.sniff(list[0])) { await sortChosen(await deliveryImp.filesOfZip(list[0])); return; }
         const collection = services.importer.collectionFor(list);
         if (list.length > 1 && !collection) { await sortChosen(list); return; }
-        wiz.answers = {}; wiz.sorted = null; wiz.results = null;
+        wiz.answers = {}; wiz.sorted = null; wiz.results = null; wiz.pasted = pasted || null;
         wiz.files = collection && list.length > 1 ? list : [];
-        wiz.file = list[0]; wiz.handle = null; wiz.text = ''; wiz.name = '';
+        wiz.file = list[0]; wiz.handle = null; wiz.text = pasted ? wiz.text : ''; wiz.name = '';
         wiz.options.format = wiz.files.length ? collection.id : ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; wiz.options.plan = undefined; wiz.options.layers = undefined; wiz.nameFromPlan = false;
         if (wiz.files.length) wiz.name = services.importer.folderOf(list) || t('import.collection.' + collection.id, { n: list.length });
         await runPreview();
@@ -961,7 +998,7 @@
         try {
           const { handle, file } = await linked.pick();
           if (!(await importersReady())) return;
-          wiz.file = await services.importer.recognise(file); wiz.files = []; wiz.handle = handle; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; wiz.options.plan = undefined; wiz.options.layers = undefined; wiz.nameFromPlan = false;
+          wiz.file = await services.importer.recognise(file); wiz.files = []; wiz.handle = handle; wiz.text = ''; wiz.pasted = null; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; wiz.options.plan = undefined; wiz.options.layers = undefined; wiz.nameFromPlan = false;
           await runPreview();
         } catch (err) { if (!err || err.name !== 'AbortError') { wiz.error = (err && err.message) || String(err); render(); } }
       }
@@ -1032,9 +1069,11 @@
       function stepOptions() {
         const p = wiz.preview;
         const left = h('div', { class: 'dm-stack' });
-        if (wiz.file) left.appendChild(h('p', { class: 'dm-help', text: t('import.file', { name: wiz.file.name, size: i18n.formatBytes(wiz.file.size) }) }));
+        if (wiz.file && !wiz.pasted) left.appendChild(h('p', { class: 'dm-help', text: t('import.file', { name: wiz.file.name, size: i18n.formatBytes(wiz.file.size) }) }));
+        // A pasted text says what it was recognised as (usePasted), and that the format can be chosen.
+        if (wiz.pasted) left.appendChild(h('p', { class: 'dm-help dm-small', 'data-paste-recognised': '', text: wiz.pasted.document ? t('import.paste.recognised.text') : t('import.paste.recognised', { format: wiz.pasted.format }) }));
         // A file recognised by its contents, since its name has no extension the app knows (F83 a).
-        if (wiz.file && p && p.recognised) left.appendChild(h('p', { class: 'dm-help dm-small', 'data-import-recognised': '', text: p.recognisedText ? t('import.recognised.text') : t('import.recognised', { format: p.recognised }) }));
+        if (wiz.file && !wiz.pasted && p && p.recognised) left.appendChild(h('p', { class: 'dm-help dm-small', 'data-import-recognised': '', text: p.recognisedText ? t('import.recognised.text') : t('import.recognised', { format: p.recognised }) }));
         const sense = p ? senseCard(p) : null;
         if (sense) left.appendChild(sense);
         // A coordinate system the app cannot convert: said before the import (the places would otherwise land in the wrong place).
@@ -1048,7 +1087,7 @@
         if (wiz.refused.length) left.appendChild(h('div', { class: 'dm-stack-xs', 'data-import-refused': '' }, h('p', { class: 'dm-help dm-small', text: t('raster.refused') }), wiz.refused.map((r) => h('p', { class: 'dm-warn dm-small', text: r.message }))));
         if (wiz.options.format === 'csv' || wiz.options.format === 'fixed') {
           const encOptions = encoding.ENCODINGS.map((e) => ({ value: e.value, label: e.label + (p && p.encodingDetected && p.encodingDetected.encoding === e.value ? t('import.encoding.detected') : '') }));
-          if (wiz.file) left.appendChild(select(t('import.encoding'), encOptions, wiz.options.encoding || 'utf-8', (v) => { wiz.options.encoding = v; schedulePreview(); }));
+          if (wiz.file && !wiz.pasted) left.appendChild(select(t('import.encoding'), encOptions, wiz.options.encoding || 'utf-8', (v) => { wiz.options.encoding = v; schedulePreview(); }));
           if (wiz.options.format === 'csv') left.appendChild(select(t('import.delimiter'), csv.DELIMITERS.map((d) => ({ value: d.value, label: d.value === 'auto' ? t('import.delimiter.auto') + (p && p.delimiter ? ` (${describeDelimiter(p.delimiter)})` : '') : t(d.key) })), wiz.options.delimiter, (v) => { wiz.options.delimiter = v; schedulePreview(); }));
           else {
             const breaks = /** @type {any} */ (h('dm-input', { label: t('import.breaks'), help: t('import.breaks.help'), placeholder: p && p.breaksText ? p.breaksText : '0, 12, 20' }));
@@ -1360,6 +1399,7 @@
         try {
           const opts = cleanOptions();
           if (wiz.handle) opts.linked = true;
+          if (wiz.pasted && wiz.file) opts.pasted = true;
           const reproject = wiz.preview ? fileSense.reprojectOption(wiz.preview, wiz.answers) : null;
           if (reproject) opts.reproject = reproject;
           const specs = wiz.specs.map((s) => ({ name: s.name, type: s.type, include: s.include !== false, decimal: s.decimal, label: s.label || s.name }));

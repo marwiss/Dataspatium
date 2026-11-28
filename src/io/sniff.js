@@ -8,8 +8,9 @@
  * Only sure signatures count. The order: binary signatures at fixed places first (SQLite and GeoPackage, ZIP by its entries,
  * PDF, TIFF, PNG, JPEG, GIF, WebP, BMP, AVIF, OLE2 with a workbook, Access, shapefile, SPSS, Stata, SAS, SAS transport,
  * Parquet, RData), then text (IFC with its FILE_SCHEMA, DXF, JSON that parses on the head with GeoJSON, TopoJSON and the
- * app's own `format`, XML and HTML by the root element, SQL script, LaTeX, PC-Axis, Cypher) and last a table with the same
- * number of delimiters on every line. Anything else gives null, and the file keeps today's way.
+ * app's own `format`, XML and HTML by the root element, SQL script, LaTeX, PC-Axis, Cypher, Markdown) and last a table with the
+ * same number of delimiters on every line. Anything else gives null, and the file keeps today's way. A pasted text in Inhämta is
+ * recognised the same way (TEXT lists what a text can be).
  */
 (function () {
   'use strict';
@@ -22,14 +23,14 @@
     const SAS7BDAT = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xc2, 0xea, 0x81, 0x60, 0xb3, 0x14, 0x11, 0xcf, 0xbd, 0x92, 0x08, 0x00, 0x09, 0xc7, 0x31, 0x8c, 0x18, 0x1f, 0x10, 0x11];
 
     /**
-     * @typedef {{ext: string, format: string, type: string}} Sniffed the extension the file gets, the format's name as the
-     *   preview says it, and the media type
+     * @typedef {{ext: string, format: string, type: string, id: string}} Sniffed the extension the file gets, the format's name
+     *   as the preview says it, the media type, and the format's id in io/formats (the extension where the two are the same)
      */
     /**
      * A recognised format. The type stays empty where a reader would take the type before the extension (an image/ type goes
      * to the pictures, an XML type to the XML reader). @returns {Sniffed}
      */
-    const hit = (ext, format, type = '') => ({ ext, format, type });
+    const hit = (ext, format, type = '', id = ext) => ({ ext, format, type, id });
     const ascii = (b, from, to) => { let s = ''; for (let i = from; i < Math.min(to, b.length); i++) s += String.fromCharCode(b[i]); return s; };
     const has = (b, list, at = 0) => b.length >= at + list.length && list.every((x, i) => b[at + i] === x);
     const u16 = (b, at) => (at + 2 <= b.length ? b[at] | (b[at + 1] << 8) : -1);
@@ -247,7 +248,7 @@
       if (name === 'qgis') return hit('qgs', 'QGIS');
       if (name === 'svg') return null;
       if (name === 'document' && /opendocument\.spreadsheet/.test(root.attrs)) return hit('fods', 'FODS', 'application/vnd.oasis.opendocument.spreadsheet');
-      if (name === 'workbook' && /urn:schemas-microsoft-com:office:spreadsheet/.test(t)) return hit('xml', 'Excel 2003 XML', 'application/xml');
+      if (name === 'workbook' && /urn:schemas-microsoft-com:office:spreadsheet/.test(t)) return hit('xml', 'Excel 2003 XML', 'application/xml', 'excelxml');
       // A tag with neither the XML declaration nor a namespace is not sure to be XML.
       if (!/^<\?xml\s/.test(t) && !root.ns) return null;
       if (/opengis\.net\/(gml|wfs)/.test(t.slice(0, 4096))) return hit('xml', 'GML', 'application/gml+xml');
@@ -268,7 +269,36 @@
       for (let i = 0; i < line.length; i++) { const c = line[i]; if (c === '"') quoted = !quoted; else if (c === d && !quoted) n++; }
       return n;
     }
-    /** A table: the same number of one delimiter on every line (at least three lines, or two delimiters a line). */
+    /**
+     * Markdown, by what only Markdown writes: a pipe table with its line of dashes, a fenced code block, a heading first with an
+     * empty line or another mark of Markdown after it, or three kinds of marks (headings, lists, quotes, links, bold text,
+     * underlined headings). A script whose comments start with # has none of the others.
+     */
+    function markdownKind(t) {
+      const lines = t.split(/\r\n|\n|\r/).slice(0, 400);
+      const marks = new Set();
+      let first = -1; let fences = 0;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (first < 0 && line.trim()) first = i;
+        if (/^ {0,3}(```|~~~)/.test(line)) fences++;
+        if (/^ {0,3}#{1,6}\s+\S/.test(line)) marks.add('heading');
+        if (/^ {0,3}([-*+]|\d{1,3}[.)])\s+\S/.test(line)) marks.add('list');
+        if (/^ {0,3}>\s?\S/.test(line)) marks.add('quote');
+        if (/!?\[[^\]\n]+\]\([^)\s]+\)/.test(line)) marks.add('link');
+        if (/\*\*[^*\n]+\*\*|__[^_\n]+__/.test(line)) marks.add('bold');
+        if (i > 0 && /^(={3,}|-{3,})\s*$/.test(line) && /\S/.test(lines[i - 1]) && !/^ {0,3}([-*+]\s|#)/.test(lines[i - 1])) marks.add('setext');
+        if (i > 0 && lines[i - 1].includes('|') && /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line)) return hit('md', 'Markdown', 'text/markdown');
+      }
+      if (fences >= 2) return hit('md', 'Markdown', 'text/markdown');
+      const headed = first >= 0 && /^ {0,3}#{1,6}\s+\S/.test(lines[first]);
+      const blankAfter = headed && first + 1 < lines.length && !lines[first + 1].trim();
+      return (headed && (blankAfter || marks.size >= 2)) || marks.size >= 3 ? hit('md', 'Markdown', 'text/markdown') : null;
+    }
+    /**
+     * A table: the same number of one delimiter on every line (at least three lines, or two delimiters a line; two lines with
+     * tabs, which prose seldom has, as two columns copied from a spreadsheet are).
+     */
     function tableKind(t, complete) {
       const all = t.split(/\r\n|\n|\r/);
       if (!complete) all.pop();
@@ -277,7 +307,7 @@
       for (const d of ['\t', ';', ',', '|']) {
         if (d === '|' && lines[0].trim().startsWith('|')) continue;
         const first = count(lines[0], d);
-        if (first < 1 || (lines.length < 3 && first < 2)) continue;
+        if (first < 1 || (lines.length < 3 && first < 2 && d !== '\t')) continue;
         if (lines.every((l) => count(l, d) === first)) return d === '\t' ? hit('tsv', 'TSV', 'text/tab-separated-values') : hit('csv', 'CSV', 'text/csv');
       }
       return null;
@@ -298,7 +328,7 @@
       if (/^(%[^\n]*\n\s*)*\\documentclass\b/.test(s)) return hit('tex', 'LaTeX', 'application/x-tex');
       if (/^(CHARSET|AXIS-VERSION|CODEPAGE|LANGUAGE|CREATION-DATE|DECIMALS|MATRIX)\s*=/.test(s) && /^(STUB|HEADING)(\[[^\]]*\])?\s*=/m.test(s)) return hit('px', 'PC-Axis (PX)');
       if (/^(\/\/[^\n]*\n\s*)*(CREATE|MERGE|:begin|UNWIND)\b/i.test(s) && /\b(CREATE|MERGE)\s*\(\s*[A-Za-z_]*\s*:\s*`?[A-Za-z_]/i.test(s)) return hit('cypher', 'Cypher');
-      return tableKind(s, complete);
+      return markdownKind(s) || tableKind(s, complete);
     }
 
     /**
@@ -323,6 +353,13 @@
       return textOf(await bytesOf(file, 0, HEAD)) !== null;
     }
 
-    return { sniff, isText, HEAD };
+    /**
+     * The formats a text is recognised as (text above), by their ids in io/formats and in the order they are tried. Klistra in
+     * names the formats of io/formats that a text is recognised as (pasted), and tests/sniff.test.js keeps the two the same. GML
+     * and IDS are XML here.
+     */
+    const TEXT = ['ifc', 'dxf', 'ndjson', 'topojson', 'geojson', 'json', 'html', 'kml', 'gpx', 'graphml', 'gexf', 'qgs', 'fods', 'excelxml', 'xml', 'sql', 'tex', 'px', 'cypher', 'md', 'csv', 'tsv'];
+
+    return { sniff, isText, HEAD, TEXT };
   });
 })();

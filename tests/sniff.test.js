@@ -126,8 +126,14 @@
     ['LaTeX', () => '% rapport\n\\documentclass{article}\n\\begin{document}\n', 'tex', 'LaTeX'],
     ['PC-Axis', () => 'CHARSET="ANSI";\nAXIS-VERSION="2010";\nMATRIX="BE0101";\nSTUB="region";\nHEADING="år";\nDATA=\n1 2;\n', 'px', 'PC-Axis (PX)'],
     ['Cypher', () => 'CREATE (:Person {namn: "A"});\nCREATE (:Person {namn: "B"});\n', 'cypher', 'Cypher'],
+    ['Markdown with a heading and a paragraph', () => '# Rubrik\n\nEtt stycke text.\n', 'md', 'Markdown'],
+    ['Markdown with a pipe table', () => 'Län | Folkmängd\n--- | ---:\nUppsala | 400 000\n', 'md', 'Markdown'],
+    ['Markdown by its marks', () => 'Inledning med **fet** text.\n\n- en punkt\n- en [länk](https://example.invalid)\n', 'md', 'Markdown'],
+    ['a script with comments is not Markdown', () => '# Läs in data\nx <- read.csv("a.csv")\n# Rita\nplot(x)\n', null, ''],
     ['CSV', () => CSV, 'csv', 'CSV'],
     ['TSV', () => 'a\tb\n1\t2\n3\t4\n', 'tsv', 'TSV'],
+    ['TSV of two lines, as copied from a spreadsheet', () => 'namn\tvärde\nA\t1\n', 'tsv', 'TSV'],
+    ['two lines with one comma are not sure', () => 'namn,värde\nA,1\n', null, ''],
     ['CSV in UTF-16 with a byte order mark', () => bytes([0xff, 0xfe], Array.from('a;b\n1;2\n3;4\n').flatMap((c) => [c.charCodeAt(0), 0])), 'csv', 'CSV'],
     ['an unsure text', () => PROSE, null, ''],
     ['bytes that are not text', () => bytes([1, 2, 0, 0, 7, 255, 3, 0], zeros(40)), null, ''],
@@ -143,6 +149,44 @@
       return got.ext;
     });
   }
+
+  test('sniff: Klistra in names the formats a text is recognised as, and each pasted text goes to the importer of its format', async (assert) => {
+    const formats = D.require('io/formats');
+    const pipeline = D.require('io/import-pipeline');
+    const qgis = D.require('io/importers/qgis');
+    const pasted = formats.pasted();
+    const ids = pasted.map((f) => f.id);
+    assert.deepEqual(sniffer.TEXT.filter((id) => !ids.includes(id)), [], 'recognised by io/sniff but not named by Klistra in');
+    // The others are found by the pipeline in the JSON that io/sniff recognises (a plan, JSON-stat, SDMX, a graph).
+    assert.deepEqual(pasted.filter((f) => !sniffer.TEXT.includes(f.id) && !(f.content && f.ext.includes('json'))).map((f) => f.id), [], 'named but recognised by nothing');
+    const sample = (what) => { const c = CASES.find((x) => x[0] === what); return /** @type {string} */ (c[1]()); };
+    const TEXTS = {
+      ifc: sample('IFC with its FILE_SCHEMA'), dxf: sample('DXF'), ndjson: sample('JSON Lines'), topojson: TOPOJSON, geojson: GEOJSON,
+      json: sample('a JSON object'), html: sample('HTML'), kml: sample('KML'), gpx: sample('GPX'), graphml: sample('GraphML'), gexf: sample('GEXF'),
+      qgs: sample('a QGIS project'), fods: sample('FODS'), excelxml: sample('Excel 2003 XML'), xml: sample('XML by its declaration'),
+      sql: sample('a SQL script'), tex: sample('LaTeX'), px: sample('PC-Axis'), cypher: sample('Cypher'), md: sample('Markdown with a heading and a paragraph'),
+      csv: CSV, tsv: sample('TSV'),
+      planjson: JSON.stringify({ type: 'FeatureCollection', features: [{ type: 'Feature', properties: { 'feature:typ': 'detaljplan', beteckning: 'DP 1' }, geometry: null }] }),
+      jsonstat: JSON.stringify({ version: '2.0', class: 'dataset', id: ['region'], size: [2], dimension: { region: { category: { index: { '0180': 0, '1280': 1 }, label: { '0180': 'Stockholm', 1280: 'Malmö' } } } }, value: [984748, 362133] }),
+      sdmx: JSON.stringify(D.require('tests/fixtures/sdmx').ecbExr),
+      nodelink: JSON.stringify({ nodes: [{ id: 'a' }, { id: 'b' }], links: [{ source: 'a', target: 'b' }] }),
+    };
+    for (const f of pasted) {
+      assert.ok(TEXTS[f.id], 'a text for ' + f.id);
+      const file = await importer.recognise(new File([TEXTS[f.id]], t('import.paste.file')));
+      const found = importer.recognisedAs(file);
+      assert.ok(found && !found.document, f.id + ': recognised');
+      if (sniffer.TEXT.includes(f.id)) assert.equal(found.id, f.id, f.id + ': by io/sniff');
+      const got = f.importer === 'qgis' ? (qgis.detect(file) ? 'qgis' : file.name) : (await pipeline.resolve(file)).id;
+      assert.equal(got, f.importer, f.id + ': read by its importer');
+      if (f.id === 'jsonstat') assert.ok((await importer.preview(file, {})).jsonStat, 'as JSON-stat');
+      if (f.id === 'sdmx') assert.equal((await importer.preview(file, {})).statFormat, 'sdmx-json', 'as SDMX-JSON');
+    }
+    // Text that is none of them is a text document.
+    const other = await importer.recognise(new File([PROSE], t('import.paste.file')));
+    assert.ok(importer.recognisedAs(other).document, 'other text is a text document');
+    return pasted.length + ' formats';
+  }, 30000);
 
   test('recognise: a known extension still decides, as before', async (assert) => {
     const pdfAsCsv = new File([bytes('%PDF-1.7\n')], 'tabell.csv', { type: 'text/csv' });

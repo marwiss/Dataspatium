@@ -107,16 +107,40 @@
     assert.deepEqual(rows, [['A', 1.5], ['B', 2]]);
   });
 
-  test('import: every extension an importer reads by the file\'s name is in the file picker of Inhämta', async (assert) => {
-    // The extensions the importers read (detect in src/io/importers/), written out, so that one they stop reading shows here.
+  test('import: every extension an importer reads by the file\'s name is in the table of formats and in the file picker of Inhämta', async (assert) => {
+    const formats = D.require('io/formats');
+    const pipeline = D.require('io/import-pipeline');
+    // The extensions the importers read (detect in src/io/importers/), written out, so that one they stop reading shows here, with
+    // the table's own and some that no importer reads today (so that one that starts to read them has to be in the table).
     const EXTENSIONS = ['csv', 'tsv', 'txt', 'tab', 'dat', 'fwf', 'prn', 'xlsx', 'xlsm', 'xls', 'xlsb', 'ods', 'fods', 'dbf', 'slk', 'sylk', 'dif', 'wk1', 'wk3', 'wk4',
       'wks', 'wq1', 'wq2', 'wb1', 'wb2', 'wb3', 'qpw', 'html', 'htm', 'xhtml', 'md', 'markdown', 'docx', 'tex', 'json', 'ndjson', 'jsonl', 'geojson', 'topojson', 'kml',
       'kmz', 'gpx', 'xml', 'sqlite', 'sqlite3', 'db', 's3db', 'gpkg', 'sql', 'shp', 'zip', 'sav', 'zsav', 'por', 'dta', 'sas7bdat', 'xpt', 'px', 'rds', 'rda', 'RData',
       'parquet', 'mdb', 'accdb', 'pdf', 'odt', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'avif', 'tif', 'tiff', 'gtiff', 'qgs', 'qgz', 'bcf', 'bcfzip', 'graphml', 'gexf', 'cypher', 'cql',
-      'cyp', 'ifc', 'ifczip', 'dxf'];
+      'cyp', 'ifc', 'ifczip', 'dxf', 'geojsonl', 'geojsons', 'geojsonseq'];
+    const OTHERS = ['gml', 'ids', 'citygml', 'cityjson', 'landxml', 'las', 'laz', 'e57', 'osm', 'pbf', 'fgb', 'mif', 'asc', 'xyz', 'svg', 'heic', 'gltf', 'glb', 'obj', 'stl', 'dwg', 'rtf', 'pptx', 'epub', 'yaml', 'toml', 'gz', 'prj', 'shx', 'cpg'];
     const importers = D.moduleNames().filter((n) => n.startsWith('io/importers/')).map((n) => D.require(n)).filter((m) => typeof m.detect === 'function');
-    const read = EXTENSIONS.filter((ext) => importers.some((m) => m.detect(new File([''], 'x.' + ext))));
+    const byName = (ext) => new File([''], 'x.' + ext);
+    const candidates = Array.from(new Set(EXTENSIONS.concat(formats.extensions(), OTHERS)));
+    const read = candidates.filter((ext) => importers.some((m) => m.detect(byName(ext))));
     assert.deepEqual(EXTENSIONS.filter((ext) => !read.includes(ext)), [], 'every extension of the list is read by an importer');
+    const table = new Set(formats.extensions());
+    assert.deepEqual(read.filter((ext) => !table.has(ext.toLowerCase())), [], 'read by an importer but not in the table of formats (io/formats)');
+    // Each format's own extensions go to its importer: the one the name picks (io/import importerFor), or the BCF and QGIS readers
+    // that Inhämta asks before it; a format recognised by its contents shares its extension with another and is not asked here.
+    const PROFILES = D.require('data/kinds').PROFILES;
+    const ids = new Set();
+    for (const f of formats.FORMATS) {
+      assert.ok(!ids.has(f.id), 'one post per format: ' + f.id); ids.add(f.id);
+      assert.ok(formats.GROUPS.includes(f.group), f.id + ': a group of its own purpose');
+      assert.ok(f.kind === '' || PROFILES[f.kind], f.id + ': a kind of data/kinds');
+      assert.ok(formats.nameOf(f) && !formats.nameOf(f).startsWith('import.'), f.id + ': a name');
+      if (f.content) continue;
+      for (const ext of f.ext) {
+        const file = byName(ext);
+        const got = f.importer === 'bcf' || f.importer === 'qgis' ? (D.require('io/importers/' + f.importer).detect(file) ? f.importer : '') : pipeline.importerFor(file).id;
+        assert.equal(got, f.importer, `${f.id}: .${ext} goes to ${f.importer}`);
+      }
+    }
     // The drop zone of Inhämta, as the app draws it.
     const root = document.createElement('div');
     root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
@@ -134,7 +158,9 @@
     } finally { root.remove(); }
     const offered = new Set(accept.toLowerCase().split(',').map((x) => x.trim()));
     assert.deepEqual(read.filter((ext) => !offered.has('.' + ext.toLowerCase())), [], 'read by an importer but not offered by the file picker');
-    return read.length + ' extensions';
+    assert.deepEqual(formats.extensions().filter((ext) => !offered.has('.' + ext)), [], 'in the table but not offered by the file picker');
+    assert.ok(offered.has('.prj') && offered.has('.dbf'), 'a shapefile\'s parts can be picked with it');
+    return read.length + ' extensions, ' + formats.FORMATS.length + ' formats';
   });
 
   test('presets: the bundled example dataset imports with the right types', async (assert) => {

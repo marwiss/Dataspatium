@@ -165,8 +165,9 @@
         packages.push({ importer: 'planarchive', collection: false, files: Array.from(inPackage), name: root });
         files = files.filter((f) => !inPackage.has(f));
       }
-      // The other files by their contents where their names say nothing; a package keeps its paths for its checksums.
-      files = await Promise.all(files.map(recognise));
+      // A shapefile's parts go with its .shp (io/importers/shapefile bundle). The other files by their contents where their names
+      // say nothing; a package keeps its paths for its checksums.
+      files = await Promise.all(shapefile.bundle(files).map(recognise));
       for (const file of files) {
         if (JUNK.test(file.name)) continue;
         if (!importers.some((i) => i.detect(file)) && !(await D.require('io/datapackage').sniff(file))) { skipped.push(file); continue; }
@@ -249,10 +250,11 @@
       table.columns = types.cleanColumnNames(table.columns);
       const columnSpecs = specs || types.inferColumns(table.columns, table.rows, { decimal: options.decimal }).map((c) => Object.assign({ include: true }, c));
       const { columns, rows } = materialize(table, columnSpecs, options);
+      // A pasted text read as the format it was recognised as (Klistra in in Inhämta) is still a pasted text.
       return datasets.create({
         name: name || baseName(file.name),
         columns, rows,
-        source: { kind: 'file', fileName: file.name, size: file.size, lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null, format: table.meta.format, linked: !!options.linked },
+        source: options.pasted ? { kind: 'paste', format: table.meta.format } : { kind: 'file', fileName: file.name, size: file.size, lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null, format: table.meta.format, linked: !!options.linked },
         importOptions: Object.assign({}, options, table.meta),
       });
     }
@@ -335,6 +337,6 @@
       return { kind: 'text', columns, dataRows: table.rows.slice(0, 100), header: table.meta.header, delimiter: table.meta.delimiter, totalRows: table.rows.length, importer: 'csv', inferred: inferred.map((c, i) => Object.assign({ include: true, label: columns[i], sourceName: table.columns[i] }, c)) };
     }
 
-    return { importers, importerFor, recognise, recognisedAs, preview, parse, run, runText, runFiles, collectionFor, sortFiles, runSorted, runPreset, previewText };
+    return { importers, importerFor, resolve: resolveImporter, recognise, recognisedAs, preview, parse, run, runText, runFiles, collectionFor, sortFiles, runSorted, runPreset, previewText };
   });
 })();
