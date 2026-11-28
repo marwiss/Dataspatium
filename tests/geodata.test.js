@@ -260,6 +260,7 @@
       assert.equal(root.querySelectorAll('.dm-center .dm-geo-layer').length, 3, 'the list again');
       assert.ok(!root.querySelector('.dm-center .dm-geo-result') && root.querySelector('.dm-right .dm-geo-form') === formEl, 'the form kept');
       assert.ok(root.querySelector('.dm-center .dm-geo-layer[aria-current="true"]').textContent.includes('Kommuner'), 'the layer still chosen');
+      assert.equal(document.activeElement, root.querySelector('.dm-center .dm-geo-layer[aria-current="true"]'), 'and focused');
       // The catalogue: search, one card with the organisation and the service buttons, add the WFS as a source.
       itemByText('Testkatalog').click();
       const input = await waitFor(() => root.querySelector('.dm-geoportal-search dm-input'), 5000, 'search field');

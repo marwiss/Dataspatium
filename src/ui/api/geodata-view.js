@@ -181,7 +181,12 @@
           h('div', { class: 'dm-row' }, basic.button({ label: t('geodata.back'), icon: 'chevron-left', size: 'sm', variant: 'ghost', title: t('geodata.back.hint'), 'data-geo-back': '', onClick: back })),
           h('div', { class: 'dm-stack dm-fill-rest dm-geo-result' }, api.output.progress, api.output.result));
       }
-      function back() { state.showing = 'list'; render(); focusSearch(); }
+      /** Back to the list: the focus on the chosen layer, which brings it into view (the list is drawn anew at its top). */
+      function back() {
+        state.showing = 'list'; render();
+        const chosen = /** @type {HTMLElement|null} */ (el.querySelector('[data-geo-layer][aria-current="true"]'));
+        if (chosen) chosen.focus(); else focusSearch();
+      }
       /** A layer's fetch from its form: the answer is shown in the work area, and a sheet over it closes. @param {any} job */
       function runFetch(job) {
         if (api.output) { state.showing = 'result'; render(); }
