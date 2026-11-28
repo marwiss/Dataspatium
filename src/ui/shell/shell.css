@@ -271,7 +271,8 @@ dm-table .dm-cell-editor { width: 100%; height: 28px; margin: 0; padding: 0 var(
 /* Geodata sources: the layer list, the map preview of an answer and the catalogue cards. */
 .dm-geo-head { align-items: flex-end; }
 .dm-geo-head dm-input { flex: 1 1 240px; min-width: 200px; }
-.dm-geo-layers { max-height: 360px; overflow: auto; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); padding: var(--dm-s-1); }
+/* The layer list takes the height the window leaves below the form's head (a service can have hundreds of layers), at least 360px. */
+.dm-geo-layers { max-height: max(360px, calc(100vh - 400px)); overflow: auto; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); padding: var(--dm-s-1); }
 .dm-api-map { border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); overflow: hidden; max-width: 640px; }
 .dm-api-map svg { display: block; width: 100%; height: auto; }
 .dm-sense-head { display: flex; align-items: center; gap: var(--dm-s-2); }

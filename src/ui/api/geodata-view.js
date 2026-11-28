@@ -50,7 +50,7 @@
           state.planMsg ? h('p', { class: state.planErr ? 'dm-error dm-small' : 'dm-success', text: state.planMsg }) : null);
       }
       const el = h('div', { class: 'dm-stack' });
-      let listEl = null; let formEl = null;
+      let listEl = null; let formEl = null; let countEl = null;
 
       const layers = () => geodata.layerEndpoints(connector);
       const generic = () => geodata.genericEndpoint(connector);
@@ -88,6 +88,8 @@
       function renderList() {
         if (!listEl) return;
         const all = layers(); const shown = filtered();
+        // The count says how many layers the filter leaves of all of them.
+        if (countEl) replace(countEl, all.length ? h('dm-badge', { 'data-geo-count': String(shown.length), text: shown.length === all.length ? t('geodata.layers.count', { n: i18n.formatNumber(all.length) }) : t('geodata.layers.count.of', { shown: i18n.formatNumber(shown.length), n: i18n.formatNumber(all.length) }) }) : null);
         const nodes = [];
         if (state.loading) nodes.push(h('p', { class: 'dm-help' }, h('dm-progress', { indeterminate: true, label: state.loading })));
         else if (!all.length) nodes.push(h('p', { class: 'dm-help', text: state.error ? '' : t('geodata.layers.none') }));
@@ -111,14 +113,14 @@
         const filter = /** @type {any} */ (h('dm-input', { label: t('geodata.filter'), placeholder: t('geodata.filter.placeholder'), inline: true }));
         filter.value = state.filter;
         filter.addEventListener('input', () => { state.filter = filter.value; renderList(); });
-        const n = layers().length;
         listEl = h('div', { class: 'dm-stack-sm' });
         formEl = h('div');
+        countEl = h('span');
         replace(el,
           planCard(),
           h('div', { class: 'dm-row-wrap dm-geo-head' },
             filter,
-            n ? h('dm-badge', { text: t('geodata.layers.count', { n: i18n.formatNumber(n) }) }) : null,
+            countEl,
             basic.button({ label: t('geodata.refresh'), icon: 'refresh-cw', size: 'sm', variant: 'ghost', title: t('geodata.refresh.hint'), loading: !!state.loading, onClick: discover })),
           state.error ? h('p', { class: 'dm-error dm-small', text: state.error }) : null,
           listEl,

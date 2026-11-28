@@ -3320,6 +3320,7 @@
     'geodata.filter': 'Filter',
     'geodata.filter.placeholder': 'Search the layers',
     'geodata.layers.count': '{n} layers',
+    'geodata.layers.count.of': '{shown} of {n} layers',
     'geodata.layers.none': 'No layers yet. Read the layers from the service, or name a layer yourself under Any layer.',
     'geodata.layers.nomatch': 'No layer matches the filter.',
     'geodata.layers.more': '… and {n} more; filter the list to see them.',
