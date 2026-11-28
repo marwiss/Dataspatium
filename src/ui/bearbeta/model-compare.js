@@ -8,7 +8,10 @@
  * fetched version (the topic it was approved from, who proposed and approved it, and every change), and the server's own diff of the
  * fetched version against any other version of the document (its OB-30), sources beside the snapshots and the other models. The
  * server's diff by STEP id (its phase 5.1) also names the instances under each element, and the instances no object reaches or that
- * too many share. Pure reading: nothing is changed; the diff comes from data/model-diff, or from the server in the same shape.
+ * too many share. A server that keeps the document's history in git (its phase 5.5) gives the commits as pages to choose from, each
+ * compared with this version through the diff of two sides, and Dela opens the panel on the branch of an upload that did not merge,
+ * compared with the latest version. Pure reading: nothing is changed; the diff comes from data/model-diff, or from the server in the
+ * same shape.
  */
 (function () {
   'use strict';
@@ -24,14 +27,20 @@
 
     /**
      * @param {any} ctx shell context @param {any} ds the model dataset
-     * @param {{preview?: (preview: {bytes?: Uint8Array|null, colors?: Array<{color: string, ids: number[]}>}|null) => any}} options
+     * With `conflict` (Dela, after a 412 of the server's ifcmerge) the upload that did not merge, kept on a branch until `expiresAt`, is
+     * the first choice, compared with the latest version (`latest`) through the diff of two sides, and run at once; `diff` is the
+     * server's answer when Dela has it already.
+     * @param {{preview?: (preview: {bytes?: Uint8Array|null, colors?: Array<{color: string, ids: number[]}>}|null) => any, conflict?: {commit: string, latest: number, expiresAt?: string|null, diff?: any}}} options
      */
     function create(ctx, ds, options) {
-      const s = { choices: [], choice: '', busy: false, result: null, showOther: false, error: '', server: null, serverBusy: false, serverError: '' };
+      const s = { choices: [], choice: '', busy: false, result: null, showOther: false, error: '', server: null, serverBusy: false, serverError: '', history: null };
       const cde = ds && ds.source && ds.source.cde && ds.source.cde.connectorId && ds.source.cde.documentId && ds.source.cde.versionIndex ? ds.source.cde : null;
       const el = h('div', { class: 'dm-card dm-stack-sm', 'data-compare-panel': '' });
       const keyOf = (c) => (c.server ? `server:${c.server}` : c.snapshot ? `v${c.snapshot}` : c.datasetId);
-      let serverChoices = [];
+      const conflict = cde && options.conflict && options.conflict.commit && Number(options.conflict.latest) >= 1 ? options.conflict : null;
+      /** The branch of an upload that did not merge, as a choice: this side is the upload (the model here), the other the latest version. */
+      let serverChoices = conflict ? [{ datasetId: ds.id, server: conflict.commit, sides: { a: conflict.commit, b: Number(conflict.latest) }, expiresAt: conflict.expiresAt || null, diff: conflict.diff || null,
+        label: t('compare.conflict.label', { latest: String(conflict.latest) }) }] : [];
       async function load() {
         s.choices = (await modelDiff.choices(ds.id)).concat(serverChoices);
         if (!s.choices.some((c) => keyOf(c) === s.choice)) s.choice = s.choices[0] ? keyOf(s.choices[0]) : '';
@@ -78,13 +87,47 @@
         if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
         return connector;
       }
-      /** The document's other versions on the server as choices, compared through the server's diff (Dataregium's OB-30). */
+      /** A point of the document's history as a choice, compared with this version through the server's sides (its phase 5.5). */
+      function historyChoice(e) {
+        const params = { n: String(e.versionIndex || e.mergedWith || '–'), date: e.date ? i18n.formatDateTime(e.date) : '', author: e.author, subject: e.subject.slice(0, 80), expires: e.expiresAt ? i18n.formatDateTime(e.expiresAt) : '' };
+        const key = e.kind === 'conflict' && opencde.expired(e.expiresAt) ? 'compare.history.conflict.gone' : 'compare.history.' + e.kind;
+        return { datasetId: ds.id, server: e.commit, sides: { a: Number(cde.versionIndex), b: e.kind === 'version' && e.versionIndex ? e.versionIndex : e.commit }, expiresAt: e.expiresAt, label: t(key, params) };
+      }
+      /** A page of the document's history as the choices, newest first; this version itself is left out. */
+      async function loadHistory(connector, skip) {
+        const page = await opencde.history(connector, cde.documentId, { top: opencde.HISTORY_TOP, skip });
+        // The server counts only while there is more than the page, so the last page keeps the count of the one before.
+        s.history = { total: page.total !== null ? page.total : (s.history && s.history.total) || null, more: page.more, top: page.top, skip: page.skip, count: page.entries.length };
+        serverChoices = page.entries.filter((e) => !(e.kind === 'version' && e.versionIndex === Number(cde.versionIndex))).map(historyChoice);
+        await load();
+        if (serverChoices.length) s.choice = keyOf(serverChoices[0]);
+      }
+      /** Another page of the history: newer (-1) or older (+1). @param {number} step */
+      async function pageHistory(step) {
+        if (!s.history || s.serverBusy) return;
+        const skip = Math.max(0, s.history.skip + step * s.history.top);
+        if (step > 0 && !s.history.more) return;
+        s.serverBusy = true; s.serverError = ''; render();
+        try { await loadHistory(await connectorOf(), skip); } catch (err) { s.serverError = String((err && err.message) || err); }
+        s.serverBusy = false; render();
+      }
+      /**
+       * The document's other versions on the server as choices, compared through the server's diff (Dataregium's OB-30); a server that
+       * keeps the document's history in git gives its commits instead, page by page, each compared with this version through the
+       * diff of two sides (its phase 5.5).
+       */
       async function loadServerVersions() {
         if (!cde || s.serverBusy) return;
         s.serverBusy = true; s.serverError = ''; render();
         try {
           const connector = await connectorOf();
           const caps = await opencde.capabilities(connector);
+          if (opencde.canHistory(caps)) {
+            await loadHistory(connector, 0);
+            if (!serverChoices.length && !s.history.more) throw new Error(t('compare.server.noversions'));
+            s.serverBusy = false; render();
+            return;
+          }
           if (!opencde.hasExtension(caps, 'ifc_diff')) throw new Error(t('compare.server.nodiff'));
           const versions = await opencde.documentVersions(connector, [cde.documentId]);
           serverChoices = versions.filter((v) => Number(v.version_index) !== Number(cde.versionIndex)).map((v) => ({ datasetId: ds.id, server: Number(v.version_index), label: t('compare.server.version', { n: String(v.version_number || v.version_index) }) }))
@@ -96,8 +139,18 @@
         s.serverBusy = false; render();
       }
       async function serverDiff(c) {
-        const connector = await connectorOf();
-        const json = await opencde.versionDiff(connector, cde.documentId, Number(cde.versionIndex), c.server);
+        let json = c.diff || null;
+        c.diff = null;
+        if (!json) {
+          const connector = await connectorOf();
+          try {
+            json = c.sides ? await opencde.sidesDiff(connector, cde.documentId, c.sides.a, c.sides.b) : await opencde.versionDiff(connector, cde.documentId, Number(cde.versionIndex), c.server);
+          } catch (err) {
+            // A conflict's branch is taken away at the first cleanup after its time (Dataregium's phase 5.5).
+            if (err && err.status === 404 && c.expiresAt) throw new Error(t('compare.conflict.expired', { date: i18n.formatDateTime(c.expiresAt) }));
+            throw err;
+          }
+        }
         if (!json) throw new Error(t('compare.server.nodiff'));
         const here = await D.require('data/datasets').ensureOpen(ds.id);
         return modelDiff.fromServer(here.engine, json, c.label, c);
@@ -136,6 +189,19 @@
         return String(v);
       }
       const serverKey = (c) => (c.step_id !== undefined && c.step_id !== null ? '#' + c.step_id : String(c.guid || '') + (c.path ? '/' + c.path : ''));
+      /** Where in the history the choices are, and the way to newer and older commits. */
+      function historyPages() {
+        const p = s.history;
+        if (!p || (!p.skip && !p.more)) return p ? h('p', { class: 'dm-help dm-xs', 'data-compare-history': String(p.count), text: t('compare.history.hint') }) : null;
+        const page = Math.floor(p.skip / p.top) + 1;
+        const pages = p.total ? Math.max(page, Math.ceil(p.total / p.top)) : 0;
+        return h('div', { class: 'dm-stack-xs', 'data-compare-history': String(p.count) },
+          h('p', { class: 'dm-help dm-xs', text: t('compare.history.hint') }),
+          h('div', { class: 'dm-row-wrap' },
+            basic.button({ label: t('compare.history.newer'), icon: 'chevron-left', size: 'sm', disabled: !p.skip || s.serverBusy, title: t('compare.history.newer.hint'), 'data-compare-history-newer': '', onClick: () => pageHistory(-1) }),
+            h('span', { class: 'dm-small', 'data-compare-history-page': String(page), text: pages ? t('compare.history.page', { page: i18n.formatNumber(page), pages: i18n.formatNumber(pages) }) : t('compare.history.page.open', { page: i18n.formatNumber(page) }) }),
+            basic.button({ label: t('compare.history.older'), icon: 'chevron-right', size: 'sm', disabled: !p.more || s.serverBusy, title: t('compare.history.older.hint'), 'data-compare-history-older': '', onClick: () => pageHistory(1) })));
+      }
       function renderServer() {
         if (!cde) return null;
         const sv = s.server;
@@ -144,6 +210,7 @@
           h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('compare.server.versions'), icon: 'history', size: 'sm', loading: s.serverBusy, title: t('compare.server.versions.hint'), 'data-compare-server-versions': '', onClick: loadServerVersions }),
             basic.button({ label: t('compare.server.load', { n: String(cde.versionIndex) }), icon: 'download', size: 'sm', loading: s.serverBusy, title: t('compare.server.hint'), 'data-compare-server-load': '', onClick: loadServer }),
             sv && sv.changes.length ? basic.button({ label: t('compare.server.mark', { n: i18n.formatNumber(sv.changes.length) }), icon: 'list-checks', size: 'sm', 'data-compare-server-mark': '', onClick: markServer }) : null),
+          historyPages(),
           s.serverError ? h('p', { class: 'dm-error', text: s.serverError }) : null,
           sv && !sv.set ? h('p', { class: 'dm-help dm-small', 'data-compare-server-none': '', text: t('compare.server.none', { n: String(sv.version) }) }) : null,
           sv && sv.set ? h('div', { class: 'dm-stack-sm', 'data-compare-server-result': String(sv.changes.length) },
@@ -213,8 +280,12 @@
           renderServer());
       }
       function destroy() { if (s.result && options.preview) { s.result = null; Promise.resolve(options.preview(null)).catch(() => {}); } }
-      load().then(render);
-      return { el, destroy, state: s, load, run, toggleOther, mark, loadServer, markServer, loadServerVersions };
+      const ready = load().then(() => {
+        if (conflict) s.choice = keyOf(serverChoices[0]);
+        render();
+        return conflict ? run() : undefined;
+      }).catch((err) => D.log('compare', err));
+      return { el, destroy, state: s, ready, load, run, toggleOther, mark, loadServer, markServer, loadServerVersions, pageHistory };
     }
     return { create };
   });

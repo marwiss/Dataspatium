@@ -9,7 +9,10 @@
  * Dataspatium users share through the server; the source view's files card receives it on the other side. A model fetched from
  * Dataregium and changed since in the table or with Python can instead go as a change proposal (decision F123 a): the changes from
  * the base version's file (fetched from the server, since each step replaces the model's own) to the model's, in the server's form,
- * through the review and ui/share/change-proposal, as in the AI panel.
+ * through the review and ui/share/change-proposal, as in the AI panel; when the changes cannot carry what changed (new or deleted
+ * elements, relationships, shapes) and the server takes files, the whole file goes instead, through the review as an upload
+ * (decision F124 a). A 412 of the server's ifcmerge names the branch it keeps the upload on for a while (its phase 5.5): the panel
+ * compares it with the latest version in Bearbeta's 3D view, and says so when the branch is gone.
  */
 (function () {
   'use strict';
@@ -171,7 +174,8 @@
             fail(err);
             if (err && err.code === 'ifc_validation_failed' && err.report) refusedReport(String(err.report)).catch((e) => D.log('cde', e));
             // The server's ifcmerge found changes on both sides of the same thing (Dataregium's phase 5.3): the panel lists them.
-            if (err && err.code === 'version_conflict' && Array.isArray(err.conflicts)) s.conflict = { keys: err.conflicts, details: Array.isArray(err.conflictDetails) ? err.conflictDetails : [], merge: err.merge || null };
+            // From its phase 5.5 the upload that did not merge is kept on a branch for a while (conflict_commit, conflict_expires_at).
+            if (err && err.code === 'version_conflict' && Array.isArray(err.conflicts)) s.conflict = { keys: err.conflicts, details: Array.isArray(err.conflictDetails) ? err.conflictDetails : [], merge: err.merge || null, commit: err.conflictCommit || null, expiresAt: err.conflictExpiresAt || null, gone: false, documentId: options.asVersionOf || null };
           }
         }
         s.busy = ''; s.progress = null; render();
@@ -375,11 +379,49 @@
           h('h4', { text: whole ? t('cde.send.conflict.whole', { latest }) : t('cde.send.conflict.title', { n: c.keys.length, latest }) }),
           whole ? null : h('ul', { class: 'dm-list dm-xs' }, shown.map((x) => h('li', { class: 'dm-small', text: t('cde.send.conflict.row', { key: String(x.key || ''), op: String(x.op || 'set'), base: brief(x.base), ours: brief(x.ours), theirs: brief(x.theirs) }) }))),
           !whole && c.keys.length > shown.length ? h('p', { class: 'dm-help dm-xs', text: t('compare.more', { n: i18n.formatNumber(c.keys.length - shown.length) }) }) : null,
-          h('p', { class: 'dm-help dm-small', text: t('cde.send.conflict.hint', { latest }) }));
+          h('p', { class: 'dm-help dm-small', text: t('cde.send.conflict.hint', { latest }) }),
+          branchPart(c));
+      }
+      /** The branch the server keeps the upload on (Dataregium's phase 5.5): compared with the latest version in 3D until it is gone. */
+      function branchPart(c) {
+        if (!c.commit) return null;
+        const date = c.expiresAt ? i18n.formatDateTime(c.expiresAt) : '';
+        if (c.gone || opencde.expired(c.expiresAt)) return h('p', { class: 'dm-warn dm-small', 'data-cde-conflict-gone': '', text: date ? t('cde.send.conflict.gone', { date }) : t('cde.send.conflict.gone.now') });
+        const d = ds();
+        // Only an IFC model is drawn in 3D, which is all ifcmerge merges anyway.
+        const drawn = !!d && model.isModel(d) && !model.isDxf(d);
+        return h('div', { class: 'dm-row-wrap', 'data-cde-conflict-branch': c.commit },
+          h('span', { class: 'dm-help dm-small dm-grow', text: date ? t('cde.send.conflict.kept', { date, commit: c.commit.slice(0, 12) }) : t('cde.send.conflict.kept.open', { commit: c.commit.slice(0, 12) }) }),
+          drawn ? ui.button({ label: t('cde.send.conflict.compare'), icon: 'layers', size: 'sm', loading: s.busy === 'branch', title: t('cde.send.conflict.compare.hint'), 'data-cde-conflict-compare': '', onClick: () => compareBranch() }) : null);
+      }
+      /**
+       * The upload that did not merge compared with the latest version: the server's diff of the two sides (the branch's commit and the
+       * latest version's index), then Jämför versioner in Bearbeta on it, where the model is coloured in 3D. A branch the server has
+       * taken away (404 after its time) says so here.
+       */
+      async function compareBranch() {
+        const c = s.conflict;
+        const d = ds();
+        const documentId = (c && c.documentId) || (d && d.source && d.source.cde && d.source.cde.documentId);
+        if (!c || !c.commit || !d || !documentId || s.busy || !model.isModel(d)) return;
+        if (opencde.expired(c.expiresAt)) { c.gone = true; render(); return; }
+        s.busy = 'branch'; s.error = ''; render();
+        try {
+          let latest = c.merge && c.merge.latestVersionIndex ? Number(c.merge.latestVersionIndex) : 0;
+          if (!latest) latest = (await opencde.documentVersions(s.connector, [documentId])).reduce((n, v) => Math.max(n, Number(v.version_index) || 0), 0);
+          const diff = await opencde.sidesDiff(s.connector, documentId, c.commit, latest);
+          if (!diff) throw new Error(t('compare.server.nodiff'));
+          shell.log(t('cde.send.conflict.compared', { latest: String(latest) }), 'info');
+          if (ctx.store && ctx.store.set) ctx.store.set({ selectedId: d.id, openModelCompare: { datasetId: d.id, conflict: { commit: c.commit, latest, expiresAt: c.expiresAt, diff } } });
+          if (shell.activate) shell.activate('bearbeta');
+        } catch (err) {
+          if (err && err.status === 404) c.gone = true; else fail(err);
+        }
+        s.busy = ''; render();
       }
       function destroy() { progressEl = null; }
 
-      return { el, start, send, propose, approveOnServer: flow.approve, resolveConflicts: flow.resolve, render, destroy, state: s };
+      return { el, start, send, propose, compareBranch, approveOnServer: flow.approve, resolveConflicts: flow.resolve, render, destroy, state: s };
     }
 
     /** Loads what the panel needs and the start does without: the group 'families' with the OpenCDE family. Call it before create. */
