@@ -67,15 +67,16 @@
 
     /**
      * Perform a request.
-     * @param {{url: string, method?: string, headers?: Record<string, string>, body?: any, signal?: AbortSignal, timeoutMs?: number, notModifiedOk?: boolean, rateKey?: string, rateLimit?: {requests: number, perSeconds: number}, retries?: number, responseType?: 'text'|'arraybuffer', ask?: boolean, cors?: {file?: boolean, web?: boolean}}} req
-     *   `cors`: what was measured for the source (api/reach), so that a refused request names the bridge
+     * @param {{url: string, method?: string, headers?: Record<string, string>, body?: any, signal?: AbortSignal, timeoutMs?: number, notModifiedOk?: boolean, rateKey?: string, rateLimit?: {requests: number, perSeconds: number}, retries?: number, responseType?: 'text'|'arraybuffer', ask?: boolean, cors?: {file?: boolean, web?: boolean}, perHost?: boolean}} req
+     *   `cors`: what was measured for the source (api/reach), so that a refused request names the bridge; `perHost`: the address
+     *   came from content (a source added from a catalogue post), so consent is asked for its host (F102 a, F103 a)
      * @returns {Promise<{ok: boolean, status: number, statusText: string, headers: Headers, url: string, text: string, buffer: ArrayBuffer|null, contentType: string, ms: number}>}
      */
     async function request(req) {
       // Real servers are contacted only with the user's consent for API fetches (asked once); the app's own
       // virtual sources (dataspatium-asset://, used by presets and tests) never leave the page.
       // `ask: false` (a flow at start): only a consent already kept lets the request go out.
-      if (!/^dataspatium-asset:/.test(String(req.url))) await D.require('platform/consent').require('api', { host: hostOf(req.url), ask: req.ask });
+      if (!/^dataspatium-asset:/.test(String(req.url))) await D.require('platform/consent').require('api', { host: hostOf(req.url), ask: req.ask, perHost: !!req.perHost });
       const proxyUrl = await getProxy();
       const url = applyProxy(req.url, proxyUrl);
       const retries = req.retries === undefined ? 2 : req.retries;

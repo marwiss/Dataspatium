@@ -118,6 +118,9 @@
         },
         // What was measured for the service's CORS from a folder (file://, origin null) and from the web version (api/reach).
         cors: { type: 'object', properties: { file: { type: 'boolean' }, web: { type: 'boolean' } } },
+        // A source whose address came from content (a catalogue post in Geodataportalen): every request asks consent for its host
+        // (F102 a, F103 a), not for the purpose.
+        perHost: { type: 'boolean' },
         // A column of file addresses in the result (STAC assets), the hosts that may receive the connector's key with them, and
         // those that also take a user name and password (Basic) when they refuse the key (api/auth fileLogin).
         files: { type: 'object', required: ['column'], properties: { column: { type: 'string' }, hosts: { type: 'array', items: { type: 'string' } }, basic: { type: 'array', items: { type: 'string' } } } },

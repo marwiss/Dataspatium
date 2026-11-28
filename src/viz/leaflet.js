@@ -522,13 +522,14 @@
       return out;
     }
     /**
-     * The named layers of a WMS service from its capabilities, after consent "basemaps": [{id, name, abstract}].
-     * @param {string} url the service address (a GetCapabilities link works too)
+     * The named layers of a WMS service from its capabilities, after consent "basemaps": [{id, name, abstract}]. With `perHost`
+     * (an address from content, such as a catalogue post) consent is asked for its host (F102 a, F103 a).
+     * @param {string} url the service address (a GetCapabilities link works too) @param {{perHost?: boolean}} [options]
      */
-    async function wmsLayers(url) {
+    async function wmsLayers(url, options = {}) {
       const base = wmsUrl(url);
       if (!/^(https?|dataspatium-asset):\/\//i.test(base)) throw new Error(D.t('families.err.url', { field: D.t('map.wms.url') }));
-      await consent.require('basemaps', { host: hostOf(base), url: base });
+      await consent.require('basemaps', { host: hostOf(base), url: base, perHost: !!options.perHost });
       const res = await globalThis.fetch(base + (base.includes('?') ? '&' : '?') + 'service=WMS&request=GetCapabilities', { headers: { Accept: 'application/xml, text/xml, */*;q=0.5' } });
       if (!res.ok) throw new Error(D.t('geodata.err.http', { status: res.status }));
       const doc = new DOMParser().parseFromString(await res.text(), 'application/xml');

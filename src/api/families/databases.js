@@ -198,7 +198,7 @@
     /** GET JSON with the connector's authentication (discovery). */
     async function getJson(connector, url, headers) {
       const req = await auth.apply(connector, { url, method: 'GET', headers: Object.assign({ Accept: 'application/json' }, headers || {}) });
-      const res = await http.request(Object.assign({}, req, { retries: 0, rateKey: connector.id }));
+      const res = await http.request(Object.assign({}, req, { retries: 0, rateKey: connector.id, perHost: !!connector.perHost }));
       if (!res.ok) throw http.httpError(res, connector.name);
       try { return JSON.parse(res.text); } catch (_e) { throw new Error(t('api.err.json', { text: String(res.text || '').slice(0, 120) })); }
     }

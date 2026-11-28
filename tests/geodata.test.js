@@ -254,12 +254,17 @@
       assert.ok(card.querySelector('details') && card.textContent.includes('Info'), 'the other link under Fler länkar');
       const known = new Set((await connectors.list()).map((c) => c.id));
       buttonByText(t('geoportal.add.wfs')).click();
+      // The form of a geodata source in the workspace, with the family and the address filled in (PLAN 12 a4).
+      const field = await waitFor(() => root.querySelector('.dm-center [data-source-form="geodata"] [data-family-field="baseUrl"]'), 8000, 'the geodata form with the address');
+      assert.equal(/** @type {any} */ (field).value, BASE + '/cat-wfs?service=WFS&request=GetCapabilities', 'the address from the post');
+      Array.from(root.querySelectorAll('.dm-center [data-source-form="geodata"] dm-button')).find((b) => b.textContent.trim() === t('families.add')).click();
       const added = await waitFor(() => { const h1 = root.querySelector('.dm-api-view h1'); return h1 && !h1.textContent.includes('Testkatalog') && root.querySelectorAll('.dm-geo-layer').length === 3 ? h1 : null; }, 15000, 'the new source opened with its layers');
       const newOnes = (await connectors.list()).filter((c) => !known.has(c.id));
       assert.equal(newOnes.length, 1, 'one connector created');
       ids.push(newOnes[0].id);
       assert.equal(newOnes[0].baseUrl, BASE + '/cat-wfs'); assert.equal(newOnes[0].family.kind, 'wfs');
       assert.equal(newOnes[0].id, 'wfs-tests-geo-cat-wfs', 'id from host and path'); assert.equal(newOnes[0].name, 'tests/geo/cat-wfs (WFS)', 'name from host and path');
+      assert.equal(newOnes[0].perHost, true, 'a source from a catalogue post asks consent per host');
       assert.ok(added.textContent.includes(newOnes[0].name), 'the view shows the new source');
       return 'ok';
     } finally {

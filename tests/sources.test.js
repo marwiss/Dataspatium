@@ -64,7 +64,7 @@
         assert.deepEqual(groups.common, ['file', 'paste', 'url', 'opencde', 'mobile'], 'Vanliga källor');
         assert.deepEqual(groups.databases, ['database', 'bridge', 'neo4j'], 'Databaskällor');
         assert.deepEqual(groups.apis, ['catalog', 'apifile'], 'API-källor');
-        assert.deepEqual(groups.geodata, ['geodata', 'boundaries'], 'Geodatakällor');
+        assert.deepEqual(groups.geodata, ['geodata', 'geoportal', 'boundaries'], 'Geodatakällor: Geodataportalen beside the form (PLAN 12 a4)');
         assert.deepEqual(groups.other, ['saved', 'examples', 'guides'], 'Övriga källor: Insamling i fält is a part of Mobilen');
         for (const id of connectors.DEFAULT_ADDED) assert.ok(groups.added.includes('api:' + id), 'added from the start: ' + id);
         const all = await connectors.list();

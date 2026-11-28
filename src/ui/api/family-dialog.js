@@ -21,7 +21,8 @@
     /** Both groups of families share the form: databases (tables) and geodata services (layers with geometry). */
     const ALL = () => families.FAMILIES.concat(geodata.FAMILIES);
     const byId = (id) => families.byId(id) || geodata.byId(id);
-    const createFor = (id, values) => (geodata.byId(id) ? geodata.createConnector(id, values) : families.createConnector(id, values));
+    /** @param {{perHost?: boolean}} [options] perHost: the address came from content (a catalogue post) */
+    const createFor = (id, values, options = {}) => (geodata.byId(id) ? geodata.createConnector(id, values, options.perHost ? { perHost: true } : {}) : families.createConnector(id, values));
     /** @type {Promise<any[]>|null} */ let servicesLoading = null;
     let servicesOverride = null;
     /** The ready-made geodata services (tests may replace the list with setServices). */
@@ -43,7 +44,8 @@
     /**
      * The form's element; `finish(connector)` is called with the saved connector.
      * @param {any} ctx the mode context (shell for the log)
-     * @param {{family?: string, values?: Record<string, string>, group?: 'databases'|'geodata'}} options
+     * @param {{family?: string, values?: Record<string, string>, group?: 'databases'|'geodata', perHost?: boolean}} options `perHost`: the
+     *   address was filled in from content (a post in Geodataportalen), so the source asks consent for its host (F102 a, F103 a)
      * @param {(connector: any) => void} finish
      */
     function build(ctx, options, finish) {
@@ -156,7 +158,7 @@
             const reg = await opencde.register(state.values.baseUrl, { redirectUri: redirect, bcfVersion: state.values.bcfVersion });
             state.values = Object.assign({}, state.values, { clientId: reg.clientId, clientSecret: reg.clientSecret || '' });
           }
-          const res = await createFor(state.family, state.values);
+          const res = await createFor(state.family, state.values, { perHost: !!options.perHost });
           announce(res);
           state.busy = false; state.values = {}; render();
           finish(res.connector);
@@ -168,7 +170,7 @@
 
     /**
      * The form in a workspace (Inhämta's centre): `done` resolves with the first connector it saves.
-     * @param {any} ctx @param {{family?: string, values?: Record<string, string>, group?: 'databases'|'geodata'}} [options]
+     * @param {any} ctx @param {{family?: string, values?: Record<string, string>, group?: 'databases'|'geodata', perHost?: boolean}} [options]
      * @returns {{el: HTMLElement, done: Promise<any>, title: string}}
      */
     function form(ctx, options = {}) {
@@ -180,7 +182,7 @@
     /**
      * The same form as a dialog, for another mode or a card.
      * @param {any} ctx the mode context (shell for the log)
-     * @param {{family?: string, values?: Record<string, string>, group?: 'databases'|'geodata'}} [options]
+     * @param {{family?: string, values?: Record<string, string>, group?: 'databases'|'geodata', perHost?: boolean}} [options]
      * @returns {Promise<any|null>} the saved connector, or null when cancelled
      */
     function open(ctx, options = {}) {

@@ -8,7 +8,8 @@
  * GeoJSON in WGS 84, so the datasets get a geometry column and open as maps: a WFS in the GeoJSON format its
  * capabilities name, or in GML when it offers none (F130 a: Kartverket and other INSPIRE and deegree services; read by
  * io/importers/gml, asked for in urn:ogc:def:crs:EPSG::4326 with the box in CRS84), pages no larger than the service sends.
- * Keys (for example Lantmäteriet's national geodata platform) are Bearer tokens kept in api/secrets.
+ * Keys (for example Lantmäteriet's national geodata platform) are Bearer tokens kept in api/secrets. A source added from a
+ * catalogue post carries `perHost`: its requests ask consent for their host (F102 a, F103 a).
  */
 (function () {
   'use strict';
@@ -41,7 +42,7 @@
     /** GET text with the connector's authentication (XML capabilities); an OGC exception report is the service's error. */
     async function getText(connector, url) {
       const req = await auth.apply(connector, { url, method: 'GET', headers: { Accept: 'application/xml, text/xml, application/json;q=0.8, */*;q=0.5' } });
-      const res = await http.request(Object.assign({}, req, { retries: 0, rateKey: connector.id }));
+      const res = await http.request(Object.assign({}, req, { retries: 0, rateKey: connector.id, perHost: !!connector.perHost }));
       if (!res.ok) throw http.httpError(res, connector.name);
       const ows = http.owsError(res.text, connector.name);
       if (ows) throw ows;
@@ -283,7 +284,8 @@
 
     /**
      * Build, discover and save a geodata connector (same contract as api/families/databases.createConnector).
-     * @param {string} familyId @param {Record<string, string>} values @param {{discover?: boolean}} [options]
+     * @param {string} familyId @param {Record<string, string>} values @param {{discover?: boolean, perHost?: boolean}} [options]
+     *   perHost: the address came from content (a catalogue post), so every request of the source asks consent for its host
      */
     async function createConnector(familyId, values, options = {}) {
       const fam = byId(familyId);
@@ -302,6 +304,7 @@
       connector.id = slug(`${fam.id}-${where.id}`);
       if (!String(v.name || '').trim()) connector.name = `${where.label} (${t('geodata.badge.' + fam.id)})`;
       connector.family = { type: 'geodata', kind: fam.id };
+      if (options.perHost) connector.perHost = true;
       const creds = fam.secrets ? fam.secrets(v) : null;
       if (creds) secrets.set(connector.id, creds);
       let entities = []; let discoveryError = null;

@@ -33,14 +33,25 @@
       } catch (_err) { return D.t('url.file.name'); }
     }
 
-    /** Fetch a URL (CORS) and return it as a File. */
-    async function fetchFile(url) {
+    /**
+     * Fetch a URL (CORS) and return it as a File. With `perHost` (an address from content: a catalogue post, an ATOM feed)
+     * consent is asked for its host (F102 a, F103 a). An answer the browser may not read goes through the bridge when the person
+     * has chosen that under Internetåtkomst and a bridge that can fetch is connected (api/bridge); otherwise the error has
+     * `kind: 'network'` and the host, so that a view can name the bridge.
+     * @param {string} url @param {{perHost?: boolean}} [options]
+     */
+    async function fetchFile(url, options = {}) {
       const clean = String(url || '').trim();
       if (!/^https?:\/\//i.test(clean) && !/^dataspatium-asset:\/\//.test(clean)) throw new Error(D.t('url.err.scheme'));
-      if (/^https?:\/\//i.test(clean)) await D.require('platform/consent').require('url', { host: D.require('platform/consent').hostOf(clean) });
+      const consent = D.require('platform/consent');
+      const host = consent.hostOf(clean);
+      if (/^https?:\/\//i.test(clean)) await consent.require('url', { host, perHost: !!options.perHost });
       let res;
       try { res = await fetch(clean, { mode: 'cors' }); } catch (err) {
-        throw new Error(D.t('url.err.fetch', { message: (err && err.message) || err }));
+        const bridge = D.require('api/bridge');
+        const relay = /^https:/i.test(clean) && await bridge.canRelay().catch(() => false);
+        if (!relay) throw Object.assign(new Error(D.t('url.err.fetch', { message: (err && err.message) || err })), { kind: 'network', host });
+        try { res = await bridge.relay(clean); } catch (e2) { throw new Error(D.t('api.err.bridge', { host, message: (e2 && e2.message) || String(e2) })); }
       }
       if (!res.ok) throw new Error(D.t('url.err.status', { status: `${res.status}${res.statusText ? ' ' + res.statusText : ''}` }));
       const type = res.headers.get('content-type') || '';

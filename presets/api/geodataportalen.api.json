@@ -3,7 +3,7 @@
   "id": "geodataportalen",
   "name": "Geodataportalen (sök geodata)",
   "publisher": "Lantmäteriet (Geodatarådet)",
-  "description": "Sök bland myndigheters, regioners och kommuners geodata i den nationella katalogen. Resultatet är en tabell med titel, organisation och tjänsteadresser (WFS, OGC API Features, ArcGIS, WMS); en tjänst kan läggas till som geodatakälla med ett klick.",
+  "description": "Sök bland myndigheters, regioners och kommuners geodata i den nationella katalogen. Resultatet är en tabell med titel, organisation, villkor och länkar (WFS, OGC API Features, ArcGIS, WMS, nedladdning, ATOM-flöde); i Inhämta under Geodatakällor läggs en tjänst till som geodatakälla, hämtas en fil eller visas en WMS på kartan.",
   "docs": "https://www.geodata.se/geodataportalen/",
   "license": {
     "name": "Metadata: öppna data",
@@ -41,7 +41,81 @@
           "OrgForResourceObject",
           "OrgForResource",
           "contact",
-          "link"
+          "link",
+          "licenseObject",
+          "MD_LegalConstraintsOtherConstraintsObject"
+        ]
+      },
+      "params": [
+        {
+          "name": "q",
+          "in": "template",
+          "label": "Sökord",
+          "type": "string",
+          "required": true,
+          "example": "detaljplan"
+        }
+      ],
+      "response": {
+        "format": "geonetwork"
+      },
+      "dataset": {
+        "name": "Geodataportalen: {q}"
+      }
+    },
+    {
+      "id": "fetchable",
+      "name": "Sök geodata som går att hämta",
+      "description": "Som Sök geodata, men bara poster med en tjänst eller fil som appen kan hämta: WFS, OGC API Features, ArcGIS, WMS, nedladdning eller ATOM-flöde.",
+      "method": "POST",
+      "path": "/_search",
+      "bodyType": "json",
+      "body": {
+        "query": {
+          "bool": {
+            "must": [
+              {
+                "query_string": {
+                  "query": "{q}",
+                  "default_operator": "AND"
+                }
+              }
+            ],
+            "filter": [
+              {
+                "terms": {
+                  "linkProtocol": [
+                    "HTTP:OGC:WFS",
+                    "OGC:WFS",
+                    "HTTP:OGC:API-Features",
+                    "OGC:API-Features",
+                    "OGC API - Features",
+                    "HTTP:API:ArcGISRest",
+                    "ESRI:REST",
+                    "HTTP:Nedladdning",
+                    "HTTP:Nedladdning:Atom",
+                    "WWW:DOWNLOAD-1.0-http--download",
+                    "INSPIRE Atom",
+                    "atom:feed",
+                    "HTTP:OGC:WMS",
+                    "OGC:WMS"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "size": 50,
+        "_source": [
+          "resourceTitleObject",
+          "resourceAbstractObject",
+          "resourceType",
+          "OrgForResourceObject",
+          "OrgForResource",
+          "contact",
+          "link",
+          "licenseObject",
+          "MD_LegalConstraintsOtherConstraintsObject"
         ]
       },
       "params": [
@@ -65,11 +139,20 @@
   "i18n": {
     "en": {
       "name": "Geodataportalen (search geodata)",
-      "description": "Search the geodata of Swedish agencies, regions and municipalities in the national catalogue. The result is a table with title, organisation and service addresses (WFS, OGC API Features, ArcGIS, WMS); a service can be added as a geodata source with one click.",
+      "description": "Search the geodata of Swedish agencies, regions and municipalities in the national catalogue. The result is a table with title, organisation, conditions and links (WFS, OGC API Features, ArcGIS, WMS, download, ATOM feed); in Inhämta under Geodatakällor a service is added as a geodata source, a file fetched or a WMS shown on the map.",
       "endpoints": {
         "search": {
           "name": "Search geodata",
           "description": "Free-text search in the catalogue (Elasticsearch). The result lists the services per record.",
+          "params": {
+            "q": {
+              "label": "Search words"
+            }
+          }
+        },
+        "fetchable": {
+          "name": "Search geodata that can be fetched",
+          "description": "Like Search geodata, but only posts with a service or file the app can fetch: WFS, OGC API Features, ArcGIS, WMS, a download or an ATOM feed.",
           "params": {
             "q": {
               "label": "Search words"

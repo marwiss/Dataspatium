@@ -60,6 +60,7 @@
         { id: 'apifile', icon: 'file-json', label: 'api.add.file.short', sub: 'import.sources.api.hint' }] },
       { id: 'geodata', label: 'import.sources.geodata', items: [
         { id: 'geodata', icon: 'map', label: 'geodata.add.short', sub: 'geodata.add.hint', feature: 'source:geodata' },
+        { id: 'geoportal', icon: 'search', label: 'geoportal.title', sub: 'geoportal.hint', feature: 'source:geodata' },
         { id: 'boundaries', icon: 'grid-2x2', label: 'presets.geo.label', sub: 'import.sources.boundaries.hint' }] },
       { id: 'added', label: 'import.sources.added', items: [] },
       { id: 'other', label: 'import.sources.other', items: [
@@ -76,6 +77,8 @@
       neo4j: { options: { family: 'neo4j' }, lead: 'families.neo4j.add.hint' },
       geodata: { options: { group: 'geodata' }, lead: 'geodata.add.hint' },
     };
+    /** The catalogue that the source Geodataportalen searches (presets/api/geodataportalen.api.json). */
+    const GEOPORTAL = 'geodataportalen';
     /** Under this key the tree keeps which groups are folded, per browser (ui/tree memory). */
     const GROUPS_KEY = 'inhamta.groups';
     /** @param {string} id */
@@ -94,6 +97,7 @@
       let apiId = null;
       /** @type {any} */ let bridgeUi = null;
       /** @type {any} */ let guidesUi = null;
+      /** Geodataportalen (ui/api/geoportal-view), kept while it is the source. @type {any} */ let geoportalUi = null;
       /** Mobilen (ui/field/mobile-source), kept while it is the source. @type {any} */ let mobileUi = null;
       /** Exempeldata (ui/import/source-forms). @type {any} */ let examplesUi = null;
       /** The form in the workspace that adds a source: {id, el, title}, built once per opening. @type {any} */ let formUi = null;
@@ -161,6 +165,7 @@
         if (apiUi) { apiUi.destroy(); apiUi = null; apiId = null; }
         if (bridgeUi) { bridgeUi.destroy(); bridgeUi = null; }
         if (guidesUi) { guidesUi.destroy(); guidesUi = null; }
+        if (geoportalUi) { geoportalUi.destroy(); geoportalUi = null; }
         if (mobileUi) { mobileUi.destroy(); mobileUi = null; }
         if (examplesUi) { examplesUi.destroy(); examplesUi = null; }
         if (leftTree) { leftTree.destroy(); leftTree = null; }
@@ -367,7 +372,7 @@
        * @param {string} id
        */
       function loadAhead(id) {
-        const sources = id.startsWith('api:') || id.startsWith('bridge') || id === 'guides' || !!FAMILY_FORMS[id];
+        const sources = id.startsWith('api:') || id.startsWith('bridge') || id === 'guides' || id === 'geoportal' || !!FAMILY_FORMS[id];
         const wanted = sources ? D.ensure(['sources']) : id === 'saved' ? D.ensure(['families']) : id === 'newplan' || id === 'newdetailplan' ? D.ensure(['plan']) : id === 'mobile' ? D.ensure(['dela']) : null;
         if (wanted) wanted.catch((err) => D.log('inhamta', 'load ahead', id, err));
       }
@@ -385,6 +390,7 @@
         if (source === 'bridge') { renderBridge(); return; }
         if (source === 'mobile') { renderMobile(); return; }
         if (source === 'guides') { renderGuides(); return; }
+        if (source === 'geoportal') { renderGeoportal(); return; }
         if (source === 'newmodel') { renderNewModel(); return; }
         if (source === 'newplan') { renderNewPlan(); return; }
         if (source === 'newdetailplan') { renderNewDetailPlan(); return; }
@@ -460,6 +466,7 @@
             onRemoved: () => { apiUi = null; apiId = null; source = 'file'; reloadConnectors().then(render); },
             // A geodata source added from a catalogue search opens in place of the search.
             onConnector: (c) => openConnector(c),
+            geoportal: geoportalActions,
           });
           apiUi.start();
         }
@@ -520,8 +527,9 @@
         if (!formUi) {
           const wanted = formWanted && formWanted.id === id ? formWanted : null;
           formWanted = null;
+          // A post of Geodataportalen names its family (WFS, OGC API, ArcGIS) and came from content: consent per host (F103 a).
           const f = family
-            ? D.require('ui/api/family-dialog').form(ctx, Object.assign({}, family.options, wanted ? { values: wanted.values } : {}, wanted && wanted.family !== id && id === 'database' ? { family: wanted.family } : {}))
+            ? D.require('ui/api/family-dialog').form(ctx, Object.assign({}, family.options, wanted ? { values: wanted.values } : {}, wanted && wanted.family && wanted.family !== id && (id === 'database' || id === 'geodata') ? { family: wanted.family } : {}, wanted && wanted.perHost ? { perHost: true } : {}))
             : id === 'apifile' ? sourceForms.apiFileForm.form(ctx) : sourceForms.boundariesForm.form(ctx);
           const mine = { id, el: f.el, title: f.title };
           formUi = mine;
@@ -796,6 +804,24 @@
         });
       }
 
+      // ---- Geodataportalen: search the national catalogue and fetch what its posts link to (PLAN 12 a4) ----
+      /**
+       * What a post does in Inhämta: a service opens the form of a geodata source with the address filled in, a fetched file goes
+       * to the import wizard as a file from an address, and the bridge's own view opens when a service shuts the browser out.
+       */
+      const geoportalActions = {
+        add: (family, url) => { formWanted = { id: 'geodata', values: { baseUrl: url }, family, perHost: true }; formUi = null; choose('geodata'); },
+        open: (file, url) => { source = 'url'; restart(); useFetched(url, file, { config: false }); },
+        bridge: () => choose('bridge'),
+      };
+      function renderGeoportal() {
+        if (!sourcesReady()) return;
+        const connector = connectorList.find((c) => c.id === GEOPORTAL);
+        const head = h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('search', 20), t('geoportal.title')));
+        if (!connector) { replace(slots.center, head, h('p', { class: 'dm-help', text: t('common.loading') })); return; }
+        if (!geoportalUi) { geoportalUi = D.require('ui/api/geoportal-view').create({ connector, log: (m, k) => shell.log(m, k), actions: geoportalActions }); geoportalUi.start(); }
+        replace(slots.center, head, h('p', { class: 'dm-help', 'data-source-lead': 'geoportal', text: t('geoportal.lead') }), geoportalUi.el);
+      }
       function renderGuides() {
         // The guides fetch through the families and are part of the group 'sources' (src/boot.js).
         if (!sourcesReady()) return;
@@ -813,10 +839,26 @@
         wiz.url = url;
         if (!(await importersReady())) return;
         wiz.busy = true; wiz.error = ''; render();
+        let file = null;
+        try { file = await D.require('io/url-import').fetchFile(url); } catch (err) {
+          wiz.error = (err && err.message) || String(err);
+          shell.log(t('import.error', { message: wiz.error }), 'error');
+          wiz.busy = false; render();
+          return;
+        }
+        await useFetched(url, file);
+      }
+      /**
+       * A file fetched from an address (here, or by a post of Geodataportalen): a configuration is added, data goes on in the wizard.
+       * A file a catalogue post chose is only data (`config: false`): what content links to never adds a source by itself.
+       */
+      async function useFetched(url, file, options = {}) {
+        wiz.url = url;
+        if (!(await importersReady())) return;
+        wiz.busy = true; wiz.error = ''; render();
         try {
           const urlImport = D.require('io/url-import');
-          const file = await urlImport.fetchFile(url);
-          if (/\.json$/i.test(file.name) || /json/.test(file.type)) {
+          if (options.config !== false && (/\.json$/i.test(file.name) || /json/.test(file.type))) {
             const text = await file.text();
             if (urlImport.configFormat(text)) {
               const res = await urlImport.importConfig(text);
@@ -1558,6 +1600,7 @@
         if (source === 'boundaries') { replace(slots.right, h('h4', { text: t('presets.geo.label') }), h('p', { class: 'dm-help', text: t('boundaries.right') })); return; }
         if (source === 'apifile' || FAMILY_FORMS[source]) { replace(slots.right, h('h4', { text: t(itemOf(source).label) }), h('p', { class: 'dm-help', text: t('import.form.right') })); return; }
         if (source === 'guides') { replace(slots.right, h('h4', { text: t('guides.title') }), h('p', { class: 'dm-help', text: t('guides.right') })); return; }
+        if (source === 'geoportal') { replace(slots.right, h('h4', { text: t('geoportal.title') }), h('p', { class: 'dm-help', text: t('geoportal.right') })); return; }
         if (source === 'newmodel') { replace(slots.right, h('h4', { text: t('newmodel.title') }), h('p', { class: 'dm-help', text: t('newmodel.right') })); return; }
         if (source === 'newplan') { replace(slots.right, h('h4', { text: t('newplan.title') }), h('p', { class: 'dm-help', text: t('newplan.right') })); return; }
         if (source === 'newdetailplan' || source === 'newlayer' || source === 'newtable') { replace(slots.right, h('h4', { text: t(source + '.title') }), h('p', { class: 'dm-help', text: t(source + '.right') })); return; }

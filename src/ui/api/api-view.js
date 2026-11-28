@@ -17,8 +17,9 @@
 
       /**
        * @param {any} ctx shell context @param {any} connector
-       * @param {{onDataset?: Function, onRemoved?: Function, onConnector?: Function}} [hooks] onConnector: a source created from
-       *   this view (a catalogue hit added as a geodata source) that Inhämta should open
+       * @param {{onDataset?: Function, onRemoved?: Function, onConnector?: Function, geoportal?: any}} [hooks] onConnector: a source
+       *   created from this view that Inhämta should open; geoportal: what Inhämta does with a catalogue post (ui/api/geoportal-view
+       *   actions: the form of a geodata source, the import wizard, the bridge)
        */
       function create(ctx, connector, hooks = {}) {
         const { shell, store } = ctx;
@@ -28,7 +29,7 @@
         const el = h('div', { class: 'dm-stack dm-api-view' });
         const resultEl = h('div', { class: 'dm-stack' });
         const progressEl = h('div');
-        const api = { ctx, connector, runFetch, refreshRight: () => renderRight(), log: (m, k) => shell.log(m, k), onConnector: (c) => { if (hooks.onConnector) hooks.onConnector(c); }, onDataset: (m) => { if (hooks.onDataset) hooks.onDataset(m); } };
+        const api = { ctx, connector, runFetch, refreshRight: () => renderRight(), log: (m, k) => shell.log(m, k), onConnector: (c) => { if (hooks.onConnector) hooks.onConnector(c); }, actions: hooks.geoportal || null, onDataset: (m) => { if (hooks.onDataset) hooks.onDataset(m); } };
         const authUi = auth.needsCredentials(connector) ? authPanel.create(connector) : null;
         const family = connector.family && connector.family.type;
         const isGeodata = family === 'geodata';

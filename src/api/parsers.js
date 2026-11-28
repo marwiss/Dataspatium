@@ -270,19 +270,42 @@
       return Object.assign({ data, types: {}, meta: {} }, table);
     }
 
+    /** Hosts whose services need a key: Lantmäteriet's API platform (STAC, the national geodata platform). */
+    const KEY_HOSTS = /(^|\.)api\.lantmateriet\.se$/i;
+    /** Access constraints that say there are none ("Ingen begränsning", INSPIRE noLimitations, "inga tillämpliga villkor"). */
+    const OPEN_ACCESS = /^(ingen|inga)\b|no ?limitations|inga tillämpliga|no conditions/i;
+    /**
+     * Access constraints that need a key, a permit or an agreement: "kräver tillstånd", "Licens för användning av resurs krävs",
+     * an agreement or secrecy, INSPIRE's limitations under article 13; "Du har tillstånd att dela" (CC BY) is no constraint.
+     */
+    const CLOSED_ACCESS = /(licens|tillstånd|avtal|inloggning|nyckel|registrering)[^.;]{0,40}krävs|kräver[^.;]{0,30}(licens|tillstånd|avtal|inloggning|nyckel)|användaravtal|licensavtal|sekretess|api-?nyckel|requires?[^.;]{0,30}(licen[cs]e|key|agreement|login|permission)|(licen[cs]e|key|agreement|login|permission)[^.;]{0,30}required|Article13/i;
     /**
      * GeoNetwork 4 catalogue search (Elasticsearch hits, as Geodataportalen answers): one row per metadata record with
-     * title, abstract, organisation and the service links sorted by protocol (WFS, OGC API Features, ArcGIS, WMS).
+     * title, abstract, organisation and the links sorted by what they are: WFS, OGC API Features, ArcGIS, WMS, a file to
+     * download (nedladdning), an INSPIRE ATOM feed (atom), and the access constraints (villkor) with `begransad` when they
+     * need a key or an agreement (or a link goes to a host that needs a key).
      */
     function geonetworkRecords(data) {
       const hits = data && data.hits && Array.isArray(data.hits.hits) ? data.hits.hits : [];
       const text = (o) => (o && typeof o === 'object' ? (o.default || o.langswe || o.langeng || Object.values(o).find((v) => typeof v === 'string') || null) : (typeof o === 'string' ? o : null));
       const linkUrl = (l) => (l && (text(l.urlObject) || l.url || null));
       const pick = (links, re) => { const l = links.find((x) => re.test(String(x.protocol || '')) || re.test(String(linkUrl(x) || ''))); return l ? linkUrl(l) : null; };
+      const proto = (l) => String((l && l.protocol) || '');
+      const isAtom = (l) => /atom/i.test(proto(l)) || (/download|nedladdning/i.test(proto(l)) && /atom/i.test(String(linkUrl(l) || '')));
+      // A file: a download link that is not a feed or an API (HTTP:Nedladdning:API is Lantmäteriet's STAC), or an address of a file.
+      const isFile = (l) => !isAtom(l) && !/:API\b/i.test(proto(l)) && (/DOWNLOAD|nedladdning/i.test(proto(l)) || /\.(zip|gpkg|geojson|gml)(\?|$)/i.test(String(linkUrl(l) || '')));
+      const find = (links, fn) => { const l = links.find(fn); return l ? linkUrl(l) : null; };
+      // Each constraint as its words (or its code list link) and whether it closes access: a code (INSPIRE article 13) counts too.
+      const terms = (s) => [].concat(s.licenseObject || [], s.MD_LegalConstraintsOtherConstraintsObject || []).map((o) => {
+        const words = String(text(o) || (o && o.link) || '').trim();
+        return { words, closed: CLOSED_ACCESS.test(words + ' ' + String((o && o.link) || '')) && !OPEN_ACCESS.test(words) };
+      }).filter((x) => x.words);
       return hits.map((hit) => {
         const s = hit._source || {};
         const links = Array.isArray(s.link) ? s.link : [];
         const org = text(s.OrgForResourceObject) || (Array.isArray(s.OrgForResource) ? s.OrgForResource[0] : null) || (Array.isArray(s.contact) && s.contact[0] ? text(s.contact[0].organisationObject) || s.contact[0].organisation : null);
+        const conditions = terms(s);
+        const restricted = conditions.some((x) => x.closed) || links.some((l) => KEY_HOSTS.test(http.hostOf(String(linkUrl(l) || ''))));
         return {
           id: hit._id || s.id || null,
           titel: text(s.resourceTitleObject),
@@ -293,7 +316,10 @@
           ogc_api: pick(links, /API-Features|OGC:API|\/collections(\/|$)/i),
           arcgis: pick(links, /ESRI|ARCGIS|\/(FeatureServer|MapServer)(\/|$|\?)/i),
           wms: pick(links, /WMS|service=WMS/i),
-          nedladdning: pick(links, /DOWNLOAD|nedladdning|\.zip$|\.gpkg$|\.geojson$/i),
+          nedladdning: find(links, isFile),
+          atom: find(links, isAtom),
+          villkor: Array.from(new Set(conditions.map((x) => x.words))).join('; ').slice(0, 500) || null,
+          begransad: restricted,
           lankar: links.length ? JSON.stringify(links.map((l) => ({ protocol: l.protocol || null, url: linkUrl(l), name: text(l.nameObject) || l.name || null }))) : null,
           metadata: hit._id ? 'https://www.geodata.se/geodataportalen/srv/swe/catalog.search#/metadata/' + hit._id : null,
         };

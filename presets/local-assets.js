@@ -111,7 +111,7 @@ Dataspatium.assets.addEntries({
  "presets/api/geodataportalen.api.json": {
   "file": "presets/api/geodataportalen.api.json.js",
   "encoding": "text",
-  "size": 5183,
+  "size": 7802,
   "library": "dataspatium"
  },
  "presets/api/hagstofa.api.json": {
