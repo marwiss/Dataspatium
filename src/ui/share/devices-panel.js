@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * The Enheter tab in Dela: direct transfer to and from phones and other computers over WebRTC (platform/p2p).
+ * The Enheter tab in Dela, and Mobilen in Inhämta: direct transfer to and from phones and other computers over WebRTC (platform/p2p).
  * The computer shows a QR code (the mobile page's address with the offer after the hash) or a text code; a paired
  * device connects at once, a new device answers with its fingerprint code. Once connected both sides show the same
  * six-digit verification code, items can be sent (bundles, files) and received (bundles open in Ta emot, other
@@ -20,11 +20,14 @@
     }
 
     /**
+     * The panel. With `receive` it is Inhämta's (Mobilen, F129 a): connecting and pairing as here, what the phone sends, and of
+     * the sending only a form for the phone that waits in `devicesPending`; Dela's panel sends datasets and files as well.
      * @param {any} ctx the mode context
-     * @param {{onChanged?: () => void}} [options]
+     * @param {{onChanged?: () => void, receive?: boolean}} [options]
      */
     async function create(ctx, options = {}) {
       const { ui, services, shell, store } = ctx;
+      const receive = !!options.receive;
       const el = h('div', { class: 'dm-stack' });
       const state = {
         target: 'new', session: null, qrEl: null, qrFor: null, status: '', peers: await p2p.peers(), identity: null,
@@ -228,24 +231,29 @@
           }
         }
         const connectCard = h('div', { class: 'dm-card dm-stack' }, connectParts);
-        // Send
-        const what = /** @type {any} */ (h('dm-select', { label: t('devices.send.what') }));
+        // Send: in Inhämta (receive) only a form waiting for the phone, else datasets, files or that form.
         const s = store.get();
-        const nSelected = s.selectedIds && s.selectedIds.length ? s.selectedIds.length : (s.selectedId ? 1 : 0);
-        what.options = [{ value: 'selected', label: t('devices.send.what.selected', { n: nSelected }) }, { value: 'all', label: t('devices.send.what.all') }, { value: 'files', label: t('devices.send.what.files') }];
-        what.value = 'selected';
-        if (s.devicesPending) {
-          what.options = [{ value: 'pending', label: t('devices.send.pending', { name: s.devicesPending.label }) }].concat(what.options);
-          what.value = 'pending';
+        let sendCard = null;
+        if (!receive || s.devicesPending) {
+          const what = /** @type {any} */ (h('dm-select', { label: t('devices.send.what') }));
+          const nSelected = s.selectedIds && s.selectedIds.length ? s.selectedIds.length : (s.selectedId ? 1 : 0);
+          what.options = receive ? [] : [{ value: 'selected', label: t('devices.send.what.selected', { n: nSelected }) }, { value: 'all', label: t('devices.send.what.all') }, { value: 'files', label: t('devices.send.what.files') }];
+          what.value = 'selected';
+          if (s.devicesPending) {
+            what.options = [{ value: 'pending', label: t('devices.send.pending', { name: s.devicesPending.label }) }].concat(what.options);
+            what.value = 'pending';
+          }
+          const sendBtn = ui.button({ label: t('devices.send'), icon: 'upload', variant: connected ? 'primary' : 'default', onClick: () => sendNow(what.value, sendBtn) });
+          if (!connected) sendBtn.disabled = true;
+          sendCard = h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('devices.send.title') }), h('p', { class: 'dm-help', text: t('devices.send.hint') }), h('div', { class: 'dm-row-wrap' }, what, sendBtn), receive ? null : transfersEl);
         }
-        const sendBtn = ui.button({ label: t('devices.send'), icon: 'upload', variant: connected ? 'primary' : 'default', onClick: () => sendNow(what.value, sendBtn) });
-        if (!connected) sendBtn.disabled = true;
         renderTransfers();
-        const sendCard = h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('devices.send.title') }), h('p', { class: 'dm-help', text: t('devices.send.hint') }), h('div', { class: 'dm-row-wrap' }, what, sendBtn), transfersEl);
+        // Receive (Inhämta): what the phone sends arrives here, with its transfers.
+        const receiveCard = receive ? h('div', { class: 'dm-card dm-stack', 'data-devices-receive': '' }, h('h3', { text: t('devices.receive.title') }), h('p', { class: 'dm-help', text: t('devices.receive.hint') }), transfersEl) : null;
         // Paired devices
         const peerRows = state.peers.map((p) => h('div', { class: 'dm-row' }, ui.icon('smartphone', 16), h('span', { class: 'dm-grow dm-truncate', text: p.name || p.id.slice(0, 12) }), h('span', { class: 'dm-muted dm-small', text: t('devices.peers.since', { date: i18n.formatDateTime ? i18n.formatDateTime(p.pairedAt) : p.pairedAt }) }), ui.button({ label: t('devices.peers.forget'), icon: 'trash-2', size: 'sm', variant: 'ghost', onClick: async () => { await p2p.forget(p.id); if (state.target === p.id) state.target = 'new'; await refreshPeers(); } })));
         const peersCard = h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('devices.peers.title') }), peerRows.length ? h('div', { class: 'dm-stack-sm' }, peerRows) : h('p', { class: 'dm-help', text: t('devices.peers.none') }));
-        replace(el, p2p.supported() ? [thisCard, connectCard, sendCard, peersCard] : [h('div', { class: 'dm-card' }, h('p', { class: 'dm-help', text: t('devices.unsupported') }))]);
+        replace(el, p2p.supported() ? [thisCard, connectCard, sendCard, receiveCard, peersCard].filter(Boolean) : [h('div', { class: 'dm-card' }, h('p', { class: 'dm-help', text: t('devices.unsupported') }))]);
       }
 
       render();

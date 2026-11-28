@@ -1,9 +1,9 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Insamling i fält in Inhämta: choose a dataset (or start an empty one), decide which columns the phone asks for, with
- * labels, choices, position and photos, and send the form to Dataspatium Mobil. The form is kept in the dataset. What
- * leaves the computer is shown first: columns, labels, choices and rules, never rows.
+ * Insamling i fält in Inhämta, a part of the source Mobilen (ui/field/mobile-source): choose a dataset (or start an empty one),
+ * decide which columns the phone asks for, with labels, choices, position and photos, and send the form to Dataspatium Mobil.
+ * The form is kept in the dataset. What leaves the computer is shown first: columns, labels, choices and rules, never rows.
  */
 (function () {
   'use strict';
@@ -29,7 +29,12 @@
       });
     }
 
-    function create(ctx) {
+    /**
+     * @param {any} ctx the mode context
+     * @param {{embedded?: boolean, onSend?: () => void}} [options] embedded: drawn under the heading of the view it is part of;
+     *   onSend: called once the reviewed form waits for the phone in `devicesPending` (else Enheter in Dela opens)
+     */
+    function create(ctx, options = {}) {
       const { ui, store, shell, services } = ctx;
       const s = { id: null, form: null };
       let slots = null; let seq = 0; let saveTimer = 0;
@@ -63,7 +68,7 @@
         if (s.id && !s.form) s.form = await collect.formFor(s.id);
         const right = await inspector();
         if (my !== seq || !slots) return;
-        const head = h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('smartphone', 20), t('field.title')));
+        const head = options.embedded ? null : h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('smartphone', 20), t('field.title')));
         const pick = /** @type {any} */ (h('dm-select', { label: t('field.dataset') }));
         pick.options = [{ value: '', label: t('field.dataset.choose') }].concat(list.map((d) => ({ value: d.id, label: d.name })));
         pick.value = s.id || '';
@@ -173,7 +178,9 @@
       async function sendToPhone() {
         const pack = await review();
         if (!pack) return;
-        store.set({ devicesPending: { name: pack.name, label: pack.form.title, blob: pack.blob, kind: 'field-form' }, delaTab: 'devices' });
+        store.set({ devicesPending: { name: pack.name, label: pack.form.title, blob: pack.blob, kind: 'field-form' } });
+        if (options.onSend) { options.onSend(); return; }
+        store.set({ delaTab: 'devices' });
         shell.activate('dela');
       }
       async function saveFile() {
