@@ -135,6 +135,7 @@
     'src/ui/components/code-editor.js',
     'src/ui/components/tooltip.js',
     'src/ui/components/viewcube.js',
+    'src/ui/components/menu.js',
     'src/ui/components/index.js',
     'src/ui/share/qr.js',
     'src/data/field-form.js',
@@ -283,6 +284,7 @@
     'src/ui/components/code-editor.js',
     'src/ui/components/tooltip.js',
     'src/ui/components/viewcube.js',
+    'src/ui/components/menu.js',
     'src/ui/components/index.js',
     // UI: shell and modes
     'src/ui/shell/state.js',

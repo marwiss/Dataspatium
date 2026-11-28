@@ -124,6 +124,8 @@
   --dm-z-floating: 50;
   --dm-z-dialog: 100;
   --dm-z-toast: 200;
+  /* Menus (ui/menu) and a row dragged with a finger (ui/tree): above sheets and floating panels, below toasts. */
+  --dm-z-menu: 150;
 }
 
 /* Dark theme: explicit choice ... */
