@@ -16,7 +16,7 @@
     const PARAM_TYPES = ['string', 'number', 'boolean', 'enum', 'multi', 'date', 'text', 'querylines', 'bbox'];
     const PARAM_IN = ['path', 'query', 'header', 'body', 'template', 'option'];
     const PAGINATION_TYPES = ['none', 'page', 'offset', 'next-url', 'cursor', 'link-header', 'link-rel'];
-    const FORMATS = ['json', 'jsonstat', 'sdmx', 'csv', 'geojson', 'xml', 'entryscape', 'text', 'graphql', 'sparql', 'influx-csv', 'geonetwork'];
+    const FORMATS = ['json', 'jsonstat', 'sdmx', 'csv', 'geojson', 'gml', 'xml', 'entryscape', 'text', 'graphql', 'sparql', 'influx-csv', 'geonetwork'];
     // geodata: a geodata service (family.kind wfs, ogcapi or arcgis) whose layers are discovered on demand; geoportal: a catalogue search.
     // opencde: a buildingSMART OpenCDE server (BCF API, Documents API) browsed after an OAuth2 sign-in.
     const FAMILIES = ['pxweb', 'socialstyrelsen', 'statbank', 'fhi', 'geodata', 'geoportal', 'neo4j', 'opencde'];
@@ -48,6 +48,9 @@
         max: { type: 'number' },
         crs: { type: 'string' },
         bboxFormat: { type: 'string', enum: ['comma', 'pairs'] },
+        // The system named after the four numbers (WFS 2.0: bbox=…,urn:ogc:def:crs:OGC:1.3:CRS84), so that a service whose own system
+        // is another one (deegree, Kartverket) reads the box in WGS 84.
+        bboxCrs: { type: 'string' },
       },
     };
 

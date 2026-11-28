@@ -8,11 +8,11 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('io/import-pipeline', ['io/import', 'io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'io/importers/access', 'io/importers/documents', 'io/importers/images', 'io/importers/raster', 'io/importers/detaljplan', 'io/importers/graph', 'io/importers/model', 'io/importers/plan-delivery', 'io/sniff', 'data/plan-delivery', 'data/plan', 'data/types', 'data/datasets', 'platform/tier'], (thin, csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, access, documents, images, raster, detaljplanImp, graphImp, modelImp, deliveryImp, sniffer, delivery, plan, types, datasets, tier) => {
+  D.define('io/import-pipeline', ['io/import', 'io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'io/importers/gml', 'io/importers/access', 'io/importers/documents', 'io/importers/images', 'io/importers/raster', 'io/importers/detaljplan', 'io/importers/graph', 'io/importers/model', 'io/importers/plan-delivery', 'io/sniff', 'data/plan-delivery', 'data/plan', 'data/types', 'data/datasets', 'platform/tier'], (thin, csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, gml, access, documents, images, raster, detaljplanImp, graphImp, modelImp, deliveryImp, sniffer, delivery, plan, types, datasets, tier) => {
     // Documents go before the table-in-document importer: a Word or Markdown file is a document unless "tables" is chosen.
     // A TIFF is a raster before it is a picture (the browsers cannot draw TIFF files).
     // The plan importer never detects by extension (resolveImporter sniffs JSON heads for it); it is listed for forced formats.
-    const importers = [excel, documents, raster, images, tables, geo, json, xml, sqliteImp, access, shapefile, rFormats, fixedWidth, csv, detaljplanImp, graphImp, modelImp];
+    const importers = [excel, documents, raster, images, tables, geo, gml, json, xml, sqliteImp, access, shapefile, rFormats, fixedWidth, csv, detaljplanImp, graphImp, modelImp];
     /** Importers that turn one or several files into one dataset of their own kind (documents, rasters, images). */
     const collections = [documents, raster, images];
 
@@ -94,6 +94,8 @@
       if ((importer === json || importer === xml) && graphImp.sniff(head)) return graphImp;
       if (importer === json && /"type"\s*:\s*"Topology"/.test(head)) return geo;
       if (importer === xml && /urn:schemas-microsoft-com:office:spreadsheet/.test(head)) return excel;
+      // GML saved as .xml (a WFS answer, an INSPIRE download) goes to the GML reader.
+      if (importer === xml && gml.sniff(head)) return gml;
       return importer;
     }
 

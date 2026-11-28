@@ -6,8 +6,9 @@
  * of a service and how to write the endpoints of an ordinary connector, so that "Lägg till geodatakälla" in Inhämta
  * turns a service address into a connector with one endpoint per layer plus a generic one. Every endpoint answers
  * GeoJSON in WGS 84, so the datasets get a geometry column and open as maps: a WFS in the GeoJSON format its
- * capabilities name (GML only is reported, not read), pages no larger than the service sends. Keys (for example
- * Lantmäteriet's national geodata platform) are Bearer tokens kept in api/secrets.
+ * capabilities name, or in GML when it offers none (F130 a: Kartverket and other INSPIRE and deegree services; read by
+ * io/importers/gml, asked for in urn:ogc:def:crs:EPSG::4326 with the box in CRS84), pages no larger than the service sends.
+ * Keys (for example Lantmäteriet's national geodata platform) are Bearer tokens kept in api/secrets.
  */
 (function () {
   'use strict';
@@ -70,6 +71,21 @@
       const i = lower.findIndex((f) => /^application\/(geo\+)?json\s*;/.test(f));
       return i >= 0 ? formats[i] : null;
     }
+    /**
+     * The GML format among a WFS's output formats, as the server spells it: GML 3.2 first (WFS 2.0's own), then 3.1.1, then
+     * 2.1.2 ("text/xml; subtype=gml/3.2.1", "application/gml+xml; version=3.2", GML32, gml3, GML2), or null.
+     */
+    function gmlFormat(formats) {
+      const gml = formats.filter((f) => /gml/i.test(f));
+      for (const re of [/3\.?2/, /3\.?1|^gml3$/i, /2\.?1|^gml2$/i, /./]) { const f = gml.find((x) => re.test(x)); if (f) return f; }
+      return null;
+    }
+    /** True for an output format that is GML (the endpoints then ask for and read GML). */
+    const isGml = (format) => /gml/i.test(String(format || '')) && !/json/i.test(String(format || ''));
+    /** The system a GML answer is asked for in: WGS 84 as a URN, whose axis order every server reads the same way. */
+    const GML_SRS = 'urn:ogc:def:crs:EPSG::4326';
+    /** The box's system in a GML request: CRS84 (longitude first), since a service's own system may be another (Kartverket). */
+    const GML_BBOX_CRS = 'urn:ogc:def:crs:OGC:1.3:CRS84';
     /** The number of features a WFS sends at most per request (the constraint CountDefault), or 0 when not stated. */
     function wfsCountDefault(doc) {
       const c = byLocal(doc, 'Constraint').find((el) => el.getAttribute('name') === 'CountDefault');
@@ -176,18 +192,24 @@
           if (!list.length) throw new Error(t('geodata.err.nolayers'));
           const formats = wfsFormats(doc);
           const json = jsonFormat(formats);
-          if (formats.length && !json) throw new Error(t('geodata.err.nojson', { formats: formats.slice(0, 6).join(', ') }));
-          v.outputFormat = json || 'application/json';
+          const gml = json ? null : gmlFormat(formats);
+          if (formats.length && !json && !gml) throw new Error(t('geodata.err.nojson', { formats: formats.slice(0, 6).join(', ') }));
+          v.outputFormat = json || gml || 'application/json';
           v.pageSize = pageSize(wfsCountDefault(doc));
           return list.filter((e) => e.id);
         },
         endpoints(v, entities) {
-          const fixed = [P('service', { default: 'WFS', hidden: true }), P('version', { default: '2.0.0', hidden: true }), P('request', { default: 'GetFeature', hidden: true }), P('outputFormat', { default: v.outputFormat || 'application/json', hidden: true }), P('srsName', { default: 'EPSG:4326', hidden: true })];
-          const common = () => [bboxParam(), P('CQL_FILTER', { label: t('geodata.param.cql'), help: t('geodata.param.cql.help'), example: "kommunkod = '0180'" }), P('propertyName', { label: t('geodata.param.properties'), help: t('geodata.param.properties.help') })];
+          // GML: asked for in WGS 84 as a URN and read in its axis order, the box typed in WGS 84 and sent with its system.
+          const gml = isGml(v.outputFormat);
+          const fixed = [P('service', { default: 'WFS', hidden: true }), P('version', { default: '2.0.0', hidden: true }), P('request', { default: 'GetFeature', hidden: true }), P('outputFormat', { default: v.outputFormat || 'application/json', hidden: true }), P('srsName', { default: gml ? GML_SRS : 'EPSG:4326', hidden: true })];
+          const box = () => (gml ? Object.assign(bboxParam(), { type: 'bbox', bboxCrs: GML_BBOX_CRS }) : bboxParam());
+          const common = () => [box(), P('CQL_FILTER', { label: t('geodata.param.cql'), help: t('geodata.param.cql.help'), example: "kommunkod = '0180'" }), P('propertyName', { label: t('geodata.param.properties'), help: t('geodata.param.properties.help') })];
           const pagination = { type: 'offset', param: 'startIndex', sizeParam: 'count', size: v.pageSize || PAGE, totalPath: 'numberMatched', maxPages: 200 };
+          // A GML answer whose geometries name no system is in the one asked for.
+          const response = gml ? { format: 'gml', options: { srsName: GML_SRS } } : { format: 'geojson' };
           const ids = endpointIds('layer-', entities);
-          const list = entities.map((e, i) => ({ id: ids[i], name: e.name, description: e.abstract || '', method: 'GET', path: '', params: fixed.concat([P('typeNames', { default: e.id, hidden: true })], common()), pagination, response: { format: 'geojson' }, dataset: { name: e.name } }));
-          list.push({ id: 'layer', name: t('geodata.generic.layer'), method: 'GET', path: '', params: fixed.concat([P('typeNames', { required: true, label: t('geodata.param.layer') })], common()), pagination, response: { format: 'geojson' }, dataset: { name: '{typeNames}' } });
+          const list = entities.map((e, i) => ({ id: ids[i], name: e.name, description: e.abstract || '', method: 'GET', path: '', params: fixed.concat([P('typeNames', { default: e.id, hidden: true })], common()), pagination, response, dataset: { name: e.name } }));
+          list.push({ id: 'layer', name: t('geodata.generic.layer'), method: 'GET', path: '', params: fixed.concat([P('typeNames', { required: true, label: t('geodata.param.layer') })], common()), pagination, response, dataset: { name: '{typeNames}' } });
           return list;
         },
       },
@@ -317,6 +339,6 @@
       return { connector: saved, entities };
     }
 
-    return { FAMILIES, byId, createConnector, refresh, layerEndpoints, genericEndpoint, familyForLink, serviceUrl, arcgisRoot, getText, jsonFormat };
+    return { FAMILIES, byId, createConnector, refresh, layerEndpoints, genericEndpoint, familyForLink, serviceUrl, arcgisRoot, getText, jsonFormat, gmlFormat };
   });
 })();

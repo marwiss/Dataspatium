@@ -251,7 +251,8 @@
       if (name === 'workbook' && /urn:schemas-microsoft-com:office:spreadsheet/.test(t)) return hit('xml', 'Excel 2003 XML', 'application/xml', 'excelxml');
       // A tag with neither the XML declaration nor a namespace is not sure to be XML.
       if (!/^<\?xml\s/.test(t) && !root.ns) return null;
-      if (/opengis\.net\/(gml|wfs)/.test(t.slice(0, 4096))) return hit('xml', 'GML', 'application/gml+xml');
+      // GML with features (a WFS answer, a .gml file); a WFS's capabilities and other OGC documents stay XML.
+      if (/opengis\.net\/(gml|wfs)/.test(t.slice(0, 4096)) && (/FeatureCollection$/.test(root.local) || /featureMembers?\b|<wfs:member\b|\bgml:id=/.test(t.slice(0, 8192)))) return hit('gml', 'GML', 'application/gml+xml');
       if (/buildingsmart\.org\/ids/i.test(root.ns)) return hit('xml', 'IDS', 'application/xml');
       return hit('xml', `XML (${root.local})`, 'application/xml');
     }
@@ -355,10 +356,10 @@
 
     /**
      * The formats a text is recognised as (text above), by their ids in io/formats and in the order they are tried. Klistra in
-     * names the formats of io/formats that a text is recognised as (pasted), and tests/sniff.test.js keeps the two the same. GML
-     * and IDS are XML here.
+     * names the formats of io/formats that a text is recognised as (pasted), and tests/sniff.test.js keeps the two the same. IDS
+     * is XML here.
      */
-    const TEXT = ['ifc', 'dxf', 'ndjson', 'topojson', 'geojson', 'json', 'html', 'kml', 'gpx', 'graphml', 'gexf', 'qgs', 'fods', 'excelxml', 'xml', 'sql', 'tex', 'px', 'cypher', 'md', 'csv', 'tsv'];
+    const TEXT = ['ifc', 'dxf', 'ndjson', 'topojson', 'geojson', 'json', 'html', 'kml', 'gpx', 'graphml', 'gexf', 'qgs', 'fods', 'excelxml', 'gml', 'xml', 'sql', 'tex', 'px', 'cypher', 'md', 'csv', 'tsv'];
 
     return { sniff, isText, HEAD, TEXT };
   });

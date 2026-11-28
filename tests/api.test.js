@@ -756,7 +756,11 @@
       const entities = await fam.discover(v, c, (url, headers) => databases.getJson(c, url, headers));
       const conn = Object.assign({}, c, { endpoints: fam.endpoints(v, entities) });
       const ep = geodata.layerEndpoints(conn)[0];
-      return `${entities.length} layers, ${ep.name} ${rowsOf(await runner.fetchTable(conn, ep, {}, { firstPageOnly: true }))}`;
+      const table = await runner.fetchTable(conn, ep, {}, { firstPageOnly: true });
+      // Rows with a geometry (in WGS 84: the first position's longitude and latitude within range) show that the answer is read.
+      const gi = table.columns.indexOf('geometri');
+      const placed = gi < 0 ? 0 : table.rows.filter((r) => { const c = r[gi] ? D.require('data/geo').firstCoordinate(JSON.parse(r[gi]).coordinates || []) : null; return c && Math.abs(c[0]) <= 180 && Math.abs(c[1]) <= 90; }).length;
+      return `${entities.length} layers, ${ep.name} (${ep.response.format}) ${rowsOf(table)}${table.rows.length ? `, ${placed} with geometry` : ''}`;
     }
     return null;
   }
@@ -791,10 +795,28 @@
   }
   if (!LIVE_PRESETS) test('api: every preset against its real service (only with ?live=presets)', () => 'skipped (add ?live=presets to run)');
   else {
+    // &preset=<regular expression> runs the presets and services whose ids it matches (kartverket|geonorge, for example).
+    const only = new URLSearchParams(location.search).get('preset');
+    const wanted = (id) => !only || new RegExp(only).test(id);
     for (const name of D.assets.names(connectors.PRESET_PREFIX).filter((n) => n.endsWith('.api.json'))) {
       const id = name.slice(connectors.PRESET_PREFIX.length, -'.api.json'.length);
-      test('api live: ' + id, async () => livePreset((await connectors.loadPresets()).find((p) => p.id === id)), 300000);
+      if (wanted(id)) test('api live: ' + id, async () => livePreset((await connectors.loadPresets()).find((p) => p.id === id)), 300000);
     }
+    // The ready geodata services that are no preset (presets/geodata/services.json, as Lägg till geodatakälla lists them), as the
+    // source that one click makes of them: layers from the service, the first layer's first page. One line per service.
+    test('api live: the ready geodata services without a preset', async () => {
+      const list = JSON.parse(await D.assets.loadText('presets/geodata/services.json')).services || [];
+      const lines = []; const failed = [];
+      for (const svc of list) {
+        if (svc.preset || !['wfs', 'ogcapi', 'arcgis'].includes(svc.kind) || !wanted(svc.id)) continue;
+        if (svc.key) { lines.push(`${svc.id}: needs a key, skipped`); continue; }
+        const conn = { format: 'dataspatium-api/1', id: 'live-' + svc.id, name: svc.name, baseUrl: svc.url, auth: { type: 'none' }, family: { type: 'geodata', kind: svc.kind }, cors: svc.cors, endpoints: [] };
+        try { lines.push(`${svc.id}: ${await liveFamily(conn)}`); } catch (err) { failed.push(`${svc.id}: ${(err && err.message) || err}`); }
+      }
+      D.log('api', 'live services', lines.join(' | '));
+      if (failed.length) throw new Error(failed.join(' | ') + (lines.length ? ' || ok: ' + lines.join('; ') : ''));
+      return lines.join('; ') || 'none chosen';
+    }, 900000);
   }
 
   test('api: cleanup', async () => {

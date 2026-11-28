@@ -38,6 +38,7 @@
       { id: 'kml', name: 'KML', ext: ['kml'], group: 'geo', kind: 'table', importer: 'geo', text: true },
       { id: 'kmz', name: 'KMZ', ext: ['kmz'], group: 'geo', kind: 'table', importer: 'geo' },
       { id: 'gpx', name: 'GPX', ext: ['gpx'], group: 'geo', kind: 'table', importer: 'geo', text: true },
+      { id: 'gml', name: 'GML', ext: ['gml'], group: 'geo', kind: 'table', importer: 'gml', text: true },
       { id: 'shapefile', nameKey: 'import.formats.shapefile', ext: ['shp', 'zip'], parts: ['dbf', 'prj', 'cpg', 'shx'], group: 'geo', kind: 'table', importer: 'shapefile' },
       { id: 'gpkg', name: 'GeoPackage', ext: ['gpkg'], group: 'geo', kind: 'table', importer: 'sqlite' },
       { id: 'geotiff', name: 'GeoTIFF', ext: ['tif', 'tiff', 'gtiff'], group: 'geo', kind: 'raster', importer: 'raster' },

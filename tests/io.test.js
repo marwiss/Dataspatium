@@ -116,8 +116,8 @@
       'wks', 'wq1', 'wq2', 'wb1', 'wb2', 'wb3', 'qpw', 'html', 'htm', 'xhtml', 'md', 'markdown', 'docx', 'tex', 'json', 'ndjson', 'jsonl', 'geojson', 'topojson', 'kml',
       'kmz', 'gpx', 'xml', 'sqlite', 'sqlite3', 'db', 's3db', 'gpkg', 'sql', 'shp', 'zip', 'sav', 'zsav', 'por', 'dta', 'sas7bdat', 'xpt', 'px', 'rds', 'rda', 'RData',
       'parquet', 'mdb', 'accdb', 'pdf', 'odt', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'avif', 'tif', 'tiff', 'gtiff', 'qgs', 'qgz', 'bcf', 'bcfzip', 'graphml', 'gexf', 'cypher', 'cql',
-      'cyp', 'ifc', 'ifczip', 'dxf', 'geojsonl', 'geojsons', 'geojsonseq'];
-    const OTHERS = ['gml', 'ids', 'citygml', 'cityjson', 'landxml', 'las', 'laz', 'e57', 'osm', 'pbf', 'fgb', 'mif', 'asc', 'xyz', 'svg', 'heic', 'gltf', 'glb', 'obj', 'stl', 'dwg', 'rtf', 'pptx', 'epub', 'yaml', 'toml', 'gz', 'prj', 'shx', 'cpg'];
+      'cyp', 'ifc', 'ifczip', 'dxf', 'geojsonl', 'geojsons', 'geojsonseq', 'gml'];
+    const OTHERS = ['ids', 'citygml', 'cityjson', 'landxml', 'las', 'laz', 'e57', 'osm', 'pbf', 'fgb', 'mif', 'asc', 'xyz', 'svg', 'heic', 'gltf', 'glb', 'obj', 'stl', 'dwg', 'rtf', 'pptx', 'epub', 'yaml', 'toml', 'gz', 'prj', 'shx', 'cpg'];
     const importers = D.moduleNames().filter((n) => n.startsWith('io/importers/')).map((n) => D.require(n)).filter((m) => typeof m.detect === 'function');
     const byName = (ext) => new File([''], 'x.' + ext);
     const candidates = Array.from(new Set(EXTENSIONS.concat(formats.extensions(), OTHERS)));

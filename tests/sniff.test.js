@@ -118,7 +118,8 @@
     ['HTML', () => '<!DOCTYPE html>\n<html lang="sv"><body><table><tr><td>1</td></tr></table></body></html>', 'html', 'HTML'],
     ['Excel 2003 XML', () => '<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"></Workbook>', 'xml', 'Excel 2003 XML'],
     ['FODS', () => '<?xml version="1.0"?><office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" office:mimetype="application/vnd.oasis.opendocument.spreadsheet"></office:document>', 'fods', 'FODS'],
-    ['GML', () => '<?xml version="1.0"?><wfs:FeatureCollection xmlns:wfs="http://www.opengis.net/wfs/2.0" xmlns:gml="http://www.opengis.net/gml/3.2"></wfs:FeatureCollection>', 'xml', 'GML'],
+    ['GML', () => '<?xml version="1.0"?><wfs:FeatureCollection xmlns:wfs="http://www.opengis.net/wfs/2.0" xmlns:gml="http://www.opengis.net/gml/3.2"></wfs:FeatureCollection>', 'gml', 'GML'],
+    ['WFS capabilities are XML, not GML', () => '<?xml version="1.0"?><wfs:WFS_Capabilities xmlns:wfs="http://www.opengis.net/wfs/2.0" version="2.0.0"></wfs:WFS_Capabilities>', 'xml', 'XML (WFS_Capabilities)'],
     ['IDS', () => '<?xml version="1.0"?><ids:ids xmlns:ids="http://standards.buildingsmart.org/IDS"></ids:ids>', 'xml', 'IDS'],
     ['SVG is no table', () => '<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg"></svg>', null, ''],
     ['a tag without declaration or namespace is not sure', () => '<b>fet</b> text', null, ''],
@@ -163,7 +164,7 @@
     const TEXTS = {
       ifc: sample('IFC with its FILE_SCHEMA'), dxf: sample('DXF'), ndjson: sample('JSON Lines'), topojson: TOPOJSON, geojson: GEOJSON,
       json: sample('a JSON object'), html: sample('HTML'), kml: sample('KML'), gpx: sample('GPX'), graphml: sample('GraphML'), gexf: sample('GEXF'),
-      qgs: sample('a QGIS project'), fods: sample('FODS'), excelxml: sample('Excel 2003 XML'), xml: sample('XML by its declaration'),
+      qgs: sample('a QGIS project'), fods: sample('FODS'), excelxml: sample('Excel 2003 XML'), gml: sample('GML'), xml: sample('XML by its declaration'),
       sql: sample('a SQL script'), tex: sample('LaTeX'), px: sample('PC-Axis'), cypher: sample('Cypher'), md: sample('Markdown with a heading and a paragraph'),
       csv: CSV, tsv: sample('TSV'),
       planjson: JSON.stringify({ type: 'FeatureCollection', features: [{ type: 'Feature', properties: { 'feature:typ': 'detaljplan', beteckning: 'DP 1' }, geometry: null }] }),

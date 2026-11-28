@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * Response parsers: turn an API response body into {columns, rows}. Formats: json (records at a path,
- * optionally exploding a nested array), jsonstat, sdmx (SDMX-JSON 1.0 and 2.0), csv, geojson, xml (repeated element), entryscape
+ * optionally exploding a nested array), jsonstat, sdmx (SDMX-JSON 1.0 and 2.0), csv, geojson, gml (a WFS answer in GML, read by
+ * io/importers/gml and converted to WGS 84), xml (repeated element), entryscape
  * (Sveriges dataportal search) and text. Post-processing shared by all formats: constants from the
  * root document, rename, convert (epoch timestamps) and drop.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/parsers', ['io/importers/json', 'io/importers/csv', 'api/jsonstat', 'api/sdmx', 'data/types', 'data/geo', 'api/http'], (jsonImp, csv, jsonstat, sdmx, types, geo, http) => {
+  D.define('api/parsers', ['io/importers/json', 'io/importers/csv', 'io/importers/gml', 'api/jsonstat', 'api/sdmx', 'data/types', 'data/geo', 'api/http'], (jsonImp, csv, gml, jsonstat, sdmx, types, geo, http) => {
     function resolvePath(data, path) {
       if (!path) return data;
       // A key that itself contains dots (OData's "@odata.nextLink") is tried whole before the path is split.
@@ -247,6 +248,12 @@
         for (const mark of [].concat(options.skipUntil || [])) { const i = body.indexOf(mark); if (i > 0) { body = body.slice(i); break; } }
         const parsed = await csv.parseText(body, { delimiter: options.delimiter || 'auto', header: options.header === undefined ? true : options.header, decimal: options.decimal });
         table = { columns: parsed.columns, rows: parsed.rows };
+      }
+      else if (format === 'gml') {
+        // WFS's numberMatched (a number, or "unknown" as deegree says) is where offset paging looks for the total.
+        const got = await gml.read(text, { srsName: options.srsName });
+        data = { numberMatched: got.numberMatched === null ? undefined : got.numberMatched, numberReturned: got.numberReturned === null ? undefined : got.numberReturned };
+        table = jsonImp.tabulate(gml.records(got.features, { wgs84: true }));
       }
       else if (format === 'xml') { table = jsonImp.tabulate(xmlRecords(text, spec)); }
       else if (format === 'graphql') {

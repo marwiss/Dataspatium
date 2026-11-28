@@ -24,7 +24,8 @@
     /**
      * A box typed in WGS 84 ("west,south,east,north"). With `crs` it is sent in that system (SWEREF 99 TM, EPSG:3006): the
      * four corners are converted and their extent is used, since the box turns a little in a projected system. `bboxFormat:
-     * "pairs"` writes "x1 y1, x2 y2" (Trafikverket's box), otherwise the four numbers are joined with commas.
+     * "pairs"` writes "x1 y1, x2 y2" (Trafikverket's box), otherwise the four numbers are joined with commas, followed by the
+     * system's name when `bboxCrs` gives one (a WFS 2.0 box in CRS84).
      */
     function box(param, value) {
       const s = Array.isArray(value) ? value.join(',') : String(value).trim();
@@ -39,7 +40,8 @@
         const xs = corners.map((c) => c[0]); const ys = corners.map((c) => c[1]);
         [x1, y1, x2, y2] = [Math.floor(Math.min(...xs)), Math.floor(Math.min(...ys)), Math.ceil(Math.max(...xs)), Math.ceil(Math.max(...ys))];
       } else if (code !== 4326) throw new Error('bbox: unsupported crs ' + param.crs);
-      return param.bboxFormat === 'pairs' ? `${x1} ${y1}, ${x2} ${y2}` : [x1, y1, x2, y2].join(',');
+      if (param.bboxFormat === 'pairs') return `${x1} ${y1}, ${x2} ${y2}`;
+      return [x1, y1, x2, y2].join(',') + (param.bboxCrs ? ',' + param.bboxCrs : '');
     }
     function isEmpty(v) { return v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0); }
 

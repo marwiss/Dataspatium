@@ -600,7 +600,7 @@
   const KV_EXC = "<?xml version='1.0' encoding='UTF-8'?>\n<ows:ExceptionReport xmlns:ows=\"http://www.opengis.net/ows/1.1\" version=\"2.0.0\">\n  <ows:Exception exceptionCode=\"InvalidParameterValue\" locator=\"outputFormat\">\n    <ows:ExceptionText>This WFS is not configured to handle the output/input format 'application/json'</ows:ExceptionText>\n  </ows:Exception>\n</ows:ExceptionReport>";
   const SGU_EXC = '<?xml version="1.0" encoding="UTF-8"?><ows:ExceptionReport xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ows="http://www.opengis.net/ows" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0">\n  <ows:Exception exceptionCode="ServiceUnavailable">\n    <ows:ExceptionText>Service WFS is disabled</ows:ExceptionText>\n  </ows:Exception>\n</ows:ExceptionReport>\n';
 
-  test('geodata: a WFS is read in the GeoJSON format and page size its capabilities name, and one that offers only GML says so', async (assert) => {
+  test('geodata: a WFS is read in the GeoJSON format and page size its capabilities name, one that offers only GML in GML, and one with neither says so', async (assert) => {
     assert.equal(geodata.jsonFormat(['GML32', 'application/geo+json', 'application/json']), 'application/json', 'application/json first');
     assert.equal(geodata.jsonFormat(['gml3', 'application/geo+json', 'json']), 'application/geo+json');
     assert.equal(geodata.jsonFormat(['GML2', 'json']), 'json');
@@ -628,12 +628,19 @@
       assert.equal(table.rows.length, 3);
       const q = new URL(served[0]);
       assert.deepEqual(['GEOJSON', '500', 'EPSG:4326'], ['outputFormat', 'count', 'srsName'].map((k) => q.searchParams.get(k)));
-      // Kartverket: GML only, named for all operations; the source is kept with its generic endpoint and says why.
+      // Kartverket: GML only, named for all operations; read as GML 3.2 (F130 a, tests/gml.test.js reads the answers).
       serve('tests/geo/kv', (u) => (u.searchParams.get('request') === 'GetCapabilities' ? KV_CAPS : KV_EXC));
       const r2 = await geodata.createConnector('wfs', { baseUrl: BASE + '/kv' });
       ids.push(r2.connector.id);
-      assert.ok(r2.discoveryError && r2.discoveryError.includes('application/gml+xml; version=3.2') && r2.discoveryError === t('geodata.err.nojson', { formats: 'text/xml; subtype=gml/3.2.1, application/gml+xml; version=3.2' }), 'no GeoJSON said plainly: ' + r2.discoveryError);
-      assert.deepEqual(r2.connector.endpoints.map((e) => e.id), ['layer']);
+      assert.equal(r2.discoveryError, null, 'GML is read: ' + r2.discoveryError);
+      assert.deepEqual(r2.connector.endpoints.map((e) => [e.id, e.response.format]), [['layer-app-fylke', 'gml'], ['layer', 'gml']]);
+      assert.equal(r2.connector.endpoints[0].params.find((p) => p.name === 'outputFormat').default, 'text/xml; subtype=gml/3.2.1');
+      // Neither GeoJSON nor GML: the source is kept with its generic endpoint and says why.
+      serve('tests/geo/shp', (u) => (u.searchParams.get('request') === 'GetCapabilities' ? KV_CAPS.replace('<ows:Value>text/xml; subtype=gml/3.2.1</ows:Value><ows:Value>application/gml+xml; version=3.2</ows:Value>', '<ows:Value>SHAPE-ZIP</ows:Value><ows:Value>csv</ows:Value>') : KV_EXC));
+      const r4 = await geodata.createConnector('wfs', { baseUrl: BASE + '/shp' });
+      ids.push(r4.connector.id);
+      assert.ok(r4.discoveryError && r4.discoveryError === t('geodata.err.nojson', { formats: 'SHAPE-ZIP, csv' }), 'neither GeoJSON nor GML said plainly: ' + r4.discoveryError);
+      assert.deepEqual(r4.connector.endpoints.map((e) => e.id), ['layer']);
       // Capabilities that list no formats keep application/json (the GeoServer default).
       serve('tests/geo/plain', (u) => (u.searchParams.get('request') === 'GetCapabilities' ? CAPS : { type: 'FeatureCollection', features: [] }));
       const r3 = await geodata.createConnector('wfs', { baseUrl: BASE + '/plain' });

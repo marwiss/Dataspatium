@@ -391,6 +391,7 @@
       'src/io/importers/fixed-width.js',
       'src/io/importers/tables.js',
       'src/io/importers/geo.js',
+      'src/io/importers/gml.js',
       'src/io/importers/access.js',
       'src/io/importers/documents.js',
       'src/io/importers/images.js',
