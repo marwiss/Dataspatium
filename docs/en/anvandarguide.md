@@ -194,8 +194,10 @@ name or rows. The checkboxes select datasets (Shift selects a range; on a touch 
 folder's checkbox, or a click on the folder, selects everything in it and its subfolders. The folders are changed in
 Manage only, where right above the tree are the tools *New folder*, *Rename*, *Cut*, *Copy*, *Paste*, *Move* and *Delete* as icons (what does not fit under *More
 options*), the same actions are in the context menu (a right click or a long press), and in the tree the keys Delete,
-Ctrl+C, Ctrl+X, Ctrl+V and F2 work. *Delete* on
-a folder deletes it with everything in it, its subfolders too, after one question that says how much it is (it cannot be undone); *Copy* and *Paste* make copies
+Ctrl+C, Ctrl+X, Ctrl+V and F2 work. The tree starts with the storage location, *Browser* on this computer, with
+*Workspace* and *Trash* below it. *Delete* moves datasets and folders with everything in them to the trash without a
+question, and *Undo* or *Restore* puts them back where they lay; *Empty the trash* removes for good after a question.
+What lies in the trash shows only there. *Copy* and *Paste* make copies
 of the datasets with everything in them, and *Cut* and *Paste* move. Names are typed right in the tree. Datasets and
 folders can also be dragged into, out of and between folders, with a finger too. *Organise* gives a dataset a folder and tags, and the button
 *Actions for selected (n)* does the same thing with all the selected at once, also everything in a selected folder: organise, bundle, export as ZIP with CSV files,

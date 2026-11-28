@@ -105,6 +105,29 @@ same row height; a dataset has its short name and size on a second line (hidden 
 arrow in front of a folder collapses and expands it, and the tree remembers which folders are collapsed. A click on a
 dataset opens it.
 
+**The storage location.** At the top of the tree stands where the workspace lies: *Browser*, with the line *on this
+computer*, or the folder's name when the workspace is saved to a portable folder after every change. Below it are two
+nodes: *Workspace* with the folders and the datasets, indented so that you see what lies where, and *Trash* with what
+was deleted. The tree remembers whether the nodes are expanded or collapsed; the trash starts collapsed. The same
+structure shows in every mode but Import, but it is changed in Manage only. In Manage a click on *Workspace* or
+*Browser* opens the workspace's page. The data is stored in the browser's database on this computer and does not follow
+you to another computer or another browser, except through a backup, a bundle or a portable folder.
+
+**The trash.** *Delete* moves datasets and whole folders with everything in them to the trash, without a question. The
+data stays, marked with when it was deleted and where it lay. The log says what was moved, and *Undo* in the message
+puts it all back in the same place. In the trash stands each deleted folder with what it held and each dataset deleted
+on its own, the latest first, with where it lay and when. *Restore* (the button on the row, or the context menu) puts it
+back where it lay, also when the folder no longer exists. *Delete permanently* in the context menu, or Delete, removes an
+entry after a question. *Empty the trash* (the button on the row *Trash*, its context menu or the workspace's page)
+removes everything after a question that says how much it concerns; it cannot be undone. You can also drag datasets and
+folders to the trash.
+
+What lies in the trash does not show in the modes' lists and choices, in search, SQL, R, maps and the like, only in the
+trash. It is not counted in the workspace's size in the status bar, which shows the trash's size on its own. A backup
+takes the trash along only if you switch on *Include the trash*, and then it goes back into the trash when the backup is
+restored; in a bundle you choose datasets from the trash under *The trash* in the dialog. The portable folder has the
+trash with it.
+
 **Selecting.** The checkboxes select datasets. A folder's checkbox, or a click on the folder, selects everything in the
 folder and its subfolders; a folder of which only a part is selected shows a dash in its box. Ctrl and a click select
 one more row, and Shift and a click select all rows from the previous one. On a touch screen the checkboxes show only
@@ -117,9 +140,8 @@ used. The folders are changed in Manage only: the tools, the context menu, their
 In the other modes the tree shows the datasets and the folders with the filter, the sort order and checkboxes for the
 mode's own actions.
 
-- *Delete* on a folder deletes the folder with everything in it, its subfolders too (empty or not) and their datasets,
-  at once, after one question that says how many subfolders and datasets it concerns. It cannot be undone: there is no
-  wastebasket. *Cancel* in the question changes nothing.
+- *Delete* on a folder moves the folder with everything in it, its subfolders too (empty or not) and their datasets, to
+  the trash at once (see *The trash* above).
 - *Copy* and then *Paste* make copies of the datasets with everything in them (rows, columns, files, details and
   history); a copy in the same folder is called *(copy)*, and a copied folder takes its subfolders along. *Cut* and then
   *Paste* move instead. What is cut is shown faded until it is pasted.
@@ -133,8 +155,9 @@ mode's own actions.
 the tools. The menu acts on the row you pressed, or on everything selected when the row is one of them. With the
 keyboard it opens with the menu key or Shift+F10.
 
-**Drag and drop.** Datasets and folders can be dragged into a folder, out of it to another level or to the root (drop at
-the top of the panel, on the filter field), with the same result as *Cut* and *Paste*. Dropped on a dataset, what you drag
+**Drag and drop.** Datasets and folders can be dragged into a folder, out of it to another level or to the root (drop on
+*Workspace*, or at the top of the panel on the filter field), with the same result as *Cut* and *Paste*. Dropped on
+*Trash*, what you drag is deleted. Dropped on a dataset, what you drag
 lands in its folder. The folder that receives it is outlined. A folder cannot be dragged into itself. With a finger:
 hold the row until it is marked, then drag; near the top or bottom of the panel it scrolls. *Move to …* in the context
 menu does the same without dragging.
@@ -142,7 +165,8 @@ menu does the same without dragging.
 **Keys in the tree** (as in other trees, following WAI-ARIA): arrow up and down move between the rows, Home and End to
 the first and last, arrow right expands a folder and then goes into it, arrow left collapses it or goes to the folder
 above, Enter opens, space selects, Shift+arrow up and down select while moving, Ctrl+A selects everything, `*` expands
-the folders beside, and a letter jumps to the next name that starts with it. Delete deletes, Ctrl+C copies, Ctrl+X
+the folders beside, and a letter jumps to the next name that starts with it. Delete moves to the trash (in the trash
+Delete removes permanently, after a question), Ctrl+C copies, Ctrl+X
 cuts, Ctrl+V pastes into the folder where the cursor is (or beside the dataset) and F2 renames, in Manage. Screen readers get the
 tree as a tree with level, position and collapsed or expanded state; on touch screens, where screen readers read trees
 unevenly, each row is a button that says whether it is expanded.
@@ -151,8 +175,8 @@ Large trees (thousands of rows) draw only the rows in view, so that scrolling is
 
 The button *Actions for selected (n)* in Manage opens the batch actions for the selected: organise (folder and tags),
 bundle, export as ZIP with CSV files, re-fetch from API, run a recipe and delete. A selected folder gives the actions
-everything in it, in its subfolders too, and *Delete* there does the same as the tool: the question says how much goes,
-and a folder selected as a whole is deleted with its subfolders. Folder and tags travel with the dataset in its file, in
+everything in it, in its subfolders too, and *Delete* there does the same as the tool: a folder selected as a whole is
+moved to the trash with its subfolders. Folder and tags travel with the dataset in its file, in
 bundles and in backups.
 
 The filter field lies right under the panel's heading. Below the tree it says how many are selected and what is cut
@@ -160,8 +184,10 @@ or copied, so that no row moves when you select.
 
 The overview of a dataset shows metadata, the column list, comments, a history of what has been done with the
 dataset and versions, and here you rename and change the short name (the short name is used in SQL, R and chart
-files), organise, delete and re-fetch from API. Under *Workspace* you find how much storage is used, persistent
-storage, backup to ZIP and restore, in Edge and Chrome a portable folder (the workspace is saved as ordinary files in
+files), organise, delete and re-fetch from API. The workspace's page (a click on *Workspace* in the tree) says where
+the workspace is stored and what that means, and shows how much storage is used (the trash on its own), persistent
+storage, backup to ZIP (with the trash if you choose so) and restore, *Empty the trash*, in Edge and Chrome a portable
+folder (the workspace is saved as ordinary files in
 a folder you choose, automatically after every change if you like, and can be loaded on another computer),
 *Internet access* (which purposes may contact the internet, the hosts Python code and plotly figures have an answer
 for, each with a button that removes the answer, and the log of requests) and *Components* (parts of the

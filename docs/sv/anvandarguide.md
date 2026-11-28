@@ -193,7 +193,10 @@ för en mapp, eller ett klick på mappen, markerar allt i den och dess undermapp
 verktygen ligger direkt ovanför trädet:
 *Ny mapp*, *Byt namn*, *Klipp ut*, *Kopiera*, *Klistra in*, *Flytta* och *Ta bort* som ikoner (det som inte får plats
 under *Fler alternativ*), samma åtgärder finns i snabbmenyn (högerklick eller ett långt tryck), och i trädet gäller
-tangenterna Delete, Ctrl+C, Ctrl+X, Ctrl+V och F2. *Ta bort* på en mapp tar bort den med allt i den, också undermapparna, efter en enda fråga som säger hur mycket det är (det går inte att ångra); *Kopiera* och
+tangenterna Delete, Ctrl+C, Ctrl+X, Ctrl+V och F2. Trädet börjar med lagringsplatsen, *Webbläsaren* på den här datorn,
+med *Arbetsyta* och *Papperskorg* under sig. *Ta bort* flyttar datamängder och mappar med allt i dem till papperskorgen
+utan fråga, och *Ångra* eller *Återställ* lägger tillbaka dem där de låg; *Töm papperskorgen* tar bort för gott efter en
+fråga. Det som ligger i papperskorgen syns bara där. *Kopiera* och
 *Klistra in* gör kopior av datamängderna med allt i dem, och *Klipp ut* och *Klistra in* flyttar. Namn skrivs direkt
 i trädet. Datamängder och mappar kan också dras in i, ut ur och mellan mappar, också med finger. *Ordna* ger en datamängd en mapp och taggar, och
 knappen *Åtgärder för markerade (n)* gör samma sak med alla markerade på en gång, också allt i en markerad mapp: ordna, paketera, exportera som ZIP med CSV-filer,
