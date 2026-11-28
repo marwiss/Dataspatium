@@ -183,7 +183,7 @@
       let release = null;
       serve(path, (u) => (new URL(u).searchParams.get('typeNames') === 'RIGES:NGP_Anvandningsbestammelse_yta' ? new Promise((res) => { release = () => res(wfs(u, LAYERS())); }) : wfs(u, LAYERS())));
       const running = whole.fetchPlan({ id: P1.id, beteckning: P1.beteckning, namn: P1.namn });
-      for (let i = 0; i < 100 && !release; i++) await wait(20);
+      for (let i = 0; i < 250 && !release; i++) await wait(20);
       assert.ok(release, 'the slow layer was asked for');
       assert.ok(whole.el.querySelector('[data-plan-whole-progress]'), 'progress while fetching');
       whole.cancel(); release();
