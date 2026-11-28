@@ -174,12 +174,14 @@ also be mirrored to a portable folder on disk, automatically on every change.
 
 The object panel in Manage, and in the other modes but Import, is a tree with folders (with subfolders, such as
 `Economy/2026`). The filter field searches name, short name, tag and folder, and the list can be sorted by changed,
-name or rows. The checkboxes select datasets (Shift selects a range), and a folder's checkbox, or a click on the
-folder, selects everything in it and its subfolders. Right above the tree are the tools *New folder*, *Rename*, *Cut*,
-*Copy*, *Paste*, *Move* and *Delete*, and in the tree the keys Delete, Ctrl+C, Ctrl+X, Ctrl+V and F2 work. *Delete* on
+name or rows. The checkboxes select datasets (Shift selects a range; on a touch screen they show with *Select*), and a
+folder's checkbox, or a click on the folder, selects everything in it and its subfolders. Right above the tree are the
+tools *New folder*, *Rename*, *Cut*, *Copy*, *Paste*, *Move* and *Delete* as icons (what does not fit under *More
+options*), the same actions are in the context menu (a right click or a long press), and in the tree the keys Delete,
+Ctrl+C, Ctrl+X, Ctrl+V and F2 work. *Delete* on
 a folder deletes it with everything in it after one question that says how much it is; *Copy* and *Paste* make copies
 of the datasets with everything in them, and *Cut* and *Paste* move. Names are typed right in the tree. Datasets and
-folders can also be dragged to another folder. *Organise* gives a dataset a folder and tags, and the button
+folders can also be dragged into, out of and between folders, with a finger too. *Organise* gives a dataset a folder and tags, and the button
 *Actions (n)* does the same thing with all the selected at once: organise, bundle, export as ZIP with CSV files,
 re-fetch from API, run a recipe or delete. See [lagen.md](lagen.md#manage). Folder and tags are stored
 in the dataset's file and travel in bundles, backups and GitHub; in R, `dm_list()` shows the folder and

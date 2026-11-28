@@ -92,14 +92,21 @@ All sources in the list look the same, with a mark for their type and a line und
 ## Manage
 
 The datasets' home. The object panel is a tree, and the same tree is in every mode but Import: datasets can live in
-folders with subfolders (`Economy/2026`) and have tags; a filter field searches name, short name, tag and folder, and
-the list can be sorted by changed, name or rows. The arrow in front of a folder collapses and expands it.
+folders with subfolders (`Economy/2026`) and have tags; a filter field searches name, short name, tag and folder and
+shows the matches with their folders, and the list can be sorted by changed, name or rows. Folders and datasets have the
+same row height; a dataset has its short name and size on a second line (hidden in windows narrower than 760 px). The
+arrow in front of a folder collapses and expands it, and the tree remembers which folders are collapsed. A click on a
+dataset opens it.
 
-**Selecting.** The checkboxes select datasets (Shift selects a range). A folder's checkbox, or a click on the folder,
-selects everything in the folder and its subfolders; a folder of which only a part is selected shows a dash in its box.
+**Selecting.** The checkboxes select datasets. A folder's checkbox, or a click on the folder, selects everything in the
+folder and its subfolders; a folder of which only a part is selected shows a dash in its box. Ctrl and a click select
+one more row, and Shift and a click select all rows from the previous one. On a touch screen the checkboxes show only
+after you tap *Select* at the top of the panel; a tap then selects instead of opening, and *Done* goes back.
 
-**The tools right above the tree**: *New folder*, *Rename*, *Cut*, *Copy*, *Paste*, *Move* and *Delete*. They act on
-what is selected, or on the current dataset when nothing is selected, and they are on when they can be used.
+**The tools right above the tree**: *New folder*, *Rename*, *Cut*, *Copy*, *Paste*, *Move* and *Delete*, as icons on
+one line with the name in the tip. What does not fit in a narrow panel is under *More options* (the three dots). The
+tools act on what is selected, or on the current dataset when nothing is selected, and they are on when they can be
+used.
 
 - *Delete* on a folder deletes the folder with all its subfolders and datasets at once, after one question that says how
   many subfolders and datasets it concerns.
@@ -112,9 +119,25 @@ what is selected, or on the current dataset when nothing is selected, and they a
 - *New folder* and *Rename* take the name right in the tree: Enter saves and Esc cancels. A new folder stays, empty,
   until something is put in it.
 
-**Keys in the tree**: Delete deletes, Ctrl+C copies, Ctrl+X cuts, Ctrl+V pastes into the folder where the cursor is (or
-beside the dataset), F2 renames, arrow up and down move between the rows and arrow right and left expand and collapse.
-Datasets and folders can also be dragged to a folder, or to the heading for the root.
+**The context menu.** A right click on a row, or a long press on a touch screen, opens a menu with the same actions as
+the tools. The menu acts on the row you pressed, or on everything selected when the row is one of them. With the
+keyboard it opens with the menu key or Shift+F10.
+
+**Drag and drop.** Datasets and folders can be dragged into a folder, out of it to another level or to the root (drop on
+the heading at the top of the panel), with the same result as *Cut* and *Paste*. Dropped on a dataset, what you drag
+lands in its folder. The folder that receives it is outlined. A folder cannot be dragged into itself. With a finger:
+hold the row until it is marked, then drag; near the top or bottom of the panel it scrolls. *Move to …* in the context
+menu does the same without dragging.
+
+**Keys in the tree** (as in other trees, following WAI-ARIA): arrow up and down move between the rows, Home and End to
+the first and last, arrow right expands a folder and then goes into it, arrow left collapses it or goes to the folder
+above, Enter opens, space selects, Shift+arrow up and down select while moving, Ctrl+A selects everything, `*` expands
+the folders beside, and a letter jumps to the next name that starts with it. Delete deletes, Ctrl+C copies, Ctrl+X
+cuts, Ctrl+V pastes into the folder where the cursor is (or beside the dataset) and F2 renames. Screen readers get the
+tree as a tree with level, position and collapsed or expanded state; on touch screens, where screen readers read trees
+unevenly, each row is a button that says whether it is expanded.
+
+Large trees (thousands of rows) draw only the rows in view, so that scrolling is as quick with 20,000 rows.
 
 The button *Actions (n)* in Manage opens the batch actions for the selected: organise (folder and tags), bundle, export
 as ZIP with CSV files, re-fetch from API, run a recipe and delete. Folder and tags travel with the dataset in its file,

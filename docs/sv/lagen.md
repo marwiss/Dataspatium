@@ -102,14 +102,20 @@ Alla källor i listan ser likadana ut, med en symbol för sin typ och en rad und
 ## Hantera
 
 Datamängdernas hem. Objektpanelen är ett träd, och samma träd finns i alla lägen utom Inhämta: datamängder kan ligga
-i mappar med undermappar (`Ekonomi/2026`) och ha taggar; ett filterfält söker på namn, kortnamn, tagg och mapp, och
-listan kan sorteras på ändrad, namn eller rader. Pilen framför en mapp fäller ihop och ut den.
+i mappar med undermappar (`Ekonomi/2026`) och ha taggar; ett filterfält söker på namn, kortnamn, tagg och mapp och visar
+träffarna med sina mappar, och listan kan sorteras på ändrad, namn eller rader. Mappar och datamängder har samma
+radhöjd; en datamängd har kortnamnet och storleken på en andra rad (den döljs i fönster smalare än 760 px). Pilen framför
+en mapp fäller ihop och ut den, och trädet minns vilka mappar som är ihopfällda. Ett klick på en datamängd öppnar den.
 
-**Markera.** Kryssrutorna markerar datamängder (Skift markerar ett spann). Kryssrutan för en mapp, eller ett klick på
-mappen, markerar allt i mappen och dess undermappar; en mapp där bara en del är markerad visar ett streck i rutan.
+**Markera.** Kryssrutorna markerar datamängder. Kryssrutan för en mapp, eller ett klick på mappen, markerar allt i mappen
+och dess undermappar; en mapp där bara en del är markerad visar ett streck i rutan. Ctrl och ett klick markerar en rad
+till, och Skift och ett klick markerar alla rader från den förra. På en pekskärm visas kryssrutorna först när du trycker
+på *Välj* i panelens överkant; då markerar ett tryck i stället för att öppna, och *Klar* går tillbaka.
 
-**Verktygen direkt ovanför trädet**: *Ny mapp*, *Byt namn*, *Klipp ut*, *Kopiera*, *Klistra in*, *Flytta* och *Ta bort*.
-De gäller det som är markerat, eller den valda datamängden när inget är markerat, och är tända när de går att använda.
+**Verktygen direkt ovanför trädet**: *Ny mapp*, *Byt namn*, *Klipp ut*, *Kopiera*, *Klistra in*, *Flytta* och *Ta bort*,
+som ikoner på en rad med namnet i tipset. Det som inte får plats i en smal panel ligger under *Fler alternativ* (de tre
+punkterna). Verktygen gäller det som är markerat, eller den valda datamängden när inget är markerat, och är tända när de
+går att använda.
 
 - *Ta bort* på en mapp tar bort mappen med alla dess undermappar och datamängder på en gång, efter en enda fråga som
   säger hur många undermappar och datamängder det gäller.
@@ -122,9 +128,25 @@ De gäller det som är markerat, eller den valda datamängden när inget är mar
 - *Ny mapp* och *Byt namn* skriver namnet direkt i trädet: Enter sparar och Esc avbryter. En ny mapp finns kvar, tom,
   tills något läggs i den.
 
-**Tangenter i trädet**: Delete tar bort, Ctrl+C kopierar, Ctrl+X klipper ut, Ctrl+V klistrar in i mappen där markören
-står (eller bredvid datamängden), F2 byter namn, pil upp och ned går mellan raderna och pil höger och vänster fäller ut
-och ihop. Datamängder och mappar kan också dras till en mapp, eller till rubriken för roten.
+**Snabbmenyn.** Högerklick på en rad, eller ett långt tryck på en pekskärm, öppnar en meny med samma åtgärder som
+verktygen. Menyn gäller raden du tryckte på, eller allt som är markerat när raden är en av dem. Med tangentbordet öppnas
+den med menytangenten eller Skift+F10.
+
+**Dra och släpp.** Datamängder och mappar kan dras in i en mapp, ut ur den till en annan nivå eller till roten (släpp
+på rubriken överst i panelen), med samma resultat som *Klipp ut* och *Klistra in*. Släpper du på en datamängd hamnar
+det du drar i dess mapp. Den mapp som tar emot ramas in. En mapp kan inte dras in i sig själv. Med finger: håll kvar på
+raden tills den markeras, och dra sedan; nära panelens över- eller underkant rullar den. *Flytta till …* i snabbmenyn
+gör samma sak utan att dra.
+
+**Tangenter i trädet** (som i andra träd, enligt WAI-ARIA): pil upp och ned går mellan raderna, Home och End till den
+första och sista, pil höger fäller ut en mapp och går sedan in i den, pil vänster fäller ihop den eller går till mappen
+ovanför, Enter öppnar, mellanslag markerar, Skift+pil upp och ned markerar medan du går, Ctrl+A markerar allt, `*`
+fäller ut mapparna bredvid, och en bokstav hoppar till nästa namn som börjar på den. Delete tar bort, Ctrl+C kopierar,
+Ctrl+X klipper ut, Ctrl+V klistrar in i mappen där markören står (eller bredvid datamängden) och F2 byter namn.
+Skärmläsare får trädet som ett träd med nivå, plats och ihop- eller utfällt läge; på pekskärmar, där skärmläsarna läser
+träd ojämnt, är varje rad en knapp som säger om den är utfälld.
+
+Stora träd (tusentals rader) ritar bara de rader som syns, så att rullningen går lika fort med 20 000 rader.
 
 Knappen *Åtgärder (n)* i Hantera öppnar batchåtgärderna för de markerade: ordna (mapp och taggar), paketera,
 exportera som ZIP med CSV-filer, hämta igen från API, köra ett recept och ta bort. Mapp och taggar följer
