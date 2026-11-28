@@ -7,7 +7,7 @@
  *
  *   const view = tree.create({label, nodes, ...});   parent.appendChild(view.el);   view.update({nodes, ...});
  *
- * A node: {id, label, icon?, iconOpen?, sub?, code?, badges?: [{text, kind}], count?, children?: Node[] (a folder), lazy?: true
+ * A node: {id, label, icon? (false: none, as Inhämta's group headings), iconOpen?, sub?, code?, badges?: [{text, kind}], count?, children?: Node[] (a folder), lazy?: true
  * (a folder whose children come from `loadChildren(node)`), trailing?: Node (a control at the end of the row), current?, cut?,
  * checkable?, draggable?, droppable?, renamable?, rowAttrs?, mainAttrs?, mainClass?, data?}.
  *
@@ -338,7 +338,7 @@
             'aria-selected': !buttons && !o.checkable_ ? String(isCurrent) : null, 'aria-current': isCurrent ? 'true' : null,
             draggable: canDrag(n) && !editHere ? 'true' : null,
           }));
-          main.appendChild(icons.icon(r.folder && r.open && n.iconOpen ? n.iconOpen : (n.icon || (r.folder ? (r.open ? 'folder-open' : 'folder') : 'file')), 16));
+          if (n.icon !== false) main.appendChild(icons.icon(r.folder && r.open && n.iconOpen ? n.iconOpen : (n.icon || (r.folder ? (r.open ? 'folder-open' : 'folder') : 'file')), 16));
           if (editHere) main.appendChild(editor(n));
           else {
             const sub = n.sub || n.code ? h('span', { class: 'dm-list-sub dm-truncate' }) : null;
