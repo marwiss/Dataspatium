@@ -284,6 +284,57 @@ dm-input input[type="range"].dm-field { padding: 0; border: none; background: no
   dm-button[icon-only].dm-overlay-toggle > button { width: 44px; }
 }
 
+/* Tree (ui/tree): one row height for folders and items, the same background, the focus ring inside the row, and hover, checked,
+   current and drop target from the tokens. Large trees place their rows absolutely (only the rows in view are drawn). */
+.dm-tree { position: relative; display: flex; flex-direction: column; min-width: 0; }
+.dm-tree.dm-tree-virtual { display: block; }
+.dm-tree-row, .dm-tree-folder-row {
+  display: flex; align-items: center; gap: var(--dm-s-1); height: var(--dm-tree-row-h); min-width: 0; box-sizing: border-box;
+  padding-left: calc(var(--dm-depth, 0) * var(--dm-tree-indent)); border-radius: var(--dm-radius-sm); background: transparent;
+}
+.dm-tree-virtual > .dm-tree-row, .dm-tree-virtual > .dm-tree-folder-row { position: absolute; left: 0; right: 0; }
+.dm-tree-row:hover, .dm-tree-folder-row:hover { background: var(--dm-surface-hover); }
+.dm-tree-row.dm-tree-checked, .dm-tree-folder-row.dm-tree-checked { background: var(--dm-selection); }
+.dm-tree-row.dm-tree-current, .dm-tree-folder-row.dm-tree-current { background: var(--dm-accent-soft); }
+.dm-tree-row.dm-drop-target, .dm-tree-folder-row.dm-drop-target, .dm-tree.dm-drop-target { outline: 2px dashed var(--dm-accent); outline-offset: -2px; background: var(--dm-accent-soft); }
+.dm-tree .dm-tree-main {
+  flex: 1 1 auto; min-width: 0; align-self: stretch; height: auto; padding: 0 var(--dm-s-2) 0 var(--dm-s-1); background: transparent;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+.dm-tree .dm-tree-main:hover, .dm-tree .dm-tree-main[aria-current="true"] { background: transparent; }
+.dm-tree .dm-tree-main[aria-current="true"] { color: var(--dm-accent); }
+.dm-tree .dm-tree-main:focus { outline: none; }
+.dm-tree .dm-tree-main:focus-visible { outline: 2px solid var(--dm-focus); outline-offset: -2px; }
+.dm-tree .dm-tree-main.dm-tree-pressed { background: var(--dm-surface-hover); }
+.dm-tree .dm-list-main { line-height: 1.25; }
+.dm-tree-label { min-width: 0; }
+.dm-tree-folder-row .dm-tree-label { font-weight: var(--dm-weight-medium); }
+.dm-tree-count { margin-left: auto; padding-left: var(--dm-s-2); color: var(--dm-text-faint); font-size: var(--dm-text-xs); font-variant-numeric: tabular-nums; }
+.dm-tree .dm-tree-main dm-badge { flex: 0 0 auto; }
+.dm-tree-check { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; align-self: stretch; width: var(--dm-s-6); cursor: pointer; }
+.dm-tree-check > input[type="checkbox"] { margin: 0; accent-color: var(--dm-accent); cursor: pointer; }
+.dm-tree-toggle, .dm-tree-spacer { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: var(--dm-s-5); height: var(--dm-s-5); padding: 0; }
+.dm-tree-toggle { border: 0; border-radius: var(--dm-radius-sm); background: none; color: var(--dm-text-muted); cursor: pointer; }
+.dm-tree-toggle:hover { background: var(--dm-surface-hover); color: var(--dm-text); }
+.dm-tree-row > :last-child:not(.dm-tree-main), .dm-tree-folder-row > :last-child:not(.dm-tree-main) { flex: 0 0 auto; }
+.dm-tree-edit { flex: 1 1 auto; min-width: 0; }
+.dm-tree-edit .dm-field { height: 30px; font-size: var(--dm-text-sm); }
+.dm-tree-placeholder .dm-tree-main { color: var(--dm-text-muted); }
+/* Klipp ut: what will move when pasted is shown faded until then. */
+.dm-tree-cut > .dm-tree-main { opacity: 0.55; }
+.dm-tree[data-dragging] { cursor: grabbing; }
+.dm-tree-ghost {
+  position: fixed; z-index: var(--dm-z-menu); display: flex; align-items: center; gap: var(--dm-s-2); max-width: var(--dm-panel-w);
+  padding: var(--dm-s-1) var(--dm-s-2); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); background: var(--dm-surface);
+  color: var(--dm-text); box-shadow: var(--dm-shadow-lg); font-size: var(--dm-text-sm); pointer-events: none;
+}
+/* Touch screens: the check boxes show only in Välj. Narrow screens: wide targets; the second line goes under 760 px. */
+@media (pointer: coarse) { .dm-tree:not([data-selecting]) .dm-tree-check { display: none; } }
+@media (max-width: 1099px) {
+  .dm-tree-toggle, .dm-tree-spacer, .dm-tree-check { min-width: 44px; min-height: 44px; }
+}
+@media (max-width: 759px) { .dm-tree .dm-list-sub { display: none; } }
+
 /* Menu (ui/menu): the tree's snabbmeny and Fler alternativ */
 .dm-menu {
   position: fixed; z-index: var(--dm-z-menu); display: flex; flex-direction: column; min-width: 200px; max-width: min(320px, calc(100vw - 2 * var(--dm-s-2)));

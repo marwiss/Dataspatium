@@ -126,6 +126,13 @@
   --dm-z-toast: 200;
   /* Menus (ui/menu) and a row dragged with a finger (ui/tree): above sheets and floating panels, below toasts. */
   --dm-z-menu: 150;
+  /* Trees (ui/tree): one row height for folders and items (two lines of text), and the indent of a level. */
+  --dm-tree-row-h: 40px;
+  --dm-tree-indent: var(--dm-s-4);
+}
+/* Touch targets of at least 44 px in the narrow layouts. */
+@media (max-width: 1099px) {
+  :root { --dm-tree-row-h: 44px; }
 }
 
 /* Dark theme: explicit choice ... */

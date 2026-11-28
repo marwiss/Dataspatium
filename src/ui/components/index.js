@@ -7,9 +7,9 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/components', ['ui/base', 'ui/icons', 'ui/basic', 'ui/fields', 'ui/layout', 'ui/overlays', 'ui/dropzone', 'ui/table', 'ui/code-editor', 'ui/tooltip', 'ui/viewcube', 'ui/menu'],
-    (base, icons, basic, fields, layout, overlays, dropzone, table, codeEditor, tooltip, viewcube, menu) => {
+  D.define('ui/components', ['ui/base', 'ui/icons', 'ui/basic', 'ui/fields', 'ui/layout', 'ui/overlays', 'ui/dropzone', 'ui/table', 'ui/code-editor', 'ui/tooltip', 'ui/viewcube', 'ui/menu', 'ui/tree'],
+    (base, icons, basic, fields, layout, overlays, dropzone, table, codeEditor, tooltip, viewcube, menu, tree) => {
       tooltip.install();
-      return Object.assign({}, { base, icons, basic, fields, layout, overlays, dropzone, table, codeEditor, tooltip, viewcube, menu });
+      return Object.assign({}, { base, icons, basic, fields, layout, overlays, dropzone, table, codeEditor, tooltip, viewcube, menu, tree });
     });
 })();
