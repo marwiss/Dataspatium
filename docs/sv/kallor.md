@@ -404,7 +404,7 @@ Kartverkets administrativa enheter, fastighetskarta och ortnamn (Norge; GML) sam
 SYKE:s skyddade områden (Finland). Lagren läses från tjänsten första gången källan öppnas och kan läsas om med
 *Läs om lagren*; listan sparas i din kopia av källan. Lantmäteriets geodataplattform (detaljplaner, byggnader, strandskydd, kulturhistoriska lämningar och gränsen för fjällnära skog) finns som nivå 2 med
 en nyckel som alla kan få utan kostnad genom Geotorget, se [planer.md](planer.md#hela-detaljplaner-från-en-geodatakälla). Detaljplanerna öppnas som en
-förinställd källa; byggnaderna, strandskyddet, lämningarna och gränsen för fjällnära skog läggs till som egna källor med samma
+förinställd källa; byggnaderna, strandskyddet, lämningarna, gränsen för fjällnära skog och översiktsplanerna läggs till som egna källor med samma
 inloggning, och nycklarna du angett för detaljplanerna i sessionen följer med.
 
 **Trafikverkets NVDB** (*Trafikverket NVDB: vägdata*) ger 45 objekttyper ur Nationella vägdatabasen, som hastighetsgränser,

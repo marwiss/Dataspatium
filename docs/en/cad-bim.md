@@ -607,7 +607,8 @@ Two of the tools draw pictures of the model. With them the AI sees the shape and
 
 The picture is drawn in the browser and is at most 1,024 × 768 pixels and about 300 kB. It goes with the tool's answer only to a model
 that sees pictures: Anthropic's models and the OpenAI-compatible models that take pictures (for example GPT-4o and later, Gemini and
-models with vision or VL in the name). Other models get a short text saying that no picture can be shown. The picture is sent only with
+models with vision or VL in the name). For an OpenAI-compatible provider, such as a local model with a name of its own, switch
+*The model sees pictures* on or off in the provider's form; it is preset from the name. Other models get a short text saying that no picture can be shown. The picture is sent only with
 the question you send yourself, after the same consent as the question, and at most six pictures go with a question. The panel shows
 the picture the AI asked for as a small picture in the tool call's line, and a press shows it at full size. The pictures show the model
 as it is, without the changes of an open change set.

@@ -588,7 +588,8 @@ Två av verktygen ritar bilder av modellen. Med dem ser AI:n formen och hur dela
 
 Bilden ritas i webbläsaren och är högst 1 024 × 768 bildpunkter och omkring 300 kB. Den följer med verktygets svar bara till en modell
 som ser bilder: Anthropics modeller och de OpenAI-kompatibla modeller som tar bilder (till exempel GPT-4o och senare, Gemini och
-modeller med vision eller VL i namnet). Andra modeller får en kort text om att ingen bild kan visas. Bilden skickas bara med frågan du
+modeller med vision eller VL i namnet). För en OpenAI-kompatibel leverantör, till exempel en lokal modell med ett eget namn,
+slår du på eller av *Modellen ser bilder* i leverantörens formulär; rutan är förvald efter namnet. Andra modeller får en kort text om att ingen bild kan visas. Bilden skickas bara med frågan du
 själv skickar, efter samma samtycke som frågan, och högst sex bilder går med en fråga. Panelen visar bilden som AI:n bad om som en
 liten bild i verktygsanropets rad, och ett tryck på den visar den i full storlek. Bilderna visar modellen som den är, utan ändringarna i
 ett öppet ändringsset.

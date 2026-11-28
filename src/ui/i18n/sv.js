@@ -7460,6 +7460,8 @@
     'ai.model.hint': 'Modellen som leverantören kör; valet sparas med leverantören',
     'ai.model.other': 'Annan modell …',
     'ai.model.own': 'Modellens namn',
+    'ai.images': 'Modellen ser bilder',
+    'ai.images.hint': 'Slå på om modellen kan läsa bilder, så att AI:n får bilderna från bildverktygen. Förvalt efter modellens namn.',
     'ai.model.fetch': 'Hämta modellistan',
     'ai.model.fetch.hint': 'Hämtar leverantörens egen lista över modeller med nyckeln. Frågar om samtycke för leverantörens värd först.',
     'ai.model.fetching': 'Hämtar modellistan …',

@@ -84,6 +84,16 @@
     assert.ok(providers.seesImages({ kind: 'anthropic', model: 'claude-test' }), 'every Claude model sees pictures');
     assert.ok(['gpt-5', 'gpt-4o-mini', 'gemini-2.5-flash', 'llama3.2-vision', 'qwen2.5vl:7b', 'o3'].every((m) => providers.seesImages({ kind: 'openai', model: m })), 'models that see pictures');
     assert.ok(['llama3.2', 'gpt-test', 'o3-mini', ''].every((m) => !providers.seesImages({ kind: 'openai', model: m })), 'models that read text only');
+    // The person's word wins over the name (F139 a): a local model with an unknown name, and a known one switched off.
+    assert.ok(providers.seesImages({ kind: 'openai', model: 'min-lokala-modell', images: true }), 'switched on');
+    assert.ok(!providers.seesImages({ kind: 'openai', model: 'gpt-4o', images: false }), 'switched off');
+    assert.ok(providers.seesImages({ kind: 'anthropic', model: 'claude-test', images: false }), 'Claude always');
+    const kept = await providers.save({ id: 'ai-test-images', kind: 'openai', name: 'Lokal', baseUrl: 'http://127.0.0.1:11434/v1', model: 'min-lokala-modell', images: true });
+    try {
+      assert.equal((await providers.get(kept.id)).images, true, 'the switch is kept with the provider');
+      const plain = await providers.save({ id: 'ai-test-images', kind: 'openai', name: 'Lokal', baseUrl: 'http://127.0.0.1:11434/v1', model: 'min-lokala-modell' });
+      assert.equal(plain.images, undefined, 'left unset, the name decides');
+    } finally { await providers.remove(kept.id).catch(() => {}); }
     return 'ok';
   });
 
@@ -200,6 +210,32 @@
     } finally { panel.destroy(); panel.el.remove(); }
     return 'ok';
   }, 60000);
+
+  test('ai picture: the provider form has *The model sees pictures* for an OpenAI-compatible model, preset from its name and kept when set (F139 a)', async (assert) => {
+    const aiProviders = D.require('ui/bearbeta/ai-providers');
+    const p = await providers.save({ id: 'ai-test-images-form', kind: 'openai', name: 'Lokal', baseUrl: 'http://127.0.0.1:11434/v1', model: 'min-lokala-modell' });
+    try {
+      const editing = aiProviders.edit(await providers.get(p.id));
+      const dlg = /** @type {HTMLElement} */ (await waitFor(() => { const s = document.querySelector('dialog[open] [data-ai-form-images]'); return s && s.closest('dialog'); }, 3000, 'the form'));
+      const images = /** @type {any} */ (dlg.querySelector('[data-ai-form-images]'));
+      assert.ok(!images.hidden && !images.checked, 'shown, and off for a name not known to see pictures');
+      images.checked = true; images.dispatchEvent(new Event('change'));
+      /** @type {HTMLElement} */ (dlg.querySelector('.dm-dialog-actions dm-button[variant="primary"] button')).click();
+      const saved = await editing;
+      assert.equal(saved && (await providers.get(saved.id)).images, true, 'kept with the provider');
+      assert.ok(providers.seesImages(await providers.get(p.id)), 'and the picture tools now send it pictures');
+      const claude = aiProviders.edit({ id: 'ai-test-images-claude', kind: 'anthropic', name: 'Claude', baseUrl: 'https://api.anthropic.com', model: 'claude-sonnet-5-5' });
+      const dlg2 = /** @type {HTMLElement} */ (await waitFor(() => { const s = document.querySelector('dialog[open] [data-ai-form-images]'); return s && s.closest('dialog'); }, 3000, 'the Claude form'));
+      assert.ok(/** @type {any} */ (dlg2.querySelector('[data-ai-form-images]')).hidden, 'no switch for Claude, which always sees pictures');
+      /** @type {any} */ (dlg2).close();
+      await claude;
+    } finally {
+      for (const d of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (d).close();
+      await providers.remove(p.id).catch(() => {});
+      await providers.remove('ai-test-images-claude').catch(() => {});
+    }
+    return 'ok';
+  });
 
   test('ai picture: cleanup', async () => {
     if (realRequest) http.request = realRequest;

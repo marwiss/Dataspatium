@@ -423,7 +423,7 @@ Dataspatium.assets.addEntries({
  "presets/geodata/services.json": {
   "file": "presets/geodata/services.json.js",
   "encoding": "text",
-  "size": 31012,
+  "size": 32234,
   "library": "dataspatium"
  },
  "presets/ids/SE-Dataspatium_Avfallshantering.ids": {
@@ -627,7 +627,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kallor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 47164,
+  "size": 47184,
   "library": "dataspatium"
  },
  "docs/sv/snabbstart.md": {
@@ -669,7 +669,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/planer.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 44567,
+  "size": 45272,
   "library": "dataspatium"
  },
  "docs/sv/grafer.md": {
@@ -681,7 +681,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/cad-bim.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 92919,
+  "size": 93111,
   "library": "dataspatium"
  },
  "docs/sv/floden.md": {
@@ -1641,7 +1641,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kallor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 47319,
+  "size": 47340,
   "library": "dataspatium"
  },
  "docs/en/snabbstart.md": {
@@ -1683,7 +1683,7 @@ Dataspatium.assets.addEntries({
  "docs/en/planer.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 45011,
+  "size": 45729,
   "library": "dataspatium"
  },
  "docs/en/grafer.md": {
@@ -1695,7 +1695,7 @@ Dataspatium.assets.addEntries({
  "docs/en/cad-bim.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 94230,
+  "size": 94406,
   "library": "dataspatium"
  },
  "docs/en/floden.md": {

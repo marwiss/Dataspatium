@@ -63,6 +63,13 @@ specifikationen (Detaljplan 4.1) hämtas den och sparas som planens original; an
 hämtas planens referensobjekt sida för sida. Nyckeln skickas bara till Lantmäteriets egen server, aldrig till en fil på en
 annan värd.
 
+**Översiktsplaner från geodataplattformen.** Under *Geodatakälla* lägger *Översiktsplaner (geodataplattformen)* till
+Lantmäteriets sökning för översiktsplaner (version 2, i WGS 84) som en egen källa med samma inloggning och nycklar som detaljplanerna.
+Kommunernas samlingar blir lager, och ett lager hämtas som karta. Specifikationen för översiktsplaner är ännu ett test (Test 5), och
+sökningen version 2 gick 2026-11-28 inte att prenumerera på i produktionens API-portal (bara GeodatakatalogSökning v1); finns den
+i portalens lista, prenumerera på den också.
+Verifieringsmiljön (api-ver.lantmateriet.se, egen portal och egna nycklar) kan ha testplaner när produktionen saknar dem.
+
 **Nyckel till geodataplattformen.** Alla kan bli konsument utan kostnad: privatperson, företag, förening, kommun eller
 myndighet. Skapa ett konto i Geotorget, ansök under *Nationella geodataplattformen* om att bli konsument och godkänn
 villkoren (för en organisation tar kontot cirka två arbetsdagar). Logga sedan in i API-portalen (apimanager.lantmateriet.se)

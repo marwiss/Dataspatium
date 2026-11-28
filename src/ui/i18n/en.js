@@ -7438,6 +7438,8 @@
     'ai.model.hint': 'The model the provider runs; the choice is kept with the provider',
     'ai.model.other': 'Other model …',
     'ai.model.own': 'Model name',
+    'ai.images': 'The model sees pictures',
+    'ai.images.hint': 'Switch on if the model can read pictures, so that the AI gets the picture tools\' pictures. Preset from the model\'s name.',
     'ai.model.fetch': 'Fetch the list of models',
     'ai.model.fetch.hint': 'Fetches the provider\'s own list of models with the key. Asks for consent for the provider\'s host first.',
     'ai.model.fetching': 'Fetching the list of models …',

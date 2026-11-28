@@ -413,7 +413,7 @@ remains, the Swedish Forest Agency, Kartverket's administrative units, cadastral
 Statistics Finland and SYKE's protected areas (Finland). The layers are read from the service the first time
 the source is opened and can be reread with *Reread layers*; the list is kept in your copy of the source. Lantmäteriet's
 geodata platform (detailed plans, buildings, shore protection, cultural heritage remains and the boundary of forest near the mountains) is a level 2 source with a key anyone can get free of charge through Geotorget, see [planer.md](planer.md#whole-detailed-plans-from-a-geodata-source). The detailed plans open as a preset
-source; the buildings, shore protection, remains and forest boundary are added as sources of their own with the same login,
+source; the buildings, shore protection, remains, forest boundary and comprehensive plans are added as sources of their own with the same login,
 and the keys you gave for the detailed plans in the session come along.
 
 **Trafikverket’s NVDB** (*Trafikverket NVDB: road data*) gives 45 object types from the Swedish national road database, such

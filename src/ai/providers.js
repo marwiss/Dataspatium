@@ -72,6 +72,8 @@
       const i = all.findIndex((x) => x.id === p.id);
       const models = cleanModels(provider.models !== undefined ? provider.models : i >= 0 ? all[i].models : []);
       if (models.length) p.models = models;
+      // Whether the model sees pictures, when the person said so (F139 a); without it the model's name decides (seesImages).
+      if (typeof provider.images === 'boolean') p.images = provider.images;
       if (i >= 0) all[i] = p; else all.push(p);
       await idb.setSetting(SETTING, all);
       notify();
@@ -178,7 +180,9 @@
      * Whether a provider sees pictures, so that the picture tools' pictures go to it (ai/view-tools): Anthropic Messages always,
      * an OpenAI-compatible API when its model is one of SEES. @param {{kind?: string, model?: string}|null} provider
      */
-    const seesImages = (provider) => !!provider && (provider.kind === 'anthropic' || SEES.test(String(provider.model || '')));
+    const seesImages = (provider) => !!provider && (provider.kind === 'anthropic' || (typeof provider.images === 'boolean' ? provider.images : seesByName(provider.model)));
+    /** Whether a model's name is one of the OpenAI-compatible models known to see pictures (the dialog's default, F139 a). @param {string} model */
+    const seesByName = (model) => SEES.test(String(model || ''));
     /** A tool's picture as the kind's image block. @param {{mediaType?: string, data: string}} image @param {string} kind */
     const imageBlock = (image, kind) => userContent([{ type: 'image', mediaType: image.mediaType, data: image.data }], kind)[0];
 
@@ -364,6 +368,6 @@
       const code = out.status === 401 ? 'key' : out.status === 403 ? 'access' : out.status === 404 || out.status === 405 ? 'address' : 'other';
       return { ok: false, status: out.status, code, message: statusText(out.status, provider, errorText(out.res, key)), models: [] };
     }
-    return { KINDS, MODELS, PRESETS, POLICIES, list, get, save, setModel, modelsFor, remove, setKey, hasKey, saveKey, forgetKey, unstoreKey, unlockKeys, keyState, subscribeKeys, isLocal, hostOf, policy, setPolicy, allowed, chat, fetchModels, testKey, subscribe, seesImages };
+    return { KINDS, MODELS, PRESETS, POLICIES, list, get, save, setModel, modelsFor, remove, setKey, hasKey, saveKey, forgetKey, unstoreKey, unlockKeys, keyState, subscribeKeys, isLocal, hostOf, policy, setPolicy, allowed, chat, fetchModels, testKey, subscribe, seesImages, seesByName };
   });
 })();
