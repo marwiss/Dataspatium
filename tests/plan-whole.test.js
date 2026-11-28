@@ -307,9 +307,10 @@
       const posts = served.filter((s) => /\/search\?/.test(s.url));
       assert.equal(posts.length, 2, 'one search per field');
       assert.ok(posts.every((s) => new URL(s.url).searchParams.get('crs') === ngp.CRS84), 'the answer asked for in WGS 84');
+      // The two searches run side by side, so they may arrive in either order.
       const bodies = posts.map((s) => JSON.parse(String(s.body)));
-      assert.deepEqual(bodies.map((b) => Object.keys(b.query).sort()), [['detaljplan.namn', 'feature.typ'], ['detaljplan.beteckning', 'feature.typ']]);
-      assert.deepEqual(bodies[0], { limit: ngp.LIST, query: { 'feature.typ': { eq: 'detaljplan' }, 'detaljplan.namn': { contains: 'östergöta' } }, collections: [KOMMUN] });
+      assert.deepEqual(bodies.map((b) => Object.keys(b.query).sort().join(',')).sort(), ['detaljplan.beteckning,feature.typ', 'detaljplan.namn,feature.typ']);
+      assert.deepEqual(bodies.find((b) => b.query['detaljplan.namn']), { limit: ngp.LIST, query: { 'feature.typ': { eq: 'detaljplan' }, 'detaljplan.namn': { contains: 'östergöta' } }, collections: [KOMMUN] });
       assert.ok(posts.every((s) => s.headers.Authorization === 'Bearer ngp-token'), 'the token on the searches');
       // The token: client id and secret in the form body (client_secret_post), no Authorization header on that request.
       const tok = served.find((s) => /\/ngp\/token$/.test(s.url));
