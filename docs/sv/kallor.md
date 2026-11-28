@@ -289,6 +289,15 @@ och IDS-dokumentet, som väljs bland projektets filer eller anges med sitt id, o
 angivna finns i projektet. En ändring som bara rör ett teams del godkänns av teamets ansvarige, inte av en projektansvarig (se
 *Ändra med AI* i CAD och BIM).
 
+Har serverns administratör slagit på spegling (Dataregium från steg 7) visar kortet också *Spegling till en kodplattform*: servern
+speglar då projektets git-repo åt ett håll till ett tomt repo på en kodplattform, till exempel GitHub. Du anger repots https-adress,
+en finkornig token för just det repot, när token går ut (högst ett år, ett år om du inte anger något) och den största fil som
+plattformen tar (100 MiB hos GitHub; större filer lämnas utanför). Du bekräftar först att projektets filer, med de personuppgifter de
+kan bära, lämnar servern. Token skickas en gång till din server, i anropets kropp och aldrig i adressen eller CDE-loggen, och sparas
+aldrig i appen; servern låser in den och visar den aldrig igen. Kortet visar sedan speglingens läge: väntar, speglat, ändrat sedan
+senaste speglingen eller fel med serverns ord, när den senast speglades, vilka grenar som speglats och vilka filer som lämnats
+utanför. *Sluta spegla* tar bort speglingen; repot på plattformen står kvar.
+
 Ärenden hämtas i sidor om 500. En lista som servern har kapat (Dataregium kapar vid 1 000 poster) läses till slut genom
 serverns rubrik Link med rel="next", men bara på samma server, så att din token aldrig går någon annanstans.
 
@@ -298,7 +307,9 @@ Under *Filer i projektet* listar källan de modeller och dokument som servern ha
 filens eget slag, så en IFC-fil blir en modell och en CSV-fil en tabell, och datamängden minns vilken server, vilket projekt
 och vilken version den kom från. I Hantera visar kortet *Från CDE* detta, och *Sök ny version* frågar servern om dokumentet
 har en nyare version; den hämtas då som en egen datamängd bredvid den gamla. Har servern en git-historik per projekt
-(Dataregium från fas 5.2) visar kortet också vilken commit versionen ligger i. Källan säger också vad du får göra i projektet,
+(Dataregium från fas 5.2) visar kortet också vilken commit versionen ligger i, och från fas 5.5 själva commiten: meddelandet med
+dess trailers, vem som gjorde den och vem som lade in den, basversionen och, för en sammanfogad version, uppladdningen som den kom
+eller förslagets prövning. Källan säger också vad du får göra i projektet,
 till exempel skapa ärenden eller ladda upp dokument. När källan skapas frågar dialogen servern var man loggar in; svarar
 servern inte då, frågar appen igen vid första inloggningen.
 

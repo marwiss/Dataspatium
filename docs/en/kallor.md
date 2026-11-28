@@ -296,6 +296,15 @@ document, picked among the project's files or given by its id, and remove a team
 project. A change that touches one team's part is approved by that team's responsible, not by a manager (see *Change with AI* in CAD
 and BIM).
 
+When the server's administrator has turned mirroring on (Dataregium from step 7), the card also shows *Mirror to a forge*: the server
+then mirrors the project's git repository one way to an empty repository at a forge, such as GitHub. You give the repository's https
+address, a fine-grained token for that repository alone, when the token expires (at most a year; a year when you give none) and the
+largest file the forge takes (100 MiB at GitHub; larger files are left out). You first confirm that the project's files, with the
+personal data they may hold, leave the server. The token goes once to your server, in the request's body and never in the address or
+the CDE log, and is never kept in the app; the server seals it and never shows it again. The card then shows the mirror's state:
+waiting, mirrored, changed since the last mirroring or failed in the server's words, when it was last mirrored, which branches were
+mirrored and which files were left out. *Stop mirroring* removes the mirror; the repository at the forge stays.
+
 Topics are fetched in pages of 500. A list the server has capped (Dataregium caps at 1,000 items) is read to the end through
 the server’s Link header with rel="next", but only on the same server, so that your token never goes anywhere else.
 
@@ -305,7 +314,9 @@ Under *Files in the project* the source lists the models and documents the serve
 dataset of the file's own kind, so an IFC file becomes a model and a CSV file a table, and the dataset remembers which
 server, project and version it came from. In Manage the card *From the CDE* shows this, and *Check for a new version* asks
 the server whether the document has a newer version; that version is then fetched as a dataset of its own beside the old
-one. When the server keeps a git history per project (Dataregium from phase 5.2), the card also shows the commit the version is in. The source also says what you may do in the project, such as create issues or upload documents. When the source is
+one. When the server keeps a git history per project (Dataregium from phase 5.2), the card also shows the commit the version is in, and
+from phase 5.5 the commit itself: its message with the trailers, who made it and who committed it, the base version and, for a merged
+version, the upload as it came or the proposal's trial. The source also says what you may do in the project, such as create issues or upload documents. When the source is
 made, the dialog asks the server where to sign in; if the server does not answer then, the app asks again at the first
 sign-in.
 

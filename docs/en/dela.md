@@ -165,9 +165,23 @@ and a manager of the project can approve it as the document's next version. When
 the collisions one by one, the same way as for proposals from the AI panel (see [CAD and BIM](cad-bim.md#change-with-ai)). The model
 in the app does not change.
 
-When the model does not differ from the base version, or the changes are only new elements, the app says so at the button. The
-same goes when nothing that changed can be expressed, or when the changes are more than a proposal can carry. Use *Send as
-version* then, and the server merges the whole file with what came between.
+When the change set cannot carry everything that changed, that is new or deleted elements, new relationships, changed shapes or
+more changes than a proposal holds, and the server takes whole files (Dataregium names `file_snippet_type`), the app proposes the
+whole model file instead. The file goes through the review before sharing just as an upload does, and the reviewed copy is what is
+sent, as the topic's own attachment against the base version, with the steps that made the change as its provenance. The file may be
+at most as large as the server takes. The server tries it and a manager approves it as a change set. When the file collides with a
+newer version the panel shows the collisions, but for a whole file they cannot be chosen one by one: fetch the latest version, redo
+the changes and propose again.
+
+When the model does not differ from the base version the app says so at the button. When the server does not take whole files the
+app also says so when the changes are only new elements, when nothing that changed can be expressed, or when the changes are more
+than a proposal can carry. Use *Send as version* then, and the server merges the whole file with what came between.
+
+When a new version collides with what came between since the base version, and the server merges with ifcmerge, the panel lists the
+collisions. From Dataregium's phase 5.5 the server keeps your upload for a while on a conflict branch, and the panel says until when.
+*Compare in 3D* has the server compare the conflict branch with the latest version and opens *Compare versions* in Bearbeta, where
+the differences are coloured in the model. When the time has passed, or the server has already taken the branch away, the panel says
+so; fetch the latest version then and redo your changes there.
 
 ## Receive
 

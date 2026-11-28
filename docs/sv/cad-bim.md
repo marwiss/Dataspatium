@@ -781,6 +781,20 @@ borttaget eller har bytt klass i den senaste versionen gäller krocken hela elem
 ändringar av det, och annars prövas de igen på den senaste versionen. Sammanfogningen sker på servern; webbläsaren hanterar bara
 själva krockarna.
 
+Kan ändringssetet inte uttrycka allt, till exempel nya eller borttagna element, nya samband eller ändrade former, och tar servern
+emot hela filer (Dataregium anger `file_snippet_type`), föreslår panelen i stället hela den förhandsvisade filen. Filen går först
+genom granskningen före delning, precis som en uppladdning, och skickas sedan som ärendets egen bilaga mot basversionen, med
+AI-modellen och verktygen som proveniens; servern sätter själv användaren och tiden. Servern prövar filen och en projektansvarig
+godkänner den på samma sätt som ett ändringsset. Krockar filen med det som kommit emellan listar panelen krockarna, men en hel fil
+har inga ändringar att behålla eller stryka en och en: hämta den senaste versionen, gör om ändringen där och föreslå igen. Uttrycker
+ändringssetet allt, som när servern tar skrivverktygens operationer, går ändringssetet som förut. Filen får vara högst så stor som
+servern tar emot (`max_upload_bytes`), annars säger appen det innan något skickas.
+
+Ett prövat förslag på kortet *Ändringsförslag på servern* har knappen *Visa skillnaden* när servern kan jämföra två sidor (Dataregium
+från fas 5.5): appen läser prövningen, som anger om förslaget är en hel fil eller ett ändringsset och vilken commit den gjordes på,
+och servern jämför basversionen med den commiten. Kortet visar hur många element som är nya, borttagna och ändrade och de första av
+dem. Ett förslag som hel fil, från appen eller från en annan klient, står som *Hel fil* på raden och godkänns som de andra.
+
 ## Rätt IFC-klass
 
 I IFC är klassen den första klassificeringen: den mest specifika klassen med sin PredefinedType, ObjectType bara när PredefinedType är
@@ -875,6 +889,13 @@ instanser under det har ändrats, till exempel en punkt i en väggs profil, stå
 en ägarhistorik, står under *Utan objekt*, och instanser som fler än 100 objekt når, som en stil eller en enhet, under *Gemensamma
 instanser*, utan att markera några objekt. Är den ena versionen en omexport, eller jämför du med ett annat dokument, säger panelen att
 jämförelsen gjordes på GlobalId.
+
+Har servern dokumentets historik i projektets git (Dataregium från fas 5.5) hämtar *Serverns versioner* i stället historiken, nyast
+först och hundra punkter åt gången med *Nyare* och *Äldre*: versionerna, uppladdningar som de kom innan servern sammanfogade dem,
+förslagens prövningar och uppladdningar som inte gick att sammanfoga. Varje punkt visar när den gjordes, av vem och dess rubrik. Den
+valda punkten jämförs med den här versionen genom serverns jämförelse av två sidor, där en sida är ett versionsnummer eller en commit,
+och visas som listorna och färgerna ovan. En konflikt sparas bara en tid; efter den säger panelen att den inte finns kvar. Utan
+historiken på servern hämtar knappen versionerna som förut.
 
 ## Dubbletter mellan modeller
 
