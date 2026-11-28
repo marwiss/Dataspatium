@@ -93,7 +93,8 @@ file of one plan is imported as a detailed plan.
 A plan opens as a plan map: use provisions filled with Boverket's colours (housing yellow, centre brown, industry
 blue-grey, street light grey, park light green, water blue and so on per the general advice to BFS 2020:5; the shades
 are the app's), property provisions as blue dashed outlines, administrative provisions as purple dotted ones, the plan
-boundary in black and the designations as labels. Click an object and the inspector shows its facts and what the
+boundary in black and the designations as labels. A label shows where it fits: inside its area and without covering
+another (the larger areas first), so zoom in to see more; *Designations* switches them on and off. Click an object and the inspector shows its facts and what the
 catalogue says about the provision: code, type, validity and the catalogue's formulation. Layers are switched on and
 off per type, a background map appears after consent, and the buttons give *Save as map view* (for Visualise,
 dashboards and Publish), *Plan provisions* (the list as Markdown) and *Show as table*.

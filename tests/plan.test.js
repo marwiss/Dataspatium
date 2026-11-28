@@ -148,6 +148,16 @@
       await waitFor(() => root.querySelectorAll('.dm-plan-label').length >= 2, 5000, 'designation labels');
       const labels = Array.from(root.querySelectorAll('.dm-plan-label')).map((e) => e.textContent);
       assert.ok(labels.includes('B'), 'label B: ' + labels.join(','));
+      // A label shows only where it fits inside its area: zoomed far out the areas are too small, zoomed back in they show again.
+      const mapNode = /** @type {HTMLElement} */ (root.querySelector('.dm-plan-view.leaflet-container'));
+      const shownLabels = () => Number(String(mapNode.getAttribute('data-plan-labels') || '0/0').split('/')[0]);
+      const before = shownLabels();
+      const zoomOut = /** @type {HTMLElement} */ (root.querySelector('.dm-plan-view .leaflet-control-zoom-out'));
+      const zoomIn = /** @type {HTMLElement} */ (root.querySelector('.dm-plan-view .leaflet-control-zoom-in'));
+      for (let i = 0; i < 5; i++) { zoomOut.click(); await new Promise((r) => setTimeout(r, 350)); }
+      await waitFor(() => shownLabels() === 0, 5000, 'no labels when the areas are too small: ' + mapNode.getAttribute('data-plan-labels'));
+      for (let i = 0; i < 5; i++) { zoomIn.click(); await new Promise((r) => setTimeout(r, 350)); }
+      await waitFor(() => shownLabels() >= Math.min(before, 2), 5000, 'the labels back when zoomed in: ' + mapNode.getAttribute('data-plan-labels'));
       await waitFor(() => root.querySelectorAll('.dm-right .dm-plan-legend li').length === 2, 5000, 'legend with two uses');
       const swatch = /** @type {HTMLElement} */ (root.querySelector('.dm-right .dm-plan-legend li .dm-map-legend-swatch'));
       assert.ok(swatch && /244, 224, 122|f4e07a/i.test(swatch.style.background), 'B is yellow: ' + swatch.style.background);

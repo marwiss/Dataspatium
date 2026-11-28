@@ -90,7 +90,8 @@ en fil med en plan läses in som detaljplan.
 En plan öppnas som plankarta: användningsbestämmelserna fyllda med Boverkets färger (bostäder gul, centrum brun,
 industri blågrå, gata ljusgrå, park ljusgrön, vatten blå och så vidare enligt de allmänna råden till BFS 2020:5;
 nyanserna är appens), egenskapsbestämmelser som blå streckade konturer, administrativa bestämmelser som lila
-punktade, planområdesgränsen i svart och beteckningarna som etiketter. Klicka på ett objekt så visar inspektören
+punktade, planområdesgränsen i svart och beteckningarna som etiketter. En etikett visas där den får plats: inuti sin yta och utan att
+täcka en annan (de större ytorna först), så zooma in för att se fler; *Beteckningar* slår av och på dem. Klicka på ett objekt så visar inspektören
 dess uppgifter och vad Planbestämmelsekatalogen säger om bestämmelsen: kod, typ, giltighet och katalogens
 formulering. Lagren slås av och på per typ, bakgrundskarta visas efter samtycke, och knapparna ger *Spara som
 kartvy* (för Visualisera, dashboards och Publicera), *Planbestämmelser* (bestämmelselistan som Markdown) och

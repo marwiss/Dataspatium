@@ -669,7 +669,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/planer.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 44390,
+  "size": 44567,
   "library": "dataspatium"
  },
  "docs/sv/grafer.md": {
@@ -1683,7 +1683,7 @@ Dataspatium.assets.addEntries({
  "docs/en/planer.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 44846,
+  "size": 45011,
   "library": "dataspatium"
  },
  "docs/en/grafer.md": {

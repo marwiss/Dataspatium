@@ -235,6 +235,7 @@
           unhook = boxHandlers(hd.map);
           editor.mapDrawn(hd.map, L, groups);
           updateLabels();
+          hd.map.on('moveend resize', scheduleLabels);
           if (options.overlays) { await options.overlays.attach(hd, ds, { hostLayers: s.layers, fit, refresh: renderInspector }); if (my !== seq) return; }
           fit();
           // A section's areas stay marked, and the chosen areas chosen, when the map is drawn again (another background map or grid).
@@ -392,12 +393,41 @@
           else if (handle && lyr.getLatLng) handle.map.setView(lyr.getLatLng(), 16);
         }
       }
-      /** Designation labels at the centre of every visible object (the plan boundary excluded). */
+      /** The font, side padding and height of a label class, read once from the page's styles. */
+      const labelFonts = new Map();
+      let measureCtx = null;
+      /** A label's size in pixels, measured on a canvas so that the page's layout is not touched for every label. */
+      function labelSize(text, use) {
+        const key = use ? 'use' : 'plain';
+        if (!labelFonts.has(key)) {
+          const probe = document.createElement('span');
+          probe.className = 'dm-plan-label' + (use ? ' dm-plan-label-use' : '');
+          probe.style.cssText = 'position:absolute; visibility:hidden; transform:none;';
+          probe.textContent = 'Åg';
+          handle.map.getContainer().appendChild(probe);
+          const cs = getComputedStyle(probe);
+          labelFonts.set(key, { font: cs.font || `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`, pad: (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0) + 2, h: probe.offsetHeight || (parseFloat(cs.fontSize) || 12) * 1.5 });
+          probe.remove();
+        }
+        const f = labelFonts.get(key);
+        measureCtx = measureCtx || document.createElement('canvas').getContext('2d');
+        if (!measureCtx) return { w: text.length * 7 + f.pad, h: f.h };
+        measureCtx.font = f.font;
+        return { w: measureCtx.measureText(text).width + f.pad, h: f.h };
+      }
+      /**
+       * Designation labels at the centre of the visible objects (the plan boundary excluded), only where there is room: an area's
+       * label shows when it fits inside the area on screen, and no label covers another (the larger areas first). They are
+       * placed again when the map is zoomed or moved, so that zooming in shows more of them.
+       */
       function updateLabels() {
         if (!handle || !L) return;
         if (labelLayer) { handle.map.removeLayer(labelLayer); labelLayer = null; }
         if (!s.labels) return;
-        const markers = [];
+        const map = handle.map;
+        const size = map.getSize();
+        const margin = 40;
+        const candidates = [];
         for (const g of groups) {
           if (s.hidden.has(g.key)) continue;
           g.group.eachLayer((lyr) => {
@@ -405,13 +435,44 @@
             if (row.objekttyp === 'planomrade' || row.tema === 'plangeometri') return;
             const text = labelText(row);
             if (!text) return;
-            const center = lyr.getBounds ? lyr.getBounds().getCenter() : (lyr.getLatLng ? lyr.getLatLng() : null);
+            let center = null; let room = null;
+            if (lyr.getBounds) {
+              const b = lyr.getBounds();
+              if (!b || !b.isValid()) return;
+              center = b.getCenter();
+              // An area needs room for its label inside itself; a line's box is no such room, so only the overlap counts there.
+              if (lyr instanceof L.Polygon) {
+                const nw = map.latLngToContainerPoint(b.getNorthWest()); const se = map.latLngToContainerPoint(b.getSouthEast());
+                room = { w: Math.abs(se.x - nw.x), h: Math.abs(se.y - nw.y) };
+              }
+            } else if (lyr.getLatLng) center = lyr.getLatLng();
             if (!center) return;
-            const el = document.createElement('span'); el.className = 'dm-plan-label' + (row.objekttyp === 'anvandning' || row.tema === 'markochvattenanvandning' ? ' dm-plan-label-use' : ''); el.textContent = String(text);
-            markers.push(L.marker(center, { icon: L.divIcon({ className: 'dm-plan-label-wrap', html: el, iconSize: null }), interactive: false, keyboard: false }));
+            const p = map.latLngToContainerPoint(center);
+            if (p.x < -margin || p.y < -margin || p.x > size.x + margin || p.y > size.y + margin) return;
+            const use = row.objekttyp === 'anvandning' || row.tema === 'markochvattenanvandning';
+            candidates.push({ text: String(text), center, p, room, use, area: room ? room.w * room.h : 0 });
           });
         }
-        labelLayer = L.layerGroup(markers).addTo(handle.map);
+        candidates.sort((a, b) => b.area - a.area);
+        const placed = [];
+        const markers = [];
+        for (const c of candidates) {
+          const sz = labelSize(c.text, c.use);
+          if (c.room && (sz.w > c.room.w || sz.h > c.room.h)) continue;
+          const r = { x0: c.p.x - sz.w / 2 - 2, y0: c.p.y - sz.h / 2 - 2, x1: c.p.x + sz.w / 2 + 2, y1: c.p.y + sz.h / 2 + 2 };
+          if (placed.some((q) => r.x0 < q.x1 && r.x1 > q.x0 && r.y0 < q.y1 && r.y1 > q.y0)) continue;
+          placed.push(r);
+          const el = document.createElement('span'); el.className = 'dm-plan-label' + (c.use ? ' dm-plan-label-use' : ''); el.textContent = c.text;
+          markers.push(L.marker(c.center, { icon: L.divIcon({ className: 'dm-plan-label-wrap', html: el, iconSize: null }), interactive: false, keyboard: false }));
+        }
+        labelLayer = L.layerGroup(markers).addTo(map);
+        mapEl.setAttribute('data-plan-labels', `${markers.length}/${candidates.length}`);
+      }
+      /** The labels are placed again after the map has been zoomed, moved or resized, at most once a frame. */
+      let labelFrame = 0;
+      function scheduleLabels() {
+        if (labelFrame) return;
+        labelFrame = requestAnimationFrame(() => { labelFrame = 0; updateLabels(); });
       }
       function fit() {
         if (!handle || !L) return;
