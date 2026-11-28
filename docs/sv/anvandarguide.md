@@ -242,7 +242,10 @@ med appens kommandon, i alla lägen. Den använder den AI-leverantör du har lag
 nyckel eller en lokal modell, och nås först när du har gett samtycke för leverantörens värd.
 
 Skriv vad du vill få gjort och tryck på *Skicka* (eller Ctrl+Enter). AI:n läser först, till exempel vilka datamängder och
-kolumner som finns, och väljer nästa steg efter vad den får veta. Stegen visas i panelen medan de körs.
+kolumner som finns, och väljer nästa steg efter vad den får veta. Stegen visas i panelen medan de körs, och statusraden överst säger
+vad AI:n gör just nu, med svaret medan det skrivs, AI-tiden och token. En fråga från AI:n visas överst i panelen (se
+[Medan AI:n arbetar](cad-bim.md#medan-ain-arbetar)). Rubriken visar leverantören och dess modell, och under *Leverantörer* väljer du
+modell, sparar nyckeln krypterat och prövar den (se [Nyckeln och modellen](cad-bim.md#nyckeln-och-modellen)).
 
 - Allt som ändrar något, som en åtgärd i Bearbeta, en export eller ett R- eller Python-skript, visas först i en egen dialog med
   kommandot och dess argument. Det körs bara om du trycker på *Godkänn*, och det kan ångras efteråt.

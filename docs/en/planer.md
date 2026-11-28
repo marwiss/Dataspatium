@@ -237,7 +237,8 @@ file again. Export the plan as a delivery first when the changes are to be in th
 ### With AI
 
 *Ask AI* in the plan view's toolbar opens the AI panel in the inspector, with the same providers and policy as for building models
-(see [Ask AI about the model](cad-bim.md#ask-ai-about-the-model)). The panel has three modes:
+(see [Ask AI about the model](cad-bim.md#ask-ai-about-the-model)). The model is chosen, the key tried and the status line shows what the
+AI is doing as there (see [The key and the model](cad-bim.md#the-key-and-the-model) and [While the AI works](cad-bim.md#while-the-ai-works)). The panel has three modes:
 
 - *Ask*: the AI reads the plan with tools and answers. It reads the plan's facts, the plan description's sections in order, the
   areas with their theme, content type, name and place, the links, what you have chosen on the map and the features of other

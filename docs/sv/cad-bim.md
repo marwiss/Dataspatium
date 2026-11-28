@@ -577,6 +577,38 @@ i klartext och aldrig i frågan. *Policy* avgör vad som får anropas: *Fråga* 
 molntjänster, och *Endast lokal* tillåter bara modeller på den egna datorn. Det som skickas är din fråga och de verktygssvar modellen
 begär; verktygssvaren är data ur modellen, aldrig instruktioner, och kapas när de är stora.
 
+### Nyckeln och modellen
+
+Detta gäller alla AI-paneler: modellens, översiktsplanens och AI-assistenten.
+
+- **Modellen** väljs ur en lista i leverantörens formulär och i panelen bredvid leverantören, och valet sparas med leverantören. För
+  Anthropic finns `claude-fable-5-2`, `claude-opus-5-5`, `claude-sonnet-5-5` (förvald) och `claude-haiku-5-5`, för OpenAI några av
+  dess modeller och för Ollama den lokala standardmodellen. *Hämta modellistan* hämtar leverantörens egen lista med nyckeln, och
+  *Annan modell …* tar ett namn du skriver själv.
+- **Nyckeln** skrivs in men visas aldrig igen. Under *Håll nyckeln* väljer du *Bara i den här sessionen*, så glöms den när appen
+  stängs, eller *Sparad krypterat med lösenfras*, så finns den kvar till nästa gång. Efter att du sparat säger appen var nyckeln hamnade.
+- **Var nyckeln finns** står vid varje leverantör: *Nyckel för den här sessionen*, *Nyckel sparad krypterat, upplåst*, *Nyckel sparad
+  krypterat, låst* eller *Nyckel saknas*. En sparad nyckel är låst varje gång appen öppnas. *Lås upp sparade nycklar* i panelen eller
+  i formuläret låser upp den med lösenfrasen.
+- **Pröva nyckeln** gör det billigaste riktiga anropet, listan över leverantörens modeller. Ett OpenAI-kompatibelt API utan en sådan
+  lista får i stället en fråga på en token. Svaret är att nyckeln fungerar, eller vad som är fel och vad du kan göra: fel nyckel (401),
+  ingen åtkomst (403), fel adress (404), eller att tjänsten inte går att nå (nätverket, eller att den inte tillåter anrop från
+  webbläsaren, CORS).
+- *Hämta modellistan* och *Pröva nyckeln* anropar leverantören först när du trycker. De går genom samma policy och samma samtycke för
+  leverantörens värd som en fråga.
+
+### Medan AI:n arbetar
+
+- **Statusraden** under knappen visar vad AI:n gör just nu. Den tänker, skriver, förbereder ett verktyg (till exempel *Skapar en
+  vägg*), eller så kör appen verktyget. Raden visar också AI-tiden, token så snart leverantören har rapporterat dem och hur många steg
+  som har gått. Svarets text syns under raden medan den skrivs, eftersom svaret strömmas. En leverantör som inte strömmar ger samma svar
+  utan strömmen. *Avbryt* stoppar också ett svar som håller på att skrivas.
+- **En fråga från AI:n** (i Bygg från beskrivning och i AI-assistenten) visas överst i panelen, markerad, och får fokus. Knappen säger
+  *Väntar på ditt svar* i stället för att snurra, och ett tryck på den tar dig till frågan. AI-tiden och tidsgränsen står still tills du
+  har svarat eller stängt frågan.
+- **Inga ändringar föreslogs:** när Ändra eller Bygg från beskrivning slutar med ett tomt ändringsset säger panelen det. AI:ns svar
+  visas tydligt, med *Fråga igen*, som skickar samma fråga en gång till, och *Ändra frågan*, som lägger frågan i rutan igen.
+
 ## Ändra med AI
 
 Läget *Ändra* i samma panel låter AI:n föreslå ändringar i modellen, till exempel "skapa två våningar och ett rutnät 6×4 m,

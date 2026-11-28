@@ -243,7 +243,10 @@ you with the app's commands, in every mode. It uses the AI provider you have add
 key or a local model, and is reached only after you have given consent for the provider's host.
 
 Write what you want done and press *Send* (or Ctrl+Enter). The AI reads first, for example which datasets and columns there are,
-and chooses its next step by what it learns. The steps show in the panel as they run.
+and chooses its next step by what it learns. The steps show in the panel as they run, and the status line at the top says what the
+AI is doing right now, with the answer as it is written, the AI time and the tokens. A question from the AI is shown at the top of the
+panel (see [While the AI works](cad-bim.md#while-the-ai-works)). The heading shows the provider and its model, and under *Providers*
+you choose the model, save the key encrypted and try it (see [The key and the model](cad-bim.md#the-key-and-the-model)).
 
 - Everything that changes something, such as an action in Process, an export or an R or Python script, is shown first in a
   dialog of its own with the command and its arguments. It runs only if you press *Approve*, and it can be undone afterwards.

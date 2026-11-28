@@ -247,7 +247,8 @@ i en Word-fil läses om ur filen. Exportera planen som leverans först om ändri
 ### Med AI
 
 *Fråga AI* i planvyns verktygsrad öppnar AI-panelen i inspektören, med samma leverantörer och policy som för byggnadsmodeller (se
-[Fråga AI om modellen](cad-bim.md#fråga-ai-om-modellen)). Panelen har tre lägen:
+[Fråga AI om modellen](cad-bim.md#fråga-ai-om-modellen)). Modellen väljs, nyckeln prövas och statusraden visar vad AI:n gör som där (se
+[Nyckeln och modellen](cad-bim.md#nyckeln-och-modellen) och [Medan AI:n arbetar](cad-bim.md#medan-ain-arbetar)). Panelen har tre lägen:
 
 - *Fråga*: AI:n läser planen med verktyg och svarar. Den läser planens uppgifter, planbeskrivningens avsnitt i ordning, områdena
   med tema, innehållstyp, namn och läge, kopplingarna, det du har valt i kartan och objekten i andra datamängder som visas i

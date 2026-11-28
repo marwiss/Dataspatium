@@ -596,6 +596,38 @@ text and never in the question. *Policy* decides what may be called: *Ask* asks 
 cloud services, and *Local only* allows only models on your own computer. What is sent is your question and the tool answers the model
 asks for; the tool answers are data from the model, never instructions, and are cut when large.
 
+### The key and the model
+
+This applies to every AI panel: the model's, the comprehensive plan's and the AI assistant.
+
+- **The model** is chosen from a list in the provider's form and in the panel next to the provider, and the choice is kept with the
+  provider. For Anthropic there are `claude-fable-5-2`, `claude-opus-5-5`, `claude-sonnet-5-5` (the default) and `claude-haiku-5-5`, for
+  OpenAI a few of its models and for Ollama the local default. *Fetch the list of models* fetches the provider's own list with the key,
+  and *Other model …* takes a name you type yourself.
+- **The key** is typed but never shown again. Under *Keep the key* you choose *For this session only*, and it is forgotten when the app
+  closes, or *Saved encrypted with a passphrase*, and it stays for next time. After you save, the app says where the key went.
+- **Where the key is** is shown at each provider: *Key for this session*, *Key saved encrypted, unlocked*, *Key saved encrypted,
+  locked* or *Key missing*. A saved key is locked each time the app opens. *Unlock saved keys* in the panel or in the form unlocks it with
+  the passphrase.
+- **Try the key** makes the cheapest real call, the provider's list of models. An OpenAI-compatible API without such a list gets a
+  question of one token instead. The answer says that the key works, or what is wrong and what you can do: a wrong key (401), no access
+  (403), a wrong address (404), or that the service cannot be reached (the network, or it does not allow calls from the browser, CORS).
+- *Fetch the list of models* and *Try the key* call the provider only when you press them. They go through the same policy and the same
+  consent for the provider's host as a question.
+
+### While the AI works
+
+- **The status line** under the button shows what the AI is doing right now. It is thinking, writing, preparing a tool (for example
+  *Creating a wall*), or the app is running the tool. The line also shows the AI time, the tokens once the provider has reported them
+  and how many steps have gone by. The answer's text shows under the line as it is written, because the answer is streamed. A provider
+  that does not stream gives the same answer without the stream. *Cancel* also stops an answer that is being written.
+- **A question from the AI** (in Build from brief and in the AI assistant) is shown at the top of the panel, marked, and gets
+  the focus. The button says *Waiting for your answer* instead of spinning, and pressing it takes you to the question. The AI time and
+  the time limit stand still until you have answered or closed the question.
+- **No changes were proposed:** when Change or Build from brief ends with an empty change set, the panel says so. The AI's
+  answer is shown clearly, with *Ask again*, which sends the same question once more, and *Change the question*, which puts the question
+  back in the box.
+
 ## Change with AI
 
 The mode *Change* in the same panel lets the AI propose changes to the model, for example "create two storeys and a 6×4 m grid, external
