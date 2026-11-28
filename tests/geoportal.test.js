@@ -254,13 +254,13 @@
       // A file: on to the import wizard as a file from an address.
       buttonByText(t('geoportal.download'), /** @type {HTMLElement} */ (root.querySelectorAll('.dm-center .dm-geoportal-card')[1])).click();
       await waitFor(() => root.querySelector('.dm-center') && root.querySelector('.dm-center').textContent.includes('Profil 1'), 10000, 'the preview of the fetched file');
-      // A WFS: the geodata form in the workspace with the family and the address filled in.
+      // A WFS: the form Egen geodatakälla in the workspace with the family and the address filled in (B-81.3).
       /** @type {HTMLElement} */ (root.querySelector('[data-source="geoportal"]')).click();
       await waitFor(() => root.querySelectorAll('.dm-center .dm-geoportal-card').length === 5, 8000, 'the posts kept');
       buttonByText(t('geoportal.add.wfs')).click();
-      const field = await waitFor(() => root.querySelector('.dm-center [data-source-form="geodata"] [data-family-field="baseUrl"]'), 8000, 'the geodata form');
+      const field = await waitFor(() => root.querySelector('.dm-center [data-source-form="owngeodata"] [data-family-field="baseUrl"]'), 8000, 'the geodata form');
       assert.equal(/** @type {any} */ (field).value, BASE + '/wfs?service=WFS&request=GetCapabilities');
-      const family = /** @type {any} */ (Array.from(root.querySelectorAll('.dm-center [data-source-form="geodata"] dm-select')).find((s) => (s.getAttribute('label') || '') === t('families.family')));
+      const family = /** @type {any} */ (Array.from(root.querySelectorAll('.dm-center [data-source-form="owngeodata"] dm-select')).find((s) => (s.getAttribute('label') || '') === t('families.family')));
       assert.equal(family && family.value, 'wfs', 'the family of the post');
     } finally {
       if (before) await connectors.save(before); else await connectors.remove(ID).catch(() => {});

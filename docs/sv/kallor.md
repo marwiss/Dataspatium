@@ -8,7 +8,7 @@ Inhämta. Filer som valts med datorns filväljare kan dessutom **länkas**, så 
 disken med ett klick. Allt sker i webbläsaren; inget skickas någon annanstans än till den databas du själv anger.
 
 I Inhämta ligger källorna i grupper i vänsterkolumnen: *Skapa källor* (se nedan), *Databaskällor* (Extern databas, Databas via bryggan och Neo4j),
-*API-källor*, *Geodatakällor* (Geodatakälla och Gränser för kartor) med flera, och OpenCDE och Mobilen under *Vanliga
+*API-källor*, *Geodatakällor* (Geodatakälla, Egen geodatakälla, Geodataportalen och Gränser för kartor) med flera, och OpenCDE och Mobilen under *Vanliga
 källor*. Det du väljer visas i mitten. Formulären som lägger till en källa har sin hjälptext ovanför, och den nya källan
 öppnas där när den är sparad. Samma formulär visas som dialog när det öppnas från ett annat ställe, till exempel Neo4j
 från en OpenCDE-servers kort.
@@ -351,22 +351,21 @@ sidor har formen `index.html#/inhamta/opencde?server=https://…` och öppnar di
 
 ## Öppna geodata
 
-Formuläret för *Geodatakälla* under *Geodatakällor* börjar med en lista över **färdiga geodatakällor**: öppna WFS-, OGC API Features-
+*Geodatakälla* under *Geodatakällor* är en lista över **färdiga geodatakällor**: öppna WFS-, OGC API Features-
 och ArcGIS-tjänster från nordiska myndigheter och kommuner (SCB, SGU, Naturvårdsverket, SLU Artdatabanken, Riksantikvarieämbetet,
 Skogsstyrelsen, Sundsvalls kommun, Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsingfors, Väylävirasto,
 Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med flera), alla prövade från webbläsaren
 hela vägen till ett hämtat objekt med geometri, också Kartverkets WFS-tjänster, som bara ger GML. En förinställd källa öppnas, övriga läggs till med ett klick och lagren läses från
-tjänsten; filtrera på namn, land eller innehåll. Listan ligger i `presets/geodata/services.json`. Under listan finns
+tjänsten; filtrera på namn, land eller innehåll. Listan ligger i `presets/geodata/services.json`. En tjänst som inte står
+i listan lägger du till under *Egen geodatakälla* (se nedan).
 
 Tre källor hämtar planer: *Plandata.dk (WFS)* och *Skipulagsstofnun skipulagsgögn (ArcGIS)* har knappen **Hämta plan**
 som läser en hel lokalplan respektive ett deiliskipulag (alla lager) med planens nummer och sparar den som plan, och
 *Ryhti kaavatiedot (OGC API Features)* ger Finlands planindex. Se [planer.md](planer.md#planer-från-andra-nordiska-länder).
-fälten för en egen tjänst. Boverkets Planbestämmelsekatalog finns som vanlig API-källa (*Boverket
-Planbestämmelsekatalogen*), se [planer.md](planer.md).
+Boverkets Planbestämmelsekatalog finns som vanlig API-källa (*Boverket Planbestämmelsekatalogen*), se [planer.md](planer.md).
 
-Valet **Geodatakälla** under *Geodatakällor* i Inhämta gör en vanlig API-källa av adressen till en geodatatjänst,
-på samma sätt som databaskällorna. Appen läser tjänstens lager och lägger en ändpunkt per lager plus en allmän där du
-anger lagret själv. Svaren läses i WGS 84: datamängden får en geometrikolumn och öppnas som karta i Bearbeta (se
+En geodatakälla, färdig eller egen, är en vanlig API-källa. Appen läser tjänstens lager och lägger en ändpunkt per lager
+plus en allmän där du anger lagret själv. Svaren läses i WGS 84: datamängden får en geometrikolumn och öppnas som karta i Bearbeta (se
 [kartor.md](kartor.md)). Källan visar lagren som en lista att filtrera i; välj ett lager, begränsa gärna med ett område
 (bbox) och hämta. Förhandsgranskningen visar svaret som en liten karta ovanför tabellen, och *Öppna som karta* tar dig
 till den sparade datamängden.
@@ -419,6 +418,14 @@ Nyckeln är konsumentnyckeln och konsumenthemligheten från ett kostnadsfritt ko
 Lantmäteriets API och filservern dl1.lantmateriet.se.
 En höjdprofil längs en linje ritar Visualisera (*Nytt diagram* → *Höjdprofil längs en linje*).
 
+### Egen geodatakälla
+
+**Egen geodatakälla**, direkt under *Geodatakälla* i *Geodatakällor*, gör en källa av adressen till en geodatatjänst som
+inte står bland de färdiga, på samma sätt som databaskällorna. Välj familj (WFS, OGC API Features eller ArcGIS REST),
+ange adressen och, om tjänsten kräver det, nyckeln (den sparas bara i sessionen), och välj *Lägg till källa*. Den nya
+källan hamnar under *Tillagda källor* och öppnas med sina lager. Formuläret visas i mitten i Inhämta och som dialog när
+det öppnas från ett annat läge, och det har adressen `#/inhamta/owngeodata` och ett kommando i paletten.
+
 ### Geodataportalen
 
 **Geodataportalen** (geodata.se) är den nationella katalogen över myndigheters, regioners och kommuners geodata. Vyn
@@ -426,7 +433,7 @@ En höjdprofil längs en linje ritar Visualisera (*Nytt diagram* → *Höjdprofi
 beskrivning och det posten länkar till. Brytaren *Bara det som går att hämta* (på från början) visar bara poster med en
 tjänst eller fil som appen kan hämta. Varje post har en åtgärd per slag av länk:
 
-- **Lägg till som geodatakälla** för en WFS-, OGC API Features- eller ArcGIS-tjänst: formuläret för en geodatakälla öppnas i
+- **Lägg till som geodatakälla** för en WFS-, OGC API Features- eller ArcGIS-tjänst: formuläret *Egen geodatakälla* öppnas i
   arbetsytan med tjänsten och adressen ifyllda, och *Lägg till* gör källan.
 - **Hämta filen** för en nedladdning (ZIP, GeoPackage, GeoJSON, GML): filen hämtas och läses in som en fil från en adress,
   med förhandsgranskning och kolumner. Är länken ett INSPIRE ATOM-flöde läser appen flödet först och listar dess filer, och

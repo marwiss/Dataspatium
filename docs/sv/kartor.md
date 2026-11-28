@@ -16,8 +16,8 @@ hämtas från nätet förrän du väljer en bakgrundskarta och ger ditt samtycke
 Datamängder med en geometrikolumn eller kolumner som heter longitud och latitud öppnas som karta direkt; för andra
 koordinatkolumner (till exempel `x` och `y`) väljer du *Visa som karta* i tabellens verktygsrad.
 
-Geodata kan också hämtas direkt från öppna tjänster: *Lägg till geodatakälla* i Inhämta gör en källa av en WFS-, OGC API
-Features- eller ArcGIS-tjänst, också en WFS som bara ger GML, och vyn *Geodataportalen* söker i den nationella katalogen och
+Geodata kan också hämtas direkt från öppna tjänster: *Geodatakälla* i Inhämta listar färdiga tjänster, *Egen geodatakälla*
+gör en källa av adressen till en annan WFS-, OGC API Features- eller ArcGIS-tjänst, också en WFS som bara ger GML, och vyn *Geodataportalen* söker i den nationella katalogen och
 hämtar det som listas: en tjänst blir en geodatakälla, en fil läses in och en WMS visas på kartan. Svaren får en
 geometrikolumn och öppnas som karta. Se [kallor.md](kallor.md#öppna-geodata).
 

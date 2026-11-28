@@ -254,10 +254,10 @@
       assert.ok(card.querySelector('details') && card.textContent.includes('Info'), 'the other link under Fler länkar');
       const known = new Set((await connectors.list()).map((c) => c.id));
       buttonByText(t('geoportal.add.wfs')).click();
-      // The form of a geodata source in the workspace, with the family and the address filled in (PLAN 12 a4).
-      const field = await waitFor(() => root.querySelector('.dm-center [data-source-form="geodata"] [data-family-field="baseUrl"]'), 8000, 'the geodata form with the address');
+      // The form Egen geodatakälla in the workspace, with the family and the address filled in (PLAN 12 a4, B-81.3).
+      const field = await waitFor(() => root.querySelector('.dm-center [data-source-form="owngeodata"] [data-family-field="baseUrl"]'), 8000, 'the geodata form with the address');
       assert.equal(/** @type {any} */ (field).value, BASE + '/cat-wfs?service=WFS&request=GetCapabilities', 'the address from the post');
-      Array.from(root.querySelectorAll('.dm-center [data-source-form="geodata"] dm-button')).find((b) => b.textContent.trim() === t('families.add')).click();
+      Array.from(root.querySelectorAll('.dm-center [data-source-form="owngeodata"] dm-button')).find((b) => b.textContent.trim() === t('families.add')).click();
       const added = await waitFor(() => { const h1 = root.querySelector('.dm-api-view h1'); return h1 && !h1.textContent.includes('Testkatalog') && root.querySelectorAll('.dm-geo-layer').length === 3 ? h1 : null; }, 15000, 'the new source opened with its layers');
       const newOnes = (await connectors.list()).filter((c) => !known.has(c.id));
       assert.equal(newOnes.length, 1, 'one connector created');
@@ -273,6 +273,63 @@
       root.remove();
     }
   }, 120000);
+
+  test('ui: Egen geodatakälla is a source of its own in Geodatakällor whose form saves an address as a source, and Geodatakälla lists only the ready-made services', async (assert) => {
+    const root = document.createElement('div');
+    root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
+    document.body.appendChild(root);
+    const familyDialog = D.require('ui/api/family-dialog');
+    const ID = 'wfs-tests-geo-own-wfs';
+    try {
+      history.replaceState(null, '', location.pathname + location.search);
+      serve('tests/geo/own-wfs', (u) => (u.searchParams.get('request') === 'GetCapabilities' ? CAPS : { type: 'FeatureCollection', features: ALL }));
+      familyDialog.setServices([{ id: 'test-listed', name: 'Testverkets listade WFS', publisher: 'Testverket', country: 'NO', kind: 'wfs', url: BASE + '/listed-wfs', about: { sv: 'Prov.' } }]);
+      const shell = await D.require('app').start(root);
+      shell.activate('inhamta');
+      const pane = root.querySelector('.dm-left');
+      const center = root.querySelector('.dm-center');
+      const item = (id) => /** @type {HTMLElement} */ (pane.querySelector(`[data-source="${id}"]`));
+      await waitFor(() => item('owngeodata'), 5000, 'Egen geodatakälla in the column');
+      const rows = shell.modes.get('inhamta').sourceTree.rows();
+      const at = rows.findIndex((r) => r.id === 'group:geodata');
+      assert.deepEqual(rows.slice(at + 1, at + 5).map((r) => r.id), ['geodata', 'owngeodata', 'geoportal', 'boundaries'], 'in Geodatakällor, right after Geodatakälla');
+      assert.equal(item('owngeodata').querySelector('.dm-tree-label').textContent, t('geodata.own.short'));
+      // Geodatakälla: the ready-made services, and no fields for an address.
+      item('geodata').click();
+      const listed = await waitFor(() => center.querySelector('[data-source-form="geodata"] [data-family-form="geodata-ready"] .dm-geodata-ready-item'), 8000, 'the ready-made services');
+      assert.ok(listed.textContent.includes('Testverkets listade WFS'));
+      assert.ok(!center.querySelector('[data-family-field]'), 'no address of one\'s own there');
+      // Egen geodatakälla: the families and the address, without the list.
+      item('owngeodata').click();
+      const form = await waitFor(() => center.querySelector('[data-source-form="owngeodata"] [data-family-form="geodata"]'), 8000, 'the form');
+      assert.equal(center.querySelector('.dm-page-head h1').textContent.trim(), t('geodata.own.short'), 'its own heading');
+      assert.equal(center.querySelector('[data-source-lead="owngeodata"]').textContent, t('geodata.own.lead'));
+      assert.ok(!form.querySelector('.dm-geodata-ready'), 'no list of ready-made services');
+      assert.deepEqual(/** @type {any} */ (form.querySelector('dm-select')).options.map((o) => o.value), geodata.FAMILIES.map((f) => f.id), 'the geodata families');
+      const address = /** @type {any} */ (form.querySelector('[data-family-field="baseUrl"]'));
+      address.value = BASE + '/own-wfs'; address.dispatchEvent(new Event('input'));
+      /** @type {HTMLElement} */ (Array.from(form.querySelectorAll('dm-button')).find((b) => b.textContent.trim() === t('families.add')).querySelector('button')).click();
+      await waitFor(() => pane.querySelector(`[data-added="api:${ID}"]`) && root.querySelectorAll('.dm-center .dm-geo-layer').length === 3, 15000, 'saved, among the added sources and opened with its layers');
+      const made = await connectors.get(ID);
+      assert.ok(made && made.baseUrl === BASE + '/own-wfs' && made.family.kind === 'wfs', 'the address saved as a source: ' + JSON.stringify(made && made.baseUrl));
+      assert.deepEqual(geodata.layerEndpoints(made).map((e) => e.id), ['layer-stat-kommuner', 'layer-stat-lan']);
+      // From another mode the same form is a dialog.
+      shell.activate('hantera');
+      const dialogs = () => Array.from(document.querySelectorAll('dialog[open]'));
+      const done = familyDialog.open(shell.ctx, { group: 'geodata' });
+      const dlg = await waitFor(() => dialogs().pop(), 3000, 'the dialog');
+      assert.equal(dlg.querySelector('.dm-dialog-head h2').textContent, t('geodata.own.add'));
+      assert.ok(dlg.querySelector('[data-family-form="geodata"] [data-family-field="baseUrl"]') && !dlg.querySelector('.dm-geodata-ready'), 'the address, without the list');
+      /** @type {any} */ (dlg).close();
+      assert.equal(await done, null, 'closed without a source');
+      return 'ok';
+    } finally {
+      for (const d of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (d).close();
+      familyDialog.setServices(null);
+      await connectors.remove(ID).catch(() => {});
+      root.remove();
+    }
+  }, 60000);
 
   test('geodata: the shipped list has SLU species observations and four more datasets of the geodata platform', async (assert) => {
     const list = JSON.parse(await D.assets.loadText('presets/geodata/services.json')).services;
@@ -317,7 +374,7 @@
     const dialogs = () => Array.from(document.querySelectorAll('dialog.dm-dialog'));
     const here = reach.mode();
     familyDialog.setServices([{ id: 'test-far', name: 'Avlägsen tjänst', publisher: 'Testverket', country: 'NO', kind: 'wfs', url: 'https://example.invalid/wfs', cors: { [here]: false }, about: { sv: 'Nås inte här.' } }]);
-    const promise = familyDialog.open({ shell: { log: () => {} } }, { group: 'geodata' });
+    const promise = familyDialog.open({ shell: { log: () => {} } }, { group: 'geodata', ready: true });
     try {
       const dialog = await waitFor(() => { const d = dialogs().pop(); return d && d.querySelector('.dm-geodata-ready-item') ? d : null; }, 5000, 'the dialog');
       const item = dialog.querySelector('.dm-geodata-ready-item');
@@ -340,7 +397,7 @@
         { id: 'scb-geodata', preset: 'scb-geodata', name: 'SCB öppna geodata', publisher: 'SCB', country: 'SE', kind: 'wfs', url: 'https://geodata.scb.se/geoserver/wfs', about: { sv: 'Gränser.' } },
         { id: 'test-ready', name: 'Testverkets WFS', publisher: 'Testverket', country: 'NO', kind: 'wfs', url: BASE + '/ready-wfs', about: { sv: 'Kommuner i testlandet.', en: 'Municipalities of the test land.' } },
       ]);
-      const promise = familyDialog.open({ shell: { log: () => {} } }, { group: 'geodata' });
+      const promise = familyDialog.open({ shell: { log: () => {} } }, { group: 'geodata', ready: true });
       const dialog = await waitFor(() => { const d = dialogs().pop(); return d && d.querySelectorAll('.dm-geodata-ready-item').length === 2 ? d : null; }, 5000, 'dialog with two services');
       const items = () => Array.from(dialog.querySelectorAll('.dm-geodata-ready-item'));
       assert.ok(items()[0].textContent.includes('SCB öppna geodata') && items()[1].textContent.includes('Testverket'), 'names shown');
@@ -356,7 +413,7 @@
       assert.equal(connector.name, 'Testverkets WFS'); assert.deepEqual(geodata.layerEndpoints(connector).map((e) => e.id), ['layer-stat-kommuner', 'layer-stat-lan']);
       // A preset entry opens the existing connector without creating anything.
       const before = (await connectors.list()).length;
-      const promise2 = familyDialog.open({ shell: { log: () => {} } }, { group: 'geodata' });
+      const promise2 = familyDialog.open({ shell: { log: () => {} } }, { group: 'geodata', ready: true });
       const dialog2 = await waitFor(() => { const d = dialogs().pop(); return d && d !== dialog && d.querySelectorAll('.dm-geodata-ready-item').length === 2 ? d : null; }, 5000, 'second dialog');
       /** @type {any} */ (dialog2.querySelectorAll('.dm-geodata-ready-item')[0].querySelector('dm-button')).click();
       const preset = await promise2;

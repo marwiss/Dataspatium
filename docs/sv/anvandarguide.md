@@ -67,8 +67,9 @@ visas i mitten med en hjälptext ovanför.
   Insamling i fält, formuläret som telefonen fyller i; se [insamling.md](insamling.md)).
 - *Databaskällor*: Extern databas, Databas via bryggan och Neo4j.
 - *API-källor*: Öppna API:er och API från fil.
-- *Geodatakällor*: Geodatakälla och Gränser för kartor, med kommun- och regiongränser för Sverige, Danmark, Norge och
-  Finland som följer med appen.
+- *Geodatakällor*: Geodatakälla (färdiga öppna tjänster), Egen geodatakälla (en tjänst du anger adressen till),
+  Geodataportalen och Gränser för kartor, med kommun- och regiongränser för Sverige, Danmark, Norge och Finland som följer
+  med appen.
 - *Tillagda källor*: det du har lagt till, varje rad med en ta bort-knapp.
 - *Övriga källor*: Sparade hämtningar, Exempeldata (små öppna datamängder som följer med appen, var och en med ursprung och
   licens, och en knapp som importerar alla) och Guider.

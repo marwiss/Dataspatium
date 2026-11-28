@@ -68,8 +68,9 @@ shown in the middle with a help text above it.
   collection, the form the phone fills in; see [insamling.md](insamling.md)).
 - *Database sources*: External database, Database through the bridge and Neo4j.
 - *API sources*: Open APIs and API from file.
-- *Geodata sources*: Geodata source and Boundaries for maps, with municipality and region boundaries for Sweden, Denmark,
-  Norway and Finland that ship with the app.
+- *Geodata sources*: Geodata source (ready-made open services), Your own geodata source (a service whose address you
+  enter), Geodataportalen and Boundaries for maps, with municipality and region boundaries for Sweden, Denmark, Norway and
+  Finland that ship with the app.
 - *Added sources*: what you have added, each row with a remove button.
 - *Other sources*: Saved fetches, Example data (small open datasets that ship with the app, each with its origin and
   licence, and a button that imports them all) and Guides.

@@ -3352,7 +3352,6 @@
     'plan.theme.sarskiltvardefullabyggnadsverkallmannaplatserochbebyggelseomraden': 'Erityisen arvokkaat rakennukset, yleiset alueet ja rakennetut alueet',
     'plan.theme.omrade': 'Alue',
     'plan.theme.plangeometri': 'Kaavageometria',
-    'geodata.own.title': 'Oma palvelu',
     'geodata.ready.title': 'Valmiit paikkatietolähteet',
     'geodata.ready.hint': 'Avoimia palveluja, joiden on tarkistettu toimivan selaimesta. Valmis lähde avataan; muut lisätään yhdellä napsautuksella, ja tasot luetaan palvelusta.',
     'geodata.ready.filter': 'Suodata',

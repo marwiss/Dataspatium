@@ -42,7 +42,7 @@ samt via R: SPSS, Stata, SAS, PX, Parquet, RDS och RData (se
 Vänsterkolumnen har rubriken Källor i panelhuvudet, som i alla lägen. Grupperna fälls ut och
 in med pilen framför rubriken, och webbläsaren minns hur de stod. *Skapa källor*: Ny byggnadsmodell, Ny översiktsplan, Ny detaljplan, Nytt kartlager och Ny tabell.
 *Vanliga källor*: Filer, Klistra in, Webbadress, OpenCDE och Mobilen. *Databaskällor*: Extern databas, Databas via bryggan
-och Neo4j. *API-källor*: Öppna API:er och API från fil. *Geodatakällor*: Geodatakälla och Gränser för kartor. *Tillagda
+och Neo4j. *API-källor*: Öppna API:er och API från fil. *Geodatakällor*: Geodatakälla, Egen geodatakälla, Geodataportalen och Gränser för kartor. *Tillagda
 källor*: det du lagt till, varje rad med en ta bort-knapp; från start ligger SCB:s och Boverkets öppna API:er där. *Övriga
 källor*: Sparade hämtningar, Exempeldata och Guider. Allt öppnas i mitten, också formulären som lägger till en källa, med
 hjälptexten ovanför; samma formulär visas som dialog när det öppnas från ett annat läge eller ett kort. Varje källa har en
@@ -69,9 +69,9 @@ och i Chrome och Edge kan en fil länkas så att datamängden läses in igen fr�
 
 QGIS-projekt (.qgs, .qgz) blir kartvyer: lagerordning, synlighet och symboler följer med, lagren kopplas till datamängder med samma filnamn och datafiler som släpps tillsammans med projektet importeras först (se [kartor.md](kartor.md)).
 
-*Geodatakälla* under Geodatakällor: en WFS-, OGC API Features- eller ArcGIS-tjänst blir en källa vars
-lager hämtas som GeoJSON och öppnas som kartor, och källan *Geodataportalen (sök geodata)* söker i den nationella
-geodatakatalogen och lägger till tjänster med ett klick. Förinställda geodatakällor finns för SCB, SGU, Havs- och
+*Geodatakälla* under Geodatakällor listar färdiga öppna geodatatjänster, och *Egen geodatakälla* bredvid gör en källa av
+adressen till en annan WFS-, OGC API Features- eller ArcGIS-tjänst. Lagren hämtas som GeoJSON och öppnas som kartor, och
+källan *Geodataportalen (sök geodata)* söker i den nationella geodatakatalogen och lägger till tjänster med ett klick. Förinställda geodatakällor finns för SCB, SGU, Havs- och
 vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Statistikcentralen och SYKE, samt Lantmäteriets
 geodataplattform för den som har nyckel. Se [kallor.md](kallor.md#öppna-geodata). *Gränser för kartor* bredvid är
 kommun- och regiongränser för Norden som följer med appen, var och en med ursprung och licens, och *Exempeldata* under

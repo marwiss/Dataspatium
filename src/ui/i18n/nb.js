@@ -3352,7 +3352,6 @@
     'plan.theme.sarskiltvardefullabyggnadsverkallmannaplatserochbebyggelseomraden': 'Særlig verdifulle byggverk, allmenne plasser og bebyggelsesområder',
     'plan.theme.omrade': 'Område',
     'plan.theme.plangeometri': 'Plangeometri',
-    'geodata.own.title': 'Egen tjeneste',
     'geodata.ready.title': 'Ferdige geodatakilder',
     'geodata.ready.hint': 'Åpne tjenester som er kontrollert å virke fra nettleseren. En forhåndsinnstilt kilde åpnes; de øvrige legges til med ett klikk, og lagene leses fra tjenesten.',
     'geodata.ready.filter': 'Filtrer',

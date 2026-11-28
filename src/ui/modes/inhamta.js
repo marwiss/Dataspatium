@@ -59,7 +59,8 @@
         { id: 'catalog', icon: 'globe', label: 'api.sources', sub: 'api.catalog.hint' },
         { id: 'apifile', icon: 'file-json', label: 'api.add.file.short', sub: 'import.sources.api.hint' }] },
       { id: 'geodata', label: 'import.sources.geodata', items: [
-        { id: 'geodata', icon: 'map', label: 'geodata.add.short', sub: 'geodata.add.hint', feature: 'source:geodata' },
+        { id: 'geodata', icon: 'map', label: 'geodata.add.short', sub: 'geodata.ready.sub', feature: 'source:geodata' },
+        { id: 'owngeodata', icon: 'map-pin', label: 'geodata.own.short', sub: 'geodata.add.hint', feature: 'source:geodata' },
         { id: 'geoportal', icon: 'search', label: 'geoportal.title', sub: 'geoportal.hint', feature: 'source:geodata' },
         { id: 'boundaries', icon: 'grid-2x2', label: 'presets.geo.label', sub: 'import.sources.boundaries.hint' }] },
       { id: 'added', label: 'import.sources.added', items: [] },
@@ -75,7 +76,8 @@
       database: { options: { group: 'databases' }, lead: 'families.database.lead' },
       opencde: { options: { family: 'opencde' }, lead: 'families.opencde.add.hint' },
       neo4j: { options: { family: 'neo4j' }, lead: 'families.neo4j.add.hint' },
-      geodata: { options: { group: 'geodata' }, lead: 'geodata.add.hint' },
+      geodata: { options: { group: 'geodata', ready: true }, lead: 'geodata.ready.lead' },
+      owngeodata: { options: { group: 'geodata' }, lead: 'geodata.own.lead' },
     };
     /** The catalogue that the source Geodataportalen searches (presets/api/geodataportalen.api.json). */
     const GEOPORTAL = 'geodataportalen';
@@ -516,9 +518,10 @@
 
       // ---- the forms that add a source, in the workspace with their help (F126 a) ----
       /**
-       * The form of the source chosen, built once per opening: Extern databas, OpenCDE, Neo4j and Geodatakälla (ui/api/family-dialog
-       * in the group 'sources'), API från fil and Gränser för kartor (ui/import/source-forms). The same forms open as dialogs from
-       * other places. A form that adds a source opens the source when it is saved.
+       * The form of the source chosen, built once per opening: Extern databas, OpenCDE, Neo4j, Geodatakälla (the ready-made
+       * services) and Egen geodatakälla (ui/api/family-dialog in the group 'sources'), API från fil and Gränser för kartor
+       * (ui/import/source-forms). The same forms open as dialogs from other places. A form that adds a source opens the source
+       * when it is saved.
        */
       function renderForm() {
         const id = source;
@@ -529,7 +532,7 @@
           formWanted = null;
           // A post of Geodataportalen names its family (WFS, OGC API, ArcGIS) and came from content: consent per host (F103 a).
           const f = family
-            ? D.require('ui/api/family-dialog').form(ctx, Object.assign({}, family.options, wanted ? { values: wanted.values } : {}, wanted && wanted.family && wanted.family !== id && (id === 'database' || id === 'geodata') ? { family: wanted.family } : {}, wanted && wanted.perHost ? { perHost: true } : {}))
+            ? D.require('ui/api/family-dialog').form(ctx, Object.assign({}, family.options, wanted ? { values: wanted.values } : {}, wanted && wanted.family && wanted.family !== id && (id === 'database' || id === 'owngeodata') ? { family: wanted.family } : {}, wanted && wanted.perHost ? { perHost: true } : {}))
             : id === 'apifile' ? sourceForms.apiFileForm.form(ctx) : sourceForms.boundariesForm.form(ctx);
           const mine = { id, el: f.el, title: f.title };
           formUi = mine;
@@ -806,11 +809,11 @@
 
       // ---- Geodataportalen: search the national catalogue and fetch what its posts link to (PLAN 12 a4) ----
       /**
-       * What a post does in Inhämta: a service opens the form of a geodata source with the address filled in, a fetched file goes
+       * What a post does in Inhämta: a service opens the form Egen geodatakälla with the address filled in, a fetched file goes
        * to the import wizard as a file from an address, and the bridge's own view opens when a service shuts the browser out.
        */
       const geoportalActions = {
-        add: (family, url) => { formWanted = { id: 'geodata', values: { baseUrl: url }, family, perHost: true }; formUi = null; choose('geodata'); },
+        add: (family, url) => { formWanted = { id: 'owngeodata', values: { baseUrl: url }, family, perHost: true }; formUi = null; choose('owngeodata'); },
         open: (file, url) => { source = 'url'; restart(); useFetched(url, file, { config: false }); },
         bridge: () => choose('bridge'),
       };
@@ -1598,7 +1601,7 @@
         if (source === 'mobile') return;
         if (source === 'examples') { if (examplesUi) examplesUi.renderRight(slots.right); return; }
         if (source === 'boundaries') { replace(slots.right, h('h4', { text: t('presets.geo.label') }), h('p', { class: 'dm-help', text: t('boundaries.right') })); return; }
-        if (source === 'apifile' || FAMILY_FORMS[source]) { replace(slots.right, h('h4', { text: t(itemOf(source).label) }), h('p', { class: 'dm-help', text: t('import.form.right') })); return; }
+        if (source === 'apifile' || FAMILY_FORMS[source]) { replace(slots.right, h('h4', { text: t(itemOf(source).label) }), h('p', { class: 'dm-help', text: t(source === 'geodata' ? 'geodata.ready.right' : 'import.form.right') })); return; }
         if (source === 'guides') { replace(slots.right, h('h4', { text: t('guides.title') }), h('p', { class: 'dm-help', text: t('guides.right') })); return; }
         if (source === 'geoportal') { replace(slots.right, h('h4', { text: t('geoportal.title') }), h('p', { class: 'dm-help', text: t('geoportal.right') })); return; }
         if (source === 'newmodel') { replace(slots.right, h('h4', { text: t('newmodel.title') }), h('p', { class: 'dm-help', text: t('newmodel.right') })); return; }

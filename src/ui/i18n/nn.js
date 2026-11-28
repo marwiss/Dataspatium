@@ -3352,7 +3352,6 @@
     'plan.theme.sarskiltvardefullabyggnadsverkallmannaplatserochbebyggelseomraden': 'Særleg verdifulle byggverk, allmenne plassar og busetnadsområde',
     'plan.theme.omrade': 'Område',
     'plan.theme.plangeometri': 'Plangeometri',
-    'geodata.own.title': 'Eiga teneste',
     'geodata.ready.title': 'Ferdige geodatakjelder',
     'geodata.ready.hint': 'Opne tenester som er kontrollerte å verke frå nettlesaren. Ei førehandsinnstilt kjelde blir opna; dei andre blir lagde til med eitt klikk, og laga blir lesne frå tenesta.',
     'geodata.ready.filter': 'Filtrer',

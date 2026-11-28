@@ -3352,7 +3352,6 @@
     'plan.theme.sarskiltvardefullabyggnadsverkallmannaplatserochbebyggelseomraden': 'Sérlega verðmæt mannvirki, almenningssvæði og byggðasvæði',
     'plan.theme.omrade': 'Svæði',
     'plan.theme.plangeometri': 'Skipulagsrúmfræði',
-    'geodata.own.title': 'Eigin þjónusta',
     'geodata.ready.title': 'Tilbúnar landupplýsingauppsprettur',
     'geodata.ready.hint': 'Opnar þjónustur sem staðfest er að virki úr vafranum. Forstillt uppspretta opnast; aðrar er bætt við með einum smelli og lögin lesin úr þjónustunni.',
     'geodata.ready.filter': 'Sía',
