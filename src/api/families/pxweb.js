@@ -40,9 +40,10 @@
 
     const getJson = common.getJson;
     async function postJson(connector, url, body, options = {}) {
-      // PxWeb API v1 answers CORS preflights without Access-Control-Allow-Headers, so a JSON content type
-      // is blocked by browsers; the service accepts the same body as text/plain, which needs no preflight.
-      return common.postJson(connector, url, body, Object.assign({ contentType: version(connector) === 2 ? 'application/json' : 'text/plain;charset=UTF-8' }, options));
+      // PxWeb API v1 answers CORS preflights without Access-Control-Allow-Headers (ÅSUB refuses them), so a JSON content type
+      // is blocked by browsers; the service reads the same body under a form type, which needs no preflight. Not text/plain:
+      // ÅSUB's firewall refuses a JSON body under that type (Threat Protection, 403).
+      return common.postJson(connector, url, body, Object.assign({ contentType: version(connector) === 2 ? 'application/json' : 'application/x-www-form-urlencoded;charset=UTF-8' }, options));
     }
 
     // ---- v1 ----

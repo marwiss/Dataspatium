@@ -1,6 +1,6 @@
 {
  "format": "dataspatium-geodata-services/1",
- "note": "Open geodata services verified to allow requests from the browser (CORS with Origin null) on 2026-11-04 (Sundsvall on 2026-11-08). `preset` names the connector shipped with the app; the others are added with one click in the dialog Lägg till geodatakälla.",
+ "note": "Open geodata services verified on 2026-11-27 the way the app uses them: the capabilities, /collections or the ArcGIS directory with its folders, one feature of a layer in the format the app chooses, and CORS with Origin null. `preset` names the connector shipped with the app; the others are added with one click in the dialog Lägg till geodatakälla. Kartverket's WFS services give only GML, which the app cannot read yet.",
  "services": [
   {
    "id": "scb-geodata",
@@ -9,7 +9,7 @@
    "publisher": "Statistiska centralbyrån",
    "country": "SE",
    "kind": "wfs",
-   "url": "https://geodata.scb.se/geoserver/wfs",
+   "url": "https://geodata.scb.se/geoserver/stat/wfs",
    "docs": "https://www.scb.se/vara-tjanster/oppna-data/oppna-geodata/",
    "license": "CC0 1.0",
    "about": {
@@ -24,20 +24,58 @@
   {
    "id": "sgu-geodata",
    "preset": "sgu-geodata",
-   "name": "SGU öppna geodata",
+   "name": "SGU jordarter",
    "publisher": "Sveriges geologiska undersökning",
    "country": "SE",
-   "kind": "wfs",
-   "url": "https://maps3.sgu.se/geoserver/wfs",
+   "kind": "ogcapi",
+   "url": "https://api.sgu.se/oppnadata/jordarter25k-100k/ogc/features/v1",
    "docs": "https://www.sgu.se/produkter-och-tjanster/geologiska-data/",
-   "license": "SGU öppna data",
+   "license": "CC0 1.0",
    "about": {
-    "sv": "Jordarter, berggrund, brunnar och grundvatten.",
-    "en": "Soils, bedrock, wells and groundwater.",
-    "da": "Jordarter, grundfjeld, brønde og grundvand.",
-    "nb": "Løsmasser, berggrunn, brønner og grunnvann.",
-    "fi": "Maaperä, kallioperä, kaivot ja pohjavesi.",
-    "is": "Jarðgrunnur, berggrunnur, borholur og grunnvatn."
+    "sv": "Jordartskartan 1:25 000–1:100 000: grundlager, översta ytlager, landformer, blockighet med mera.",
+    "en": "The soil map 1:25,000–1:100,000: base layer, top surface layer, landforms, bouldery ground and more."
+   }
+  },
+  {
+   "id": "sgu-berggrund",
+   "name": "SGU berggrund",
+   "publisher": "Sveriges geologiska undersökning",
+   "country": "SE",
+   "kind": "ogcapi",
+   "url": "https://api.sgu.se/oppnadata/berggrund50k-250k/ogc/features/v1",
+   "docs": "https://www.sgu.se/produkter-och-tjanster/geologiska-data/",
+   "license": "CC0 1.0",
+   "about": {
+    "sv": "Berggrundskartan 1:50 000–1:250 000: geologiska enheter, deformationszoner och bergarter.",
+    "en": "The bedrock map 1:50,000–1:250,000: geological units, deformation zones and rock types."
+   }
+  },
+  {
+   "id": "sgu-brunnar",
+   "name": "SGU brunnar",
+   "publisher": "Sveriges geologiska undersökning",
+   "country": "SE",
+   "kind": "ogcapi",
+   "url": "https://api.sgu.se/oppnadata/brunnar/ogc/features/v1",
+   "docs": "https://www.sgu.se/produkter-och-tjanster/geologiska-data/",
+   "license": "CC0 1.0",
+   "about": {
+    "sv": "Brunnsarkivet: brunnar med djup, jorddjup, kapacitet och användning; fastighetsbeteckningen följer med.",
+    "en": "The well archive: wells with depth, soil depth, capacity and use; the property designation comes along."
+   }
+  },
+  {
+   "id": "sgu-grundvatten",
+   "name": "SGU grundvattenmagasin",
+   "publisher": "Sveriges geologiska undersökning",
+   "country": "SE",
+   "kind": "ogcapi",
+   "url": "https://api.sgu.se/oppnadata/grundvattenmagasin/ogc/features/v1",
+   "docs": "https://www.sgu.se/produkter-och-tjanster/geologiska-data/",
+   "license": "CC0 1.0",
+   "about": {
+    "sv": "Grundvattenmagasin, grundvattendelare och grundvattnets strömningsriktningar.",
+    "en": "Groundwater aquifers, groundwater divides and flow directions."
    }
   },
   {
@@ -392,21 +430,17 @@
    }
   },
   {
-   "id": "riksantikvaren-arcgis",
-   "name": "Kulturminnesøk",
+   "id": "riksantikvaren-kulturminner",
+   "name": "Kulturminner",
    "publisher": "Riksantikvaren",
    "country": "NO",
-   "kind": "arcgis",
-   "url": "https://kart.ra.no/arcgis/rest/services",
-   "docs": "https://www.riksantikvaren.no/veileder/kulturminnesok-og-askeladden/",
+   "kind": "ogcapi",
+   "url": "https://api.ra.no/LokaliteterEnkeltminnerOgSikringssoner",
+   "docs": "https://kartkatalog.geonorge.no/metadata/47c7e832-d52d-459d-8c87-d4e157476e75",
    "license": "NLOD 2.0",
    "about": {
-    "sv": "Kulturminnen och kulturmiljöer i Norge.",
-    "en": "Cultural heritage sites and environments of Norway.",
-    "da": "Kulturminder og kulturmiljøer i Norge.",
-    "nb": "Kulturminner og kulturmiljøer.",
-    "fi": "Norjan kulttuuriperintökohteet ja -ympäristöt.",
-    "is": "Menningarminjar og menningarumhverfi í Noregi."
+    "sv": "Kulturminnen i Norge ur Askeladden: lokaliteter, enkeltminnen och säkringszoner.",
+    "en": "Cultural heritage sites of Norway from Askeladden: localities, single monuments and safety zones."
    }
   },
   {
@@ -431,20 +465,30 @@
   {
    "id": "syke-geodata",
    "preset": "syke-geodata",
-   "name": "SYKE",
+   "name": "SYKE skyddade områden",
    "publisher": "Finlands miljöcentral",
    "country": "FI",
-   "kind": "arcgis",
-   "url": "https://paikkatieto.ymparisto.fi/arcgis/rest/services",
-   "docs": "https://www.syke.fi/sv/miljoinformation/oppen-information",
+   "kind": "wfs",
+   "url": "https://paikkatiedot.ymparisto.fi/geoserver/inspire_ps/wfs",
+   "docs": "https://www.syke.fi/avointieto",
    "license": "CC BY 4.0",
    "about": {
-    "sv": "Naturskyddsområden, vattendrag, avrinningsområden.",
-    "en": "Nature reserves, watercourses, catchments.",
-    "da": "Naturbeskyttelsesområder, vandløb, afstrømningsområder.",
-    "nb": "Naturvernområder, vassdrag, nedbørfelt.",
-    "fi": "Luonnonsuojelualueet, vesistöt, valuma-alueet.",
-    "is": "Náttúruverndarsvæði, vatnsföll, vatnasvið."
+    "sv": "Naturskyddsområden, Natura 2000, ödemarksområden och skyddade byggnader i Finland.",
+    "en": "Nature reserves, Natura 2000, wilderness areas and protected buildings in Finland."
+   }
+  },
+  {
+   "id": "syke-vatten",
+   "name": "SYKE vatten",
+   "publisher": "Finlands miljöcentral",
+   "country": "FI",
+   "kind": "wfs",
+   "url": "https://paikkatiedot.ymparisto.fi/geoserver/inspire_hy/wfs",
+   "docs": "https://www.syke.fi/avointieto",
+   "license": "CC BY 4.0",
+   "about": {
+    "sv": "Avrinningsområden, vattendrag och vattennätets noder i Finland.",
+    "en": "Catchments, watercourses and the nodes of the water network in Finland."
    }
   },
   {

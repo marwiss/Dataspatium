@@ -44,7 +44,10 @@
         let pages = 0; let truncated = false; let firstData = null; let lastMeta = null;
         while (req) {
           const authed = await auth.apply(connector, req, { signal: options.signal, ask: options.ask });
-          const res = await http.request(Object.assign({}, authed, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal, ask: options.ask }));
+          // A page that may be asked for again smaller is not repeated at the same size first (pagination.shrink).
+          const shrinkable = pagination.canShrink(pag, state);
+          const res = await http.request(Object.assign({}, authed, { rateKey: connector.id, rateLimit: connector.rateLimit, cors: connector.cors, signal: options.signal, ask: options.ask }, shrinkable ? { retries: 0 } : {}));
+          if (!res.ok && res.status >= 500 && shrinkable) { req = pagination.shrink(pag, state, req); continue; }
           pages++;
           if (!res.ok) throw http.httpError(res, connector.name);
           const parsed = await parsers.parse(res.text, spec, { options: runtimeOptions });

@@ -25,7 +25,7 @@ browsed in the app's language when the service has it.
 | OECD | Unemployment, GDP growth and the OECD's other statistics (SDMX) | No | Choose countries, or give the dataflow and series key |
 | National Board of Health and Welfare | Causes of death, diagnoses, medicines, operations and more | No | Choose subject, choose values per variable, Fetch |
 | SMHI meteorological observations | The weather stations' measurements | No | Choose parameter, station and period |
-| Air quality (Swedish EPA data host) | Air pollutants per measuring station | No | List time series, fetch values for a time series |
+| Air quality (Swedish EPA data host) | Air pollutants per measuring station | No | List the stations, list the time series of a station, fetch values for a time series |
 | Nature Conservation Register (Swedish EPA) | Protected areas (WFS) | No | Choose layer, Fetch |
 | Lantmäteriet open geodata (catalogue) | Products and download files | No | List products and files, download, import as a file |
 | Sweden's data portal | Search the datasets of all agencies | No | Search, read the table, download and import as a file |
@@ -35,7 +35,7 @@ browsed in the app's language when the service has it.
 | Trafikverket NVDB | Road data: speed limits, road numbers, bearing capacity and 42 more object types, as a map | Yes, free key from data.trafikverket.se | Choose an object type, give an area, Fetch |
 | Lantmäteriet geodata with a key (STAC) | Vector data, orthophotos, elevation data and maps as files | Yes, account in Geotorget (OAuth2) | Choose a collection, give an area, Fetch; the files are fetched in Manage with *Files in the source* |
 | Riksbank interest and exchange rates (SWEA) | The policy rate, market rates and exchange rates | No, but reached only through the bridge | Choose a series and a period, Fetch |
-| World Bank: indicators | Population, GDP, emissions and other indicators per country and year | No, but reached only through the bridge | Give countries, indicator and years, Fetch |
+| World Bank: indicators | Population, GDP, emissions and other indicators per country and year | No | Give countries, indicator and years, Fetch |
 
 ### The other Nordic countries
 
@@ -65,14 +65,14 @@ All have been checked for CORS (requests with an `Origin` header) in November 20
 | Nordic region | Nordic Statistics database | Comparable Nordic statistics, English | Browse, choose values |
 
 Not included: Denmark's DMI and Norway's Frost (MET) require a key; Energi Data Service and data.norge.no lack CORS;
-opingogn.is no longer has a search API. The Riksbank and the World Bank do not allow requests from
-the browser (no CORS); they are reached through the bridge (see [Fetching through the bridge](kallor.md#fetching-through-the-bridge)) or your own proxy, see below. The Swedish Civil Defence and Resilience
+opingogn.is no longer has a search API. The Riksbank does not allow requests from
+the browser (no CORS); it is reached through the bridge (see [Fetching through the bridge](kallor.md#fetching-through-the-bridge)) or your own proxy, see below, and the error of a fetch says how. The Swedish Civil Defence and Resilience
 Agency (MCF, formerly MSB) has no documented open API; its statistics are imported as files.
 
 Geodata sources (the family `geodata` with `kind` `wfs`, `ogcapi` or `arcgis`) ship without endpoints: the layers are read
-from the service when the source is opened and kept in your copy of the configuration. Presets: SCB open geodata, SGU, the
+from the service when the source is opened and kept in your copy of the configuration. Presets: SCB open geodata, SGU (OGC API Features), the
 Agency for Marine and Water Management, the National Heritage Board, the Forest Agency (ArcGIS), Kartverket (administrative
-units, cadastral map), Statistics Finland, SYKE (ArcGIS) and, with a key, Lantmäteriet's geodata platform (detailed
+units, cadastral map; GML only), Statistics Finland, SYKE (WFS) and, with a key, Lantmäteriet's geodata platform (detailed
 plans). The source *Geodataportalen (sök geodata)* (the family `geoportal`, response format `geonetwork`) searches the
 Swedish national catalogue. See [kallor.md](kallor.md#open-geodata).
 
@@ -205,7 +205,7 @@ app folder and are good starting points.
 | `headers` | Extra headers |
 | `params` | Parameters, see below |
 | `body`, `bodyType` | Body for POST: a JSON template where `"{name}"` is replaced by the value (`json`, default), `form`, `text` or `xml` (a text template whose values are escaped, except for parameters with `raw`, and whose empty placeholders are removed) |
-| `pagination` | `none`, `page` (`param`, `start`, `sizeParam`, `size`, `totalPagesPath`), `offset` (`param`, `sizeParam`, `size`, `totalPath`; `in: "body"` puts the offset and the size in the body), `next-url` (`path` to the next address in the response), `cursor` (`path`, `param`), `link-header` (`rel`), `link-rel` (`path` to a list of links, `rel`); `maxPages` limits the number of requests |
+| `pagination` | `none`, `page` (`param`, `start`, `sizeParam`, `size`, `totalPagesPath`), `offset` (`param`, `sizeParam`, `size`, `totalPath`; `in: "body"` puts the offset and the size in the body; `sizeEnd: true` sends the end of the page, the offset plus the size, in `sizeParam`, as Naturvårdsregistret's WFS reads `count`; `shrink: true` asks again for a page that the service answers with 5xx, a quarter as large, down to 10, and keeps the smaller size, as the ArcGIS layers of geodata sources do), `next-url` (`path` to the next address in the response), `cursor` (`path`, `param`), `link-header` (`rel`), `link-rel` (`path` to a list of links, `rel`); `maxPages` limits the number of requests |
 | `response` | `format`: `json` (`path` to the records, `explode` for a nested list), `jsonstat`, `sdmx` (SDMX-JSON 1.0 and 2.0), `csv` (`options.delimiter`, `options.skipUntil`, `options.decimal`), `geojson` (`options.geometry`), `xml` (`recordTag`), `entryscape`, `text`, `graphql` (the first list under `data` becomes the table; errors in the response are reported), `sparql` (the query variables become columns), `influx-csv` (annotated CSV from InfluxDB). `lift` lifts the fields of a nested object into columns (CouchDB `doc`, Elasticsearch `_source`, Airtable `fields`), and a `path` that is a key with dots (`@odata.nextLink`) is looked up whole. `geometry` (`path` to the geometry as WKT and `crs`) gives the columns `geometri_typ` and `geometri` in WGS 84, and `errorPath` points to the service's error message in an answer that is otherwise data. Common: `constants` (column: path in the root document), `convert` (`epoch-ms`, `epoch-s`, `number`), `rename`, `drop` |
 | `dataset` | `name` with placeholders, `keys` for the duplicate check when appending rows |
 

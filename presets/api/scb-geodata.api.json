@@ -11,7 +11,7 @@
   },
   "level": 1,
   "country": "SE",
-  "baseUrl": "https://geodata.scb.se/geoserver/wfs",
+  "baseUrl": "https://geodata.scb.se/geoserver/stat/wfs",
   "auth": {
     "type": "none"
   },

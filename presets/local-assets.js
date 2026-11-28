@@ -33,7 +33,7 @@ Dataspatium.assets.addEntries({
  "presets/api/avoindata-fi.api.json": {
   "file": "presets/api/avoindata-fi.api.json.js",
   "encoding": "text",
-  "size": 5566,
+  "size": 5572,
   "library": "dataspatium"
  },
  "presets/api/boverket-energideklarationer.api.json": {
@@ -153,7 +153,7 @@ Dataspatium.assets.addEntries({
  "presets/api/kolada.api.json": {
   "file": "presets/api/kolada.api.json.js",
   "encoding": "text",
-  "size": 16106,
+  "size": 16144,
   "library": "dataspatium"
  },
  "presets/api/kuntien-avainluvut.api.json": {
@@ -189,7 +189,7 @@ Dataspatium.assets.addEntries({
  "presets/api/luftkvalitet.api.json": {
   "file": "presets/api/luftkvalitet.api.json.js",
   "encoding": "text",
-  "size": 8785,
+  "size": 8240,
   "library": "dataspatium"
  },
  "presets/api/met-locationforecast.api.json": {
@@ -201,7 +201,7 @@ Dataspatium.assets.addEntries({
  "presets/api/naturvardsregistret.api.json": {
   "file": "presets/api/naturvardsregistret.api.json.js",
   "encoding": "text",
-  "size": 5833,
+  "size": 5849,
   "library": "dataspatium"
  },
  "presets/api/nordic-statistics.api.json": {
@@ -255,7 +255,7 @@ Dataspatium.assets.addEntries({
  "presets/api/scb-geodata.api.json": {
   "file": "presets/api/scb-geodata.api.json.js",
   "encoding": "text",
-  "size": 3025,
+  "size": 3030,
   "library": "dataspatium"
  },
  "presets/api/scb-pxweb-v2.api.json": {
@@ -273,7 +273,7 @@ Dataspatium.assets.addEntries({
  "presets/api/sgu-geodata.api.json": {
   "file": "presets/api/sgu-geodata.api.json.js",
   "encoding": "text",
-  "size": 3022,
+  "size": 2572,
   "library": "dataspatium"
  },
  "presets/api/skipulagsstofnun.api.json": {
@@ -291,7 +291,7 @@ Dataspatium.assets.addEntries({
  "presets/api/smhi-metobs.api.json": {
   "file": "presets/api/smhi-metobs.api.json.js",
   "encoding": "text",
-  "size": 13816,
+  "size": 13920,
   "library": "dataspatium"
  },
  "presets/api/socialstyrelsen.api.json": {
@@ -339,7 +339,7 @@ Dataspatium.assets.addEntries({
  "presets/api/syke-geodata.api.json": {
   "file": "presets/api/syke-geodata.api.json.js",
   "encoding": "text",
-  "size": 2937,
+  "size": 2598,
   "library": "dataspatium"
  },
  "presets/api/trafikverket-nvdb.api.json": {
@@ -357,7 +357,7 @@ Dataspatium.assets.addEntries({
  "presets/api/worldbank.api.json": {
   "file": "presets/api/worldbank.api.json.js",
   "encoding": "text",
-  "size": 8707,
+  "size": 6684,
   "library": "dataspatium"
  },
  "presets/geo/fylker-no.geojson": {
@@ -417,7 +417,7 @@ Dataspatium.assets.addEntries({
  "presets/geodata/services.json": {
   "file": "presets/geodata/services.json.js",
   "encoding": "text",
-  "size": 30962,
+  "size": 32863,
   "library": "dataspatium"
  },
  "presets/ids/SE-Dataspatium_Avfallshantering.ids": {
@@ -585,13 +585,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/api-konfiguration.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 21302,
+  "size": 21669,
   "library": "dataspatium"
  },
  "docs/sv/kallor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 28991,
+  "size": 29852,
   "library": "dataspatium"
  },
  "docs/sv/snabbstart.md": {
@@ -1599,13 +1599,13 @@ Dataspatium.assets.addEntries({
  "docs/en/api-konfiguration.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 21949,
+  "size": 22295,
   "library": "dataspatium"
  },
  "docs/en/kallor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 28825,
+  "size": 29694,
   "library": "dataspatium"
  },
  "docs/en/snabbstart.md": {

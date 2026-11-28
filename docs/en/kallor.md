@@ -69,9 +69,8 @@ When a fetch fails like a network error and a bridge is connected, the app sends
 the page can never add one. It refuses addresses on this computer or the local network, sends only a few headers and no
 cookies, follows at most three redirects to allowed hosts and stops at `--max-fetch-mb` (50 MB by default). The bridge’s log
 shows the host and the path, never the query, the headers or the body. The consent for the purpose applies as before.
-Two presets are reached only this way: *Riksbank interest and exchange rates (SWEA)* and *World Bank: indicators*. The source
-list marks them *Requires the bridge*; start the bridge with `--allow-host api.riksbank.se --allow-host api.worldbank.org` to
-fetch from them.
+One preset is reached only this way: *Riksbank interest and exchange rates (SWEA)*. The source list marks it *Requires the
+bridge*, and a fetch without the bridge says how: start the bridge with `--allow-host api.riksbank.se` to fetch from it.
 
 ### Controlling the app from outside
 
@@ -255,8 +254,8 @@ Dataregium opens in a popup (sign-in, upload, document selection) appear in the 
 The dialog for *Geodata source* under *Add sources* starts with a list of **ready-made geodata sources**: open WFS, OGC API Features and
 ArcGIS services of Nordic agencies and municipalities (SCB, SGU, Naturvårdsverket, SLU Artdatabanken, Riksantikvarieämbetet,
 Skogsstyrelsen, Sundsvalls kommun, Kartverket, Miljødirektoratet, Riksantikvaren, Statistics Finland, SYKE, Helsinki, Väylävirasto,
-Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands and others), all verified to work from the
-browser. A preset source opens, the others are added with one click and their layers read from the service; filter
+Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands and others), all tried from the browser all
+the way to a fetched feature. Kartverket's WFS services give only GML and cannot be read yet. A preset source opens, the others are added with one click and their layers read from the service; filter
 by name, country or contents. The list lives in `presets/geodata/services.json`. Below the list are the fields for a
 
 Three sources fetch plans: *Plandata.dk (WFS)* and *Skipulagsstofnun skipulagsgögn (ArcGIS)* have the button **Fetch
@@ -274,13 +273,18 @@ and *Open as map* takes you to the saved dataset.
 
 | Family | Discovery | Fetching | Key |
 |---|---|---|---|
-| WFS 2.0 (GeoServer, MapServer, Deegree) | GetCapabilities | GetFeature with `outputFormat=application/json` and `srsName=EPSG:4326`; area (bbox), CQL filter, columns; pages with `startIndex`/`count` | Bearer (optional) |
+| WFS 2.0 (GeoServer, MapServer, ArcGIS Server, Deegree) | GetCapabilities | GetFeature in the GeoJSON format the capabilities name (`application/json`, `GEOJSON` and others) with `srsName=EPSG:4326`; area (bbox), CQL filter, columns; pages with `startIndex`/`count`, never larger than the service sends (`CountDefault`) | Bearer (optional) |
 | OGC API Features | `/collections` | `/collections/{id}/items` with bbox, datetime and filter; next links are followed | Bearer (optional; required by Lantmäteriet's geodata platform) |
-| ArcGIS REST (FeatureServer, MapServer) | The service description or a whole directory | `/{layer}/query` with where, area, `f=geojson` and `outSR=4326`; pages with `resultOffset` | Token (optional) |
+| ArcGIS REST (FeatureServer, MapServer) | The service description or a whole directory with its folders, and each service's layers except group and raster layers | `/{layer}/query` with where, area, `f=geojson` and `outSR=4326`; pages with `resultOffset`, never larger than `maxRecordCount`; a page the service cannot manage (error 500 for heavy polygons) is fetched again a quarter as large | Token (optional) |
 
-Preset geodata sources without a key (CORS verified): SCB open geodata, SGU, the Swedish Agency for Marine and Water
-Management, the National Heritage Board's ancient remains, the Swedish Forest Agency, Kartverket's administrative units
-and cadastral map (Norway), Statistics Finland and SYKE (Finland). The layers are read from the service the first time
+Errors the service reports itself are shown with the service's text and code, for example *Service WFS is disabled
+(ServiceUnavailable)* from a switched-off WFS or an ArcGIS error, and a WFS that gives no GeoJSON says which formats it
+gives. The app does not read GML yet; choose another service for the same data then, for example an OGC API Features service.
+
+Preset geodata sources without a key (CORS verified): SCB open geodata, SGU's soils (bedrock, wells and groundwater
+aquifers are in the list), the Swedish Agency for Marine and Water Management, the National Heritage Board's ancient
+remains, the Swedish Forest Agency, Kartverket's administrative units and cadastral map (Norway; GML only, cannot be read
+yet), Statistics Finland and SYKE's protected areas (Finland). The layers are read from the service the first time
 the source is opened and can be reread with *Reread layers*; the list is kept in your copy of the source. Lantmäteriet's
 geodata platform (detailed plans, buildings, shore protection, cultural heritage remains and the boundary of forest near the mountains) is a level 2 source with a Bearer key from a connected organisation.
 

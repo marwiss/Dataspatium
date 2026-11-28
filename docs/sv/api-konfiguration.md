@@ -19,7 +19,7 @@ tjänsten tillåter anrop från webbläsare (CORS); alla förinställningar neda
 | OECD | Arbetslöshet, BNP-tillväxt och OECD:s övriga statistik (SDMX) | Nej | Välj länder, eller ange dataflöde och serienyckel |
 | Socialstyrelsen Statistikdatabasen | Dödsorsaker, diagnoser, läkemedel, operationer m.m. | Nej | Välj ämne, välj värden per variabel, Hämta |
 | SMHI meteorologiska observationer | Väderstationernas mätvärden | Nej | Välj parameter, station och tidsutsnitt |
-| Luftkvalitet (Naturvårdsverkets datavärdskap) | Luftföroreningar per mätstation | Nej | Lista tidsserier, hämta värden för en tidsserie |
+| Luftkvalitet (Naturvårdsverkets datavärdskap) | Luftföroreningar per mätstation | Nej | Lista stationerna, lista tidsserierna för en station, hämta värden för en tidsserie |
 | Naturvårdsregistret (Naturvårdsverket) | Skyddade områden (WFS) | Nej | Välj lager, Hämta |
 | Lantmäteriet öppna geodata (katalog) | Produkter och nedladdningsfiler | Nej | Lista produkter och filer, ladda ned, importera som fil |
 | Sveriges dataportal | Sök datamängder hos alla myndigheter | Nej | Sök, läs tabellen, ladda ned och importera som fil |
@@ -29,10 +29,10 @@ tjänsten tillåter anrop från webbläsare (CORS); alla förinställningar neda
 | Trafikverket NVDB | Vägdata: hastighetsgränser, vägnummer, bärighet och 42 objekttyper till, som karta | Ja, kostnadsfri nyckel från data.trafikverket.se | Välj objekttyp, ange område, Hämta |
 | Lantmäteriet geodata med nyckel (STAC) | Vektordata, ortofoton, höjddata och kartor som filer | Ja, konto i Geotorget (OAuth2) | Välj samling, ange område, Hämta; filerna hämtas i Hantera med *Filer i källan* |
 | Riksbanken räntor och valutakurser (SWEA) | Styrräntan, marknadsräntor och valutakurser | Nej, men nås bara via bryggan | Välj serie och period, Hämta |
-| Världsbanken: indikatorer | Folkmängd, BNP, utsläpp och andra indikatorer per land och år | Nej, men nås bara via bryggan | Ange länder, indikator och år, Hämta |
+| Världsbanken: indikatorer | Folkmängd, BNP, utsläpp och andra indikatorer per land och år | Nej | Ange länder, indikator och år, Hämta |
 
-Riksbanken och Världsbanken tillåter inte anrop från webbläsaren (ingen CORS); de nås via bryggan (se
-[Hämta via bryggan](kallor.md#hämta-via-bryggan)) eller via en egen proxy, se nedan. Myndigheten för civilt försvar (MCF, tidigare MSB) har inget dokumenterat
+Riksbanken tillåter inte anrop från webbläsaren (ingen CORS); den nås via bryggan (se
+[Hämta via bryggan](kallor.md#hämta-via-bryggan)) eller via en egen proxy, se nedan, och felet vid en hämtning säger hur. Myndigheten för civilt försvar (MCF, tidigare MSB) har inget dokumenterat
 öppet API; deras statistik importeras som filer.
 
 ### Övriga Norden
@@ -73,9 +73,9 @@ CORS; opingogn.is har inget sök-API längre. Egna konfigurationer för sådana 
 proxy eller nyckel enligt nedan.
 
 Geodatakällor (familjen `geodata` med `kind` `wfs`, `ogcapi` eller `arcgis`) levereras utan ändpunkter: lagren läses från
-tjänsten när källan öppnas och sparas i din kopia av konfigurationen. Förinställda: SCB öppna geodata, SGU, Havs- och
-vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen (ArcGIS), Kartverket (administrativa enheter, fastighetskarta),
-Statistikcentralen, SYKE (ArcGIS) och, med nyckel, Lantmäteriets geodataplattform (detaljplaner). Källan *Geodataportalen
+tjänsten när källan öppnas och sparas i din kopia av konfigurationen. Förinställda: SCB öppna geodata, SGU (OGC API Features), Havs- och
+vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen (ArcGIS), Kartverket (administrativa enheter, fastighetskarta;
+bara GML), Statistikcentralen, SYKE (WFS) och, med nyckel, Lantmäteriets geodataplattform (detaljplaner). Källan *Geodataportalen
 (sök geodata)* (familjen `geoportal`, svarsformatet `geonetwork`) söker i den nationella katalogen. Se
 [kallor.md](kallor.md#öppna-geodata).
 
@@ -203,7 +203,7 @@ från fil** och kan exporteras med **Exportera konfiguration** för att delas. F
 | `headers` | Extra headers |
 | `params` | Parametrar, se nedan |
 | `body`, `bodyType` | Kropp för POST: JSON-mall där `"{namn}"` byts mot värdet (`json`, standard), `form`, `text` eller `xml` (textmall där värdena escapas, utom för parametrar med `raw`, och tomma platshållare tas bort) |
-| `pagination` | `none`, `page` (`param`, `start`, `sizeParam`, `size`, `totalPagesPath`), `offset` (`param`, `sizeParam`, `size`, `totalPath`; `in: "body"` lägger förskjutningen och storleken i kroppen), `next-url` (`path` till nästa adress i svaret), `cursor` (`path`, `param`), `link-header` (`rel`), `link-rel` (`path` till en länklista, `rel`); `maxPages` begränsar antalet anrop |
+| `pagination` | `none`, `page` (`param`, `start`, `sizeParam`, `size`, `totalPagesPath`), `offset` (`param`, `sizeParam`, `size`, `totalPath`; `in: "body"` lägger förskjutningen och storleken i kroppen; `sizeEnd: true` skickar sidans slut, förskjutningen plus storleken, i `sizeParam`, som Naturvårdsregistrets WFS läser `count`; `shrink: true` ber om en sida som tjänsten svarar 5xx på igen, en fjärdedel så stor, ned till 10, och behåller den mindre storleken, som geodatakällornas ArcGIS-lager gör), `next-url` (`path` till nästa adress i svaret), `cursor` (`path`, `param`), `link-header` (`rel`), `link-rel` (`path` till en länklista, `rel`); `maxPages` begränsar antalet anrop |
 | `response` | `format`: `json` (`path` till posterna, `explode` för nästlad lista), `jsonstat`, `sdmx` (SDMX-JSON 1.0 och 2.0), `csv` (`options.delimiter`, `options.skipUntil`, `options.decimal`), `geojson` (`options.geometry`), `xml` (`recordTag`), `entryscape`, `text`, `graphql` (första listan under `data` blir tabellen; fel i svaret rapporteras), `sparql` (frågans variabler blir kolumner), `influx-csv` (kommenterad CSV från InfluxDB). `lift` lyfter upp ett nästlat objekts fält till kolumner (CouchDB `doc`, Elasticsearch `_source`, Airtable `fields`), och en `path` som är en nyckel med punkter (`@odata.nextLink`) slås upp hel. `geometry` (`path` till geometrin som WKT och `crs`) ger kolumnerna `geometri_typ` och `geometri` i WGS 84, och `errorPath` pekar på tjänstens felmeddelande i ett svar som annars är data. Gemensamt: `constants` (kolumn: sökväg i rotdokumentet), `convert` (`epoch-ms`, `epoch-s`, `number`), `rename`, `drop` |
 | `dataset` | `name` med platshållare, `keys` för dubblettkontroll vid Lägg till rader |
 

@@ -101,12 +101,6 @@
       assert.equal(t2.rows.length, 3); assert.equal(t2.meta.pages, 2);
       const q = new URL(served[0]);
       assert.deepEqual(['1=1', '*', '4326', 'geojson', 'true', '0', '2'], ['where', 'outFields', 'outSR', 'f', 'returnGeometry', 'resultOffset', 'resultRecordCount'].map((k) => q.searchParams.get(k)), 'query parameters');
-      // A services directory: the feature and map services become entities with their first layer.
-      serve('tests/geo/arcgis2', () => ({ services: [{ name: 'Mapp/Skog', type: 'FeatureServer' }, { name: 'Mapp/Bild', type: 'ImageServer' }] }));
-      const r3 = await geodata.createConnector('arcgis', { baseUrl: BASE + '/arcgis2' });
-      ids.push(r3.connector.id);
-      assert.deepEqual(r3.entities.map((e) => e.id), ['Skog/FeatureServer/0']);
-      assert.equal(r3.connector.endpoints[0].path, '/Skog/FeatureServer/0/query');
     } finally { for (const id of ids) await connectors.remove(id).catch(() => {}); }
     return 'ok';
   });
@@ -291,6 +285,14 @@
       assert.ok(s.key && s.kind === 'ogcapi' && /\/sokning\/v1\/[a-z]+\/v1$/.test(s.url), s.id + ': ' + s.url);
     }
     assert.equal(new Set(list.map((s) => s.id)).size, list.length, 'the ids are unique');
+    // The review of 2026-11-27: SCB's workspace, SGU's and Riksantikvaren's OGC APIs, SYKE's GeoServer.
+    assert.equal(byId.get('scb-geodata').url, 'https://geodata.scb.se/geoserver/stat/wfs');
+    for (const id of ['sgu-geodata', 'sgu-berggrund', 'sgu-brunnar', 'sgu-grundvatten']) assert.ok(byId.get(id) && byId.get(id).kind === 'ogcapi' && /^https:\/\/api\.sgu\.se\/oppnadata\/[a-z0-9-]+\/ogc\/features\/v1$/.test(byId.get(id).url), id);
+    assert.ok(!list.some((s) => /maps3\.sgu\.se|kart\.ra\.no|paikkatieto\.ymparisto\.fi\/arcgis/.test(s.url)), 'no switched-off or closed addresses');
+    assert.equal(byId.get('riksantikvaren-kulturminner').url, 'https://api.ra.no/LokaliteterEnkeltminnerOgSikringssoner');
+    for (const s of list) assert.ok(s.about && s.about.sv && s.about.en, s.id + ': a description in Swedish and English');
+    const sgu = JSON.parse(await D.assets.loadText('presets/api/sgu-geodata.api.json'));
+    assert.deepEqual([sgu.family.kind, sgu.baseUrl], ['ogcapi', byId.get('sgu-geodata').url], 'the SGU preset follows the list');
     const stac = JSON.parse(await D.assets.loadText('presets/api/lantmateriet-geodata.api.json'));
     assert.equal(stac.license.name, 'CC BY 4.0', 'the licence the STAC catalogue states');
     return list.length + ' services';
@@ -588,6 +590,155 @@
       D.require('api/auth').clearToken('lantmateriet-stac');
     }
   }, 60000);
+
+  // Excerpts of real answers (2026-11-27). Naturvårdsregistret is an ArcGIS Server WFS that calls GeoJSON "GEOJSON", refuses
+  // application/json and sends at most 500 features per request (CountDefault); Kartverket's deegree WFS lists only GML, for all
+  // operations; SGU's old GeoServer WFS is switched off.
+  const NVR_CAPS = '<?xml version="1.0" encoding="UTF-8"?><wfs:WFS_Capabilities xmlns="http://www.opengis.net/wfs/2.0" xmlns:wfs="http://www.opengis.net/wfs/2.0" xmlns:ows="http://www.opengis.net/ows/1.1" version="2.0.0"><ows:OperationsMetadata><ows:Operation name="GetFeature"><ows:Parameter name="resultType"><ows:AllowedValues><ows:Value>results</ows:Value><ows:Value>hits</ows:Value></ows:AllowedValues></ows:Parameter><ows:Parameter name="outputFormat"><ows:AllowedValues><ows:Value>GML32</ows:Value><ows:Value>application/gml+xml; version=3.2</ows:Value><ows:Value>GEOJSON</ows:Value><ows:Value>GEOJSON+ZIP</ows:Value><ows:Value>ESRIGEOJSON</ows:Value><ows:Value>KML</ows:Value></ows:AllowedValues></ows:Parameter></ows:Operation><ows:Constraint name="ImplementsResultPaging"><ows:NoValues/><ows:DefaultValue>TRUE</ows:DefaultValue></ows:Constraint><ows:Constraint name="CountDefault"><ows:NoValues/><ows:DefaultValue>500</ows:DefaultValue></ows:Constraint></ows:OperationsMetadata><wfs:FeatureTypeList><wfs:FeatureType><wfs:Name>Naturvardsregistret_WFS:SkyddadeOmraden</wfs:Name><wfs:Title>SkyddadeOmraden</wfs:Title><wfs:DefaultCRS>urn:ogc:def:crs:EPSG::3006</wfs:DefaultCRS></wfs:FeatureType></wfs:FeatureTypeList></wfs:WFS_Capabilities>';
+  const NVR_EXC = '\n<ExceptionReport\n version="2.0.0" xmlns="http://www.opengis.net/ows/1.1"\n xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n>\n  <Exception exceptionCode="InvalidParameterValue" locator="outputFormat">\n    <ExceptionText><![CDATA[OutputFormat \'application/json\' not supported.]]></ExceptionText>\n  </Exception>\n</ExceptionReport>';
+  const KV_CAPS = '<?xml version="1.0" encoding="UTF-8"?><WFS_Capabilities xmlns="http://www.opengis.net/wfs/2.0" xmlns:wfs="http://www.opengis.net/wfs/2.0" xmlns:ows="http://www.opengis.net/ows/1.1" version="2.0.0"><ows:OperationsMetadata><ows:Operation name="GetFeature"><ows:DCP><ows:HTTP><ows:Get xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://wfs.geonorge.no/skwms1/wfs.administrative_enheter?"/></ows:HTTP></ows:DCP></ows:Operation><ows:Parameter name="version"><ows:AllowedValues><ows:Value>2.0.0</ows:Value></ows:AllowedValues></ows:Parameter><ows:Parameter name="outputFormat"><ows:AllowedValues><ows:Value>text/xml; subtype=gml/3.2.1</ows:Value><ows:Value>application/gml+xml; version=3.2</ows:Value></ows:AllowedValues></ows:Parameter></ows:OperationsMetadata><FeatureTypeList><FeatureType><Name xmlns:app="https://skjema.geonorge.no/SOSI/produktspesifikasjon/AdmEnheter/20240101">app:Fylke</Name><Title>Fylke</Title><DefaultCRS>urn:ogc:def:crs:EPSG::4258</DefaultCRS></FeatureType></FeatureTypeList></WFS_Capabilities>';
+  const KV_EXC = "<?xml version='1.0' encoding='UTF-8'?>\n<ows:ExceptionReport xmlns:ows=\"http://www.opengis.net/ows/1.1\" version=\"2.0.0\">\n  <ows:Exception exceptionCode=\"InvalidParameterValue\" locator=\"outputFormat\">\n    <ows:ExceptionText>This WFS is not configured to handle the output/input format 'application/json'</ows:ExceptionText>\n  </ows:Exception>\n</ows:ExceptionReport>";
+  const SGU_EXC = '<?xml version="1.0" encoding="UTF-8"?><ows:ExceptionReport xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ows="http://www.opengis.net/ows" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0">\n  <ows:Exception exceptionCode="ServiceUnavailable">\n    <ows:ExceptionText>Service WFS is disabled</ows:ExceptionText>\n  </ows:Exception>\n</ows:ExceptionReport>\n';
+
+  test('geodata: a WFS is read in the GeoJSON format and page size its capabilities name, and one that offers only GML says so', async (assert) => {
+    assert.equal(geodata.jsonFormat(['GML32', 'application/geo+json', 'application/json']), 'application/json', 'application/json first');
+    assert.equal(geodata.jsonFormat(['gml3', 'application/geo+json', 'json']), 'application/geo+json');
+    assert.equal(geodata.jsonFormat(['GML2', 'json']), 'json');
+    assert.equal(geodata.jsonFormat(['GML32', 'GEOJSON', 'ESRIGEOJSON']), 'GEOJSON', 'as the server spells it');
+    assert.equal(geodata.jsonFormat(['GML2', 'application/json; subtype=geojson']), 'application/json; subtype=geojson', 'MapServer');
+    assert.equal(geodata.jsonFormat(['GML32', 'ESRIGEOJSON', 'application/vnd.ogc.fg+json']), null, 'Esri JSON and JSON-FG are not GeoJSON');
+    const ids = [];
+    try {
+      serve('tests/geo/nvr', (u) => {
+        if (u.searchParams.get('request') === 'GetCapabilities') return NVR_CAPS;
+        if (u.searchParams.get('outputFormat') !== 'GEOJSON') return NVR_EXC;
+        // ArcGIS Server sends no numberMatched and at most 500 features.
+        const start = Number(u.searchParams.get('startIndex') || 0); const count = Math.min(500, Number(u.searchParams.get('count') || 500));
+        return { type: 'FeatureCollection', crs: { type: 'name', properties: { name: 'EPSG:4326' } }, features: ALL.slice(start, start + count) };
+      });
+      const r = await geodata.createConnector('wfs', { baseUrl: BASE + '/nvr' });
+      ids.push(r.connector.id);
+      assert.equal(r.discoveryError, null, 'discovered: ' + r.discoveryError);
+      const ep = r.connector.endpoints[0];
+      assert.equal(ep.params.find((p) => p.name === 'outputFormat').default, 'GEOJSON', 'the format is kept in the source');
+      assert.equal(ep.pagination.size, 500, 'pages of CountDefault, so that paging does not stop after the first 500');
+      assert.equal(geodata.genericEndpoint(r.connector).params.find((p) => p.name === 'outputFormat').default, 'GEOJSON', 'the generic endpoint too');
+      served.length = 0;
+      const table = await runner.fetchTable(r.connector, ep, {});
+      assert.equal(table.rows.length, 3);
+      const q = new URL(served[0]);
+      assert.deepEqual(['GEOJSON', '500', 'EPSG:4326'], ['outputFormat', 'count', 'srsName'].map((k) => q.searchParams.get(k)));
+      // Kartverket: GML only, named for all operations; the source is kept with its generic endpoint and says why.
+      serve('tests/geo/kv', (u) => (u.searchParams.get('request') === 'GetCapabilities' ? KV_CAPS : KV_EXC));
+      const r2 = await geodata.createConnector('wfs', { baseUrl: BASE + '/kv' });
+      ids.push(r2.connector.id);
+      assert.ok(r2.discoveryError && r2.discoveryError.includes('application/gml+xml; version=3.2') && r2.discoveryError === t('geodata.err.nojson', { formats: 'text/xml; subtype=gml/3.2.1, application/gml+xml; version=3.2' }), 'no GeoJSON said plainly: ' + r2.discoveryError);
+      assert.deepEqual(r2.connector.endpoints.map((e) => e.id), ['layer']);
+      // Capabilities that list no formats keep application/json (the GeoServer default).
+      serve('tests/geo/plain', (u) => (u.searchParams.get('request') === 'GetCapabilities' ? CAPS : { type: 'FeatureCollection', features: [] }));
+      const r3 = await geodata.createConnector('wfs', { baseUrl: BASE + '/plain' });
+      ids.push(r3.connector.id);
+      assert.equal(r3.connector.endpoints[0].params.find((p) => p.name === 'outputFormat').default, 'application/json');
+      assert.equal(r3.connector.endpoints[0].pagination.size, 1000);
+    } finally { for (const id of ids) await connectors.remove(id).catch(() => {}); }
+    return 'ok';
+  });
+
+  test('geodata: an OGC exception report is the service\'s own error, in the capabilities and in GetFeature, also with status 400', async (assert) => {
+    const http = D.require('api/http');
+    assert.deepEqual(http.owsException(SGU_EXC), { code: 'ServiceUnavailable', locator: '', text: 'Service WFS is disabled' });
+    assert.deepEqual(http.owsException(NVR_EXC), { code: 'InvalidParameterValue', locator: 'outputFormat', text: "OutputFormat 'application/json' not supported." }, 'CDATA and no prefix');
+    assert.deepEqual(http.owsException('<?xml version="1.0"?><ServiceExceptionReport version="1.1.1"><ServiceException code="LayerNotDefined">Layer &quot;x&quot; is not defined</ServiceException></ServiceExceptionReport>'), { code: 'LayerNotDefined', locator: '', text: 'Layer "x" is not defined' }, 'the older report');
+    assert.equal(http.owsException(CAPS), null, 'capabilities are not an error');
+    assert.equal(http.owsException('{"type":"FeatureCollection","features":[]}'), null);
+    const e400 = http.httpError({ ok: false, status: 400, text: KV_EXC, url: 'https://x/wfs' }, 'Kartverket');
+    assert.ok(e400.message.startsWith('Kartverket: ') && e400.message.includes("This WFS is not configured to handle the output/input format 'application/json'") && e400.message.includes('InvalidParameterValue, outputFormat') && !e400.message.includes('<'), e400.message);
+    assert.equal(e400.status, 400);
+    const ids = [];
+    try {
+      // SGU's switched-off WFS answers 200 with a report: the service's text, not "no layers".
+      serve('tests/geo/sgu', () => SGU_EXC);
+      const r = await geodata.createConnector('wfs', { baseUrl: BASE + '/sgu' });
+      ids.push(r.connector.id);
+      assert.ok(r.discoveryError && r.discoveryError.includes('Service WFS is disabled') && r.discoveryError.includes('ServiceUnavailable') && !r.discoveryError.includes(t('geodata.err.nolayers')), r.discoveryError);
+      // A source saved before the format was read asks for application/json and gets Naturvårdsregistret's report.
+      serve('tests/geo/nvr2', (u) => (u.searchParams.get('request') === 'GetCapabilities' ? NVR_CAPS : NVR_EXC));
+      const r2 = await geodata.createConnector('wfs', { baseUrl: BASE + '/nvr2' }, { discover: false });
+      ids.push(r2.connector.id);
+      const err = await runner.fetchTable(r2.connector, geodata.genericEndpoint(r2.connector), { typeNames: 'Naturvardsregistret_WFS:SkyddadeOmraden' }).then(() => null, (x) => x);
+      assert.ok(err && err.message.includes("OutputFormat 'application/json' not supported.") && err.message.includes('InvalidParameterValue') && !err.message.includes('JSON:'), 'the report, not "not valid JSON": ' + (err && err.message));
+      // ... and with status 400, as deegree answers.
+      D.net.virtual('tests/geo/kv400', () => Promise.resolve({ kind: 'text', data: KV_EXC, status: 400 }));
+      names.push('tests/geo/kv400');
+      const r3 = await geodata.createConnector('wfs', { baseUrl: BASE + '/kv400' }, { discover: false });
+      ids.push(r3.connector.id);
+      const err3 = await runner.fetchTable(r3.connector, geodata.genericEndpoint(r3.connector), { typeNames: 'app:Fylke' }).then(() => null, (x) => x);
+      assert.ok(err3 && err3.message.includes('This WFS is not configured') && err3.status === 400, err3 && err3.message);
+    } finally { for (const id of ids) await connectors.remove(id).catch(() => {}); }
+    return 'ok';
+  });
+
+  test('geodata: an ArcGIS directory with only folders is read in its folders, each service gives its queryable layers, and an ArcGIS error is reported', async (assert) => {
+    // Riksantikvaren's directory (2026-11-27): folders only at the root, layer 1 but no layer 0, a feature and a map service of the
+    // same name, a service closed to the public; SYKE's flood service starts with a group layer.
+    const RA = 'tests/geo/ra/rest/services';
+    const routes = {
+      '': { currentVersion: 11.3, folders: ['Andretjenester', 'MABYGIS', 'Utilities'], services: [] },
+      '/Andretjenester': { currentVersion: 11.3, folders: [], services: [] },
+      '/MABYGIS': { currentVersion: 11.3, folders: [], services: [{ name: 'MABYGIS/admin', type: 'MapServer' }, { name: 'MABYGIS/MABYGIS_Askeladden', type: 'FeatureServer' }, { name: 'MABYGIS/MABYGIS_Askeladden', type: 'MapServer' }, { name: 'MABYGIS/Tulva', type: 'MapServer' }, { name: 'MABYGIS/Bilder', type: 'ImageServer' }] },
+      '/MABYGIS/admin/MapServer': { status: 'error', messages: ['Administrative access is disabled. Please contact your system administrator to enable it.'], code: 403 },
+      '/MABYGIS/MABYGIS_Askeladden/FeatureServer': { maxRecordCount: 1000, layers: [{ id: 1, name: 'Dispensasjoner', parentLayerId: -1, defaultVisibility: true, subLayerIds: null, minScale: 0, maxScale: 0, type: 'Feature Layer', geometryType: 'esriGeometryPolygon' }], tables: [] },
+      '/MABYGIS/Tulva/MapServer': { maxRecordCount: 500, layers: [{ id: 0, name: 'Assets values', parentLayerId: -1, subLayerIds: [1, 2], type: 'Group Layer', geometryType: null }, { id: 1, name: 'predominantly', parentLayerId: 0, subLayerIds: null, type: 'Feature Layer', geometryType: 'esriGeometryPolygon' }, { id: 2, name: 'Raster', parentLayerId: 0, subLayerIds: null, type: 'Raster Layer' }] },
+      '/MABYGIS/MABYGIS_Askeladden/FeatureServer/1/query': { type: 'FeatureCollection', features: ALL },
+      '/MABYGIS/MABYGIS_Askeladden/FeatureServer/0/query': { error: { code: 400, extendedCode: -2147024809, message: 'Invalid or missing input parameters.', details: ['Invalid Layer or Table ID: 0.'] } },
+    };
+    for (const [path, body] of Object.entries(routes)) serve(RA + path, () => body);
+    const ids = [];
+    try {
+      served.length = 0;
+      const r = await geodata.createConnector('arcgis', { baseUrl: BASE + '/ra/rest/services' });
+      ids.push(r.connector.id);
+      assert.equal(r.discoveryError, null, 'discovered: ' + r.discoveryError);
+      assert.deepEqual(r.entities.map((e) => [e.id, e.name, e.abstract]), [['MABYGIS/MABYGIS_Askeladden/FeatureServer/1', 'MABYGIS_Askeladden: Dispensasjoner', 'Polygon'], ['MABYGIS/Tulva/MapServer/1', 'Tulva: predominantly', 'Polygon']], 'the feature service, no group or raster layers, the closed service left out');
+      assert.ok(!served.some((u) => /\/Utilities/.test(u)) && !served.some((u) => /MABYGIS_Askeladden\/MapServer/.test(u)), 'Utilities and the duplicate map service are not read');
+      const [askeladden, tulva] = r.connector.endpoints;
+      assert.equal(askeladden.path, '/MABYGIS/MABYGIS_Askeladden/FeatureServer/1/query');
+      assert.equal(tulva.pagination.size, 500, 'pages of maxRecordCount');
+      assert.equal(tulva.params.find((p) => p.name === 'resultRecordCount').default, 500);
+      const table = await runner.fetchTable(r.connector, askeladden, {});
+      assert.equal(table.rows.length, 3);
+      // An ArcGIS error in an answer of status 200 is the service's message, not an empty layer.
+      const err = await runner.fetchTable(r.connector, geodata.genericEndpoint(r.connector), { layer: 'MABYGIS/MABYGIS_Askeladden/FeatureServer/0' }).then(() => null, (x) => x);
+      assert.ok(err && err.message.includes('Invalid or missing input parameters. Invalid Layer or Table ID: 0.'), err && err.message);
+      // The folder's own address: the layers are relative to it.
+      const r2 = await geodata.createConnector('arcgis', { baseUrl: BASE + '/ra/rest/services/MABYGIS' });
+      ids.push(r2.connector.id);
+      assert.deepEqual(r2.entities.map((e) => e.id), ['MABYGIS_Askeladden/FeatureServer/1', 'Tulva/MapServer/1']);
+      assert.equal(r2.connector.endpoints[0].path, '/MABYGIS_Askeladden/FeatureServer/1/query');
+      // A service's own address still lists its layers, without group layers.
+      const r3 = await geodata.createConnector('arcgis', { baseUrl: BASE + '/ra/rest/services/MABYGIS/Tulva/MapServer' });
+      ids.push(r3.connector.id);
+      assert.deepEqual(r3.entities.map((e) => [e.id, e.pageSize]), [['1', 500]]);
+    } finally { for (const id of ids) await connectors.remove(id).catch(() => {}); }
+    return 'ok';
+  });
+
+  test('geodata: layers whose names share their first 60 characters get endpoints of their own', async (assert) => {
+    // Havs- och vattenmyndigheten (2026-11-27): eleven layers in one long workspace name.
+    const long = 'vidareutveckling-av-lansstyrelsernas-geografiska-kulturmiljounderlag';
+    const types = ['samband', 'siktsektorer', 'A02-lamningar-sverige-linestring-urval-vrak-i-hav'].map((n) => `<wfs:FeatureType><wfs:Name>${long}:${n}</wfs:Name><wfs:Title>${n}</wfs:Title></wfs:FeatureType>`).join('');
+    serve('tests/geo/hav', () => `<?xml version="1.0"?><wfs:WFS_Capabilities xmlns:wfs="http://www.opengis.net/wfs/2.0" version="2.0.0"><wfs:FeatureTypeList>${types}<wfs:FeatureType><wfs:Name>a:b</wfs:Name><wfs:Title>Ett</wfs:Title></wfs:FeatureType><wfs:FeatureType><wfs:Name>a_b</wfs:Name><wfs:Title>Två</wfs:Title></wfs:FeatureType></wfs:FeatureTypeList></wfs:WFS_Capabilities>`);
+    const r = await geodata.createConnector('wfs', { baseUrl: BASE + '/hav' });
+    try {
+      assert.equal(r.discoveryError, null, r.discoveryError);
+      const epIds = r.connector.endpoints.map((e) => e.id);
+      assert.equal(new Set(epIds).size, epIds.length, 'unique: ' + epIds.join(' '));
+      assert.equal(epIds[0], 'layer-' + (long + '-samband').slice(0, 60), 'the first keeps the short id');
+      assert.equal(epIds[1], 'layer-' + long + '-siktsektorer', 'the next one the whole name');
+      assert.deepEqual(epIds.slice(3), ['layer-a-b', 'layer-a-b-2', 'layer']);
+    } finally { await connectors.remove(r.connector.id).catch(() => {}); }
+    return 'ok';
+  });
 
   test('geodata: cleanup', async (assert) => {
     for (const n of names) D.net.unvirtual(n);

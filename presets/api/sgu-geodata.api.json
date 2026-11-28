@@ -1,51 +1,47 @@
 {
   "format": "dataspatium-api/1",
   "id": "sgu-geodata",
-  "name": "SGU öppna geodata (WFS)",
+  "name": "SGU jordarter (OGC API Features)",
   "publisher": "Sveriges geologiska undersökning",
-  "description": "Geologiska lager från SGU: jordarter, berggrund, brunnar, grundvatten och mer. Välj lager och hämta objekten med geometri; begränsa gärna med ett område (bbox).",
+  "description": "Jordartskartan 1:25 000–1:100 000 från SGU: grundlager, översta ytlager, landformer, blockighet, linjer och punkter. Välj lager och hämta objekten med geometri; begränsa gärna med ett område (bbox). SGU:s berggrund, brunnar och grundvattenmagasin finns i listan över färdiga geodatakällor.",
   "docs": "https://www.sgu.se/produkter-och-tjanster/geologiska-data/",
   "license": {
-    "name": "SGU öppna data",
-    "url": "https://www.sgu.se/produkter-och-tjanster/geologiska-data/oppna-data/"
+    "name": "CC0 1.0",
+    "url": "https://creativecommons.org/publicdomain/zero/1.0/"
   },
   "level": 1,
   "country": "SE",
-  "baseUrl": "https://maps3.sgu.se/geoserver/wfs",
+  "baseUrl": "https://api.sgu.se/oppnadata/jordarter25k-100k/ogc/features/v1",
   "auth": {
     "type": "none"
   },
   "family": {
     "type": "geodata",
-    "kind": "wfs"
+    "kind": "ogcapi"
   },
   "endpoints": [],
   "notes": "Lagren hämtas från tjänsten när källan öppnas (GetCapabilities respektive tjänstekatalogen). Svaren är GeoJSON i WGS 84 och öppnas som kartor.",
   "i18n": {
     "en": {
-      "name": "SGU open geodata (WFS)",
-      "description": "Geological layers from the Geological Survey of Sweden: soils, bedrock, wells, groundwater and more. Choose a layer and fetch the features with geometry; limit by an area (bbox).",
+      "name": "SGU soils (OGC API Features)",
+      "description": "The soil map 1:25,000–1:100,000 from the Geological Survey of Sweden: base layer, top surface layer, landforms, bouldery ground, lines and points. Choose a layer and fetch the features with geometry; limit by an area (bbox). SGU's bedrock, wells and groundwater aquifers are in the list of ready-made geodata sources.",
       "notes": "The layers are read from the service when the source is opened (GetCapabilities or the service directory). Answers are GeoJSON in WGS 84 and open as maps."
     },
     "da": {
-      "name": "SGU åbne geodata (WFS)",
-      "description": "Geologiske lag fra SGU: jordarter, grundfjeld, brønde, grundvand og mere. Vælg et lag og hent objekterne med geometri; begræns gerne med et område (bbox).",
-      "notes": "Lagene hentes fra tjenesten, når kilden åbnes (GetCapabilities henholdsvis tjenestekataloget). Svarene er GeoJSON i WGS 84 og åbnes som kort."
+      "notes": "Lagene hentes fra tjenesten, når kilden åbnes (GetCapabilities henholdsvis tjenestekataloget). Svarene er GeoJSON i WGS 84 og åbnes som kort.",
+      "name": "SGU soils (OGC API Features)"
     },
     "nb": {
-      "name": "SGU åpne geodata (WFS)",
-      "description": "Geologiske lag fra SGU: løsmasser, berggrunn, brønner, grunnvann og mer. Velg et lag og hent objektene med geometri; begrens gjerne med et område (bbox).",
-      "notes": "Lagene hentes fra tjenesten når kilden åpnes (GetCapabilities respektive tjenestekatalogen). Svarene er GeoJSON i WGS 84 og åpnes som kart."
+      "notes": "Lagene hentes fra tjenesten når kilden åpnes (GetCapabilities respektive tjenestekatalogen). Svarene er GeoJSON i WGS 84 og åpnes som kart.",
+      "name": "SGU soils (OGC API Features)"
     },
     "fi": {
-      "name": "SGU:n avoin paikkatieto (WFS)",
-      "description": "Geologisia tasoja SGU:lta: maaperä, kallioperä, kaivot, pohjavesi ja muuta. Valitse taso ja nouda kohteet geometrioineen; rajaa mielellään alueella (bbox).",
-      "notes": "Tasot noudetaan palvelusta, kun lähde avataan (GetCapabilities tai palveluhakemisto). Vastaukset ovat GeoJSONia WGS 84:ssä ja avautuvat karttoina."
+      "notes": "Tasot noudetaan palvelusta, kun lähde avataan (GetCapabilities tai palveluhakemisto). Vastaukset ovat GeoJSONia WGS 84:ssä ja avautuvat karttoina.",
+      "name": "SGU soils (OGC API Features)"
     },
     "is": {
-      "name": "Opin landupplýsingagögn SGU (WFS)",
-      "description": "Jarðfræðilög frá SGU: jarðgrunnur, berggrunnur, borholur, grunnvatn og fleira. Veldu lag og sæktu fitjurnar með rúmfræði; takmarkaðu gjarnan við svæði (bbox).",
-      "notes": "Lögin eru sótt úr þjónustunni þegar uppsprettan er opnuð (GetCapabilities eða þjónustuskráin). Svörin eru GeoJSON í WGS 84 og opnast sem kort."
+      "notes": "Lögin eru sótt úr þjónustunni þegar uppsprettan er opnuð (GetCapabilities eða þjónustuskráin). Svörin eru GeoJSON í WGS 84 og opnast sem kort.",
+      "name": "SGU soils (OGC API Features)"
     }
   }
 }

@@ -27,7 +27,7 @@
       "method": "GET",
       "path": "/1.0/parameter/{parameter}.json",
       "params": [
-        { "name": "parameter", "in": "path", "label": "Parameter", "type": "string", "required": true, "optionsFrom": { "endpoint": "parameters", "value": "key", "label": "title" } }
+        { "name": "parameter", "in": "path", "label": "Parameter", "type": "string", "required": true, "example": "1", "optionsFrom": { "endpoint": "parameters", "value": "key", "label": "title" } }
       ],
       "response": { "format": "json", "path": "station", "drop": ["link", "summary"], "convert": { "from": "epoch-ms", "to": "epoch-ms", "updated": "epoch-ms" }, "rename": { "key": "station_id", "name": "station", "from": "fran", "to": "till", "updated": "uppdaterad", "height": "hojd", "latitude": "latitud", "longitude": "longitud", "owner": "agare", "active": "aktiv" } },
       "dataset": { "name": "SMHI stationer parameter {parameter}" }
@@ -39,8 +39,8 @@
       "method": "GET",
       "path": "/1.0/parameter/{parameter}/station/{station}/period/{period}/data.json",
       "params": [
-        { "name": "parameter", "in": "path", "label": "Parameter", "type": "string", "required": true, "optionsFrom": { "endpoint": "parameters", "value": "key", "label": "title" } },
-        { "name": "station", "in": "path", "label": "Station", "type": "string", "required": true, "optionsFrom": { "endpoint": "stations", "value": "station_id", "label": "station", "params": { "parameter": "{parameter}" } } },
+        { "name": "parameter", "in": "path", "label": "Parameter", "type": "string", "required": true, "example": "1", "optionsFrom": { "endpoint": "parameters", "value": "key", "label": "title" } },
+        { "name": "station", "in": "path", "label": "Station", "type": "string", "required": true, "example": "98230", "optionsFrom": { "endpoint": "stations", "value": "station_id", "label": "station", "params": { "parameter": "{parameter}" } } },
         { "name": "period", "in": "path", "label": "Tidsutsnitt", "type": "enum", "required": true, "default": "latest-day", "options": [{ "value": "latest-hour", "label": "Senaste timmen" }, { "value": "latest-day", "label": "Senaste dygnet" }, { "value": "latest-months", "label": "Senaste fyra månaderna" }] }
       ],
       "response": { "format": "json", "path": "value", "constants": { "parameter": "parameter.name", "enhet": "parameter.unit", "station": "station.name", "station_id": "station.key" }, "convert": { "date": "epoch-ms" }, "rename": { "date": "tid", "value": "varde", "quality": "kvalitet" } },
@@ -54,8 +54,8 @@
       "path": "/1.0/parameter/{parameter}/station/{station}/period/corrected-archive/data.csv",
       "headers": { "Accept": "text/csv, text/plain, */*" },
       "params": [
-        { "name": "parameter", "in": "path", "label": "Parameter", "type": "string", "required": true, "optionsFrom": { "endpoint": "parameters", "value": "key", "label": "title" } },
-        { "name": "station", "in": "path", "label": "Station", "type": "string", "required": true, "optionsFrom": { "endpoint": "stations", "value": "station_id", "label": "station", "params": { "parameter": "{parameter}" } } }
+        { "name": "parameter", "in": "path", "label": "Parameter", "type": "string", "required": true, "example": "1", "optionsFrom": { "endpoint": "parameters", "value": "key", "label": "title" } },
+        { "name": "station", "in": "path", "label": "Station", "type": "string", "required": true, "example": "98230", "optionsFrom": { "endpoint": "stations", "value": "station_id", "label": "station", "params": { "parameter": "{parameter}" } } }
       ],
       "response": { "format": "csv", "options": { "delimiter": ";", "skipUntil": ["Datum;", "Från Datum"], "decimal": "point" } },
       "dataset": { "name": "SMHI arkiv parameter {parameter} station {station}" }
@@ -67,7 +67,7 @@
       "method": "GET",
       "path": "/1.0/parameter/{parameter}/station-set/all/period/latest-hour/data.json",
       "params": [
-        { "name": "parameter", "in": "path", "label": "Parameter", "type": "string", "required": true, "optionsFrom": { "endpoint": "parameters", "value": "key", "label": "title" } }
+        { "name": "parameter", "in": "path", "label": "Parameter", "type": "string", "required": true, "example": "1", "optionsFrom": { "endpoint": "parameters", "value": "key", "label": "title" } }
       ],
       "response": { "format": "json", "path": "station", "explode": "value", "constants": { "parameter": "parameter.name", "enhet": "parameter.unit" }, "convert": { "date": "epoch-ms", "from": "epoch-ms", "to": "epoch-ms" }, "rename": { "key": "station_id", "name": "station", "date": "tid", "value": "varde", "quality": "kvalitet", "height": "hojd", "latitude": "latitud", "longitude": "longitud", "owner": "agare" }, "drop": ["link", "from", "to", "ownerCategory", "measuringStations"] },
       "dataset": { "name": "SMHI {parameter} senaste timmen", "keys": ["station_id", "tid"] }

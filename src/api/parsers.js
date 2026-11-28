@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/parsers', ['io/importers/json', 'io/importers/csv', 'api/jsonstat', 'api/sdmx', 'data/types', 'data/geo'], (jsonImp, csv, jsonstat, sdmx, types, geo) => {
+  D.define('api/parsers', ['io/importers/json', 'io/importers/csv', 'api/jsonstat', 'api/sdmx', 'data/types', 'data/geo', 'api/http'], (jsonImp, csv, jsonstat, sdmx, types, geo, http) => {
     function resolvePath(data, path) {
       if (!path) return data;
       // A key that itself contains dots (OData's "@odata.nextLink") is tried whole before the path is split.
@@ -218,7 +218,9 @@
     function serviceError(data, spec) {
       if (!spec.errorPath) return;
       const e = resolvePath(data, spec.errorPath);
-      if (e !== undefined && e !== null && e !== '') throw new Error(D.t('api.err.service', { message: typeof e === 'object' ? JSON.stringify(e) : String(e) }));
+      // An ArcGIS error ({code, message, details}) reads as its message and details; other objects as JSON.
+      const text = e && typeof e === 'object' ? (typeof e.message === 'string' ? [e.message].concat(Array.isArray(e.details) ? e.details : []).filter(Boolean).join(' ') : JSON.stringify(e)) : String(e);
+      if (e !== undefined && e !== null && e !== '') throw new Error(D.t('api.err.service', { message: text }));
     }
 
     /**
@@ -233,11 +235,13 @@
       const options = Object.assign({}, spec.options || {}, ctx.options || {});
       let data = null;
       let table;
+      // An OGC exception report (a WFS that refuses the output format, a disabled service) is the service's error, not data.
+      if (format !== 'text' && /^\s*</.test(String(text || ''))) { const ows = http.owsError(text); if (ows) throw ows; }
       const parseJson = () => { try { return jsonImp.parseJsonText(text); } catch (err) { throw new Error(D.t('api.err.json', { text: String(text || '').slice(0, 120) })); } };
       if (format === 'json') { data = parseJson(); serviceError(data, spec); table = jsonImp.tabulate(jsonRecords(data, spec)); }
       else if (format === 'jsonstat') { data = parseJson(); const t = jsonstat.toTable(data, options); table = { columns: t.columns, rows: t.rows, types: t.types, meta: t.meta }; }
       else if (format === 'sdmx') { data = parseJson(); const t = sdmx.toTable(data, options); table = { columns: t.columns, rows: t.rows, types: t.types, meta: t.meta }; }
-      else if (format === 'geojson') { data = parseJson(); table = jsonImp.tabulate(geojsonRecords(spec.path ? resolvePath(data, spec.path) : data, options)); }
+      else if (format === 'geojson') { data = parseJson(); serviceError(data, spec); table = jsonImp.tabulate(geojsonRecords(spec.path ? resolvePath(data, spec.path) : data, options)); }
       else if (format === 'csv') {
         let body = text;
         for (const mark of [].concat(options.skipUntil || [])) { const i = body.indexOf(mark); if (i > 0) { body = body.slice(i); break; } }

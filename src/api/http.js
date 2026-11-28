@@ -18,7 +18,7 @@
     let proxy = null;
 
     class ApiError extends Error {
-      /** @param {string} message @param {{kind: string, status?: number, url?: string, detail?: string, cause?: any}} info */
+      /** @param {string} message @param {{kind: string, status?: number, url?: string, detail?: string, code?: string, cause?: any}} info */
       constructor(message, info) { super(message); this.name = 'ApiError'; Object.assign(this, info); }
     }
 
@@ -67,7 +67,8 @@
 
     /**
      * Perform a request.
-     * @param {{url: string, method?: string, headers?: Record<string, string>, body?: any, signal?: AbortSignal, timeoutMs?: number, notModifiedOk?: boolean, rateKey?: string, rateLimit?: {requests: number, perSeconds: number}, retries?: number, responseType?: 'text'|'arraybuffer', ask?: boolean}} req
+     * @param {{url: string, method?: string, headers?: Record<string, string>, body?: any, signal?: AbortSignal, timeoutMs?: number, notModifiedOk?: boolean, rateKey?: string, rateLimit?: {requests: number, perSeconds: number}, retries?: number, responseType?: 'text'|'arraybuffer', ask?: boolean, cors?: {file?: boolean, web?: boolean}}} req
+     *   `cors`: what was measured for the source (api/reach), so that a refused request names the bridge
      * @returns {Promise<{ok: boolean, status: number, statusText: string, headers: Headers, url: string, text: string, buffer: ArrayBuffer|null, contentType: string, ms: number}>}
      */
     async function request(req) {
@@ -94,7 +95,7 @@
           if (req.signal && req.signal.aborted) throw new ApiError('Avbrutet.', { kind: 'aborted' });
           if (controller.signal.aborted) throw new ApiError(D.t('api.err.timeout', { host: hostOf(req.url) }), { kind: 'timeout', url: req.url });
           res = url === req.url ? await viaBridge(req) : null;
-          if (!res) throw new ApiError(D.t('api.err.network', { host: hostOf(req.url) }), { kind: 'network', url: req.url, cause: err });
+          if (!res) throw networkError(req, err, url !== req.url);
         } finally {
           if (req.signal) req.signal.removeEventListener('abort', onAbort);
         }
@@ -118,6 +119,21 @@
     }
 
     /**
+     * The error of a request that never got an answer. A source marked as out of the browser's reach here (`req.cors`, what was
+     * measured for it, api/reach) says so and how the bridge fetches it, instead of "no network or no CORS"; through the user's
+     * own proxy the general text stands.
+     * @param {{url: string, cors?: {file?: boolean, web?: boolean}}} req @param {any} cause @param {boolean} proxied
+     */
+    function networkError(req, cause, proxied) {
+      const host = hostOf(req.url);
+      const reach = D.require('api/reach');
+      const why = req.cors && !proxied ? reach.blocked({ cors: req.cors }) : null;
+      if (!why) return new ApiError(D.t('api.err.network', { host }), { kind: 'network', url: req.url, cause });
+      const text = D.t('api.err.nocors', { host });
+      return new ApiError(why === 'bridge' ? text : reach.hint(why) + ' ' + text, { kind: 'network', code: 'cors', url: req.url, cause });
+    }
+
+    /**
      * A service that does not let the browser read its answer (no CORS) fails like a network error. When the user has chosen
      * it in Internetåtkomst and a bridge that can fetch is connected, the request goes through the bridge on this computer
      * instead (F14.1); otherwise null, and the network error stands. Only https addresses go this way.
@@ -130,10 +146,41 @@
       catch (err) { throw new ApiError(D.t('api.err.bridge', { host: hostOf(req.url), message: (err && err.message) || String(err) }), { kind: 'network', url: req.url, cause: err }); }
     }
 
-    /** Build an ApiError from a non-OK response. */
+    /** Build an ApiError from a non-OK response; an OGC exception report in the body gives the service's own text. */
     function httpError(res, context) {
+      const ows = owsError(res.text, context);
+      if (ows) return Object.assign(ows, { kind: 'http', status: res.status, url: res.url });
       const detail = (res.text || '').replace(/\s+/g, ' ').trim().slice(0, 300);
       return new ApiError(`${context ? context + ': ' : ''}${describeStatus(res.status)}${detail ? ' Svar: ' + detail : ''}`, { kind: 'http', status: res.status, url: res.url, detail });
+    }
+
+    const ENTITIES = { lt: '<', gt: '>', quot: '"', apos: "'", amp: '&' };
+    /** Text content of an XML fragment: CDATA kept, tags dropped, entities decoded, white space collapsed. */
+    const xmlText = (s) => String(s).replace(/<!\[CDATA\[([\s\S]*?)\]\]>|<[^>]*>|&(lt|gt|quot|apos|amp|#\d+);/g, (_m, cdata, ent) => (cdata !== undefined ? cdata : ent ? (ent[0] === '#' ? String.fromCharCode(Number(ent.slice(1))) : ENTITIES[ent]) : '')).replace(/\s+/g, ' ').trim();
+    /**
+     * The code, locator and text of an OGC exception report (ows:ExceptionReport of WFS, WMS and WCS, or the older
+     * ServiceExceptionReport) when that is what a response body is, otherwise null. Regular expressions, so that it works
+     * in workers too.
+     * @param {string} text @returns {{code: string, locator: string, text: string}|null}
+     */
+    function owsException(text) {
+      const s = String(text || '');
+      if (!/^\s*</.test(s) || !/<(\w+:)?(ExceptionReport|ServiceExceptionReport)[\s>/]/.test(s.slice(0, 1500))) return null;
+      const attr = (name) => xmlText((new RegExp(`\\b${name}\\s*=\\s*"([^"]*)"`).exec(s) || [])[1] || '');
+      const texts = Array.from(s.matchAll(/<((?:\w+:)?(?:ExceptionText|ServiceException))\b[^>]*>([\s\S]*?)<\/\1>/g), (m) => xmlText(m[2])).filter(Boolean);
+      return { code: attr('(?:exceptionCode|code)'), locator: attr('locator'), text: texts.join(' ').slice(0, 300) };
+    }
+    /**
+     * An ApiError with the service's own message when a response body is an OGC exception report, otherwise null:
+     * "Service WFS is disabled (ServiceUnavailable)" instead of "not valid JSON".
+     * @param {string} text @param {string} [context] the source's name
+     */
+    function owsError(text, context) {
+      const e = owsException(text);
+      if (!e) return null;
+      const what = [e.code, e.locator].filter(Boolean).join(', ');
+      const message = D.t('api.err.service', { message: (e.text || e.code || '?') + (what && e.text ? ` (${what})` : '') });
+      return new ApiError(`${context ? context + ': ' : ''}${message}`, { kind: 'service', code: e.code, detail: e.text });
     }
 
     /** Parse an RFC 8288 Link header and return the URL with the given rel, or null. */
@@ -146,6 +193,6 @@
       return null;
     }
 
-    return { request, throttle, getProxy, setProxy, applyProxy, describeStatus, httpError, linkHeader, hostOf, ApiError, sleep };
+    return { request, throttle, getProxy, setProxy, applyProxy, describeStatus, httpError, owsException, owsError, linkHeader, hostOf, ApiError, sleep };
   });
 })();
